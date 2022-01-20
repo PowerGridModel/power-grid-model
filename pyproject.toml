@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = ["--cov", "--cov-report", "term", "--cov-report", "html:cov_html"]
+
+[tool.coverage.run]
+source = ["power_grid_model"]
+
+[tool.coverage.report]
+fail_under = 95
+
+[tool.mypy]
+follow_imports = "silent"
+disallow_incomplete_defs = true
+ignore_missing_imports = true
+show_column_numbers = true
+non_interactive = true
+install_types = true
+
+[tool.black]
+line-length = 120
+target-version = ['py38']

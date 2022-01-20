@@ -1,0 +1,76 @@
+{
+  "configurations": [
+    {
+      "name": "x64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${projectDir}\\cpp_build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}\\cpp_build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+    },
+    {
+      "name": "x64-Debug-MKL",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\cpp_build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 -DPOWER_GRID_MODEL_SPARSE_SOLVER=MKL",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+    },
+    {
+      "name": "x64-Release-MKL",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}\\cpp_build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 -DPOWER_GRID_MODEL_SPARSE_SOLVER=MKL",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+    },
+    {
+      "name": "x64-Debug-MKL-at-runtime",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\cpp_build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 -DPOWER_GRID_MODEL_SPARSE_SOLVER=MKL_RUNTIME",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake",
+      "inheritEnvironments": [ "msvc_x64_x64" ]
+    },
+    {
+      "name": "x64-Release-MKL-at-runtime",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}\\cpp_build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 -DPOWER_GRID_MODEL_SPARSE_SOLVER=MKL_RUNTIME",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake",
+      "inheritEnvironments": [ "msvc_x64_x64" ]
+    }
+  ]
+}

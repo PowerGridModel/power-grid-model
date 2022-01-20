@@ -1,0 +1,8 @@
+{
+  "calculation_method": "iterative_linear",
+  "rtol": 1e-6,
+  "atol": {
+    "q.*": 1e-1,
+    "default": 1e-6
+  }
+}

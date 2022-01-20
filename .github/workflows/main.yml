@@ -1,0 +1,272 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
+# This is a basic workflow to help you get started with Actions
+
+name: Build and Test C++ and Python
+
+# Controls when the workflow will run
+on:
+  # run pipeline on push event of main or release branch
+  push:
+    branches:
+      - main
+      - 'release/**'
+  # run pipeline on pull request
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  TWINE_USERNAME: ${{ secrets.PYPI_USER }}
+  TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
+
+jobs:
+  build-cpp-test-linux:
+    
+    runs-on: ubuntu-latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
+    strategy:
+      matrix:
+        build-option: [ Debug, Release ]
+        sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run build script
+        run: ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
+
+
+  build-and-test-python-linux:
+    
+    runs-on: ubuntu-latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
+    needs: build-cpp-test-linux
+    strategy:
+      matrix:
+        python-version: [ cp38-cp38, cp39-cp39, cp310-cp310 ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Test
+        run: |
+          /opt/python/${{ matrix.python-version }}/bin/pip install --no-build-isolation -v --no-deps -e .
+          /opt/python/${{ matrix.python-version }}/bin/pytest
+          POWER_GRID_MODEL_SPARSE_SOLVER=MKL /opt/python/${{ matrix.python-version }}/bin/pytest
+          POWER_GRID_MODEL_SPARSE_SOLVER=EIGEN /opt/python/${{ matrix.python-version }}/bin/pytest
+
+      - name: Build and audit
+        run: |
+          /opt/python/${{ matrix.python-version }}/bin/pip wheel -w dist --no-deps --no-build-isolation -v .
+          auditwheel show dist/*
+          auditwheel repair dist/* -w dist_upload/
+          rm -rf dist/*
+
+      - name: Publish
+        if: github.event_name == 'push'
+        run: |
+          echo Publishing to ${TWINE_REPOSITORY_URL}
+          twine upload --verbose dist_upload/*
+
+
+  build-cpp-test-windows:
+    
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build-option: [ Debug, Release ]
+        sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
+    env:
+      MKL_INCLUDE: C:\conda_envs\cpp_pkgs\Library\include
+      MKL_LIB: C:\conda_envs\cpp_pkgs\Library\lib
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Activate conda
+        run: |
+          & "$env:CONDA\condabin\conda" init
+
+      - name: Cache conda environments
+        uses: actions/cache@v2
+        id: cache
+        env:
+          cache-name: conda-envs-windows
+        with:
+          path: C:\conda_envs
+          key: conda-envs-windows-6
+
+      - name: Install conda environments
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: .\.github\conda-windows.ps1
+
+      - name: Build and test
+        run: |
+          $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
+          mkdir cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
+          cd cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
+          # generate cmake cache
+          cmake .. `
+            -DPOWER_GRID_MODEL_SPARSE_SOLVER=${{ matrix.sparse-solver }} `
+            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
+            -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
+          # build
+          & "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\ALL_BUILD.vcxproj -property:Configuration=${{ matrix.build-option }}
+          # test
+          .\tests\cpp_unit_tests\${{ matrix.build-option }}\power_grid_model_unit_tests.exe
+
+
+  build-and-test-python-windows:
+    
+    runs-on: windows-latest
+    needs: build-cpp-test-windows
+    strategy:
+      matrix:
+        python-version: [ cp38-cp38, cp39-cp39, cp310-cp310 ]
+
+    env:
+      EIGEN_INCLUDE: C:\conda_envs\cpp_pkgs\Library\include\eigen3
+      BOOST_INCLUDE: C:\conda_envs\cpp_pkgs\Library\include
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Activate conda
+        run: |
+          & "$env:CONDA\condabin\conda" init
+
+      - name: Cache conda environments
+        uses: actions/cache@v2
+        id: cache
+        env:
+          cache-name: conda-envs-windows
+        with:
+          path: C:\conda_envs
+          key: conda-envs-windows-6
+
+      - name: Install conda environments
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: .\.github\conda-windows.ps1
+
+      - name: Test
+        run: |
+          conda activate C:\conda_envs\${{ matrix.python-version }}
+          pip uninstall -y power-grid-model
+          pip install --no-build-isolation -v --no-deps -e .
+          # test without MKL library path
+          pytest
+          # test with MKL library path
+          $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
+          pytest
+          $env:POWER_GRID_MODEL_SPARSE_SOLVER = 'MKL'
+          pytest
+          $env:POWER_GRID_MODEL_SPARSE_SOLVER = 'EIGEN'
+          pytest
+
+      - name: Build
+        run: |
+          conda activate C:\conda_envs\${{ matrix.python-version }}
+          dir env:
+          pip wheel -w dist --no-deps --no-build-isolation -v .
+
+      - name: Publish
+        if: github.event_name == 'push'
+        run: |
+          conda activate C:\conda_envs\${{ matrix.python-version }}
+          echo Publishing to ${TWINE_REPOSITORY_URL}
+          twine upload --verbose dist/*
+
+
+  build-cpp-test-macos:
+    
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build-option: [ Debug, Release ]
+        sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
+    env:
+      CC: clang
+      CXX: clang++
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install cpp dependencies
+        run: |
+          brew install ninja
+          sudo ${CONDA}/bin/conda create --yes -p ${HOME}/conda_envs/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+
+      - name: Build and test
+        run: |
+          # environment
+          export MKL_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include
+          export MKL_LIB=${HOME}/conda_envs/cpp_pkgs/lib
+          export LD_LIBRARY_PATH=${HOME}/conda_envs/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+          # generate cmake cache
+          mkdir cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
+          cd cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
+          cmake .. -GNinja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} \
+            -DPOWER_GRID_MODEL_SPARSE_SOLVER=${{ matrix.sparse-solver }} \
+            -DCMAKE_PREFIX_PATH=${HOME}/conda_envs/cpp_pkgs \
+            -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
+          # build
+          cmake --build . --verbose
+          # test
+          ./tests/cpp_unit_tests/power_grid_model_unit_tests
+
+
+  build-and-test-python-macos:
+    
+    runs-on: macos-latest
+    needs: build-cpp-test-macos
+    strategy:
+      matrix:
+        python-version: [ '3.8', '3.9', '3.10' ]
+
+    env:
+      CC: clang
+      CXX: clang++
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install cpp dependencies
+        run: |
+          brew install ninja
+          sudo ${CONDA}/bin/conda create --yes -p ${HOME}/conda_envs/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install python dependencies
+        run: pip install -r dev-requirements.txt
+
+      - name: Test
+        run: |
+          export LD_LIBRARY_PATH=${HOME}/conda_envs/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+          export BOOST_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include
+          export EIGEN_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include/eigen3
+          pip install --no-build-isolation -v --no-deps -e .
+          pytest
+          POWER_GRID_MODEL_SPARSE_SOLVER=MKL pytest
+          POWER_GRID_MODEL_SPARSE_SOLVER=EIGEN pytest
+
+      - name: Build
+        run: |
+          export BOOST_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include
+          export EIGEN_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include/eigen3
+          pip wheel -w dist --no-deps --no-build-isolation -v .
+
+      - name: Publish
+        if: github.event_name == 'push'
+        run: |
+          echo Publishing to ${TWINE_REPOSITORY_URL}
+          twine upload --verbose dist/*

@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
+# GitHub Action that uses
+#     Black to reformat the Python code in an incoming pull request.
+#     clang-format to reformat the C++ code in an incoming pull request.
+# If all code in the pull request is compliant with Black and clang-format then this Action
+# does nothing. Otherwise, it will print the files which need to be reformatted and raise an error.
+
+name: Format Code
+
+on:
+  # run pipeline on push event of main or release branch
+  push:
+    branches:
+      - main
+      - 'release/**'
+  # run pipeline on pull request
+  pull_request:
+
+jobs:
+  code-format-check:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+        
+      - name: Install Black and clang-format
+        run: |
+          pip install black[juypter]
+          sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Run black
+        run: black .
+
+      - name: Run clang-format
+        run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
+
+      - name: If needed raise error
+        run: |
+
+          if [[ `git status --porcelain --untracked-files=no` ]]; then
+            echo "Formatting not correct! See blow the files which need to be reformatted!"
+            git status --porcelain --untracked-files=no
+            exit 1
+          fi
+     
