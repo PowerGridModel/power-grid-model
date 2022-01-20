@@ -299,7 +299,7 @@ build_pkg(
     setup_file=__file__,
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
-    description="Power Grid Model in C++",
+    description="Python/C++ library for distribution power system analysis",
     url="https://github.com/alliander-opensource/power-grid-model",
     include_dirs=[os.environ["EIGEN_INCLUDE"], os.environ["BOOST_INCLUDE"]],
     define_macros=[("EIGEN_MPL2_ONLY", "1"), ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1)],
