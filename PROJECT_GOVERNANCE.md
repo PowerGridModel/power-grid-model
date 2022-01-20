@@ -67,7 +67,7 @@ To honor their contribution, we mention their names as non-code contributors as 
 * Jacco Heres: algorithm test
 * Thijs Baaijen: test for macOS support
 
-### Historial Contributors
+### Historical Contributors
 
 Our gratitude goes to the following contributors who have worked (and maybe still be working) 
 in this project before it became open source:

@@ -25,7 +25,7 @@ The only Python runtime dependency is
 [numpy](https://numpy.org/). It will be automatically installed as the requirements.
 Moreover, the library optionally depends on
 [Intel Math Kernel Library (mkl)](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html),
-for its [PARDISO](https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-interface.html) sparse solver.
+for its [PARDISO](https://www.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-iface.html) sparse solver.
 It is recommended to install `mkl` because it gives huge performance boosts.
 
 The easiest way to install `mkl` is using `pip` or `conda`:
