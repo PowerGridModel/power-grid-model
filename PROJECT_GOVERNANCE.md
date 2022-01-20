@@ -66,3 +66,16 @@ To honor their contribution, we mention their names as non-code contributors as 
 * Werner van Westering: algorithm design
 * Jacco Heres: algorithm test
 * Thijs Baaijen: test for macOS support
+
+### Historial Contributors
+
+Our gratitude goes to the following contributors who have worked (and maybe still be working) 
+in this project before it became open source:
+
+* Werner van Westering
+* Sanne Korzec
+* Jonas van den Bogaard
+* Bram Stoeller
+* Démian Janssen
+* Peter Salemink
+* Tony Xiang
