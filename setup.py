@@ -247,7 +247,7 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
     """
     pkg_dir = os.path.dirname(os.path.realpath(setup_file))
     # package description
-    pkg_pip_name = 'power-grid-model'
+    pkg_pip_name = "power-grid-model"
     pkg_name = pkg_pip_name.replace("-", "_")
     with open(os.path.join(pkg_dir, "README.md")) as f:
         long_description = f.read()
