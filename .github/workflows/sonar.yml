@@ -90,6 +90,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_CPP }}
         run: |
-          ls build_wrapper_output_directory/
-          cat build_wrapper_output_directory/build-wrapper-dump.json
           sonar-scanner -X -Dproject.settings=./sonar-project-cpp.properties --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
