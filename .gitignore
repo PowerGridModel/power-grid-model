@@ -500,3 +500,5 @@ output/
 extra-test*/
 cpp_cov_html/
 cpp_coverage.info
+python_cov_html/
+python_coverage.xml
