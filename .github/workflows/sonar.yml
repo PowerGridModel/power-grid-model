@@ -32,7 +32,12 @@ jobs:
         run: |
           /opt/python/${PYTHON_VERSION}/bin/pip install --no-build-isolation -v --no-deps -e .
           /opt/python/${PYTHON_VERSION}/bin/pytest
-          cat python_coverage.xml
+
+      # Fix relative paths in coverage file
+      # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
+      - name: fix code coverage paths
+        run: |
+          sed -i "s@$PWD@/github/workspace@g" python_coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
