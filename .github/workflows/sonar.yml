@@ -81,6 +81,10 @@ jobs:
           mkdir cpp_build
           cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DPOWER_GRID_MODEL_SPARSE_SOLVER=EIGEN -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake 
           VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build cpp_build/
+      - name: Run coverage
+        run: |
+          cd cpp_build
+
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
