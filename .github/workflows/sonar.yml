@@ -84,10 +84,12 @@ jobs:
       - name: Run coverage
         run: |
           cd cpp_build
+          ./tests/cpp_unit_tests/power_grid_model_unit_tests
+          find ./tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir/ -name '*.o' -type f -exec gcov {} \;
 
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_CPP }}
         run: |
-          sonar-scanner -X -Dproject.settings=./sonar-project-cpp.properties --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+          sonar-scanner -Dproject.settings=./sonar-project-cpp.properties --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
