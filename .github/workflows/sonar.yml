@@ -85,7 +85,7 @@ jobs:
         run: |
           cd cpp_build
           ./tests/cpp_unit_tests/power_grid_model_unit_tests
-          find ./tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir/ -name '*.o' -type f -exec gcov {} \;
+          gcov tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir/*.o
 
       - name: Run sonar-scanner
         env:
