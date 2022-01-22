@@ -19,6 +19,7 @@ jobs:
   sonar-cloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
     steps:
       - uses: actions/checkout@v2
         with:
