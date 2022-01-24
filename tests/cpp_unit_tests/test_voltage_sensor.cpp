@@ -13,6 +13,23 @@
 namespace power_grid_model {
 
 TEST_CASE("Test voltage sensor") {
+    SECTION("Test Sensor energized function") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        double const u_rated = 10.0e3;
+        VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
+
+        CHECK(voltage_sensor.energized(true) == true);
+        CHECK(voltage_sensor.energized(false) == true);
+    }
+
+    SECTION("Test Sensor math_model_type") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        double const u_rated = 10.0e3;
+        VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
+
+        CHECK(voltage_sensor.math_model_type() == ComponentType::sensor);
+    }
+
     SECTION("Test sym/asym calc_param for symmetric voltage sensor, angle = 0") {
         RealValue<true> const u_measured{10.1e3};
         RealValue<true> const u_angle_measured{0};
