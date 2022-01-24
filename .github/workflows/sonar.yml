@@ -15,40 +15,11 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-env:
-  PYTHON_VERSION: cp310-cp310
-
 jobs:
-  sonar-cloud-python:
-    name: SonarCloud Python
+  sonar-cloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-
-      - name: Test
-        run: |
-          /opt/python/${PYTHON_VERSION}/bin/pip install --no-build-isolation -v --no-deps -e .
-          /opt/python/${PYTHON_VERSION}/bin/pytest
-
-      # Fix relative paths in coverage file
-      # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
-      - name: fix code coverage paths
-        run: |
-          sed -i "s@$PWD@/github/workspace@g" python_coverage.xml
-
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  sonar-cloud-cpp:
-    name: SonarCloud CPP
-    runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env-sonar:latest
     env:
       SONAR_SCANNER_VERSION: 4.4.0.2170
       SONAR_SERVER_URL: "https://sonarcloud.io"
@@ -76,20 +47,32 @@ jobs:
           curl -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
           unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
           echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
-      - name: Run build-wrapper
+
+      - name: Python test and coverage
+        run: |
+          /opt/venv/bin/pip install --no-build-isolation -v --no-deps -e .
+          /opt/venv/bin/pytest
+          # remove cython generated cpp file
+          rm -rf power_grid_model/*.cpp
+
+      - name: Run build-wrapper for C++
         run: |
           mkdir cpp_build
           cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DPOWER_GRID_MODEL_SPARSE_SOLVER=EIGEN -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake 
           VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build cpp_build/
-      - name: Run coverage
+
+      - name: C++ test and coverage
         run: |
           cd cpp_build
           ./tests/cpp_unit_tests/power_grid_model_unit_tests
-          gcov tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir/*.o
+          gcovr --sonarqube ../cpp_coverage.xml -r ..
+          cd ..
+          # remove branch hits count, since it does not make sense in heavy C++ templates
+          sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_CPP }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          sonar-scanner -Dproject.settings=./sonar-project-cpp.properties --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+          sonar-scanner --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
