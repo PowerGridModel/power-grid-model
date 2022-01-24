@@ -9,13 +9,13 @@ SPDX-License-Identifier: MPL-2.0
 [![REUSE Compliance Check](https://github.com/alliander-opensource/power-grid-model/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/reuse-compliance.yml)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 
 
-[![Python Test Coverage](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 
 # Power Grid Model
 
