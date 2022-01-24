@@ -30,6 +30,19 @@ TEST_CASE("Test voltage sensor") {
         CHECK(voltage_sensor.math_model_type() == ComponentType::sensor);
     }
 
+    SECTION("Test get_null_output") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        voltage_sensor_input.id = 12;
+        double const u_rated = 10.0e3;
+        VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
+
+        VoltageSensorOutput<true> vs_output = voltage_sensor.get_null_output<true>();
+        CHECK(vs_output.id == 12);
+        CHECK(vs_output.energized == 0);
+        CHECK(vs_output.u_residual == Approx(0.0));
+        CHECK(vs_output.u_angle_residual == Approx(0.0));
+    }
+
     SECTION("Test sym/asym calc_param for symmetric voltage sensor, angle = 0") {
         RealValue<true> const u_measured{10.1e3};
         RealValue<true> const u_angle_measured{0};
