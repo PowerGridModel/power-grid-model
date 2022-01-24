@@ -4,7 +4,7 @@
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov", "--cov-report", "term", "--cov-report", "html:cov_html"]
+addopts = ["--cov", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml"]
 
 [tool.coverage.run]
 source = ["power_grid_model"]

@@ -14,15 +14,31 @@ on:
   pull_request:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  
+
+env:
+  PYTHON_VERSION: cp310-cp310
+
 jobs:
   sonar-cloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Test
+        run: |
+          /opt/python/${PYTHON_VERSION}/bin/pip install --no-build-isolation -v --no-deps -e .
+          /opt/python/${PYTHON_VERSION}/bin/pytest
+
+      # Fix relative paths in coverage file
+      # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
+      - name: fix code coverage paths
+        run: |
+          sed -i "s@$PWD@/github/workspace@g" python_coverage.xml
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
