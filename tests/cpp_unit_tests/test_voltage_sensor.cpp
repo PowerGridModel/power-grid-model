@@ -81,11 +81,8 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> param = voltage_sensor.calc_param<false>();
         CHECK(param.variance == Approx(6.75));
 
-        ComplexValue<false> const expected_param_value{
-            0.5 * sqrt(3) * exp(1i * 2.0),
-            0.55 * sqrt(3) * exp(1i * 2.1),
-            0.6 * sqrt(3) * exp(1i * 2.2)
-        };
+        ComplexValue<false> const expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
+                                                       0.6 * sqrt(3) * exp(1i * 2.2)};
         CHECK(cabs(param.value[0]) == Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == Approx(cabs(expected_param_value[1])));
         CHECK(cabs(param.value[2]) == Approx(cabs(expected_param_value[2])));
