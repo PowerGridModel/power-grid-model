@@ -244,6 +244,14 @@ TEST_CASE("Test transformer") {
         CHECK((cabs(param.value[1] - y_ft) < numerical_tolerance).all());
         CHECK((cabs(param.value[2] - y_tf) < numerical_tolerance).all());
         CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
+
+        SECTION("Test transformer is_param_mutable") {
+            CHECK(YNyn12.is_param_mutable() == true);
+        }
+
+        SECTION("Test transformer phase shift") {
+            CHECK(YNyn12.phase_shift() == Approx(0.0));
+        }
     }
 
     SECTION("Test grounding - Dyn11") {
