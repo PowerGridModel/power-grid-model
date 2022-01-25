@@ -251,6 +251,10 @@ TEST_CASE("Test transformer") {
         SECTION("Test transformer phase shift") {
             CHECK(YNyn12.phase_shift() == Approx(0.0));
         }
+
+        SECTION("Test transformer loading") {
+            CHECK(YNyn12.loading(60.0e6, 0.0) == Approx(2.0));
+        }
     }
 
     SECTION("Test grounding - Dyn11") {
