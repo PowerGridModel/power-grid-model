@@ -156,7 +156,7 @@ def assert_valid_data_structure(data: Union[InputData, UpdateData], data_type: s
                         f"Unexpected Numpy array ({array.dtype}) for '{component}' {data_type}_data "
                         "(should be a Numpy structured array)."
                     )
-                raise TypeError(f"Unexpected Numpy structured array " f"(expected = {dtype}, actual = {array.dtype}).")
+                raise TypeError(f"Unexpected Numpy structured array; (expected = {dtype}, actual = {array.dtype}).")
         else:
             raise TypeError(
                 f"Unexpected data type {type(array).__name__} for '{component}' {data_type}_data "
