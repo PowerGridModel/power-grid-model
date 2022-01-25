@@ -194,7 +194,7 @@ TEST_CASE("Test transformer") {
         };
         double const u1_rated{150.0e3};
         double const u2_rated{10.0e3};
-        Transformer const YNyn12{input, u1_rated, u2_rated};
+        Transformer YNyn12{input, u1_rated, u2_rated};
 
         double const z_abs = input.uk * input.u2 * input.u2 / input.sn;  // z_abs = uk * u2 * u2 / sn
         double const z_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
@@ -254,6 +254,11 @@ TEST_CASE("Test transformer") {
 
         SECTION("Test transformer loading") {
             CHECK(YNyn12.loading(60.0e6, 0.0) == Approx(2.0));
+        }
+
+        SECTION("Test transformer set_limit - false") {
+            CHECK(YNyn12.set_tap(na_IntS) == false);
+            CHECK(YNyn12.set_tap(input.tap_pos) == false);
         }
     }
 
