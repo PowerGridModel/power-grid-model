@@ -82,7 +82,7 @@ In case of major version release with new features and/or breaking changes, we m
 This project utilize a Developer Certificate of Origin (DCO) to ensure that 
 each commit was written by the author or that the author has the appropriate rights 
 necessary to contribute the change. 
-Specifically, we utilize [Developer Certificate of Origin, Version 1.1](http://developercertificate.org/),  
+Specifically, we utilize [Developer Certificate of Origin, Version 1.1](http://developercertificate.org/), 
 which is the same mechanism that the Linux® Kernel and many other communities use to manage code contributions. 
 The DCO is considered one of the simplest tools for sign-offs from contributors as the representations are 
 meant to be easy to read and indicating signoff is done as a part of the commit message.
