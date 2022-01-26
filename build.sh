@@ -51,9 +51,15 @@ fi
 
 cd ..
 # test coverage report for debug build and for linux
-if [[ "$1" = "Debug" ]] && [[ ${CXX} == "g++"* ]] && [[ $3 == "Coverage" ]];  then
+if [[ "$1" = "Debug" ]] && [[ $3 == "Coverage" ]];  then
   echo "Generating coverage report..."
-  lcov -q -c -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir -b include --no-external --output-file cpp_coverage.info
+  if [[ ${CXX} == "clang++"* ]]; then
+    GCOV_TOOL="--gcov-tool llvm-gcov.sh"
+  else
+    GCOV_TOOL=
+  fi
+
+  PATH=${PATH}:${PWD} lcov -q -c -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir -b include --no-external --output-file cpp_coverage.info ${GCOV_TOOL}
   genhtml -q cpp_coverage.info --output-directory cpp_cov_html
   rm cpp_coverage.info
 fi
