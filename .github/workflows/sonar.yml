@@ -63,7 +63,7 @@ jobs:
         run: |
           cd cpp_build
           ./tests/cpp_unit_tests/power_grid_model_unit_tests
-          gcovr --sonarqube ../cpp_coverage.xml -r ..
+          PATH=${PATH}:${PWD}/.. gcovr --gcov-executable llvm-gcov.sh --sonarqube ../cpp_coverage.xml -r ..
           cd ..
           # remove branch hits count, since it does not make sense in heavy C++ templates
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
