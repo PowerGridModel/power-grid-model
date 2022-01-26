@@ -353,18 +353,14 @@ ValidationCase create_validation_case(CaseParam& param) {
     return validation_case;
 }
 
-TEST_CASE("Check existence of validation data path") {
-    CHECK(std::filesystem::exists(data_path));
-    std::cout << "Validation test dataset: " << data_path << '\n';
-}
+// all test cases
+std::vector<CaseParam> all_cases;
 
-TEST_CASE("Validation test") {
-    if (data_path.empty()) {
-        return;
-    }
+TEST_CASE("Check existence of validation data path") {
+    REQUIRE(std::filesystem::exists(data_path));
+    std::cout << "Validation test dataset: " << data_path << '\n';
 
     // detect all test cases
-    std::vector<CaseParam> all_cases;
     for (std::string calculation_type : {"power_flow", "state_estimation"}) {
         // loop all sub-directories
         for (auto const& dir_entry : std::filesystem::directory_iterator(data_path / calculation_type)) {
@@ -383,6 +379,12 @@ TEST_CASE("Validation test") {
                 }
             }
         }
+    }
+}
+
+TEST_CASE("Validation test") {
+    if (data_path.empty()) {
+        return;
     }
 
     SECTION("Test single validation") {

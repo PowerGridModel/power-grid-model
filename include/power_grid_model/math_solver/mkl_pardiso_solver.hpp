@@ -20,6 +20,8 @@
 #include <string>
 // add header for envget
 #include <stdlib.h>
+// add std forward
+#include <memory>
 
 // add platform dependent header for loading dll or so
 #ifdef _WIN32
@@ -165,9 +167,15 @@ inline PardisoHandle const& get_pardiso_handle() {
     static PardisoHandle const handle{};
     return handle;
 }
-// define macro to use the function as if they are included
-#define pardiso (get_pardiso_handle().pardiso)
-#define pardisoinit (get_pardiso_handle().pardisoinit)
+// forward pardiso function
+template <class... Args>
+void pardiso(Args&&... args) {
+    get_pardiso_handle().pardiso(std::forward<Args>(args)...);
+}
+template <class... Args>
+void pardisoinit(Args&&... args) {
+    get_pardiso_handle().pardisoinit(std::forward<Args>(args)...);
+}
 
 }  // namespace power_grid_model
 
@@ -360,12 +368,6 @@ class PARDISOSolver final {
 };
 
 }  // namespace power_grid_model
-
-// undefine macro
-#ifdef POWER_GRID_MODEL_USE_MKL_AT_RUNTIME
-#undef pardiso
-#undef pardisoinit
-#endif
 
 #endif  // POWER_GRID_MODEL_USE_MKL
 

@@ -363,6 +363,15 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
+    SECTION("Test wrong calculation type") {
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_linear),
+                        InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, CalculationMethod::linear),
+                        InvalidCalculationMethod);
+    }
+
     SECTION("Test const z pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
