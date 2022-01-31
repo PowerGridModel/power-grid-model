@@ -28,9 +28,12 @@ else:
 class MyBuildExt(build_ext):
     def build_extensions(self):
         if not if_win:
-            print('-------compiler arguments----------')
+            print(self.compiler)
+            print("-------compiler arguments----------")
             print(self.compiler.compiler_so)
-            print('-------linker arguments----------')
+            print("-------compiler cxx arguments----------")
+            print(self.compiler.compiler_cxx)
+            print("-------linker arguments----------")
             print(self.compiler.linker_so)
 
             if "CXX" in os.environ:
@@ -42,30 +45,15 @@ class MyBuildExt(build_ext):
             else:
                 lto_flag = "-flto"
             # customize compiler and linker options
-            self.compiler.compiler_so = [
-                cxx,
-                "-std=c++17",
-                "-m64",
-                "-DNDEBUG",
-                "-fPIC",
-                "-Wall",
-                lto_flag,
-                "-O3",
-                "-fvisibility=hidden",
-            ]
+            self.compiler.compiler_so[0] = cxx
+            self.compiler.compiler_so += [lto_flag]
+            self.compiler.linker_so[0] = cxx
+            self.compiler.linker_so += [lto_flag]
             self.compiler.compiler_cxx = [cxx]
-            self.compiler.linker_so = [cxx, "-lpthread", "-ldl", "-fPIC", "-shared", lto_flag, "-O3"]
 
-            # extra flag for Mac
-            if platform.system() == "Darwin":
-                # compiler flag
-                self.compiler.compiler_so.append("-mmacosx-version-min=10.14")
-                # linker flag
-                self.compiler.linker_so += ["-undefined", "dynamic_lookup"]
-
-            print('-------compiler arguments----------')
+            print("-------compiler arguments----------")
             print(self.compiler.compiler_so)
-            print('-------linker arguments----------')
+            print("-------linker arguments----------")
             print(self.compiler.linker_so)
 
         build_ext.build_extensions(self)
@@ -78,10 +66,7 @@ def get_ext_name(src_file, pkg_dir, pkg_name):
     return f"{base_name}.{module_name}"
 
 
-def generate_build_ext(
-    pkg_dir: str,
-    pkg_name: str
-):
+def generate_build_ext(pkg_dir: str, pkg_name: str):
     """
     Generate extension dict for setup.py
     the return value ext_dict, can be called in setup(**ext_dict)
@@ -96,7 +81,7 @@ def generate_build_ext(
         np.get_include(),  # The include-folder of numpy header
         os.path.join(pkg_dir, "include"),  # The include-folder of the repo self
         os.environ["EIGEN_INCLUDE"],  # eigen3 library
-        os.environ["BOOST_INCLUDE"]  # boost library
+        os.environ["BOOST_INCLUDE"],  # boost library
     ]
     # compiler and link flag
     cflags = []
@@ -106,7 +91,7 @@ def generate_build_ext(
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
-        ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1)  # use mkl runtime loading
+        ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1),  # use mkl runtime loading
     ]
 
     # remove old extension build
@@ -131,6 +116,20 @@ def generate_build_ext(
     else:
         include_dirs += [os.path.join(env_base_path, "include"), get_paths()["platinclude"], get_paths()["include"]]
         library_dirs += [os.path.join(env_base_path, "lib")]
+        # flags for Linux and Mac
+        cflags += [
+            "-std=c++17",
+            "-m64",
+            "-O3",
+            "-fvisibility=hidden",
+        ]
+        lflags += ["-lpthread", "-ldl", "-O3"]
+        # extra flag for Mac
+        if platform.system() == "Darwin":
+            # compiler flag
+            cflags.append("-mmacosx-version-min=10.14")
+            # linker flag
+            lflags += ["-undefined", "dynamic_lookup"]
 
     # list of compiled cython files, without file extension
     cython_src = glob(os.path.join(pkg_dir, pkg_name, "**", r"*.pyx"), recursive=True)
@@ -273,5 +272,5 @@ build_pkg(
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
     description="Python/C++ library for distribution power system analysis",
-    url="https://github.com/alliander-opensource/power-grid-model"
+    url="https://github.com/alliander-opensource/power-grid-model",
 )
