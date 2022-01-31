@@ -13,8 +13,6 @@ from distutils.command.build_ext import build_ext
 from setuptools import setup, find_packages
 import Cython.Compiler.Main as CythonCompiler
 from pathlib import Path
-from typing import List, Dict
-import datetime
 
 
 # determine platform, only windows or linux
@@ -30,6 +28,11 @@ else:
 class MyBuildExt(build_ext):
     def build_extensions(self):
         if not if_win:
+            print('-------compiler arguments----------')
+            print(self.compiler.compiler_so)
+            print('-------linker arguments----------')
+            print(self.compiler.linker_so)
+
             if "CXX" in os.environ:
                 cxx = os.environ["CXX"]
             else:
@@ -60,6 +63,11 @@ class MyBuildExt(build_ext):
                 # linker flag
                 self.compiler.linker_so += ["-undefined", "dynamic_lookup"]
 
+            print('-------compiler arguments----------')
+            print(self.compiler.compiler_so)
+            print('-------linker arguments----------')
+            print(self.compiler.linker_so)
+
         build_ext.build_extensions(self)
 
 
@@ -72,14 +80,7 @@ def get_ext_name(src_file, pkg_dir, pkg_name):
 
 def generate_build_ext(
     pkg_dir: str,
-    pkg_name: str,
-    cflags: list = None,
-    lflags: list = None,
-    include_dirs: list = None,
-    library_dirs: list = None,
-    libraries: list = None,
-    define_macros: list = None,
-    cpp_exts: Dict[str, List[str]] = None,
+    pkg_name: str
 ):
     """
     Generate extension dict for setup.py
@@ -87,29 +88,26 @@ def generate_build_ext(
     Args:
         pkg_dir:
         pkg_name:
-        cflags:
-        lflags:
-        include_dirs:
-        library_dirs:
-        libraries:
-        define_macros:
-        cpp_exts: a dict of hand-made C++ extentions, each entry is an extension module
-            key: name of the extension module, including relative pakcage path
-            value: list of C++ source files
-
     Returns:
 
     """
+    # include-folders
+    include_dirs = [
+        np.get_include(),  # The include-folder of numpy header
+        os.path.join(pkg_dir, "include"),  # The include-folder of the repo self
+        os.environ["EIGEN_INCLUDE"],  # eigen3 library
+        os.environ["BOOST_INCLUDE"]  # boost library
+    ]
     # compiler and link flag
-    cflags = cflags if cflags is not None else []
-    lflags = lflags if lflags is not None else []
-    include_dirs = include_dirs if include_dirs is not None else []
-    # The include folder of numpy header is always present
-    include_dirs += [np.get_include()]
-    # The include folder of the repo self is always present
-    include_dirs += [os.path.join(pkg_dir, "include")]
-    library_dirs = library_dirs if library_dirs is not None else []
-    libraries = libraries if libraries is not None else []
+    cflags = []
+    lflags = []
+    library_dirs = []
+    libraries = []
+    # macro
+    define_macros = [
+        ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
+        ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1)  # use mkl runtime loading
+    ]
 
     # remove old extension build
     shutil.rmtree(os.path.join(pkg_dir, "build"), ignore_errors=True)
@@ -172,22 +170,6 @@ def generate_build_ext(
         )
         for src_file in cython_src_cpp
     ]
-    # add hand-made extensions
-    if cpp_exts is not None:
-        for cpp_ext_name, cpp_ext_src in cpp_exts.items():
-            exts.append(
-                Extension(
-                    name=cpp_ext_name,
-                    sources=cpp_ext_src,
-                    include_dirs=include_dirs,
-                    library_dirs=library_dirs,
-                    libraries=libraries,
-                    extra_compile_args=cflags,
-                    extra_link_args=lflags,
-                    define_macros=define_macros,
-                    language="c++",
-                )
-            )
 
     # return dict of exts
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
@@ -230,7 +212,7 @@ def get_version(pkg_dir):
     return version
 
 
-def build_pkg(setup_file, author, author_email, description, url, entry_points: dict = None, **ext_args):
+def build_pkg(setup_file, author, author_email, description, url):
     """
 
     Args:
@@ -239,9 +221,6 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
         author_email:
         description:
         url:
-        entry_points: entry points of scripts
-        **ext_args: extra argument for extension build
-
     Returns:
 
     """
@@ -256,10 +235,6 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
         required = [x for x in required if "#" not in x]
     version = get_version(pkg_dir)
 
-    resource_package = package_files(os.path.join(pkg_name, "resources"))
-    if entry_points is None:
-        entry_points = {}
-
     setup(
         name=pkg_pip_name,
         version=version,
@@ -270,7 +245,6 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
         long_description_content_type="text/markdown",
         url=url,
         packages=find_packages(),
-        package_data={pkg_name: resource_package},
         license="MPL-2.0",
         classifiers=[
             "Programming Language :: Python :: 3",
@@ -290,8 +264,7 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
             "Topic :: Scientific/Engineering :: Physics",
         ],
         install_requires=required,
-        entry_points=entry_points,
-        **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name, **ext_args),
+        **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
     )
 
 
@@ -300,7 +273,5 @@ build_pkg(
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
     description="Python/C++ library for distribution power system analysis",
-    url="https://github.com/alliander-opensource/power-grid-model",
-    include_dirs=[os.environ["EIGEN_INCLUDE"], os.environ["BOOST_INCLUDE"]],
-    define_macros=[("EIGEN_MPL2_ONLY", "1"), ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1)],
+    url="https://github.com/alliander-opensource/power-grid-model"
 )
