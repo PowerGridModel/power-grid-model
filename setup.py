@@ -9,7 +9,7 @@ import numpy as np
 import platform
 from sysconfig import get_paths
 from setuptools import Extension
-from distutils.command.build_ext import build_ext
+from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages
 import Cython.Compiler.Main as CythonCompiler
 from pathlib import Path
@@ -28,14 +28,6 @@ else:
 class MyBuildExt(build_ext):
     def build_extensions(self):
         if not if_win:
-            print(self.compiler)
-            print("-------compiler arguments----------")
-            print(self.compiler.compiler_so)
-            print("-------compiler cxx arguments----------")
-            print(self.compiler.compiler_cxx)
-            print("-------linker arguments----------")
-            print(self.compiler.linker_so)
-
             if "CXX" in os.environ:
                 cxx = os.environ["CXX"]
             else:
