@@ -52,7 +52,7 @@ class MyBuildExt(build_ext):
 
 
 def get_ext_name(src_file, pkg_dir, pkg_name):
-    base_name = os.path.dirname(os.path.relpath(src_file, os.path.join(pkg_dir, pkg_name)))
+    base_name = os.path.dirname(os.path.relpath(src_file, os.path.join(pkg_dir, "src", pkg_name)))
     base_name = base_name.replace("\\", ".").replace("/", ".")
     module_name = Path(src_file).resolve().stem
     return f"{base_name}.{module_name}"
@@ -89,8 +89,8 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     # remove old extension build
     shutil.rmtree(os.path.join(pkg_dir, "build"), ignore_errors=True)
     # remove binary
-    bin_files = glob(os.path.join(pkg_dir, pkg_name, "**", r"*.so"), recursive=True) + glob(
-        os.path.join(pkg_dir, pkg_name, "**", r"*.pyd"), recursive=True
+    bin_files = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.so"), recursive=True) + glob(
+        os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyd"), recursive=True
     )
     for bin_file in bin_files:
         os.remove(bin_file)
@@ -122,7 +122,7 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
             cflags.append("-mmacosx-version-min=10.14")
 
     # list of compiled cython files, without file extension
-    cython_src = glob(os.path.join(pkg_dir, pkg_name, "**", r"*.pyx"), recursive=True)
+    cython_src = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyx"), recursive=True)
     cython_src = [os.path.splitext(x)[0] for x in cython_src]
     # compile cython
     cython_src_pyx = [f"{x}.pyx" for x in cython_src]
@@ -233,7 +233,8 @@ def build_pkg(setup_file, author, author_email, description, url):
         long_description=long_description,
         long_description_content_type="text/markdown",
         url=url,
-        packages=["power_grid_model"],
+        package_dir={"": "src"},
+        packages=find_packages("src"),
         license="MPL-2.0",
         classifiers=[
             "Programming Language :: Python :: 3",
