@@ -228,8 +228,8 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      BOOST_INCLUDE: /usr/local/miniconda/conda_envs/cpp_pkgs/include
-      EIGEN_INCLUDE: /usr/local/miniconda/include/eigen3
+      BOOST_INCLUDE:  /Users/runner/conda_envs/cpp_pkgs/include
+      EIGEN_INCLUDE: /Users/runner/conda_envs/cpp_pkgs/include/eigen3
 
     steps:
       - uses: actions/checkout@v2
