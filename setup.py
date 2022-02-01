@@ -253,6 +253,7 @@ def build_pkg(setup_file, author, author_email, description, url):
             "Topic :: Scientific/Engineering :: Physics",
         ],
         install_requires=required,
+        python_requires=">=3.8",
         **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
     )
 
