@@ -233,7 +233,7 @@ def build_pkg(setup_file, author, author_email, description, url):
         long_description=long_description,
         long_description_content_type="text/markdown",
         url=url,
-        packages=find_packages(),
+        packages=["power_grid_model"],
         license="MPL-2.0",
         classifiers=[
             "Programming Language :: Python :: 3",
