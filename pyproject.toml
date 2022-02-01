@@ -25,7 +25,7 @@ build-verbosity = 1
 skip = ["pp*", "*-win32", "*-manylinux_i686"]
 
 test-requires = ["pytest", "pytest-cov"]
-test-command = "pytest"
+test-command = "pytest {package}/tests"
 
 
 [tool.cibuildwheel.macos]
