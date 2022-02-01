@@ -5,6 +5,7 @@
 [project]
 requires-python = ">=3.8"
 
+
 [build-system]
 requires = [
     "setuptools",
@@ -14,24 +15,36 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+
 [tool.cibuildwheel]
-# Switch to using build
-build-frontend = "build"
+# build-frontend = "build"
+build-verbosity = 1
+
+# Disable building PyPy wheels on all platforms
+# Skip 32-bit builds
+skip = ["pp*", "*-win32", "*-manylinux_i686"]
+
 test-requires = ["pytest", "pytest-cov"]
 test-command = "pytest"
 
+
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "universal2", "arm64"]
+# archs = ["x86_64", "universal2", "arm64"]
+archs = ["x86_64"]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = ["--cov", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml"]
 
+
 [tool.coverage.run]
 source = ["power_grid_model"]
 
+
 [tool.coverage.report]
 fail_under = 95
+
 
 [tool.black]
 line-length = 120

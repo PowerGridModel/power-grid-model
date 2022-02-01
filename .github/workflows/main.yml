@@ -223,50 +223,25 @@ jobs:
   build-and-test-python-macos:
     
     runs-on: macos-latest
-    needs: build-cpp-test-macos
-    strategy:
-      matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+    # needs: build-cpp-test-macos
 
     env:
       CC: clang
       CXX: clang++
+      BOOST_INCLUDE: /usr/local/miniconda/conda_envs/cpp_pkgs/include
+      EIGEN_INCLUDE: /usr/local/miniconda/include/eigen3
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install cpp dependencies
         run: |
-          brew install ninja
           sudo ${CONDA}/bin/conda create --yes -p ${HOME}/conda_envs/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
 
-      - name: Setup python
-        uses: actions/setup-python@v2
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2
+
+      - name: Keep wheel files
+        uses: actions/upload-artifact@v2
         with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
-
-      - name: Install python dependencies
-        run: pip install -r dev-requirements.txt
-
-      - name: Test
-        run: |
-          export LD_LIBRARY_PATH=${HOME}/conda_envs/cpp_pkgs/lib:${LD_LIBRARY_PATH}
-          export BOOST_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include
-          export EIGEN_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include/eigen3
-          pip install --no-build-isolation -v --no-deps -e .
-          pytest
-          POWER_GRID_MODEL_SPARSE_SOLVER=MKL pytest
-          POWER_GRID_MODEL_SPARSE_SOLVER=EIGEN pytest
-
-      - name: Build
-        run: |
-          export BOOST_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include
-          export EIGEN_INCLUDE=${HOME}/conda_envs/cpp_pkgs/include/eigen3
-          pip wheel -w dist --no-deps --no-build-isolation -v .
-
-      - name: Publish
-        if: github.event_name == 'push'
-        run: |
-          echo Publishing to ${TWINE_REPOSITORY_URL}
-          twine upload --verbose dist/*
+          path: ./wheelhouse/*.whl
