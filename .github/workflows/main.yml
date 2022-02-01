@@ -232,14 +232,14 @@ jobs:
       EIGEN_INCLUDE: /usr/local/miniconda/include/eigen3
 
     steps:
-      - uses: actions/checkout@v2.3.1
+      - uses: actions/checkout@v2
 
       - name: Install cpp dependencies
         run: |
           sudo ${CONDA}/bin/conda create --yes -p ${HOME}/conda_envs/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2
+        uses: pypa/cibuildwheel@v2.3.1
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v2
