@@ -114,6 +114,7 @@ jobs:
             boost:
             eigen:
             cibw_build: cp*-manylinux_x86_64
+            archs: x86_64
           - platform: macos
             os: macos-latest
             cc: clang
@@ -121,6 +122,7 @@ jobs:
             boost: /opt/cpp_pkgs/include
             eigen: /opt/cpp_pkgs/include/eigen3
             cibw_build: cp*-macosx_universal2
+            archs: universal2
           - platform: windows
             os: windows-latest
             cc:
@@ -128,6 +130,7 @@ jobs:
             boost: C:\conda_envs\cpp_pkgs\Library\include
             eigen: C:\conda_envs\cpp_pkgs\Library\include\eigen3
             cibw_build: cp*-win_amd64
+            archs: AMD64
 
     runs-on: ${{ matrix.os }}
     # needs: build-cpp-test-macos
@@ -140,6 +143,7 @@ jobs:
       CIBW_BUILD_VERBOSITY: 1
       # CIBW_BUILD_FRONTEND: "build"
       CIBW_BUILD: ${{ matrix.cibw_build }}
+      CIBW_ARCHS: ${{ matrix.archs }}
       CIBW_TEST_REQUIRES: pytest pytest-cov
       CIBW_TEST_COMMAND: pytest {package}/tests
       # Skip trying to test arm64 builds on Intel Macs
