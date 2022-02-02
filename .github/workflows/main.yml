@@ -19,10 +19,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-env:
-  TWINE_USERNAME: ${{ secrets.PYPI_USER }}
-  TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
-
 jobs:
   build-cpp-test-linux:
     
@@ -165,7 +161,7 @@ jobs:
         sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
       MACOSX_DEPLOYMENT_TARGET: 10.15
       CIBW_BEFORE_ALL_WINDOWS : >
-        & "$env:CONDA\condabin\conda" init;
+        "$env:CONDA\condabin\conda" init;
         conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
 
     steps:
@@ -179,3 +175,12 @@ jobs:
         with:
           name:
           path: ./wheelhouse/*.whl
+
+  publish-wheels:
+    runs-on: ubuntu-latest
+    env:
+      TWINE_USERNAME: ${{ secrets.PYPI_USER }}
+      TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
+
+    steps:
+      - uses: actions/checkout@v2
