@@ -255,6 +255,7 @@ jobs:
         clang++ --version &&
         sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl && 
         export LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+      MACOSX_DEPLOYMENT_TARGET: 10.15
 
     steps:
       - uses: actions/checkout@v2
