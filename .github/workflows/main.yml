@@ -248,6 +248,8 @@ jobs:
       EIGEN_INCLUDE: ${{ matrix.eigen }}
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
       CIBW_BEFORE_ALL_MACOS: >
+        which clang++ &&
+        clang++ --version &&
         sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl && 
         export LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
 
