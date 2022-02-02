@@ -57,6 +57,11 @@ jobs:
         run: |
           conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
 
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        with:
+          msbuild-architecture: x64
+
       - name: Build and test
         run: |
           $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
@@ -64,13 +69,15 @@ jobs:
           cd cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
           # generate cmake cache
           cmake .. `
+            -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-option }}`
             -DPOWER_GRID_MODEL_SPARSE_SOLVER=${{ matrix.sparse-solver }} `
             -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
             -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
           # build
-          & "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\ALL_BUILD.vcxproj -property:Configuration=${{ matrix.build-option }}
+          cmake --build . --verbose
           # test
-          .\tests\cpp_unit_tests\${{ matrix.build-option }}\power_grid_model_unit_tests.exe
+          .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
 
 
   build-cpp-test-macos:
