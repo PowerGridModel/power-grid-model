@@ -86,7 +86,7 @@ jobs:
       CXX: clang++
       MKL_INCLUDE: /opt/cpp_pkgs/include
       MKL_LIB: /opt/cpp_pkgs/lib
-      CMAKE_PREFIX_PATH: /opt/cpp_pkg
+      CMAKE_PREFIX_PATH: /opt/cpp_pkgs
 
     steps:
       - uses: actions/checkout@v2
