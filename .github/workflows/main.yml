@@ -185,7 +185,7 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: my-wheelhouse
+          name: wheelhouse
           path: wheelhouse
 
       - name: List wheels
