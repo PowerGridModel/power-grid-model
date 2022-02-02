@@ -30,7 +30,7 @@
 #define POWER_GRID_MODEL_CALLING_CONVENTION __cdecl
 namespace power_grid_model {
 using LibHandle = HINSTANCE;
-constexpr std::array mkl_rt_files{"mkl_rt.dll", "mkl_rt.1.dll"};
+constexpr std::array mkl_rt_files{"mkl_rt.dll", "mkl_rt.1.dll", "mkl_rt.2.dll"};
 auto constexpr load_mkl_single = [](char const* f) {
     return LoadLibrary(f);
 };
@@ -54,7 +54,7 @@ using LibHandle = void*;
 #ifdef __linux__
 constexpr std::array mkl_rt_files{"libmkl_rt.so", "libmkl_rt.so.1", "libmkl_rt.so.2"};
 #else   // __APPLE__
-constexpr std::array mkl_rt_files{"libmkl_rt.dylib", "libmkl_rt.1.dylib"};
+constexpr std::array mkl_rt_files{"libmkl_rt.dylib", "libmkl_rt.1.dylib", "libmkl_rt.2.dylib"};
 #endif  // __linux__ or __APPLE__
 auto constexpr load_mkl_single = [](char const* f) {
     return dlopen(f, RTLD_LAZY);

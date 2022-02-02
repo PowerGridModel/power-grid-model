@@ -40,6 +40,7 @@ else()
 	endif()
   else()
     list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES .1.dylib)
+	list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES .2.dylib)
   endif()
   # thread
   find_package(Threads REQUIRED)
