@@ -74,7 +74,6 @@ jobs:
 
 
   build-cpp-test-macos:
-    
     runs-on: macos-latest
     strategy:
       matrix:
@@ -138,7 +137,13 @@ jobs:
       CXX: ${{ matrix.cxx }}
       BOOST_INCLUDE: ${{ matrix.boost }}
       EIGEN_INCLUDE: ${{ matrix.eigen }}
+      CIBW_BUILD_VERBOSITY: 1
+      # CIBW_BUILD_FRONTEND: "build"
       CIBW_BUILD: ${{ matrix.cibw_build }}
+      CIBW_TEST_REQUIRES: pytest pytest-cov
+      CIBW_TEST_COMMAND: pytest {package}/tests
+      # Skip trying to test arm64 builds on Intel Macs
+      CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
       CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
       CIBW_BEFORE_ALL_MACOS: >

@@ -16,17 +16,6 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 
-[tool.cibuildwheel]
-# build-frontend = "build"
-build-verbosity = 1
-
-# Skip trying to test arm64 builds on Intel Macs
-test-skip = "*-macosx_arm64 *-macosx_universal2:arm64"
-
-test-requires = ["pytest", "pytest-cov"]
-test-command = "pytest {package}/tests"
-
-
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=95"]
