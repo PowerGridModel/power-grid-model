@@ -42,6 +42,9 @@ class MyBuildExt(build_ext):
             self.compiler.linker_so[0] = cxx
             self.compiler.linker_so += [lto_flag]
             self.compiler.compiler_cxx = [cxx]
+            # remove -g and -O2
+            self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
+            self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
 
             print("-------compiler arguments----------")
             print(self.compiler.compiler_so)
