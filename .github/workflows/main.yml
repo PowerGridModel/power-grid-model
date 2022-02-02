@@ -135,7 +135,7 @@ jobs:
             archs: universal2
             test_cmd: >
               pytest {package}/tests &&
-              LD_LIBRARY_PATH=$/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH} pytest {package}/tests
+              LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH} pytest {package}/tests
           - platform: windows
             os: windows-latest
             cc:
