@@ -138,12 +138,12 @@ jobs:
             cibw_build: cp*-win_amd64
             archs: AMD64
             test_cmd: >
-              pytest {package}/tests ;
-              $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin" ;
+              pytest {package}/tests &&
+              $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin" &&
               pytest {package}/tests
 
     runs-on: ${{ matrix.os }}
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
+    # needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
 
     env:
       CC: ${{ matrix.cc }}
