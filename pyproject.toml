@@ -27,18 +27,6 @@ test-requires = ["pytest", "pytest-cov"]
 test-command = "pytest {package}/tests"
 
 
-[tool.cibuildwheel.macos]
-archs = ["universal2"]
-
-
-[tool.cibuildwheel.linux]
-archs = ["x86_64"]
-
-
-[tool.cibuildwheel.windows]
-archs = ["AMD64"]
-
-
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=95"]

@@ -20,8 +20,8 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build-cpp-test-linux:
-    
     runs-on: ubuntu-latest
     container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
     strategy:
@@ -37,7 +37,6 @@ jobs:
 
 
   build-cpp-test-windows:
-    
     runs-on: windows-latest
     strategy:
       matrix:
@@ -141,6 +140,7 @@ jobs:
       EIGEN_INCLUDE: ${{ matrix.eigen }}
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
+      CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
         clang++ --version &&
