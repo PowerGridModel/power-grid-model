@@ -53,19 +53,7 @@ jobs:
       - name: Activate conda
         run: |
           & "$env:CONDA\condabin\conda" init
-
-      - name: Cache conda environments
-        uses: actions/cache@v2
-        id: cache
-        env:
-          cache-name: conda-envs-windows
-        with:
-          path: C:\conda_envs
-          key: conda-envs-windows-6
-
-      - name: Install conda environments
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: .\.github\conda-windows.ps1
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
 
       - name: Build and test
         run: |
