@@ -143,7 +143,7 @@ jobs:
               pytest {package}/tests
 
     runs-on: ${{ matrix.os }}
-    # needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
 
     env:
       CC: ${{ matrix.cc }}
