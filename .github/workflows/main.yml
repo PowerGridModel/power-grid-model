@@ -151,7 +151,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Activate conda for windows
-        if: ${{ matrix.platform }} == 'windows'
+        if: matrix.platform == 'windows'
         run: |
           & "$env:CONDA\condabin\conda" init
 
