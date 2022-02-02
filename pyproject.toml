@@ -36,7 +36,7 @@ archs = ["x86_64"]
 
 
 [tool.cibuildwheel.windows]
-archs = ["amd64"]
+archs = ["AMD64"]
 
 
 [tool.pytest.ini_options]
