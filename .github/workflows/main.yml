@@ -97,7 +97,7 @@ jobs:
       - name: Build and test
         run: |
           # environment
-          export LD_LIBRARY_PATH=${HOME}/conda_envs/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=$/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
           # bash
           ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
 
@@ -114,6 +114,9 @@ jobs:
             boost:
             eigen:
             cibw_build: cp*-manylinux_x86_64
+            test_cmd: >
+              pytest {package}/tests &&
+              LD_LIBRARY_PATH= pytest {package}/tests
             archs: x86_64
           - platform: macos
             os: macos-latest
@@ -123,6 +126,9 @@ jobs:
             eigen: /opt/cpp_pkgs/include/eigen3
             cibw_build: cp*-macosx_universal2
             archs: universal2
+            test_cmd: >
+              pytest {package}/tests &&
+              LD_LIBRARY_PATH=$/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH} pytest {package}/tests
           - platform: windows
             os: windows-latest
             cc:
@@ -131,6 +137,10 @@ jobs:
             eigen: C:\conda_envs\cpp_pkgs\Library\include\eigen3
             cibw_build: cp*-win_amd64
             archs: AMD64
+            test_cmd: >
+              pytest {package}/tests ;
+              $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin" ;
+              pytest {package}/tests
 
     runs-on: ${{ matrix.os }}
     # needs: build-cpp-test-macos
