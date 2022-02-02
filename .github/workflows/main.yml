@@ -219,11 +219,10 @@ jobs:
           # test
           ./tests/cpp_unit_tests/power_grid_model_unit_tests
 
-
   build-and-test-python:
     strategy:
       matrix:
-        platform: [ linux, macos ]
+        platform: [ linux, macos, windows ]
         include:
           - platform: linux
             os: ubuntu-latest
@@ -239,6 +238,13 @@ jobs:
             boost: /opt/cpp_pkgs/include
             eigen: /opt/cpp_pkgs/include/eigen3
             cibw_build: cp*-macosx_universal2
+          - platform: windows
+            os: windows-latest
+            cc:
+            cxx:
+            boost: C:\conda_envs\cpp_pkgs\Library\include
+            eigen: C:\conda_envs\cpp_pkgs\Library\include\eigen3
+            cibw_build: cp*-win_amd64
 
     runs-on: ${{ matrix.os }}
     # needs: build-cpp-test-macos
@@ -253,9 +259,11 @@ jobs:
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
         clang++ --version &&
-        sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl && 
-        export LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+        sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
       MACOSX_DEPLOYMENT_TARGET: 10.15
+      CIBW_BEFORE_ALL_WINDOWS : >
+        & "$env:CONDA\condabin\conda" init &&
+        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
 
     steps:
       - uses: actions/checkout@v2
