@@ -231,12 +231,14 @@ jobs:
             cxx: g++
             boost:
             eigen:
+            cibw_build: cp*-manylinux_x86_64
           - platform: macos
             os: macos-latest
             cc: clang
             cxx: clang++
             boost: /opt/cpp_pkgs/include
             eigen: /opt/cpp_pkgs/include/eigen3
+            cibw_build: cp*-macosx_universal2
 
     runs-on: ${{ matrix.os }}
     # needs: build-cpp-test-macos
@@ -246,6 +248,7 @@ jobs:
       CXX: ${{ matrix.cxx }}
       BOOST_INCLUDE: ${{ matrix.boost }}
       EIGEN_INCLUDE: ${{ matrix.eigen }}
+      CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
