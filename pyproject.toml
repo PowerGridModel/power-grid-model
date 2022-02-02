@@ -23,6 +23,8 @@ build-verbosity = 1
 # Disable building PyPy wheels on all platforms
 # Skip 32-bit builds
 skip = ["pp*", "*-win32", "*-manylinux_i686"]
+# Skip trying to test arm64 builds on Intel Macs
+test-skip = "*-macosx_arm64 *-macosx_universal2:arm64"
 
 test-requires = ["pytest", "pytest-cov"]
 test-command = "pytest {package}/tests"
@@ -30,6 +32,10 @@ test-command = "pytest {package}/tests"
 
 [tool.cibuildwheel.macos]
 archs = ["universal2"]
+
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"]
 
 
 [tool.pytest.ini_options]
