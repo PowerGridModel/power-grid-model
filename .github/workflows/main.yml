@@ -173,10 +173,12 @@ jobs:
       - name: Keep wheel files
         uses: actions/upload-artifact@v2
         with:
-          name:
+          name: wheelhouse
           path: ./wheelhouse/*.whl
 
+
   publish-wheels:
+    needs: build-and-test-python
     runs-on: ubuntu-latest
     env:
       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
@@ -184,3 +186,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+          architecture: x64
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: my-wheelhouse
+          path: wheelhouse
+
+      - name: List wheels
+        run: ls ./wheelhouse/*.whl -ral
