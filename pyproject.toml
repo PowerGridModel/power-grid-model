@@ -29,8 +29,7 @@ test-command = "pytest {package}/tests"
 
 
 [tool.cibuildwheel.macos]
-# archs = ["x86_64", "universal2", "arm64"]
-archs = ["x86_64"]
+archs = ["universal2"]
 
 
 [tool.pytest.ini_options]

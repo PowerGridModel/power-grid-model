@@ -220,16 +220,33 @@ jobs:
           ./tests/cpp_unit_tests/power_grid_model_unit_tests
 
 
-  build-and-test-python-macos:
-    
-    runs-on: macos-latest
+  build-and-test-python:
+    strategy:
+      matrix:
+        platform: [ linux, macos ]
+        include:
+          - platform: linux
+            os: ubuntu-latest
+            cc: gcc
+            cxx: g++
+            boost:
+            eigen:
+          - platform: macos
+            os: macos-latest
+            cc: clang
+            cxx: clang++
+            boost: /opt/cpp_pkgs/include
+            eigen: /opt/cpp_pkgs/include/eigen3
+
+    runs-on: ${{ matrix.os }}
     # needs: build-cpp-test-macos
 
     env:
-      CC: clang
-      CXX: clang++
-      BOOST_INCLUDE: /opt/cpp_pkgs/include
-      EIGEN_INCLUDE: /opt/cpp_pkgs/include/eigen3
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      BOOST_INCLUDE: ${{ matrix.boost }}
+      EIGEN_INCLUDE: ${{ matrix.eigen }}
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
       CIBW_BEFORE_ALL_MACOS: >
         sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl && 
         export LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
