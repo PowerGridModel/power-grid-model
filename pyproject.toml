@@ -2,23 +2,24 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+[project]
+requires-python = ">=3.8"
+
+
+[build-system]
+requires = [
+    "setuptools",
+    "wheel",
+    "cython",
+    "oldest-supported-numpy",
+]
+build-backend = "setuptools.build_meta"
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml"]
+addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=95"]
 
-[tool.coverage.run]
-source = ["power_grid_model"]
-
-[tool.coverage.report]
-fail_under = 95
-
-[tool.mypy]
-follow_imports = "silent"
-disallow_incomplete_defs = true
-ignore_missing_imports = true
-show_column_numbers = true
-non_interactive = true
-install_types = true
 
 [tool.black]
 line-length = 120

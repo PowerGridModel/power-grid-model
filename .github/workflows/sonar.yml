@@ -48,10 +48,10 @@ jobs:
 
       - name: Python test and coverage
         run: |
-          /opt/venv/bin/pip install --no-build-isolation -v --no-deps -e .
+          /opt/venv/bin/pip install -e .
           /opt/venv/bin/pytest
           # remove cython generated cpp file
-          rm -rf power_grid_model/*.cpp
+          rm -rf src/power_grid_model/*.cpp
 
       - name: Run build-wrapper for C++
         run: |

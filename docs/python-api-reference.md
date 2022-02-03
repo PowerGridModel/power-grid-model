@@ -112,7 +112,7 @@ Take a look at [this example](../scripts/quick_example.py) to get a better idea 
 ## Functionality
 
 Below is a Python-friendly description on the functions and their respective signatures.
-For implementation details look at [the source](../power_grid_model/_power_grid_core.pyx).
+For implementation details look at [the source](../src/power_grid_model/_power_grid_core.pyx).
 
 ```python
 import numpy as np

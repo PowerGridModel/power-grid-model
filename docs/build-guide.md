@@ -82,12 +82,11 @@ The table below shows the Python dependencies
 | [wheel](https://github.com/pypa/wheel)                 | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                | 
 | [pytest](https://github.com/pytest-dev/pytest)         | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                |
 | [pytest-cov](https://github.com/pytest-dev/pytest-cov) | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                |
-| [twine](https://github.com/pypa/twine)                 | Development dependency   | [Apache License 2.0](https://github.com/pypa/twine/blob/main/LICENSE) |
 
-You can install them using `pip`.
+You can install the development dependencies using `pip`.
 
 ```
-pip install numpy cython wheel pytest pytest-cov twine
+pip install -r dev-requirements.txt
 ```
 
 # Build Python Package
@@ -96,10 +95,10 @@ Once you have prepared the build dependencies, you can install the library from 
 folder of the repository.
 
 ```
-python setup.py develop
+pip install -e .
 ```
 
-If you have `pytest` installed in your Python environment, you can run the tests.
+If you have the development dependencies installed in your Python environment, you can run the tests.
 
 ```
 pytest
@@ -199,7 +198,7 @@ pip install -r dev-requirements.txt
 Install from source in develop mode, and run `pytest`.
 
 ```shell
-python setup.py develop
+pip install -e .
 pytest
 ```
 
@@ -329,7 +328,7 @@ pip install -r dev-requirements.txt
 Install from source in develop mode, and run `pytest`.
 
 ```shell
-python setup.py develop
+pip install -e .
 pytest
 ```
 
@@ -419,7 +418,7 @@ pip install -r dev-requirements.txt
 Install from source in develop mode, and run `pytest`.
 
 ```shell
-python setup.py develop
+pip install -e .
 pytest
 ```
 
