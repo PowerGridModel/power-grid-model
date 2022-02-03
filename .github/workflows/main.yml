@@ -129,8 +129,8 @@ jobs:
             cxx: clang++
             boost: /opt/cpp_pkgs/include
             eigen: /opt/cpp_pkgs/include/eigen3
-            cibw_build: cp*-macosx_universal2
-            archs: universal2
+            cibw_build: cp*-macosx_*
+            archs: "x86_64 arm64"
             test_cmd: >
               pytest {package}/tests &&
               LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH} pytest {package}/tests
