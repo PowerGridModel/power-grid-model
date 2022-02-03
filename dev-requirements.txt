@@ -2,9 +2,5 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-cython
-numpy
 pytest
 pytest-cov
-wheel
-twine
