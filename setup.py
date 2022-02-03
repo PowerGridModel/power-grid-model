@@ -120,9 +120,9 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
         ]
         lflags += ["-lpthread", "-ldl", "-O3"]
         # # extra flag for Mac
-        # if platform.system() == "Darwin":
-        #     # compiler flag to set version
-        #     cflags.append("-mmacosx-version-min=10.15")
+        if platform.system() == "Darwin":
+            # compiler flag to set version
+            cflags.append("-mmacosx-version-min=10.15")
 
     # list of compiled cython files, without file extension
     cython_src = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyx"), recursive=True)
