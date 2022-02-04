@@ -9,9 +9,9 @@ on:
   push:
     branches:
       - main
-      - 'release/**'
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  # run pipeline on pull request
+  pull_request:
+
 
 jobs:
   sonar-cloud:
@@ -48,10 +48,10 @@ jobs:
 
       - name: Python test and coverage
         run: |
-          /opt/venv/bin/pip install --no-build-isolation -v --no-deps -e .
+          /opt/venv/bin/pip install -e .
           /opt/venv/bin/pytest
           # remove cython generated cpp file
-          rm -rf power_grid_model/*.cpp
+          rm -rf src/power_grid_model/*.cpp
 
       - name: Run build-wrapper for C++
         run: |
@@ -63,12 +63,13 @@ jobs:
         run: |
           cd cpp_build
           ./tests/cpp_unit_tests/power_grid_model_unit_tests
-          gcovr --sonarqube ../cpp_coverage.xml -r ..
+          PATH=${PATH}:${PWD}/.. gcovr --gcov-executable llvm-gcov.sh --sonarqube ../cpp_coverage.xml -r ..
           cd ..
           # remove branch hits count, since it does not make sense in heavy C++ templates
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 
       - name: Run sonar-scanner
+        if: github.event_name == 'push'  # only run sonar server in push event
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

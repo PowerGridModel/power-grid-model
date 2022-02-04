@@ -13,6 +13,81 @@
 namespace power_grid_model {
 
 TEST_CASE("Test voltage sensor") {
+    SECTION("Test Sensor energized function") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        double const u_rated = 10.0e3;
+        VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
+
+        CHECK(voltage_sensor.energized(true) == true);
+        CHECK(voltage_sensor.energized(false) == true);
+    }
+
+    SECTION("Test Sensor math_model_type") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        double const u_rated = 10.0e3;
+        VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
+
+        CHECK(voltage_sensor.math_model_type() == ComponentType::sensor);
+    }
+
+    SECTION("Test get_null_output") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        voltage_sensor_input.id = 12;
+        double const u_rated = 10.0e3;
+        VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
+
+        VoltageSensorOutput<true> vs_output = voltage_sensor.get_null_output<true>();
+        CHECK(vs_output.id == 12);
+        CHECK(vs_output.energized == 0);
+        CHECK(vs_output.u_residual == Approx(0.0));
+        CHECK(vs_output.u_angle_residual == Approx(0.0));
+    }
+
+    SECTION("Test voltage sensor update - sym") {
+        VoltageSensorInput<true> voltage_sensor_input;
+        double const u_rated = 2.0;
+        VoltageSensor<true> voltage_sensor{voltage_sensor_input, u_rated};
+
+        VoltageSensorUpdate<true> vs_update;
+        vs_update.u_measured = 1.0;
+        vs_update.u_angle_measured = 2.0;
+        vs_update.u_sigma = 3.0;
+
+        UpdateChange update = voltage_sensor.update(vs_update);
+
+        CHECK(update.param == false);
+        CHECK(update.topo == false);
+
+        ComplexValue<true> const expected_param_value{0.5 * exp(1i * 2.0)};
+        SensorCalcParam<true> param = voltage_sensor.calc_param<true>();
+        CHECK(param.variance == Approx(2.25));
+        CHECK(param.value == expected_param_value);
+    }
+
+    SECTION("Test voltage sensor update - asym") {
+        VoltageSensorInput<false> voltage_sensor_input;
+        double const u_rated = 2.0;
+        VoltageSensor<false> voltage_sensor{voltage_sensor_input, u_rated};
+
+        VoltageSensorUpdate<false> vs_update;
+        vs_update.u_measured = {1.0, 1.1, 1.2};
+        vs_update.u_angle_measured = {2.0, 2.1, 2.2};
+        vs_update.u_sigma = 3.0;
+
+        UpdateChange update = voltage_sensor.update(vs_update);
+        CHECK(update.param == false);
+        CHECK(update.topo == false);
+
+        SensorCalcParam<false> param = voltage_sensor.calc_param<false>();
+        CHECK(param.variance == Approx(6.75));
+
+        ComplexValue<false> const expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
+                                                       0.6 * sqrt(3) * exp(1i * 2.2)};
+        CHECK(cabs(param.value[0]) == Approx(cabs(expected_param_value[0])));
+        CHECK(cabs(param.value[1]) == Approx(cabs(expected_param_value[1])));
+        CHECK(cabs(param.value[2]) == Approx(cabs(expected_param_value[2])));
+    }
+
     SECTION("Test sym/asym calc_param for symmetric voltage sensor, angle = 0") {
         RealValue<true> const u_measured{10.1e3};
         RealValue<true> const u_angle_measured{0};

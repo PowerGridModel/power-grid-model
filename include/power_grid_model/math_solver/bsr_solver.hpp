@@ -26,10 +26,6 @@ namespace power_grid_model {
 
 #ifdef POWER_GRID_MODEL_USE_MKL_AT_RUNTIME
 
-// select solver at runtime
-// boolean to determine if use mkl of not
-#define use_mkl (get_pardiso_handle().has_pardiso)
-
 // wrapper solver
 template <class T>
 class BSRSolver {
@@ -42,11 +38,11 @@ class BSRSolver {
               class = std::enable_if_t<(!std::is_same_v<std::decay_t<Args>, BSRSolver<T>> && ...)>>
     explicit BSRSolver(Args&&... args)
         :  // template<class... Args> Args&&... args perfect forwarding
-          solver_{use_mkl ?
-                          // initialize with pardiso
+          solver_{get_pardiso_handle().has_pardiso ?
+                                                   // initialize with pardiso
                       SolverType{std::in_place_type<PARDISOSolver<T>>, std::forward<Args>(args)...}
-                          :
-                          // initialize with eigen
+                                                   :
+                                                   // initialize with eigen
                       SolverType{std::in_place_type<EigenSuperLUSolver<T>>, std::forward<Args>(args)...}} {
     }
 
@@ -54,7 +50,7 @@ class BSRSolver {
     void solve(Args&&... args) {
         // template<class... Args> Args&&... args perfect forwarding
         // call solver based on use mkl
-        if (use_mkl) {
+        if (get_pardiso_handle().has_pardiso) {
             std::get<PARDISOSolver<T>>(solver_).solve(std::forward<Args>(args)...);
         }
         else {
@@ -65,7 +61,7 @@ class BSRSolver {
     template <class... Args>
     void prefactorize(Args&&... args) {
         // template<class... Args> Args&&... args perfect forwarding
-        if (use_mkl) {
+        if (get_pardiso_handle().has_pardiso) {
             std::get<PARDISOSolver<T>>(solver_).prefactorize(std::forward<Args>(args)...);
         }
         else {
@@ -74,7 +70,7 @@ class BSRSolver {
     }
 
     void invalidate_prefactorization() {
-        if (use_mkl) {
+        if (get_pardiso_handle().has_pardiso) {
             std::get<PARDISOSolver<T>>(solver_).invalidate_prefactorization();
         }
         else {
@@ -86,8 +82,6 @@ class BSRSolver {
     SolverType solver_;
 };
 
-// undefine macro
-#undef use_mkl
 #else
 
 // select solver statically at compile time

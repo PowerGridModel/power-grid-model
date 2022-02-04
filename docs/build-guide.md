@@ -6,8 +6,8 @@ SPDX-License-Identifier: MPL-2.0
 
 # Build Guide
 
-This document explains how you can build this library from source, including some examples of build environment.
-In this repository there are two builds:
+This document explains how you can build this library from source, including some examples of build environment. In this
+repository there are two builds:
 
 * A `power-grid-model` [pip](https://pip.pypa.io/en/stable/) Python package with C++ extension as the calculation core.
 * A [CMake](https://cmake.org/) C++ project to build native C++ unit tests and/or performance benchmark.
@@ -17,37 +17,38 @@ In this repository there are two builds:
 
 # Build Requirements
 
-To build the library from source, you need to first prepare the compiler toolchains
-and the build dependencies. In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (Ubuntu 20.04), Windows 10, and macOS (Big Sur).
+To build the library from source, you need to first prepare the compiler toolchains and the build dependencies. In this
+section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 20.04)
+, Windows 10, and macOS (Big Sur).
 
 ## Architecture Support
 
-This library is written and tested on `x86_64` architecture.
-Building the library in `x86_32` might be working, but is not tested.
-It is in theory also possible to build the library in other architectures,
-but the MKL library is only available for `x86`. So only Eigen sparse solver is available.
+This library is written and tested on `x86_64` architecture. Building the library in `x86_32` might be working, but is
+not tested. It is in theory also possible to build the library in other architectures, but the MKL library is only
+available for `x86`. So only Eigen sparse solver is available.
 
-The source code is written with the mindset of ISO standard C++ only,
-i.e. avoid compiler-extension or platform-specific features as much as possible.
-In this way the effort to port the library to other platform/architecture might be minimum.
+The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
+features as much as possible. In this way the effort to port the library to other platform/architecture might be
+minimum.
 
 ## Compiler Support
 
 You need a C++ compiler with C++17 support. Below is a list of tested compilers:
 
 **Linux**
+
 * gcc >= 9.3
 * clang >= 9.0
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
 **Windows**
+
 * MSVC >= 14.2 (Visual Studio 2019, IDE or build tools)
 
 **macOS**
-* clang >= 12.0
 
+* clang >= 12.0
 
 ## Build System for CMake Project
 
@@ -67,8 +68,8 @@ The table below shows the C++ build dependencies
 | [nlohmann-json](https://github.com/nlohmann/json)                                               | None                                                                                                                | CMake needs to be able find `nlohmann_json`                                                                                                                                                                                                                                                           | header-only                                                                                                                                                                                                                              | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                                                                                                             |
 | [MKL](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html) | Add path to MKL runtime library (`libmkl_rt.so` or `mkl_rt.dll`) into `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux) | <ul><li> Define environment variable `MKL_INCLUDE` to the include folder </li><li> Define environment variable `MKL_LIB` to the lib folder (`.lib` or `.so`) </li><li> Add path to MKL runtime library (`libmkl_rt.so` or `mkl_rt.dll`) into `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux) </li></ul> | Optional for use of MKL PARDISO sparse solver. | [Intel Simplified Software License (proprietary license)](https://www.intel.com/content/www/us/en/developer/articles/license/onemkl-license-faq.html) |
 
-\* The environment variables should point to the root include folder of the library, not a subfolder.
-For example in the path `BOOST_INCLUDE` there should be a folder called `boost` which has all the `boost` header files.
+\* The environment variables should point to the root include folder of the library, not a subfolder. For example in the
+path `BOOST_INCLUDE` there should be a folder called `boost` which has all the `boost` header files.
 
 ### Python
 
@@ -77,29 +78,27 @@ The table below shows the Python dependencies
 | Library name                                           | Remark                   | License            |
 |--------------------------------------------------------|--------------------------|--------------------|
 | [cython](https://cython.org/)                          | build dependency         | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html) |
- | [numpy](https://numpy.org/)                            | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)              |
- | [wheel](https://github.com/pypa/wheel)                 | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                | 
- | [pytest](https://github.com/pytest-dev/pytest)         | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                |
- | [pytest-cov](https://github.com/pytest-dev/pytest-cov) | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                |
- | [twine](https://github.com/pypa/twine)                 | Development dependency   | [Apache License 2.0](https://github.com/pypa/twine/blob/main/LICENSE) |
+| [numpy](https://numpy.org/)                            | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)              |
+| [wheel](https://github.com/pypa/wheel)                 | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                | 
+| [pytest](https://github.com/pytest-dev/pytest)         | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                |
+| [pytest-cov](https://github.com/pytest-dev/pytest-cov) | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                |
 
-You can install them using `pip`.
+You can install the development dependencies using `pip`.
 
 ```
-pip install numpy cython wheel pytest pytest-cov twine
+pip install -r dev-requirements.txt
 ```
 
 # Build Python Package
 
-Once you have prepared the build dependencies,
-you can install the library from source in develop mode.
-Go to the root folder of the repository.
+Once you have prepared the build dependencies, you can install the library from source in develop mode. Go to the root
+folder of the repository.
 
 ```
-python setup.py develop
+pip install -e .
 ```
 
-If you have `pytest` installed in your Python environment, you can run the tests.
+If you have the development dependencies installed in your Python environment, you can run the tests.
 
 ```
 pytest
@@ -107,18 +106,18 @@ pytest
 
 # Build CMake Project
 
-There is a root cmake file in the root folder of the repo [`CMakeLists.txt`](../CMakeLists.txt).
-It specifies dependencies and the build options for the project.
-The core algorithm is implemented in the header-only library `power_grid_model`.
-There are two sub-project defined in the root cmake file:
+There is a root cmake file in the root folder of the repo [`CMakeLists.txt`](../CMakeLists.txt). It specifies
+dependencies and the build options for the project. The core algorithm is implemented in the header-only
+library `power_grid_model`. There are two sub-project defined in the root cmake file:
 
-* [`tests/cpp_unit_tests/CMakeLists.txt`](../tests/cpp_unit_tests/CMakeLists.txt): the unit test project using `Catch2` framework.
-* [`tests/benchmark_cpp/CMakeLists.txt`](../tests/benchmark_cpp/CMakeLists.txt): the C++ benchmark project for performance measure.
+* [`tests/cpp_unit_tests/CMakeLists.txt`](../tests/cpp_unit_tests/CMakeLists.txt): the unit test project using `Catch2`
+  framework.
+* [`tests/benchmark_cpp/CMakeLists.txt`](../tests/benchmark_cpp/CMakeLists.txt): the C++ benchmark project for
+  performance measure.
 
-In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project.
-When you use `cmake build` for the root cmake file,
-the following additional options are available besides the standard cmake option.
-If no option is defined, the cmake project will build the unit tests with *Eigen sparse solver*.
+In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. When you
+use `cmake build` for the root cmake file, the following additional options are available besides the standard cmake
+option. If no option is defined, the cmake project will build the unit tests with *Eigen sparse solver*.
 
 | Option                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -127,9 +126,8 @@ If no option is defined, the cmake project will build the unit tests with *Eigen
 
 # Example Setup for Ubuntu 20.04 (in WSL or physical/virtual machine)
 
-In this section an example is given for setup in Ubuntu 20.04.
-You can use this example in Windows Subsystem for Linux (WSL),
-or in a physical/virtual machine.
+In this section an example is given for setup in Ubuntu 20.04. You can use this example in Windows Subsystem for Linux (
+WSL), or in a physical/virtual machine.
 
 ## Environment variables
 
@@ -151,8 +149,8 @@ export MKL_INCLUDE=${HOME}/.local/include
 
 ## Ubuntu Software Packages
 
-Install the following packages from Ubuntu.
-In the `.bashrc` you can set environment variable `CXX` to select a C++ compiler.
+Install the following packages from Ubuntu. In the `.bashrc` you can set environment variable `CXX` to select a C++
+compiler.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
@@ -175,11 +173,10 @@ cd vcpkg
 
 ## MKL
 
-The easiest way to install `mkl` is through `pip`.
-Since you can have multiple Python environment which may depend on a single `mkl` library.
-It is better to install `mkl` without virtual environment.
-Make sure your current shell is **NOT** in a virtual environment (no parentheses before the prompt).
-Without `sudo`, it will install the `mkl` into the folder `${HOME}/.local`.
+The easiest way to install `mkl` is through `pip`. Since you can have multiple Python environment which may depend on a
+single `mkl` library. It is better to install `mkl` without virtual environment. Make sure your current shell is **NOT**
+in a virtual environment (no parentheses before the prompt). Without `sudo`, it will install the `mkl` into the
+folder `${HOME}/.local`.
 
 ```shell
 python3.9 -m pip install mkl mkl-include mkl-devel
@@ -187,9 +184,8 @@ python3.9 -m pip install mkl mkl-include mkl-devel
 
 ## Build Python Library from Source
 
-It is recommended to create a virtual environment.
-Clone repository, create and activate virtual environment, and install the build dependency.
-go to a root folder you prefer to save the repositories.
+It is recommended to create a virtual environment. Clone repository, create and activate virtual environment, and
+install the build dependency. go to a root folder you prefer to save the repositories.
 
 ```shell
 git clone https://github.com/alliander-opensource/power-grid-model.git  # or git@github.com:alliander-opensource/power-grid-model.git
@@ -202,29 +198,27 @@ pip install -r dev-requirements.txt
 Install from source in develop mode, and run `pytest`.
 
 ```shell
-python setup.py develop
+pip install -e .
 pytest
 ```
 
 ## Build CMake Project
 
 There is a convenient shell script to build the cmake project:
-[`build.sh`](../build.sh).
-You can study the file and write your own build script.
-Six configurations are pre-defined for two input arguments, which will be passed into `cmake`.
-It includes debug or release build,
-as well as the option to use MKL at link-time, or at runtime, or not at all.
+[`build.sh`](../build.sh). You can study the file and write your own build script. Six configurations are pre-defined
+for two input arguments, which will be passed into `cmake`. It includes debug or release build, as well as the option to
+use MKL at link-time, or at runtime, or not at all.
 
 * Option 1
-  * Debug
-  * Release
+    * Debug
+    * Release
 * Option 2
-  * EIGEN
-  * MKL
-  * MKL_RUNTIME
+    * EIGEN
+    * MKL
+    * MKL_RUNTIME
 
-As an example, go to the root folder of repo.
-Use the following command to build the project with MKL at link-time and benchmark:
+As an example, go to the root folder of repo. Use the following command to build the project with MKL at link-time and
+benchmark:
 
 ```shell
 ./build.sh Release MKL
@@ -238,6 +232,22 @@ One can run the unit tests and benchmark by:
 ./cpp_build_Relase_MKL/tests/benchmark_cpp/power_grid_model_benchmark_cpp
 ```
 
+## Optional: to generate a C++ test coverage report
+
+If you want to generate a C++ test coverage report you should do a few extra steps.
+
+1. Install the following extra packages from Ubuntu.
+
+```shell
+sudo apt install lcov gcovr
+```
+
+2. Change your compiler in `${HOME}/.bashrc`
+
+```shell
+export CXX=g++-10  # or clang++-10, or g++-9, or g++-10
+export CC=gcc-10  # or clang-10, or gcc-9, or gcc-10
+```
 
 # Example Setup for Windows 10
 
@@ -276,8 +286,8 @@ Other toolchains:
 
 ## C++ package manager: vcpkg
 
-The recommended way to get C++ package is via [vcpkg](https://github.com/microsoft/vcpkg).
-Open a PowerShell console, go to the parent folder of your desired <ROOT_FOLDER_OF_VCPKG>.
+The recommended way to get C++ package is via [vcpkg](https://github.com/microsoft/vcpkg). Open a PowerShell console, go
+to the parent folder of your desired <ROOT_FOLDER_OF_VCPKG>.
 
 ```shell
 git clone https://github.com/Microsoft/vcpkg.git
@@ -288,10 +298,9 @@ cd vcpkg
 
 ## MKL
 
-You can install `mkl` from `conda`.
-Since you might want to use `mkl` in different projects,
-it is recommended to (only) install `mkl` in a separate conda environment.
-In this example the environment is called `mkl-base`. Open a Miniconda PowerShell Prompt.
+You can install `mkl` from `conda`. Since you might want to use `mkl` in different projects, it is recommended to (only)
+install `mkl` in a separate conda environment. In this example the environment is called `mkl-base`. Open a Miniconda
+PowerShell Prompt.
 
 ```shell
 conda create -n mkl-base python=3.9
@@ -301,9 +310,8 @@ conda install mkl mkl-include mkl-devel
 
 ## Build Python Library from Source
 
-It is recommended to create a `conda` environment.
-Clone repository, create and activate `conda` environment, and install the build dependency.
-go to a root folder you prefer to save the repositories, open a Git Bash Console.
+It is recommended to create a `conda` environment. Clone repository, create and activate `conda` environment, and
+install the build dependency. go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
 git clone https://github.com/alliander-opensource/power-grid-model.git
@@ -320,17 +328,15 @@ pip install -r dev-requirements.txt
 Install from source in develop mode, and run `pytest`.
 
 ```shell
-python setup.py develop
+pip install -e .
 pytest
 ```
 
 ## Build CMake Project
 
-If you have installed Visual Studio 2019/2022 (not the build tools),
-you can open the repo folder as a cmake project.
+If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
 The IDE should be able to automatically detect the Visual Studio cmake configuration file
-[`CMakeSettings.json`](../CMakeSettings.json).
-Six configurations are pre-defined. It includes debug or release build,
+[`CMakeSettings.json`](../CMakeSettings.json). Six configurations are pre-defined. It includes debug or release build,
 as well as the option to use MKL at link-time, or at runtime, or not at all.
 
 * `x64-Debug`
@@ -340,13 +346,10 @@ as well as the option to use MKL at link-time, or at runtime, or not at all.
 * `x64-Release-MKL`
 * `x64-Release-MKL-at-runtime`
 
-
-
 # Example Setup for macOS (Big Sur)
 
-In this section an example is given for setup in macOS Big Sur and Python 3.10.
-It is likely that other versions (3.8+) of Python are also supported, 
-though you'll need to change some paths accordingly.
+In this section an example is given for setup in macOS Big Sur and Python 3.10. It is likely that other versions (3.8+)
+of Python are also supported, though you'll need to change some paths accordingly.
 
 ## Environment variables
 
@@ -365,7 +368,6 @@ export LD_LIBRARY_PATH=/Library/Frameworks/Python.framework/Versions/3.9/lib:${L
 export MKL_LIB=/Library/Frameworks/Python.framework/Versions/3.9/lib
 export MKL_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.9/include
 ```
-
 
 ## macOS Software Packages
 
@@ -391,11 +393,10 @@ cd vcpkg
 
 ## MKL
 
-The easiest way to install `mkl` is through `pip`.
-Since you can have multiple Python environment which may depend on a single `mkl` library.
-It is better to install `mkl` without virtual environment.
-Make sure your current shell is **NOT** in a virtual environment (no parentheses before the prompt).
-Without `sudo`, it will install the `mkl` into the folder `${HOME}/.local`.
+The easiest way to install `mkl` is through `pip`. Since you can have multiple Python environment which may depend on a
+single `mkl` library. It is better to install `mkl` without virtual environment. Make sure your current shell is **NOT**
+in a virtual environment (no parentheses before the prompt). Without `sudo`, it will install the `mkl` into the
+folder `${HOME}/.local`.
 
 ```shell
 python3.9 -m pip install mkl mkl-include mkl-devel
@@ -403,9 +404,8 @@ python3.9 -m pip install mkl mkl-include mkl-devel
 
 ## Build Python Library from Source
 
-It is recommended to create a virtual environment.
-Clone repository, create and activate virtual environment, and install the build dependency.
-go to a root folder you prefer to save the repositories.
+It is recommended to create a virtual environment. Clone repository, create and activate virtual environment, and
+install the build dependency. go to a root folder you prefer to save the repositories.
 
 ```shell
 git clone https://github.com/alliander-opensource/power-grid-model.git  # or git@github.com:alliander-opensource/power-grid-model.git
@@ -418,29 +418,27 @@ pip install -r dev-requirements.txt
 Install from source in develop mode, and run `pytest`.
 
 ```shell
-python setup.py develop
+pip install -e .
 pytest
 ```
 
 ## Build CMake Project
 
 There is a convenient shell script to build the cmake project:
-[`build.sh`](../build.sh).
-You can study the file and write your own build script.
-Six configurations are pre-defined for two input arguments, which will be passed into `cmake`.
-It includes debug or release build,
-as well as the option to use MKL at link-time, or at runtime, or not at all.
+[`build.sh`](../build.sh). You can study the file and write your own build script. Six configurations are pre-defined
+for two input arguments, which will be passed into `cmake`. It includes debug or release build, as well as the option to
+use MKL at link-time, or at runtime, or not at all.
 
 * Option 1
-  * Debug
-  * Release
+    * Debug
+    * Release
 * Option 2
-  * EIGEN
-  * MKL
-  * MKL_RUNTIME
+    * EIGEN
+    * MKL
+    * MKL_RUNTIME
 
-As an example, go to the root folder of repo.
-Use the following command to build the project with MKL at link-time and benchmark:
+As an example, go to the root folder of repo. Use the following command to build the project with MKL at link-time and
+benchmark:
 
 ```shell
 ./build.sh Release MKL

@@ -9,12 +9,10 @@ import numpy as np
 import platform
 from sysconfig import get_paths
 from setuptools import Extension
-from distutils.command.build_ext import build_ext
+from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages
 import Cython.Compiler.Main as CythonCompiler
 from pathlib import Path
-from typing import List, Dict
-import datetime
 
 
 # determine platform, only windows or linux
@@ -39,83 +37,63 @@ class MyBuildExt(build_ext):
             else:
                 lto_flag = "-flto"
             # customize compiler and linker options
-            self.compiler.compiler_so = [
-                cxx,
-                "-std=c++17",
-                "-m64",
-                "-DNDEBUG",
-                "-fPIC",
-                "-Wall",
-                lto_flag,
-                "-O3",
-                "-fvisibility=hidden",
-            ]
+            self.compiler.compiler_so[0] = cxx
+            self.compiler.compiler_so += [lto_flag]
+            self.compiler.linker_so[0] = cxx
+            self.compiler.linker_so += [lto_flag]
             self.compiler.compiler_cxx = [cxx]
-            self.compiler.linker_so = [cxx, "-lpthread", "-ldl", "-fPIC", "-shared", lto_flag, "-O3"]
+            # remove -g and -O2
+            self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
+            self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
 
-            # extra flag for Mac
-            if platform.system() == "Darwin":
-                # compiler flag
-                self.compiler.compiler_so.append("-mmacosx-version-min=10.14")
-                # linker flag
-                self.compiler.linker_so += ["-undefined", "dynamic_lookup"]
+            print("-------compiler arguments----------")
+            print(self.compiler.compiler_so)
+            print("-------linker arguments----------")
+            print(self.compiler.linker_so)
 
         build_ext.build_extensions(self)
 
 
 def get_ext_name(src_file, pkg_dir, pkg_name):
-    base_name = os.path.dirname(os.path.relpath(src_file, os.path.join(pkg_dir, pkg_name)))
+    base_name = os.path.dirname(os.path.relpath(src_file, os.path.join(pkg_dir, "src", pkg_name)))
     base_name = base_name.replace("\\", ".").replace("/", ".")
     module_name = Path(src_file).resolve().stem
     return f"{base_name}.{module_name}"
 
 
-def generate_build_ext(
-    pkg_dir: str,
-    pkg_name: str,
-    cflags: list = None,
-    lflags: list = None,
-    include_dirs: list = None,
-    library_dirs: list = None,
-    libraries: list = None,
-    define_macros: list = None,
-    cpp_exts: Dict[str, List[str]] = None,
-):
+def generate_build_ext(pkg_dir: str, pkg_name: str):
     """
     Generate extension dict for setup.py
     the return value ext_dict, can be called in setup(**ext_dict)
     Args:
         pkg_dir:
         pkg_name:
-        cflags:
-        lflags:
-        include_dirs:
-        library_dirs:
-        libraries:
-        define_macros:
-        cpp_exts: a dict of hand-made C++ extentions, each entry is an extension module
-            key: name of the extension module, including relative pakcage path
-            value: list of C++ source files
-
     Returns:
 
     """
+    # include-folders
+    include_dirs = [
+        np.get_include(),  # The include-folder of numpy header
+        os.path.join(pkg_dir, "include"),  # The include-folder of the repo self
+        os.environ["EIGEN_INCLUDE"],  # eigen3 library
+        os.environ["BOOST_INCLUDE"],  # boost library
+    ]
     # compiler and link flag
-    cflags = cflags if cflags is not None else []
-    lflags = lflags if lflags is not None else []
-    include_dirs = include_dirs if include_dirs is not None else []
-    # The include folder of numpy header is always present
-    include_dirs += [np.get_include()]
-    # The include folder of the repo self is always present
-    include_dirs += [os.path.join(pkg_dir, "include")]
-    library_dirs = library_dirs if library_dirs is not None else []
-    libraries = libraries if libraries is not None else []
+    cflags = []
+    lflags = []
+    library_dirs = []
+    libraries = []
+    # macro
+    define_macros = [
+        ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
+        ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1),  # use mkl runtime loading
+    ]
 
     # remove old extension build
     shutil.rmtree(os.path.join(pkg_dir, "build"), ignore_errors=True)
     # remove binary
-    bin_files = glob(os.path.join(pkg_dir, pkg_name, "**", r"*.so"), recursive=True) + glob(
-        os.path.join(pkg_dir, pkg_name, "**", r"*.pyd"), recursive=True
+    bin_files = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.so"), recursive=True) + glob(
+        os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyd"), recursive=True
     )
     for bin_file in bin_files:
         os.remove(bin_file)
@@ -133,9 +111,21 @@ def generate_build_ext(
     else:
         include_dirs += [os.path.join(env_base_path, "include"), get_paths()["platinclude"], get_paths()["include"]]
         library_dirs += [os.path.join(env_base_path, "lib")]
+        # flags for Linux and Mac
+        cflags += [
+            "-std=c++17",
+            "-m64",
+            "-O3",
+            "-fvisibility=hidden",
+        ]
+        lflags += ["-lpthread", "-ldl", "-O3"]
+        # # extra flag for Mac
+        if platform.system() == "Darwin":
+            # compiler flag to set version
+            cflags.append("-mmacosx-version-min=10.15")
 
     # list of compiled cython files, without file extension
-    cython_src = glob(os.path.join(pkg_dir, pkg_name, "**", r"*.pyx"), recursive=True)
+    cython_src = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyx"), recursive=True)
     cython_src = [os.path.splitext(x)[0] for x in cython_src]
     # compile cython
     cython_src_pyx = [f"{x}.pyx" for x in cython_src]
@@ -172,22 +162,6 @@ def generate_build_ext(
         )
         for src_file in cython_src_cpp
     ]
-    # add hand-made extensions
-    if cpp_exts is not None:
-        for cpp_ext_name, cpp_ext_src in cpp_exts.items():
-            exts.append(
-                Extension(
-                    name=cpp_ext_name,
-                    sources=cpp_ext_src,
-                    include_dirs=include_dirs,
-                    library_dirs=library_dirs,
-                    libraries=libraries,
-                    extra_compile_args=cflags,
-                    extra_link_args=lflags,
-                    define_macros=define_macros,
-                    language="c++",
-                )
-            )
 
     # return dict of exts
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
@@ -230,7 +204,7 @@ def get_version(pkg_dir):
     return version
 
 
-def build_pkg(setup_file, author, author_email, description, url, entry_points: dict = None, **ext_args):
+def build_pkg(setup_file, author, author_email, description, url):
     """
 
     Args:
@@ -239,9 +213,6 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
         author_email:
         description:
         url:
-        entry_points: entry points of scripts
-        **ext_args: extra argument for extension build
-
     Returns:
 
     """
@@ -256,10 +227,6 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
         required = [x for x in required if "#" not in x]
     version = get_version(pkg_dir)
 
-    resource_package = package_files(os.path.join(pkg_name, "resources"))
-    if entry_points is None:
-        entry_points = {}
-
     setup(
         name=pkg_pip_name,
         version=version,
@@ -269,8 +236,8 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
         long_description=long_description,
         long_description_content_type="text/markdown",
         url=url,
-        packages=find_packages(),
-        package_data={pkg_name: resource_package},
+        package_dir={"": "src"},
+        packages=find_packages("src"),
         license="MPL-2.0",
         classifiers=[
             "Programming Language :: Python :: 3",
@@ -290,8 +257,8 @@ def build_pkg(setup_file, author, author_email, description, url, entry_points: 
             "Topic :: Scientific/Engineering :: Physics",
         ],
         install_requires=required,
-        entry_points=entry_points,
-        **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name, **ext_args),
+        python_requires=">=3.8",
+        **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
     )
 
 
@@ -301,6 +268,4 @@ build_pkg(
     author_email="dynamic.grid.calculation@alliander.com",
     description="Python/C++ library for distribution power system analysis",
     url="https://github.com/alliander-opensource/power-grid-model",
-    include_dirs=[os.environ["EIGEN_INCLUDE"], os.environ["BOOST_INCLUDE"]],
-    define_macros=[("EIGEN_MPL2_ONLY", "1"), ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1)],
 )

@@ -25,6 +25,16 @@ fi
 BUILD_DIR=cpp_build_$1_$2
 echo "Build dir: ${BUILD_DIR}"
 
+if [[ ! -z "${VCPKG_ROOT}" ]]; then
+  PATH_FOR_CMAKE=-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+elif [[ ! -z "${CMAKE_PREFIX_PATH}" ]]; then
+  PATH_FOR_CMAKE=-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+else 
+  PATH_FOR_CMAKE=
+fi
+
+echo ${PATH_FOR_CMAKE}
+
 rm -rf ${BUILD_DIR}/
 mkdir ${BUILD_DIR}
 cd ${BUILD_DIR}
@@ -32,7 +42,7 @@ cd ${BUILD_DIR}
 cmake .. -GNinja \
     -DCMAKE_BUILD_TYPE=$1 \
     -DPOWER_GRID_MODEL_SPARSE_SOLVER=$2 \
-    -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+    ${PATH_FOR_CMAKE} \
     -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
 # build
 VERBOSE=1 cmake --build .
@@ -51,9 +61,15 @@ fi
 
 cd ..
 # test coverage report for debug build and for linux
-if [[ "$1" = "Debug" ]] && [[ ${CXX} == *"g++"* ]] && [[ $3 == "Coverage" ]];  then
+if [[ "$1" = "Debug" ]] && [[ $3 == "Coverage" ]];  then
   echo "Generating coverage report..."
-  lcov -q -c -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir -b include --no-external --output-file cpp_coverage.info
+  if [[ ${CXX} == "clang++"* ]]; then
+    GCOV_TOOL="--gcov-tool llvm-gcov.sh"
+  else
+    GCOV_TOOL=
+  fi
+
+  PATH=${PATH}:${PWD} lcov -q -c -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir -b include --no-external --output-file cpp_coverage.info ${GCOV_TOOL}
   genhtml -q cpp_coverage.info --output-directory cpp_cov_html
   rm cpp_coverage.info
 fi

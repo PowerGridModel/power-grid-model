@@ -20,6 +20,8 @@
 #include <string>
 // add header for envget
 #include <stdlib.h>
+// add std forward
+#include <memory>
 
 // add platform dependent header for loading dll or so
 #ifdef _WIN32
@@ -28,7 +30,7 @@
 #define POWER_GRID_MODEL_CALLING_CONVENTION __cdecl
 namespace power_grid_model {
 using LibHandle = HINSTANCE;
-constexpr std::array mkl_rt_files{"mkl_rt.dll", "mkl_rt.1.dll"};
+constexpr std::array mkl_rt_files{"mkl_rt.dll", "mkl_rt.1.dll", "mkl_rt.2.dll"};
 auto constexpr load_mkl_single = [](char const* f) {
     return LoadLibrary(f);
 };
@@ -52,7 +54,7 @@ using LibHandle = void*;
 #ifdef __linux__
 constexpr std::array mkl_rt_files{"libmkl_rt.so", "libmkl_rt.so.1", "libmkl_rt.so.2"};
 #else   // __APPLE__
-constexpr std::array mkl_rt_files{"libmkl_rt.dylib", "libmkl_rt.1.dylib"};
+constexpr std::array mkl_rt_files{"libmkl_rt.dylib", "libmkl_rt.1.dylib", "libmkl_rt.2.dylib"};
 #endif  // __linux__ or __APPLE__
 auto constexpr load_mkl_single = [](char const* f) {
     return dlopen(f, RTLD_LAZY);
@@ -165,9 +167,15 @@ inline PardisoHandle const& get_pardiso_handle() {
     static PardisoHandle const handle{};
     return handle;
 }
-// define macro to use the function as if they are included
-#define pardiso (get_pardiso_handle().pardiso)
-#define pardisoinit (get_pardiso_handle().pardisoinit)
+// forward pardiso function
+template <class... Args>
+void pardiso(Args&&... args) {
+    get_pardiso_handle().pardiso(std::forward<Args>(args)...);
+}
+template <class... Args>
+void pardisoinit(Args&&... args) {
+    get_pardiso_handle().pardisoinit(std::forward<Args>(args)...);
+}
 
 }  // namespace power_grid_model
 
@@ -360,12 +368,6 @@ class PARDISOSolver final {
 };
 
 }  // namespace power_grid_model
-
-// undefine macro
-#ifdef POWER_GRID_MODEL_USE_MKL_AT_RUNTIME
-#undef pardiso
-#undef pardisoinit
-#endif
 
 #endif  // POWER_GRID_MODEL_USE_MKL
 

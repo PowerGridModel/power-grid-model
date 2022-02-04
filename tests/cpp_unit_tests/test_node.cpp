@@ -27,6 +27,18 @@ TEST_CASE("Test node") {
     asym_res = node.get_null_output<false>();
     CHECK(asym_res.u(0) == 0.0);
     CHECK(!asym_res.energized);
+
+    SECTION("Test energized function") {
+        CHECK(node.energized(true));
+        CHECK(!node.energized(false));
+    }
+
+    SECTION("Test node update") {
+        BaseInput base_input;
+        UpdateChange update_change = node.update(base_input);
+        CHECK(update_change.topo == false);
+        CHECK(update_change.param == false);
+    }
 }
 
 }  // namespace power_grid_model
