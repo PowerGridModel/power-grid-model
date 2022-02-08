@@ -59,7 +59,7 @@ If the library cannot find `mkl` runtime, it will fall back to an internally bui
 
 ## Install from Pre-built Binary Package
 
-The `power-grid-model` python package is pre-built for Windows, Linux, and macOS,
+The `power-grid-model` python package is pre-built for Windows, Linux, and macOS (both Intel and Arm-based),
 for Python version 3.8, 3.9, and 3.10.
 You can directly install the package from PyPI.
 
