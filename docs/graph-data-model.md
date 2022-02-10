@@ -44,26 +44,26 @@ in the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](nati
                      |
                      |
     -----------------------------------------------------------------------------------------
-    |           |                              |                                            |
-    |           |                              |                                            |
-   node       branch                        appliance                                       |
-                |                              |                                            |
-                |                              |                                            |
-        -------------------          ---------------------------------                      |
-        |          |      |          |          |                    |                      |
-        |          |      |          |          |                    |                      |
-     transformer  line   link      source     shunt          generic_load_gen             sensor
-                                                                     |                      |
-                                                                     |                      |
-                                   ----------------------------------------                 |
-                                   |            |            |            |                 |
-                                   |            |            |            |                 |
-                                 sym_load   asym_load      sym_gen     asym_gen             |
-                                                                                            |
-                                                            ----------------------------------
-                                                            |                                |
-                                                            |                                |
-                                                   generic_voltage_sensor           generic_power_sensor
+    |           |              |               |                                            |
+    |           |              |               |                                            |
+   node       branch        branch3         appliance                                       |
+                |              |               |                                            |
+                |              |               |                                            |
+        -------------------    |     ---------------------------------                      |
+        |          |      |    |     |          |                    |                      |
+        |          |      |    |     |          |                    |                      |
+     transformer  line   link  |   source     shunt          generic_load_gen             sensor
+                               |                                     |                      |
+                               |                                     |                      |
+                               |   ----------------------------------------                 |
+                               |   |            |            |            |                 |
+                               |   |            |            |            |                 |
+                               | sym_load   asym_load      sym_gen     asym_gen             |
+                               |                                                            |
+                               |                            ----------------------------------
+                               |                            |                                |
+                               |                            |                                |
+                    three_winding_transformer      generic_voltage_sensor           generic_power_sensor
                                                             |                                |
                                                             |                                |
                                            --------------------------                --------------------------
