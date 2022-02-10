@@ -269,6 +269,37 @@ In this case the winding voltage is decreased if the tap position is increased.*
 | `r_grounding_to` | `double` | ohm (Ω) | grounding resistance at to-side, if relevant | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 | `x_grounding_to` | `double` | ohm (Ω) | grounding reactance at to-side, if relevant | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 
+## Branch3
+
+* type name: `branch3`
+
+`branch3` is the abstract base type for the component which connects three *different* nodes.
+For each branch3 three switches are always defined at side 1, 2, or 3 of the branch.
+In reality such switches may not exist.
+
+| name | data type | unit | description | required | input | update | output | valid values |
+| -- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
+| `node_1` | `int32_t` | - | ID of node at side 1 | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
+| `node_2` | `int32_t` | - | ID of node at side 2 | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
+| `node_3` | `int32_t` | - | ID of node at side 3 | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
+| `status_1` | `int8_t` | - | connection status at side 1 | &#10004; | &#10004; | &#10004; | &#10060; | `0` or `1` |
+| `status_2` | `int8_t` | - | connection status at side 2 | &#10004; | &#10004; | &#10004; | &#10060; | `0` or `1` |
+| `status_3` | `int8_t` | - | connection status at side 3 | &#10004; | &#10004; | &#10004; | &#10060; | `0` or `1` |
+| `p_1` | `RealValueOutput` | watt (W) | active power flowing into the branch at side 1 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `q_1` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at side 1 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `i_1` | `RealValueOutput` | ampere (A) | current at side 1 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `s_1` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at side 1 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `p_2` | `RealValueOutput` | watt (W) | active power flowing into the branch at side 2 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `q_2` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at side 2 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `i_2` | `RealValueOutput` | ampere (A) | current at side 2 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `s_2` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at side 2 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `p_3` | `RealValueOutput` | watt (W) | active power flowing into the branch at side 3 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `q_3` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at side 3 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `i_3` | `RealValueOutput` | ampere (A) | current at side 3 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `s_3` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at side 3 | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `loading` | `double` | - | relative loading of the branch, `1.0` meaning 100% loaded. | &#10004; | &#10060; | &#10060; | &#10004; | |
+
+
 ## Appliance
 
 * type name: `appliance`
