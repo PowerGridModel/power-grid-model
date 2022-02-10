@@ -72,20 +72,24 @@ in the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](nati
                                   sym_voltage_sensor      asym_voltage_sensor   sym_power_sensor      asym_power_sensor
 ```
 
-This library uses a graph data model with three generic component types: `node`, `branch`, and `appliance`.
-A node is similar to a vertex in the graph, a branch is similar to an edge in the graph.
-An appliance is a component which is connected (coupled) to a node, it is seen as a user of this node.
+This library uses a graph data model with four generic component types: `node`, `branch`, `branch3`, and `appliance`.
+* A node is similar to a vertex in the graph
+* A branch is similar to an edge in the graph 
+* A branch3 connects three nodes together
+* An appliance is a component which is connected (coupled) to a node, it is seen as a user of this node.
+
 The figure below shows a simple example:
 
 ```
-node_1 ---line_3 (branch)--- node_2
- |                             |
-source_5 (appliance)       sym_load_4 (appliance)
+node_1 ---line_3 (branch)--- node_2 --------------three_winding_transformer_8 (branch3)------ node_6
+ |                             |                                 |
+source_5 (appliance)       sym_load_4 (appliance)             node_7
 ```
 
-There are two nodes (points/vertices) in the graph of this simple grid.
-The two nodes are connected by `line_3` which is a branch (edge).
-Furthermore, there are two appliances in the grid.
+* There are four nodes (points/vertices) in the graph of this simple grid.
+* The `node_1` and `node_2` are connected by `line_3` which is a branch (edge).
+* The `node_2`, `node_6`, and `node_7` are connected by `three_winding_transformer_8` which is a branch3.
+* There are two appliances in the grid. 
 The `source_5` is coupled to `node_1` and the `sym_load_4` is coupled to `node_2`.
 
 # Symmetry of Components and Calculation
@@ -276,7 +280,7 @@ For each branch3 three switches are always defined at side 1, 2, or 3 of the bra
 In reality such switches may not exist.
 
 | name | data type | unit | description | required | input | update | output | valid values |
-| -- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
+| --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | `node_1` | `int32_t` | - | ID of node at side 1 | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
 | `node_2` | `int32_t` | - | ID of node at side 2 | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
 | `node_3` | `int32_t` | - | ID of node at side 3 | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
