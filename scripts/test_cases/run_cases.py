@@ -61,6 +61,8 @@ def export_individual_test(case_gen, case_path, params, type_of_output):
     pp_result_exporter(case_gen, type_of_output=type_of_output, case_path=case_path, rtol=params['rtol'] / 1000)
     with open(case_path / 'params.json', 'w') as file_pointer:
         json.dump(params, file_pointer, indent=2)
+    Path(case_path.absolute() / 'params.json.license').write_text(
+            "SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>\n\nSPDX-License-Identifier: MPL-2.0")
 
 
 def export_all_individual_tests():
