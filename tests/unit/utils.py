@@ -31,11 +31,17 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
         # list of all cases, directories in validation datasets
         calculation_type_dir = DATA_PATH / calculation_type
         if test_cases is None:
-            all_test_cases_paths = {item.name: item for item in calculation_type_dir.glob("**/")
-                                    if (item.is_dir() and (item / "input.json").is_file())}
+            all_test_cases_paths = {
+                item.name: item
+                for item in calculation_type_dir.glob("**/")
+                if (item.is_dir() and (item / "input.json").is_file())
+            }
         else:
-            all_test_cases_paths = {item.name: item for item in calculation_type_dir.glob("**/")
-                                    if (item.is_dir() and (item / "input.json").is_file() and item.name in test_cases)}
+            all_test_cases_paths = {
+                item.name: item
+                for item in calculation_type_dir.glob("**/")
+                if (item.is_dir() and (item / "input.json").is_file() and item.name in test_cases)
+            }
         for case_name, case_dir in all_test_cases_paths.items():
             with open(case_dir / "params.json") as f:
                 params = json.load(f)
