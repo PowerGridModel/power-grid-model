@@ -30,19 +30,14 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
     for calculation_type in relevant_calculations:
         # list of all cases, directories in validation datasets
         calculation_type_dir = DATA_PATH / calculation_type
-        if test_cases is None:
-            all_test_cases_paths = {
-                item.name: item
-                for item in calculation_type_dir.glob("**/")
-                if (item.is_dir() and (item / "input.json").is_file())
-            }
-        else:
-            all_test_cases_paths = {
-                item.name: item
-                for item in calculation_type_dir.glob("**/")
-                if (item.is_dir() and (item / "input.json").is_file() and item.name in test_cases)
-            }
-        for case_name, case_dir in all_test_cases_paths.items():
+        test_cases_paths = {
+            str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
+            for item in calculation_type_dir.glob("**/")
+            if (item.is_dir() and (item / "input.json").is_file())
+        }
+        if test_cases is not None:
+            test_cases_paths = {key: value for key, value in test_cases_paths.items() if key in test_cases}
+        for case_name, case_dir in test_cases_paths.items():
             with open(case_dir / "params.json") as f:
                 params = json.load(f)
             # loop for sym or asym scenario
@@ -53,7 +48,6 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
                     # Build a recognizable case ID
                     case_id = case_name
                     case_id += "-sym" if sym else "-asym"
-                    case_id += "-" + calculation_type
                     case_id += "-" + params["calculation_method"]
                     if get_batch_cases:
                         case_id += "-batch"
