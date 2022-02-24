@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+
+SPDX-License-Identifier: MPL-2.0
+-->
+
 ## Component Test Case: Basic node
 
 Test case for validation of source component for symmetrical power flow calculations in pandapower.
