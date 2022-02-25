@@ -33,7 +33,7 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
         test_cases_paths = {
             str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
             for item in calculation_type_dir.glob("**/")
-            if (item.is_dir() and (item / "input.json").is_file())
+            if (item.is_dir() and (item / "params.json").is_file())
         }
         if test_cases is not None:
             test_cases_paths = {key: value for key, value in test_cases_paths.items() if key in test_cases}
