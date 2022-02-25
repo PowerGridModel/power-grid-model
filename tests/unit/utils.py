@@ -98,6 +98,7 @@ def import_case_data(data_path: Path, sym: bool):
 def save_json_data(json_file: str, data: Union[dict, list]):
     OUPUT_PATH.mkdir(parents=True, exist_ok=True)
     data_file = OUPUT_PATH / json_file
+    data_file.parent.mkdir(parents=True, exist_ok=True)
     export_json_data(data_file, data)
 
 
