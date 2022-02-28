@@ -27,7 +27,7 @@ class EigenSuperLUSolver final {
     using SparseMatrix = Eigen::SparseMatrix<T, Eigen::ColMajor, Idx>;
     using SparseIndexMatrix = Eigen::SparseMatrix<Idx, Eigen::ColMajor, Idx>;
     using SparseSolver = Eigen::SparseLU<SparseMatrix, Eigen::NaturalOrdering<Idx>>;
-    using BufferVector = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1, Eigen::DontAlign>, Eigen::Aligned8>;
+    using BufferVector = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>, Eigen::Aligned8>;
     using SparseIdxEntry = Eigen::Triplet<Idx, Idx>;
 
    public:
