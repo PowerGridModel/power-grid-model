@@ -1,0 +1,36 @@
+node:
+  sheet: Nodes
+  attributes:
+    id: ID
+    u_rated: Unom
+line:
+  sheet: Cables
+  attributes:
+    id: ID
+    from_node: From.ID
+    from_status: From.Switch state
+    to_node: To.ID
+    to_status: To.Switch state
+  enums:
+    from_status:
+      0: "off"
+      1: "in"
+    to_status:
+      0: "off"
+      1: "in"
+link:
+  sheet: Links
+  attributes:
+    id: ID
+    from_node: From.ID
+    from_status: From.Switch state
+    to_node: To.ID
+    to_status: To.Switch state
+  enums:
+    from_status:
+      0: "off"
+      1: "in"
+    to_status:
+      0: "off"
+      1: "in"
+
