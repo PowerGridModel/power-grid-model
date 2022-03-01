@@ -1,15 +1,17 @@
 node:
   sheet: Nodes
   attributes:
-    id: ID
+    id: Number
     u_rated: Unom
 line:
-  sheet: Cables
+  sheet:
+  - Cables
+  - Reactance coils
   attributes:
-    id: ID
-    from_node: From.ID
+    id: Number
+    from_node: From.Number
     from_status: From.Switch state
-    to_node: To.ID
+    to_node: To.Number
     to_status: To.Switch state
   enums:
     from_status:
@@ -21,10 +23,10 @@ line:
 link:
   sheet: Links
   attributes:
-    id: ID
-    from_node: From.ID
+    id: Number
+    from_node: From.Number
     from_status: From.Switch state
-    to_node: To.ID
+    to_node: To.Number
     to_status: To.Switch state
   enums:
     from_status:

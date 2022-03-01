@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
@@ -27,10 +31,10 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
         raise ValueError(f"Output file should be a .json file, {output_file.suffix} provided.")
 
     # Convert XLSX
-    pgm_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
+    pgm_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
 
     # Store JSON
-    export_json_data(json_file=output_file, data=pgm_data)
+    export_json_data(json_file=output_file, data=pgm_data, meta_data=meta_data)
 
 
 if __name__ == "__main__":
