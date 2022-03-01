@@ -1,38 +1,33 @@
-node:
-  sheet: Nodes
-  attributes:
-    id: Number
-    u_rated: Unom
-line:
-  sheet:
-  - Cables
-  - Reactance coils
-  attributes:
-    id: Number
-    from_node: From.Number
-    from_status: From.Switch state
-    to_node: To.Number
-    to_status: To.Switch state
-  enums:
-    from_status:
-      0: "off"
-      1: "in"
-    to_status:
-      0: "off"
-      1: "in"
-link:
-  sheet: Links
-  attributes:
-    id: Number
-    from_node: From.Number
-    from_status: From.Switch state
-    to_node: To.Number
-    to_status: To.Switch state
-  enums:
-    from_status:
-      0: "off"
-      1: "in"
-    to_status:
-      0: "off"
-      1: "in"
-
+grid:
+  Nodes:
+    node:
+      id: Number
+      u_rated: Unom
+  Cables:
+    line:
+        id: Number   # Maybe name could be used here as well to make it globally unique or combination of name and id (not sure if later is possible)? (Rei Syziu)
+        from_node: From.Number
+        from_status: From.Switch state
+        to_node: To.Number
+        to_status: To.Switch state
+        r1: R
+        x1: X
+        c1: C
+        # tan1:   missing in Excel (Rei Syziu)
+        r0: R0
+        x0: X0
+        c0: C0
+        # tan0:   missing in Excel (Rei Syziu)
+        i_n: Inom'
+enums:
+  from_status:
+    off: 0
+    in: 1
+  to_status:
+    off: 0
+    in: 1
+units:
+  µF: 1e-6
+  kV: 1e3
+  kA: 1e3
+  MVA: 1e6
