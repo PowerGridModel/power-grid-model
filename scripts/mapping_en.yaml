@@ -3,6 +3,8 @@ grid:
     node:
       id: Number
       u_rated: Unom
+# Disabled: unknown field (Bram Stoeller)
+#     simultaneity: Simultaneity  # I added this myself, not required. But needed for other calculations. Thought might be easier to get it here and use somewhere else (Rei Syziu)
   Cables:
     line:
         id: Number   # Maybe name could be used here as well to make it globally unique or combination of name and id (not sure if later is possible)? (Rei Syziu)
@@ -19,7 +21,56 @@ grid:
         c0: C0
         # tan0:   missing in Excel (Rei Syziu)
         i_n: Inom'
+  Links:
+    link:
+      id: Number
+      from_node: From.Number
+      from_status: From.Switch state
+      to_node: To.Number
+      to_status: To.Switch state
+  Transformers:
+    transformer:
+      id: Number
+      from_node: From.Number
+      from_status: From.Switch state
+      to_node: To.Number
+      to_status: To.Switch state
+      u1: Unom1
+      u2: Unom2
+      sn: Snom
+      uk: uk
+      pk: Pk
+      i0: Io            # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      p0: Po
+      # winding_from:   -------------------------------------------------------------------------------------------------------
+      # winding_to:     These 3 can be obtained from Connection (Excel), discuss with Bram for appropriate solution (Rei Syziu)
+      #                 See: https://pacbasics.org/transformer-vector-group/ (Rei Syziu)
+      #                 Example: https://www.answers.com/Q/What_is_vector_group_Ynyn0_in_transformer (Rei Syziu)
+      # clock:          -------------------------------------------------------------------------------------------------------
+      tap_side: Tap side
+      tap_pos: Tap
+      tap_min: Tap min
+      tap_max: Tap max
+      tap_size: Tap size
+  Sources:
+    source:
+      id:    # ID of the coupled node is a struct of node number and subnumber (Rei Syziu)
+      - Node.Number
+      - Subnumber
+      status: Switch state
+# Functions and constants are not yet implemented (Bram Stoeller)
+#     p: Sk"nom*pf    # Not given in Excel but can be calculated from s and pf below (Rei Syziu)
+#     q: sqrt(Sk"nom^2 - (Sk"nom*pf)^2) # Not given in Excel but can be calculated from s and pf below (Rei Syziu)
+      # i:              Dont know how to calculate it; also not given in Excel (Rei Syziu)
+#     s: Sk"nom
+#      pf: 0.85    # Not specified in Excel but it is 0.85 as a global value in Liander grid simulation files (Rei Syziu)
+      u_ref: Uref
+#      rx_ratio: R/X       # Not required in pgm but can be used as input in pgm (Rei Syziu)
+#      z01_ratio: Z0/Z1    # Not required in pgm but can be used as input in pgm (Rei Syziu)
 enums:
+  status:
+    off: 0
+    in: 1
   from_status:
     off: 0
     in: 1
@@ -31,3 +82,4 @@ units:
   kV: 1e3
   kA: 1e3
   MVA: 1e6
+  "%": 1e-2

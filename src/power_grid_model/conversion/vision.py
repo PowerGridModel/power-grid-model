@@ -43,7 +43,7 @@ def read_vision_mapping(mapping_file: Path) -> Dict[str, Dict[str, Any]]:
         return yaml.safe_load(mapping_stream)
 
 
-def convert_vision_to_pgm(input_workbook: Dict[str, Tuple[pd.DataFrame, List[Optional[str]]]],
+def convert_vision_to_pgm(input_workbook: Dict[str, Tuple[pd.DataFrame, Dict[str, Optional[str]]]],
                           mapping: Dict[str, Dict[str, Any]]) \
         -> Tuple[Dict[str, np.ndarray], Dict[int, Dict[str, Any]]]:
     enums = mapping.get("enums", {})
@@ -92,23 +92,23 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
                                            enums: Dict[str, Dict[str, int]], units: Dict[str, float], base_id: int) \
         -> Tuple[Dict[str, np.ndarray], List[Dict[str, Any]]]:
     sheet, col_units = input_workbook[sheet_name]
-    meta_data = []
+    meta_data = [{"sheet": sheet_name} for _ in range(len(sheet))]
     pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
     for attr, column_name in attributes.items():
-        if not column_name in sheet:
-            raise KeyError(f"Could not find column '{column_name}' in sheet '{sheet_name}' "
-                           f"(to use as {component_name}.{attr})")
-        col_data = sheet[column_name]
-        if attr in enums:
-            col_data = col_data.map(enums[attr])
-        if col_units[column_name] in units:
-            col_data *= float(units[col_units[column_name]])
+        multi_columns = column_name if isinstance(column_name, list) else [column_name]
+        for col in multi_columns:
+            if not col in sheet:
+                raise KeyError(f"Could not find column '{col}' in sheet '{sheet_name}' "
+                               f"(to use as {component_name}.{attr})")
         if attr == "id":
-            meta_data += [
-                {"sheet": sheet_name, column_name: obj_id}
-                for obj_id in col_data.tolist()
-            ]
-            col_data = range(base_id, base_id + len(col_data))
+            for i, meta in enumerate(meta_data):
+                meta.update({col: sheet[col][i].item() for col in multi_columns})
+            col_data = range(base_id, base_id + len(sheet))
+        else:
+            col_data = sheet[column_name]
+            if attr in enums:
+                col_data = col_data.map(enums[attr])
+            if col_units[column_name] in units:
+                col_data *= float(units[col_units[column_name]])
         pgm_data[attr] = col_data
-
     return pgm_data, meta_data
