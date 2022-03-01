@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 
 SPDX-License-Identifier: MPL-2.0
 -->
+[![PyPI version](https://badge.fury.io/py/power-grid-model.svg)](https://badge.fury.io/py/power-grid-model)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/alliander-opensource/power-grid-model/blob/main/LICENSE)
 [![Build and Test C++ and Python](https://github.com/alliander-opensource/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/main.yml)
 [![Format Code](https://github.com/alliander-opensource/power-grid-model/actions/workflows/black-and-clang-format.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/black-and-clang-format.yml)
