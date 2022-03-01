@@ -197,7 +197,7 @@ Node Result
 
 # Examples
 
-Please refer to [Examples](./examples) for more detailed examples for power flow and state estimation.
+Please refer to [Examples](examples) for more detailed examples for power flow and state estimation.
 
 # License
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
