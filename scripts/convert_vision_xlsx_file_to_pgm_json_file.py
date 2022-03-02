@@ -8,6 +8,7 @@ from typing import Optional
 
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
+from power_grid_model.validation import validate_input_data, errors_to_string
 
 BASE_DIR = Path(__file__).parent
 
@@ -32,6 +33,10 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
 
     # Convert XLSX
     pgm_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
+
+    errors = validate_input_data(pgm_data)
+    if errors:
+        print(errors_to_string(errors))
 
     # Store JSON
     export_json_data(json_file=output_file, data=pgm_data, meta_data=meta_data)

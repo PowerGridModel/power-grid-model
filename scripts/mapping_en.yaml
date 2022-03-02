@@ -144,7 +144,7 @@ grid:
       id:
       - Node.Number
       - Subnumber
-      p_specified:      0                       # Number 0
+      p_specified:      Pnom
       q_specified:      0                       # Number 0
 enums:
   status:
@@ -157,8 +157,9 @@ enums:
     off: 0
     in: 1
 units:
-  µF: 1e-6
-  kV: 1e3
-  kA: 1e3
-  MVA: 1e6
   "%": 1e-2
+  µF: 1e-6
+  kA: 1e3
+  kV: 1e3
+  MVA: 1e6
+  MWp: 1e6
