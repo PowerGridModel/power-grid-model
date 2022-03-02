@@ -100,6 +100,21 @@ grid:
       x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
       r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
       x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+  Transformer loads:
+    transformer:
+      id:
+      - Node.Number
+      - Subnumber
+      from_node:        Node.Number
+      to_node:          null                    # TODO (Bram Stoeller)
+      # ...
+    node:
+      id:               null                    # TODO (Bram Stoeller)
+      # ...
+    sym_load:
+      id:               null                    # TODO (Bram Stoeller)
+      node:             null                    # TODO (Bram Stoeller)
+      # ...
   Sources:
     source:
       id:

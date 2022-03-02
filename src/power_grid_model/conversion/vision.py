@@ -108,6 +108,8 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             return _parse_col_def_map(col_def)
         elif isinstance(col_def, list):
             return _parse_col_def_composite(col_def)
+        elif col_def is None:
+            return [], []
         else:
             raise TypeError(col_def)
 
@@ -158,9 +160,12 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             col_data = range(base_id, base_id + len(sheet))
         else:
             col_data, _ = _parse_col_def(col_def)
-            if len(col_data) != 1:
+            if len(col_data) == 0:
+                col_data = 0  # TODO
+            elif len(col_data) != 1:
                 raise NotImplementedError("Can't use composite values for regular columns")
-            col_data = col_data.pop()
+            else:
+                col_data = col_data.pop()
         pgm_data[attr] = col_data
 
     return pgm_data, meta_data
