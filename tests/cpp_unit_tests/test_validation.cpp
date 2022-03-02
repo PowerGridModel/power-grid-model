@@ -283,6 +283,7 @@ std::map<std::pair<std::string, bool>, CalculationFunc> const calculation_type_m
 
 // case parameters
 struct CaseParam {
+    std::filesystem::path case_dir;
     std::string case_name;
     std::string calculation_type;
     std::string calcualtion_method;
@@ -293,18 +294,27 @@ struct CaseParam {
     std::map<std::string, double> atol;
 
     CaseParam() = default;
-    CaseParam(std::string const& case_name_input, std::string const& calculation_type_input, bool sym_input,
+    CaseParam(std::filesystem::path const& case_dir_input, std::string const& calculation_type_input, bool sym_input,
               bool is_batch_input)
-        : case_name{case_name_input},
+        : case_dir{case_dir_input},
+          case_name{replace_backslash(std::filesystem::relative(case_dir, data_path).string())},
           calculation_type{calculation_type_input},
           sym{sym_input},
           is_batch{is_batch_input},
           rtol{} {
     }
+
+    static std::string replace_backslash(std::string const& str) {
+        std::string str_out{str};
+        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) {
+            return c == '\\' ? '/' : c;
+        });
+        return str_out;
+    }
 };
 
 void set_case_param(CaseParam& param) {
-    std::filesystem::path const param_file = data_path / param.calculation_type / param.case_name / "params.json";
+    std::filesystem::path const param_file = param.case_dir / "params.json";
     json j = read_json(param_file);
     j.at("calculation_method").get_to(param.calcualtion_method);
     j.at("rtol").get_to(param.rtol);
@@ -336,19 +346,16 @@ ValidationCase create_validation_case(CaseParam& param) {
     validation_case.param = param;
     std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
     // input
-    validation_case.input =
-        convert_json_single(read_json(data_path / param.calculation_type / param.case_name / "input.json"), "input");
+    validation_case.input = convert_json_single(read_json(param.case_dir / "input.json"), "input");
     // output and update
     if (!param.is_batch) {
-        validation_case.output = convert_json_single(
-            read_json(data_path / param.calculation_type / param.case_name / (output_prefix + ".json")), output_prefix);
+        validation_case.output =
+            convert_json_single(read_json(param.case_dir / (output_prefix + ".json")), output_prefix);
     }
     else {
-        validation_case.update_batch = convert_json_batch(
-            read_json(data_path / param.calculation_type / param.case_name / "update_batch.json"), "update");
-        validation_case.output_batch = convert_json_batch(
-            read_json(data_path / param.calculation_type / param.case_name / (output_prefix + "_batch.json")),
-            output_prefix);
+        validation_case.update_batch = convert_json_batch(read_json(param.case_dir / "update_batch.json"), "update");
+        validation_case.output_batch =
+            convert_json_batch(read_json(param.case_dir / (output_prefix + "_batch.json")), output_prefix);
     }
     return validation_case;
 }
@@ -363,9 +370,11 @@ TEST_CASE("Check existence of validation data path") {
     // detect all test cases
     for (std::string calculation_type : {"power_flow", "state_estimation"}) {
         // loop all sub-directories
-        for (auto const& dir_entry : std::filesystem::directory_iterator(data_path / calculation_type)) {
+        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_path / calculation_type)) {
             std::filesystem::path const case_dir = dir_entry.path();
-            std::string const case_name = case_dir.filename().string();
+            if (!std::filesystem::exists(case_dir / "params.json")) {
+                continue;
+            }
             // loop sym and batch
             for (bool const sym : {true, false}) {
                 std::string const output_prefix = sym ? "sym_output" : "asym_output";
@@ -374,7 +383,7 @@ TEST_CASE("Check existence of validation data path") {
                     // add a case if output file exists
                     std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
                     if (std::filesystem::exists(output_file)) {
-                        all_cases.emplace_back(case_name, calculation_type, sym, is_batch);
+                        all_cases.emplace_back(case_dir, calculation_type, sym, is_batch);
                     }
                 }
             }
@@ -392,11 +401,9 @@ TEST_CASE("Validation test") {
             if (param.is_batch) {
                 continue;
             }
-            SECTION("Single test " + param.calculation_type + " " + param.case_name + " " +
-                    (param.sym ? "sym" : "asym")) {
-                std::cout << "Validation test calculation type: " << param.calculation_type
-                          << ", name: " << param.case_name << ", sym: " << param.sym << ", is_batch: " << param.is_batch
-                          << std::endl;
+            SECTION("Single test " + param.case_name + " " + (param.sym ? "sym" : "asym")) {
+                std::cout << "Validation test: " << param.case_name << ", sym: " << param.sym
+                          << ", is_batch: " << param.is_batch << std::endl;
                 ValidationCase const validation_case = create_validation_case(param);
                 std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
                 SingleData result = create_result_dataset(validation_case.input, output_prefix);
@@ -417,11 +424,9 @@ TEST_CASE("Validation test") {
             if (!param.is_batch) {
                 continue;
             }
-            SECTION("Batch test " + param.calculation_type + " " + param.case_name + " " +
-                    (param.sym ? "sym" : "asym")) {
-                std::cout << "Validation test calculation type: " << param.calculation_type
-                          << ", name: " << param.case_name << ", sym: " << param.sym << ", is_batch: " << param.is_batch
-                          << std::endl;
+            SECTION("Batch test " + param.case_name + " " + (param.sym ? "sym" : "asym")) {
+                std::cout << "Validation test: " << param.case_name << ", sym: " << param.sym
+                          << ", is_batch: " << param.is_batch << std::endl;
                 ValidationCase const validation_case = create_validation_case(param);
                 std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
                 SingleData result = create_result_dataset(validation_case.input, output_prefix);

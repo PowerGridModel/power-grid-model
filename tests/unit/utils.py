@@ -30,12 +30,14 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
     for calculation_type in relevant_calculations:
         # list of all cases, directories in validation datasets
         calculation_type_dir = DATA_PATH / calculation_type
-        if test_cases is None:
-            collected_test_cases = [item.name for item in calculation_type_dir.iterdir() if item.is_dir()]
-        else:
-            collected_test_cases = test_cases
-        for case_name in collected_test_cases:
-            case_dir = calculation_type_dir / case_name
+        test_cases_paths = {
+            str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
+            for item in calculation_type_dir.glob("**/")
+            if (item.is_dir() and (item / "params.json").is_file())
+        }
+        if test_cases is not None:
+            test_cases_paths = {key: value for key, value in test_cases_paths.items() if key in test_cases}
+        for case_name, case_dir in test_cases_paths.items():
             with open(case_dir / "params.json") as f:
                 params = json.load(f)
             # loop for sym or asym scenario
@@ -46,7 +48,6 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
                     # Build a recognizable case ID
                     case_id = case_name
                     case_id += "-sym" if sym else "-asym"
-                    case_id += "-" + calculation_type
                     case_id += "-" + params["calculation_method"]
                     if get_batch_cases:
                         case_id += "-batch"
@@ -97,6 +98,7 @@ def import_case_data(data_path: Path, sym: bool):
 def save_json_data(json_file: str, data: Union[dict, list]):
     OUPUT_PATH.mkdir(parents=True, exist_ok=True)
     data_file = OUPUT_PATH / json_file
+    data_file.parent.mkdir(parents=True, exist_ok=True)
     export_json_data(data_file, data)
 
 
