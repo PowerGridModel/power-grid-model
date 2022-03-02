@@ -15,7 +15,7 @@ grid:
         r1: R
         x1: X
         c1: C
-        # tan1:   missing in Excel (Rei Syziu)
+        # tan1:   # missing in Excel (Rei Syziu)
         r0: R0
         x0: X0
         c0: C0
@@ -58,15 +58,15 @@ grid:
       - Node.Number
       - Subnumber
       status: Switch state
-# Functions and constants are not yet implemented (Bram Stoeller)
+# These are all output attributes, you don't need to specify those (Bram Stoeller)
 #     p: Sk"nom*pf    # Not given in Excel but can be calculated from s and pf below (Rei Syziu)
 #     q: sqrt(Sk"nom^2 - (Sk"nom*pf)^2) # Not given in Excel but can be calculated from s and pf below (Rei Syziu)
-      # i:              Dont know how to calculate it; also not given in Excel (Rei Syziu)
+#     i:              Dont know how to calculate it; also not given in Excel (Rei Syziu)
 #     s: Sk"nom
-#      pf: 0.85    # Not specified in Excel but it is 0.85 as a global value in Liander grid simulation files (Rei Syziu)
+#     pf: 0.85    # Not specified in Excel but it is 0.85 as a global value in Liander grid simulation files (Rei Syziu)
       u_ref: Uref
-#      rx_ratio: R/X       # Not required in pgm but can be used as input in pgm (Rei Syziu)
-#      z01_ratio: Z0/Z1    # Not required in pgm but can be used as input in pgm (Rei Syziu)
+      rx_ratio: R/X
+      z01_ratio: Z0/Z1
 enums:
   status:
     off: 0

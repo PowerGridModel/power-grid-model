@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import numbers
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -95,15 +95,22 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
     meta_data = [{"sheet": sheet_name} for _ in range(len(sheet))]
     pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
     for attr, column_name in attributes.items():
+        if not attr in pgm_data.dtype.names:
+            attrs = ", ".join(pgm_data.dtype.names)
+            raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
+
+        # Some fields may use multiple columns, for simplicity treat a sngle column as a list of length 1
         multi_columns = column_name if isinstance(column_name, list) else [column_name]
         for col in multi_columns:
-            if not col in sheet:
+            if not isinstance(col, numbers.Number) and col not in sheet:
                 raise KeyError(f"Could not find column '{col}' in sheet '{sheet_name}' "
                                f"(to use as {component_name}.{attr})")
         if attr == "id":
             for i, meta in enumerate(meta_data):
                 meta.update({col: sheet[col][i].item() for col in multi_columns})
             col_data = range(base_id, base_id + len(sheet))
+        elif isinstance(col, numbers.Number):
+            col_data = column_name
         else:
             col_data = sheet[column_name]
             if attr in enums:
