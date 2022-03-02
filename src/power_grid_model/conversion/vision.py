@@ -148,8 +148,8 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
         return pd.concat(columns, axis=1)
 
     def _id_lookup(component: str, row: pd.Series) -> int:
-        data = ",".join(f"{k}={v}" for k, v in sorted(row.to_dict().items(), key=lambda x: x[0]))
-        key = f"{component}:{data}"
+        data = {col.split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: x[0])}
+        key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
         return LOOKUP[key]
 
     for attr, col_def in attributes.items():
