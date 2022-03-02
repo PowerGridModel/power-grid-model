@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import numbers
+from importlib import import_module
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -100,8 +101,12 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             return _parse_col_def_const(col_def)
         elif isinstance(col_def, str):
             return _parse_col_def_column_name(col_def)
-        elif isinstance(col_def, list):  # composite value
+        elif isinstance(col_def, dict) and len(col_def) == 1:
+            return _parse_col_def_map(col_def)
+        elif isinstance(col_def, list):
             return _parse_col_def_composite(col_def)
+        else:
+            raise TypeError(col_def)
 
     def _parse_col_def_const(col_def: numbers.Number) -> Tuple[Any, List[str]]:
         assert isinstance(col_def, numbers.Number)
@@ -118,17 +123,12 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             col_data *= float(units[col_units[col_def]])
         return [col_data], [col_def]
 
-    def _parse_col_def_function(col_def: Dict[str, Any]) -> Tuple[Any, List[str]]:
-        assert isinstance(col_def, str)
-        if col_name not in sheet:
-            raise KeyError(f"Could not find column '{col_name}' in sheet '{sheet_name}' "
-                           f"(for {component_name})")
-        col_data = sheet[col_def]
-        if attr in enums:
-            col_data = col_data.map(enums[attr])
-        if col_units[col_def] in units:
-            col_data *= float(units[col_units[col_def]])
-        return [col_data], [col_def]
+    def _parse_col_def_map(col_def: Dict[str, str]) -> Tuple[Any, List[str]]:
+        assert isinstance(col_def, dict) and len(col_def) == 1
+        col_name, fn_name = col_def.popitem()
+        data, col_name = _parse_col_def_column_name(col_name)
+        fn = _get_function(fn_name)
+        return [data[0].map(fn)], col_name
 
     def _parse_col_def_composite(col_def: list) -> Tuple[Any, List[str]]:
         assert isinstance(col_def, list)
@@ -158,3 +158,10 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
         pgm_data[attr] = col_data
 
     return pgm_data, meta_data
+
+
+def _get_function(fn: str) -> Callable:
+    module_path, function_name = fn.rsplit('.', 1)
+    module = import_module(module_path)
+    function = getattr(module, function_name)
+    return function
