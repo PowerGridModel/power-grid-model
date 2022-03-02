@@ -3,12 +3,13 @@ from typing import Tuple
 
 from ..enum import WindingType
 
-CONNECTION_PATTERN = re.compile(r'(Y|YN|D)(y|yn|d)(1?[0-9])')
+CONNECTION_PATTERN = re.compile(r'(Y|YN|D|ZN)(y|yn|d|zn)(1?[0-9])')
 
 WINDING_TYPES = {
     "Y": WindingType.wye,
     "YN": WindingType.wye_n,
     "D": WindingType.delta,
+    "ZN": WindingType.wye,  # TODO: Find the right value
 }
 
 

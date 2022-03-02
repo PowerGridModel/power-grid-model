@@ -142,7 +142,7 @@ grid:
       id:
       - Node.Number
       - Subnumber
-      u_rated:          Unom
+      u_rated:          Unom2
     sym_load:
       id:
       - Node.Number
@@ -158,7 +158,7 @@ grid:
       node:             Node.Number       
       status:           Switch state
       u_ref:            Uref
-      sK:               Sk"nom
+      sk:               Sk"nom
       rx_ratio:         R/X
       z01_ratio:        Z0/Z1
   Synchronous generators:
@@ -168,17 +168,17 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             generator
+#     type:             generator
       p_specified:      Pref
       q_specified:      0                       # Number 0
-  Wind Turbines:
+  Wind turbines:
     sym_gen:
       id:
       - Node.Number
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             generator
+#     type:             generator
       p_specified:      Pnom
       q_specified:      0                       # Number 0
   Loads:
@@ -188,7 +188,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             load
+#     type:             load
       p_specified:      P
       q_specified:      Q
   Zigzag transformers:
@@ -211,7 +211,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             generator
+#     type:             generator
       p_specified:      Inverter.Pnom
       q_specified:      0                       # Number 0
 enums:

@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
 
+from power_grid_model import PowerGridModel
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
 from power_grid_model.validation import validate_input_data, errors_to_string
@@ -32,14 +33,17 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
         raise ValueError(f"Output file should be a .json file, {output_file.suffix} provided.")
 
     # Convert XLSX
-    pgm_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
+    input_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
 
-    errors = validate_input_data(pgm_data)
+    errors = validate_input_data(input_data)
     if errors:
         print(errors_to_string(errors))
 
-    # Store JSON
-    export_json_data(json_file=output_file, data=pgm_data, meta_data=meta_data)
+    # Store Input JSON
+    export_json_data(json_file=output_file, data=input_data, meta_data=meta_data)
+
+    model = PowerGridModel(input_data=input_data)
+    model.calculate_power_flow()
 
 
 if __name__ == "__main__":
