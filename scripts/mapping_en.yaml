@@ -7,7 +7,7 @@ grid:
 #     simultaneity: Simultaneity  # I added this myself, not required. But needed for other calculations. Thought might be easier to get it here and use somewhere else (Rei Syziu)
   Cables:
     line:
-        id: Number   # Maybe name could be used here as well to make it globally unique or combination of name and id (not sure if later is possible)? (Rei Syziu)
+        id: Number
         from_node: From.Number
         from_status: From.Switch state
         to_node: To.Number
@@ -40,13 +40,20 @@ grid:
       sn: Snom
       uk: uk
       pk: Pk
-      i0: Io            # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      i0: Io # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
       p0: Po
-      # winding_from:   -------------------------------------------------------------------------------------------------------
-      # winding_to:     These 3 can be obtained from Connection (Excel), discuss with Bram for appropriate solution (Rei Syziu)
-      #                 See: https://pacbasics.org/transformer-vector-group/ (Rei Syziu)
-      #                 Example: https://www.answers.com/Q/What_is_vector_group_Ynyn0_in_transformer (Rei Syziu)
-      # clock:          -------------------------------------------------------------------------------------------------------
+#      winding_from:
+#        fn: power_grid_model.conversion.filters.get_winding_from
+#        kwargs:
+#          conn_str: Connection
+#      winding_to:
+#        fn: power_grid_model.conversion.filters.get_winding_to
+#        kwargs:
+#          conn_str: Connection
+#      clock:
+#        fn: power_grid_model.conversion.filters.get_clock
+#        kwargs:
+#          conn_str: Connection
       tap_side: Tap side
       tap_pos: Tap
       tap_min: Tap min
@@ -54,7 +61,7 @@ grid:
       tap_size: Tap size
   Sources:
     source:
-      id:    # ID of the coupled node is a struct of node number and subnumber (Rei Syziu)
+      id:
       - Node.Number
       - Subnumber
       status: Switch state

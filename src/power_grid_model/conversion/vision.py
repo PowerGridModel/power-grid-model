@@ -94,28 +94,67 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
     sheet, col_units = input_workbook[sheet_name]
     meta_data = [{"sheet": sheet_name} for _ in range(len(sheet))]
     pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
-    for attr, column_name in attributes.items():
+
+    def _parse_col_def(col_def: Any) -> Tuple[Any, List[str]]:
+        if isinstance(col_def, numbers.Number):
+            return _parse_col_def_const(col_def)
+        elif isinstance(col_def, str):
+            return _parse_col_def_column_name(col_def)
+        elif isinstance(col_def, list):  # composite value
+            return _parse_col_def_composite(col_def)
+
+    def _parse_col_def_const(col_def: numbers.Number) -> Tuple[Any, List[str]]:
+        assert isinstance(col_def, numbers.Number)
+        return [col_def], ['const']
+
+    def _parse_col_def_column_name(col_def: str) -> Tuple[Any, List[str]]:
+        assert isinstance(col_def, str)
+        if col_def not in sheet:
+            raise KeyError(f"Could not find column '{col_def}' in sheet '{sheet_name}' (for {component_name})")
+        col_data = sheet[col_def]
+        if attr in enums:
+            col_data = col_data.map(enums[attr])
+        if col_units[col_def] in units:
+            col_data *= float(units[col_units[col_def]])
+        return [col_data], [col_def]
+
+    def _parse_col_def_function(col_def: Dict[str, Any]) -> Tuple[Any, List[str]]:
+        assert isinstance(col_def, str)
+        if col_name not in sheet:
+            raise KeyError(f"Could not find column '{col_name}' in sheet '{sheet_name}' "
+                           f"(for {component_name})")
+        col_data = sheet[col_def]
+        if attr in enums:
+            col_data = col_data.map(enums[attr])
+        if col_units[col_def] in units:
+            col_data *= float(units[col_units[col_def]])
+        return [col_data], [col_def]
+
+    def _parse_col_def_composite(col_def: list) -> Tuple[Any, List[str]]:
+        assert isinstance(col_def, list)
+        data = []
+        labels = []
+        for sub_def in col_def:
+            sub_data, sub_labels = _parse_col_def(sub_def)
+            data += sub_data
+            labels += sub_labels
+        return data, labels
+
+    for attr, col_def in attributes.items():
         if not attr in pgm_data.dtype.names:
             attrs = ", ".join(pgm_data.dtype.names)
             raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
 
-        # Some fields may use multiple columns, for simplicity treat a sngle column as a list of length 1
-        multi_columns = column_name if isinstance(column_name, list) else [column_name]
-        for col in multi_columns:
-            if not isinstance(col, numbers.Number) and col not in sheet:
-                raise KeyError(f"Could not find column '{col}' in sheet '{sheet_name}' "
-                               f"(to use as {component_name}.{attr})")
         if attr == "id":
-            for i, meta in enumerate(meta_data):
-                meta.update({col: sheet[col][i].item() for col in multi_columns})
+            for data, label in zip(*_parse_col_def(col_def)):
+                for i, meta in enumerate(meta_data):
+                    meta[label] = data[i].item()
             col_data = range(base_id, base_id + len(sheet))
-        elif isinstance(col, numbers.Number):
-            col_data = column_name
         else:
-            col_data = sheet[column_name]
-            if attr in enums:
-                col_data = col_data.map(enums[attr])
-            if col_units[column_name] in units:
-                col_data *= float(units[col_units[column_name]])
+            col_data, _ = _parse_col_def(col_def)
+            if len(col_data) != 1:
+                raise NotImplementedError("Can't use composite values for regular columns")
+            col_data = col_data.pop()
         pgm_data[attr] = col_data
+
     return pgm_data, meta_data
