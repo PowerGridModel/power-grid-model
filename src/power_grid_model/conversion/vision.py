@@ -94,7 +94,10 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
         -> Tuple[Dict[str, np.ndarray], List[Dict[str, Any]]]:
     sheet, col_units = input_workbook[sheet_name]
     meta_data = [{"sheet": sheet_name} for _ in range(len(sheet))]
-    pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
+    try:
+        pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
+    except KeyError as ex:
+        raise KeyError(f"Invalid component type '{component_name}'") from ex
 
     def _parse_col_def(col_def: Any) -> Tuple[Any, List[str]]:
         if isinstance(col_def, numbers.Number):
@@ -115,7 +118,10 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
     def _parse_col_def_column_name(col_def: str) -> Tuple[Any, List[str]]:
         assert isinstance(col_def, str)
         if col_def not in sheet:
-            raise KeyError(f"Could not find column '{col_def}' in sheet '{sheet_name}' (for {component_name})")
+            try:
+                return _parse_col_def_const(float(col_def))
+            except ValueError:
+                raise KeyError(f"Could not find column '{col_def}' in sheet '{sheet_name}' (for {component_name})")
         col_data = sheet[col_def]
         if attr in enums:
             col_data = col_data.map(enums[attr])
@@ -161,7 +167,15 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
 
 
 def _get_function(fn: str) -> Callable:
-    module_path, function_name = fn.rsplit('.', 1)
-    module = import_module(module_path)
-    function = getattr(module, function_name)
+    parts = fn.split(".")
+    function_name = parts.pop()
+    module_path = ".".join(parts) if parts else "builtins"
+    try:
+        module = import_module(module_path)
+    except ModuleNotFoundError:
+        raise AttributeError(f"Function: {fn} does not exist")
+    try:
+        function = getattr(module, function_name)
+    except AttributeError:
+        raise AttributeError(f"Function: {function_name} does not exist in {module_path}")
     return function

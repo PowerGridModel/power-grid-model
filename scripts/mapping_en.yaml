@@ -1,73 +1,151 @@
 grid:
   Nodes:
     node:
-      id: Number
-      u_rated: Unom
+      id:             Number
+      u_rated:        Unom
 # Disabled: unknown field (Bram Stoeller)
 #     simultaneity: Simultaneity  # I added this myself, not required. But needed for other calculations. Thought might be easier to get it here and use somewhere else (Rei Syziu)
   Cables:
     line:
-        id: Number
-        from_node: From.Number
-        from_status: From.Switch state
-        to_node: To.Number
-        to_status: To.Switch state
-        r1: R
-        x1: X
-        c1: C
-        # tan1:   # missing in Excel (Rei Syziu)
-        r0: R0
-        x0: X0
-        c0: C0
-        # tan0:   missing in Excel (Rei Syziu)
-        i_n: Inom'
+        id:           Number
+        from_node:    From.Number
+        from_status:  From.Switch state
+        to_node:      To.Number
+        to_status:    To.Switch state
+        r1:           R
+        x1:           X
+        c1:           C
+        tan1:         0                       # missing in Excel so set to 0 (Rei Syziu)
+        r0:           R0
+        x0:           X0
+        c0:           C0
+        tan0:         0                       # missing in Excel so set to 0 (Rei Syziu)
+        i_n:          Inom'
   Links:
     link:
-      id: Number
-      from_node: From.Number
-      from_status: From.Switch state
-      to_node: To.Number
-      to_status: To.Switch state
+      id:              Number
+      from_node:       From.Number
+      from_status:     From.Switch state
+      to_node:         To.Number
+      to_status:       To.Switch state
+  Reactance coils:
+    link:
+      id:               Number
+      from_node:        From.Number
+      from_status:      From.Switch state
+      to_node:          To.Number
+      to_status:        To.Switch state
   Transformers:
     transformer:
-      id: Number
-      from_node: From.Number
-      from_status: From.Switch state
-      to_node: To.Number
-      to_status: To.Switch state
-      u1: Unom1
-      u2: Unom2
-      sn: Snom
-      uk: uk
-      pk: Pk
-      i0: Io # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
-      p0: Po
+      id:               Number
+      from_node:        From.Number
+      from_status:      From.Switch state
+      to_node:          To.Number
+      to_status:        To.Switch state
+      u1:               Unom1
+      u2:               Unom2
+      sn:               Snom
+      uk:               uk
+      pk:               Pk
+      i0:               Io                    # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      p0:               Po
       winding_from:
-        Connection: power_grid_model.conversion.filters.get_winding_from
+        Connection:     power_grid_model.conversion.filters.get_winding_from
       winding_to:
-        Connection: power_grid_model.conversion.filters.get_winding_to
+        Connection:     power_grid_model.conversion.filters.get_winding_to
       clock:
-        Connection: power_grid_model.conversion.filters.get_clock
-      tap_side: Tap side
-      tap_pos: Tap
-      tap_min: Tap min
-      tap_max: Tap max
-      tap_size: Tap size
+        Connection:     power_grid_model.conversion.filters.get_clock
+      tap_side:         Tap side
+      tap_pos:          Tap
+      tap_min:          Tap min
+      tap_max:          Tap max
+      tap_nom:          0                     # Missing so set to 0 (Rei Syziu)
+      tap_size:         Tap size
+      uk_min:           uk
+      uk_max:           uk
+      pk_min:           Pk
+      pk_max:           Pk
+      r_grounding_from: 0                     # Missing so set to 0 (Rei Syziu)
+      x_grounding_from: 0                     # Missing so set to 0 (Rei Syziu)
+      r_grounding_to:   0                     # Missing so set to 0 (Rei Syziu)
+      x_grounding_to:   0                     # Missing so set to 0 (Rei Syziu)
+  Special transformers:
+    transformer:
+      id:               Number
+      from_node:        From.Number
+      from_status:      From.Switch state
+      to_node:          To.Number
+      to_status:        To.Switch state
+      u1:               Unom1
+      u2:               Unom2
+      sn:               Snom
+      uk:               uknom
+      pk:               Pknom
+      i0:               Io                    # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      p0:               Po
+      winding_from:     0                     # Winding type WYE (Bram Stoeller)
+      winding_to:       0                     # Winding type WYE (Bram Stoeller)
+      clock:            0                     # Clock 0 (Bram Stoeller)
+      tap_side:         Tap side
+      tap_pos:          Tap
+      tap_min:          Tap min
+      tap_max:          Tap max
+      tap_nom:          Tap nom
+      tap_size:         Tap size
+      uk_min:           ukmin
+      uk_max:           ukmax
+      pk_min:           Pkmin
+      pk_max:           Pkmax
+      r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
   Sources:
     source:
       id:
       - Node.Number
       - Subnumber
-      status: Switch state
-# These are all output attributes, you don't need to specify those (Bram Stoeller)
-#     p: Sk"nom*pf    # Not given in Excel but can be calculated from s and pf below (Rei Syziu)
-#     q: sqrt(Sk"nom^2 - (Sk"nom*pf)^2) # Not given in Excel but can be calculated from s and pf below (Rei Syziu)
-#     i:              Dont know how to calculate it; also not given in Excel (Rei Syziu)
-#     s: Sk"nom
-#     pf: 0.85    # Not specified in Excel but it is 0.85 as a global value in Liander grid simulation files (Rei Syziu)
-      u_ref: Uref
-      rx_ratio: R/X
-      z01_ratio: Z0/Z1
+      status:           Switch state
+      u_ref:            Uref
+      sk:               Sk"nom
+      rx_ratio:         R/X
+      z01_ratio:        Z0/Z1
+  Synchronous generators:
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      p_specified:      Pref
+      q_specified:      0                       # Number 0
+  Wind turbines:
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      p_specified:      Pnom
+      q_specified:      0                       # Number 0
+  Loads:
+    sym_load:
+      id:
+      - Node.Number
+      - Subnumber
+      p_specified:      P
+      q_specified:      Q
+  Zigzag transformers:
+    shunt:
+      g1:               inf
+      b1:               inf
+      g0:                                       # Math operation here 1/ column R0 (Rei Syziu)
+        R0:             power_grid_model.conversion.filters.inverse
+      b0:                                       # Math operation here 1/ column X0 (Rei Syziu)
+        X0:             power_grid_model.conversion.filters.inverse
+  Pvs:
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      p_specified:      0                       # Number 0
+      q_specified:      0                       # Number 0
 enums:
   status:
     off: 0

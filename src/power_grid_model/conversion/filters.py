@@ -12,11 +12,8 @@ WINDING_TYPES = {
 }
 
 
-def _split_connection_string(conn_str: str) -> Tuple[str, str, str]:
-    match = CONNECTION_PATTERN.fullmatch(conn_str)
-    if not match:
-        raise ValueError(f"Invalid connection string: '{conn_str}'")
-    return match.groups()
+def inverse(val: float):
+    return 1 / val if val != 0 else float('inf')
 
 
 def get_winding_from(conn_str: str) -> WindingType:
@@ -35,3 +32,10 @@ def get_clock(conn_str: str) -> int:
     if clock > 12:
         raise ValueError
     return clock
+
+
+def _split_connection_string(conn_str: str) -> Tuple[str, str, str]:
+    match = CONNECTION_PATTERN.fullmatch(conn_str)
+    if not match:
+        raise ValueError(f"Invalid connection string: '{conn_str}'")
+    return match.groups()
