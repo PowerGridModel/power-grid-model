@@ -106,16 +106,17 @@ grid:
       - Node.Number
       - Subnumber
       from_node:        Node.Number
-      to_node:          null                    
+      to_node:
+      - Node.Number
+      - Subnumber
       from_status:      Switch state
-      to_node:          null
-      to_status:        null
+      to_status:        1
       u1:               Unom1
       u2:               Unom2
       sn:               Snom
       uk:               uk
       pk:               Pk
-      i0:               null                    
+      i0:               0
       p0:               Po
       winding_from:
         Connection:     power_grid_model.conversion.filters.get_winding_from
@@ -129,22 +130,26 @@ grid:
       tap_max:          Tap max
       tap_nom:          Tap nom
       tap_size:         Tap size
-      uk_min:           null
-      uk_max:           null
-      pk_min:           null
-      pk_max:           null
+      uk_min:           0
+      uk_max:           0
+      pk_min:           0
+      pk_max:           0
       r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
       x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
       r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
       x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
     node:
-      id:               Number
+      id:
+      - Node.Number
+      - Subnumber
       u_rated:          Unom
     sym_load:
-      id:               null                    # TODO (Bram Stoeller)
-      node:             null                    # TODO (Bram Stoeller)
-      # ...
-
+      id:
+      - Node.Number
+      - Subnumber
+      node:
+      - Node.Number
+      - Subnumber
   Sources:
     source:
       id:

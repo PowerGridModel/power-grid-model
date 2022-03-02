@@ -37,5 +37,5 @@ def get_clock(conn_str: str) -> int:
 def _split_connection_string(conn_str: str) -> Tuple[str, str, str]:
     match = CONNECTION_PATTERN.fullmatch(conn_str)
     if not match:
-        raise ValueError(f"Invalid connection string: '{conn_str}'")
+        raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.groups()

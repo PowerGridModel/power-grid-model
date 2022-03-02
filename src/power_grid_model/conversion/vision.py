@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-import numbers
 from importlib import import_module
+from numbers import Number
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -10,7 +10,10 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from .auto_id import AutoID
 from .. import initialize_array
+
+LOOKUP = AutoID()
 
 
 def read_vision_xlsx(input_file: Path) -> Dict[str, Tuple[pd.DataFrame, Dict[str, Optional[str]]]]:
@@ -50,7 +53,7 @@ def convert_vision_to_pgm(input_workbook: Dict[str, Tuple[pd.DataFrame, Dict[str
     enums = mapping.get("enums", {})
     units = mapping.get("units", {})
     pgm_data: Dict[str, List[np.ndarray]] = {}
-    meta_data: List[Dict[str, Any]] = []
+    meta_data: Dict[int, Dict[str, Any]] = {}
     for sheet_name, components in mapping["grid"].items():
         for component_name, instances in components.items():
             if not isinstance(instances, list):
@@ -62,14 +65,13 @@ def convert_vision_to_pgm(input_workbook: Dict[str, Tuple[pd.DataFrame, Dict[str
                     component_name=component_name,
                     attributes=attributes,
                     enums=enums,
-                    units=units,
-                    base_id=len(meta_data)
+                    units=units
                 )
                 if component_name not in pgm_data:
                     pgm_data[component_name] = []
-                meta_data += sheet_meta_data
+                meta_data.update(sheet_meta_data)
                 pgm_data[component_name].append(sheet_pgm_data)
-    return _merge_pgm_data(pgm_data), dict(enumerate(meta_data))
+    return _merge_pgm_data(pgm_data), meta_data
 
 
 def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
@@ -90,17 +92,17 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
 
 def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.DataFrame, List[Optional[str]]]],
                                            sheet_name: str, component_name: str, attributes: Dict[str, str],
-                                           enums: Dict[str, Dict[str, int]], units: Dict[str, float], base_id: int) \
-        -> Tuple[Dict[str, np.ndarray], List[Dict[str, Any]]]:
+                                           enums: Dict[str, Dict[str, int]], units: Dict[str, float]) \
+        -> Tuple[Dict[str, np.ndarray], Dict[int, Dict[str, Any]]]:
     sheet, col_units = input_workbook[sheet_name]
-    meta_data = [{"sheet": sheet_name} for _ in range(len(sheet))]
+    meta_data = {}
     try:
         pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
     except KeyError as ex:
         raise KeyError(f"Invalid component type '{component_name}'") from ex
 
-    def _parse_col_def(col_def: Any) -> Tuple[Any, List[str]]:
-        if isinstance(col_def, numbers.Number):
+    def _parse_col_def(col_def: Any) -> pd.DataFrame:
+        if isinstance(col_def, Number):
             return _parse_col_def_const(col_def)
         elif isinstance(col_def, str):
             return _parse_col_def_column_name(col_def)
@@ -108,16 +110,14 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             return _parse_col_def_map(col_def)
         elif isinstance(col_def, list):
             return _parse_col_def_composite(col_def)
-        elif col_def is None:
-            return [], []
         else:
-            raise TypeError(col_def)
+            raise TypeError(f"Invalid colmn definition: {col_def}")
 
-    def _parse_col_def_const(col_def: numbers.Number) -> Tuple[Any, List[str]]:
-        assert isinstance(col_def, numbers.Number)
-        return [col_def], ['const']
+    def _parse_col_def_const(col_def: Number) -> pd.DataFrame:
+        assert isinstance(col_def, Number)
+        return pd.DataFrame([col_def])
 
-    def _parse_col_def_column_name(col_def: str) -> Tuple[Any, List[str]]:
+    def _parse_col_def_column_name(col_def: str) -> pd.DataFrame:
         assert isinstance(col_def, str)
         if col_def not in sheet:
             try:
@@ -129,43 +129,48 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             col_data = col_data.map(enums[attr])
         if col_units[col_def] in units:
             col_data *= float(units[col_units[col_def]])
-        return [col_data], [col_def]
+        return pd.DataFrame(col_data, columns=[col_def])
 
-    def _parse_col_def_map(col_def: Dict[str, str]) -> Tuple[Any, List[str]]:
-        assert isinstance(col_def, dict) and len(col_def) == 1
-        col_name, fn_name = col_def.popitem()
-        data, col_name = _parse_col_def_column_name(col_name)
-        fn = _get_function(fn_name)
-        return [data[0].map(fn)], col_name
+    def _parse_col_def_map(col_def: Dict[str, str]) -> pd.DataFrame:
+        assert isinstance(col_def, dict)
+        data = pd.DataFrame()
+        for col_name, fn_name in col_def.items():
+            fn = _get_function(fn_name)
+            col_data = _parse_col_def_column_name(col_name)
+            for key, col in col_data.items():
+                data[key] = col.map(fn)
+        return data
 
-    def _parse_col_def_composite(col_def: list) -> Tuple[Any, List[str]]:
+    def _parse_col_def_composite(col_def: list) -> pd.DataFrame:
         assert isinstance(col_def, list)
-        data = []
-        labels = []
-        for sub_def in col_def:
-            sub_data, sub_labels = _parse_col_def(sub_def)
-            data += sub_data
-            labels += sub_labels
-        return data, labels
+        data = pd.DataFrame()
+        columns = [_parse_col_def(sub_def) for sub_def in col_def]
+        return pd.concat(columns, axis=1)
+
+    def _id_lookup(component: str, row: pd.Series) -> int:
+        data = ",".join(f"{k}={v}" for k, v in sorted(row.to_dict().items(), key=lambda x: x[0]))
+        key = f"{component}:{data}"
+        return LOOKUP[key]
 
     for attr, col_def in attributes.items():
         if not attr in pgm_data.dtype.names:
             attrs = ", ".join(pgm_data.dtype.names)
             raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
 
+        col_data = _parse_col_def(col_def)
         if attr == "id":
-            for data, label in zip(*_parse_col_def(col_def)):
-                for i, meta in enumerate(meta_data):
-                    meta[label] = data[i].item()
-            col_data = range(base_id, base_id + len(sheet))
+            meta = col_data.to_dict(orient="records")
+            col_data = col_data.apply(lambda row: _id_lookup(component_name, row), axis=1)
+            for i, m in zip(col_data, meta):
+                meta_data[i] = {"sheet": sheet_name}
+                meta_data[i].update(m)
+        elif attr.endswith("node"):
+            col_data = col_data.apply(lambda row: _id_lookup("node", row), axis=1)
+        elif len(col_data.columns) != 1:
+            raise ValueError(f"DataFrame for {component_name}.{attr} should contain a single column "
+                             f"({col_data.columns})")
         else:
-            col_data, _ = _parse_col_def(col_def)
-            if len(col_data) == 0:
-                col_data = 0  # TODO
-            elif len(col_data) != 1:
-                raise NotImplementedError("Can't use composite values for regular columns")
-            else:
-                col_data = col_data.pop()
+            col_data = col_data.iloc[:, 0]
         pgm_data[attr] = col_data
 
     return pgm_data, meta_data
