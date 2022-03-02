@@ -35,7 +35,7 @@ grid:
       from_status:      From.Switch state
       to_node:          To.Number
       to_status:        To.Switch state
-  Transformers:
+  Transformers:  
     transformer:
       id:               Number
       from_node:        From.Number
@@ -115,15 +115,16 @@ grid:
       id:               null                    # TODO (Bram Stoeller)
       node:             null                    # TODO (Bram Stoeller)
       # ...
+
   Sources:
     source:
       id:
       - Node.Number
       - Subnumber
-      node:             Node.Number
+      node:             Node.Number       
       status:           Switch state
       u_ref:            Uref
-      sk:               Sk"nom
+      sK:               Sk"nom
       rx_ratio:         R/X
       z01_ratio:        Z0/Z1
   Synchronous generators:
@@ -131,13 +132,19 @@ grid:
       id:
       - Node.Number
       - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             generator
       p_specified:      Pref
       q_specified:      0                       # Number 0
-  Wind turbines:
+  Wind Turbines:
     sym_gen:
       id:
       - Node.Number
       - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             generator
       p_specified:      Pnom
       q_specified:      0                       # Number 0
   Loads:
@@ -145,10 +152,18 @@ grid:
       id:
       - Node.Number
       - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             load
       p_specified:      P
       q_specified:      Q
   Zigzag transformers:
     shunt:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number
+      status:           Switch state
       g1:               inf
       b1:               inf
       g0:                                       # Math operation here 1/ column R0 (Rei Syziu)
@@ -160,22 +175,28 @@ grid:
       id:
       - Node.Number
       - Subnumber
-      p_specified:      Pnom
+      node:             Node.Number 
+      status:           Switch state 
+      type:             generator
+      p_specified:      Inverter.Pnom
       q_specified:      0                       # Number 0
 enums:
   status:
-    off: 0
-    in: 1
+    off:                0
+    in:                 1
   from_status:
-    off: 0
-    in: 1
+    off:                0
+    in:                 1
   to_status:
-    off: 0
-    in: 1
+    off:                0
+    in:                 1
 units:
-  "%": 1e-2
-  µF: 1e-6
-  kA: 1e3
-  kV: 1e3
-  MVA: 1e6
-  MWp: 1e6
+  µF:                   1e-6
+  kV:                   1e3
+  kA:                   1e3
+  kW:                   1e3
+  MVA:                  1e6
+  Mvar:                 1e6
+  MW:                   1e6
+  MWp:                  1e6
+  "%":                  1e-2
