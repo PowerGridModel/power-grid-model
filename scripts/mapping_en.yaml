@@ -105,6 +105,7 @@ grid:
       id:
       - Node.Number
       - Subnumber
+      node:             Node.Number
       status:           Switch state
       u_ref:            Uref
       sk:               Sk"nom
