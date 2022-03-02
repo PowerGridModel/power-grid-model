@@ -47,14 +47,27 @@ grid:
       sn:               Snom
       uk:               uk
       pk:               Pk
-      i0:               Io                    # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      i0:
+        fn: power_grid_model.conversion.filters.relative_no_load_current # Io/(Sn/U2/sqrt(3))
+        kwargs:
+          sn: Snom
+          u2: Unom2
+          i0: Io
       p0:               Po
       winding_from:
-        Connection:     power_grid_model.conversion.filters.get_winding_from
+        fn: power_grid_model.conversion.filters.get_winding_from
+        kwargs:
+          conn_str: Connection
+          neutral_grounding: N1
       winding_to:
-        Connection:     power_grid_model.conversion.filters.get_winding_to
+        fn: power_grid_model.conversion.filters.get_winding_to
+        kwargs:
+          conn_str: Connection
+          neutral_grounding: N1
       clock:
-        Connection:     power_grid_model.conversion.filters.get_clock
+        fn: power_grid_model.conversion.filters.get_clock
+        kwargs:
+          conn_str: Connection
       tap_side:         Tap side
       tap_pos:          Tap
       tap_min:          Tap min
@@ -65,10 +78,10 @@ grid:
       uk_max:           uk
       pk_min:           Pk
       pk_max:           Pk
-      r_grounding_from: 0                     # Missing so set to 0 (Rei Syziu)
-      x_grounding_from: 0                     # Missing so set to 0 (Rei Syziu)
-      r_grounding_to:   0                     # Missing so set to 0 (Rei Syziu)
-      x_grounding_to:   0                     # Missing so set to 0 (Rei Syziu)
+      r_grounding_from: Re1
+      x_grounding_from: Xe1
+      r_grounding_to:   Re2
+      x_grounding_to:   Xe2
   Special transformers:
     transformer:
       id:               Number
@@ -119,11 +132,19 @@ grid:
       i0:               0
       p0:               Po
       winding_from:
-        Connection:     power_grid_model.conversion.filters.get_winding_from
+        fn: power_grid_model.conversion.filters.get_winding_from
+        kwargs:
+          conn_str: Connection
+          neutral_grounding: N1
       winding_to:
-        Connection:     power_grid_model.conversion.filters.get_winding_to
+        fn: power_grid_model.conversion.filters.get_winding_to
+        kwargs:
+          conn_str: Connection
+          neutral_grounding: N0
       clock:
-        Connection:     power_grid_model.conversion.filters.get_clock
+        fn: power_grid_model.conversion.filters.get_clock
+        kwargs:
+          conn_str: Connection
       tap_side:         Tap side
       tap_pos:          Tap
       tap_min:          Tap min
@@ -150,6 +171,13 @@ grid:
       node:
       - Node.Number
       - Subnumber
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      node:
+      - Node.Number
+      - Subnumber
   Sources:
     source:
       id:
@@ -170,7 +198,7 @@ grid:
       status:           Switch state 
 #     type:             generator
       p_specified:      Pref
-      q_specified:      0                       # Number 0
+      q_specified:      0
   Wind turbines:
     sym_gen:
       id:
@@ -180,7 +208,7 @@ grid:
       status:           Switch state 
 #     type:             generator
       p_specified:      Pnom
-      q_specified:      0                       # Number 0
+      q_specified:      0
   Loads:
     sym_load:
       id:
@@ -189,7 +217,11 @@ grid:
       node:             Node.Number 
       status:           Switch state 
 #     type:             load
-      p_specified:      P
+      p_specified:
+        fn: power_grid_model.conversion.filters.scaled_power
+        kwargs:
+          p: P
+          simultaneity: Nodes!Simultaneity
       q_specified:      Q
   Zigzag transformers:
     shunt:
@@ -198,12 +230,18 @@ grid:
       - Subnumber
       node:             Node.Number
       status:           Switch state
-      g1:               inf
-      b1:               inf
+      g1:               0
+      b1:               0
       g0:                                       # Math operation here 1/ column R0 (Rei Syziu)
-        R0:             power_grid_model.conversion.filters.inverse
+        fn: power_grid_model.conversion.filters.complex_inverse_real_part
+        kwargs:
+          r0: R0
+          x0: X0
       b0:                                       # Math operation here 1/ column X0 (Rei Syziu)
-        X0:             power_grid_model.conversion.filters.inverse
+        fn: power_grid_model.conversion.filters.complex_inverse_imaginary_part
+        kwargs:
+          r0: R0
+          x0: X0
   Pvs:
     sym_gen:
       id:
@@ -213,17 +251,17 @@ grid:
       status:           Switch state 
 #     type:             generator
       p_specified:      Inverter.Pnom
-      q_specified:      0                       # Number 0
+      q_specified:      0
 enums:
-  status:
+  Switch state:
     off:                0
     in:                 1
-  from_status:
-    off:                0
-    in:                 1
-  to_status:
-    off:                0
-    in:                 1
+  N1:
+    none:               false
+    own:                true
+  N2:
+    none:               false
+    own:                true
 units:
   µF:                   1e-6
   kV:                   1e3
