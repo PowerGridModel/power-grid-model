@@ -106,8 +106,8 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             return _parse_col_def_const(col_def)
         elif isinstance(col_def, str):
             return _parse_col_def_column_name(col_def)
-        elif isinstance(col_def, dict) and len(col_def) == 1:
-            return _parse_col_def_map(col_def)
+        elif isinstance(col_def, dict):
+            return _parse_col_def_function(col_def)
         elif isinstance(col_def, list):
             return _parse_col_def_composite(col_def)
         else:
@@ -125,21 +125,21 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
             except ValueError:
                 raise KeyError(f"Could not find column '{col_def}' in sheet '{sheet_name}' (for {component_name})")
         col_data = sheet[col_def]
-        if attr in enums:
-            col_data = col_data.map(enums[attr])
+        base_col_name = col_def.split(".").pop()
+        if base_col_name in enums:
+            col_data = col_data.map(enums[base_col_name])
         if col_units[col_def] in units:
             col_data *= float(units[col_units[col_def]])
         return pd.DataFrame(col_data, columns=[col_def])
 
-    def _parse_col_def_map(col_def: Dict[str, str]) -> pd.DataFrame:
+    def _parse_col_def_function(col_def: Dict[str, str]) -> pd.DataFrame:
         assert isinstance(col_def, dict)
-        data = pd.DataFrame()
-        for col_name, fn_name in col_def.items():
+        data = []
+        for fn_name, sub_def in col_def.items():
             fn = _get_function(fn_name)
-            col_data = _parse_col_def_column_name(col_name)
-            for key, col in col_data.items():
-                data[key] = col.map(fn)
-        return data
+            col_data = _parse_col_def(sub_def)
+            data.append(col_data.apply(lambda row: fn(*row), axis=1, raw=True))
+        return pd.concat(data, axis=1)
 
     def _parse_col_def_composite(col_def: list) -> pd.DataFrame:
         assert isinstance(col_def, list)

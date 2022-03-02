@@ -3,26 +3,43 @@ from typing import Tuple
 
 from ..enum import WindingType
 
-CONNECTION_PATTERN = re.compile(r'(Y|YN|D|ZN)(y|yn|d|zn)(1?[0-9])')
+CONNECTION_PATTERN = re.compile(r'(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(1?[0-9])')
 
 WINDING_TYPES = {
     "Y": WindingType.wye,
     "YN": WindingType.wye_n,
     "D": WindingType.delta,
-    "ZN": WindingType.wye,  # TODO: Find the right value
+    "Z": WindingType.wye,
+    "ZN": WindingType.wye_n,
 }
 
 
-def inverse(val: float):
-    return 1 / val if val != 0 else float('inf')
+def relative_no_load_current(*args):  # TODO
+    return 0.0
 
 
-def get_winding_from(conn_str: str) -> WindingType:
+def neutral_grounding(*args):  # TODO
+    return 0.0
+
+
+def scaled_power(*args):  # TODO
+    return 0.0
+
+
+def complex_inverse_real_part(*args):  # TODO
+    return 0.0
+
+
+def complex_inverse_imaginary_part(*args):  # TODO
+    return 0.0
+
+
+def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingType:  # TODO
     winding_str, _, _ = _split_connection_string(conn_str)
     return WINDING_TYPES[winding_str]
 
 
-def get_winding_to(conn_str: str) -> WindingType:
+def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType:  # TODO
     _, winding_str, _ = _split_connection_string(conn_str)
     return WINDING_TYPES[winding_str.upper()]
 

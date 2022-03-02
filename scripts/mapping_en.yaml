@@ -48,26 +48,22 @@ grid:
       uk:               uk
       pk:               Pk
       i0:
-        fn: power_grid_model.conversion.filters.relative_no_load_current # Io/(Sn/U2/sqrt(3))
-        kwargs:
-          sn: Snom
-          u2: Unom2
-          i0: Io
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+          - Snom
+          - Unom2
+          - Io
       p0:               Po
       winding_from:
-        fn: power_grid_model.conversion.filters.get_winding_from
-        kwargs:
-          conn_str: Connection
-          neutral_grounding: N1
+        power_grid_model.conversion.filters.get_winding_from:
+          - Connection
+          - N1
       winding_to:
-        fn: power_grid_model.conversion.filters.get_winding_to
-        kwargs:
-          conn_str: Connection
-          neutral_grounding: N1
+        power_grid_model.conversion.filters.get_winding_to:
+          - Connection
+          - N1
       clock:
-        fn: power_grid_model.conversion.filters.get_clock
-        kwargs:
-          conn_str: Connection
+        power_grid_model.conversion.filters.get_clock:
+          - Connection
       tap_side:         Tap side
       tap_pos:          Tap
       tap_min:          Tap min
@@ -132,19 +128,11 @@ grid:
       i0:               0
       p0:               Po
       winding_from:
-        fn: power_grid_model.conversion.filters.get_winding_from
-        kwargs:
-          conn_str: Connection
-          neutral_grounding: N1
+        power_grid_model.conversion.filters.get_winding_from: Connection
       winding_to:
-        fn: power_grid_model.conversion.filters.get_winding_to
-        kwargs:
-          conn_str: Connection
-          neutral_grounding: N0
+        power_grid_model.conversion.filters.get_winding_to: Connection
       clock:
-        fn: power_grid_model.conversion.filters.get_clock
-        kwargs:
-          conn_str: Connection
+        power_grid_model.conversion.filters.get_clock: Connection
       tap_side:         Tap side
       tap_pos:          Tap
       tap_min:          Tap min
@@ -218,10 +206,9 @@ grid:
       status:           Switch state 
 #     type:             load
       p_specified:
-        fn: power_grid_model.conversion.filters.scaled_power
-        kwargs:
-          p: P
-          simultaneity: Nodes!Simultaneity
+        power_grid_model.conversion.filters.scaled_power:
+          - P
+#         - Nodes!Simultaneity #TODO: Reference to other sheet
       q_specified:      Q
   Zigzag transformers:
     shunt:
@@ -232,16 +219,14 @@ grid:
       status:           Switch state
       g1:               0
       b1:               0
-      g0:                                       # Math operation here 1/ column R0 (Rei Syziu)
-        fn: power_grid_model.conversion.filters.complex_inverse_real_part
-        kwargs:
-          r0: R0
-          x0: X0
-      b0:                                       # Math operation here 1/ column X0 (Rei Syziu)
-        fn: power_grid_model.conversion.filters.complex_inverse_imaginary_part
-        kwargs:
-          r0: R0
-          x0: X0
+      g0:
+        power_grid_model.conversion.filters.complex_inverse_real_part:
+          - R0
+          - X0
+      b0:
+        power_grid_model.conversion.filters.complex_inverse_imaginary_part:
+          - R0
+          - X0
   Pvs:
     sym_gen:
       id:

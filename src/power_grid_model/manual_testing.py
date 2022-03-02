@@ -86,6 +86,8 @@ def convert_python_to_numpy(
     if isinstance(data, dict):
         return_dict = {}
         for component_name, component_list in data.items():
+            if component_name == "meta":
+                continue
             arr: np.ndarray = initialize_array(data_type, component_name, len(component_list))
             for i, component in enumerate(component_list):
                 for property_name, value in component.items():
