@@ -1,26 +1,26 @@
 grid:
   Nodes:
     node:
-      id:             Number
-      u_rated:        Unom
+      id:               Number
+      u_rated:          Unom
 # Disabled: unknown field (Bram Stoeller)
 #     simultaneity: Simultaneity  # I added this myself, not required. But needed for other calculations. Thought might be easier to get it here and use somewhere else (Rei Syziu)
   Cables:
     line:
-        id:           Number
-        from_node:    From.Number
-        from_status:  From.Switch state
-        to_node:      To.Number
-        to_status:    To.Switch state
-        r1:           R
-        x1:           X
-        c1:           C
-        tan1:         0                       # missing in Excel so set to 0 (Rei Syziu)
-        r0:           R0
-        x0:           X0
-        c0:           C0
-        tan0:         0                       # missing in Excel so set to 0 (Rei Syziu)
-        i_n:          Inom'
+        id:             Number
+        from_node:      From.Number
+        from_status:    From.Switch state
+        to_node:        To.Number
+        to_status:      To.Switch state
+        r1:             R
+        x1:             X
+        c1:             C
+        tan1:           0                       # missing in Excel so set to 0 (Rei Syziu)
+        r0:             R0
+        x0:             X0
+        c0:             C0
+        tan0:           0                       # missing in Excel so set to 0 (Rei Syziu)
+        i_n:            Inom'
   Links:
     link:
       id:              Number
@@ -106,11 +106,40 @@ grid:
       - Node.Number
       - Subnumber
       from_node:        Node.Number
-      to_node:          null                    # TODO (Bram Stoeller)
-      # ...
+      to_node:          null                    
+      from_status:      Switch state
+      to_node:          null
+      to_status:        null
+      u1:               Unom1
+      u2:               Unom2
+      sn:               Snom
+      uk:               uk
+      pk:               Pk
+      i0:               null                    
+      p0:               Po
+      winding_from:
+        Connection:     power_grid_model.conversion.filters.get_winding_from
+      winding_to:
+        Connection:     power_grid_model.conversion.filters.get_winding_to
+      clock:
+        Connection:     power_grid_model.conversion.filters.get_clock
+      tap_side:         Tap side
+      tap_pos:          Tap
+      tap_min:          Tap min
+      tap_max:          Tap max
+      tap_nom:          Tap nom
+      tap_size:         Tap size
+      uk_min:           null
+      uk_max:           null
+      pk_min:           null
+      pk_max:           null
+      r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
     node:
-      id:               null                    # TODO (Bram Stoeller)
-      # ...
+      id:               Number
+      u_rated:          Unom
     sym_load:
       id:               null                    # TODO (Bram Stoeller)
       node:             null                    # TODO (Bram Stoeller)
