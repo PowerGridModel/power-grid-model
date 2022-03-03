@@ -6,6 +6,7 @@ from ..enum import WindingType
 
 CONNECTION_PATTERN = re.compile(r'(Y|YN|D|Z|ZN)(y|yn|d|z|zn)([0-9]|1[0-2])')
 
+# TODO: Implement Z winding
 WINDING_TYPES = {
     "Y": WindingType.wye,
     "YN": WindingType.wye_n,
@@ -31,19 +32,25 @@ def complex_inverse_imaginary_part(real: float, imag: float) -> float:
     return (1.0 / (real + 1j * imag)).imag
 
 
+# TODO: Check Z logic
 def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    winding_str, _, _ = _split_connection_string(conn_str)
-    winding = WINDING_TYPES[winding_str]
+    wfr, wto, clock_str = _split_connection_string(conn_str)
+    winding = WINDING_TYPES[wfr]
     if winding == WindingType.wye_n and not neutral_grounding:
         winding = WindingType.wye
+    if wfr[0] == "Z" and wto != "d" and int(clock_str) % 2:
+        winding = WindingType.delta
     return winding
 
 
+# TODO: Check Z logic
 def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    _, winding_str, _ = _split_connection_string(conn_str)
-    winding = WINDING_TYPES[winding_str.upper()]
+    wfr, wto, clock_str = _split_connection_string(conn_str)
+    winding = WINDING_TYPES[wto.upper()]
     if winding == WindingType.wye_n and not neutral_grounding:
         winding = WindingType.wye
+    if wfr != "D" and wto[0] == "z" and int(clock_str) % 2:
+        winding = WindingType.delta
     return winding
 
 

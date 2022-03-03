@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 from power_grid_model import PowerGridModel
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
@@ -44,7 +45,12 @@ def convert_vision_xlsx_file_to_pgm_json_file(
     export_json_data(json_file=output_file, data=input_data, meta_data=meta_data)
 
     model = PowerGridModel(input_data=input_data)
-    model.calculate_power_flow()
+    output_data = model.calculate_power_flow()
+
+    for component in output_data:
+        df = pd.DataFrame(input_data[component])
+        print(component)
+        print(df)
 
 
 if __name__ == "__main__":

@@ -15,14 +15,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # input_data
-    input_data = import_json_data(Path("OS Lemmer_EN.json"), "input")
+    input_data = import_json_data(args.input, "input")
 
     # call constructor
     model = PowerGridModel(input_data, system_frequency=50.0)
 
-    result = model.calculate_power_flow()
+    output_data = model.calculate_power_flow()
 
-    for component, data in result.items():
-        print(component.upper())
-        print("=" * len(component))
-        print(pd.DataFrame(result[component]))
+    for component in output_data:
+        df = pd.DataFrame(input_data[component])
+        print(component)
+        print(df)

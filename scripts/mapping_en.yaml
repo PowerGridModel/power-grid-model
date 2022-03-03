@@ -286,8 +286,7 @@ enums:
     Default:             0
     Industry:            0
     Business:            0
-    Residential:         0   
-
+    Residential:         0
 units:
   µF:                   1e-6
   kV:                   1e3
