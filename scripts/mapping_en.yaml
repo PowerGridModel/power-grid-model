@@ -160,7 +160,9 @@ grid:
       id:
       - Node.Number
       - Subnumber
-      node:             Node.Number 
+      node:
+      - Node.Number
+      - Subnumber
       status:           Switch state 
       type:             Behaviour
       p_specified:
@@ -171,14 +173,13 @@ grid:
         power_grid_model.conversion.filters.multiply:
           - Load.Q
           - Nodes!Simultaneity[Number=Node.Number]
-      node:
-      - Node.Number
-      - Subnumber
     sym_gen:
       id:
       - Node.Number
       - Subnumber
-      node:             Node.Number 
+      node:
+      - Node.Number
+      - Subnumber
       status:           Switch state 
       type:             0
       p_specified:      
@@ -189,9 +190,6 @@ grid:
         power_grid_model.conversion.filters.multiply:
           - Generation.Q
           - Nodes!Simultaneity[Number=Node.Number]
-      node:
-      - Node.Number
-      - Subnumber
   Sources:
     source:
       id:
