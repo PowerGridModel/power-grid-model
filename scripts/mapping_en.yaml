@@ -156,6 +156,14 @@ grid:
       id:
       - Node.Number
       - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+#     type:             load
+      p_specified:
+        power_grid_model.conversion.filters.scaled_power:
+          - Load.P
+#         - Nodes!Simultaneity #TODO: Reference to other sheet
+      q_specified:      Load.Q          #TODO Simultaneity here as well (Rei Syziu)
       node:
       - Node.Number
       - Subnumber
@@ -163,6 +171,11 @@ grid:
       id:
       - Node.Number
       - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+#     type:             generator
+      p_specified:      Generation.P
+      q_specified:      Generation.Q
       node:
       - Node.Number
       - Subnumber
