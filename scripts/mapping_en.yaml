@@ -162,12 +162,15 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             0
+      type:             Behaviour
       p_specified:
-        power_grid_model.conversion.filters.scaled_power:
+        power_grid_model.conversion.filters.multiply:
           - Load.P
-#         - Nodes!Simultaneity #TODO: Reference to other sheet
-      q_specified:      Load.Q          #TODO Simultaneity here as well (Rei Syziu)
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Load.Q
+          - Nodes!Simultaneity[Number=Node.Number]
       node:
       - Node.Number
       - Subnumber
@@ -178,8 +181,14 @@ grid:
       node:             Node.Number 
       status:           Switch state 
       type:             0
-      p_specified:      Generation.P    #TODO Simultaneity here as well (Rei Syziu)
-      q_specified:      Generation.Q    #TODO Simultaneity here as well (Rei Syziu)
+      p_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Generation.P
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Generation.Q
+          - Nodes!Simultaneity[Number=Node.Number]
       node:
       - Node.Number
       - Subnumber
@@ -221,12 +230,15 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             0
+      type:             Behaviour
       p_specified:
-        power_grid_model.conversion.filters.scaled_power:
+        power_grid_model.conversion.filters.multiply:
           - P
-#         - Nodes!Simultaneity #TODO: Reference to other sheet
-      q_specified:      Q
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Q
+          - Nodes!Simultaneity[Number=Node.Number]
   Zigzag transformers:
     shunt:
       id:
@@ -264,6 +276,15 @@ enums:
   N2:
     none:               false
     own:                true
+  Behaviour:
+    Constant admittance: 1
+    ~Constant current:   2
+    Constant power:      0
+    Default:             0
+    Industry:            0
+    Business:            0
+    Residential:         0   
+
 units:
   µF:                   1e-6
   kV:                   1e3
