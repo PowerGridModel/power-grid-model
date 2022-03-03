@@ -127,8 +127,11 @@ grid:
       sn:               Snom
       uk:               uk
       pk:               Pk
-      i0:               0
       p0:               Po
+      i0:               
+        power_grid_model.conversion.filters.division:
+          - Po
+          - Sn      
       winding_from:
         power_grid_model.conversion.filters.get_winding_from: Connection
       winding_to:
