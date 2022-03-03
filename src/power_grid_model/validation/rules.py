@@ -94,7 +94,7 @@ def all_greater_than_zero(data: Dict[str, np.ndarray], component: str, field: st
 
 
 def all_greater_than_or_equal_to_zero(
-        data: Dict[str, np.ndarray], component: str, field: str
+    data: Dict[str, np.ndarray], component: str, field: str
 ) -> List[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
@@ -113,7 +113,7 @@ def all_greater_than_or_equal_to_zero(
 
 
 def all_greater_than(
-        data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
+    data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
 ) -> List[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
@@ -139,7 +139,7 @@ def all_greater_than(
 
 
 def all_greater_or_equal(
-        data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
+    data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
 ) -> List[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
@@ -167,7 +167,7 @@ def all_greater_or_equal(
 
 
 def all_less_than(
-        data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
+    data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
 ) -> List[NotLessThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than the
@@ -193,7 +193,7 @@ def all_less_than(
 
 
 def all_less_or_equal(
-        data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
+    data: Dict[str, np.ndarray], component: str, field: str, ref_value: Union[int, float, str]
 ) -> List[NotLessOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than,
@@ -221,11 +221,11 @@ def all_less_or_equal(
 
 
 def all_between(
-        data: Dict[str, np.ndarray],
-        component: str,
-        field: str,
-        ref_value_1: Union[int, float, str],
-        ref_value_2: Union[int, float, str],
+    data: Dict[str, np.ndarray],
+    component: str,
+    field: str,
+    ref_value_1: Union[int, float, str],
+    ref_value_2: Union[int, float, str],
 ) -> List[NotBetweenError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are (exclusively)
@@ -255,11 +255,11 @@ def all_between(
 
 
 def all_between_or_at(
-        data: Dict[str, np.ndarray],
-        component: str,
-        field: str,
-        ref_value_1: Union[int, float, str],
-        ref_value_2: Union[int, float, str],
+    data: Dict[str, np.ndarray],
+    component: str,
+    field: str,
+    ref_value_1: Union[int, float, str],
+    ref_value_2: Union[int, float, str],
 ) -> List[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
@@ -289,12 +289,12 @@ def all_between_or_at(
 
 
 def none_match_comparison(
-        data: Dict[str, np.ndarray],
-        component: str,
-        field: str,
-        compare_fn: ComparisonFn,
-        ref_value: ComparisonError.RefType,
-        error: Type[Error] = ComparisonError,
+    data: Dict[str, np.ndarray],
+    component: str,
+    field: str,
+    compare_fn: ComparisonFn,
+    ref_value: ComparisonError.RefType,
+    error: Type[Error] = ComparisonError,
 ) -> List[Error]:
     # pylint: disable=too-many-arguments
     """
@@ -358,7 +358,7 @@ def all_unique(data: Dict[str, np.ndarray], component: str, field: str) -> List[
 
 
 def all_cross_unique(
-        data: Dict[str, np.ndarray], fields: List[Tuple[str, str]], cross_only=True
+    data: Dict[str, np.ndarray], fields: List[Tuple[str, str]], cross_only=True
 ) -> List[MultiComponentNotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
@@ -393,7 +393,7 @@ def all_cross_unique(
 
 
 def all_valid_enum_values(
-        data: Dict[str, np.ndarray], component: str, field: str, enum: Type[Enum]
+    data: Dict[str, np.ndarray], component: str, field: str, enum: Type[Enum]
 ) -> List[InvalidEnumValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
@@ -418,7 +418,7 @@ def all_valid_enum_values(
 
 
 def all_valid_ids(
-        data: Dict[str, np.ndarray], component: str, field: str, ref_components: Union[str, List[str]], **filters: Any
+    data: Dict[str, np.ndarray], component: str, field: str, ref_components: Union[str, List[str]], **filters: Any
 ) -> List[InvalidIdError]:
     """
     For a column which should contain object identifiers (ids), check if the id exists in the data, for a specific set
@@ -487,7 +487,7 @@ def all_boolean(data: Dict[str, np.ndarray], component: str, field: str) -> List
 
 
 def all_not_two_values_zero(
-        data: Dict[str, np.ndarray], component: str, field_1: str, field_2: str
+    data: Dict[str, np.ndarray], component: str, field_1: str, field_2: str
 ) -> List[TwoValuesZeroError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
@@ -512,7 +512,7 @@ def all_not_two_values_zero(
 
 
 def all_not_two_values_equal(
-        data: Dict[str, np.ndarray], component: str, field_1: str, field_2: str
+    data: Dict[str, np.ndarray], component: str, field_1: str, field_2: str
 ) -> List[SameValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
@@ -538,7 +538,7 @@ def all_not_two_values_equal(
 
 
 def all_ids_exist_in_data_set(
-        data: Dict[str, np.ndarray], ref_data: Dict[str, np.ndarray], component: str, ref_name: str
+    data: Dict[str, np.ndarray], ref_data: Dict[str, np.ndarray], component: str, ref_name: str
 ) -> List[IdNotInDatasetError]:
     """
     Check that for all records of a particular type of component, the ids exist in the reference data set.
@@ -617,7 +617,7 @@ def none_missing(data: Dict[str, np.ndarray], component: str, fields: Union[str,
 
 
 def all_clocks_valid(
-        data: Dict[str, np.ndarray], component: str, clock_field: str, winding_from_field: str, winding_to_field: str
+    data: Dict[str, np.ndarray], component: str, clock_field: str, winding_from_field: str, winding_to_field: str
 ) -> List[MissingValueError]:
     """
     Custom validation rule: Odd clock number is only allowed for Dy(n) or Y(N)d configuration.
