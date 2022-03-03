@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+import re
 from importlib import import_module
 from numbers import Number
 from pathlib import Path
@@ -13,7 +14,7 @@ import yaml
 from .auto_id import AutoID
 from .. import initialize_array
 
-LOOKUP = AutoID()
+COL_REF_RE = re.compile(r'([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]')
 
 
 def read_vision_xlsx(input_file: Path) -> Dict[str, Tuple[pd.DataFrame, Dict[str, Optional[str]]]]:
@@ -54,6 +55,7 @@ def convert_vision_to_pgm(input_workbook: Dict[str, Tuple[pd.DataFrame, Dict[str
     units = mapping.get("units", {})
     pgm_data: Dict[str, List[np.ndarray]] = {}
     meta_data: Dict[int, Dict[str, Any]] = {}
+    lookup = AutoID()
     for sheet_name, components in mapping["grid"].items():
         for component_name, instances in components.items():
             if not isinstance(instances, list):
@@ -65,7 +67,8 @@ def convert_vision_to_pgm(input_workbook: Dict[str, Tuple[pd.DataFrame, Dict[str
                     component_name=component_name,
                     attributes=attributes,
                     enums=enums,
-                    units=units
+                    units=units,
+                    lookup=lookup
                 )
                 if component_name not in pgm_data:
                     pgm_data[component_name] = []
@@ -92,18 +95,16 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
 
 def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.DataFrame, List[Optional[str]]]],
                                            sheet_name: str, component_name: str, attributes: Dict[str, str],
-                                           enums: Dict[str, Dict[str, int]], units: Dict[str, float]) \
+                                           enums: Dict[str, Dict[str, int]], units: Dict[str, float], lookup: AutoID) \
         -> Tuple[Dict[str, np.ndarray], Dict[int, Dict[str, Any]]]:
-    sheet, col_units = input_workbook[sheet_name]
-    meta_data = {}
-    try:
-        pgm_data = initialize_array(data_type="input", component_type=component_name, shape=len(sheet))
-    except KeyError as ex:
-        raise KeyError(f"Invalid component type '{component_name}'") from ex
+    if sheet_name not in input_workbook:
+        return {}, {}
 
     def _parse_col_def(col_def: Any) -> pd.DataFrame:
         if isinstance(col_def, Number):
             return _parse_col_def_const(col_def)
+        elif isinstance(col_def, str) and "!" in col_def:
+            return _parse_col_def_column_reference(col_def)
         elif isinstance(col_def, str):
             return _parse_col_def_column_name(col_def)
         elif isinstance(col_def, dict):
@@ -117,14 +118,41 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
         assert isinstance(col_def, Number)
         return pd.DataFrame([col_def])
 
-    def _parse_col_def_column_name(col_def: str) -> pd.DataFrame:
+    def _parse_col_def_column_name(col_def: str, col_sheet_name: str = sheet_name) -> pd.DataFrame:
         assert isinstance(col_def, str)
+        sheet, _ = input_workbook[col_sheet_name]
         if col_def not in sheet:
-            try:
+            try:  # Maybe it is not a column, but a float value like 'inf'
                 return _parse_col_def_const(float(col_def))
             except ValueError:
-                raise KeyError(f"Could not find column '{col_def}' in sheet '{sheet_name}' (for {component_name})")
+                raise KeyError(f"Could not find column '{col_def}' in sheet '{col_sheet_name}' (for {component_name})")
         col_data = sheet[col_def]
+        return _apply_enums_and_units(col_def, col_data, col_sheet_name)
+
+    def _parse_col_def_column_reference(col_def: str) -> pd.DataFrame:
+        assert isinstance(col_def, str)
+        match = COL_REF_RE.fullmatch(col_def)
+        if match is None:
+            raise ValueError(f"Invalid column reference '{col_def}' "
+                             "(should be 'OtherSheet!ValueColumn[IdColumn=RefColumn])")
+        other_sheet, value_col_name, _, other_sheet_, id_col_name, _, this_sheet_, ref_col_name = match.groups()
+        if (other_sheet_ is not None and other_sheet_ != other_sheet) \
+                or (this_sheet_ is not None and this_sheet_ != sheet_name):
+            raise ValueError(
+                f"Invalid column reference '{col_def}'.\n"
+                "It should be something like "
+                f"{other_sheet}!{value_col_name}[{other_sheet}!{{id_column}}={sheet_name}!{{ref_column}}] "
+                f"or simply {other_sheet}!{value_col_name}[{{id_column}}={{ref_column}}]"
+            )
+        ref_column = _parse_col_def_column_name(ref_col_name, sheet_name)
+        id_column = _parse_col_def_column_name(id_col_name, other_sheet)
+        val_column = _parse_col_def_column_name(value_col_name, other_sheet)
+        other = pd.concat([id_column, val_column], axis=1)
+        result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
+        return result[value_col_name]
+
+    def _apply_enums_and_units(col_def, col_data, col_sheet_name):
+        _, col_units = input_workbook[col_sheet_name]
         base_col_name = col_def.split(".").pop()
         if base_col_name in enums:
             col_data = col_data.map(enums[base_col_name])
@@ -150,7 +178,16 @@ def _convert_vision_sheet_to_pgm_component(input_workbook: Dict[str, Tuple[pd.Da
     def _id_lookup(component: str, row: pd.Series) -> int:
         data = {col.split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: x[0])}
         key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
-        return LOOKUP[key]
+        return lookup[key]
+
+    n_records = len(input_workbook[sheet_name][0])
+
+    try:
+        pgm_data = initialize_array(data_type="input", component_type=component_name, shape=n_records)
+    except KeyError as ex:
+        raise KeyError(f"Invalid component type '{component_name}'") from ex
+
+    meta_data = {}
 
     for attr, col_def in attributes.items():
         if not attr in pgm_data.dtype.names:
