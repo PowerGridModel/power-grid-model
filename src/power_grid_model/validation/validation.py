@@ -369,7 +369,6 @@ def validate_transformer(data: InputData) -> List[ValidationError]:
     errors += all_between(data, "transformer", "uk_max", 0, 1)
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "uk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "uk_max")
-    errors += all_greater_or_equal(data, "transformer", "uk_max", "uk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_max")
     return errors
