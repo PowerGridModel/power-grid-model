@@ -116,12 +116,12 @@ grid:
   Transformer loads:
     transformer:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       from_node:        Node.Number
       to_node:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       from_status:      Switch state
       to_status:        1
       u1:               Unom1
@@ -153,50 +153,41 @@ grid:
       x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
     node:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       u_rated:          Unom2
     sym_load:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number 
       status:           Switch state 
       type:             0
       p_specified:
-        power_grid_model.conversion.filters.multiply:
+        power_grid_model.conversion.filters.scaled_power:
           - Load.P
-          - Nodes!Simultaneity[Number=Node.Number]
-      q_specified:
-        power_grid_model.conversion.filters.multiply:
-          - Load.Q
-          - Nodes!Simultaneity[Number=Node.Number]
+#         - Nodes!Simultaneity #TODO: Reference to other sheet
+      q_specified:      Load.Q          #TODO Simultaneity here as well (Rei Syziu)
       node:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
     sym_gen:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number 
       status:           Switch state 
       type:             0
-      p_specified:
-        power_grid_model.conversion.filters.multiply:
-          - Generation.P
-          - Nodes!Simultaneity[Number=Node.Number]
-      q_specified:
-        power_grid_model.conversion.filters.multiply:
-          - Generation.Q
-          - Nodes!Simultaneity[Number=Node.Number]
+      p_specified:      Generation.P    #TODO Simultaneity here as well (Rei Syziu)
+      q_specified:      Generation.Q    #TODO Simultaneity here as well (Rei Syziu)
       node:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
   Sources:
     source:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number       
       status:           Switch state
       u_ref:            Uref
@@ -206,18 +197,18 @@ grid:
   Synchronous generators:
     sym_gen:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             1
+      type:             0
       p_specified:      Pref
       q_specified:      0
   Wind turbines:
     sym_gen:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number 
       status:           Switch state 
       type:             1
@@ -226,21 +217,21 @@ grid:
   Loads:
     sym_load:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number 
       status:           Switch state 
       type:             0
       p_specified:
-        power_grid_model.conversion.filters.multiply:
+        power_grid_model.conversion.filters.scaled_power:
           - P
-          - Nodes!Simultaneity[Number=Node.Number]
+#         - Nodes!Simultaneity #TODO: Reference to other sheet
       q_specified:      Q
   Zigzag transformers:
     shunt:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number
       status:           Switch state
       g1:               0
@@ -256,11 +247,11 @@ grid:
   Pvs:
     sym_gen:
       id:
-        - Node.Number
-        - Subnumber
+      - Node.Number
+      - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             1
+      type:             0
       p_specified:      Inverter.Pnom
       q_specified:      0
 enums:
