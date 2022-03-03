@@ -66,7 +66,7 @@ grid:
       tap_pos:          Tap
       tap_min:          Tap min
       tap_max:          Tap max
-      tap_nom:          0                     # Missing so set to 0 (Rei Syziu)
+      tap_nom:          Tap nom
       tap_size:         Tap size
       uk_min:           uk
       uk_max:           uk
