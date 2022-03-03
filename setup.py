@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import os
+import re
 from glob import glob
 import shutil
 import numpy as np
@@ -177,6 +178,15 @@ def package_files(directory):
     return paths
 
 
+def convert_long_description(raw_readme: str):
+    if "GITHUB_SHA" not in os.environ:
+        return raw_readme
+    else:
+        sha = os.environ["GITHUB_SHA"].lower()
+        url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
+        return re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
+
+
 def get_version(pkg_dir):
     with open(os.path.join(pkg_dir, "VERSION")) as f:
         version = f.read().strip().strip("\n")
@@ -222,6 +232,7 @@ def build_pkg(setup_file, author, author_email, description, url):
     pkg_name = pkg_pip_name.replace("-", "_")
     with open(os.path.join(pkg_dir, "README.md")) as f:
         long_description = f.read()
+        long_description = convert_long_description(long_description)
     with open(os.path.join(pkg_dir, "requirements.txt")) as f:
         required = f.read().splitlines()
         required = [x for x in required if "#" not in x]

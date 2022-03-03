@@ -49,6 +49,7 @@ jobs:
       - name: Python test and coverage
         run: |
           /opt/venv/bin/pip install -e .
+          /opt/venv/bin/pip install -r dev-requirements.txt
           /opt/venv/bin/pytest
           # remove cython generated cpp file
           rm -rf src/power_grid_model/*.cpp
