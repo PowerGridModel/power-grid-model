@@ -37,7 +37,7 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
 
     errors = validate_input_data(input_data)
     if errors:
-        print(errors_to_string(errors))
+        print(errors_to_string(errors, details=True))
 
     # Store Input JSON
     export_json_data(json_file=output_file, data=input_data, meta_data=meta_data)
