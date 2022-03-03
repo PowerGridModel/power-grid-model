@@ -177,9 +177,9 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-      type:             1
-      p_specified:      Generation.P
-      q_specified:      Generation.Q
+      type:             0
+      p_specified:      Generation.P    #TODO Simultaneity here as well (Rei Syziu)
+      q_specified:      Generation.Q    #TODO Simultaneity here as well (Rei Syziu)
       node:
       - Node.Number
       - Subnumber
