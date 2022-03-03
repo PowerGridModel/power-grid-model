@@ -14,12 +14,9 @@ WINDING_TYPES = {
     "ZN": WindingType.wye_n,
 }
 
-def division(p0: float, sn: float) -> float:
-    return p0/sn
 
-
-def relative_no_load_current(i0: float, sn: float, un: float) -> float:
-    return i0 / (sn / un / math.sqrt(3))
+def relative_no_load_current(i0: float, p0: float, sn: float, un: float) -> float:
+    return i0 / (sn / un / math.sqrt(3)) if i0 > p0 / sn else p0 / sn
 
 
 def multiply(*args: float):

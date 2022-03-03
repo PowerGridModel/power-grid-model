@@ -46,8 +46,9 @@ grid:
       uk:               uk
       pk:               Pk
       i0:
-        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3)) if Io > Po/Sn else Po/Sn
           - Io
+          - Po
           - Snom
           - Unom2
       p0:               Po
@@ -89,8 +90,9 @@ grid:
       uk:               uknom
       pk:               Pknom
       i0:               
-        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3)) if Io > Po/Sn else Po/Sn
           - Io
+          - Po
           - Snom
           - Unom2
       p0:               Po
@@ -129,9 +131,11 @@ grid:
       pk:               Pk
       p0:               Po
       i0:               
-        power_grid_model.conversion.filters.division:
+        power_grid_model.conversion.filters.relative_no_load_current: # Po/Sn
+          - 0
           - Po
-          - Snom      
+          - Snom
+          - Unom2
       winding_from:
         power_grid_model.conversion.filters.get_winding_from: Connection
       winding_to:
