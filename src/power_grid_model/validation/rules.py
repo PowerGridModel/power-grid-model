@@ -639,7 +639,7 @@ def all_clocks_valid(
     wto = data[component][winding_to_field]
     odd = clk % 2 == 1
     dyn = np.logical_and(wfr == WindingType.delta, np.isin(wto, [WindingType.wye, WindingType.wye_n]))
-    ynd = np.logical_and(np.isin(wfr, [WindingType.wye, WindingType.wye_n]), wfr == WindingType.delta)
+    ynd = np.logical_and(np.isin(wfr, [WindingType.wye, WindingType.wye_n]), wto == WindingType.delta)
     err = np.logical_and(odd, np.logical_not(np.logical_or(dyn, ynd)))
     if err.any():
         return [
