@@ -14,8 +14,9 @@ from power_grid_model.validation import validate_input_data, errors_to_string
 BASE_DIR = Path(__file__).parent
 
 
-def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Path,
-                                              output_file: Optional[Path] = None) -> None:
+def convert_vision_xlsx_file_to_pgm_json_file(
+    input_file: Path, mapping_file: Path, output_file: Optional[Path] = None
+) -> None:
     # Input Workbook
     if input_file.suffix.lower() != ".xlsx":
         raise ValueError(f"Input file should be a .xlsx file, {input_file.suffix} provided.")
