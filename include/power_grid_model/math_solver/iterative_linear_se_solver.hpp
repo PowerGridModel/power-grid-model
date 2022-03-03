@@ -33,7 +33,7 @@ static_assert(sizeof(SEUnknown<true>) == sizeof(double[4]));
 static_assert(alignof(SEUnknown<true>) == alignof(double[4]));
 static_assert(std::is_standard_layout_v<SEUnknown<true>>);
 static_assert(sizeof(SEUnknown<false>) == sizeof(double[12]));
-static_assert(alignof(SEUnknown<false>) == alignof(double[12]));
+static_assert(alignof(SEUnknown<false>) >= alignof(double[12]));
 static_assert(std::is_standard_layout_v<SEUnknown<false>>);
 // block class for the right hand side in state estimation equation
 template <bool sym>
@@ -45,7 +45,7 @@ static_assert(sizeof(SERhs<true>) == sizeof(double[4]));
 static_assert(alignof(SERhs<true>) == alignof(double[4]));
 static_assert(std::is_standard_layout_v<SERhs<true>>);
 static_assert(sizeof(SERhs<false>) == sizeof(double[12]));
-static_assert(alignof(SERhs<false>) == alignof(double[12]));
+static_assert(alignof(SERhs<false>) >= alignof(double[12]));
 static_assert(std::is_standard_layout_v<SERhs<false>>);
 
 // class of 2*2 (6*6) se gain block
