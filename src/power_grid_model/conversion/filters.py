@@ -35,7 +35,7 @@ def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingTy
     winding_str, _, _ = _split_connection_string(conn_str)
     winding = WINDING_TYPES[winding_str]
     if winding == WindingType.wye_n and not neutral_grounding:
-        winding == WindingType.wye
+        winding = WindingType.wye
     return winding
 
 
@@ -43,7 +43,7 @@ def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType
     _, winding_str, _ = _split_connection_string(conn_str)
     winding = WINDING_TYPES[winding_str.upper()]
     if winding == WindingType.wye_n and not neutral_grounding:
-        winding == WindingType.wye
+        winding = WindingType.wye
     return winding
 
 
