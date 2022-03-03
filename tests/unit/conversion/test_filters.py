@@ -1,12 +1,6 @@
 import pytest
-from power_grid_model.conversion.filters import inverse, get_winding_from, get_winding_to, get_clock
+from power_grid_model.conversion.filters import get_winding_from, get_winding_to, get_clock
 from power_grid_model.enum import WindingType
-
-
-def test_inverse():
-    assert inverse(0) == float('inf')
-    assert inverse(1) == float(1)
-    assert inverse(10) == float(0.1)
 
 
 def test_get_winding_from():

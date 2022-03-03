@@ -58,7 +58,7 @@ grid:
       winding_to:
         power_grid_model.conversion.filters.get_winding_to:
           - Connection
-          - N1
+          - N2
       clock:
         power_grid_model.conversion.filters.get_clock:
           - Connection
