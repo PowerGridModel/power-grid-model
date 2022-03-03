@@ -131,7 +131,7 @@ grid:
       i0:               
         power_grid_model.conversion.filters.division:
           - Po
-          - Sn      
+          - Snom      
       winding_from:
         power_grid_model.conversion.filters.get_winding_from: Connection
       winding_to:
