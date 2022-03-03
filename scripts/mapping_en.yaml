@@ -90,7 +90,11 @@ grid:
       sn:               Snom
       uk:               uknom
       pk:               Pknom
-      i0:               Io                    # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      i0:               
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+          - Snom
+          - Unom2
+          - Io
       p0:               Po
       winding_from:     0                     # Winding type WYE (Bram Stoeller)
       winding_to:       0                     # Winding type WYE (Bram Stoeller)
