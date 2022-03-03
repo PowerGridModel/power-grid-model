@@ -15,8 +15,8 @@ WINDING_TYPES = {
 }
 
 
-def relative_no_load_current(*args):  # TODO
-    return 0.0
+def relative_no_load_current(i0, sn, un):
+    return i0 / (sn / un / math.sqrt(3))
 
 
 def neutral_grounding(*args):  # TODO

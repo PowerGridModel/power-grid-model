@@ -3,8 +3,6 @@ grid:
     node:
       id:               Number
       u_rated:          Unom
-# Disabled: unknown field (Bram Stoeller)
-#     simultaneity: Simultaneity  # I added this myself, not required. But needed for other calculations. Thought might be easier to get it here and use somewhere else (Rei Syziu)
   Cables:
     line:
         id:             Number
@@ -49,9 +47,9 @@ grid:
       pk:               Pk
       i0:
         power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+          - Io
           - Snom
           - Unom2
-          - Io
       p0:               Po
       winding_from:
         power_grid_model.conversion.filters.get_winding_from:
@@ -92,9 +90,9 @@ grid:
       pk:               Pknom
       i0:               
         power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+          - Io
           - Snom
           - Unom2
-          - Io
       p0:               Po
       winding_from:     0                     # Winding type WYE (Bram Stoeller)
       winding_to:       0                     # Winding type WYE (Bram Stoeller)
