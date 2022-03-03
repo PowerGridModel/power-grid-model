@@ -141,8 +141,8 @@ grid:
       tap_max:          Tap max
       tap_nom:          Tap nom
       tap_size:         Tap size
-      uk_min:           0
-      uk_max:           0
+      uk_min:           uk
+      uk_max:           uk
       pk_min:           0
       pk_max:           0
       r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
