@@ -158,7 +158,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             load
+      type:             0
       p_specified:
         power_grid_model.conversion.filters.scaled_power:
           - Load.P
@@ -173,7 +173,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Generation.P
       q_specified:      Generation.Q
       node:
@@ -197,7 +197,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Pref
       q_specified:      0
   Wind turbines:
@@ -207,7 +207,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Pnom
       q_specified:      0
   Loads:
@@ -217,7 +217,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             load
+      type:             0
       p_specified:
         power_grid_model.conversion.filters.scaled_power:
           - P
@@ -247,7 +247,7 @@ grid:
       - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Inverter.Pnom
       q_specified:      0
 enums:
