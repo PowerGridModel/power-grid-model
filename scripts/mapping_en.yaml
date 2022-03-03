@@ -90,7 +90,11 @@ grid:
       sn:               Snom
       uk:               uknom
       pk:               Pknom
-      i0:               Io                    # Not sure about units here; in Excel it is in A but in pgm it is in - (Rei Syziu)
+      i0:               
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3))
+          - Snom
+          - Unom2
+          - Io
       p0:               Po
       winding_from:     0                     # Winding type WYE (Bram Stoeller)
       winding_to:       0                     # Winding type WYE (Bram Stoeller)
@@ -156,6 +160,17 @@ grid:
       id:
         - Node.Number
         - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             0
+      p_specified:
+        power_grid_model.conversion.filters.multiply:
+          - Load.P
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:
+        power_grid_model.conversion.filters.multiply:
+          - Load.Q
+          - Nodes!Simultaneity[Number=Node.Number]
       node:
         - Node.Number
         - Subnumber
@@ -163,6 +178,17 @@ grid:
       id:
         - Node.Number
         - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             0
+      p_specified:
+        power_grid_model.conversion.filters.multiply:
+          - Generation.P
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:
+        power_grid_model.conversion.filters.multiply:
+          - Generation.Q
+          - Nodes!Simultaneity[Number=Node.Number]
       node:
         - Node.Number
         - Subnumber
@@ -184,7 +210,7 @@ grid:
         - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Pref
       q_specified:      0
   Wind turbines:
@@ -194,7 +220,7 @@ grid:
         - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Pnom
       q_specified:      0
   Loads:
@@ -204,9 +230,9 @@ grid:
         - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             load
+      type:             0
       p_specified:
-        power_grid_model.conversion.filters.scaled_power:
+        power_grid_model.conversion.filters.multiply:
           - P
           - Nodes!Simultaneity[Number=Node.Number]
       q_specified:      Q
@@ -234,7 +260,7 @@ grid:
         - Subnumber
       node:             Node.Number 
       status:           Switch state 
-#     type:             generator
+      type:             1
       p_specified:      Inverter.Pnom
       q_specified:      0
 enums:

@@ -1,3 +1,4 @@
+import math
 import re
 from typing import Tuple
 
@@ -22,8 +23,8 @@ def neutral_grounding(*args):  # TODO
     return 0.0
 
 
-def scaled_power(*args):  # TODO
-    return 0.0
+def multiply(*args):
+    return math.prod(args)
 
 
 def complex_inverse_real_part(*args):  # TODO
