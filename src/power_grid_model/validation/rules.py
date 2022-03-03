@@ -59,8 +59,10 @@ from .errors import (
     NotBetweenOrAtError,
     MissingValueError,
     InfinityError,
+    TransformerClockError,
 )
 from .utils import eval_expression, nan_type
+from ..enum import WindingType
 
 Error = TypeVar("Error", bound=ValidationError)
 
@@ -612,3 +614,39 @@ def none_missing(data: Dict[str, np.ndarray], component: str, fields: Union[str,
             ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
     return errors
+
+
+def all_clocks_valid(
+    data: Dict[str, np.ndarray], component: str, clock_field: str, winding_from_field: str, winding_to_field: str
+) -> List[MissingValueError]:
+    """
+    Custom validation rule: Odd clock number is only allowed for Dy(n) or Y(N)d configuration.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        clock_field: The clock field
+        winding_from_field: The winding from field
+        winding_to_field: The winding to field
+
+    Returns:
+        A list containing zero or more TransformerClockErrors; listing all the ids of transformers where the clock was
+        invalid, given the winding type.
+    """
+
+    clk = data[component][clock_field]
+    wfr = data[component][winding_from_field]
+    wto = data[component][winding_to_field]
+    odd = clk % 2 == 1
+    dyn = np.logical_and(wfr == WindingType.delta, np.isin(wto, [WindingType.wye, WindingType.wye_n]))
+    ynd = np.logical_and(np.isin(wfr, [WindingType.wye, WindingType.wye_n]), wfr == WindingType.delta)
+    err = np.logical_and(odd, np.logical_not(np.logical_or(dyn, ynd)))
+    if err.any():
+        return [
+            TransformerClockError(
+                component=component,
+                fields=[component, winding_from_field, winding_to_field],
+                ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
