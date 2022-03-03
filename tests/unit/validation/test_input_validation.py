@@ -6,7 +6,7 @@ from typing import Dict
 
 import numpy as np
 import pytest
-from power_grid_model import initialize_array, MeasuredTerminalType, WindingType, LoadGenType
+from power_grid_model import initialize_array, BranchSide, MeasuredTerminalType, WindingType, LoadGenType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     NotGreaterThanError,
@@ -71,7 +71,7 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["tap_nom"] = [-3, 3, 4]
     transformer["tap_size"] = [262.5, 0.0, -10.0]
     transformer["uk_min"] = [0.0000000005, 0.0, 0.9]
-    transformer["uk_max"] = [0.0000000005, 0.0, 0.9]
+    transformer["uk_max"] = [0.0000000005, 0.0, 0.8]
     transformer["pk_min"] = [300.0, 0.0, -10.0]
     transformer["pk_max"] = [400.0, -0.1, -10.0]
 
@@ -249,9 +249,9 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotBetweenError("transformer", "uk_max", [14], (0, 1)) in validation_errors
     assert NotGreaterOrEqualError("transformer", "pk_min", [15], 0) in validation_errors
     assert NotGreaterOrEqualError("transformer", "pk_max", [14, 15], 0) in validation_errors
-    assert InvalidEnumValueError("transformer", "winding_from", [1], WindingType)
-    assert InvalidEnumValueError("transformer", "winding_to", [1], WindingType)
-    assert InvalidEnumValueError("transformer", "tap_side", [1], WindingType)
+    assert InvalidEnumValueError("transformer", "winding_from", [1], WindingType) in validation_errors
+    assert InvalidEnumValueError("transformer", "winding_to", [1], WindingType) in validation_errors
+    assert InvalidEnumValueError("transformer", "tap_side", [1], BranchSide) in validation_errors
 
     assert InvalidIdError("source", "node", [16], "node") in validation_errors
     assert NotBooleanError("source", "status", [17, 1]) in validation_errors
@@ -265,19 +265,19 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert InvalidIdError("sym_load", "node", [1], "node") in validation_errors
     assert NotBooleanError("sym_load", "status", [20, 21]) in validation_errors
-    assert InvalidEnumValueError("sym_load", "type", [20], LoadGenType)
+    assert InvalidEnumValueError("sym_load", "type", [21], LoadGenType) in validation_errors
 
     assert InvalidIdError("sym_gen", "node", [1], "node") in validation_errors
     assert NotBooleanError("sym_gen", "status", [22, 23]) in validation_errors
-    assert InvalidEnumValueError("sym_gen", "type", [22], LoadGenType)
+    assert InvalidEnumValueError("sym_gen", "type", [22], LoadGenType) in validation_errors
 
     assert InvalidIdError("asym_load", "node", [1], "node") in validation_errors
     assert NotBooleanError("asym_load", "status", [24, 25]) in validation_errors
-    assert InvalidEnumValueError("asym_load", "type", [24], LoadGenType)
+    assert InvalidEnumValueError("asym_load", "type", [1], LoadGenType) in validation_errors
 
     assert InvalidIdError("asym_gen", "node", [1], "node") in validation_errors
     assert NotBooleanError("asym_gen", "status", [26, 27]) in validation_errors
-    assert InvalidEnumValueError("sym_load", "type", [1, 26], LoadGenType)
+    assert InvalidEnumValueError("asym_gen", "type", [1, 26], LoadGenType) in validation_errors
 
     assert InvalidIdError("sym_voltage_sensor", "measured_object", [8, 10], "node") in validation_errors
     assert NotGreaterThanError("sym_voltage_sensor", "u_measured", [7, 10], 0) in validation_errors
@@ -308,7 +308,10 @@ def test_validate_input_data_sym_calculation(input_data):
         )
         in validation_errors
     )
-    assert InvalidEnumValueError("sym_power_sensor", "measured_terminal_type", [10], MeasuredTerminalType)
+    assert (
+        InvalidEnumValueError("sym_power_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        in validation_errors
+    )
 
     assert (
         InvalidIdError(
@@ -330,7 +333,12 @@ def test_validate_input_data_sym_calculation(input_data):
         )
         in validation_errors
     )
-    assert InvalidEnumValueError("asym_power_sensor", "measured_terminal_type", [10], MeasuredTerminalType)
+    assert (
+        InvalidEnumValueError("asym_power_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        in validation_errors
+    )
+
+    assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
 
 
 def test_validate_input_data_asym_calculation(input_data):
