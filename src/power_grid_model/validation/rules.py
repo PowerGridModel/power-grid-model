@@ -645,7 +645,7 @@ def all_clocks_valid(
         return [
             TransformerClockError(
                 component=component,
-                fields=[component, winding_from_field, winding_to_field],
+                fields=[clock_field, winding_from_field, winding_to_field],
                 ids=data[component]["id"][err].flatten().tolist(),
             )
         ]
