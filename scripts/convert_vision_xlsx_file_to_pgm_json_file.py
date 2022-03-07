@@ -10,7 +10,7 @@ import pandas as pd
 from power_grid_model import PowerGridModel
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
-from power_grid_model.validation import validate_input_data, errors_to_string
+from power_grid_model.validation import assert_valid_input_data, errors_to_string, ValidationException
 
 BASE_DIR = Path(__file__).parent
 
@@ -36,10 +36,11 @@ def convert_vision_xlsx_file_to_pgm_json_file(
 
     # Convert XLSX
     input_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
-
-    errors = validate_input_data(input_data)
-    if errors:
-        print(errors_to_string(errors, details=True))
+    try:
+        assert_valid_input_data(input_data)
+    except ValidationException as ex:
+        print(errors_to_string(ex.errors, details=True))
+        raise
 
     # Store Input JSON
     export_json_data(json_file=output_file, data=input_data, meta_data=meta_data)

@@ -202,7 +202,10 @@ grid:
       - Subnumber
       node:             Node.Number       
       status:           Switch state
-      u_ref:            Uref
+      u_ref:
+        power_grid_model.conversion.filters.multiply:
+          - Uref
+          - Nodes!Unom[Number=Node.Number]
       sk:               Sk"nom
       rx_ratio:         R/X
       z01_ratio:        Z0/Z1
@@ -288,12 +291,15 @@ enums:
     Business:            0
     Residential:         0
 units:
-  µF:                   1e-6
-  kV:                   1e3
-  kA:                   1e3
-  kW:                   1e3
-  MVA:                  1e6
-  Mvar:                 1e6
-  MW:                   1e6
-  MWp:                  1e6
-  "%":                  1e-2
+  pu:   1       # per unit
+  Ohm:  1       # ohm
+  A:    1       # ampere
+  µF:   1e-6    # micro farad
+  kV:   1e3     # kilo volts
+  kA:   1e3     # kilo amperes
+  kW:   1e3     # kilo watts
+  MVA:  1e6     # mega volt amperes
+  Mvar: 1e6     # mega volt amperes reactive
+  MW:   1e6     # mega watts
+  MWp:  1e6     # mega watt peak
+  "%":  1e-2    # percent

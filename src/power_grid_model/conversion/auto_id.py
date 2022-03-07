@@ -2,7 +2,6 @@ from typing import Dict, Hashable
 
 
 class AutoID:
-
     def __init__(self):
         self.items: Dict[Hashable, int] = {}
 

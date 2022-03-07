@@ -4,7 +4,7 @@ from typing import Tuple
 
 from ..enum import WindingType
 
-CONNECTION_PATTERN = re.compile(r'(Y|YN|D|Z|ZN)(y|yn|d|z|zn)([0-9]|1[0-2])')
+CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)([0-9]|1[0-2])")
 
 # TODO: Implement Z winding
 WINDING_TYPES = {
