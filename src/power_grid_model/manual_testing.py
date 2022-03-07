@@ -8,7 +8,7 @@ This file contains all the helper functions for testing purpose
 
 import json
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -34,7 +34,7 @@ def is_nan(data) -> bool:
 
 
 def convert_list_to_batch_data(
-    list_data: List[Dict[str, np.ndarray]]
+        list_data: List[Dict[str, np.ndarray]]
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert list of dataset to one single batch dataset
@@ -71,7 +71,7 @@ def convert_list_to_batch_data(
 
 
 def convert_python_to_numpy(
-    data: Union[Dict, List], data_type: str
+        data: Union[Dict, List], data_type: str
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert native python data to internal numpy
@@ -86,6 +86,8 @@ def convert_python_to_numpy(
     if isinstance(data, dict):
         return_dict = {}
         for component_name, component_list in data.items():
+            if component_name == "meta":
+                continue
             arr: np.ndarray = initialize_array(data_type, component_name, len(component_list))
             for i, component in enumerate(component_list):
                 for property_name, value in component.items():
@@ -107,7 +109,7 @@ def convert_python_to_numpy(
 
 
 def convert_batch_to_list_data(
-    batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+        batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
 ) -> List[Dict[str, np.ndarray]]:
     """
     Convert list of dataset to one single batch dataset
@@ -132,7 +134,7 @@ def convert_batch_to_list_data(
         single_dataset = {}
         for key, batch in batch_data.items():
             if isinstance(batch, dict):
-                single_dataset[key] = batch["data"][batch["indptr"][i] : batch["indptr"][i + 1]]
+                single_dataset[key] = batch["data"][batch["indptr"][i]: batch["indptr"][i + 1]]
             else:
                 single_dataset[key] = batch[i, ...]
         list_data.append(single_dataset)
@@ -181,18 +183,24 @@ def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndar
     return convert_python_to_numpy(json_data, data_type)
 
 
-def export_json_data(json_file: Path, data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]], indent=2):
+def export_json_data(json_file: Path, data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]], indent=2,
+                     meta_data: Optional[Dict[int, Any]] = None):
     """
     export json data
     Args:
         json_file: path to json file
-        data: A single or batch dataset for power-grid-model
-        indent:
-            indent of the file, default 2
+        data: a single or batch dataset for power-grid-model
+        indent: indent of the file, default 2
+        meta_data: extra information (in any json-serializable format), indexed on the object ids
+                   e.g. a string representing the original id, or a dictionary storing even more information.
 
     Returns:
         Save to file
     """
     json_data = convert_numpy_to_python(data)
+
+    if meta_data is not None:
+        json_data["meta"] = meta_data
+
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
         json.dump(json_data, file_pointer, indent=indent)

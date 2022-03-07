@@ -1,0 +1,303 @@
+grid:
+  Nodes:
+    node:
+      id:               Number
+      u_rated:          Unom
+  Cables:
+    line:
+        id:             Number
+        from_node:      From.Number
+        from_status:    From.Switch state
+        to_node:        To.Number
+        to_status:      To.Switch state
+        r1:             R
+        x1:             X
+        c1:             C
+        tan1:           0                       # missing in Excel so set to 0 (Rei Syziu)
+        r0:             R0
+        x0:             X0
+        c0:             C0
+        tan0:           0                       # missing in Excel so set to 0 (Rei Syziu)
+        i_n:            Inom'
+  Links:
+    link:
+      id:              Number
+      from_node:       From.Number
+      from_status:     From.Switch state
+      to_node:         To.Number
+      to_status:       To.Switch state
+  Reactance coils:
+    link:
+      id:               Number
+      from_node:        From.Number
+      from_status:      From.Switch state
+      to_node:          To.Number
+      to_status:        To.Switch state
+  Transformers:  
+    transformer:
+      id:               Number
+      from_node:        From.Number
+      from_status:      From.Switch state
+      to_node:          To.Number
+      to_status:        To.Switch state
+      u1:               Unom1
+      u2:               Unom2
+      sn:               Snom
+      uk:               uk
+      pk:               Pk
+      i0:
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3)) if Io > Po/Sn else Po/Sn
+          - Io
+          - Po
+          - Snom
+          - Unom2
+      p0:               Po
+      winding_from:
+        power_grid_model.conversion.filters.get_winding_from:
+          - Connection
+          - N1
+      winding_to:
+        power_grid_model.conversion.filters.get_winding_to:
+          - Connection
+          - N2
+      clock:
+        power_grid_model.conversion.filters.get_clock:
+          - Connection
+      tap_side:         Tap side
+      tap_pos:          Tap
+      tap_min:          Tap min
+      tap_max:          Tap max
+      tap_nom:          Tap nom
+      tap_size:         Tap size
+      uk_min:           uk
+      uk_max:           uk
+      pk_min:           Pk
+      pk_max:           Pk
+      r_grounding_from: Re1
+      x_grounding_from: Xe1
+      r_grounding_to:   Re2
+      x_grounding_to:   Xe2
+  Special transformers:
+    transformer:
+      id:               Number
+      from_node:        From.Number
+      from_status:      From.Switch state
+      to_node:          To.Number
+      to_status:        To.Switch state
+      u1:               Unom1
+      u2:               Unom2
+      sn:               Snom
+      uk:               uknom
+      pk:               Pknom
+      i0:               
+        power_grid_model.conversion.filters.relative_no_load_current: # Io/(Sn/U2/sqrt(3)) if Io > Po/Sn else Po/Sn
+          - Io
+          - Po
+          - Snom
+          - Unom2
+      p0:               Po
+      winding_from:     0                     # Winding type WYE (Bram Stoeller)
+      winding_to:       0                     # Winding type WYE (Bram Stoeller)
+      clock:            0                     # Clock 0 (Bram Stoeller)
+      tap_side:         Tap side
+      tap_pos:          Tap
+      tap_min:          Tap min
+      tap_max:          Tap max
+      tap_nom:          Tap nom
+      tap_size:         Tap size
+      uk_min:           ukmin
+      uk_max:           ukmax
+      pk_min:           Pkmin
+      pk_max:           Pkmax
+      r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+  Transformer loads:
+    transformer:
+      id:
+      - Node.Number
+      - Subnumber
+      from_node:        Node.Number
+      to_node:
+      - Node.Number
+      - Subnumber
+      from_status:      Switch state
+      to_status:        1
+      u1:               Unom1
+      u2:               Unom2
+      sn:               Snom
+      uk:               uk
+      pk:               Pk
+      p0:               Po
+      i0:               
+        power_grid_model.conversion.filters.relative_no_load_current: # Po/Sn
+          - 0
+          - Po
+          - Snom
+          - Unom2
+      winding_from:
+        power_grid_model.conversion.filters.get_winding_from: Connection
+      winding_to:
+        power_grid_model.conversion.filters.get_winding_to: Connection
+      clock:
+        power_grid_model.conversion.filters.get_clock: Connection
+      tap_side:         Tap side
+      tap_pos:          Tap
+      tap_min:          Tap min
+      tap_max:          Tap max
+      tap_nom:          Tap nom
+      tap_size:         Tap size
+      uk_min:           uk
+      uk_max:           uk
+      pk_min:           Pk
+      pk_max:           Pk
+      r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
+      r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+      x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+    node:
+      id:
+      - Node.Number
+      - Subnumber
+      u_rated:          Unom2
+    sym_load:
+      id:
+      - Node.Number
+      - Subnumber
+      node:
+      - Node.Number
+      - Subnumber
+      status:           Switch state 
+      type:             Behaviour
+      p_specified:
+        power_grid_model.conversion.filters.multiply:
+          - Load.P
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Load.Q
+          - Nodes!Simultaneity[Number=Node.Number]
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      node:
+      - Node.Number
+      - Subnumber
+      status:           Switch state 
+      type:             0
+      p_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Generation.P
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Generation.Q
+          - Nodes!Simultaneity[Number=Node.Number]
+  Sources:
+    source:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number       
+      status:           Switch state
+      u_ref:            Uref
+      sk:               Sk"nom
+      rx_ratio:         R/X
+      z01_ratio:        Z0/Z1
+  Synchronous generators:
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             0
+      p_specified:      Pref
+      q_specified:
+        power_grid_model.conversion.filters.value_or_zero: Qref
+  Wind turbines:
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             1
+      p_specified:      Pnom
+      q_specified:      0
+  Loads:
+    sym_load:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             Behaviour
+      p_specified:
+        power_grid_model.conversion.filters.multiply:
+          - P
+          - Nodes!Simultaneity[Number=Node.Number]
+      q_specified:      
+        power_grid_model.conversion.filters.multiply:
+          - Q
+          - Nodes!Simultaneity[Number=Node.Number]
+  Zigzag transformers:
+    shunt:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number
+      status:           Switch state
+      g1:               0
+      b1:               0
+      g0:
+        power_grid_model.conversion.filters.complex_inverse_real_part:
+          - R0
+          - X0
+      b0:
+        power_grid_model.conversion.filters.complex_inverse_imaginary_part:
+          - R0
+          - X0
+  Pvs:
+    sym_gen:
+      id:
+      - Node.Number
+      - Subnumber
+      node:             Node.Number 
+      status:           Switch state 
+      type:             0
+      p_specified:      Inverter.Pnom
+      q_specified:      0
+enums:
+  Switch state:
+    off:                0
+    in:                 1
+  N1:
+    none:               false
+    own:                true
+  N2:
+    none:               false
+    own:                true
+  Behaviour:
+    Constant admittance: 1
+    ~Constant current:   2
+    Constant power:      0
+    Default:             0
+    Industry:            0
+    Business:            0
+    Residential:         0
+units:
+  pu:   1       # per unit
+  Ohm:  1       # ohm
+  A:    1       # ampere
+  µF:   1e-6    # micro farad
+  kV:   1e3     # kilo volts
+  kA:   1e3     # kilo amperes
+  kW:   1e3     # kilo watts
+  MVA:  1e6     # mega volt amperes
+  Mvar: 1e6     # mega volt amperes reactive
+  MW:   1e6     # mega watts
+  MWp:  1e6     # mega watt peak
+  "%":  1e-2    # percent
