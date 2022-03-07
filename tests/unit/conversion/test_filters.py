@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 import pytest
 from power_grid_model.conversion.filters import get_winding_from, get_winding_to, get_clock
 from power_grid_model.enum import WindingType
