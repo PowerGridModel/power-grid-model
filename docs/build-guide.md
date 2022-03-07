@@ -23,9 +23,9 @@ section a list of general requirements are given. After this section there are e
 
 ## Architecture Support
 
-This library is written and tested on `x86_64` architecture. Building the library in `x86_32` might be working, but is
-not tested. It is in theory also possible to build the library in other architectures, but the MKL library is only
-available for `x86`. So only Eigen sparse solver is available.
+This library is written and tested on `x86_64` and `aarch64` architecture. Building the library in `x86_32` might be working, but is
+not tested. The MKL library is only
+available for `x86_64`. So only Eigen sparse solver is available for `aarch64`.
 
 The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
 features as much as possible. In this way the effort to port the library to other platform/architecture might be
