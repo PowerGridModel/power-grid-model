@@ -202,10 +202,7 @@ grid:
       - Subnumber
       node:             Node.Number       
       status:           Switch state
-      u_ref:
-        power_grid_model.conversion.filters.multiply:
-          - Uref
-          - Nodes!Unom[Number=Node.Number]
+      u_ref:            Uref
       sk:               Sk"nom
       rx_ratio:         R/X
       z01_ratio:        Z0/Z1
