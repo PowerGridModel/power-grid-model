@@ -1,6 +1,8 @@
 import math
 import re
-from typing import Tuple
+from typing import Optional, Tuple, TypeVar
+
+import numpy as np
 
 from ..enum import WindingType
 
@@ -15,6 +17,8 @@ WINDING_TYPES = {
     "ZN": WindingType.wye_n,
 }
 
+T = TypeVar("T")
+
 
 def relative_no_load_current(i0: float, p0: float, sn: float, un: float) -> float:
     return i0 / (sn / un / math.sqrt(3)) if i0 > p0 / sn else p0 / sn
@@ -22,6 +26,14 @@ def relative_no_load_current(i0: float, p0: float, sn: float, un: float) -> floa
 
 def multiply(*args: float):
     return math.prod(args)
+
+
+def value_or_default(value: Optional[T], default: T) -> T:
+    return value if value is not None and not np.isnan(value) else default
+
+
+def value_or_zero(value: Optional[T]) -> T:
+    return value_or_default(value=value, default=0)
 
 
 def complex_inverse_real_part(real: float, imag: float) -> float:

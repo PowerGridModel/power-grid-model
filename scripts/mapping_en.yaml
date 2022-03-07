@@ -150,8 +150,8 @@ grid:
       tap_size:         Tap size
       uk_min:           uk
       uk_max:           uk
-      pk_min:           0
-      pk_max:           0
+      pk_min:           Pk
+      pk_max:           Pk
       r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
       x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
       r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
@@ -218,7 +218,8 @@ grid:
       status:           Switch state 
       type:             0
       p_specified:      Pref
-      q_specified:      0
+      q_specified:
+        power_grid_model.conversion.filters.value_or_zero: Qref
   Wind turbines:
     sym_gen:
       id:
