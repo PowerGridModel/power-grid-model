@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+import numpy as np
 from power_grid_model import PowerGridModel
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
@@ -49,9 +50,14 @@ def convert_vision_xlsx_file_to_pgm_json_file(
     output_data = model.calculate_power_flow()
 
     for component in output_data:
-        df = pd.DataFrame(input_data[component])
+        df_input = pd.DataFrame(input_data[component])
+        df_output = pd.DataFrame(output_data[component])
         print(component)
-        print(df)
+        print(df_input)
+        print(df_output)
+
+    u_pu = output_data['node']['u_pu'][output_data['node']['energized'] == 1]
+    print('u_pu', np.min(u_pu), np.max(u_pu))
 
 
 if __name__ == "__main__":

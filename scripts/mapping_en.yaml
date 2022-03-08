@@ -17,11 +17,11 @@ grid:
         r1:             R
         x1:             X
         c1:             C
-        tan1:           0                       # missing in Excel so set to 0 (Rei Syziu)
+        tan1:           0                       # Missing so set to 0
         r0:             R0
         x0:             X0
         c0:             C0
-        tan0:           0                       # missing in Excel so set to 0 (Rei Syziu)
+        tan0:           0                       # Missing so set to 0
         i_n:            Inom'
   Links:
     link:
@@ -31,12 +31,21 @@ grid:
       to_node:         To.Number
       to_status:       To.Switch state
   Reactance coils:
-    link:
+    line:
       id:               Number
       from_node:        From.Number
       from_status:      From.Switch state
       to_node:          To.Number
       to_status:        To.Switch state
+      r1: R
+      x1: X
+      c1: 0                         # Missing so set to 0
+      tan1: 0                       # Missing so set to 0
+      r0: R0
+      x0: X0
+      c0: 0                         # Missing so set to 0
+      tan0: 0                       # Missing so set to 0
+      i_n: Inom
   Transformers:  
     transformer:
       id:               Number
@@ -100,8 +109,8 @@ grid:
           - Snom
           - Unom2
       p0:               Po
-      winding_from:     0                     # Winding type WYE (Bram Stoeller)
-      winding_to:       0                     # Winding type WYE (Bram Stoeller)
+      winding_from:     0                     # Winding type WYE
+      winding_to:       0                     # Winding type WYE
       clock:            0                     # Clock 0 (Bram Stoeller)
       tap_side:         Tap side
       tap_pos:          Tap
@@ -113,10 +122,10 @@ grid:
       uk_max:           ukmax
       pk_min:           Pkmin
       pk_max:           Pkmax
-      r_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
-      x_grounding_from: 0                       # Missing so set to 0 (Rei Syziu)
-      r_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
-      x_grounding_to:   0                       # Missing so set to 0 (Rei Syziu)
+      r_grounding_from: 0                       # Missing so set to 0
+      x_grounding_from: 0                       # Missing so set to 0
+      r_grounding_to:   0                       # Missing so set to 0
+      x_grounding_to:   0                       # Missing so set to 0
   Transformer loads:
     transformer:
       id:
@@ -292,6 +301,9 @@ enums:
     Industry:            0
     Business:            0
     Residential:         0
+  Tap side:
+    1:                   0
+    2:                   1
 units:
   pu:   1       # per unit
   Ohm:  1       # ohm
