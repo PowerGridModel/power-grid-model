@@ -62,7 +62,7 @@ def convert_vision_xlsx_file_to_pgm_json_file(
     print('u_pu', np.min(u_pu), np.max(u_pu))
 
     # asymmetric
-    asym_output_data = model.calculate_power_flow(symmetric=False)
+    asym_output_data = model.calculate_power_flow(symmetric=False, error_tolerance=1e-5)
     export_json_data(json_file=dump_asym_output, data=asym_output_data, meta_data=meta_data)
 
 

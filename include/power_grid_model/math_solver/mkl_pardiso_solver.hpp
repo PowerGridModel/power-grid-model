@@ -316,7 +316,8 @@ class PARDISOSolver final {
             throw SparseMatrixError{error};
         }
 
-        if (bsr_handle_.iparm[13] != 0) {
+        // maximum allow one pivoting perturbation
+        if (bsr_handle_.iparm[13] > 1) {
             throw SparseMatrixError{};
         }
     }
