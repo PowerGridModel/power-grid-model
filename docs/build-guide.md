@@ -23,9 +23,9 @@ section a list of general requirements are given. After this section there are e
 
 ## Architecture Support
 
-This library is written and tested on `x86_64` architecture. Building the library in `x86_32` might be working, but is
-not tested. It is in theory also possible to build the library in other architectures, but the MKL library is only
-available for `x86`. So only Eigen sparse solver is available.
+This library is written and tested on `x86_64` and `aarch64` architecture. Building the library in `x86_32` might be working, but is
+not tested. The MKL library is only
+available for `x86_64`. So only Eigen sparse solver is available for `aarch64`.
 
 The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
 features as much as possible. In this way the effort to port the library to other platform/architecture might be
@@ -360,8 +360,9 @@ export CXX=clang++
 export CC=clang
 export VCPKG_FEATURE_FLAGS=-binarycaching
 export VCPKG_ROOT=${HOME}/vcpkg
-export EIGEN_INCLUDE=${VCPKG_ROOT}/installed/x64-osx/include/eigen3
-export BOOST_INCLUDE=${VCPKG_ROOT}/installed/x64-osx/include
+export EIGEN_INCLUDE=${VCPKG_ROOT}/installed/x64-osx/include/eigen3  # use arm64-osx in m1 Mac
+export BOOST_INCLUDE=${VCPKG_ROOT}/installed/x64-osx/include  # use arm64-osx in m1 Mac
+# Skip the following for Mac M1 (due to MKL)
 export MKL_THREADING_LAYER=SEQUENTIAL
 export MKL_INTERFACE_LAYER=LP64
 export LD_LIBRARY_PATH=/Library/Frameworks/Python.framework/Versions/3.9/lib:${LD_LIBRARY_PATH}
@@ -374,7 +375,7 @@ export MKL_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.9/include
 Install the following packages with [Homebrew](https://brew.sh/).
 
 ```shell
-brew install ninja cmake
+brew install ninja cmake pkg-config
 ```
 
 ## C++ package manager: vcpkg
@@ -392,6 +393,8 @@ cd vcpkg
 **The installation of `boost` will take a long time, be patient**
 
 ## MKL
+
+Skip this step for Mac M1.
 
 The easiest way to install `mkl` is through `pip`. Since you can have multiple Python environment which may depend on a
 single `mkl` library. It is better to install `mkl` without virtual environment. Make sure your current shell is **NOT**
