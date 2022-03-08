@@ -17,8 +17,7 @@ BASE_DIR = Path(__file__).parent
 
 
 def convert_vision_xlsx_file_to_pgm_json_file(
-    input_file: Path, mapping_file: Path, output_file: Optional[Path] = None
-) -> None:
+    input_file: Path, mapping_file: Path) -> None:
     # Input Workbook
     if input_file.suffix.lower() != ".xlsx":
         raise ValueError(f"Input file should be a .xlsx file, {input_file.suffix} provided.")
@@ -29,41 +28,47 @@ def convert_vision_xlsx_file_to_pgm_json_file(
         raise ValueError(f"Mapping file should be a .yaml file, {mapping_file.suffix} provided.")
     mapping = read_vision_mapping(mapping_file)
 
-    # Output file
-    if output_file is None:
-        output_file = input_file.with_suffix(".json")
-    if output_file.suffix.lower() != ".json":
-        raise ValueError(f"Output file should be a .json file, {output_file.suffix} provided.")
+    # dump file
+    input_str = input_file.with_suffix("")
+    dump_input = Path(f"{input_str}_input.json")
+    dump_sym_output = Path(f"{input_str}_sym_output.json")
+    dump_asym_output = Path(f"{input_str}_asym_output.json")
 
     # Convert XLSX
     input_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
     try:
         assert_valid_input_data(input_data)
+        assert_valid_input_data(input_data, symmetric=False)
     except ValidationException as ex:
         print(errors_to_string(ex.errors, details=True))
         raise
 
     # Store Input JSON
-    export_json_data(json_file=output_file, data=input_data, meta_data=meta_data)
+    export_json_data(json_file=dump_input, data=input_data, meta_data=meta_data)
 
     model = PowerGridModel(input_data=input_data)
-    output_data = model.calculate_power_flow()
+    sym_output_data = model.calculate_power_flow()
+    # store sym output
+    export_json_data(json_file=dump_sym_output, data=sym_output_data, meta_data=meta_data)
 
-    for component in output_data:
-        df_input = pd.DataFrame(input_data[component])
-        df_output = pd.DataFrame(output_data[component])
+    # print symmetric results
+    for component in sym_output_data:
+        df_input = pd.DataFrame(sym_output_data[component])
+        df_output = pd.DataFrame(sym_output_data[component])
         print(component)
         print(df_input)
         print(df_output)
-
-    u_pu = output_data['node']['u_pu'][output_data['node']['energized'] == 1]
+    u_pu = sym_output_data['node']['u_pu'][sym_output_data['node']['energized'] == 1]
     print('u_pu', np.min(u_pu), np.max(u_pu))
+
+    # asymmetric
+    asym_output_data = model.calculate_power_flow(symmetric=False)
+    export_json_data(json_file=dump_asym_output, data=asym_output_data, meta_data=meta_data)
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Convert a Vision .xslx export file to a Power Grid Model .json file")
     parser.add_argument("--input", type=Path, required=True)
-    parser.add_argument("--output", type=Path)
     parser.add_argument("--mapping", type=Path, default=BASE_DIR / "mapping_en.yaml")
     args = parser.parse_args()
-    convert_vision_xlsx_file_to_pgm_json_file(input_file=args.input, mapping_file=args.mapping, output_file=args.output)
+    convert_vision_xlsx_file_to_pgm_json_file(input_file=args.input, mapping_file=args.mapping)
