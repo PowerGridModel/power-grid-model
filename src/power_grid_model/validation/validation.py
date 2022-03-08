@@ -31,6 +31,7 @@ from .rules import (
     all_boolean,
     all_valid_ids,
     all_not_two_values_zero,
+    all_clocks_valid,
 )
 from .utils import InputData, UpdateData, split_update_data_in_batches, update_input_data
 from .. import power_grid_meta_data
@@ -359,6 +360,7 @@ def validate_transformer(data: InputData) -> List[ValidationError]:
     errors += all_valid_enum_values(data, "transformer", "winding_from", WindingType)
     errors += all_valid_enum_values(data, "transformer", "winding_to", WindingType)
     errors += all_between_or_at(data, "transformer", "clock", 0, 12)
+    errors += all_clocks_valid(data, "transformer", "clock", "winding_from", "winding_to")
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
@@ -369,7 +371,6 @@ def validate_transformer(data: InputData) -> List[ValidationError]:
     errors += all_between(data, "transformer", "uk_max", 0, 1)
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "uk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "uk_max")
-    errors += all_greater_or_equal(data, "transformer", "uk_max", "uk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_max")
     return errors
