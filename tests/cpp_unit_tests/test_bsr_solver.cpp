@@ -94,6 +94,8 @@ TEST_CASE("Test BSR solver") {
 
     SECTION("Test singular") {
         data[0] = 0.0;
+        data[12] = 0.0;
+        data[15] = 0.0;
         CHECK_THROWS_AS(solver.solve(data.data(), rhs.data(), x_solver.data()), SparseMatrixError);
     }
 
