@@ -200,14 +200,8 @@ grid:
       - Subnumber
       status:           Switch state 
       type:             0
-      p_specified:      
-        power_grid_model.conversion.filters.multiply:
-          - Generation.P
-          - Nodes!Simultaneity[Number=Node.Number]
-      q_specified:      
-        power_grid_model.conversion.filters.multiply:
-          - Generation.Q
-          - Nodes!Simultaneity[Number=Node.Number]
+      p_specified:      Generation.P
+      q_specified:      Generation.Q
   Sources:
     source:
       id:
@@ -281,7 +275,7 @@ grid:
       node:             Node.Number 
       status:           Switch state 
       type:             0
-      p_specified:      Inverter.Pnom
+      p_specified:      Pnom
       q_specified:      0
 enums:
   Switch state:

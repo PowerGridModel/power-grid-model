@@ -8,7 +8,7 @@ import pytest
 from power_grid_model.conversion.vision import COL_REF_RE
 
 
-def test_cases():
+def cases():
     yield "OtherSheet!ValueColumn[IdColumn=RefColumn]", (
         "OtherSheet",
         "ValueColumn",
@@ -36,7 +36,7 @@ def test_cases():
     yield "OtherSheet![IdColumn=RefColumn]", None
 
 
-@pytest.mark.parametrize("value,groups", test_cases())
+@pytest.mark.parametrize("value,groups", cases())
 def test_col_ref_pattern(value: str, groups: Optional[Tuple[Optional[str]]]):
     match = COL_REF_RE.fullmatch(value)
     if groups is None:

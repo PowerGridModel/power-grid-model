@@ -48,7 +48,7 @@ def complex_inverse_imaginary_part(real: float, imag: float) -> float:
     return (1.0 / (real + 1j * imag)).imag
 
 
-# TODO: Check Z logic
+# TODO: use z winding when zigzag is implemented
 def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingType:
     wfr, wto, clock_str = _split_connection_string(conn_str)
     winding = WINDING_TYPES[wfr]
@@ -59,7 +59,7 @@ def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingTy
     return winding
 
 
-# TODO: Check Z logic
+# TODO: use z winding when zigzag is implemented
 def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType:
     wfr, wto, clock_str = _split_connection_string(conn_str)
     winding = WINDING_TYPES[wto.upper()]
@@ -80,4 +80,4 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, str]:
     match = CONNECTION_PATTERN.fullmatch(conn_str)
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
-    return match.groups()
+    return match.group(1), match.group(2), match.group(3)
