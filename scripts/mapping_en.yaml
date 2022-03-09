@@ -293,7 +293,7 @@ grid:
         - Inverter.cos phi      
 enums:
   Switch state:
-    off:                0
+    "off":              0  # off means False in yaml, "off" forces the value to be interpreted as the string "off"
     in:                 1
   N1:
     none:               false
@@ -309,6 +309,7 @@ enums:
     Industry:            0
     Business:            0
     Residential:         0
+    Living:              0
   Tap side:
     1:                   0
     2:                   1
