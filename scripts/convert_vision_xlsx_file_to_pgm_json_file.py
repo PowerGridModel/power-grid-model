@@ -34,15 +34,17 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
 
     # Convert XLSX
     input_data, meta_data = convert_vision_to_pgm(workbook=workbook, mapping=mapping.get("grid"))
+
+    # Store Input JSON
+    export_json_data(json_file=dump_input, data=input_data, meta_data=meta_data)
+
+    # Validate data
     try:
         assert_valid_input_data(input_data)
         assert_valid_input_data(input_data, symmetric=False)
     except ValidationException as ex:
         print(errors_to_string(ex.errors, details=True))
         raise
-
-    # Store Input JSON
-    export_json_data(json_file=dump_input, data=input_data, meta_data=meta_data)
 
     model = PowerGridModel(input_data=input_data)
     sym_output_data = model.calculate_power_flow()
