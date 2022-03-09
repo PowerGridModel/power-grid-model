@@ -36,7 +36,7 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
     input_data, meta_data = convert_vision_to_pgm(workbook=workbook, mapping=mapping.get("grid"))
 
     # Store Input JSON
-    export_json_data(json_file=dump_input, data=input_data, meta_data=meta_data)
+    export_json_data(json_file=dump_input, data=input_data, meta_data=meta_data, compact=True)
 
     # Validate data
     try:
@@ -49,7 +49,7 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
     model = PowerGridModel(input_data=input_data)
     sym_output_data = model.calculate_power_flow()
     # store sym output
-    export_json_data(json_file=dump_sym_output, data=sym_output_data, meta_data=meta_data)
+    export_json_data(json_file=dump_sym_output, data=sym_output_data, meta_data=meta_data, compact=True)
 
     # print symmetric results
     for component in sym_output_data:
@@ -63,7 +63,7 @@ def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Pa
 
     # asymmetric
     asym_output_data = model.calculate_power_flow(symmetric=False, error_tolerance=1e-5)
-    export_json_data(json_file=dump_asym_output, data=asym_output_data, meta_data=meta_data)
+    export_json_data(json_file=dump_asym_output, data=asym_output_data, meta_data=meta_data, compact=True)
 
 
 if __name__ == "__main__":

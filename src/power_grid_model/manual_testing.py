@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 
 from . import initialize_array
+import re
 
 
 def is_nan(data) -> bool:
@@ -186,7 +187,8 @@ def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndar
 def export_json_data(
     json_file: Path,
     data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
-    indent=2,
+    indent: int = 2,
+    compact: bool = False,
     meta_data: Optional[Dict[int, Any]] = None,
 ):
     """
@@ -195,6 +197,7 @@ def export_json_data(
         json_file: path to json file
         data: a single or batch dataset for power-grid-model
         indent: indent of the file, default 2
+        compact: write components on a single line
         meta_data: extra information (in any json-serializable format), indexed on the object ids
                    e.g. a string representing the original id, or a dictionary storing even more information.
 
@@ -207,4 +210,25 @@ def export_json_data(
         json_data["meta"] = meta_data
 
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
-        json.dump(json_data, file_pointer, indent=indent)
+        if compact and indent:
+            file_pointer.write(compact_json_dump(json_data, indent=indent))
+        else:
+            json.dump(json_data, file_pointer, indent=indent)
+
+
+def compact_json_dump(data: Dict[str, Dict[str, Union[int, float]]], indent: int = 2) -> str:
+    """
+    Generate a compact json representation of the data
+    Args:
+        data: a single or batch dataset for power-grid-model
+        indent: indent of the file, default 2
+
+    Returns:
+        Compact json string
+
+    """
+    json.encoder.FLOAT_REPR = lambda o: format(o, ".2f")
+    json_str = json.dumps(data, indent=indent)
+    component_pattern = re.compile(r"\{\s*([^{}]+[^\s])\s*\}")
+    line_pattern = re.compile(r"\s*\n\s*")
+    return component_pattern.sub(lambda match: "{" + line_pattern.sub(" ", match.group(1)) + "}", json_str)
