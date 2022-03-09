@@ -58,22 +58,19 @@ def convert_vision_to_pgm(
     meta_data: Dict[int, Dict[str, Any]] = {}
     lookup = AutoID()
     for sheet_name, components in mapping.items():
-        for component_name, instances in components.items():
-            if not isinstance(instances, list):
-                instances = [instances]
-            for attributes in instances:
-                sheet_pgm_data, sheet_meta_data = _convert_vision_sheet_to_pgm_component(
-                    workbook=workbook,
-                    sheet_name=sheet_name,
-                    component_name=component_name,
-                    attributes=attributes,
-                    lookup=lookup,
-                )
-                if sheet_pgm_data is not None:
-                    if component_name not in pgm_data:
-                        pgm_data[component_name] = []
-                    meta_data.update(sheet_meta_data)
-                    pgm_data[component_name].append(sheet_pgm_data)
+        for component_name, attributes in components.items():
+            sheet_pgm_data, sheet_meta_data = _convert_vision_sheet_to_pgm_component(
+                workbook=workbook,
+                sheet_name=sheet_name,
+                component_name=component_name,
+                attributes=attributes,
+                lookup=lookup,
+            )
+            if sheet_pgm_data is not None:
+                if component_name not in pgm_data:
+                    pgm_data[component_name] = []
+                meta_data.update(sheet_meta_data)
+                pgm_data[component_name].append(sheet_pgm_data)
     return _merge_pgm_data(pgm_data), meta_data
 
 
