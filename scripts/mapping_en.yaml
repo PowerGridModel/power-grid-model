@@ -237,9 +237,9 @@ grid:
       type:             1
       p_specified:      Pnom
       q_specified:      
-        reactive_power_calculation_general:
-        - Pnom
-        - cos phi
+        power_grid_model.conversion.filters.reactive_power_calculation_general:
+          - Pnom
+          - cos phi
   Loads:
     sym_load:
       id:
@@ -286,7 +286,7 @@ grid:
         - Pnom
         - Inverter.Pnom
       q_specified:      
-        reactive_power_calculation_general:
+        power_grid_model.conversion.filters.reactive_power_calculation_general:
         - min:
           - Pnom
           - Inverter.Pnom

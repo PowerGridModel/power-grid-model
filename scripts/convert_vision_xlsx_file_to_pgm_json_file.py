@@ -4,10 +4,9 @@
 
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from power_grid_model import PowerGridModel
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
@@ -16,17 +15,16 @@ from power_grid_model.validation import assert_valid_input_data, errors_to_strin
 BASE_DIR = Path(__file__).parent
 
 
-def convert_vision_xlsx_file_to_pgm_json_file(
-    input_file: Path, mapping_file: Path) -> None:
-    # Input Workbook
-    if input_file.suffix.lower() != ".xlsx":
-        raise ValueError(f"Input file should be a .xlsx file, {input_file.suffix} provided.")
-    input_workbook = read_vision_xlsx(input_file)
-
+def convert_vision_xlsx_file_to_pgm_json_file(input_file: Path, mapping_file: Path) -> None:
     # Mapping
     if mapping_file.suffix.lower() != ".yaml":
         raise ValueError(f"Mapping file should be a .yaml file, {mapping_file.suffix} provided.")
     mapping = read_vision_mapping(mapping_file)
+
+    # Input Workbook
+    if input_file.suffix.lower() != ".xlsx":
+        raise ValueError(f"Input file should be a .xlsx file, {input_file.suffix} provided.")
+    workbook = read_vision_xlsx(input_file=input_file, units=mapping.get("units"), enums=mapping.get("enums"))
 
     # dump file
     input_str = input_file.with_suffix("")
@@ -35,7 +33,7 @@ def convert_vision_xlsx_file_to_pgm_json_file(
     dump_asym_output = Path(f"{input_str}_asym_output.json")
 
     # Convert XLSX
-    input_data, meta_data = convert_vision_to_pgm(input_workbook=input_workbook, mapping=mapping)
+    input_data, meta_data = convert_vision_to_pgm(workbook=workbook, mapping=mapping.get("grid"))
     try:
         assert_valid_input_data(input_data)
         assert_valid_input_data(input_data, symmetric=False)
@@ -58,8 +56,8 @@ def convert_vision_xlsx_file_to_pgm_json_file(
         print(component)
         print(df_input)
         print(df_output)
-    u_pu = sym_output_data['node']['u_pu'][sym_output_data['node']['energized'] == 1]
-    print('u_pu', np.min(u_pu), np.max(u_pu))
+    u_pu = sym_output_data["node"]["u_pu"][sym_output_data["node"]["energized"] == 1]
+    print("u_pu", np.min(u_pu), np.max(u_pu))
 
     # asymmetric
     asym_output_data = model.calculate_power_flow(symmetric=False, error_tolerance=1e-5)
