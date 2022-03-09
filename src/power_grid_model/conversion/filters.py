@@ -35,6 +35,9 @@ def multiply(*args: float):
 def reactive_power_calculation_sym_gen(pref: float, cosphi: float, q: str) -> float:
     return -pref * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) ) if q == "absorb" else pref * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) )
 
+def reactive_power_calculation_sym_gen(pref: float, cosphi: float, scale: float) -> float:
+    return scale * pref * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) )
+
 
 def reactive_power_calculation_general(p: float, cosphi: float) -> float:
     return p * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) ) 
