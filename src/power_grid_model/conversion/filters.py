@@ -32,6 +32,17 @@ def multiply(*args: float):
     return math.prod(args)
 
 
+def power_wind_speed(p: float, v: float) -> float:
+    result = 0
+    if v >= 3 and v < 14:
+        result = p * (math.pow(v, 3)/math.pow(14, 3))
+    if v >= 14 and v < 25:
+        result = p
+    if v >= 14 and v>= 25 and v < 30:
+        result = p * (  1 - (v - 25)/(30 - 25)  )
+    return result
+
+
 def reactive_power_calculation_sym_gen(pref: float, cosphi: float, q: str) -> float:
     return (
         -pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))

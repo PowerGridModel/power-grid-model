@@ -235,7 +235,10 @@ grid:
       node:             Node.Number 
       status:           Switch state 
       type:             1
-      p_specified:      Pnom
+      p_specified:      
+        power_wind_speed:
+        - Pnom
+        - 
       q_specified:      
         power_grid_model.conversion.filters.reactive_power_calculation_general:
           - Pnom
