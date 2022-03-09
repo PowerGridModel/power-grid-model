@@ -32,9 +32,19 @@ def multiply(*args: float):
     return math.prod(args)
 
 
+def reactive_power_calculation_sym_gen(pref: float, cosphi: float, q: str) -> float:
+    return -pref * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) ) if q == "absorb" else pref * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) )
+
+
+def reactive_power_calculation_general(p: float, cosphi: float) -> float:
+    return p * math.sqrt( (1-math.pow(cosphi, 2)/cosphi) ) 
+
+
 def value_or_default(value: Optional[T], default: T) -> T:
     return value if value is not None and not np.isnan(value) else default
 
+def find_min(pnom: float, inv_pnom: float) -> float:
+    return inv_pnom if inv_pnom < pnom else pnom
 
 def value_or_zero(value: Optional[T]) -> T:
     return value_or_default(value=value, default=0)

@@ -221,9 +221,12 @@ grid:
       node:             Node.Number 
       status:           Switch state 
       type:             0
-      p_specified:      Pref
+      p_specified:      Pref        
       q_specified:
-        power_grid_model.conversion.filters.value_or_zero: Qref
+        power_grid_model.conversion.filters.reactive_power_calculation_sym_gen: 
+        - Pref
+        - cos phi
+        - Q
   Wind turbines:
     sym_gen:
       id:
@@ -233,7 +236,10 @@ grid:
       status:           Switch state 
       type:             1
       p_specified:      Pnom
-      q_specified:      0
+      q_specified:      
+        reactive_power_calculation_general:
+        - Pnom
+        - cos phi
   Loads:
     sym_load:
       id:
@@ -275,8 +281,16 @@ grid:
       node:             Node.Number 
       status:           Switch state 
       type:             0
-      p_specified:      Pnom
-      q_specified:      0
+      p_specified:      
+        min:
+        - Pnom
+        - Inverter.Pnom
+      q_specified:      
+        reactive_power_calculation_general:
+        - min:
+          - Pnom
+          - Inverter.Pnom
+        - Inverter.cos phi      
 enums:
   Switch state:
     off:                0
