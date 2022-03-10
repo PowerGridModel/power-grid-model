@@ -49,15 +49,18 @@ def value_or_zero(value: Optional[T]) -> T:
 
 
 def power_wind_speed(pref: float, pnom: float, v: float) -> float:
-    result = 0
-    result = value_or_default(value=pref, default=0)
-    if result == 0:
-        if v >= 3 and v < 14:
+    result = value_or_default(value=pref, default=None)
+    if result is None:
+        if v < 3:
+            result = 0
+        elif v < 14:
             result = pnom * (math.pow(v, 3)/math.pow(14, 3))
-        if v >= 14 and v < 25:
+        elif v < 25:
             result = pnom
-        if v >= 14 and v>= 25 and v < 30:
+        elif v < 30:
             result = pnom * (  1 - (v - 25)/(30 - 25)  )
+        else:
+            result = 0
     
     return result
 
