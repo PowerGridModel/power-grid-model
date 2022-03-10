@@ -43,20 +43,8 @@ def power_wind_speed(p: float, v: float) -> float:
     return result
 
 
-def reactive_power_calculation_sym_gen(pref: float, cosphi: float, q: str) -> float:
-    return (
-        -pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
-        if q == "absorb"
-        else pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
-    )
-
-
-def reactive_power_calculation_sym_gen(pref: float, cosphi: float, scale: float) -> float:
+def reactive_power_calculation(pref: float, cosphi: float, scale: float) -> float:
     return scale * pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
-
-
-def reactive_power_calculation_general(p: float, cosphi: float) -> float:
-    return p * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
 
 
 def value_or_default(value: Optional[T], default: T) -> T:

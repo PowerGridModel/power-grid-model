@@ -223,7 +223,7 @@ grid:
       type:             0
       p_specified:      Pref        
       q_specified:
-        power_grid_model.conversion.filters.reactive_power_calculation_sym_gen: 
+        power_grid_model.conversion.filters.reactive_power_calculation: 
         - Pref
         - cos phi
         - Q
@@ -236,13 +236,16 @@ grid:
       status:           Switch state 
       type:             1
       p_specified:      
-        power_wind_speed:
+        power_grid_model.conversion.filters.power_wind_speed.power_wind_speed:
         - Pnom
-        - 
+        - Wind speed
       q_specified:      
-        power_grid_model.conversion.filters.reactive_power_calculation_general:
+        power_grid_model.conversion.filters.reactive_power_calculation:
+          power_grid_model.conversion.filters.power_wind_speed:
           - Pnom
-          - cos phi
+          - Wind speed
+        - cos phi
+        - 1.0
   Loads:
     sym_load:
       id:
@@ -289,11 +292,12 @@ grid:
         - Pnom
         - Inverter.Pnom
       q_specified:      
-        power_grid_model.conversion.filters.reactive_power_calculation_general:
+        power_grid_model.conversion.filters.reactive_power_calculation:
         - min:
           - Pnom
           - Inverter.Pnom
-        - Inverter.cos phi      
+        - Inverter.cos phi   
+        - 1.0   
 enums:
   Switch state:
     "off":              0  # off means False in yaml, "off" forces the value to be interpreted as the string "off"
