@@ -37,7 +37,12 @@ def read_vision_xlsx(
             if base_col_name in enums:
                 sheet_data[col_idx] = sheet_data[col_idx].map(lambda x: enums[base_col_name].get(x, x))
             if col_unit in units:
-                sheet_data[col_idx] *= float(units[col_unit])
+                multiplier = float(units[col_unit])
+                try:
+                    sheet_data[col_idx] *= multiplier
+                except TypeError as ex:
+                    print(f"WARNING: The column '{col_name}' on sheet '{sheet_name}' does not seem to be numerical "
+                          f"while trying to apply a multiplier ({multiplier}) for unit '{col_unit}': {ex}")
 
         # Let's extract the column names and units from the column indexes
         column_names = [col_idx[0] for col_idx in sheet_data.columns]
@@ -126,7 +131,14 @@ def _convert_vision_sheet_to_pgm_component(
             )
         else:
             col_data = col_data.iloc[:, 0]
-        pgm_data[attr] = col_data
+        try:
+            pgm_data[attr] = col_data
+        except ValueError as ex:
+            if "invalid literal" in str(ex) and isinstance(col_def, str):
+                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{sheet_name}' sheet: {ex}") \
+                    from ex
+            else:
+                raise ex
 
     return pgm_data, meta_data
 
@@ -154,12 +166,17 @@ def _parse_col_def_const(col_def: Number) -> pd.DataFrame:
 def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:
     assert isinstance(col_def, str)
     sheet = workbook[sheet_name]
-    if col_def not in sheet:
-        try:  # Maybe it is not a column name, but a float value like 'inf'
-            return _parse_col_def_const(float(col_def))
-        except ValueError:
-            raise KeyError(f"Could not find column '{col_def}' in sheet '{sheet_name}'")
-    return pd.DataFrame(sheet[col_def])
+
+    columns = [col_name.strip() for col_name in col_def.split("|")]
+    for col_name in columns:
+        if col_name in sheet:
+            return pd.DataFrame(sheet[col_name])
+
+    try:  # Maybe it is not a column name, but a float value like 'inf'
+        return _parse_col_def_const(float(col_def))
+    except ValueError:
+        columns = ' and '.join(f"'{col_name}'" for col_name in columns)
+        raise KeyError(f"Could not find column {columns} on sheet '{sheet_name}'")
 
 
 def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:

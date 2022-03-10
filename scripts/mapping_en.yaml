@@ -289,15 +289,15 @@ grid:
       node:             Node.Number 
       status:           Switch state 
       type:             0
-      p_specified:      
+      p_specified:
         min:
         - Pnom
-        - Inverter.Pnom
+        - Inverter.Pnom | Inverter.Snom
       q_specified:      
         power_grid_model.conversion.filters.reactive_power_calculation:
         - min:
           - Pnom
-          - Inverter.Pnom
+          - Inverter.Pnom | Inverter.Snom
         - Inverter.cos phi   
         - 1.0   
 enums:
@@ -312,6 +312,7 @@ enums:
     own:                true
   Behaviour:
     Constant admittance: 1
+    Constant impedance:  1
     ~Constant current:   2
     Constant power:      0
     Default:             0
