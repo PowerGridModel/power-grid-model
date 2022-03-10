@@ -32,31 +32,34 @@ def multiply(*args: float):
     return math.prod(args)
 
 
-def power_wind_speed(p: float, v: float) -> float:
-    result = 0
-    if v >= 3 and v < 14:
-        result = p * (math.pow(v, 3)/math.pow(14, 3))
-    if v >= 14 and v < 25:
-        result = p
-    if v >= 14 and v>= 25 and v < 30:
-        result = p * (  1 - (v - 25)/(30 - 25)  )
-    return result
-
-
 def reactive_power_calculation(pref: float, cosphi: float, scale: float) -> float:
     return scale * pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
-
-
-def value_or_default(value: Optional[T], default: T) -> T:
-    return value if value is not None and not np.isnan(value) else default
 
 
 def find_min(pnom: float, inv_pnom: float) -> float:
     return inv_pnom if inv_pnom < pnom else pnom
 
 
+def value_or_default(value: Optional[T], default: T) -> T:
+    return value if value is not None and not np.isnan(value) else default
+
+
 def value_or_zero(value: Optional[T]) -> T:
     return value_or_default(value=value, default=0)
+
+
+def power_wind_speed(pref: float, pnom: float, v: float) -> float:
+    result = 0
+    result = value_or_default(value=pref, default=0)
+    if result == 0:
+        if v >= 3 and v < 14:
+            result = pnom * (math.pow(v, 3)/math.pow(14, 3))
+        if v >= 14 and v < 25:
+            result = pnom
+        if v >= 14 and v>= 25 and v < 30:
+            result = pnom * (  1 - (v - 25)/(30 - 25)  )
+    
+    return result
 
 
 def complex_inverse_real_part(real: float, imag: float) -> float:
