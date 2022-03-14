@@ -40,29 +40,33 @@ def find_min(pnom: float, inv_pnom: float) -> float:
     return inv_pnom if inv_pnom < pnom else pnom
 
 
+def has_value(value: Optional[T]) -> bool:
+    return value is not None and not np.isnan(value)
+
+
 def value_or_default(value: Optional[T], default: T) -> T:
-    return value if value is not None and not np.isnan(value) else default
+    return value if has_value(value) else default
 
 
 def value_or_zero(value: Optional[T]) -> T:
     return value_or_default(value=value, default=0)
 
 
-def power_wind_speed(pref: float, pnom: float, v: float) -> float:
-    result = value_or_default(value=pref, default=None)
-    if result is None:
+def power_wind_speed(pref: Optional[float], pnom: float, v: float) -> float:
+    if has_value(pref):
+        return pref
+    else:
         if v < 3:
-            result = 0
+            result = 0.0
         elif v < 14:
-            result = pnom * (math.pow(v, 3)/math.pow(14, 3))
+            result = pnom * (math.pow(v, 3) / math.pow(14, 3))
         elif v < 25:
             result = pnom
         elif v < 30:
-            result = pnom * (  1 - (v - 25)/(30 - 25)  )
+            result = pnom * (1 - (v - 25) / (30 - 25))
         else:
-            result = 0
-    
-    return result
+            result = 0.0
+        return result
 
 
 def complex_inverse_real_part(real: float, imag: float) -> float:
