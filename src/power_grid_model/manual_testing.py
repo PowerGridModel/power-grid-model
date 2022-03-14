@@ -227,7 +227,6 @@ def compact_json_dump(data: Dict[str, Dict[str, Union[int, float]]], indent: int
         Compact json string
 
     """
-    json.encoder.FLOAT_REPR = lambda o: format(o, ".2f")
     json_str = json.dumps(data, indent=indent)
     component_pattern = re.compile(r"\{\s*([^{}]+[^\s])\s*\}")
     line_pattern = re.compile(r"\s*\n\s*")
