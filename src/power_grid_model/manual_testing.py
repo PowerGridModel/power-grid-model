@@ -237,6 +237,15 @@ def compact_json_dump(
 
     """
     json_str = json.dumps(data, indent=indent)
-    component_pattern = re.compile(r"\{\s*([^{}]+[^\s])\s*\}")
+
+    # Ugly TEMPORARY hack to write components with meta data on a single line
+    component_pattern = re.compile(r"\{\s*([^{}\[\]]+[^\s])\s*\}")
     line_pattern = re.compile(r"\s*\n\s*")
-    return component_pattern.sub(lambda match: "{" + line_pattern.sub(" ", match.group(1)) + "}", json_str)
+    json_str = component_pattern.sub(
+        lambda match: "BEGIN_SUB_DICT" + line_pattern.sub(" ", match.group(1)) + "END_SUB_DICT", json_str
+    )
+    json_str = component_pattern.sub(lambda match: "{" + line_pattern.sub(" ", match.group(1)) + "}", json_str)
+    json_str = re.sub("BEGIN_SUB_DICT", "{", json_str)
+    json_str = re.sub("END_SUB_DICT", "}", json_str)
+
+    return json_str

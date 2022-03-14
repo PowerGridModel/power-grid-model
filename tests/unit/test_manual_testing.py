@@ -136,7 +136,10 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
 
 
 def test_compact_json_dump():
-    data = {"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": 8}]}
+    data = {
+        "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+        "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
+    }
 
     json = """{
   "node": [
@@ -145,7 +148,7 @@ def test_compact_json_dump():
   ],
   "line": [
     {"id": 5, "x": 6},
-    {"id": 7, "x": 8}
+    {"id": 7, "x": {"y": 8.1, "z": 8.2}}
   ]
 }"""
     assert compact_json_dump(data, indent=2) == json
@@ -155,7 +158,7 @@ def test_compact_json_dump_batch():
     data = [
         {
             "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
-            "line": [{"id": 5, "x": 6}, {"id": 7, "x": 8}],
+            "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
         },
         {
             "line": [{"id": 9, "x": 10}, {"id": 11, "x": 12}],
@@ -169,7 +172,7 @@ def test_compact_json_dump_batch():
     ],
     "line": [
       {"id": 5, "x": 6},
-      {"id": 7, "x": 8}
+      {"id": 7, "x": {"y": 8.1, "z": 8.2}}
     ]
   },
   {
