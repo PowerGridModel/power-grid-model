@@ -236,7 +236,7 @@ grid:
       status:           Switch state 
       type:             1
       p_specified:      
-        power_grid_model.conversion.filters.power_wind_speed.power_wind_speed:
+        power_grid_model.conversion.filters.power_wind_speed:
         - Pref
         - Pnom
         - Wind speed
