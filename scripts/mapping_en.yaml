@@ -242,7 +242,7 @@ grid:
         - Wind speed
       q_specified:      
         power_grid_model.conversion.filters.reactive_power_calculation:
-          power_grid_model.conversion.filters.power_wind_speed:
+        - power_grid_model.conversion.filters.power_wind_speed:
           - Pref
           - Pnom
           - Wind speed
