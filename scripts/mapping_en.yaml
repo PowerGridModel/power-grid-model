@@ -202,6 +202,21 @@ grid:
       type:             0
       p_specified:      Generation.P
       q_specified:      Generation.Q
+    sym_gen:            # Pvs
+      id:
+      - Node.Number
+      - Subnumber
+      node:
+      - Node.Number
+      - Subnumber
+      status:           Switch state 
+      type:             0
+      p_specified:      PV.Pnom
+      q_specified:      
+        power_grid_model.conversion.filters.reactive_power_calculation:
+        - PV.Pnom
+        - 1.0
+        - 1.0   
   Sources:
     source:
       id:
