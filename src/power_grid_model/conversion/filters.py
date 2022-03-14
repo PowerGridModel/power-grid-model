@@ -33,7 +33,6 @@ def multiply(*args: float):
 
 
 def reactive_power_calculation(pref: float, cosphi: float, scale: float) -> float:
-    print("reactive_power_calculation", pref, cosphi, scale)
     return scale * pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
 
 
