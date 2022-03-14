@@ -57,7 +57,7 @@ def power_wind_speed(pref: Optional[float], pnom: float, v: float) -> float:
         return pref
     else:
         if v < 3:
-            result = 0
+            result = 0.0
         elif v < 14:
             result = pnom * (math.pow(v, 3)/math.pow(14, 3))
         elif v < 25:
@@ -65,7 +65,7 @@ def power_wind_speed(pref: Optional[float], pnom: float, v: float) -> float:
         elif v < 30:
             result = pnom * (1 - (v - 25)/(30 - 25))
         else:
-            result = 0
+            result = 0.0
         return result
 
 
