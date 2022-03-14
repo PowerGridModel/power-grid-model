@@ -8,7 +8,7 @@ from typing import Optional
 
 from power_grid_model.conversion.vision import read_vision_xlsx, read_vision_mapping, convert_vision_to_pgm
 from power_grid_model.manual_testing import export_json_data
-from power_grid_model.validation import assert_valid_input_data, errors_to_string, ValidationException
+from power_grid_model.validation import validate_input_data, errors_to_string
 
 BASE_DIR = Path(__file__).parent
 
@@ -19,11 +19,15 @@ def convert_vision_xlsx_file_to_pgm_json_file(
     # Read mapping
     if mapping_file.suffix.lower() != ".yaml":
         raise ValueError(f"Mapping file should be a .yaml file, {mapping_file.suffix} provided.")
+    if verbose:
+        print(f"> Reading mapping file: {mapping_file}")
     mapping = read_vision_mapping(mapping_file)
 
     # Read input Workbook
     if input_file.suffix.lower() != ".xlsx":
         raise ValueError(f"Input file should be a .xlsx file, {input_file.suffix} provided.")
+    if verbose:
+        print(f"> Reading workbook file: {input_file}")
     workbook = read_vision_xlsx(input_file=input_file, units=mapping.get("units"), enums=mapping.get("enums"))
 
     # Check JSON file name
@@ -34,22 +38,29 @@ def convert_vision_xlsx_file_to_pgm_json_file(
 
     # Convert XLSX
     input_data, meta_data = convert_vision_to_pgm(workbook=workbook, mapping=mapping.get("grid"))
+    if verbose:
+        print(f"> Converted {input_file} using {mapping_file}, resulted in {len(meta_data)} objects.")
 
     # Store JSON data
+    if verbose:
+        print(f"> Writing JSON file: {output_file}")
     export_json_data(json_file=output_file, data=input_data, meta_data=meta_data, compact=True)
 
     # Validate data
-    try:
-        assert_valid_input_data(input_data, symmetric=False)
-    except ValidationException as ex:
-        print(errors_to_string(ex.errors))
+    if verbose:
+        print(f"> Validating Power Grid Model data")
+    errors = validate_input_data(input_data, symmetric=False)
+    if not errors:
+        print("  Validation OK")
+    else:
+        print(errors_to_string(errors))
         if verbose:
             print()
-            for error in ex.errors:
+            for error in errors:
                 print(f"{type(error).__name__}: {error}")
                 for obj_id in error.ids:
                     sheet = meta_data[obj_id].pop("sheet")
-                    info = ", ".join(f"{key}: {val}" for key, val in meta_data[obj_id].items())
+                    info = ", ".join(f"{key}={val}" for key, val in meta_data[obj_id].items())
                     print(f"{obj_id:>6}. {sheet}: {info}")
 
 
