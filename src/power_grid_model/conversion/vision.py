@@ -19,7 +19,7 @@ COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]
 
 
 def read_vision_xlsx(
-    input_file: Path, units: Optional[Dict[str, float]] = None, enums: Optional[Dict[str, Dict[str, Any]]] = None
+        input_file: Path, units: Optional[Dict[str, float]] = None, enums: Optional[Dict[str, Dict[str, Any]]] = None
 ) -> Dict[str, pd.DataFrame]:
     # Read the vision Excel file and assume that the first row contains the column name and the second row is the unit.
     sheets = pd.read_excel(io=input_file, sheet_name=None, header=[0, 1])
@@ -59,7 +59,7 @@ def read_vision_mapping(mapping_file: Path) -> Dict[str, Dict[str, Any]]:
 
 
 def convert_vision_to_pgm(
-    workbook: Dict[str, pd.DataFrame], mapping: Dict[str, Dict[str, Any]]
+        workbook: Dict[str, pd.DataFrame], mapping: Dict[str, Dict[str, Any]]
 ) -> Tuple[Dict[str, np.ndarray], Dict[int, Dict[str, Any]]]:
     pgm_data: Dict[str, List[np.ndarray]] = {}
     meta_data: Dict[int, Dict[str, Any]] = {}
@@ -94,12 +94,13 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
                 data_type="input", component_type=component_name, shape=idx_ptr[-1]
             )
             for i, arr in enumerate(data_set):
-                merged[component_name][idx_ptr[i] : idx_ptr[i + 1]] = arr
+                merged[component_name][idx_ptr[i]: idx_ptr[i + 1]] = arr
     return merged
 
 
 def _convert_vision_sheet_to_pgm_component(
-    workbook: Dict[str, pd.DataFrame], sheet_name: str, component_name: str, attributes: Dict[str, str], lookup: AutoID
+        workbook: Dict[str, pd.DataFrame], sheet_name: str, component_name: str, attributes: Dict[str, str],
+        lookup: AutoID
 ) -> Tuple[Optional[np.ndarray], Dict[int, Dict[str, Any]]]:
     if sheet_name not in workbook:
         return None, {}
@@ -148,7 +149,7 @@ def _convert_vision_sheet_to_pgm_component(
 
 def _parse_col_def(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Any) -> pd.DataFrame:
     if isinstance(col_def, Number):
-        return _parse_col_def_const(col_def=col_def)
+        return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
     elif isinstance(col_def, str) and "!" in col_def:
         return _parse_col_def_column_reference(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
     elif isinstance(col_def, str):
@@ -161,9 +162,9 @@ def _parse_col_def(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: 
         raise TypeError(f"Invalid column definition: {col_def}")
 
 
-def _parse_col_def_const(col_def: Number) -> pd.DataFrame:
+def _parse_col_def_const(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Number) -> pd.DataFrame:
     assert isinstance(col_def, Number)
-    return pd.DataFrame([col_def])
+    return pd.DataFrame([col_def] * len(workbook[sheet_name]))
 
 
 def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:
@@ -176,10 +177,12 @@ def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: st
             return pd.DataFrame(sheet[col_name])
 
     try:  # Maybe it is not a column name, but a float value like 'inf'
-        return _parse_col_def_const(float(col_def))
+        const_value = float(col_def)
     except ValueError:
         columns = " and ".join(f"'{col_name}'" for col_name in columns)
         raise KeyError(f"Could not find column {columns} on sheet '{sheet_name}'")
+
+    return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=const_valueq)
 
 
 def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:
@@ -191,7 +194,7 @@ def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_nam
         )
     other_sheet, value_col_name, _, other_sheet_, id_col_name, _, this_sheet_, ref_col_name = match.groups()
     if (other_sheet_ is not None and other_sheet_ != other_sheet) or (
-        this_sheet_ is not None and this_sheet_ != sheet_name
+            this_sheet_ is not None and this_sheet_ != sheet_name
     ):
         raise ValueError(
             f"Invalid column reference '{col_def}'.\n"
@@ -208,13 +211,14 @@ def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_nam
 
 
 def _parse_col_def_function(
-    workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Dict[str, str]
+        workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Dict[str, str]
 ) -> pd.DataFrame:
     assert isinstance(col_def, dict)
     data = []
     for fn_name, sub_def in col_def.items():
         fn = _get_function(fn_name)
         col_data = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=sub_def)
+        print("_parse_col_def_function", sheet_name, col_def)
         data.append(col_data.apply(lambda row: fn(*row), axis=1, raw=True))
     return pd.concat(data, axis=1)
 
