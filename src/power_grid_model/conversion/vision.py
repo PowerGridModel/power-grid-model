@@ -41,8 +41,10 @@ def read_vision_xlsx(
                 try:
                     sheet_data[col_idx] *= multiplier
                 except TypeError as ex:
-                    print(f"WARNING: The column '{col_name}' on sheet '{sheet_name}' does not seem to be numerical "
-                          f"while trying to apply a multiplier ({multiplier}) for unit '{col_unit}': {ex}")
+                    print(
+                        f"WARNING: The column '{col_name}' on sheet '{sheet_name}' does not seem to be numerical "
+                        f"while trying to apply a multiplier ({multiplier}) for unit '{col_unit}': {ex}"
+                    )
 
         # Let's extract the column names and units from the column indexes
         column_names = [col_idx[0] for col_idx in sheet_data.columns]
@@ -92,7 +94,7 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
                 data_type="input", component_type=component_name, shape=idx_ptr[-1]
             )
             for i, arr in enumerate(data_set):
-                merged[component_name][idx_ptr[i]: idx_ptr[i + 1]] = arr
+                merged[component_name][idx_ptr[i] : idx_ptr[i + 1]] = arr
     return merged
 
 
@@ -135,8 +137,9 @@ def _convert_vision_sheet_to_pgm_component(
             pgm_data[attr] = col_data
         except ValueError as ex:
             if "invalid literal" in str(ex) and isinstance(col_def, str):
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{sheet_name}' sheet: {ex}") \
-                    from ex
+                raise ValueError(
+                    f"Possibly missing enum value for '{col_def}' column on '{sheet_name}' sheet: {ex}"
+                ) from ex
             else:
                 raise ex
 
@@ -175,7 +178,7 @@ def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: st
     try:  # Maybe it is not a column name, but a float value like 'inf'
         return _parse_col_def_const(float(col_def))
     except ValueError:
-        columns = ' and '.join(f"'{col_name}'" for col_name in columns)
+        columns = " and ".join(f"'{col_name}'" for col_name in columns)
         raise KeyError(f"Could not find column {columns} on sheet '{sheet_name}'")
 
 
