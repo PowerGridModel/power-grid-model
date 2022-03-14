@@ -70,7 +70,7 @@ def convert_vision_to_pgm(
                 workbook=workbook,
                 sheet_name=sheet_name,
                 component_name=component_name,
-                attributes=attributes,
+                instances=attributes,
                 lookup=lookup,
             )
             if sheet_pgm_data is not None:
@@ -99,7 +99,7 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
 
 
 def _convert_vision_sheet_to_pgm_component(
-    workbook: Dict[str, pd.DataFrame], sheet_name: str, component_name: str, attributes: Dict[str, str], lookup: AutoID
+    workbook: Dict[str, pd.DataFrame], sheet_name: str, component_name: str, instances: Dict[str, str], lookup: AutoID
 ) -> Tuple[Optional[np.ndarray], Dict[int, Dict[str, Any]]]:
     if sheet_name not in workbook:
         return None, {}
@@ -113,35 +113,39 @@ def _convert_vision_sheet_to_pgm_component(
 
     meta_data = {}
 
-    for attr, col_def in attributes.items():
-        if attr not in pgm_data.dtype.names:
-            attrs = ", ".join(pgm_data.dtype.names)
-            raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
+    if not isinstance(instances, list):
+        instances = [instances]
 
-        col_data = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
-        if attr == "id":
-            meta = col_data.to_dict(orient="records")
-            col_data = col_data.apply(lambda row: _id_lookup(lookup, component_name, row), axis=1)
-            for i, m in zip(col_data, meta):
-                meta_data[i] = {"sheet": sheet_name}
-                meta_data[i].update(m)
-        elif attr.endswith("node"):
-            col_data = col_data.apply(lambda row: _id_lookup(lookup, "node", row), axis=1)
-        elif len(col_data.columns) != 1:
-            raise ValueError(
-                f"DataFrame for {component_name}.{attr} should contain a single column " f"({col_data.columns})"
-            )
-        else:
-            col_data = col_data.iloc[:, 0]
-        try:
-            pgm_data[attr] = col_data
-        except ValueError as ex:
-            if "invalid literal" in str(ex) and isinstance(col_def, str):
+    for instance_attributes in instances:
+        for attr, col_def in instance_attributes.items():
+            if attr not in pgm_data.dtype.names:
+                attrs = ", ".join(pgm_data.dtype.names)
+                raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
+
+            col_data = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+            if attr == "id":
+                meta = col_data.to_dict(orient="records")
+                col_data = col_data.apply(lambda row: _id_lookup(lookup, component_name, row), axis=1)
+                for i, m in zip(col_data, meta):
+                    meta_data[i] = {"sheet": sheet_name}
+                    meta_data[i].update(m)
+            elif attr.endswith("node"):
+                col_data = col_data.apply(lambda row: _id_lookup(lookup, "node", row), axis=1)
+            elif len(col_data.columns) != 1:
                 raise ValueError(
-                    f"Possibly missing enum value for '{col_def}' column on '{sheet_name}' sheet: {ex}"
-                ) from ex
+                    f"DataFrame for {component_name}.{attr} should contain a single column " f"({col_data.columns})"
+                )
             else:
-                raise ex
+                col_data = col_data.iloc[:, 0]
+            try:
+                pgm_data[attr] = col_data
+            except ValueError as ex:
+                if "invalid literal" in str(ex) and isinstance(col_def, str):
+                    raise ValueError(
+                        f"Possibly missing enum value for '{col_def}' column on '{sheet_name}' sheet: {ex}"
+                    ) from ex
+                else:
+                    raise ex
 
     return pgm_data, meta_data
 
