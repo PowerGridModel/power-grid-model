@@ -13,6 +13,7 @@ from power_grid_model.manual_testing import (
     convert_python_to_numpy,
     export_json_data,
     is_nan,
+    compact_json_dump,
 )
 
 
@@ -132,3 +133,27 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
     export_json_data(json_file=Path("output.json"), data={}, indent=2)
     convert_mock.assert_called_once()
     json_dump_mock.assert_called_once_with({"foo": [{"val": 123}]}, open_mock(), indent=2)
+
+
+def test_compact_json_dump():
+    data = {
+        "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+        "line": [[{"id": 5, "x": 6}, {"id": 7, "x": 8}], [{"id": 9, "x": 10}, {"id": 11, "x": 12}]],
+    }
+    json = """{
+  "node": [
+    {"id": 1, "x": 2},
+    {"id": 3, "x": 4}
+  ],
+  "line": [
+    [
+      {"id": 5, "x": 6},
+      {"id": 7, "x": 8}
+    ],
+    [
+      {"id": 9, "x": 10},
+      {"id": 11, "x": 12}
+    ]
+  ]
+}"""
+    assert compact_json_dump(data, indent=2) == json

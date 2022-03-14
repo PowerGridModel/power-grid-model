@@ -7,13 +7,13 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
 from . import initialize_array
-import re
 
 
 def is_nan(data) -> bool:
@@ -142,7 +142,9 @@ def convert_batch_to_list_data(
     return list_data
 
 
-def convert_numpy_to_python(data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]) -> Union[Dict, List]:
+def convert_numpy_to_python(
+    data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+) -> Union[Dict[str, Dict[str, Union[int, float]]], List[Dict[str, Dict[str, Union[int, float]]]]]:
     """
     Convert internal numpy arrays to native python data
     If an attribute is not available (NaN value), it will not be exported.
@@ -216,7 +218,9 @@ def export_json_data(
             json.dump(json_data, file_pointer, indent=indent)
 
 
-def compact_json_dump(data: Dict[str, Dict[str, Union[int, float]]], indent: int = 2) -> str:
+def compact_json_dump(
+    data: Union[Dict[str, Dict[str, Union[int, float]]], List[Dict[str, Dict[str, Union[int, float]]]]], indent: int = 2
+) -> str:
     """
     Generate a compact json representation of the data
     Args:
