@@ -76,9 +76,9 @@ def test_is_nan():
     assert is_nan(single_value)
     array_f8 = np.array([0.1, 0.2, np.nan], dtype=np.dtype("f8"))
     assert not is_nan(array_f8)
-    array_i4 = np.array([10, 2, -(2 ** 31), 40], dtype=np.dtype("i4"))
+    array_i4 = np.array([10, 2, -(2**31), 40], dtype=np.dtype("i4"))
     assert not is_nan(array_i4)
-    array_i1 = np.array([1, 0, -(2 ** 7), 1], dtype=np.dtype("i1"))
+    array_i1 = np.array([1, 0, -(2**7), 1], dtype=np.dtype("i1"))
     assert not is_nan(array_i1)
     nan_array = np.array([np.nan, np.nan, np.nan])
     assert is_nan(nan_array)
@@ -136,10 +136,7 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
 
 
 def test_compact_json_dump():
-    data = {
-        "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
-        "line": [{"id": 5, "x": 6}, {"id": 7, "x": 8}]
-    }
+    data = {"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": 8}]}
 
     json = """{
   "node": [
@@ -162,7 +159,7 @@ def test_compact_json_dump_batch():
         },
         {
             "line": [{"id": 9, "x": 10}, {"id": 11, "x": 12}],
-        }
+        },
     ]
     json = """[
   {
