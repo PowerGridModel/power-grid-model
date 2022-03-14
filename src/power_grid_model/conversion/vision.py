@@ -21,7 +21,7 @@ COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]
 def read_vision_xlsx(
     input_file: Path, units: Optional[Dict[str, float]] = None, enums: Optional[Dict[str, Dict[str, Any]]] = None
 ) -> Dict[str, pd.DataFrame]:
-    # Read the vision excel file and assume that the first row contains the column name and the second row is the unit.
+    # Read the vision Excel file and assume that the first row contains the column name and the second row is the unit.
     sheets = pd.read_excel(io=input_file, sheet_name=None, header=[0, 1])
 
     if units is None:
@@ -92,7 +92,7 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
                 data_type="input", component_type=component_name, shape=idx_ptr[-1]
             )
             for i, arr in enumerate(data_set):
-                merged[component_name][idx_ptr[i] : idx_ptr[i + 1]] = arr
+                merged[component_name][idx_ptr[i]: idx_ptr[i + 1]] = arr
     return merged
 
 
