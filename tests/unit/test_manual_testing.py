@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import io
 from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
 
@@ -141,17 +142,52 @@ def test_compact_json_dump():
         "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
     }
 
-    json = """{
-  "node": [
-    {"id": 1, "x": 2},
-    {"id": 3, "x": 4}
-  ],
-  "line": [
-    {"id": 5, "x": 6},
-    {"id": 7, "x": {"y": 8.1, "z": 8.2}}
-  ]
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=0)
+    assert (
+        string_stream.getvalue()
+        == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
+    )
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=1)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+  "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
 }"""
-    assert compact_json_dump(data, indent=2) == json
+    )
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=2)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "node":
+    [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+  "line":
+    [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
+}"""
+    )
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=3)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "node":
+    [
+      {"id": 1, "x": 2},
+      {"id": 3, "x": 4}
+    ],
+  "line":
+    [
+      {"id": 5, "x": 6},
+      {"id": 7, "x": {"y": 8.1, "z": 8.2}}
+    ]
+}"""
+    )
 
 
 def test_compact_json_dump_batch():
@@ -164,23 +200,29 @@ def test_compact_json_dump_batch():
             "line": [{"id": 9, "x": 10}, {"id": 11, "x": 12}],
         },
     ]
-    json = """[
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=4)
+    assert (
+        string_stream.getvalue()
+        == """[
   {
-    "node": [
-      {"id": 1, "x": 2},
-      {"id": 3, "x": 4}
-    ],
-    "line": [
-      {"id": 5, "x": 6},
-      {"id": 7, "x": {"y": 8.1, "z": 8.2}}
-    ]
+    "node":
+      [
+        {"id": 1, "x": 2},
+        {"id": 3, "x": 4}
+      ],
+    "line":
+      [
+        {"id": 5, "x": 6},
+        {"id": 7, "x": {"y": 8.1, "z": 8.2}}
+      ]
   },
   {
-    "line": [
-      {"id": 9, "x": 10},
-      {"id": 11, "x": 12}
-    ]
+    "line":
+      [
+        {"id": 9, "x": 10},
+        {"id": 11, "x": 12}
+      ]
   }
 ]"""
-
-    assert compact_json_dump(data, indent=2) == json
+    )

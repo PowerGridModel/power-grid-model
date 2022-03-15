@@ -7,9 +7,8 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, IO, Optional, Union
 
 import numpy as np
 
@@ -189,7 +188,7 @@ def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndar
 def export_json_data(
     json_file: Path,
     data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
-    indent: int = 2,
+    indent: Optional[int] = 2,
     compact: bool = False,
     meta_data: Optional[Dict[int, Any]] = None,
 ):
@@ -217,35 +216,35 @@ def export_json_data(
 
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
         if compact and indent:
-            file_pointer.write(compact_json_dump(json_data, indent=indent))
+            max_level = 4 if isinstance(json_data, list) else 3
+            compact_json_dump(json_data, file_pointer, indent=indent, max_level=max_level)
         else:
             json.dump(json_data, file_pointer, indent=indent)
 
 
-def compact_json_dump(
-    data: Union[Dict[str, List[Dict[str, Union[int, float]]]], List[Dict[str, List[Dict[str, Union[int, float]]]]]],
-    indent: int = 2,
-) -> str:
-    """
-    Generate a compact json representation of the data
-    Args:
-        data: a single or batch dataset for power-grid-model
-        indent: indent of the file, default 2
-
-    Returns:
-        Compact json string
-
-    """
-    json_str = json.dumps(data, indent=indent)
-
-    # Ugly TEMPORARY hack to write components with meta data on a single line
-    component_pattern = re.compile(r"\{\s*([^{}\[\]]+[^\s])\s*\}")
-    line_pattern = re.compile(r"\s*\n\s*")
-    json_str = component_pattern.sub(
-        lambda match: "BEGIN_SUB_DICT" + line_pattern.sub(" ", match.group(1)) + "END_SUB_DICT", json_str
-    )
-    json_str = component_pattern.sub(lambda match: "{" + line_pattern.sub(" ", match.group(1)) + "}", json_str)
-    json_str = re.sub("BEGIN_SUB_DICT", "{", json_str)
-    json_str = re.sub("END_SUB_DICT", "}", json_str)
-
-    return json_str
+def compact_json_dump(data: Any, file_pointer: IO[str], indent: int, max_level: int, level: int = 0):
+    tab = " " * level * indent
+    if level >= max_level:
+        file_pointer.write(tab)
+        json.dump(data, file_pointer, indent=None)
+    elif isinstance(data, list):
+        file_pointer.write(tab + "[\n")
+        n_obj = len(data)
+        for i, obj in enumerate(data, start=1):
+            compact_json_dump(obj, file_pointer, indent, max_level, level + 1)
+            file_pointer.write(",\n" if i < n_obj else "\n")
+        file_pointer.write(tab + "]")
+    elif isinstance(data, dict):
+        file_pointer.write(tab + "{\n")
+        n_obj = len(data)
+        for i, (key, obj) in enumerate(data.items(), start=1):
+            if level == max_level - 1:
+                file_pointer.write(tab + " " * indent + f'"{key}": ')
+                json.dump(obj, file_pointer, indent=None)
+            else:
+                file_pointer.write(tab + " " * indent + f'"{key}":\n')
+                compact_json_dump(obj, file_pointer, indent, max_level, level + 2)
+            file_pointer.write(",\n" if i < n_obj else "\n")
+        file_pointer.write(tab + "}")
+    else:
+        compact_json_dump(data, file_pointer, indent, level, level)
