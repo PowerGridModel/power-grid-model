@@ -35,7 +35,7 @@ def read_vision_xlsx(
             col_name, col_unit = col_idx
             base_col_name = str(col_name).split(".").pop()
             if base_col_name in enums:
-                sheet_data[col_idx] = sheet_data[col_idx].map(lambda x: enums[base_col_name].get(x, x))
+                sheet_data[col_idx] = sheet_data[col_idx].map(lambda x: enums[base_col_name].get(str(x), x))
             if col_unit in units:
                 multiplier = float(units[col_unit])
                 try:
