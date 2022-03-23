@@ -280,7 +280,7 @@ class Transformer : public Branch {
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.ytt() = y0_series;
         }
-        
+
         // for the rest param0 is zero
         // calculate yabc
         ComplexTensor<false> const sym_matrix = get_sym_matrix();
