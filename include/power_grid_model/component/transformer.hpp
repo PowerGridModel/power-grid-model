@@ -53,11 +53,15 @@ class Transformer : public Branch {
           z_grounding_to_{
               get_z_grounding(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
         // check on clock
-        if (clock_ < 0 || clock_ > 12 ||
-            // even number should not be yd configuration
-            ((clock_ % 2) == 0 && ((winding_from_ == WindingType::delta) != (winding_to_ == WindingType::delta))) ||
-            // odd number should not be yy or dd configuration
-            ((clock_ % 2) == 1 && ((winding_from_ == WindingType::delta) == (winding_to_ == WindingType::delta)))) {
+        static auto const is_wye = [](WindingType w) -> bool {
+            return (w == WindingType::wye) || (w == WindingType::wye_n);
+        };
+        if (  // clock should be between 0 and 12
+            clock_ < 0 || clock_ > 12 ||
+            // even number is not possible if one side is wye winding and the other side is not wye winding.
+            ((clock_ % 2) == 0 && (is_wye(winding_from_) != is_wye(winding_to_))) ||
+            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
+            ((clock_ % 2) == 1 && (is_wye(winding_from_) == is_wye(winding_to_)))) {
             throw InvalidTransformerClock{id(), clock_};
         }
         // set clock to zero if it is 12
