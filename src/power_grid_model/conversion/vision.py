@@ -198,7 +198,7 @@ def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: st
         columns = " and ".join(f"'{col_name}'" for col_name in columns)
         raise KeyError(f"Could not find column {columns} on sheet '{sheet_name}'")
 
-    return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=const_valueq)
+    return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=const_value)
 
 
 def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:
