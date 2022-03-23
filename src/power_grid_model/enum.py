@@ -29,6 +29,8 @@ class WindingType(IntEnum):
     wye = 0
     wye_n = 1
     delta = 2
+    zigzag = 3
+    zigzag_n = 4
 
 
 class BranchSide(IntEnum):
