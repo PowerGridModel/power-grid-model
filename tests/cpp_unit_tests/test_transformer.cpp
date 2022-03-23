@@ -367,6 +367,111 @@ TEST_CASE("Test transformer") {
         CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
     }
 
+    SECTION("Test grounding - Yzn11") {
+        TransformerInput const input{
+            {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
+            155e3,                    // u1
+            10.0e3,                   // u2
+            30e6,                     // u1, u2, sn
+            0.203,                    // uk
+            100e3,                    // pk
+            0.015,                    // i0
+            30.0e4,                   // p0
+            WindingType::wye,       // winding_from
+            WindingType::zigzag_n,       // winding_to
+            11,                       // clock
+            BranchSide::from,         // tap_side
+            -2,                       // tap_pos
+            -11,                      // tap_min
+            9,                        // tap_max
+            0,                        // tap_nom
+            2.5e3,                    // tap_size
+            nan,                      // uk_min
+            nan,                      // uk_max
+            nan,                      // pk_min
+            nan,                      // pk_max
+            nan,                      // r_grounding_from
+            nan,                      // x_grounding_from
+            1.0,                      // r_grounding_to
+            4.0                       // x_grounding_to
+        };
+        double const u1_rated{150.0e3};
+        double const u2_rated{10.0e3};
+        Transformer const Dyn11{input, u1_rated, u2_rated};
+
+        // Positive sequence
+        double const z_1_abs = input.uk * input.u2 * input.u2 / input.sn;
+        double const z_1_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
+        double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
+
+        double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
+        double const u2 = input.u2;  // Tap is on the from side, not the to side
+        double const k = (u1 / u2) / (u1_rated / u2_rated);
+
+        double const base_y_to = base_i_to / (u2_rated / sqrt3);
+
+        DoubleComplex const z_1_series = (z_1_real + 1i * z_1_imag) * base_y_to;
+
+        double const y_shunt_abs = input.i0 * input.sn / input.u2 / input.u2;
+        double const y_shunt_real = input.p0 / input.u2 / input.u2;
+        double y_shunt_imag;
+        if (y_shunt_real > y_shunt_abs) {
+            y_shunt_imag = 0.0;
+        }
+        else {
+            y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
+        }
+        DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
+
+        DoubleComplex const tap_ratio_1 = k * std::exp(1.0i * (deg_30 * input.clock));
+
+        DoubleComplex const y_1_tt = (1.0 / z_1_series) + 0.5 * y_1_shunt;
+        DoubleComplex const y_1_ff = (1.0 / k / k) * y_1_tt;
+        DoubleComplex const y_1_ft = (-1.0 / conj(tap_ratio_1)) * (1.0 / z_1_series);
+        DoubleComplex const y_1_tf = (-1.0 / tap_ratio_1) * (1.0 / z_1_series);
+
+        // Negative sequence
+        DoubleComplex const tap_ratio_2 = k * std::exp(-1.0i * (deg_30 * input.clock));
+
+        DoubleComplex const y_2_tt = (1.0 / z_1_series) + 0.5 * y_1_shunt;
+        DoubleComplex const y_2_ff = (1.0 / k / k) * y_2_tt;
+        DoubleComplex const y_2_ft = (-1.0 / conj(tap_ratio_2)) * (1.0 / z_1_series);
+        DoubleComplex const y_2_tf = (-1.0 / tap_ratio_2) * (1.0 / z_1_series);
+
+        // Zero sequence
+        DoubleComplex const z_grounding_to = (input.r_grounding_to + 1i * input.x_grounding_to) * base_y_to;
+
+        DoubleComplex const y_0_ff = 0.0;
+        DoubleComplex const y_0_ft = 0.0;
+        DoubleComplex const y_0_tf = 0.0;
+        DoubleComplex const y_0_tt = (1.0 / (z_1_series / 2.0 + 3.0 * z_grounding_to));
+
+        // Sequence admittances -> phase addmitance
+        ComplexTensor<false> y_ff_diagonal;
+        y_ff_diagonal << y_0_ff, 0.0, 0.0, 0.0, y_1_ff, 0.0, 0.0, 0.0, y_2_ff;
+
+        ComplexTensor<false> y_ft_diagonal;
+        y_ft_diagonal << y_0_ft, 0.0, 0.0, 0.0, y_1_ft, 0.0, 0.0, 0.0, y_2_ft;
+
+        ComplexTensor<false> y_tf_diagonal;
+        y_tf_diagonal << y_0_tf, 0.0, 0.0, 0.0, y_1_tf, 0.0, 0.0, 0.0, y_2_tf;
+
+        ComplexTensor<false> y_tt_diagonal;
+        y_tt_diagonal << y_0_tt, 0.0, 0.0, 0.0, y_1_tt, 0.0, 0.0, 0.0, y_2_tt;
+
+        ComplexTensor<false> const y_ff = dot(A, y_ff_diagonal, A_inv);
+        ComplexTensor<false> const y_ft = dot(A, y_ft_diagonal, A_inv);
+        ComplexTensor<false> const y_tf = dot(A, y_tf_diagonal, A_inv);
+        ComplexTensor<false> const y_tt = dot(A, y_tt_diagonal, A_inv);
+
+        BranchCalcParam<false> const param = Dyn11.calc_param<false>();
+
+        CHECK((cabs(param.value[0] - y_ff) < numerical_tolerance).all());
+        CHECK((cabs(param.value[1] - y_ft) < numerical_tolerance).all());
+        CHECK((cabs(param.value[2] - y_tf) < numerical_tolerance).all());
+        CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
+    }
+
     SECTION("Dyn11 - tap_max and tap_min flipped") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
