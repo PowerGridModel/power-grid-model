@@ -377,8 +377,8 @@ TEST_CASE("Test transformer") {
             100e3,                    // pk
             0.015,                    // i0
             30.0e4,                   // p0
-            WindingType::wye,       // winding_from
-            WindingType::zigzag_n,       // winding_to
+            WindingType::wye,         // winding_from
+            WindingType::zigzag_n,    // winding_to
             11,                       // clock
             BranchSide::from,         // tap_side
             -2,                       // tap_pos
