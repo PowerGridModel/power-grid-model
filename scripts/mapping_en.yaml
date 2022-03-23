@@ -7,6 +7,7 @@ grid:
     node:
       id: Number
       u_rated: Unom
+      meta: ID
   Cables:
     line:
       id: Number
@@ -23,6 +24,7 @@ grid:
       c0: C0
       tan0: 0
       i_n: Inom'
+      meta: ID
   Links:
     link:
       id: Number
@@ -30,6 +32,7 @@ grid:
       from_status: From.Switch state
       to_node: To.Number
       to_status: To.Switch state
+      meta: ID
   Reactance coils:
     line:
       id: Number
@@ -46,6 +49,7 @@ grid:
       c0: 0
       tan0: 0
       i_n: Inom
+      meta: ID
   Transformers:
     transformer:
       id: Number
@@ -90,6 +94,7 @@ grid:
       x_grounding_from: Xe1
       r_grounding_to: Re2
       x_grounding_to: Xe2
+      meta: ID
   Special transformers:
     transformer:
       id: Number
@@ -126,6 +131,7 @@ grid:
       x_grounding_from: 0
       r_grounding_to: 0
       x_grounding_to: 0
+      meta: ID
   Transformer loads:
     transformer:
       id:
@@ -169,11 +175,13 @@ grid:
       x_grounding_from: 0
       r_grounding_to: 0
       x_grounding_to: 0
+      meta: ID
     node:
       id:
         - Node.Number
         - Subnumber
       u_rated: Unom2
+      meta: ID
     sym_load:
       id:
         - Node.Number
@@ -191,6 +199,7 @@ grid:
         power_grid_model.conversion.filters.multiply:
           - Load.Q
           - 'Nodes!Simultaneity[Number=Node.Number]'
+      meta: ID
     sym_gen:
       - id:
           - Node.Number
@@ -202,6 +211,7 @@ grid:
         type: 0
         p_specified: Generation.P
         q_specified: Generation.Q
+        meta: ID
       - id:
           - Node.Number
           - Subnumber
@@ -216,6 +226,7 @@ grid:
             - PV.Pnom
             - 1
             - 1
+        meta: ID
   Sources:
     source:
       id:
@@ -227,6 +238,7 @@ grid:
       sk: Sk"nom
       rx_ratio: R/X
       z01_ratio: Z0/Z1
+      meta: ID
   Synchronous generators:
     sym_gen:
       id:
@@ -241,6 +253,7 @@ grid:
           - Pref
           - cos phi
           - Q
+      meta: ID
   Wind turbines:
     sym_gen:
       id:
@@ -262,6 +275,7 @@ grid:
               - Wind speed
           - cos phi
           - 1
+      meta: ID
   Loads:
     sym_load:
       id:
@@ -278,6 +292,7 @@ grid:
         power_grid_model.conversion.filters.multiply:
           - Q
           - 'Nodes!Simultaneity[Number=Node.Number]'
+      meta: ID
   Zigzag transformers:
     shunt:
       id:
@@ -295,6 +310,7 @@ grid:
         power_grid_model.conversion.filters.complex_inverse_imaginary_part:
           - R0
           - X0
+      meta: ID
   Pvs:
     sym_gen:
       id:
@@ -314,6 +330,7 @@ grid:
               - Inverter.Pnom | Inverter.Snom
           - Inverter.cos phi
           - 1
+      meta: ID
 enums:
   Switch state:
     'off': 0

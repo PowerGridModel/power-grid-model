@@ -118,17 +118,30 @@ def _convert_vision_sheet_to_pgm_component(
 
     for instance_attributes in instances:
         for attr, col_def in instance_attributes.items():
-            if attr not in pgm_data.dtype.names:
+
+            if attr not in pgm_data.dtype.names and attr != "meta":
                 attrs = ", ".join(pgm_data.dtype.names)
                 raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
 
             col_data = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+            if attr == "meta":
+                # Extra meta data is added when processing the id column
+                continue
             if attr == "id":
                 meta = col_data.to_dict(orient="records")
                 col_data = col_data.apply(lambda row: _id_lookup(lookup, component_name, row), axis=1)
                 for i, m in zip(col_data, meta):
                     meta_data[i] = {"sheet": sheet_name}
                     meta_data[i].update(m)
+                if "meta" in instance_attributes:
+                    meta = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=instance_attributes["meta"])
+                    if not meta.columns.is_unique:
+                        meta = meta.loc[:, ~meta.columns.duplicated()]
+                    meta = meta.to_dict(orient="records")
+                    for i, m in zip(col_data, meta):
+                        meta_data[i].update(
+                            {k: v for k, v in m.items() if not isinstance(v, Number) or not np.isnan(v)}
+                        )
             elif attr.endswith("node"):
                 col_data = col_data.apply(lambda row: _id_lookup(lookup, "node", row), axis=1)
             elif len(col_data.columns) != 1:
