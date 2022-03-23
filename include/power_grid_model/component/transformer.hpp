@@ -144,7 +144,7 @@ class Transformer : public Branch {
     std::tuple<DoubleComplex, DoubleComplex, double> transformer_params() const {
         double const base_y_to = base_i_to_ * base_i_to_ / base_power_1p;
         // off nominal tap ratio
-        double const k = [this]() {
+        auto const [u1, u2] = [this]() {
             double u1 = u1_, u2 = u2_;
             if (tap_side_ == BranchSide::from) {
                 u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
@@ -152,16 +152,17 @@ class Transformer : public Branch {
             else {
                 u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            return (u1 / u2) / nominal_ratio_;
+            return std::pair<double, double>{u1, u2};
         }();
+        double const k = (u1 / u2) / nominal_ratio_;
         // pk and uk
         double const pk = get_pk(), uk = get_uk();
         // series
         DoubleComplex z_series, y_series;
         // Z = uk*U2^2/S
-        double const z_series_abs = uk * u2_ * u2_ / sn_;
+        double const z_series_abs = uk * u2 * u2 / sn_;
         // R = pk * U2^2/S^2
-        z_series.real(pk * u2_ * u2_ / sn_ / sn_);
+        z_series.real(pk * u2 * u2 / sn_ / sn_);
         // X = sqrt(Z^2 - R^2)
         z_series.imag(std::sqrt(z_series_abs * z_series_abs - z_series.real() * z_series.real()));
         // y series
@@ -169,9 +170,9 @@ class Transformer : public Branch {
         // shunt
         DoubleComplex y_shunt;
         // Y = I0_2 / (U2/sqrt(3)) = i0 * (S / sqrt(3) / U2) / (U2/sqrt(3)) = i0 * S * / U2 / U2
-        double const y_shunt_abs = i0_ * sn_ / u2_ / u2_;
+        double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
-        y_shunt.real(p0_ / u2_ / u2_);
+        y_shunt.real(p0_ / u2 / u2);
         if (y_shunt.real() > y_shunt_abs) {
             y_shunt.imag(0.0);
         }
@@ -270,13 +271,13 @@ class Transformer : public Branch {
         }
         // ZN*
         if (winding_from_ == WindingType::zigzag_n && from_status()) {
-            DoubleComplex const z0_series = (1.0 / y_series) / 2.0 + 3.0 * z_grounding_from_ / k / k;
+            DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_from_ / k / k;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.yff() = y0_series / k / k;
         }
         // *zn
         if (winding_to_ == WindingType::zigzag_n && to_status()) {
-            DoubleComplex const z0_series = (1.0 / y_series) / 2.0 + 3.0 * z_grounding_to_;
+            DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_to_;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.ytt() = y0_series;
         }

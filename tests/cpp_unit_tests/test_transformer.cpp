@@ -444,7 +444,7 @@ TEST_CASE("Test transformer") {
         DoubleComplex const y_0_ff = 0.0;
         DoubleComplex const y_0_ft = 0.0;
         DoubleComplex const y_0_tf = 0.0;
-        DoubleComplex const y_0_tt = (1.0 / (z_1_series / 2.0 + 3.0 * z_grounding_to));
+        DoubleComplex const y_0_tt = (1.0 / (z_1_series * 0.1 + 3.0 * z_grounding_to));
 
         // Sequence admittances -> phase addmitance
         ComplexTensor<false> y_ff_diagonal;
