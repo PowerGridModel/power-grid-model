@@ -432,4 +432,8 @@ class TransformerClockError(MultiFieldValidationError):
     The value of a field is infinite.
     """
 
-    _message = "Odd clock number is only allowed for Dy(n) or Y(N)d configuration, for {n} {objects}."
+    _message = (
+        "Even number is not possible if one side is wye winding and the other side is not wye winding.\n"
+        "Odd number is not possible, if both sides are wye winding or both sides are not wye winding.\n"
+        ", for {n} {objects}."
+    )
