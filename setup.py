@@ -4,8 +4,9 @@
 
 import os
 import re
-from glob import glob
 import shutil
+from itertools import chain
+
 import numpy as np
 import platform
 from sysconfig import get_paths
@@ -55,11 +56,10 @@ class MyBuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-def get_ext_name(src_file, pkg_dir, pkg_name):
-    base_name = os.path.dirname(os.path.relpath(src_file, os.path.join(pkg_dir, "src", pkg_name)))
-    base_name = base_name.replace("\\", ".").replace("/", ".")
-    module_name = Path(src_file).resolve().stem
-    return f"{base_name}.{module_name}"
+def get_ext_name(src_file: Path, pkg_dir: Path, pkg_name: str):
+    module_name = str(src_file.relative_to(pkg_dir / "src" / pkg_name).with_suffix(""))
+    module_name = module_name.replace("\\", ".").replace("/", ".")
+    return module_name
 
 
 def generate_build_ext(pkg_dir: Path, pkg_name: str):
@@ -89,15 +89,15 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
         ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1),  # use mkl runtime loading
     ]
+    pkg_bin_dir = pkg_dir / "src" / pkg_name
 
     # remove old extension build
     shutil.rmtree(pkg_dir / "build", ignore_errors=True)
     # remove binary
-    bin_files = glob(str(pkg_dir / "src" / pkg_name / "**" / r"*.so"), recursive=True) + glob(
-        str(pkg_dir / "src" / pkg_name / "**" / r"*.pyd"), recursive=True
-    )
+    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.pyd")))
     for bin_file in bin_files:
-        os.remove(bin_file)
+        print(f"Remove binary file: {bin_file}")
+        bin_file.unlink()
 
     # build steps for Windows and Linux
     # path of python env
@@ -126,14 +126,14 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             cflags.append("-mmacosx-version-min=10.15")
 
     # list of compiled cython files, without file extension
-    cython_src = glob(str(pkg_dir / "src" / pkg_name / "**" / r"*.pyx"), recursive=True)
-    cython_src = [os.path.splitext(x)[0] for x in cython_src]
+    cython_src = list(pkg_bin_dir.rglob(r"*.pyx"))
+    cython_src = [x.with_suffix("") for x in cython_src]
     # compile cython
-    cython_src_pyx = [f"{x}.pyx" for x in cython_src]
+    cython_src_pyx = [x.with_suffix(".pyx") for x in cython_src]
     print("Compile Cython extensions")
     print(cython_src_pyx)
     CythonCompiler.compile(cython_src_pyx, cplus=True, language_level=3)
-    cython_src_cpp = [f"{x}.cpp" for x in cython_src]
+    cython_src_cpp = [x.with_suffix(".pyx") for x in cython_src]
     print("Generated cpp files")
     print(cython_src_cpp)
     # for linux add visibility to the init function
@@ -152,7 +152,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     exts = [
         Extension(
             name=get_ext_name(src_file=src_file, pkg_dir=pkg_dir, pkg_name=pkg_name),
-            sources=[os.path.relpath(src_file, pkg_dir)],
+            sources=[str(src_file.relative_to(pkg_dir))],
             include_dirs=include_dirs,
             library_dirs=library_dirs,
             libraries=libraries,
@@ -216,6 +216,7 @@ def build_pkg(setup_file: Path, author, author_email, description, url):
     Returns:
 
     """
+    print(f"Build wheel from {setup_file}")
     pkg_dir = setup_file.parent
     # package description
     pkg_pip_name = "power-grid-model"
@@ -264,7 +265,7 @@ def build_pkg(setup_file: Path, author, author_email, description, url):
 
 
 build_pkg(
-    setup_file=Path(__file__),
+    setup_file=Path(__file__).resolve(),
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
     description="Python/C++ library for distribution power system analysis",
