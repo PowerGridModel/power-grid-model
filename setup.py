@@ -178,30 +178,13 @@ def convert_long_description(raw_readme: str):
 
 
 def get_version(pkg_dir: Path):
-    with open(pkg_dir / "VERSION") as f:
-        version = f.read().strip().strip("\n")
-    if ("GITHUB_SHA" in os.environ) and ("GITHUB_REF" in os.environ) and ("GITHUB_RUN_NUMBER" in os.environ):
-        sha = os.environ["GITHUB_SHA"]
-        ref = os.environ["GITHUB_REF"]
-        build_number = os.environ["GITHUB_RUN_NUMBER"]
-        # short hash number in numeric
-        short_hash = f'{int(f"0x{sha[0:6]}", base=16):08}'
-
-        if "main" in ref:
-            # main branch
-            # major.minor.build_number
-            version += f".{build_number}"
-        elif "release" in ref:
-            # release branch
-            # major.minor.build_number rc short_hash
-            # NOTE: the major.minor in release branch is usually higher than the main branch
-            # this is the leading version if you enable test version in pip install
-            version += f".{build_number}rc{short_hash}"
-        else:
-            # feature branch
-            # major.minor.0a build_number short_hash
-            version += f".0a{build_number}{short_hash}"
-    return version
+    pypi_version = pkg_dir / "PYPI_VERSION"
+    if pypi_version.exists():
+        with open(pypi_version) as f:
+            return f.read().strip().strip("\n")
+    else:
+        with open(pkg_dir / "VERSION") as f:
+            return f.read().strip().strip("\n")
 
 
 def build_pkg(setup_file: Path, author, author_email, description, url):
