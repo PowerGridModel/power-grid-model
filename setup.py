@@ -133,7 +133,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     print("Compile Cython extensions")
     print(cython_src_pyx)
     CythonCompiler.compile(cython_src_pyx, cplus=True, language_level=3)
-    cython_src_cpp = [x.with_suffix(".pyx") for x in cython_src]
+    cython_src_cpp = [x.with_suffix(".cpp") for x in cython_src]
     print("Generated cpp files")
     print(cython_src_cpp)
     # for linux add visibility to the init function
