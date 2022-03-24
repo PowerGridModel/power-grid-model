@@ -62,7 +62,7 @@ def get_ext_name(src_file, pkg_dir, pkg_name):
     return f"{base_name}.{module_name}"
 
 
-def generate_build_ext(pkg_dir: str, pkg_name: str):
+def generate_build_ext(pkg_dir: Path, pkg_name: str):
     """
     Generate extension dict for setup.py
     the return value ext_dict, can be called in setup(**ext_dict)
@@ -75,7 +75,7 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     # include-folders
     include_dirs = [
         np.get_include(),  # The include-folder of numpy header
-        os.path.join(pkg_dir, "include"),  # The include-folder of the repo self
+        str(pkg_dir / "include"),  # The include-folder of the repo self
         os.environ["EIGEN_INCLUDE"],  # eigen3 library
         os.environ["BOOST_INCLUDE"],  # boost library
     ]
@@ -91,27 +91,27 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     ]
 
     # remove old extension build
-    shutil.rmtree(os.path.join(pkg_dir, "build"), ignore_errors=True)
+    shutil.rmtree(pkg_dir / "build", ignore_errors=True)
     # remove binary
-    bin_files = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.so"), recursive=True) + glob(
-        os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyd"), recursive=True
+    bin_files = glob(str(pkg_dir / "src" / pkg_name / "**" / r"*.so"), recursive=True) + glob(
+        str(pkg_dir / "src" / pkg_name / "**" / r"*.pyd"), recursive=True
     )
     for bin_file in bin_files:
         os.remove(bin_file)
 
     # build steps for Windows and Linux
     # path of python env
-    env_base_path = get_paths()["data"]
+    env_base_path = Path(get_paths()["data"])
     # different treat for windows and linux
     # determine platform specific options
     if if_win:
         # flag for C++17
         cflags += ["/std:c++17"]
-        include_dirs += [os.path.join(env_base_path, "Library", "include")]
-        library_dirs += [os.path.join(env_base_path, "Library", "lib")]
+        include_dirs += [str(env_base_path / "Library" / "include")]
+        library_dirs += [str(env_base_path / "Library" / "lib")]
     else:
-        include_dirs += [os.path.join(env_base_path, "include"), get_paths()["platinclude"], get_paths()["include"]]
-        library_dirs += [os.path.join(env_base_path, "lib")]
+        include_dirs += [str(env_base_path / "include"), get_paths()["platinclude"], get_paths()["include"]]
+        library_dirs += [str(env_base_path / "lib")]
         # flags for Linux and Mac
         cflags += [
             "-std=c++17",
@@ -126,7 +126,7 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
             cflags.append("-mmacosx-version-min=10.15")
 
     # list of compiled cython files, without file extension
-    cython_src = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyx"), recursive=True)
+    cython_src = glob(str(pkg_dir / "src" / pkg_name / "**" / r"*.pyx"), recursive=True)
     cython_src = [os.path.splitext(x)[0] for x in cython_src]
     # compile cython
     cython_src_pyx = [f"{x}.pyx" for x in cython_src]
@@ -168,16 +168,6 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
 
 
-def package_files(directory):
-    include_extensions = {".json"}
-    paths = []
-    for (path, directories, filenames) in os.walk(directory):
-        for filename in filenames:
-            if os.path.splitext(filename)[1] in include_extensions:
-                paths.append(os.path.join("..", path, filename))
-    return paths
-
-
 def convert_long_description(raw_readme: str):
     if "GITHUB_SHA" not in os.environ:
         return raw_readme
@@ -187,8 +177,8 @@ def convert_long_description(raw_readme: str):
         return re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
 
 
-def get_version(pkg_dir):
-    with open(os.path.join(pkg_dir, "VERSION")) as f:
+def get_version(pkg_dir: Path):
+    with open(pkg_dir / "VERSION") as f:
         version = f.read().strip().strip("\n")
     if ("GITHUB_SHA" in os.environ) and ("GITHUB_REF" in os.environ) and ("GITHUB_RUN_NUMBER" in os.environ):
         sha = os.environ["GITHUB_SHA"]
@@ -214,7 +204,7 @@ def get_version(pkg_dir):
     return version
 
 
-def build_pkg(setup_file, author, author_email, description, url):
+def build_pkg(setup_file: Path, author, author_email, description, url):
     """
 
     Args:
@@ -226,14 +216,14 @@ def build_pkg(setup_file, author, author_email, description, url):
     Returns:
 
     """
-    pkg_dir = os.path.dirname(os.path.realpath(setup_file))
+    pkg_dir = setup_file.parent
     # package description
     pkg_pip_name = "power-grid-model"
     pkg_name = pkg_pip_name.replace("-", "_")
-    with open(os.path.join(pkg_dir, "README.md")) as f:
+    with open(pkg_dir / "README.md") as f:
         long_description = f.read()
         long_description = convert_long_description(long_description)
-    with open(os.path.join(pkg_dir, "requirements.txt")) as f:
+    with open(pkg_dir / "requirements.txt") as f:
         required = f.read().splitlines()
         required = [x for x in required if "#" not in x]
     version = get_version(pkg_dir)
@@ -274,7 +264,7 @@ def build_pkg(setup_file, author, author_email, description, url):
 
 
 build_pkg(
-    setup_file=__file__,
+    setup_file=Path(__file__),
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
     description="Python/C++ library for distribution power system analysis",
