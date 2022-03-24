@@ -61,7 +61,7 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["pk"] = [63000.0, 0.0, -10.0]
     transformer["i0"] = [0.0368, 10.0, 0.9]
     transformer["p0"] = [63000.0, 0.0, -10.0]
-    transformer["winding_from"] = [4, 0, 2]
+    transformer["winding_from"] = [8, 0, 2]
     transformer["winding_to"] = [5, 1, 2]
     transformer["clock"] = [13, -1, 7]
     transformer["tap_side"] = [-1, 0, 1]

@@ -637,10 +637,12 @@ def all_clocks_valid(
     clk = data[component][clock_field]
     wfr = data[component][winding_from_field]
     wto = data[component][winding_to_field]
+    wfr_is_wye = np.isin(wfr, [WindingType.wye, WindingType.wye_n])
+    wto_is_wye = np.isin(wto, [WindingType.wye, WindingType.wye_n])
     odd = clk % 2 == 1
-    dyn = np.logical_and(wfr == WindingType.delta, np.isin(wto, [WindingType.wye, WindingType.wye_n]))
-    ynd = np.logical_and(np.isin(wfr, [WindingType.wye, WindingType.wye_n]), wto == WindingType.delta)
-    err = np.logical_and(odd, np.logical_not(np.logical_or(dyn, ynd)))
+    # even number is not possible if one side is wye winding and the other side is not wye winding.
+    # odd number is not possible, if both sides are wye winding or both sides are not wye winding.
+    err = (~odd & (wfr_is_wye != wto_is_wye)) | (odd & (wfr_is_wye == wto_is_wye))
     if err.any():
         return [
             TransformerClockError(
