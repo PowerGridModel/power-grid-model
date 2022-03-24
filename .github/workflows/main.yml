@@ -202,7 +202,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: version
-          path: PYPI_VERSION
+          path: .
 
       - name: Activate conda for windows
         if: matrix.platform == 'windows'
