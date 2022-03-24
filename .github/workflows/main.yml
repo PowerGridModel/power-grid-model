@@ -21,32 +21,6 @@ on:
 
 jobs:
 
-  versioning:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
-          architecture: x64
-
-      - name: Install requirements
-        run: pip install -r versioning-requirements.txt
-
-      - name: Run versioning
-        run: |
-          python get_version.py
-          cat PYPI_VERSION
-
-      - name: Upload version
-        uses: actions/upload-artifact@v2
-        with:
-          name: version
-          path: PYPI_VERSION
-
   build-cpp-test-linux:
     runs-on: ubuntu-latest
     container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
@@ -171,7 +145,7 @@ jobs:
             test_cmd: pytest {package}/tests
 
     runs-on: ${{ matrix.os }}
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, versioning]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
 
     env:
       CC: ${{ matrix.cc }}
@@ -198,11 +172,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: version
-          path: .
 
       - name: Activate conda for windows
         if: matrix.platform == 'windows'

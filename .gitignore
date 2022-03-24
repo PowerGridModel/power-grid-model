@@ -503,6 +503,3 @@ cpp_coverage.info
 python_cov_html/
 python_coverage.xml
 cpp_coverage.xml
-
-# version
-PYPI_VERSION
