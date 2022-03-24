@@ -204,6 +204,7 @@ jobs:
           name: version
           path: .
 
+
       - name: Activate conda for windows
         if: matrix.platform == 'windows'
         run: |
