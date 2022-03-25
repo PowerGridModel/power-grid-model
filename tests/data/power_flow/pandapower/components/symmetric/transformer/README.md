@@ -8,6 +8,8 @@ SPDX-License-Identifier: MPL-2.0
 Test case for validation of the transformer component for symmetrical power flow calculations in pandapower. 
 - A transformer can be 4 states, closed on both ends, open on both ends and open on any one end.
 
+The tap changing functionality is tested using a batch calculation for various tap positions.
+
 The circuit diagram is as follows:
 ```
 source_7--node_1--transformer_3--node_2              (Transformer from_status=to_status=1)
