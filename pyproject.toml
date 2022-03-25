@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 [project]
+name = "power-grid-model"
 requires-python = ">=3.8"
 
 
