@@ -7,15 +7,18 @@ import re
 import shutil
 from itertools import chain
 
+# noinspection PyPackageRequirements
 import numpy as np
+# noinspection PyPackageRequirements
+import Cython.Compiler.Main as CythonCompiler
+# noinspection PyPackageRequirements
+import requests
 import platform
 from sysconfig import get_paths
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages
-import Cython.Compiler.Main as CythonCompiler
 from pathlib import Path
-import requests
 
 
 # determine platform, only windows or linux
