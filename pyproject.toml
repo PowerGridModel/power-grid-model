@@ -2,16 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-[project]
-requires-python = ">=3.8"
-
-
 [build-system]
 requires = [
     "setuptools",
     "wheel",
     "cython",
     "oldest-supported-numpy",
+    "requests"
 ]
 build-backend = "setuptools.build_meta"
 
