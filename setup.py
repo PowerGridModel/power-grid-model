@@ -9,8 +9,10 @@ from itertools import chain
 
 # noinspection PyPackageRequirements
 import numpy as np
+
 # noinspection PyPackageRequirements
 import Cython.Compiler.Main as CythonCompiler
+
 # noinspection PyPackageRequirements
 import requests
 import platform
@@ -96,7 +98,9 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     pkg_bin_dir = pkg_dir / "src" / pkg_name
 
     # remove old extension build
-    shutil.rmtree(pkg_dir / "build", ignore_errors=True)
+    build_dir = pkg_dir / "build"
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
     # remove binary
     bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.pyd")))
     for bin_file in bin_files:
@@ -181,7 +185,7 @@ def convert_long_description(raw_readme: str):
         return re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
 
 
-def get_version(pkg_dir: Path):
+def get_version(pkg_dir: Path) -> str:
     with open(pkg_dir / "VERSION") as f:
         version = f.read().strip().strip("\n")
     major, minor = (int(x) for x in version.split("."))
@@ -237,15 +241,11 @@ def get_new_version(major, minor, latest_major, latest_minor, latest_patch):
         )
 
 
-def build_pkg(setup_file: Path, author, author_email, description, url):
+def prepare_pkg(setup_file: Path) -> dict:
     """
 
     Args:
         setup_file:
-        author:
-        author_email:
-        description:
-        url:
     Returns:
 
     """
@@ -259,48 +259,44 @@ def build_pkg(setup_file: Path, author, author_email, description, url):
         long_description = convert_long_description(long_description)
     with open(pkg_dir / "requirements.txt") as f:
         required = f.read().splitlines()
-        required = [x for x in required if "#" not in x]
+        required = [x for x in required if x.strip() and x.strip()[0] != "#"]
     version = get_version(pkg_dir)
 
-    setup(
+    return dict(
         name=pkg_pip_name,
         version=version,
-        author=author,
-        author_email=author_email,
-        description=description,
         long_description=long_description,
-        long_description_content_type="text/markdown",
-        url=url,
-        package_dir={"": "src"},
-        packages=find_packages("src"),
-        license="MPL-2.0",
-        classifiers=[
-            "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
-            "Programming Language :: Python :: 3.9",
-            "Programming Language :: Python :: 3.10",
-            "Programming Language :: Python :: Implementation :: CPython",
-            "Programming Language :: C++",
-            "Programming Language :: Cython",
-            r"Development Status :: 5 - Production/Stable",
-            "Intended Audience :: Developers",
-            "Intended Audience :: Science/Research",
-            r"License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
-            "Operating System :: Microsoft :: Windows",
-            "Operating System :: POSIX :: Linux",
-            "Operating System :: MacOS",
-            "Topic :: Scientific/Engineering :: Physics",
-        ],
         install_requires=required,
-        python_requires=">=3.8",
         **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
     )
 
 
-build_pkg(
-    setup_file=Path(__file__).resolve(),
+setup(
+    **prepare_pkg(setup_file=Path(__file__).resolve()),
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
-    description="Python/C++ library for distribution power system analysis",
     url="https://github.com/alliander-opensource/power-grid-model",
+    description="Python/C++ library for distribution power system analysis",
+    long_description_content_type="text/markdown",
+    package_dir={"": "src"},
+    packages=find_packages("src"),
+    license="MPL-2.0",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: C++",
+        "Programming Language :: Cython",
+        r"Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        r"License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS",
+        "Topic :: Scientific/Engineering :: Physics",
+    ],
+    python_requires=">=3.8",
 )
