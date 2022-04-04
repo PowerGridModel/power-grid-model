@@ -179,7 +179,7 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.3.1
+        uses: pypa/cibuildwheel@v2.4.0
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v2
