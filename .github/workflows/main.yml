@@ -87,9 +87,9 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      MKL_INCLUDE: /usr/loal/include
-      MKL_LIB: /usr/loal/lib
-      CMAKE_PREFIX_PATH: /usr/loal
+      MKL_INCLUDE: /usr/local/include
+      MKL_LIB: /usr/local/lib
+      CMAKE_PREFIX_PATH: /usr/local
 
     steps:
       - uses: actions/checkout@v2
