@@ -102,7 +102,7 @@ jobs:
       - name: Build and test
         run: |
           # environment
-          export LD_LIBRARY_PATH=$/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=${MKL_LIB}:${LD_LIBRARY_PATH}
           # bash
           ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
 
@@ -127,13 +127,13 @@ jobs:
             os: macos-latest
             cc: clang
             cxx: clang++
-            boost: /opt/cpp_pkgs/include
-            eigen: /opt/cpp_pkgs/include/eigen3
+            boost: /usr/local/include
+            eigen: /usr/local/include/eigen3
             cibw_build: cp*-macosx_*
             archs: "x86_64 arm64"
             test_cmd: >
               pytest {package}/tests &&
-              LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH} pytest {package}/tests
+              LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH} pytest {package}/tests
           - platform: windows
             os: windows-latest
             cc:
@@ -165,7 +165,9 @@ jobs:
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
         clang++ --version &&
-        sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
+        brew install boost eigen &&
+        env &&
+        sudo pip3 install mkl mkl-devel mkl-include
       MACOSX_DEPLOYMENT_TARGET: 10.15
       CIBW_BEFORE_ALL_WINDOWS : >
         conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
