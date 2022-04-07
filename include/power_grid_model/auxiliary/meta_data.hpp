@@ -13,6 +13,8 @@
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "boost/preprocessor/punctuation/comma_if.hpp"
+#include "boost/preprocessor/control/expr_iif.hpp"
+#include "boost/preprocessor/arithmetic/mod.hpp"
 #include "boost/preprocessor/seq/for_each_i.hpp"
 #include "boost/preprocessor/variadic/to_seq.hpp"
 
@@ -31,6 +33,15 @@
             BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_SEP, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
         }                                                                                                        \
     }
+
+#define POWER_GRID_MODEL_ATTRIBUTE_DEF(r, t, i, attr) attr BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), ;)
+#define POWER_GRID_MODEL_ATTRIBUTE_META(r, t, i, attr) \
+    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(t, attr);)
+
+#define POWER_GRID_MODEL_DATA_STRUCT_DEF(type, base_type, ...)                                               \
+    struct type : base_type {                                                                                \
+        BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_DEF, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+    };
 
 namespace power_grid_model {
 
@@ -238,6 +249,8 @@ using PowerGridMetaData = std::map<std::string, MetaData>;
 using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
 
 }  // namespace meta_data
+
+struct BaseData {};
 
 }  // namespace power_grid_model
 

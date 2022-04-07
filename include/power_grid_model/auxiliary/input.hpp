@@ -9,12 +9,20 @@
 #include "../enum.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+#include "meta_data.hpp"
 
 namespace power_grid_model {
 
-struct BaseInput {
-    ID id;
-};
+//struct BaseInput {
+//    ID id;
+//};
+
+//struct NodeInput : BaseInput {
+//    double u_rated;
+//};
+
+POWER_GRID_MODEL_DATA_STRUCT_DEF(BaseInput, BaseData, ID, id)
+
 
 struct NodeInput : BaseInput {
     double u_rated;
