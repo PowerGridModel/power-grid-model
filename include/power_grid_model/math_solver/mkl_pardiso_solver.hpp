@@ -316,7 +316,7 @@ class PARDISOSolver final {
             throw SparseMatrixError{error};
         }
 
-        /* 
+        /*
         Don't allow pivoting perturbation
         Why?
         - otherwise state estimation does not crash on a singular matrix
