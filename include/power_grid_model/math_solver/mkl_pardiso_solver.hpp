@@ -316,8 +316,15 @@ class PARDISOSolver final {
             throw SparseMatrixError{error};
         }
 
-        // maximum allow one pivoting perturbation
-        if (bsr_handle_.iparm[13] > 1) {
+        /*
+        Don't allow pivoting perturbation
+        Why?
+        - otherwise state estimation does not crash on a singular matrix
+
+        Risk:
+        - For power flow a very small value might be classified as a pertubated pivot (false positive)
+        */
+        if (bsr_handle_.iparm[13] > 0) {
             throw SparseMatrixError{};
         }
     }
