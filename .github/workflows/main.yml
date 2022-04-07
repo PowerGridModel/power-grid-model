@@ -87,17 +87,17 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      MKL_INCLUDE: /opt/cpp_pkgs/include
-      MKL_LIB: /opt/cpp_pkgs/lib
-      CMAKE_PREFIX_PATH: /opt/cpp_pkgs
+      MKL_INCLUDE: /usr/loal/include
+      MKL_LIB: /usr/loal/lib
+      CMAKE_PREFIX_PATH: /usr/loal
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install cpp dependencies
         run: |
-          brew install ninja
-          sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+          brew install ninja boost eigen nlohmann-json catch2
+          sudo pip3 install mkl mkl-devel mkl-include
 
       - name: Build and test
         run: |
