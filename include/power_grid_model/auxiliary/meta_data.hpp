@@ -24,7 +24,7 @@
 // use preprocessor to generate a vector of attribute meta data
 
 #define POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(type, field) \
-    ::power_grid_model::meta_data::get_data_attribute<type, &type::field>(#field)
+    ::power_grid_model::meta_data::get_data_attribute<&type::field>(#field)
 #define POWER_GRID_MODEL_ATTRIBUTE_SEP(r, type, i, field) \
     BOOST_PP_COMMA_IF(i)                                  \
     POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(type, field)
@@ -168,9 +168,11 @@ struct DataAttribute {
     CompareValueFunc compare_value;
 };
 
-template <class T, auto member_ptr>
+template <auto member_ptr>
 inline size_t get_offset() {
-    T const obj{};
+    using struct_type = typename trait_pointer_to_member<decltype(member_ptr)>::struct_type;
+    using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+    struct_type const obj{};
     return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
 }
 
@@ -183,14 +185,14 @@ inline bool is_little_endian() {
     return bint.c[0] == 4;
 }
 
-template <class T, auto member_ptr>
+template <auto member_ptr>
 inline DataAttribute get_data_attribute(std::string const& name) {
-    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    using single_data_type = data_type<ValueType>;
+    using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+    using single_data_type = data_type<value_type>;
     DataAttribute attr{};
     attr.name = name;
     attr.numpy_type = single_data_type::numpy_type;
-    attr.offset = get_offset<T, member_ptr>();
+    attr.offset = get_offset<member_ptr>();
     if constexpr (single_data_type::ndim > 0) {
         attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
     }
