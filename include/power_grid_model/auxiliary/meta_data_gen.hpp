@@ -22,7 +22,7 @@ namespace meta_data {
 inline PowerGridMetaData get_input_meta_data() {
     PowerGridMetaData meta_map;
     // node
-    meta_map["node"] = POWER_GRID_MODEL_META_DATA_TYPE(NodeInput, id, u_rated);
+    meta_map["node"] = NodeInput::get_meta();
     // branch
     meta_map["line"] = POWER_GRID_MODEL_META_DATA_TYPE(LineInput, id, from_node, to_node, from_status, to_status, r1,
                                                        x1, c1, tan1, r0, x0, c0, tan0, i_n);

@@ -13,20 +13,9 @@
 
 namespace power_grid_model {
 
-//struct BaseInput {
-//    ID id;
-//};
+POWER_GRID_MODEL_DATA_STRUCT_DEF(BaseInput, 0, _, ID, id)
 
-//struct NodeInput : BaseInput {
-//    double u_rated;
-//};
-
-POWER_GRID_MODEL_DATA_STRUCT_DEF(BaseInput, BaseData, ID, id)
-
-
-struct NodeInput : BaseInput {
-    double u_rated;
-};
+POWER_GRID_MODEL_DATA_STRUCT_DEF(NodeInput, 1, BaseInput, double, u_rated)
 
 struct BranchInput : BaseInput {
     ID from_node;
