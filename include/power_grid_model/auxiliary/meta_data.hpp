@@ -37,7 +37,7 @@
 
 #define POWER_GRID_MODEL_ATTRIBUTE_DEF(r, t, i, attr) attr BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), ;)
 #define POWER_GRID_MODEL_ATTRIBUTE_META(r, t, i, attr) \
-    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), meta.attributes.push_back(meta_data::get_data_attribute<&t::attr>(#attr));)
+    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), meta.attributes.push_back(POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(t, attr));)
 
 #define POWER_GRID_MODEL_DATA_STRUCT_DEF(type, has_base, base_type, ...)                                          \
     struct type BOOST_PP_EXPR_IIF(has_base, : base_type) {                                                        \
