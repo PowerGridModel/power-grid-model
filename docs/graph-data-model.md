@@ -36,41 +36,34 @@ The components types are organized in an inheritance-like hierarchy.
 A sub-type has all the attributes from its parent type.
 The hierarchy of the component types is shown below.
 
+```
+base
+|- node
+|- branch
+|  |-> transformer
+|  |-> line
+|  `-> link
+|- appliance
+|  |-> source
+|  |-> shunt
+|  `- generic_load_gen
+|     |- sym_load_gen
+|     |  |-> sym_load
+|     |  `-> sym_gen
+|     `- asym_load_gen
+|        |-> asym_load
+|        `-> asym_gen
+`- sensor
+   |- generic_voltage_sensor
+   |  |-> sym_voltage_sensor
+   |  `-> asym_voltage_sensor
+   `- generic_power_sensor
+      |-> sym_power_sensor
+      `-> asym_power_sensor
+```
+
 **NOTE: the type names in the hierarchy are exactly the same as the component type names
 in the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
-
-```
-                    base
-                     |
-                     |
-    -----------------------------------------------------------------------------------------
-    |           |                              |                                            |
-    |           |                              |                                            |
-   node       branch                        appliance                                       |
-                |                              |                                            |
-                |                              |                                            |
-        -------------------          ---------------------------------                      |
-        |          |      |          |          |                    |                      |
-        |          |      |          |          |                    |                      |
-     transformer  line   link      source     shunt          generic_load_gen             sensor
-                                                                     |                      |
-                                                                     |                      |
-                                   ----------------------------------------                 |
-                                   |            |            |            |                 |
-                                   |            |            |            |                 |
-                                 sym_load   asym_load      sym_gen     asym_gen             |
-                                                                                            |
-                                                            ----------------------------------
-                                                            |                                |
-                                                            |                                |
-                                                   generic_voltage_sensor           generic_power_sensor
-                                                            |                                |
-                                                            |                                |
-                                           --------------------------                --------------------------
-                                           |                        |                |                        |
-                                           |                        |                |                        |
-                                  sym_voltage_sensor      asym_voltage_sensor   sym_power_sensor      asym_power_sensor
-```
 
 This library uses a graph data model with three generic component types: `node`, `branch`, and `appliance`.
 A node is similar to a vertex in the graph, a branch is similar to an edge in the graph.
