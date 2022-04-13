@@ -38,7 +38,7 @@ The hierarchy of the component types is shown below.
 
 ```
 base
-|- node
+|-> node
 |- branch
 |  |-> transformer
 |  |-> line
