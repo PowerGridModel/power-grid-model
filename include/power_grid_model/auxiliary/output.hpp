@@ -11,6 +11,7 @@
 
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+#include "meta_data.hpp"
 
 namespace power_grid_model {
 
