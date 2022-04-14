@@ -51,7 +51,7 @@
             BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_META, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
             return meta;                                                                                          \
         }                                                                                                         \
-    };
+    }
 
 namespace power_grid_model {
 
