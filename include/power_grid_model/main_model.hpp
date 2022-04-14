@@ -17,20 +17,10 @@
 #include "topology.hpp"
 
 // component include
+#include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/input.hpp"
 #include "auxiliary/output.hpp"
-#include "component/appliance.hpp"
-#include "component/line.hpp"
-#include "component/link.hpp"
-#include "component/load_gen.hpp"
-#include "component/node.hpp"
-#include "component/power_sensor.hpp"
-#include "component/sensor.hpp"
-#include "component/shunt.hpp"
-#include "component/source.hpp"
-#include "component/transformer.hpp"
-#include "component/voltage_sensor.hpp"
 
 // math model include
 #include "math_solver/math_solver.hpp"
@@ -41,11 +31,11 @@
 namespace power_grid_model {
 
 // main model implementation template
-template <class T, class... U>
+template <class T, class U>
 class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
-class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...> final {
+class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> final {
    private:
     // internal type traits
     // container class
@@ -1205,8 +1195,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentTyp
 
 using MainModel = MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Appliance, GenericLoadGen, GenericLoad,
                                                       GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
-                                Node, Line, Link, Transformer, Shunt, Source, SymGenerator, AsymGenerator, SymLoad,
-                                AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor>;
+                                AllComponents>;
 
 }  // namespace power_grid_model
 
