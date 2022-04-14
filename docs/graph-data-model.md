@@ -37,29 +37,27 @@ A sub-type has all the attributes from its parent type.
 The hierarchy of the component types is shown below.
 
 ```
-base
-|-> node
-|- branch
-|  |-> transformer
-|  |-> line
-|  `-> link
-|- appliance
-|  |-> source
-|  |-> shunt
-|  `- generic_load_gen
-|     |- sym_load_gen
-|     |  |-> sym_load
-|     |  `-> sym_gen
-|     `- asym_load_gen
-|        |-> asym_load
-|        `-> asym_gen
-`- sensor
-   |- generic_voltage_sensor
-   |  |-> sym_voltage_sensor
-   |  `-> asym_voltage_sensor
-   `- generic_power_sensor
-      |-> sym_power_sensor
-      `-> asym_power_sensor
+base ──┬───────────────────────────────────────────────────────────── node
+       │
+       │── branch ────────────────────────────────────────────────┬── line
+       │                                                          │── link
+       │                                                          └── transformer
+       │
+       │── appliance ──┬───────────────────────────────────────────── source
+       │               │
+       │               │───────────────────────────────────────────── shunt
+       │               │
+       │               └── generic_load_gen ──┬── sym_load_gen ───┬── sym_load
+       │                                      │                   └── sym_gen
+       │                                      │
+       │                                      └── asym_load_gen ──┬── asym_load
+       │                                                          └── asym_gen
+       │
+       └── sensor ──────────────────┬── generic_voltage_sensor ───┬── sym_voltage_sensor
+                                    │                             └── asym_voltage_sensor
+                                    │
+                                    └── generic_power_sensor ─────┬── sym_power_sensor
+                                                                  └── asym_power_sensor
 ```
 
 **NOTE: the type names in the hierarchy are exactly the same as the component type names
