@@ -52,7 +52,7 @@ TEST_CASE("Test column row conversion") {
     }
 
     SECTION("Test meta input data generation") {
-        auto const meta_map = meta_data::get_input_meta_data();
+        auto const meta_map = meta_data::meta_data().at("input");
         auto const node = meta_map.at("node");
         auto const node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
@@ -69,7 +69,7 @@ TEST_CASE("Test column row conversion") {
     }
 
     SECTION("Test meta ouput data generation") {
-        auto const meta_map = meta_data::get_output_meta_data<false>();
+        auto const meta_map = meta_data::meta_data().at("asym_output");
         auto const node = meta_map.at("node");
         auto const node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
@@ -87,7 +87,7 @@ TEST_CASE("Test column row conversion") {
     }
 
     SECTION("Test meta update data generation") {
-        auto const meta_map = meta_data::get_update_meta_data();
+        auto const meta_map = meta_data::meta_data().at("update");
         auto const load = meta_map.at("asym_load");
         auto const load_attr = load.attributes;
         CHECK(load_attr[0].name == "id");
