@@ -19,6 +19,8 @@
 #include "iterative_linear_se_solver.hpp"
 // clang-format on
 #include "y_bus.hpp"
+// iterative current addition
+//#include "iterative_current_pf_solver.hpp"
 
 namespace power_grid_model {
 
@@ -52,6 +54,16 @@ class MathSolver {
             }
             return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
         }
+        /*
+        // iterative current addition
+        else if (calculation_method == CalculationMethod::iterative_current) {
+            if (!iterative_current_pf_solver_.has_value()) {
+                Timer timer(calculation_info, 2210, "Create math solver");
+                iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
+            }
+            return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+        }
+        */
         else {
             throw InvalidCalculationMethod{};
         }
@@ -90,6 +102,8 @@ class MathSolver {
     std::optional<NewtonRaphsonPFSolver<sym>> newton_pf_solver_;
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
+    // iterative current addition
+    //std::optional<IterativecurrentPFSolver<sym>> iterative_current_pf_solver_;
 };
 
 template class MathSolver<true>;
