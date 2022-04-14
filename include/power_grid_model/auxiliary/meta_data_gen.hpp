@@ -45,7 +45,6 @@ struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
 
 using MetaDataGenerator = MetaDataGeneratorImpl<AllComponents>;
 
-
 inline AllPowerGridMetaData const& meta_data() {
     static MetaDataGenerator const meta{};
     return meta.meta_data;
