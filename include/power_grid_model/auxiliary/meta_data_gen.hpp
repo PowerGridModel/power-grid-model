@@ -34,10 +34,10 @@ struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
 
     template <class CompType>
     static void retrieve_single_type(MetaDataGeneratorImpl& inst) {
-        inst.meta_data["input"][CompType::name] = typename CompType::InputType::get_meta();
-        inst.meta_data["update"][CompType::name] = typename CompType::UpdateType::get_meta();
-        inst.meta_data["sym_output"][CompType::name] = typename CompType::template OutputType<true>::get_meta();
-        inst.meta_data["asym_output"][CompType::name] = typename CompType::template OutputType<false>::get_meta();
+        inst.meta_data["input"][CompType::name] = CompType::InputType::get_meta();
+        inst.meta_data["update"][CompType::name] = CompType::UpdateType::get_meta();
+        inst.meta_data["sym_output"][CompType::name] = CompType::template OutputType<true>::get_meta();
+        inst.meta_data["asym_output"][CompType::name] = CompType::template OutputType<false>::get_meta();
     }
 
     AllPowerGridMetaData meta_data;
