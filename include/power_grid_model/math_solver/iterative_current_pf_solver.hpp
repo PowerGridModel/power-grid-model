@@ -26,38 +26,12 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-// (Repeated struct declaration for polar phasor in newton raphson.)
-// class for phasor in polar coordinate
-template <bool sym>
-struct PolarPhasor {
-    RealValue<sym> theta;
-    RealValue<sym> v;
-};
-static_assert(sizeof(PolarPhasor<true>) == sizeof(double[2]));
-static_assert(alignof(PolarPhasor<true>) == alignof(double[2]));
-static_assert(std::is_standard_layout_v<PolarPhasor<true>>);
-static_assert(sizeof(PolarPhasor<false>) == sizeof(double[6]));
-static_assert(alignof(PolarPhasor<false>) == alignof(double[6]));
-static_assert(std::is_standard_layout_v<PolarPhasor<false>>);
-// class for complex power
-template <bool sym>
-struct ComplexPower {
-    RealValue<sym> p;
-    RealValue<sym> q;
-};
-static_assert(sizeof(ComplexPower<true>) == sizeof(double[2]));
-static_assert(alignof(ComplexPower<true>) == alignof(double[2]));
-static_assert(std::is_standard_layout_v<ComplexPower<true>>);
-static_assert(sizeof(ComplexPower<false>) == sizeof(double[6]));
-static_assert(alignof(ComplexPower<false>) == alignof(double[6]));
-static_assert(std::is_standard_layout_v<ComplexPower<false>>);
-
 // solver
 template <bool sym>
 class IterativecurrentPFSolver {
    private:
-    // block size 2 for symmetric, 6 for asym
-    static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
+    // block size 1 for symmetric, 3 for asym
+    static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
 
    public:
     IterativecurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -74,6 +48,10 @@ class IterativecurrentPFSolver {
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
+        // getter. Idk why
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        IdxVector const& bus_entry = y_bus.bus_entry();
+        // phase shifts
         std::vector<double> const& phase_shift = *phase_shift_;
         // prepare
         MathOutput<sym> output;
@@ -93,15 +71,18 @@ class IterativecurrentPFSolver {
         for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
-            x_[i].v = RealValue<sym>{u_ref};
+            // output.u[i] = RealValue<sym>{u_ref};
+            //x_[i].v = RealValue<sym>{u_ref};
+            RealValue<sym> theta = 0.0;
             if constexpr (sym) {
-                x_[i].theta = phase_shift[i];
+                theta = phase_shift[i];
             }
             else {
-                x_[i].theta << phase_shift[i], (phase_shift[i] - deg_120), (phase_shift[i] - deg_240);
+                theta << phase_shift[i], (phase_shift[i] - deg_120), (phase_shift[i] - deg_240);
             }
-            ComplexValue<sym> const phase_shift_complex = exp(1.0i * x_[i].theta);
+            ComplexValue<sym> const phase_shift_complex = exp(1.0i * theta);
             output.u[i] = u_ref * phase_shift_complex;
+
         }
         // set rhs to zero
         std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
@@ -221,10 +202,12 @@ class IterativecurrentPFSolver {
             max_dev = std::max(dev, max_dev);
             // assign
             u[bus_number] = updated_u_[bus_number];
+        }
         return max_dev;
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        // pending to correct
         // call y bus
         output.branch = y_bus.calculate_branch_flow(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
