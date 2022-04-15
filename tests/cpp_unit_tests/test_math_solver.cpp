@@ -79,7 +79,7 @@ TEST_CASE("Test math solver") {
       (mm)                     (y0, ys0)           (y1)         |
     source --yref-- bus0(m) -m-branch0-mm- bus1 --branch1-m-  bus2(mm)
                      |                      |                   |
-                              load012                load345 (m)          load6 (not connected) (m, rubbish value)
+                 load012                load345 (m)          load6 (not connected) (m, rubbish value)
                                                       for const z,
                                                               rubbish value for load3/4
 
@@ -363,6 +363,19 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
+    /* 
+    \\ iterative current addition
+    
+    SECTION("Test symmetric iterative current pf solver") {
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+        MathOutput<true> output =
+            solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_current);
+        // verify
+        assert_output(output, output_ref);
+    }
+    */
+
     SECTION("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
@@ -408,6 +421,18 @@ TEST_CASE("Test math solver") {
         // verify
         assert_output(output, output_ref_asym);
     }
+
+    /*
+    // iterative current addition
+    SECTION("Test iterative current asymmetric pf solver") {
+        MathSolver<false> solver{topo_ptr, param_asym_ptr};
+        CalculationInfo info;
+        MathOutput<false> output =
+            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::iterative_current);
+        // verify
+        assert_output(output, output_ref_asym);
+    }
+    */
 
     SECTION("Test asym const z pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
