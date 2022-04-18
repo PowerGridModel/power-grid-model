@@ -23,21 +23,11 @@
 
 // use preprocessor to generate a vector of attribute meta data
 
-#define POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(type, field) \
-    ::power_grid_model::meta_data::get_data_attribute<&type::field>(#field)
-#define POWER_GRID_MODEL_ATTRIBUTE_SEP(r, type, i, field) \
-    BOOST_PP_COMMA_IF(i)                                  \
-    POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(type, field)
-#define POWER_GRID_MODEL_META_DATA_TYPE(type, ...)                                                               \
-    ::power_grid_model::meta_data::MetaData {                                                                    \
-#type, sizeof(type), alignof(type), {                                                                    \
-            BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_SEP, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-        }                                                                                                        \
-    }
-
 #define POWER_GRID_MODEL_ATTRIBUTE_DEF(r, t, i, attr) attr BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), ;)
+#define POWER_GRID_MODEL_ATTRIBUTE_META_GEN(type, field) \
+    ::power_grid_model::meta_data::get_data_attribute<&type::field>(#field)
 #define POWER_GRID_MODEL_ATTRIBUTE_META(r, t, i, attr) \
-    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), meta.attributes.push_back(POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(t, attr));)
+    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), meta.attributes.push_back(POWER_GRID_MODEL_ATTRIBUTE_META_GEN(t, attr));)
 
 #define POWER_GRID_MODEL_DATA_STRUCT_DEF(type, has_base, base_type, ...)                                          \
     struct type BOOST_PP_EXPR_IIF(has_base, : base_type) {                                                        \

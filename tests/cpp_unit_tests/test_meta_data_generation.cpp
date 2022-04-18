@@ -11,46 +11,7 @@
 
 namespace power_grid_model {
 
-enum class TestEnum : IntS { x, y, z };
-
-struct TestBaseType {
-    int32_t x;
-};
-
-struct TestType : TestBaseType {
-    int32_t y;
-    double z;
-    TestEnum e;
-    RealValue<false> v;
-};
-
 TEST_CASE("Test column row conversion") {
-    SECTION("Test single attribute") {
-        auto const attr = POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(TestType, z);
-        CHECK(attr.name == "z");
-        CHECK(attr.numpy_type == "f8");
-        CHECK(attr.dims == std::vector<size_t>{});
-    }
-
-    SECTION("Test list of attributes") {
-        auto const meta_data_type = POWER_GRID_MODEL_META_DATA_TYPE(TestType, x, y, z, e, v);
-        CHECK(meta_data_type.name == "TestType");
-        auto const& list_attr = meta_data_type.attributes;
-        CHECK(list_attr.size() == 5);
-        CHECK(list_attr[0].name == "x");
-        CHECK(list_attr[0].numpy_type == "i4");
-        CHECK(list_attr[0].dims == std::vector<size_t>{});
-        CHECK(list_attr[2].name == "z");
-        CHECK(list_attr[2].numpy_type == "f8");
-        CHECK(list_attr[2].dims == std::vector<size_t>{});
-        CHECK(list_attr[3].name == "e");
-        CHECK(list_attr[3].numpy_type == "i1");
-        CHECK(list_attr[3].dims == std::vector<size_t>{});
-        CHECK(list_attr[4].name == "v");
-        CHECK(list_attr[4].numpy_type == "f8");
-        CHECK(list_attr[4].dims == std::vector<size_t>{3});
-    }
-
     SECTION("Test meta input data generation") {
         auto const meta_map = meta_data::meta_data().at("input");
         auto const node = meta_map.at("node");
