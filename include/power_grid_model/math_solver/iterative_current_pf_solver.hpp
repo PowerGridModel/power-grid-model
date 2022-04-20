@@ -84,11 +84,6 @@ class IterativecurrentPFSolver {
             output.u[i] = u_ref * phase_shift_complex;
 
         }
-        // set rhs to zero
-        std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
-        // copy y bus data
-        std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
-        sub_timer.stop();
 
         // start calculation
         // iteration
@@ -97,7 +92,12 @@ class IterativecurrentPFSolver {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
-            sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
+            sub_timer = Timer(calculation_info, 2222, "Calculate injected current");
+            // set rhs to zero
+            std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
+            // copy y bus data
+            std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
+            sub_timer.stop();
             // remove auto
             calculate_injected_current(y_bus, input, output.u);
             //calculate_jacobian_and_deviation(y_bus, input, output.u);
@@ -134,7 +134,7 @@ class IterativecurrentPFSolver {
     ComplexValueVector<sym> updated_u_;
     ComplexValueVector<sym> rhs_;
     ComplexTensorVector<sym> mat_data_;
-    BSRSolver<double> bsr_solver_;
+    BSRSolver<DoubleComplex> bsr_solver_;
 
     // data for jacobian 
     // std::vector<PFJacBlock<sym>> data_jac_; // Remove
@@ -238,11 +238,11 @@ class IterativecurrentPFSolver {
                         break;
                     case LoadGenType::const_y:
                         // power is quadratic relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * output.u[bus] * output.u[bus];
+                        output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus] * output.u[bus]);
                         break;
                     case LoadGenType::const_i:
                         // power is linear relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * output.u[bus];
+                        output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]);
                         break;
                     default:
                         throw MissingCaseForEnumError("Power injection", type);
