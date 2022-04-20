@@ -362,9 +362,6 @@ TEST_CASE("Test math solver") {
         // verify
         assert_output(output, output_ref);
     }
-
-    /* 
-    \\ iterative current addition
     
     SECTION("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
@@ -374,7 +371,6 @@ TEST_CASE("Test math solver") {
         // verify
         assert_output(output, output_ref);
     }
-    */
 
     SECTION("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
@@ -422,8 +418,6 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_asym);
     }
 
-    /*
-    // iterative current addition
     SECTION("Test iterative current asymmetric pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
@@ -432,7 +426,6 @@ TEST_CASE("Test math solver") {
         // verify
         assert_output(output, output_ref_asym);
     }
-    */
 
     SECTION("Test asym const z pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
