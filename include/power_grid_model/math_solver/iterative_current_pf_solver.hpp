@@ -48,7 +48,7 @@ class IterativecurrentPFSolver {
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
-        // getter. Idk why
+        // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
         // phase shifts
@@ -73,7 +73,7 @@ class IterativecurrentPFSolver {
             // consider phase shift
             // output.u[i] = RealValue<sym>{u_ref};
             //x_[i].v = RealValue<sym>{u_ref};
-            RealValue<sym> theta = 0.0;
+            RealValue<sym> theta;
             if constexpr (sym) {
                 theta = phase_shift[i];
             }
@@ -99,10 +99,10 @@ class IterativecurrentPFSolver {
             }
             sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
             // remove auto
-            calculate_injected_current(input, output.u);
+            calculate_injected_current(y_bus, input, output.u);
             //calculate_jacobian_and_deviation(y_bus, input, output.u);
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
-            bsr_solver_.solve(ydata.data(), rhs_.data(), updated_u_.data());
+            bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data());
             //bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
             sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
             max_dev = iterate_unknown(output.u);
@@ -130,7 +130,8 @@ class IterativecurrentPFSolver {
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
     std::shared_ptr<IdxVector const> source_bus_indptr_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-    std::vector<ComplexPower<sym>> updated_u_;
+    //std::vector < ComplexPower < sym>> updated_u_;
+    ComplexValueVector<sym> updated_u_;
     ComplexValueVector<sym> rhs_;
     ComplexTensorVector<sym> mat_data_;
     BSRSolver<double> bsr_solver_;
@@ -145,7 +146,8 @@ class IterativecurrentPFSolver {
     // 2. power unbalance: p/q_specified - p/q_calculated
     // std::vector<ComplexPower<sym>> del_pq_; // Remove
     
-    void calculate_injected_current(PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+    void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                    ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
@@ -169,12 +171,12 @@ class IterativecurrentPFSolver {
                         rhs_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
                         break;
                     case LoadGenType::const_y:
-                        // I_inj = S_inj/U for const impedance type
-                        rhs_[bus_number] += conj(input.s_injection[load_number] * u[bus_number]);
+                        // I_inj = conj((S_inj * abs(U*U)) / U) for const impedance type
+                        rhs_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number] * u[bus_number]) / u[bus_number]);
                         break;
                     case LoadGenType::const_i:
-                        // I_inj = S_inj/U for const current type
-                        rhs_[bus_number] += conj(input.s_injection[load_number]);
+                        // I_inj = conj(S_inj*abs(U)/U) for const current type
+                        rhs_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
                         break;
                     default:
                         throw MissingCaseForEnumError("Injection current calculation", type);
@@ -236,11 +238,11 @@ class IterativecurrentPFSolver {
                         break;
                     case LoadGenType::const_y:
                         // power is quadratic relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * x_[bus].v * x_[bus].v;
+                        output.load_gen[load_gen].s = input.s_injection[load_gen] * output.u[bus] * output.u[bus];
                         break;
                     case LoadGenType::const_i:
                         // power is linear relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * x_[bus].v;
+                        output.load_gen[load_gen].s = input.s_injection[load_gen] * output.u[bus];
                         break;
                     default:
                         throw MissingCaseForEnumError("Power injection", type);
