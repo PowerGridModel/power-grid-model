@@ -9,6 +9,21 @@
 
 /*
 Iterative Power Flow
+I = YU
+Split this with U_1 having all source buses, U_2 having all other buses
+[I_1] = [ K  L ] [U_1]
+[I_2]   [ L' M ] [U_2]
+
+I_2 = MU_2 + L'U_1
+MU_2 = I_2 - L'U_1 = RHS
+
+
+Initialize U_2 with flat start and phase shifts accounted
+while maximum deviation > error tolerance
+    Calculate I_2 with U_2 of previous iteration
+    Solve MU_2 = RHS
+    Find maximum deviation in voltage
+    Update U_2
 
 */
 
@@ -53,7 +68,7 @@ class IterativecurrentPFSolver {
         IdxVector const& bus_entry = y_bus.bus_entry();
         // phase shifts
         std::vector<double> const& phase_shift = *phase_shift_;
-        // prepare
+        // prepare output
         MathOutput<sym> output;
         output.u.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
@@ -71,8 +86,6 @@ class IterativecurrentPFSolver {
         for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
-            // output.u[i] = RealValue<sym>{u_ref};
-            //x_[i].v = RealValue<sym>{u_ref};
             RealValue<sym> theta;
             if constexpr (sym) {
                 theta = phase_shift[i];
@@ -93,18 +106,17 @@ class IterativecurrentPFSolver {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
             sub_timer = Timer(calculation_info, 2222, "Calculate injected current");
-            // set rhs to zero
+            // set rhs to zero for iteration start
             std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
-            // copy y bus data
+            // copy y bus data. (Change later)
             std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
             sub_timer.stop();
-            // remove auto
+            // Calculate RHS
             calculate_injected_current(y_bus, input, output.u);
-            //calculate_jacobian_and_deviation(y_bus, input, output.u);
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
             bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data());
-            //bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
             sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
+            // Calculate maximum deviation from previous iteration
             max_dev = iterate_unknown(output.u);
             sub_timer.stop();
         }
@@ -136,16 +148,6 @@ class IterativecurrentPFSolver {
     ComplexTensorVector<sym> mat_data_;
     BSRSolver<DoubleComplex> bsr_solver_;
 
-    // data for jacobian 
-    // std::vector<PFJacBlock<sym>> data_jac_; // Remove
-    // calculation data
-    // std::vector<PolarPhasor<sym>> x_;      // unknown
-    // std::vector<PolarPhasor<sym>> del_x_;  // unknown iterative (Remove)
-    // this stores in different steps
-    // 1. negative power injection: - p/q_calculated
-    // 2. power unbalance: p/q_specified - p/q_calculated
-    // std::vector<ComplexPower<sym>> del_pq_; // Remove
-    
     void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                     ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
@@ -153,21 +155,17 @@ class IterativecurrentPFSolver {
         std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
-        //IdxVector const& indptr = y_bus.row_indptr();
-        //IdxVector const& indices = y_bus.col_indices();
 
         // loop individual load/source
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const data_sequence = bus_entry[bus_number];    // Do something for sequence
-            // Idx const k = bus_entry[i];
             // loop load
             for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1]; ++load_number) {
                 // load type
                 LoadGenType const type = load_gen_type[load_number];
-                // modify jacobian and del_pq based on type
                 switch (type) {
                     case LoadGenType::const_pq:
-                        // I_inj = S_inj/U for PQ type
+                        // I_inj = conj(S_inj/U) for constant PQ type
                         rhs_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
                         break;
                     case LoadGenType::const_y:
