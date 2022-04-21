@@ -269,12 +269,6 @@ TEST_CASE("Test topology") {
             CHECK(math.branch_to_power_sensor_indptr == math_ref.branch_to_power_sensor_indptr);
         }
     }
-
-    SECTION("Test conflict source") {
-        comp_conn.source_connected = {1, 1, 1, 1};
-        Topology topo{comp_topo, comp_conn};
-        CHECK_THROWS_AS(topo.build_topology(), ConflictSource);
-    }
 }
 
 }  // namespace power_grid_model

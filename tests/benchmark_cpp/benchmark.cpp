@@ -34,7 +34,7 @@ struct PowerGridBenchmark {
         LinkInput const link_2{{{4}, 1, 2, true, true}};
         LinkInput const link_3{{{5}, 2, 0, true, true}};
 
-        SourceInput const source{{{6}, 0, true}, 1.05, 1e20, nan, nan};
+        SourceInput const source{{{6}, 0, true}, 1.05, nan, 1e20, nan, nan};
         // template input
         NodeInput const node{{0}, 10.0e3};
         SymLoadGenInput const sym_load{{{{0}, 0, true}, LoadGenType::const_i}, 0.4e6, 0.3e6};
