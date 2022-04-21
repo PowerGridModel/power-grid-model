@@ -13,9 +13,9 @@ TEST_CASE("Test main model static") {
                                    {{1}, na_IntS, na_IntS}, {{0}, na_IntS, na_IntS}, {{3}, na_IntS, na_IntS}};
 
     std::vector<SourceUpdate> source{
-        {{{0}, na_IntS}, 1.0},
-        {{{0}, na_IntS}, 1.0},
-        {{{0}, na_IntS}, 1.0},
+        {{{0}, na_IntS}, 1.0, nan},
+        {{{0}, na_IntS}, 1.0, nan},
+        {{{0}, na_IntS}, 1.0, nan},
     };
 
     Idx batches = 3;

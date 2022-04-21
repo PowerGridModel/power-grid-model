@@ -42,6 +42,7 @@ TEST_CASE("Test source") {
     CHECK(source.math_model_type() == ComponentType::source);
 
     SECTION("Test source parameters") {
+        // uref
         ComplexValue<true> u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
         source.set_u_ref(nan, nan);
@@ -50,6 +51,11 @@ TEST_CASE("Test source") {
         source.set_u_ref(1.0, nan);
         u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - 1.0) < numerical_tolerance);
+
+        // uref with angle
+        source.set_u_ref(nan, 2.5);
+        u_ref = source.calc_param<true>();
+        CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         // yref
         DoubleComplex const y_ref_sym_cal = source.math_param<true>();

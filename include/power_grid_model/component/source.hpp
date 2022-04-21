@@ -27,7 +27,7 @@ class Source : public Appliance {
 
     Source(SourceInput const& source_input, double u)
         : Appliance{source_input, u}, u_ref_{source_input.u_ref}, u_ref_angle_{}, y1_ref_{}, y0_ref_{} {
-        u_ref_angle_ = is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle; 
+        u_ref_angle_ = is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle;
         double const sk{is_nan(source_input.sk) ? default_source_sk : source_input.sk};
         double const rx_ratio{is_nan(source_input.rx_ratio) ? default_source_rx_ratio : source_input.rx_ratio};
         double const z01_ratio{is_nan(source_input.z01_ratio) ? default_source_z01_ratio : source_input.z01_ratio};
@@ -76,7 +76,7 @@ class Source : public Appliance {
     // getter for u_ref for calc_param
     template <bool sym>
     DoubleComplex calc_param() const {
-        return u_ref_;
+        return u_ref_ * std::exp(1.0i * u_ref_angle_);
     }
 
     // update for source
