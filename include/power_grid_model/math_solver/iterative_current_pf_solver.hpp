@@ -78,14 +78,24 @@ class IterativecurrentPFSolver {
         // initialize
         Timer sub_timer(calculation_info, 2221, "Initialize calculation");
         // average u_ref of all sources
+        /*
         double const u_ref = std::transform_reduce(input.source.cbegin(), input.source.cend(), 0.0, std::plus{},
                                                    [](SourceCalcParam<sym> const& source) {
                                                        return source.u_ref;
                                                    }) /
                              input.source.size();
+        */
+        DoubleComplex const u_ref =
+            std::transform_reduce(input.source.cbegin(), input.source.cend(), phase_shift.cbegin(), DoubleComplex{},
+                                  std::plus{},
+                                  [](DoubleComplex const& u_ref, double phase) {
+                                      return u_ref * std::exp(1.0i * -phase);  // offset phase shift angle
+                                  }) /
+            (double)input.source.size();
         for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
+            /*
             RealValue<sym> theta;
             if constexpr (sym) {
                 theta = phase_shift[i];
@@ -93,8 +103,10 @@ class IterativecurrentPFSolver {
             else {
                 theta << phase_shift[i], (phase_shift[i] - deg_120), (phase_shift[i] - deg_240);
             }
-            ComplexValue<sym> const phase_shift_complex = exp(1.0i * theta);
-            output.u[i] = u_ref * phase_shift_complex;
+            */
+            //ComplexValue<sym> const phase_shift_complex = exp(1.0i * theta);
+            //output.u[i] = u_ref * phase_shift_complex;
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};     
         }
 
         // Build y bus data with source impedance
@@ -195,8 +207,8 @@ class IterativecurrentPFSolver {
                 // YBus_diag += Y_source
                 //mat_data_[data_sequence] += input.source[source_number].y_ref;
                 // rhs += Y_source_j * U_ref_j
-                rhs_[bus_number] +=
-                    dot(input.source[source_number].y_ref, ComplexValue<sym>{input.source[source_number].u_ref});
+                rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                        ComplexValue<sym>{input.source[source_number]});
             }
         }
     }
@@ -213,7 +225,10 @@ class IterativecurrentPFSolver {
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 // YBus_diag += Y_source
-                mat_data_[data_sequence] += input.source[source_number].y_ref;            }
+                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                // to remove 
+                //mat_data_[data_sequence] += input.source[source_number].y_ref;            
+            }
         }
         // Prefactorize solver
         bsr_solver_.prefactorize(mat_data_.data());
@@ -246,8 +261,8 @@ class IterativecurrentPFSolver {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // source
             for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
-                ComplexValue<sym> const u_ref{input.source[source].u_ref};
-                ComplexTensor<sym> const y_ref = input.source[source].y_ref;
+                ComplexValue<sym> const u_ref{input.source[source]};
+                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
                 output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
                 output.source[source].s = output.u[bus] * conj(output.source[source].i);
             }
