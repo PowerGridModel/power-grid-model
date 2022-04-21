@@ -246,23 +246,18 @@ class NewtonRaphsonPFSolver {
         Timer sub_timer(calculation_info, 2221, "Initialize calculation");
         // average u_ref of all sources
         DoubleComplex const u_ref =
-            std::transform_reduce(input.source.cbegin(), input.source.cend(), DoubleComplex{}, std::plus{},
-                                  [](DoubleComplex const& u_ref) {
-                                      return u_ref;  // TODO angle offset
+            std::transform_reduce(input.source.cbegin(), input.source.cend(), phase_shift.cbegin(), DoubleComplex{},
+                                  std::plus{},
+                                  [](DoubleComplex const& u_ref, double phase) {
+                                      return u_ref * std::exp(1.0i * -phase);  // offset phase shift angle
                                   }) /
             (double)input.source.size();
         for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
-            x_[i].v = RealValue<sym>{cabs(u_ref)};  // TODO angle offset
-            if constexpr (sym) {
-                x_[i].theta = phase_shift[i];
-            }
-            else {
-                x_[i].theta << phase_shift[i], (phase_shift[i] - deg_120), (phase_shift[i] - deg_240);
-            }
-            ComplexValue<sym> const phase_shift_complex = exp(1.0i * x_[i].theta);
-            output.u[i] = cabs(u_ref) * phase_shift_complex;  // TODO angle offset
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+            x_[i].v = cabs(output.u[i]);
+            x_[i].theta = arg(output.u[i]);
         }
         sub_timer.stop();
 
