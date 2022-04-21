@@ -90,10 +90,10 @@ class LinearPFSolver {
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 // YBus_diag += Y_source
-                mat_data_[data_sequence] += input.source[source_number].y_ref;
+                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
                 // rhs += Y_source_j * U_ref_j
-                rhs_[bus_number] +=
-                    dot(input.source[source_number].y_ref, ComplexValue<sym>{input.source[source_number].u_ref});
+                rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                        ComplexValue<sym>{input.source[source_number]});
             }
         }
 
@@ -133,8 +133,8 @@ class LinearPFSolver {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // source
             for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
-                ComplexValue<sym> const u_ref{input.source[source].u_ref};
-                ComplexTensor<sym> const y_ref = input.source[source].y_ref;
+                ComplexValue<sym> const u_ref{input.source[source]};
+                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
                 output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
                 output.source[source].s = output.u[bus] * conj(output.source[source].i);
             }

@@ -56,7 +56,7 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(ShuntInput, 1, ApplianceInput,
     double, g0, double, b0);
 
 POWER_GRID_MODEL_DATA_STRUCT_DEF(SourceInput, 1, ApplianceInput,
-    double, u_ref,
+    double, u_ref, double, u_ref_angle,
     double, sk, double, rx_ratio, double, z01_ratio);
 
 using SymLoadGenInput = LoadGenInput<true>;
@@ -103,7 +103,7 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(ApplianceUpdate, 1, BaseUpdate,
     IntS, status);
 
 POWER_GRID_MODEL_DATA_STRUCT_DEF(SourceUpdate, 1, ApplianceUpdate,
-    double, u_ref);
+    double, u_ref, double, u_ref_angle);
 
 template <bool sym>
 POWER_GRID_MODEL_DATA_STRUCT_DEF(LoadGenUpdate, 1, ApplianceUpdate,

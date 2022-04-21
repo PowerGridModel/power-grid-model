@@ -291,12 +291,13 @@ For each `appliance` a switch is defined between the `appliance` and the `node`.
 It has an infinite voltage source with an internal impedance.
 The impedance is specified by convention as short circuit power.
 
-| name | data type | unit | description | required | input | update | output | valid values |
-| --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
-| `u_ref` | `double` | - | reference voltage in per-unit | &#10024; only for power flow | &#10004; | &#10004; | &#10060; | `> 0` | 
-| `sk` | `double` | volt-ampere (VA) | short circuit power | &#10060; default 1e10 | &#10004; | &#10060; | &#10060; | `> 0` | 
-| `rx_ratio` | `double` | - | R to X ratio | &#10060; default 0.1 | &#10004; | &#10060; | &#10060; | `>= 0` |
-| `z01_ratio` | `double` | - | zero sequence to positive sequence impedance ratio | &#10060; default 1.0 | &#10004; | &#10060; | &#10060; | `> 0` | 
+| name          | data type | unit | description                                        |           required           | input | update | output | valid values |
+|---------------| --- | --- |----------------------------------------------------|:----------------------------:| :---: | :---: | :---: |:------------:|
+| `u_ref`       | `double` | - | reference voltage in per-unit                      | &#10024; only for power flow | &#10004; | &#10004; | &#10060; |    `> 0`     | 
+| `u_ref_angle` | `double` | rad | reference voltage angle                            |     &#10060; default 0.0     | &#10004; | &#10004; | &#10060; |              |
+| `sk`          | `double` | volt-ampere (VA) | short circuit power                                |    &#10060; default 1e10     | &#10004; | &#10060; | &#10060; | `> 0` | 
+| `rx_ratio`    | `double` | - | R to X ratio                                       |     &#10060; default 0.1     | &#10004; | &#10060; | &#10060; | `>= 0` |
+| `z01_ratio`   | `double` | - | zero sequence to positive sequence impedance ratio |     &#10060; default 1.0     | &#10004; | &#10060; | &#10060; | `> 0` | 
 
 ### Generic Load and Generator
 
