@@ -26,7 +26,8 @@ class Source : public Appliance {
     }
 
     Source(SourceInput const& source_input, double u)
-        : Appliance{source_input, u}, u_ref_{source_input.u_ref}, y1_ref_{}, y0_ref_{} {
+        : Appliance{source_input, u}, u_ref_{source_input.u_ref}, u_ref_angle_{}, y1_ref_{}, y0_ref_{} {
+        u_ref_angle_ = is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle; 
         double const sk{is_nan(source_input.sk) ? default_source_sk : source_input.sk};
         double const rx_ratio{is_nan(source_input.rx_ratio) ? default_source_rx_ratio : source_input.rx_ratio};
         double const z01_ratio{is_nan(source_input.z01_ratio) ? default_source_z01_ratio : source_input.z01_ratio};
@@ -60,9 +61,17 @@ class Source : public Appliance {
     }
 
     // setter
-    void set_u_ref(double new_u_ref) {
-        if (!is_nan(new_u_ref))
+    bool set_u_ref(double new_u_ref, double new_u_ref_angle) {
+        bool changed = false;
+        if (!is_nan(new_u_ref)) {
             u_ref_ = new_u_ref;
+            changed = true;
+        }
+        if (!is_nan(new_u_ref_angle)) {
+            u_ref_angle_ = new_u_ref_angle;
+            changed = true;
+        }
+        return changed;
     }
     // getter for u_ref for calc_param
     template <bool sym>
@@ -73,15 +82,16 @@ class Source : public Appliance {
     // update for source
     UpdateChange update(SourceUpdate const& update) {
         assert(update.id == id());
-        bool const changed = set_status(update.status);
-        set_u_ref(update.u_ref);
+        bool const topo_changed = set_status(update.status);
+        bool const param_changed = set_u_ref(update.u_ref, update.u_ref_angle);
         // change source connection will change both topo and param
-        // change u ref will not change topo or param
-        return {changed, changed};
+        // change u ref will change param
+        return {topo_changed, param_changed || topo_changed};
     }
 
    private:
     double u_ref_;
+    double u_ref_angle_;
     // positive and zero sequence ref
     DoubleComplex y1_ref_;
     DoubleComplex y0_ref_;

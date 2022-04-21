@@ -36,7 +36,7 @@ TEST_CASE("Test source") {
     ComplexTensor<false> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
-    SourceInput source_input{{{1}, 2, true}, u_input, sk, rx_ratio, z01_ratio};
+    SourceInput source_input{{{1}, 2, true}, u_input, nan, sk, rx_ratio, z01_ratio};
     Source source{source_input, un};
 
     CHECK(source.math_model_type() == ComponentType::source);
@@ -44,10 +44,10 @@ TEST_CASE("Test source") {
     SECTION("Test source parameters") {
         ComplexValue<true> u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
-        source.set_u_ref(nan);
+        source.set_u_ref(nan, nan);
         u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
-        source.set_u_ref(1.0);
+        source.set_u_ref(1.0, nan);
         u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - 1.0) < numerical_tolerance);
 
@@ -114,12 +114,15 @@ TEST_CASE("Test source") {
     }
 
     SECTION("test update") {
-        auto changed = source.update(SourceUpdate{{{1}, true}, 1.05});
+        auto changed = source.update(SourceUpdate{{{1}, true}, 1.05, nan});
         CHECK(!changed.topo);
-        CHECK(!changed.param);
-        changed = source.update(SourceUpdate{{{1}, false}, 1.05});
+        CHECK(changed.param);
+        changed = source.update(SourceUpdate{{{1}, false}, 1.05, nan});
         CHECK(changed.topo);
         CHECK(changed.param);
+        changed = source.update(SourceUpdate{{{1}, false}, nan, nan});
+        CHECK(!changed.topo);
+        CHECK(!changed.param);
     }
 }
 

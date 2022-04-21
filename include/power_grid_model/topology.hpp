@@ -220,10 +220,6 @@ class Topology {
             Idx const source_node = comp_topo_.source_node_idx[k];
             // if the source node is already part of a graph
             if (comp_coup_.node[source_node].group != -1) {
-                // if the angle of the source is not zero, throw conflict
-                if (cabs(phase_shift_[source_node]) > numerical_tolerance) {
-                    throw ConflictSource{};
-                }
                 // skip the source
                 continue;
             }
