@@ -973,6 +973,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             math_param[i].branch_param.resize(math_topology_[i]->n_branch());
             math_param[i].shunt_param.resize(math_topology_[i]->n_shunt());
+            math_param[i].source_param.resize(math_topology_[i]->n_source());
         }
         // loop all branch
         for (Idx i = 0; i != (Idx)comp_topo_->branch_node_idx.size(); ++i) {
@@ -994,6 +995,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // assign parameters
             math_param[math_idx.group].shunt_param[math_idx.pos] =
                 components_.template get_item_by_seq<Shunt>(i).template calc_param<sym>();
+        }
+        // loop all source
+        for (Idx i = 0; i != (Idx)comp_topo_->source_node_idx.size(); ++i) {
+            Idx2D const math_idx = comp_coup_->source[i];
+            if (math_idx.group == -1) {
+                continue;
+            }
+            // assign parameters
+            math_param[math_idx.group].source_param[math_idx.pos] =
+                components_.template get_item_by_seq<Source>(i).template math_param<sym>();
         }
         return math_param;
     }
@@ -1092,8 +1103,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             pf_input[i].s_injection.resize(math_topology_[i]->n_load_gen());
             pf_input[i].source.resize(math_topology_[i]->n_source());
         }
-        prepare_input<sym, PowerFlowInput<sym>, SourceCalcParam<sym>, &PowerFlowInput<sym>::source, Source>(
-            comp_coup_->source, pf_input);
+        prepare_input<sym, PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(comp_coup_->source,
+                                                                                                     pf_input);
 
         prepare_input<sym, PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
             comp_coup_->load_gen, pf_input);

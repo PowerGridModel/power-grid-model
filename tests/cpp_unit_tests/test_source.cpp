@@ -42,19 +42,19 @@ TEST_CASE("Test source") {
     CHECK(source.math_model_type() == ComponentType::source);
 
     SECTION("Test source parameters") {
-        ComplexValue<true> u_ref = source.calc_param<true>().u_ref;
+        ComplexValue<true> u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
         source.set_u_ref(nan);
-        u_ref = source.calc_param<true>().u_ref;
+        u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
         source.set_u_ref(1.0);
-        u_ref = source.calc_param<true>().u_ref;
+        u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - 1.0) < numerical_tolerance);
 
         // yref
-        DoubleComplex const y_ref_sym_cal = source.calc_param<true>().y_ref;
+        DoubleComplex const y_ref_sym_cal = source.math_param<true>();
         CHECK(cabs(y_ref_sym_cal - y_ref_sym) < numerical_tolerance);
-        ComplexTensor<false> const y_ref_asym_cal = source.calc_param<false>().y_ref;
+        ComplexTensor<false> const y_ref_asym_cal = source.math_param<false>();
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 
@@ -103,8 +103,6 @@ TEST_CASE("Test source") {
     }
 
     SECTION("test no source") {
-        double const u_ref = source.calc_param<false>(false).u_ref;
-        CHECK(cabs(u_ref - 0.0) < numerical_tolerance);
         ApplianceOutput<false> const asym_result = source.get_null_output<false>();
         CHECK(asym_result.id == 1);
         CHECK(!asym_result.energized);

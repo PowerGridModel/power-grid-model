@@ -42,26 +42,21 @@ class Source : public Appliance {
         y0_ref_ = y1_ref_ / z01_ratio;
     }
 
-    // getter for calculation param, source voltage pu
+    // getter for calculation param, y_ref
     template <bool sym>
-    SourceCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
-        if (!energized(is_connected_to_source)) {
-            return SourceCalcParam<sym>{};
-        }
-        SourceCalcParam<sym> param{};
-        param.u_ref = u_ref_;
+    ComplexTensor<sym> math_param() const {
         // internal element_admittance
         if constexpr (sym) {
-            param.y_ref = y1_ref_;
+            return y1_ref_;
         }
         else {
             ComplexTensor<false> const sym_matrix = get_sym_matrix();
             ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
             ComplexTensor<false> y012;
             y012 << y1_ref_, 0.0, 0.0, 0.0, y1_ref_, 0.0, 0.0, 0.0, y0_ref_;
-            param.y_ref = dot(sym_matrix, y012, sym_matrix_inv);
+            ComplexTensor<false> const yabc = dot(sym_matrix, y012, sym_matrix_inv);
+            return yabc;
         }
-        return param;
     }
 
     // setter
@@ -69,8 +64,9 @@ class Source : public Appliance {
         if (!is_nan(new_u_ref))
             u_ref_ = new_u_ref;
     }
-    // getter
-    double u_ref() const {
+    // getter for u_ref for calc_param
+    template <bool sym>
+    DoubleComplex calc_param() const {
         return u_ref_;
     }
 
@@ -94,7 +90,7 @@ class Source : public Appliance {
     ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
-        ComplexTensor<sym_calc> const y_ref = calc_param<sym_calc>().y_ref;
+        ComplexTensor<sym_calc> const y_ref = math_param<sym_calc>();
         appliance_math_output.i = dot(y_ref, u_ref - u);
         appliance_math_output.s = u * conj(appliance_math_output.i);
         return appliance_math_output;
