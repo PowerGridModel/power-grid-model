@@ -174,7 +174,8 @@ Please refer to [Examples](examples) for more detailed examples for power flow a
 This library optionally depends on
 [Intel Math Kernel Library (mkl)](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html),
 for its [PARDISO](https://www.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-iface.html) sparse solver.
-It is recommended to install `mkl` because it gives huge performance boosts.
+If you are in `x86_64`, 
+it is recommended to install `mkl` because it gives huge performance boosts.
 
 The easiest way to install `mkl` is using `pip` or `conda`:
 
@@ -193,7 +194,7 @@ You need to add the path to the `mkl` runtime file `libmkl_rt.so` or `mkl_rt.dll
 If the library can find `mkl` runtime, it uses it as the sparse solver.
 It is recommended to set the environment variable `MKL_THREADING_LAYER` to `SEQUENTIAL`,
 as multi-threading is handled in a higher level.
-If the library cannot find `mkl` runtime, it will fall back to an internally built-in (and much slower)
+If the library cannot find `mkl` runtime (or in `arm64`), it will fall back to an internally built-in (and much slower)
 [Eigen SparseLU](https://eigen.tuxfamily.org/dox/classEigen_1_1SparseLU.html) solver.
 
 # License
