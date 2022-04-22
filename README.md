@@ -169,7 +169,7 @@ Node Result
 Please refer to [Examples](examples) for more detailed examples for power flow and state estimation.
 
 
-# Performance with MKL
+# Boosting performance with MKL
 
 This library optionally depends on
 [Intel Math Kernel Library (mkl)](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html),
