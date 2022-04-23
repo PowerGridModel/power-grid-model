@@ -250,7 +250,7 @@ class NewtonRaphsonPFSolver {
             DoubleComplex sum_u_ref = 0.0;
             for (Idx bus = 0; bus != n_bus_; ++bus) {
                 for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
-                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
                 }
             }
             return sum_u_ref / (double)input.source.size();
