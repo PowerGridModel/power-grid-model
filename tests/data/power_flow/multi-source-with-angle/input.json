@@ -55,5 +55,15 @@
       "u_ref": 1.0,
       "u_ref_angle": -5.759586531581287
     }
+  ],
+  "sym_load": [
+    {
+      "id": 10,
+      "node": 2,
+      "status": 1,
+      "type": 0,
+      "p_specified": 0.0,
+      "q_specified": 0.0
+    }
   ]
 }
