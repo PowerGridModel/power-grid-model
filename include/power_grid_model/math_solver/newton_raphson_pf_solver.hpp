@@ -246,8 +246,7 @@ class NewtonRaphsonPFSolver {
         // initialize
         Timer sub_timer(calculation_info, 2221, "Initialize calculation");
         // average u_ref of all sources
-        DoubleComplex const u_ref =
-            [&]() {
+        DoubleComplex const u_ref = [&]() {
             DoubleComplex sum_u_ref = 0.0;
             for (Idx bus = 0; bus != n_bus_; ++bus) {
                 for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
