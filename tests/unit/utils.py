@@ -40,32 +40,37 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
         for case_name, case_dir in test_cases_paths.items():
             with open(case_dir / "params.json") as f:
                 params = json.load(f)
+            # retrieve calculation method, can be a string or list of strings
+            calculation_methods = params["calculation_method"]
+            if not isinstance(calculation_methods, list):
+                calculation_methods = [calculation_methods]
             # loop for sym or asym scenario
             for sym in [True, False]:
                 output_prefix = "sym_output" if sym else "asym_output"
-                # only generate a case if sym or asym output exists
-                if (case_dir / f"{output_prefix}{batch_suffix}.json").exists():
-                    # Build a recognizable case ID
-                    case_id = case_name
-                    case_id += "-sym" if sym else "-asym"
-                    case_id += "-" + params["calculation_method"]
-                    if get_batch_cases:
-                        case_id += "-batch"
-                    pytest_param = [
-                        case_id,
-                        case_dir,
-                        sym,
-                        calculation_type,
-                        params["calculation_method"],
-                        params["rtol"],
-                        params["atol"],
-                    ]
-                    if get_batch_cases:
-                        pytest_param += [params["independent"], params["cache_topology"]]
-                    kwargs = {}
-                    if "fail" in params:
-                        kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
-                    yield pytest.param(*pytest_param, **kwargs, id=case_id)
+                for calculation_method in calculation_methods:
+                    # only generate a case if sym or asym output exists
+                    if (case_dir / f"{output_prefix}{batch_suffix}.json").exists():
+                        # Build a recognizable case ID
+                        case_id = case_name
+                        case_id += "-sym" if sym else "-asym"
+                        case_id += "-" + calculation_method
+                        if get_batch_cases:
+                            case_id += "-batch"
+                        pytest_param = [
+                            case_id,
+                            case_dir,
+                            sym,
+                            calculation_type,
+                            calculation_method,
+                            params["rtol"],
+                            params["atol"],
+                        ]
+                        if get_batch_cases:
+                            pytest_param += [params["independent"], params["cache_topology"]]
+                        kwargs = {}
+                        if "fail" in params:
+                            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
+                        yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
 def bool_params(true_id: str, false_id: Optional[str] = None, **kwargs):
