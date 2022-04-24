@@ -409,7 +409,7 @@ TEST_CASE("Validation test") {
     }
 
     SECTION("Test single validation") {
-        for (CaseParam& param : all_cases) {
+        for (CaseParam const& param : all_cases) {
             if (param.is_batch) {
                 continue;
             }
@@ -431,7 +431,7 @@ TEST_CASE("Validation test") {
     }
 
     SECTION("Test batch validation") {
-        for (CaseParam& param : all_cases) {
+        for (CaseParam const& param : all_cases) {
             if (!param.is_batch) {
                 continue;
             }
