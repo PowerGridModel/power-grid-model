@@ -530,21 +530,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         }
 
-        for (auto it = exceptions.begin(); it != exceptions.end();) {
-            if (it->empty()) {
-                it = exceptions.erase(it);
-            }
-            else {
-                it++;
+        // handle exception message
+        bool has_exception = false;
+        std::string combined_error_message;
+        for (Idx batch = 0; batch != n_batch; ++batch) {
+            // append exception if it is not empty
+            if (!exceptions[batch].empty()) {
+                has_exception = true;
+                combined_error_message +=
+                    "Error in batch #" + std::to_string(batch) + " , message: " + exceptions[batch] + "\n\n";
             }
         }
-
-        if (!exceptions.empty()) {
-            std::string combined_error_message;
-            for (const auto& ex : exceptions) {
-                combined_error_message.append(ex + "\n");
-            }
-            throw BatchCalculationError(combined_error_message.substr(0, combined_error_message.length() - 1));
+        if (has_exception) {
+            throw BatchCalculationError(combined_error_message);
         }
 
         return BatchParameter{independent, cache_topology};
