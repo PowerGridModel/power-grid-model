@@ -235,6 +235,7 @@ class NewtonRaphsonPFSolver {
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         std::vector<double> const& phase_shift = *phase_shift_;
+        IdxVector const& source_bus_indptr = *source_bus_indptr_;
         // prepare
         MathOutput<sym> output;
         output.u.resize(n_bus_);
@@ -245,15 +246,17 @@ class NewtonRaphsonPFSolver {
         // initialize
         Timer sub_timer(calculation_info, 2221, "Initialize calculation");
         // average u_ref of all sources
-        DoubleComplex const u_ref =
-            std::transform_reduce(input.source.cbegin(), input.source.cend(), phase_shift.cbegin(), DoubleComplex{},
-                                  std::plus{},
-                                  [](DoubleComplex const& u_ref, double phase) {
-                                      return u_ref * std::exp(1.0i * -phase);  // offset phase shift angle
-                                  }) /
-            (double)input.source.size();
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (Idx bus = 0; bus != n_bus_; ++bus) {
+                for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+                }
+            }
+            return sum_u_ref / (double)input.source.size();
+        }();
+        // assign u_ref as flat start
         for (Idx i = 0; i != n_bus_; ++i) {
-            // always flat start
             // consider phase shift
             output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
             x_[i].v = cabs(output.u[i]);
