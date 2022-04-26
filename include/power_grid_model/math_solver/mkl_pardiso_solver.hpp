@@ -181,6 +181,10 @@ void pardisoinit(Args&&... args) {
     get_pardiso_handle().pardisoinit(std::forward<Args>(args)...);
 }
 
+inline bool has_mkl() {
+    return get_pardiso_handle().has_pardiso;
+}
+
 }  // namespace power_grid_model
 
 #else  // !POWER_GRID_MODEL_USE_MKL_AT_RUNTIME

@@ -12,6 +12,9 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+#include "boost/preprocessor/arithmetic/mod.hpp"
+#include "boost/preprocessor/comparison/not_equal.hpp"
+#include "boost/preprocessor/control/expr_iif.hpp"
 #include "boost/preprocessor/punctuation/comma_if.hpp"
 #include "boost/preprocessor/seq/for_each_i.hpp"
 #include "boost/preprocessor/variadic/to_seq.hpp"
@@ -20,16 +23,24 @@
 
 // use preprocessor to generate a vector of attribute meta data
 
-#define POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(type, field) \
-    ::power_grid_model::meta_data::get_data_attribute<type, &type::field>(#field)
-#define POWER_GRID_MODEL_ATTRIBUTE_SEP(r, type, i, field) \
-    BOOST_PP_COMMA_IF(i)                                  \
-    POWER_GRID_MODEL_ONE_DATA_ATTRIBUTE(type, field)
-#define POWER_GRID_MODEL_META_DATA_TYPE(type, ...)                                                               \
-    ::power_grid_model::meta_data::MetaData {                                                                    \
-#type, sizeof(type), alignof(type), {                                                                    \
-            BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_SEP, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-        }                                                                                                        \
+#define POWER_GRID_MODEL_ATTRIBUTE_DEF(r, t, i, attr) attr BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), ;)
+#define POWER_GRID_MODEL_ATTRIBUTE_META_GEN(type, field) \
+    ::power_grid_model::meta_data::get_data_attribute<&type::field>(#field)
+#define POWER_GRID_MODEL_ATTRIBUTE_META(r, t, i, attr) \
+    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), meta.attributes.push_back(POWER_GRID_MODEL_ATTRIBUTE_META_GEN(t, attr));)
+
+#define POWER_GRID_MODEL_DATA_STRUCT_DEF(type, has_base, base_type, ...)                                          \
+    struct type BOOST_PP_EXPR_IIF(has_base, : base_type) {                                                        \
+        BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_DEF, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))      \
+        static meta_data::MetaData get_meta() {                                                                   \
+            meta_data::MetaData meta{};                                                                           \
+            meta.name = #type;                                                                                    \
+            meta.size = sizeof(type);                                                                             \
+            meta.alignment = alignof(type);                                                                       \
+            BOOST_PP_EXPR_IIF(has_base, meta.attributes = base_type::get_meta().attributes;)                      \
+            BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_META, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+            return meta;                                                                                          \
+        }                                                                                                         \
     }
 
 namespace power_grid_model {
@@ -147,9 +158,10 @@ struct DataAttribute {
     CompareValueFunc compare_value;
 };
 
-template <class T, auto member_ptr>
+template <auto member_ptr>
 inline size_t get_offset() {
-    T const obj{};
+    using struct_type = typename trait_pointer_to_member<decltype(member_ptr)>::struct_type;
+    struct_type const obj{};
     return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
 }
 
@@ -162,14 +174,14 @@ inline bool is_little_endian() {
     return bint.c[0] == 4;
 }
 
-template <class T, auto member_ptr>
+template <auto member_ptr>
 inline DataAttribute get_data_attribute(std::string const& name) {
-    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    using single_data_type = data_type<ValueType>;
+    using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+    using single_data_type = data_type<value_type>;
     DataAttribute attr{};
     attr.name = name;
     attr.numpy_type = single_data_type::numpy_type;
-    attr.offset = get_offset<T, member_ptr>();
+    attr.offset = get_offset<member_ptr>();
     if constexpr (single_data_type::ndim > 0) {
         attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
     }
