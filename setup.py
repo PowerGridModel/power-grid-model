@@ -123,7 +123,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # flags for Linux and Mac
         cflags += [
             "-std=c++17",
-            "-m64",
             "-O3",
             "-fvisibility=hidden",
         ]
