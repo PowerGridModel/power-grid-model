@@ -66,7 +66,7 @@ class IterativecurrentPFSolver {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
-        // phase shifts
+        IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
         // prepare output
         MathOutput<sym> output;
@@ -78,34 +78,18 @@ class IterativecurrentPFSolver {
         // initialize
         Timer sub_timer(calculation_info, 2221, "Initialize calculation");
         // average u_ref of all sources
-        /*
-        double const u_ref = std::transform_reduce(input.source.cbegin(), input.source.cend(), 0.0, std::plus{},
-                                                   [](SourceCalcParam<sym> const& source) {
-                                                       return source.u_ref;
-                                                   }) /
-                             input.source.size();
-        */
-        DoubleComplex const u_ref =
-            std::transform_reduce(input.source.cbegin(), input.source.cend(), phase_shift.cbegin(), DoubleComplex{},
-                                  std::plus{},
-                                  [](DoubleComplex const& u_ref, double phase) {
-                                      return u_ref * std::exp(1.0i * -phase);  // offset phase shift angle
-                                  }) /
-            (double)input.source.size();
-        for (Idx i = 0; i != n_bus_; ++i) {
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (Idx bus = 0; bus != n_bus_; ++bus) {
+                for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+                }
+            }
+            return sum_u_ref / (double)input.source.size();
+        }();
+         for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
-            /*
-            RealValue<sym> theta;
-            if constexpr (sym) {
-                theta = phase_shift[i];
-            }
-            else {
-                theta << phase_shift[i], (phase_shift[i] - deg_120), (phase_shift[i] - deg_240);
-            }
-            */
-            //ComplexValue<sym> const phase_shift_complex = exp(1.0i * theta);
-            //output.u[i] = u_ref * phase_shift_complex;
             output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};     
         }
 
@@ -278,7 +262,7 @@ class IterativecurrentPFSolver {
                         break;
                     case LoadGenType::const_y:
                         // power is quadratic relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus] * output.u[bus]);
+                        output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
                         break;
                     case LoadGenType::const_i:
                         // power is linear relation to voltage
