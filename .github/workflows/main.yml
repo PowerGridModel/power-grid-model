@@ -118,7 +118,7 @@ jobs:
             cxx: g++
             boost:
             eigen:
-            cibw_build: cp*-manylinux_x86_64,cp*-manylinux_aarch64
+            cibw_build: cp*-manylinux_x86_64, cp*-manylinux_aarch64
             test_cmd: >
               pytest {package}/tests &&
               LD_LIBRARY_PATH= pytest {package}/tests
