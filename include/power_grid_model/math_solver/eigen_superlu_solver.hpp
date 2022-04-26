@@ -59,7 +59,11 @@ class EigenSuperLUSolver final {
             std::stringstream ss;
             ss << sparse_matrix_;
             std::string msg = sparse_solver.lastErrorMessage();
-            msg += "Matrix content: \n" + ss.str() + "\n";
+            msg += "\nMatrix content: \n" + ss.str() + "\n";
+            msg += "Matrix actual size: " + std::to_string(sparse_matrix_.rows()) + " by " +
+                   std::to_string(sparse_matrix_.cols()) + "\n";
+            msg += "Size in block: " + std::to_string(matrix_size_in_block_) +
+                   ", Total size: " + std::to_string(matrix_size_) + "\n";
             throw SparseMatrixError{sparse_solver.info(), msg};
         }
         xm = sparse_solver.solve(bm);
