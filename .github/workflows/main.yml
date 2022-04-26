@@ -177,6 +177,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # remove this later
+      - name: Log in to the Container registry
+        if: matrix.platform == 'linux'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up QEMU
         if: matrix.platform == 'linux'
         uses: docker/setup-qemu-action@v1
