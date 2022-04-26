@@ -14,7 +14,6 @@
 
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
-#include <sstream>
 
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
@@ -56,15 +55,7 @@ class EigenSuperLUSolver final {
         sparse_solver.analyzePattern(sparse_matrix_);
         sparse_solver.factorize(sparse_matrix_);
         if (sparse_solver.info() != Eigen::Success) {
-            std::stringstream ss;
-            ss << sparse_matrix_;
-            std::string msg = sparse_solver.lastErrorMessage();
-            msg += "\nMatrix content: \n" + ss.str() + "\n";
-            msg += "Matrix actual size: " + std::to_string(sparse_matrix_.rows()) + " by " +
-                   std::to_string(sparse_matrix_.cols()) + "\n";
-            msg += "Size in block: " + std::to_string(matrix_size_in_block_) +
-                   ", Total size: " + std::to_string(matrix_size_) + "\n";
-            throw SparseMatrixError{sparse_solver.info(), msg};
+            throw SparseMatrixError{sparse_solver.info(), sparse_solver.lastErrorMessage()};
         }
         xm = sparse_solver.solve(bm);
         if (sparse_solver.info() != Eigen::Success) {
