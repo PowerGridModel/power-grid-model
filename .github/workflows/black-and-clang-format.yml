@@ -36,7 +36,7 @@ jobs:
         
       - name: Install Black and clang-format
         run: |
-          pip install black[juypter]
+          pip install black
           sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Run black
