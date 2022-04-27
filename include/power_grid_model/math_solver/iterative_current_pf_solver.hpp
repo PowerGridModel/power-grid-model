@@ -65,7 +65,7 @@ class IterativecurrentPFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        IdxVector const& bus_entry = y_bus.bus_entry();
+        //IdxVector const& bus_entry = y_bus.bus_entry();
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
         // prepare output
@@ -87,7 +87,7 @@ class IterativecurrentPFSolver {
             }
             return sum_u_ref / (double)input.source.size();
         }();
-         for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
             output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};     
@@ -96,7 +96,7 @@ class IterativecurrentPFSolver {
         // Build y bus data with source impedance
         // copy y bus data.
         std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
-        prefactorize_y_data(y_bus, input);
+        prefactorize_y_data(y_bus);
 
         // start calculation
         // iteration
@@ -147,7 +147,6 @@ class IterativecurrentPFSolver {
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
     std::shared_ptr<IdxVector const> source_bus_indptr_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-    //std::vector < ComplexPower < sym>> updated_u_;
     ComplexValueVector<sym> updated_u_;
     ComplexValueVector<sym> rhs_;
     ComplexTensorVector<sym> mat_data_;
@@ -174,8 +173,8 @@ class IterativecurrentPFSolver {
                         rhs_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
                         break;
                     case LoadGenType::const_y:
-                        // I_inj = conj((S_inj * abs(U*U)) / U) for const impedance type
-                        rhs_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number] * u[bus_number]) / u[bus_number]);
+                        // I_inj = conj((S_inj * abs(U)^2) / U) = conj((S_inj) * U for const impedance type
+                        rhs_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
                         break;
                     case LoadGenType::const_i:
                         // I_inj = conj(S_inj*abs(U)/U) for const current type
@@ -189,22 +188,21 @@ class IterativecurrentPFSolver {
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 // YBus_diag += Y_source
-                //mat_data_[data_sequence] += input.source[source_number].y_ref;
-                // rhs += Y_source_j * U_ref_j
+                // L'U = Y_source_j * U_ref_j
                 rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                         ComplexValue<sym>{input.source[source_number]});
             }
         }
     }
 
-    void prefactorize_y_data(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
+    void prefactorize_y_data(YBus<sym> const& y_bus) {
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         //ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
 
         // loop individual load/source
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            Idx const data_sequence = bus_entry[bus_number];  // Do something for sequence
+            Idx const data_sequence = bus_entry[bus_number];
             // loop sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
