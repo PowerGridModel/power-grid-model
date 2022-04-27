@@ -95,7 +95,9 @@ class IterativecurrentPFSolver {
         // Build y bus data with source impedance
         // copy y bus data.
         std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
+        sub_timer = Timer(calculation_info, 2222, "Prefactorization");
         prefactorize_y_data(y_bus);
+        sub_timer.stop();
 
         // start calculation
         // iteration
@@ -104,17 +106,16 @@ class IterativecurrentPFSolver {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
-            sub_timer = Timer(calculation_info, 2222, "Calculate injected current");
+            // Calculate injected current
+            sub_timer = Timer(calculation_info, 2223, "Calculate injected current");
             // set rhs to zero for iteration start
             std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
-            sub_timer.stop();
-
             // Calculate RHS
             calculate_injected_current(y_bus, input, output.u);
-            sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
-            bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data());
-            sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
+            sub_timer = Timer(calculation_info, 2224, "Solve sparse linear equation");
+            bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data(), true);
             // Calculate maximum deviation from previous iteration
+            sub_timer = Timer(calculation_info, 2225, "Iterate unknown");
             max_dev = iterate_unknown(output.u);
             sub_timer.stop();
         }
@@ -124,14 +125,14 @@ class IterativecurrentPFSolver {
         bsr_solver_.invalidate_prefactorization();
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
+        sub_timer = Timer(calculation_info, 2226, "Calculate Math Result");
         calculate_result(y_bus, input, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
         main_timer.stop();
 
-        const auto key = Timer::make_key(2226, "Max number of iterations");
+        const auto key = Timer::make_key(2227, "Max number of iterations");
         calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
 
         return output;
@@ -154,12 +155,10 @@ class IterativecurrentPFSolver {
         IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
-        // IdxVector const& bus_entry = y_bus.bus_entry();
 
         // rhs = I_inj + L'U
         // loop individual load/source
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            // Idx const data_sequence = bus_entry[bus_number];
             // loop load
             for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
                  ++load_number) {
