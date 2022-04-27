@@ -111,7 +111,7 @@
       "node": 1,
       "status": 1,
       "u_ref": 1.0,
-      "sk": 1e+20,
+      "sk": 1e+14,
       "rx_ratio": 0.1,
       "z01_ratio": 1.0
     }
