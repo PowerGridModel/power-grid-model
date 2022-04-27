@@ -365,7 +365,7 @@ TEST_CASE("Test math solver") {
         // verify
         assert_output(output, output_ref);
     }
-    
+
     SECTION("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;

@@ -54,16 +54,17 @@ class MathSolver {
             }
             return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
         }
-        
+
         // iterative current addition
         else if (calculation_method == CalculationMethod::iterative_current) {
             if (!iterative_current_pf_solver_.has_value()) {
                 Timer timer(calculation_info, 2210, "Create math solver");
                 iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
             }
-            return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+            return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
+                                                                       calculation_info);
         }
-        
+
         else {
             throw InvalidCalculationMethod{};
         }

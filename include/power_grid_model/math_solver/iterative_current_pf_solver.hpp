@@ -65,7 +65,6 @@ class IterativecurrentPFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        //IdxVector const& bus_entry = y_bus.bus_entry();
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
         // prepare output
@@ -90,7 +89,7 @@ class IterativecurrentPFSolver {
         for (Idx i = 0; i != n_bus_; ++i) {
             // always flat start
             // consider phase shift
-            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};     
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
         }
 
         // Build y bus data with source impedance
@@ -108,10 +107,8 @@ class IterativecurrentPFSolver {
             sub_timer = Timer(calculation_info, 2222, "Calculate injected current");
             // set rhs to zero for iteration start
             std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
-            // copy y bus data.
-            //std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
-        
             sub_timer.stop();
+
             // Calculate RHS
             calculate_injected_current(y_bus, input, output.u);
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
@@ -157,14 +154,15 @@ class IterativecurrentPFSolver {
         IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
-        //ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        IdxVector const& bus_entry = y_bus.bus_entry();
+        // IdxVector const& bus_entry = y_bus.bus_entry();
 
+        // rhs = I_inj + L'U
         // loop individual load/source
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            Idx const data_sequence = bus_entry[bus_number];    // Do something for sequence
+            // Idx const data_sequence = bus_entry[bus_number];
             // loop load
-            for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1]; ++load_number) {
+            for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
+                 ++load_number) {
                 // load type
                 LoadGenType const type = load_gen_type[load_number];
                 switch (type) {
@@ -187,7 +185,6 @@ class IterativecurrentPFSolver {
             // loop sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
-                // YBus_diag += Y_source
                 // L'U = Y_source_j * U_ref_j
                 rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                         ComplexValue<sym>{input.source[source_number]});
@@ -197,7 +194,6 @@ class IterativecurrentPFSolver {
 
     void prefactorize_y_data(YBus<sym> const& y_bus) {
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        //ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
 
         // loop individual load/source
@@ -208,8 +204,6 @@ class IterativecurrentPFSolver {
                  ++source_number) {
                 // YBus_diag += Y_source
                 mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
-                // to remove 
-                //mat_data_[data_sequence] += input.source[source_number].y_ref;            
             }
         }
         // Prefactorize solver
@@ -260,7 +254,8 @@ class IterativecurrentPFSolver {
                         break;
                     case LoadGenType::const_y:
                         // power is quadratic relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
+                        output.load_gen[load_gen].s =
+                            input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
                         break;
                     case LoadGenType::const_i:
                         // power is linear relation to voltage
