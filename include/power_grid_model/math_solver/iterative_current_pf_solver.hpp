@@ -96,6 +96,7 @@ class IterativecurrentPFSolver {
         // copy y bus data.
         std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
         sub_timer = Timer(calculation_info, 2222, "Prefactorization");
+        // TODO: Check if this function is really needed or just use_prefactorization=true is okay
         prefactorize_y_data(y_bus);
         sub_timer.stop();
 
@@ -120,9 +121,10 @@ class IterativecurrentPFSolver {
             sub_timer.stop();
         }
 
-        // Invalidate prefactorization when y bus data changes
+        // Invalidate prefactorization when y bus data changes, check where to do that
         // Invalidate after every calculation now, change later
-        bsr_solver_.invalidate_prefactorization();
+        // TODO: Confirm correct prefactorization for batch
+        // bsr_solver_.invalidate_prefactorization();
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2226, "Calculate Math Result");

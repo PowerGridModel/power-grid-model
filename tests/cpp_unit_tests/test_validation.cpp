@@ -270,6 +270,7 @@ std::filesystem::path const data_path = std::filesystem::path{__FILE__}.parent_p
 std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"newton_raphson", CalculationMethod::newton_raphson},
     {"linear", CalculationMethod::linear},
+    {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
 };
 using CalculationFunc = BatchParameter (MainModel::*)(double, Idx, CalculationMethod, Dataset const&,
