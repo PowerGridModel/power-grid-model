@@ -40,10 +40,14 @@ class MyBuildExt(build_ext):
                 cxx = os.environ["CXX"]
             else:
                 cxx = self.compiler.compiler_cxx[0]
-            if "clang" in cxx:
-                lto_flag = "-flto=thin"
+            # add optional link time optimization
+            if os.environ.get("POWER_GRID_MODEL_ENABLE_LTO", "OFF") == "ON":
+                if "clang" in cxx:
+                    lto_flag = "-flto=thin"
+                else:
+                    lto_flag = "-flto"
             else:
-                lto_flag = "-flto"
+                lto_flag = ""
             # customize compiler and linker options
             self.compiler.compiler_so[0] = cxx
             self.compiler.compiler_so += [lto_flag]
