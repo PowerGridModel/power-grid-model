@@ -53,6 +53,7 @@ class CalculationMethod(IntEnum):
     linear = 0
     newton_raphson = 1
     iterative_linear = 2
+    iterative_current = 3
 
 
 class MeasuredTerminalType(IntEnum):
