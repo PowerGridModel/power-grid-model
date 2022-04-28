@@ -118,11 +118,11 @@ jobs:
             cxx: g++
             boost:
             eigen:
-            cibw_build: cp*-manylinux_x86_64
+            cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
             test_cmd: >
               pytest {package}/tests &&
               LD_LIBRARY_PATH= pytest {package}/tests
-            archs: x86_64
+            archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
             cc: clang
@@ -161,6 +161,7 @@ jobs:
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
+      CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env-arm64
       CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
@@ -173,6 +174,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: matrix.platform == 'linux'
+        uses: docker/setup-qemu-action@v1
 
       - name: Activate conda for windows
         if: matrix.platform == 'windows'
@@ -211,7 +216,7 @@ jobs:
           path: wheelhouse
 
       - name: List wheels
-        run: ls ./wheelhouse/*.whl -ral
+        run: ls ./wheelhouse/*.whl -al
 
       - name: Upload wheels
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
