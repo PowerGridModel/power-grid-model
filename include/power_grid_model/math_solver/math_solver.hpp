@@ -90,10 +90,15 @@ class MathSolver {
     void clear_solver() {
         newton_pf_solver_.reset();
         linear_pf_solver_.reset();
+        iterative_current_pf_solver_.reset();
     }
 
     void update_value(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         y_bus_.update_admittance(math_model_param);
+        // Invalidate prefactorization of iterative current solver
+        if (iterative_current_pf_solver_.has_value()) {
+            iterative_current_pf_solver_.value().reset_lhs();
+        }
     }
 
    private:

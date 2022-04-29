@@ -58,6 +58,7 @@ class IterativecurrentPFSolver {
           updated_u_(y_bus.size()),
           rhs_(n_bus_),
           mat_data_(y_bus.nnz()),
+          loaded_mat_data_(false),
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
@@ -65,6 +66,7 @@ class IterativecurrentPFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        IdxVector const& bus_entry = y_bus.bus_entry();
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
         // prepare output
@@ -94,10 +96,20 @@ class IterativecurrentPFSolver {
 
         // Build y bus data with source impedance
         // copy y bus data.
-        std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
-        sub_timer = Timer(calculation_info, 2222, "Prefactorization");
-        // TODO: Check if this function is really needed or just use_prefactorization=true is okay
-        prefactorize_y_data(y_bus);
+        if (!loaded_mat_data_) {
+            std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
+            // loop bus
+            for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+                Idx const data_sequence = bus_entry[bus_number];
+                // loop sources
+                for (Idx source_number = source_bus_indptr[bus_number];
+                     source_number != source_bus_indptr[bus_number + 1]; ++source_number) {
+                    // YBus_diag += Y_source
+                    mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                }
+            }
+            loaded_mat_data_ = true;
+        }
         sub_timer.stop();
 
         // start calculation
@@ -108,36 +120,36 @@ class IterativecurrentPFSolver {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
             // Calculate injected current
-            sub_timer = Timer(calculation_info, 2223, "Calculate injected current");
+            sub_timer = Timer(calculation_info, 2222, "Calculate injected current");
             // set rhs to zero for iteration start
             std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
             // Calculate RHS
             calculate_injected_current(y_bus, input, output.u);
-            sub_timer = Timer(calculation_info, 2224, "Solve sparse linear equation");
+            sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
             bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data(), true);
             // Calculate maximum deviation from previous iteration
-            sub_timer = Timer(calculation_info, 2225, "Iterate unknown");
+            sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
             max_dev = iterate_unknown(output.u);
             sub_timer.stop();
         }
 
-        // Invalidate prefactorization when y bus data changes, check where to do that
-        // Invalidate after every calculation now, change later
-        // TODO: Confirm correct prefactorization for batch
-        // bsr_solver_.invalidate_prefactorization();
-
         // calculate math result
-        sub_timer = Timer(calculation_info, 2226, "Calculate Math Result");
+        sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
         calculate_result(y_bus, input, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
         main_timer.stop();
 
-        const auto key = Timer::make_key(2227, "Max number of iterations");
+        const auto key = Timer::make_key(2226, "Max number of iterations");
         calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
 
         return output;
+    }
+
+    void reset_lhs() {
+        bsr_solver_.invalidate_prefactorization();
+        loaded_mat_data_ = false;
     }
 
    private:
@@ -150,6 +162,7 @@ class IterativecurrentPFSolver {
     ComplexValueVector<sym> updated_u_;
     ComplexValueVector<sym> rhs_;
     ComplexTensorVector<sym> mat_data_;
+    bool loaded_mat_data_;
     BSRSolver<DoubleComplex> bsr_solver_;
 
     void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -191,24 +204,6 @@ class IterativecurrentPFSolver {
                                         ComplexValue<sym>{input.source[source_number]});
             }
         }
-    }
-
-    void prefactorize_y_data(YBus<sym> const& y_bus) {
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        IdxVector const& bus_entry = y_bus.bus_entry();
-
-        // loop individual load/source
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            Idx const data_sequence = bus_entry[bus_number];
-            // loop sources
-            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-                 ++source_number) {
-                // YBus_diag += Y_source
-                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
-            }
-        }
-        // Prefactorize solver
-        bsr_solver_.prefactorize(mat_data_.data());
     }
 
     double iterate_unknown(ComplexValueVector<sym>& u) {
