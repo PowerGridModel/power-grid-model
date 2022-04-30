@@ -130,6 +130,13 @@ TEST_CASE("Test BSR solver") {
         // solve and compare with other_x without using prefactorization
         solver.solve(other_data.data(), rhs.data(), x_solver.data(), false);
         check_result(other_x, x_solver);
+
+        // invalidate pre-factorization
+        // and re-run with original data with pre-factorization enabled
+        // it should still re-do the factorization
+        solver.invalidate_prefactorization();
+        solver.solve(data.data(), rhs.data(), x_solver.data(), true);
+        check_result(x, x_solver);
     }
 }
 
