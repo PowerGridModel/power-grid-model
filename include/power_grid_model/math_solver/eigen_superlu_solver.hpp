@@ -70,37 +70,46 @@ class EigenSuperLUSolver final {
         sparse_matrix_ = other.sparse_matrix_;
         // re initialize
         initialize_solver();
+        prefactorized_ = false;
         return *this;
     }
 
     void solve(void const* data, void* b, void* x, bool use_prefactorization = false) {
-        (void)use_prefactorization;  // suppress unused variable warning
-        // copy data
-        copy_matrix_data(data);
+        // reset possible pre-factorization if we are not using prefactorization
+        prefactorized_ = prefactorized_ && use_prefactorization;
+        // run factorization
+        if (!prefactorized_) {
+            prefactorize(data);
+        }
+        // run solve
         BufferVector bm{std::launder(reinterpret_cast<T*>(b)), bsr_handle_.matrix_size};
         BufferVector xm{std::launder(reinterpret_cast<T*>(x)), bsr_handle_.matrix_size};
-        sparse_solver_.factorize(sparse_matrix_);
-        if (sparse_solver_.info() != Eigen::Success) {
-            throw SparseMatrixError{sparse_solver_.info(), sparse_solver_.lastErrorMessage()};
-        }
         xm = sparse_solver_.solve(bm);
         if (sparse_solver_.info() != Eigen::Success) {
             throw SparseMatrixError{sparse_solver_.info(), sparse_solver_.lastErrorMessage()};
         }
     }
 
-    // empty prefactorize function
     void prefactorize(void const* data) {
-        (void)data;
+        // copy data
+        copy_matrix_data(data);
+        // factorize
+        sparse_solver_.factorize(sparse_matrix_);
+        if (sparse_solver_.info() != Eigen::Success) {
+            throw SparseMatrixError{sparse_solver_.info(), sparse_solver_.lastErrorMessage()};
+        }
+        prefactorized_ = true;
     }
 
     void invalidate_prefactorization() {
+        prefactorized_ = false;
     }
 
    private:
     BSRHandle bsr_handle_;
     SparseMatrix sparse_matrix_;
     SparseSolver sparse_solver_;  // not copyable or movable
+    bool prefactorized_{false};
 
     void initialize_matrix(IdxVector const& ia,  // indptr
                            IdxVector const& ja   // column indices
