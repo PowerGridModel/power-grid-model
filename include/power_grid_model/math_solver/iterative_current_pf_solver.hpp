@@ -18,12 +18,15 @@ I_2 = MU_2 + L'U_1
 MU_2 = I_2 - L'U_1 = RHS
 
 
+Steps:
 Initialize U_2 with flat start and phase shifts accounted
+Add source admittance to Y bus matrix
 while maximum deviation > error tolerance
-    Calculate I_2 with U_2 of previous iteration
-    Solve MU_2 = RHS
+    Calculate I_2 with U_2 of previous iteration as per load/gen types.
+    Solve MU_2 = RHS using prefactorization.
     Find maximum deviation in voltage
     Update U_2
+(Invalidate prefactorization if parameters change, ie y bus values changes)
 
 */
 
@@ -148,6 +151,7 @@ class IterativecurrentPFSolver {
     }
 
     void reset_lhs() {
+        // Invalidate prefactorization when parameters change
         bsr_solver_.invalidate_prefactorization();
         loaded_mat_data_ = false;
     }
@@ -172,34 +176,34 @@ class IterativecurrentPFSolver {
         std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
 
         // rhs = I_inj + L'U
-        // loop individual load/source
+        // loop buses: i
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            // loop load
+            // loop loads/generation: j
             for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
                  ++load_number) {
                 // load type
                 LoadGenType const type = load_gen_type[load_number];
                 switch (type) {
                     case LoadGenType::const_pq:
-                        // I_inj = conj(S_inj/U) for constant PQ type
+                        // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
                         rhs_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
                         break;
                     case LoadGenType::const_y:
-                        // I_inj = conj((S_inj * abs(U)^2) / U) = conj((S_inj) * U for const impedance type
+                        // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
                         rhs_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
                         break;
                     case LoadGenType::const_i:
-                        // I_inj = conj(S_inj*abs(U)/U) for const current type
+                        // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
                         rhs_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
                         break;
                     default:
                         throw MissingCaseForEnumError("Injection current calculation", type);
                 }
             }
-            // loop sources
+            // loop sources: j
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
-                // L'U = Y_source_j * U_ref_j
+                // -L'U = Y_source_j * U_ref_j
                 rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                         ComplexValue<sym>{input.source[source_number]});
             }
@@ -214,7 +218,7 @@ class IterativecurrentPFSolver {
             double const dev = max_val(cabs(updated_u_[bus_number] - u[bus_number]));
             // Keep maximum deviation of all buses
             max_dev = std::max(dev, max_dev);
-            // assign
+            // assign updated values
             u[bus_number] = updated_u_[bus_number];
         }
         return max_dev;
