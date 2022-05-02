@@ -185,7 +185,7 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
+        uses: pypa/cibuildwheel@2.5.0
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v2
