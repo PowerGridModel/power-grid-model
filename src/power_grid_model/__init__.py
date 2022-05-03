@@ -7,7 +7,7 @@
 # Helper functions
 # Power Grid metadata
 # Power Grid Model
-from ._power_grid_core import PowerGridModel, initialize_array, power_grid_meta_data
+from ._power_grid_core import PowerGridModel, initialize_array, power_grid_meta_data, use_mkl_solver
 
 # Enumerations
 from .enum import BranchSide, CalculationMethod, CalculationType, LoadGenType, MeasuredTerminalType, WindingType

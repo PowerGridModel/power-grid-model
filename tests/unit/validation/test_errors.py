@@ -32,7 +32,7 @@ def test_multi_field_validation_error():
     error = MultiFieldValidationError(component="charlie", fields=["delta", "echo"], ids=[0, 1, 1, 2, 3, 5])
     assert error.component_str == "charlie"
     assert error.field_str == "'delta' and 'echo'"
-    assert str(error) == "Fields 'delta' and 'echo' are not valid for 6 charlies."
+    assert str(error) == "Combination of fields 'delta' and 'echo' is not valid for 6 charlies."
 
     with pytest.raises(ValueError, match="at least two fields"):
         MultiFieldValidationError(component="charlie", fields=["delta"], ids=[])

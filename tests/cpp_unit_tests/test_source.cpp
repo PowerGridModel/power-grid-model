@@ -36,25 +36,31 @@ TEST_CASE("Test source") {
     ComplexTensor<false> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
-    SourceInput source_input{{{1}, 2, true}, u_input, sk, rx_ratio, z01_ratio};
+    SourceInput source_input{{{1}, 2, true}, u_input, nan, sk, rx_ratio, z01_ratio};
     Source source{source_input, un};
 
     CHECK(source.math_model_type() == ComponentType::source);
 
     SECTION("Test source parameters") {
-        ComplexValue<true> u_ref = source.calc_param<true>().u_ref;
+        // uref
+        ComplexValue<true> u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
-        source.set_u_ref(nan);
-        u_ref = source.calc_param<true>().u_ref;
+        source.set_u_ref(nan, nan);
+        u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
-        source.set_u_ref(1.0);
-        u_ref = source.calc_param<true>().u_ref;
+        source.set_u_ref(1.0, nan);
+        u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - 1.0) < numerical_tolerance);
 
+        // uref with angle
+        source.set_u_ref(nan, 2.5);
+        u_ref = source.calc_param<true>();
+        CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
+
         // yref
-        DoubleComplex const y_ref_sym_cal = source.calc_param<true>().y_ref;
+        DoubleComplex const y_ref_sym_cal = source.math_param<true>();
         CHECK(cabs(y_ref_sym_cal - y_ref_sym) < numerical_tolerance);
-        ComplexTensor<false> const y_ref_asym_cal = source.calc_param<false>().y_ref;
+        ComplexTensor<false> const y_ref_asym_cal = source.math_param<false>();
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 
@@ -103,8 +109,6 @@ TEST_CASE("Test source") {
     }
 
     SECTION("test no source") {
-        double const u_ref = source.calc_param<false>(false).u_ref;
-        CHECK(cabs(u_ref - 0.0) < numerical_tolerance);
         ApplianceOutput<false> const asym_result = source.get_null_output<false>();
         CHECK(asym_result.id == 1);
         CHECK(!asym_result.energized);
@@ -116,12 +120,15 @@ TEST_CASE("Test source") {
     }
 
     SECTION("test update") {
-        auto changed = source.update(SourceUpdate{{{1}, true}, 1.05});
+        auto changed = source.update(SourceUpdate{{{1}, true}, 1.05, nan});
         CHECK(!changed.topo);
-        CHECK(!changed.param);
-        changed = source.update(SourceUpdate{{{1}, false}, 1.05});
+        CHECK(changed.param);
+        changed = source.update(SourceUpdate{{{1}, false}, 1.05, nan});
         CHECK(changed.topo);
         CHECK(changed.param);
+        changed = source.update(SourceUpdate{{{1}, false}, nan, nan});
+        CHECK(!changed.topo);
+        CHECK(!changed.param);
     }
 }
 

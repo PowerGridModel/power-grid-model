@@ -11,8 +11,8 @@ TEST_CASE("Test main model") {
     std::vector<NodeInput> node_input{{{1}, 10e3}, {{2}, 10e3}, {{3}, 10e3}};
     std::vector<LineInput> line_input{{{{4}, 1, 2, true, true}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
     std::vector<LinkInput> link_input{{{{5}, 2, 3, true, true}}};
-    std::vector<SourceInput> source_input{{{{6}, 1, true}, 1.05, 1e12, nan, nan},
-                                          {{{10}, 3, false}, 1.05, 1e12, nan, nan}};
+    std::vector<SourceInput> source_input{{{{6}, 1, true}, 1.05, nan, 1e12, nan, nan},
+                                          {{{10}, 3, false}, 1.05, 0.0, 1e12, nan, nan}};
     std::vector<SymLoadGenInput> sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, 0.5e6, 0.0}};
     std::vector<AsymLoadGenInput> asym_load_input{
         {{{{8}, 3, true}, LoadGenType::const_y}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
@@ -87,7 +87,7 @@ TEST_CASE("Test main model") {
     std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, true}, 1.0e6, nan}};
     std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, false}, RealValue<false>{nan}, RealValue<false>{nan}}};
     std::vector<ApplianceUpdate> shunt_update{{{9}, false}};
-    std::vector<SourceUpdate> source_update{{{{10}, true}, u1}};
+    std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, true, false}};
 
     MainModel main_model{50.0};
@@ -575,7 +575,7 @@ TEST_CASE("Test main model") {
     }
 
     SECTION("Test update with unknown id") {
-        std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan}};
+        std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan, nan}};
         CHECK_THROWS_AS(main_model.update_component<Source>(source_update2), IDNotFound);
     }
 

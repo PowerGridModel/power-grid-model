@@ -21,27 +21,17 @@
       "sn": 1000000.0,
       "uk": 0.1,
       "pk": 10000.0,
-      "i0": 0.01,
-      "p0": 1000.0,
+      "i0": 0.0,
+      "p0": 0.0,
       "winding_from": 2,
       "winding_to": 1,
       "clock": 11,
       "tap_side": 0,
       "tap_pos": 0,
-      "tap_min": -5,
-      "tap_max": 5,
+      "tap_min": 0,
+      "tap_max": 0,
       "tap_nom": 0,
-      "tap_size": 105.0
-    }
-  ],
-  "sym_load": [
-    {
-      "id": 6,
-      "node": 2,
-      "status": 1,
-      "type": 0,
-      "p_specified": 10000.0,
-      "q_specified": 2000.0
+      "tap_size": 0.0
     }
   ],
   "source": [
@@ -49,10 +39,31 @@
       "id": 7,
       "node": 1,
       "status": 1,
+      "u_ref": 1.0
+    },
+    {
+      "id": 8,
+      "node": 2,
+      "status": 1,
       "u_ref": 1.0,
-      "sk": 1e+20,
-      "rx_ratio": 0.1,
-      "z01_ratio": 1.0
+      "u_ref_angle": -5.759586531581287
+    },
+    {
+      "id": 9,
+      "node": 2,
+      "status": 1,
+      "u_ref": 1.0,
+      "u_ref_angle": -5.759586531581287
+    }
+  ],
+  "sym_load": [
+    {
+      "id": 10,
+      "node": 2,
+      "status": 1,
+      "type": 0,
+      "p_specified": 0.0,
+      "q_specified": 0.0
     }
   ]
 }

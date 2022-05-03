@@ -15,7 +15,7 @@ TEST_CASE("Test Main Model") {
     SECTION("State Estimation") {
         SECTION("Single Node + Source") {
             main_model.add_component<Node>({{{1}, 10e3}});
-            main_model.add_component<Source>({{{{2}, 1, true}, 1.0, nan, nan, nan}});
+            main_model.add_component<Source>({{{{2}, 1, true}, 1.0, nan, nan, nan, nan}});
             SECTION("Symmetric Voltage Sensor") {
                 main_model.add_component<SymVoltageSensor>({{{{{3}, 1}, 1e2}, 12.345e3, 0.1}});
                 main_model.set_construction_complete();

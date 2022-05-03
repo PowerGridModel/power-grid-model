@@ -55,7 +55,7 @@ jobs:
 
       - name: Install conda environment
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
 
       - name: Build and test
         run: |
@@ -87,22 +87,22 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      MKL_INCLUDE: /opt/cpp_pkgs/include
-      MKL_LIB: /opt/cpp_pkgs/lib
-      CMAKE_PREFIX_PATH: /opt/cpp_pkgs
+      MKL_INCLUDE: /usr/local/include
+      MKL_LIB: /usr/local/lib
+      CMAKE_PREFIX_PATH: /usr/local
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install cpp dependencies
         run: |
-          brew install ninja
-          sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+          brew install ninja boost eigen nlohmann-json catch2
+          sudo pip3 install mkl mkl-devel mkl-include
 
       - name: Build and test
         run: |
           # environment
-          export LD_LIBRARY_PATH=$/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=${MKL_LIB}:${LD_LIBRARY_PATH}
           # bash
           ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
 
@@ -118,22 +118,22 @@ jobs:
             cxx: g++
             boost:
             eigen:
-            cibw_build: cp*-manylinux_x86_64
+            cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
             test_cmd: >
               pytest {package}/tests &&
               LD_LIBRARY_PATH= pytest {package}/tests
-            archs: x86_64
+            archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
             cc: clang
             cxx: clang++
-            boost: /opt/cpp_pkgs/include
-            eigen: /opt/cpp_pkgs/include/eigen3
+            boost: /usr/local/include
+            eigen: /usr/local/include/eigen3
             cibw_build: cp*-macosx_*
             archs: "x86_64 arm64"
             test_cmd: >
               pytest {package}/tests &&
-              LD_LIBRARY_PATH=/opt/cpp_pkgs/lib:${LD_LIBRARY_PATH} pytest {package}/tests
+              LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH} pytest {package}/tests
           - platform: windows
             os: windows-latest
             cc:
@@ -161,17 +161,23 @@ jobs:
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
+      CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env-arm64
       CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
         clang++ --version &&
-        sudo ${CONDA}/bin/conda create --yes -p /opt/cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
+        brew install boost eigen &&
+        sudo pip3 install mkl mkl-devel mkl-include
       MACOSX_DEPLOYMENT_TARGET: 10.15
       CIBW_BEFORE_ALL_WINDOWS : >
-        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge python=3.10 boost-cpp eigen mkl
+        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen mkl
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: matrix.platform == 'linux'
+        uses: docker/setup-qemu-action@v1
 
       - name: Activate conda for windows
         if: matrix.platform == 'windows'
@@ -179,7 +185,7 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.3.1
+        uses: pypa/cibuildwheel@2.5.0
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v2
@@ -210,10 +216,10 @@ jobs:
           path: wheelhouse
 
       - name: List wheels
-        run: ls ./wheelhouse/*.whl -ral
+        run: ls ./wheelhouse/*.whl -al
 
       - name: Upload wheels
-        if: github.event_name == 'push'
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         run: |
           pip install twine
           echo "Publish to PyPI..."

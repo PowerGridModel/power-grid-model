@@ -59,8 +59,10 @@ from .errors import (
     NotBetweenOrAtError,
     MissingValueError,
     InfinityError,
+    TransformerClockError,
 )
 from .utils import eval_expression, nan_type
+from ..enum import WindingType
 
 Error = TypeVar("Error", bound=ValidationError)
 
@@ -612,3 +614,41 @@ def none_missing(data: Dict[str, np.ndarray], component: str, fields: Union[str,
             ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
     return errors
+
+
+def all_clocks_valid(
+    data: Dict[str, np.ndarray], component: str, clock_field: str, winding_from_field: str, winding_to_field: str
+) -> List[MissingValueError]:
+    """
+    Custom validation rule: Odd clock number is only allowed for Dy(n) or Y(N)d configuration.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        clock_field: The clock field
+        winding_from_field: The winding from field
+        winding_to_field: The winding to field
+
+    Returns:
+        A list containing zero or more TransformerClockErrors; listing all the ids of transformers where the clock was
+        invalid, given the winding type.
+    """
+
+    clk = data[component][clock_field]
+    wfr = data[component][winding_from_field]
+    wto = data[component][winding_to_field]
+    wfr_is_wye = np.isin(wfr, [WindingType.wye, WindingType.wye_n])
+    wto_is_wye = np.isin(wto, [WindingType.wye, WindingType.wye_n])
+    odd = clk % 2 == 1
+    # even number is not possible if one side is wye winding and the other side is not wye winding.
+    # odd number is not possible, if both sides are wye winding or both sides are not wye winding.
+    err = (~odd & (wfr_is_wye != wto_is_wye)) | (odd & (wfr_is_wye == wto_is_wye))
+    if err.any():
+        return [
+            TransformerClockError(
+                component=component,
+                fields=[clock_field, winding_from_field, winding_to_field],
+                ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []

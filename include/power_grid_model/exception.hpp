@@ -83,15 +83,6 @@ class IterationDiverge : public PowerGridError {
     }
 };
 
-class ConflictSource : public PowerGridError {
-   public:
-    ConflictSource() {
-        append_msg(
-            "There are multiple sources connected to one sub-grid."
-            "They have different phase shifts. This is not allowed!\n");
-    }
-};
-
 class ConflictID : public PowerGridError {
    public:
     ConflictID(ID id) {

@@ -107,6 +107,9 @@ struct PardisoHandle {
     PardisoHandle& operator=(PardisoHandle const&) = delete;
     // constructor to load pardiso either from link time or runtime
     PardisoHandle() {
+#ifdef __aarch64__
+        std::cout << "\nMKL is not available in arm64. Eigen solver is used.\n";
+#else
         // load pardiso from runtime
         // check environment variable to see if
         // user prefer to used MKL
@@ -145,6 +148,7 @@ struct PardisoHandle {
         else {
             std::cout << "\nEigen solver is used because MKL runtime is not found.\n";
         }
+#endif
     }
 
     // release library if use mkl at runtime
@@ -175,6 +179,10 @@ void pardiso(Args&&... args) {
 template <class... Args>
 void pardisoinit(Args&&... args) {
     get_pardiso_handle().pardisoinit(std::forward<Args>(args)...);
+}
+
+inline bool has_mkl() {
+    return get_pardiso_handle().has_pardiso;
 }
 
 }  // namespace power_grid_model
@@ -312,7 +320,15 @@ class PARDISOSolver final {
             throw SparseMatrixError{error};
         }
 
-        if (bsr_handle_.iparm[13] != 0) {
+        /*
+        Don't allow pivoting perturbation
+        Why?
+        - otherwise state estimation does not crash on a singular matrix
+
+        Risk:
+        - For power flow a very small value might be classified as a pertubated pivot (false positive)
+        */
+        if (bsr_handle_.iparm[13] > 0) {
             throw SparseMatrixError{};
         }
     }

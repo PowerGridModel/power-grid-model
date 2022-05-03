@@ -133,7 +133,7 @@ class MultiFieldValidationError(ValidationError):
     Base class for an error that applies to multiple fields in a single component
     """
 
-    _message = "Fields {field} are not valid for {n} {objects}."
+    _message = "Combination of fields {field} is not valid for {n} {objects}."
     component: str
     field: List[str]
     ids: List[int]
@@ -425,3 +425,15 @@ class InfinityError(SingleFieldValidationError):
     """
 
     _message = "Field {field} is infinite for {n} {objects}."
+
+
+class TransformerClockError(MultiFieldValidationError):
+    """
+    The value of a field is infinite.
+    """
+
+    _message = (
+        "Even number is not possible if one side is wye winding and the other side is not wye winding.\n"
+        "Odd number is not possible, if both sides are wye winding or both sides are not wye winding.\n"
+        ", for {n} {objects}."
+    )

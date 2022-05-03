@@ -94,6 +94,8 @@ TEST_CASE("Test BSR solver") {
 
     SECTION("Test singular") {
         data[0] = 0.0;
+        data[12] = 0.0;
+        data[15] = 0.0;
         CHECK_THROWS_AS(solver.solve(data.data(), rhs.data(), x_solver.data()), SparseMatrixError);
     }
 
@@ -102,11 +104,6 @@ TEST_CASE("Test BSR solver") {
         solver.solve(data.data(), rhs.data(), x_solver.data(), true);
         check_result(x, x_solver);
 
-#if defined(POWER_GRID_MODEL_USE_MKL_AT_RUNTIME)
-        if (!get_pardiso_handle().has_pardiso) {
-            return;
-        }
-#endif  // POWER_GRID_MODEL_USE_MKL_AT_RUNTIME
         // basically data * 2
         std::vector<double> other_data = {
             2.0, 0.0, 0.0, 4.0,  // 0, 0
@@ -120,12 +117,10 @@ TEST_CASE("Test BSR solver") {
         // basically x / 2
         std::vector<double> other_x = {0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0};
 
-#if defined(POWER_GRID_MODEL_USE_MKL)
         // because all data should be prefactorized, changing the data should not
         // change the result when use_prefactorization = true
         solver.solve(other_data.data(), rhs.data(), x_solver.data(), true);
         check_result(x, x_solver);
-#endif  // POWER_GRID_MODEL_USE_MKL
 
         // prefactorize other_data, then solve and compare with other_x
         solver.prefactorize(other_data.data());
@@ -135,6 +130,13 @@ TEST_CASE("Test BSR solver") {
         // solve and compare with other_x without using prefactorization
         solver.solve(other_data.data(), rhs.data(), x_solver.data(), false);
         check_result(other_x, x_solver);
+
+        // invalidate pre-factorization
+        // and re-run with original data with pre-factorization enabled
+        // it should still re-do the factorization
+        solver.invalidate_prefactorization();
+        solver.solve(data.data(), rhs.data(), x_solver.data(), true);
+        check_result(x, x_solver);
     }
 }
 

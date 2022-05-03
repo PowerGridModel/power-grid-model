@@ -16,7 +16,7 @@ enum class LoadGenType : IntS {
     const_i = 2,   // constant current
 };
 
-enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2 };
+enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigzag_n = 4 };
 
 enum class BranchSide : IntS { from = 0, to = 1 };
 

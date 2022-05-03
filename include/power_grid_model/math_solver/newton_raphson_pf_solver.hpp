@@ -235,6 +235,7 @@ class NewtonRaphsonPFSolver {
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         std::vector<double> const& phase_shift = *phase_shift_;
+        IdxVector const& source_bus_indptr = *source_bus_indptr_;
         // prepare
         MathOutput<sym> output;
         output.u.resize(n_bus_);
@@ -245,23 +246,21 @@ class NewtonRaphsonPFSolver {
         // initialize
         Timer sub_timer(calculation_info, 2221, "Initialize calculation");
         // average u_ref of all sources
-        double const u_ref = std::transform_reduce(input.source.cbegin(), input.source.cend(), 0.0, std::plus{},
-                                                   [](SourceCalcParam<sym> const& source) {
-                                                       return source.u_ref;
-                                                   }) /
-                             input.source.size();
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (Idx bus = 0; bus != n_bus_; ++bus) {
+                for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+                }
+            }
+            return sum_u_ref / (double)input.source.size();
+        }();
+        // assign u_ref as flat start
         for (Idx i = 0; i != n_bus_; ++i) {
-            // always flat start
             // consider phase shift
-            x_[i].v = RealValue<sym>{u_ref};
-            if constexpr (sym) {
-                x_[i].theta = phase_shift[i];
-            }
-            else {
-                x_[i].theta << phase_shift[i], (phase_shift[i] - deg_120), (phase_shift[i] - deg_240);
-            }
-            ComplexValue<sym> const phase_shift_complex = exp(1.0i * x_[i].theta);
-            output.u[i] = u_ref * phase_shift_complex;
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+            x_[i].v = cabs(output.u[i]);
+            x_[i].theta = arg(output.u[i]);
         }
         sub_timer.stop();
 
@@ -395,8 +394,8 @@ class NewtonRaphsonPFSolver {
 
             // loop source
             for (Idx j = source_bus_indptr[i]; j != source_bus_indptr[i + 1]; ++j) {
-                ComplexTensor<sym> const y_ref = input.source[j].y_ref;
-                ComplexValue<sym> const u_ref{input.source[j].u_ref};
+                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[j];
+                ComplexValue<sym> const u_ref{input.source[j]};
                 // calculate block, um = ui, us = uref
                 PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[i], u[i]);
                 PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[i], u_ref);
@@ -455,8 +454,8 @@ class NewtonRaphsonPFSolver {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // source
             for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
-                ComplexValue<sym> const u_ref{input.source[source].u_ref};
-                ComplexTensor<sym> const y_ref = input.source[source].y_ref;
+                ComplexValue<sym> const u_ref{input.source[source]};
+                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
                 output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
                 output.source[source].s = output.u[bus] * conj(output.source[source].i);
             }
