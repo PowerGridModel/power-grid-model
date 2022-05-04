@@ -6,7 +6,8 @@ SPDX-License-Identifier: MPL-2.0
 ## Network Test Case: Transmission grid
 
 Test case representing a typical transmission grid.
-Symmetrical voltage sensors are installed on all nodes and power sensors are installed at both ends of lines.
+Symmetrical voltage sensors are installed on all nodes and power sensors are installed at both ends of lines and 
+transformers.
 
 The circuit diagram is as follows (The node 6 is same in both lines):
 ```
