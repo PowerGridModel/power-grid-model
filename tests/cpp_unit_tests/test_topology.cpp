@@ -287,4 +287,35 @@ TEST_CASE("Test topology") {
     }
 }
 
+
+TEST_CASE("Test cycle reorder") {
+    // component topology
+    ComponentTopology comp_topo{};
+    comp_topo.n_node = 7;
+    comp_topo.branch_node_idx = {
+        {0, 1},  // 0
+        {1, 2},  // 1
+        {2, 3},  // 2
+        {3, 4},  // 3
+        {4, 5},  // 4
+        {0, 5},  // 5
+        {6, 0},  // 6
+        {4, 5},  // 7
+        {6, 2},  // 8
+        {5, 1},  // 9
+        {3, 1},  // 10
+        {6, 1},  // 11
+    };
+    comp_topo.source_node_idx = {0};
+    // component connection
+    ComponentConnections comp_conn{};
+    comp_conn.branch_connected = std::vector<BranchConnected>(12, {1, 1});
+    comp_conn.branch_phase_shift = std::vector<double>(12, 0.0);
+    comp_conn.source_connected = {1};
+
+    Topology topo{comp_topo, comp_conn};
+    auto pair = topo.build_topology();
+    auto const& comp_coup = *pair.second;
+}
+
 }  // namespace power_grid_model
