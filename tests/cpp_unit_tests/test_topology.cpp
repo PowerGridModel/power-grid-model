@@ -49,18 +49,18 @@
  *      1 ->+pt1+pt2 [1:h0,v2] -- 2 --X
  *
  *
- * 
- * 
+ *
+ *
  * Topology for cycle reodering
- * 
- * 
+ *
+ *
  *   [5]  <---4--[4] <--3- [3]
  *    ^ \         ^       /  ^
  *    |   9----   |     /    |
  *    5        \  6   10     2
  *    |         v |  v       |
  * [0:s0] --0--> [1] --1--> [2]
- *    ^        ^             ^ 
+ *    ^        ^             ^
  *    |   _11_/              |
  *    7  /                   |
  *    | /                    |
@@ -287,7 +287,6 @@ TEST_CASE("Test topology") {
     }
 }
 
-
 TEST_CASE("Test cycle reorder") {
     // component topology
     ComponentTopology comp_topo{};
@@ -314,15 +313,7 @@ TEST_CASE("Test cycle reorder") {
     comp_conn.source_connected = {1};
     // result
     ComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {
-        {0, 2},
-        {0, 5},
-        {0, 6},
-        {0, 3}, 
-        {0, 1}, 
-        {0, 4},
-        {0, 0}
-    };
+    comp_coup_ref.node = {{0, 2}, {0, 5}, {0, 6}, {0, 3}, {0, 1}, {0, 4}, {0, 0}};
 
     Topology topo{comp_topo, comp_conn};
     auto pair = topo.build_topology();
