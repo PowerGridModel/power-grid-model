@@ -177,7 +177,7 @@ jobs:
 
       - name: Set up QEMU
         if: matrix.platform == 'linux'
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
 
       - name: Activate conda for windows
         if: matrix.platform == 'windows'
