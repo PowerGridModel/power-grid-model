@@ -315,7 +315,7 @@ class Topology {
             for (auto it_vertex = vertex_begin; it_vertex != vertex_end; ++it_vertex) {
                 GraphIdx const global_j = *it_vertex;
                 // skip if j is not part of cyclic sub graph
-                if (node_status_[global_j] != -2) {
+                if (node_status_[global_j] == -1) {
                     continue;
                 }
                 GraphIdx const j = (GraphIdx)node_status_[global_j];
