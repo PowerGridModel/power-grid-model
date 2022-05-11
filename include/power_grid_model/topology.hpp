@@ -295,8 +295,8 @@ class Topology {
             return node_status_[x] == -2;
         });
         GraphIdx const n_cycle_node = cyclic_node.size();
-        // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 3
-        if (n_cycle_node < 3) {
+        // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
+        if (n_cycle_node < 4) {
             std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
             return;
         }
@@ -323,9 +323,9 @@ class Topology {
             }
         }
         // start minimum degree ordering
-        std::vector<int64_t> perm(n_cycle_node), inverse_perm(n_cycle_node), degree(n_cycle_node),
+        std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node), inverse_perm(n_cycle_node), degree(n_cycle_node),
             supernode_sizes(n_cycle_node, 1);
-        boost::vec_adj_list_vertex_id_map<boost::no_property, int64_t> id{};
+        boost::vec_adj_list_vertex_id_map<boost::no_property, std::make_signed_t<GraphIdx>> id{};
         int const delta = 0;
         boost::minimum_degree_ordering(graph, boost::make_iterator_property_map(degree.begin(), id),
                                        boost::make_iterator_property_map(inverse_perm.begin(), id),
