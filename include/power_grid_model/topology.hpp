@@ -20,7 +20,7 @@
 // build topology of the grid
 // divide grid into several math models
 // start search from a source
-// using BFS search
+// using DFS search
 
 namespace power_grid_model {
 
@@ -232,6 +232,9 @@ class Topology {
                 global_graph_, (GraphIdx)source_node,
                 GlobalDFSVisitor{m, comp_coup_.node, phase_shift_, dfs_node, predecessors_, back_edges},
                 boost::get(&GlobalVertex::color, global_graph_));
+
+            // begin to construct math topology
+            MathModelTopology math_topo_single{};
             // reorder node number
             if (back_edges.empty()) {
                 // no cycle, the graph is pure tree structure
@@ -241,10 +244,8 @@ class Topology {
             else {
                 // with cycles, meshed graph
                 // use minimum degree
-                reorder_node(dfs_node, back_edges);
+                math_topo_single.fill_in = reorder_node(dfs_node, back_edges);
             }
-            // assign bus number
-            MathModelTopology math_topo_single{};
             // initialize phase shift
             math_topo_single.phase_shift.resize((Idx)dfs_node.size());
             // i as bus number
@@ -267,8 +268,11 @@ class Topology {
         }
     }
 
-    // re-order bfs_node using minimum degree
-    void reorder_node(std::vector<Idx>& dfs_node, std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
+    // re-order dfs_node using minimum degree
+    // return list of fill-ins when factorize the matrix
+    std::vector<BranchIdx> reorder_node(std::vector<Idx>& dfs_node,
+                                        std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
+        std::vector<BranchIdx> fill_in;
         // make a copy and clear current vector
         std::vector<Idx> const dfs_node_copy(dfs_node);
         dfs_node.clear();
@@ -298,7 +302,7 @@ class Topology {
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
         if (n_cycle_node < 4) {
             std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
-            return;
+            return fill_in;
         }
 
         // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
@@ -331,10 +335,16 @@ class Topology {
                                        boost::make_iterator_property_map(inverse_perm.begin(), id),
                                        boost::make_iterator_property_map(perm.begin(), id),
                                        boost::make_iterator_property_map(supernode_sizes.begin(), id), delta, id);
-        // loop to assign re-order sub graph
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            dfs_node.push_back(cyclic_node[perm[i]]);
+        // re-order cyclic node
+        {
+            std::vector<Idx> const cyclic_node_copy{cyclic_node};
+            for (GraphIdx i = 0; i != n_cycle_node; ++i) {
+                cyclic_node[i] = cyclic_node_copy[perm[i]];
+            }
         }
+        // copy back to dfs node
+        std::copy(cyclic_node.cbegin(), cyclic_node.cend(), std::back_inserter(dfs_node));
+        return fill_in;
     }
 
     void couple_branch() {
