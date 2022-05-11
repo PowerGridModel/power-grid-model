@@ -1,9 +1,9 @@
 {
   "calculation_method": "iterative_linear",
-  "rtol": 1e-05,
+  "rtol": 1e-03,
   "atol": {
-    "default": 1e-05,
-    ".+_residual": 0.1
+    "default": 1e-03,
+    ".+_residual": 1
   },
   "independent": true,
   "cache_topology": false
