@@ -30,7 +30,7 @@ jobs:
         sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run build script
         run: ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
@@ -47,7 +47,7 @@ jobs:
       MKL_LIB: C:\conda_envs\cpp_pkgs\Library\lib
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Activate conda
         run: |
@@ -92,7 +92,7 @@ jobs:
       CMAKE_PREFIX_PATH: /usr/local
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
         run: |
@@ -173,7 +173,7 @@ jobs:
         conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen mkl
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up QEMU
         if: matrix.platform == 'linux'
@@ -202,7 +202,7 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup python
         uses: actions/setup-python@v2
