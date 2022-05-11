@@ -535,8 +535,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx batch = 0; batch != n_batch; ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
-                combined_error_message +=
-                    "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
+                combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
             }
         }
         if (!combined_error_message.empty()) {
