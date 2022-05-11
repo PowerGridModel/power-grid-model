@@ -531,17 +531,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // handle exception message
-        bool has_exception = false;
         std::string combined_error_message;
         for (Idx batch = 0; batch != n_batch; ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
-                has_exception = true;
                 combined_error_message +=
-                    "Error in batch #" + std::to_string(batch) + " , message: " + exceptions[batch] + "\n\n";
+                    "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
             }
         }
-        if (has_exception) {
+        if (!combined_error_message.empty()) {
             throw BatchCalculationError(combined_error_message);
         }
 
