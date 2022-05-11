@@ -354,7 +354,41 @@ class Topology {
         meshed_graph.clear();
         build_graph(meshed_graph);
         // begin to remove vertices from graph, create fill-ins
-
+        BGL_FORALL_VERTICES(i, meshed_graph, ReorderGraph) {
+            // double loop to loop all pairs of adjacent vertices
+            BGL_FORALL_ADJ(i, j1, meshed_graph, ReorderGraph) {
+                BGL_FORALL_ADJ(i, j2, meshed_graph, ReorderGraph) {
+                    // no self edges
+                    assert(i != j1);
+                    assert(i != j2);
+                    // skip for already removed vertices
+                    if (j1 < i || j2 < i) {
+                        continue;
+                    }
+                    // only keep pair with j1 < j2
+                    if (j1 >= j2) {
+                        continue;
+                    }
+                    // if edge j1 -> j2 does not already exists
+                    // it is a fill-in
+                    if (!boost::edge(j1, j2, meshed_graph).second) {
+                        // anti edge should also not exist
+                        assert(!boost::edge(j2, j1, meshed_graph).second);
+                        // add both edges to the graph
+                        boost::add_edge(j1, j2, meshed_graph);
+                        boost::add_edge(j2, j1, meshed_graph);
+                        // add to fill-in
+                        fill_in.push_back({(Idx)j1, (Idx)j2});
+                    }
+                }
+            }
+        }
+        // offset fill-in indices by n_node - n_cycle_node
+        Idx const offset = (Idx)(dfs_node.size() - n_cycle_node);
+        std::for_each(fill_in.begin(), fill_in.end(), [offset](BranchIdx& b) {
+            b[0] += offset;
+            b[1] += offset;
+        });
         return fill_in;
     }
 
