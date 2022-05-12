@@ -321,12 +321,14 @@ class Topology {
                         continue;
                     }
                     GraphIdx const j = (GraphIdx)node_status_[global_j];
-                    boost::add_edge(i, j, g);
+                    if (!boost::edge(i, j, g).second) {
+                        boost::add_edge(i, j, g);
+                    }
                 }
             }
             return g;
         };
-        ReorderGraph meshed_graph{};
+        ReorderGraph meshed_graph{n_cycle_node};
         build_graph(meshed_graph);
         // start minimum degree ordering
         std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node), inverse_perm(n_cycle_node), degree(n_cycle_node),
@@ -352,6 +354,7 @@ class Topology {
         }
         // re-build graph with reordered cyclic node
         meshed_graph.clear();
+        meshed_graph = ReorderGraph{n_cycle_node};
         build_graph(meshed_graph);
         // begin to remove vertices from graph, create fill-ins
         BGL_FORALL_VERTICES(i, meshed_graph, ReorderGraph) {
