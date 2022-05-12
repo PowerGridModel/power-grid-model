@@ -327,7 +327,7 @@ TEST_CASE("Test cycle reorder") {
         {5, 1},  // 9
         {3, 1},  // 10
         {6, 1},  // 11
-        {6, 5},  // 12
+        {2, 1},  // 12
     };
     comp_topo.source_node_idx = {0};
     // component connection
