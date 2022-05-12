@@ -60,30 +60,30 @@
  *    5        \  6   10     2
  *    |         v |  v       |
  * [0:s0] --0--> [1] --1--> [2]
- *    ^        ^             ^
- *    |   -11-/              |
+ *    ^        ^    <- 12-   ^
+ *    |   -11-/     parallel |
  *    7  /                   |
  *    | /                    |
  *   [6] -----------------8--
  *
  * Math model after reodering
  *
- *   [4]  <---4--[1] <--3- [3]
+ *   [1]  <---4--[5] <--3- [3]
  *    ^ \         ^       /  ^
  *    |   9----   |     /    |
  *    5        \  6   10     2
  *    |         v |  v       |
- * [2:s0] --0--> [5] --1--> [6]
- *    ^        ^             ^
- *    |   -11-/              |
+ * [4:s0] --0--> [2] --1--> [0]
+ *    ^        ^    <- 12-   ^
+ *    |   -11-/     parallel |
  *    7  /                   |
  *    | /                    |
- *   [0] -----------------8--
+ *   [6] -----------------8--
  *
  * Extra fill-in:
- * (2, 6)  by removing node 0
- * (3, 4)  by removing node 1
- * (4, 6)  by removing node 2
+ * (3, 6)  by removing node 0
+ * (4, 5)  by removing node 1
+ * (5, 6)  by removing node 2
  */
 
 namespace power_grid_model {
@@ -323,16 +323,17 @@ TEST_CASE("Test cycle reorder") {
         {5, 1},  // 9
         {3, 1},  // 10
         {6, 1},  // 11
+        {6, 5},  // 12
     };
     comp_topo.source_node_idx = {0};
     // component connection
     ComponentConnections comp_conn{};
-    comp_conn.branch_connected = std::vector<BranchConnected>(12, {1, 1});
-    comp_conn.branch_phase_shift = std::vector<double>(12, 0.0);
+    comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
+    comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
     comp_conn.source_connected = {1};
     // result
     ComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {{0, 2}, {0, 5}, {0, 6}, {0, 3}, {0, 1}, {0, 4}, {0, 0}};
+    comp_coup_ref.node = {{0, 2}, {0, 5}, {0, 1}, {0, 3}, {0, 0}, {0, 4}, {0, 6}};
 
     Topology topo{comp_topo, comp_conn};
     auto pair = topo.build_topology();
