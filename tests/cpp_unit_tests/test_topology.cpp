@@ -60,29 +60,29 @@
  *    5        \  6   10     2
  *    |         v |  v       |
  * [0:s0] --0--> [1] --1--> [2]
- *    ^        ^             ^
- *    |   -11-/              |
+ *    ^        ^    <- 12-   ^
+ *    |   -11-/     parallel |
  *    7  /                   |
  *    | /                    |
  *   [6] -----------------8--
  *
  * Math model after reodering
  *
- *   [4]  <---4--[1] <--3- [3]
+ *   [4]  <---4--[0] <--3- [3]
  *    ^ \         ^       /  ^
  *    |   9----   |     /    |
  *    5        \  6   10     2
  *    |         v |  v       |
- * [2:s0] --0--> [5] --1--> [6]
- *    ^        ^             ^
- *    |   -11-/              |
+ * [2:s0] --0--> [5] --1--> [1]
+ *    ^        ^    <- 12-   ^
+ *    |   -11-/     parallel |
  *    7  /                   |
  *    | /                    |
- *   [0] -----------------8--
+ *   [6] -----------------8--
  *
  * Extra fill-in:
- * (2, 6)  by removing node 0
- * (3, 4)  by removing node 1
+ * (3, 4)  by removing node 0
+ * (3, 6)  by removing node 1
  * (4, 6)  by removing node 2
  */
 
@@ -317,22 +317,23 @@ TEST_CASE("Test cycle reorder") {
         {3, 4},  // 3
         {4, 5},  // 4
         {0, 5},  // 5
-        {6, 0},  // 6
-        {4, 5},  // 7
+        {1, 4},  // 6
+        {6, 0},  // 7
         {6, 2},  // 8
         {5, 1},  // 9
         {3, 1},  // 10
         {6, 1},  // 11
+        {6, 5},  // 12
     };
     comp_topo.source_node_idx = {0};
     // component connection
     ComponentConnections comp_conn{};
-    comp_conn.branch_connected = std::vector<BranchConnected>(12, {1, 1});
-    comp_conn.branch_phase_shift = std::vector<double>(12, 0.0);
+    comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
+    comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
     comp_conn.source_connected = {1};
     // result
     ComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {{0, 2}, {0, 5}, {0, 6}, {0, 3}, {0, 1}, {0, 4}, {0, 0}};
+    comp_coup_ref.node = {{0, 2}, {0, 5}, {0, 1}, {0, 3}, {0, 0}, {0, 4}, {0, 6}};
 
     Topology topo{comp_topo, comp_conn};
     auto pair = topo.build_topology();

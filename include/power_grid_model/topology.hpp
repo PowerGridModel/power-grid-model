@@ -319,7 +319,9 @@ class Topology {
                     continue;
                 }
                 GraphIdx const j = (GraphIdx)node_status_[global_j];
-                boost::add_edge(i, j, graph);
+                if (!boost::edge(i, j, graph).second) {
+                    boost::add_edge(i, j, graph);
+                }
             }
         }
         // start minimum degree ordering
