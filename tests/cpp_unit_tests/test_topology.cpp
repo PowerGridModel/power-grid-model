@@ -68,12 +68,12 @@
  *
  * Math model after reodering
  *
- *   [1]  <---4--[5] <--3- [3]
+ *   [4]  <---4--[0] <--3- [3]
  *    ^ \         ^       /  ^
  *    |   9----   |     /    |
  *    5        \  6   10     2
  *    |         v |  v       |
- * [4:s0] --0--> [2] --1--> [0]
+ * [2:s0] --0--> [5] --1--> [1]
  *    ^        ^    <- 12-   ^
  *    |   -11-/     parallel |
  *    7  /                   |
@@ -81,9 +81,9 @@
  *   [6] -----------------8--
  *
  * Extra fill-in:
- * (3, 6)  by removing node 0
- * (4, 5)  by removing node 1
- * (5, 6)  by removing node 2
+ * (3, 4)  by removing node 0
+ * (3, 6)  by removing node 1
+ * (4, 6)  by removing node 2
  */
 
 namespace power_grid_model {
