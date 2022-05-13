@@ -68,17 +68,17 @@
  *
  * Math model after reodering
  *
- *   [4]  <---4--[0] <--3- [3]
+ *   [1]  <---4--[6] <--3- [2]
  *    ^ \         ^       /  ^
  *    |   9----   |     /    |
  *    5        \  6   10     2
  *    |         v |  v       |
- * [2:s0] --0--> [5] --1--> [1]
+ * [3:s0] --0--> [5] --1--> [4]
  *    ^        ^    <- 12-   ^
  *    |   -11-/     parallel |
  *    7  /                   |
  *    | /                    |
- *   [6] -----------------8--
+ *   [0] -----------------8--
  *
  * Extra fill-in:
  * (3, 4)  by removing node 0
@@ -323,7 +323,7 @@ TEST_CASE("Test cycle reorder") {
         {5, 1},  // 9
         {3, 1},  // 10
         {6, 1},  // 11
-        {6, 5},  // 12
+        {2, 1},  // 12
     };
     comp_topo.source_node_idx = {0};
     // component connection
@@ -333,7 +333,7 @@ TEST_CASE("Test cycle reorder") {
     comp_conn.source_connected = {1};
     // result
     ComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {{0, 2}, {0, 5}, {0, 1}, {0, 3}, {0, 0}, {0, 4}, {0, 6}};
+    comp_coup_ref.node = {{0, 3}, {0, 5}, {0, 4}, {0, 2}, {0, 6}, {0, 1}, {0, 0}};
 
     Topology topo{comp_topo, comp_conn};
     auto pair = topo.build_topology();
