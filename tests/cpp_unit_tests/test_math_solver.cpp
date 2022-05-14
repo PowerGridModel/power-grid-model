@@ -404,7 +404,9 @@ TEST_CASE("Test math solver") {
     }
 
     SECTION("Test asymmetric pf solver") {
-        MathSolver<false> solver{topo_ptr, param_asym_ptr};
+        MathSolver<true> solver_sym{topo_ptr, param_ptr};
+        // construct from existing y bus struct
+        MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
         CalculationInfo info;
         MathOutput<false> output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::newton_raphson);

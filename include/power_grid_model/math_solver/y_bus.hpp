@@ -385,6 +385,8 @@ template class YBus<false>;
 template <bool sym>
 using YBus = math_model_impl::YBus<sym>;
 
+using YBusStructure = math_model_impl::YBusStructure;
+
 }  // namespace power_grid_model
 
 #endif
