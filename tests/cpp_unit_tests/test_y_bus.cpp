@@ -130,7 +130,10 @@ TEST_CASE("Test y bus") {
     }
 
     SECTION("Test y bus construction (asymmetrical)") {
-        YBus<false> ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym)};
+        YBus<true> ybus_sym{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        // construct from existing structure
+        YBus<false> ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym),
+                         ybus_sym.shared_y_bus_struct()};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());

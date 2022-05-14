@@ -204,8 +204,16 @@ template <bool sym>
 class YBus {
    public:
     YBus(std::shared_ptr<MathModelTopology const> const& topo_ptr,
-         std::shared_ptr<MathModelParam<sym> const> const& param)
-        : y_bus_struct_{std::make_shared<YBusStructure const>(YBusStructure{*topo_ptr})}, math_topology_{topo_ptr} {
+         std::shared_ptr<MathModelParam<sym> const> const& param,
+         std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
+        : math_topology_{topo_ptr} {
+        // use existing struct or make new struct
+        if (y_bus_struct) {
+            y_bus_struct_ = y_bus_struct;
+        }
+        else {
+            y_bus_struct_ = std::make_shared<YBusStructure const>(YBusStructure{*topo_ptr});
+        }
         // update values
         update_admittance(param);
     }
@@ -257,6 +265,9 @@ class YBus {
     }
     std::shared_ptr<MathModelTopology const> shared_topology() const {
         return math_topology_;
+    }
+    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const {
+        return y_bus_struct_;
     }
 
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
