@@ -80,14 +80,27 @@ struct YBusStructure {
     // for transpose_entry[i] indicates the position i-th element in transposed matrix in CSR form
     // for entry in the diagonal transpose_entry[i] = i
     IdxVector transpose_entry;
+    // LU csr structure for the y bus with sparse fill-ins
+    // this is the structure when y bus is LU-factorized
+    // it will contain all the elements plus the elements in fill_in from topology
+    // fill_in should never contain entries which already exist in y bus
+    IdxVector row_indptr_lu;
+    IdxVector col_indices_lu;
+    // diagonal entry of lu matrices
+    IdxVector diag_lu;
+    // map index between y bus structure and y bus LU structure
+    // for Element i in y bus, it is the element map_y_bus_lu[i] in LU matrix
+    // i.e. data_lu[map_y_bus_lu[i] = data_y_bus[i];
+    IdxVector map_y_bus_lu;
 
     // construct ybus structure
     YBusStructure(MathModelTopology const& topo) {
         Idx const n_bus = topo.n_bus();
-        Idx const n_branch = (Idx)topo.branch_bus_idx.size();
+        Idx const n_branch = topo.n_branch();
+        Idx const n_fill_in = (Idx)topo.fill_in.size();
         // allocate element vector
         std::vector<YBusElementMap> vec_map_element;
-        Idx const total_number_entries = 4 * n_branch + n_bus;
+        Idx const total_number_entries = 4 * n_branch + n_bus + 2 * n_fill_in;
         vec_map_element.reserve(total_number_entries);
         // add element
         // off diagonal element list
@@ -107,62 +120,78 @@ struct YBusStructure {
                 append_element_vector(vec_map_element, bus, bus, YBusElementType::shunt, shunt);
             }
         }
+        for (Idx fill_in = 0; fill_in != n_fill_in; ++fill_in) {
+            Idx const bus1 = topo.fill_in[fill_in][0];
+            Idx const bus2 = topo.fill_in[fill_in][1];
+            // fill both direction
+            append_element_vector(vec_map_element, bus1, bus2, YBusElementType::fill_in, -1);
+            append_element_vector(vec_map_element, bus2, bus1, YBusElementType::fill_in, -1);
+
+        }
         // sort element
         counting_sort_element(vec_map_element, n_bus);
         // initialize nnz and row start
         Idx nnz_counter = 0;
         Idx row_start = 0;
+        Idx nnz_counter_lu = 0;
+        Idx row_start_lu = 0;
         // allocate arrays
         row_indptr.resize(n_bus + 1);
         row_indptr[0] = 0;
-        // allocate indices of entries
-        y_bus_element.resize(vec_map_element.size());
+        row_indptr_lu.resize(n_bus + 1);
+        row_indptr_lu[0] = 0;
         bus_entry.resize(n_bus);
+        diag_lu.resize(n_bus);
         // start entry indptr as zero
         y_bus_entry_indptr.push_back(0);
-        // copy all elements
-        std::transform(vec_map_element.cbegin(), vec_map_element.cend(), y_bus_element.begin(), [](YBusElementMap m) {
-            return m.element;
-        });
+        // copy all elements in y bus (excluding fill-in)
+        for (YBusElementMap const& m : vec_map_element) {
+            if (m.element.element_type != YBusElementType::fill_in) {
+                y_bus_element.push_back(m.element);
+            }
+        }
 
-        // iterate the whole element
+        // iterate the whole element include fill-in
         for (auto it_element = vec_map_element.cbegin(); it_element != vec_map_element.cend();
              // incremental happends in the inner loop, not here
         ) {
             MatrixPos const pos = it_element->pos;
-            // row and col
-            Idx const row = pos.first;
-            Idx const col = pos.second;
-            // assign col
-            col_indices.push_back(col);
-            row_indices.push_back(row);
-            // iterate row if needed
-            if (row > row_start) {
-                row_indptr[++row_start] = nnz_counter;
-            }
-            // every row should have entries
-            // so the row start (after increment once) should be the same as current row
-            assert(row_start == row);
-            // inner loop to assign entries of duplicated elements
-            for (  // use it_element to start
-                ;  // stop when reach end or new position
-                it_element != vec_map_element.cend() && it_element->pos == pos; ++it_element) {
-                // assign nnz as indices for bus diag entry, or record off diag entry
-                // bus, diag entry
-                if (row == col) {
-                    bus_entry[row] = nnz_counter;
+            // assign to y bus structure if not fill-in
+            if (it_element->element.element_type != YBusElementType::fill_in) {
+                // row and col
+                Idx const row = pos.first;
+                Idx const col = pos.second;
+                // assign col
+                col_indices.push_back(col);
+                row_indices.push_back(row);
+                // iterate row if needed
+                if (row > row_start) {
+                    row_indptr[++row_start] = nnz_counter;
                 }
-                // branch off diag entry
-                else {
-                    off_diag_map[it_element->element.idx]
-                                // minus 1 because ft is 1 and tf is 2, mapped to 0 and 1
-                                [static_cast<Idx>(it_element->element.element_type) - 1] = nnz_counter;
+                // every row should have entries
+                // so the row start (after increment once) should be the same as current row
+                assert(row_start == row);
+                // inner loop to assign entries of duplicated elements
+                for (  // use it_element to start
+                    ;  // stop when reach end or new position
+                    it_element != vec_map_element.cend() && it_element->pos == pos; ++it_element) {
+                    // assign nnz as indices for bus diag entry, or record off diag entry
+                    // bus, diag entry
+                    if (row == col) {
+                        bus_entry[row] = nnz_counter;
+                    }
+                    // branch off diag entry
+                    else {
+                        off_diag_map[it_element->element.idx]
+                                    // minus 1 because ft is 1 and tf is 2, mapped to 0 and 1
+                                    [static_cast<Idx>(it_element->element.element_type) - 1] = nnz_counter;
+                    }
                 }
+                // all entries in the same position are looped, append indptr
+                y_bus_entry_indptr.push_back((Idx)(it_element - vec_map_element.cbegin()));
+                // iterate linear nnz
+                ++nnz_counter;
             }
-            // all entries in the same position are looped, append indptr
-            y_bus_entry_indptr.push_back((Idx)(it_element - vec_map_element.cbegin()));
-            // iterate linear nnz
-            ++nnz_counter;
         }
         // last entry for indptr
         row_indptr[++row_start] = nnz_counter;

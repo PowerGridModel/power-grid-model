@@ -48,7 +48,7 @@ enum class ComponentType : IntS {
 // for 0b00 - 0b11
 //     0bXY, where X, Y means the from(0)/to(1) side of branch
 //        i.e. 0b01 is the branch element for Yft
-enum class YBusElementType : IntS { bff = 0b00, bft = 0b01, btf = 0b10, btt = 0b11, shunt = 0b100 };
+enum class YBusElementType : IntS { bff = 0b00, bft = 0b01, btf = 0b10, btt = 0b11, shunt = 0b100, fill_in = 0b101 };
 
 }  // namespace power_grid_model
 
