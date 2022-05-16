@@ -17,11 +17,13 @@
 
 namespace power_grid_model {
 
-namespace three_phase_tensor {
-
 // enable scalar
 template <class T>
-using enable_scalar_t = std::enable_if_t<std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>>;
+constexpr bool check_scalar_v = std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>;
+template <class T>
+using enable_scalar_t = std::enable_if_t<check_scalar_v<T>>;
+
+namespace three_phase_tensor {
 
 template <class T>
 using Eigen3Vector = Eigen::Array<T, 3, 1>;
@@ -123,9 +125,9 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 
 // enabler
 template <class T>
-constexpr bool check_vector_v = T::RowsAtCompileTime == 3 && T::ColsAtCompileTime == 1;
+constexpr bool check_vector_v = T::ColsAtCompileTime == 1;
 template <class T>
-constexpr bool check_tensor_v = T::RowsAtCompileTime == 3 && T::ColsAtCompileTime == 3;
+constexpr bool check_tensor_v = T::RowsAtCompileTime == T::ColsAtCompileTime;
 template <class T>
 constexpr bool check_all_v = check_tensor_v<T> || check_vector_v<T>;
 template <class T>
@@ -182,6 +184,12 @@ inline double dot(double x, double y) {
 inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) {
     return x * y;
 }
+
+template <class... T, class = std::enable_if_t<(check_scalar_v<T> && ...)>>
+inline auto dot(T const&... x) {
+    return (... * x);
+}
+
 template <class... Derived, class = std::enable_if_t<(check_all_v<Derived> && ...)>>
 inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
     auto res_mat = (... * x.matrix());
