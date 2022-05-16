@@ -33,8 +33,8 @@ else()
   if(UNIX AND NOT APPLE)
     list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES .so.1)
     list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES .so.2)
-	# test coverage for debug build in linux
-	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	# test coverage for debug build in linux, if specified
+	if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND (DEFINED POWER_GRID_MODEL_COVERAGE) AND (POWER_GRID_MODEL_COVERAGE EQUAL 1))
 	  add_compile_options(-fprofile-arcs -ftest-coverage)
 	  add_link_options(-fprofile-arcs)
 	endif()

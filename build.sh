@@ -22,6 +22,12 @@ if [ ! "$2" = "EIGEN" ] && [ ! "$2" = "MKL" ] && [ ! "$2" = "MKL_RUNTIME" ]; the
   exit 1;
 fi
 
+if [[ $3 == "Coverage" ]]; then
+  BUILD_COVERAGE=-DPOWER_GRID_MODEL_COVERAGE=1
+else
+  BUILD_COVERAGE=
+fi
+
 BUILD_DIR=cpp_build_$1_$2
 echo "Build dir: ${BUILD_DIR}"
 
@@ -43,7 +49,8 @@ cmake .. -GNinja \
     -DCMAKE_BUILD_TYPE=$1 \
     -DPOWER_GRID_MODEL_SPARSE_SOLVER=$2 \
     ${PATH_FOR_CMAKE} \
-    -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
+    -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 \
+    ${BUILD_COVERAGE}
 # build
 VERBOSE=1 cmake --build .
 # test
