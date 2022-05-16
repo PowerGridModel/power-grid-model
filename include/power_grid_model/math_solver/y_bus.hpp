@@ -333,6 +333,18 @@ class YBus {
     std::shared_ptr<YBusStructure const> shared_y_bus_struct() const {
         return y_bus_struct_;
     }
+    std::shared_ptr<IdxVector const> shared_indptr_lu() const {
+        return {y_bus_struct_, &y_bus_struct_->row_indptr_lu};
+    }
+    std::shared_ptr<IdxVector const> shared_indices_lu() const {
+        return {y_bus_struct_, &y_bus_struct_->col_indices_lu};
+    }
+    std::shared_ptr<IdxVector const> shared_diag_lu() const {
+        return {y_bus_struct_, &y_bus_struct_->diag_lu};
+    }
+    std::shared_ptr<IdxVector const> shared_map_y_bus_lu() const {
+        return {y_bus_struct_, &y_bus_struct_->map_y_bus_lu};
+    }
 
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached parameters

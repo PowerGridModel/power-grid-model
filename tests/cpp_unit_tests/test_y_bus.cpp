@@ -36,7 +36,7 @@ TEST_CASE("Test y bus") {
 
     MathModelTopology topo{};
     MathModelParam<true> param_sym;
-    topo.phase_shift = {0.0, 0.0, 0.0, 0.0};
+    topo.phase_shift.resize(4, 0.0);
     topo.branch_bus_idx = {
         {1, 0},  // branch 0 from node 1 to 0
         {1, 2},  // branch 1 from node 1 to 2
@@ -76,6 +76,7 @@ TEST_CASE("Test y bus") {
                                     11, 12, 16,  // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
                                     18, 20,      // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
                                     23};
+    IdxVector map_y_bus_lu = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ComplexTensorVector<true> admittance_sym = {
         17.0 + 104.0i,   // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
         18.0 + 3.0i,     // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
@@ -127,6 +128,12 @@ TEST_CASE("Test y bus") {
         for (size_t i = 0; i < admittance_sym.size(); i++) {
             CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
         }
+
+        // check lu
+        CHECK(*ybus.shared_indptr_lu() == row_indptr);
+        CHECK(*ybus.shared_indices_lu() == col_indices);
+        CHECK(*ybus.shared_diag_lu() == bus_entry);
+        CHECK(*ybus.shared_map_y_bus_lu() == map_y_bus_lu);
     }
 
     SECTION("Test y bus construction (asymmetrical)") {
@@ -204,6 +211,23 @@ TEST_CASE("Test one bus system") {
     CHECK(bus_entry == ybus.bus_entry());
     CHECK(transpose_entry == ybus.transpose_entry());
     CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+}
+
+TEST_CASE("Test fill-in y bus") {
+    /*
+     * struct
+     * [1] --0--> [0] --[1]--> [2]
+     * extra fill-in: (1, 2) by removing node 0
+     */
+
+    MathModelTopology topo{};
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {
+        {1, 0},  // branch 0 from node 1 to 0
+        {1, 2},  // branch 1 from node 1 to 2
+    };
+    topo.shunt_bus_indptr = {0, 0, 0, 0};
+    topo.fill_in = {{1, 2}};
 }
 
 /*
