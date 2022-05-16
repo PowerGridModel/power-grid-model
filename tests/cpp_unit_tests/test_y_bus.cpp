@@ -218,16 +218,49 @@ TEST_CASE("Test fill-in y bus") {
      * struct
      * [1] --0--> [0] --[1]--> [2]
      * extra fill-in: (1, 2) by removing node 0
+     *
+     * [
+     *   0, 1, 2
+     *   3, 4, f
+     *   5, f, 6
+     * ]
      */
 
     MathModelTopology topo{};
-    topo.phase_shift = {0.0, 0.0};
+    topo.phase_shift.resize(3, 0.0);
     topo.branch_bus_idx = {
         {1, 0},  // branch 0 from node 1 to 0
-        {1, 2},  // branch 1 from node 1 to 2
+        {0, 2},  // branch 1 from node 0 to 2
     };
     topo.shunt_bus_indptr = {0, 0, 0, 0};
     topo.fill_in = {{1, 2}};
+
+    IdxVector row_indptr = {0, 3, 5, 7};
+    IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
+    IdxVector row_indices = {0, 0, 0, 1, 1, 2, 2};
+    IdxVector bus_entry = {0, 4, 6};
+    IdxVector transpose_entry = {0, 3, 5, 1, 4, 2, 6};
+    IdxVector y_bus_entry_indptr = {0, 2,               // 0, 1 belong to element [0,0] in Ybus
+                                    3, 4, 5, 6, 7, 8};  // everything else has only one entry
+    // lu matrix
+    IdxVector row_indptr_lu = {0, 3, 6, 9};
+    IdxVector col_indices_lu = {0, 1, 2, 0, 1, 2, 0, 1, 2};
+    IdxVector map_y_bus_lu = {0, 1, 2, 3, 4, 6, 8};
+    IdxVector diag_lu = {0, 4, 8};
+
+    YBusStructure ybus{topo};
+
+    CHECK(row_indptr == ybus.row_indptr);
+    CHECK(col_indices == ybus.col_indices);
+    CHECK(row_indices == ybus.row_indices);
+    CHECK(bus_entry == ybus.bus_entry);
+    CHECK(transpose_entry == ybus.transpose_entry);
+    CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr);
+    // check lu
+    CHECK(ybus.row_indptr_lu == row_indptr_lu);
+    CHECK(ybus.col_indices_lu == col_indices_lu);
+    CHECK(ybus.diag_lu == diag_lu);
+    CHECK(ybus.map_y_bus_lu == map_y_bus_lu);
 }
 
 /*
