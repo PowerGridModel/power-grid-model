@@ -4,9 +4,21 @@
 
 #include "catch2/catch.hpp"
 #include "power_grid_model/math_solver/bsr_solver.hpp"
+#include "power_grid_model/math_solver/sparse_lu_solver.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 
 namespace power_grid_model {
+
+using lu_trait_double = math_model_impl::sparse_lu_entry_trait<double, double, double>;
+static_assert(!lu_trait_double::is_block);
+static_assert(lu_trait_double::block_size == 1);
+static_assert(std::is_same_v<lu_trait_double::Scalar, double>);
+
+using lu_trait_tensor = math_model_impl::sparse_lu_entry_trait<Eigen::Array33cd, Eigen::Array3cd, Eigen::Array3cd>;
+static_assert(std::is_base_of_v<Eigen::ArrayBase<Eigen::Array33cd>, Eigen::Array33cd>);
+static_assert(lu_trait_tensor::is_block);
+static_assert(lu_trait_tensor::block_size == 3);
+static_assert(std::is_same_v<lu_trait_tensor::Scalar, DoubleComplex>);
 
 template <class T>
 void check_result(std::vector<T> const& x, std::vector<T> const& x_solver) {
