@@ -72,6 +72,48 @@ class SparseLUSolver {
           data_mapping_{data_mapping} {
     }
 
+    void solve(Tensor const* data, RHSVector const* rhs, XVector* x, bool use_prefactorization = false) {
+        // reset possible pre-factorization if we are not using prefactorization
+        prefactorized_ = prefactorized_ && use_prefactorization;
+        // run factorization
+        if (!prefactorized_) {
+            prefactorize(data);
+        }
+
+        // local reference
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        auto const& diag_lu = *diag_lu_;
+        auto const& lu_matrix = *lu_matrix_;
+
+        // forward substitution with L
+        for (Idx row = 0; row != size_; ++row) {
+            x[row] = rhs[row];
+            // loop all columns until diagonal
+            for (Idx col_idx = 0; col_idx < diag_lu[row]; ++col_idx) {
+                Idx const col = col_indices[col_idx];
+                // never overshoot
+                assert(col < row);
+                // forward subtract
+                x[row] -= dot(lu_matrix[col_idx], x[col]);
+            }
+        }
+
+        // backward substitution with U
+        for (Idx row = size_ - 1; row != -1; --row) {
+            // loop all columns from diagonal
+            for (Idx col_idx = diag_lu[row]; col_idx < row_indptr[row + 1]; ++col_idx) {
+                Idx const col = col_indices[col_idx];
+                // always in upper diagonal
+                assert(col > row);
+                // backward subtract
+                x[row] -= dot(lu_matrix[col_idx], x[col]);
+            }
+            // multiply the cached inversed pivot
+            x[row] = dot(lu_matrix[diag_lu[row]], x[row]);
+        }
+    }
+
     void prefactorize(Tensor const* data) {
         // local reference
         auto const& row_indptr = *row_indptr_;
@@ -138,25 +180,26 @@ class SparseLUSolver {
             for (Idx l_row_idx = pivot_idx + 1; l_row_idx < row_indptr[pivot_row_col + 1]; ++l_row_idx) {
                 Idx const l_row = col_indices[l_row_idx];
                 // we should exactly find the current column
-                Idx col_idx_l = col_position_idx[l_row];
-                assert(col_indices[col_idx_l] == pivot_row_col);
-                // calculating l
-                Tensor const l = dot(inverse_pivot, lu_matrix[col_idx_l]);
-                lu_matrix[col_idx_l] = l;
-                // for all entries in the left of (l_row, pivot_row_col), (l_row, col), we need to subtract it by l * (pivot_row_col, col)
+                Idx l_col_idx = col_position_idx[l_row];
+                assert(col_indices[l_col_idx] == pivot_row_col);
+                // calculating l at (l_row, pivot_row_col)
+                Tensor const l = dot(inverse_pivot, lu_matrix[l_col_idx]);
+                lu_matrix[l_col_idx] = l;
+                // for all entries in the right of (l_row, pivot_row_col)
+                //       (l_row, pivot_col) = (l_row, pivot_col) - l * (pivot_row_col, pivot_col), for pivot_col > pivot_row_col
                 // it can create fill-ins, but the fill-ins are pre-allocated
                 // it is garanteed to have an entry at (l_row, pivot_col), if (pivot_row_col, pivot_col) is non-zero
-                // loop all columns in the right of (pivot_row_col, pivot_row_col)
+                // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
                 for (Idx pivot_col_idx = pivot_idx + 1; pivot_col_idx < row_indptr[pivot_row_col + 1]; ++pivot_col_idx) {
                     Idx const pivot_col = col_indices[pivot_col_idx];
-                    // search the col_idx_l to the pivot_col,
-                    while (col_indices[col_idx_l] != pivot_col) {
-                        ++col_idx_l;
+                    // search the l_col_idx to the pivot_col,
+                    while (col_indices[l_col_idx] != pivot_col) {
+                        ++l_col_idx;
                         // it should alway exist, so no overshooting of the end of the row
-                        assert(col_idx_l < row_indptr[l_row + 1]);
+                        assert(l_col_idx < row_indptr[l_row + 1]);
                     }
-                    // substract
-                    lu_matrix[col_idx_l] -= dot(l, lu_matrix[pivot_col_idx]);
+                    // subtract
+                    lu_matrix[l_col_idx] -= dot(l, lu_matrix[pivot_col_idx]);
                 }
                 // iterate column position
                 ++col_position_idx[l_row];
