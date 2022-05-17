@@ -90,7 +90,7 @@ class SparseLUSolver {
         for (Idx row = 0; row != size_; ++row) {
             x[row] = rhs[row];
             // loop all columns until diagonal
-            for (Idx col_idx = 0; col_idx < diag_lu[row]; ++col_idx) {
+            for (Idx col_idx = row_indptr[row]; col_idx < diag_lu[row]; ++col_idx) {
                 Idx const col = col_indices[col_idx];
                 // never overshoot
                 assert(col < row);
@@ -102,7 +102,7 @@ class SparseLUSolver {
         // backward substitution with U
         for (Idx row = size_ - 1; row != -1; --row) {
             // loop all columns from diagonal
-            for (Idx col_idx = diag_lu[row]; col_idx < row_indptr[row + 1]; ++col_idx) {
+            for (Idx col_idx = diag_lu[row] + 1; col_idx < row_indptr[row + 1]; ++col_idx) {
                 Idx const col = col_indices[col_idx];
                 // always in upper diagonal
                 assert(col > row);
@@ -161,7 +161,6 @@ class SparseLUSolver {
                     }
                     inverse_pivot = lu_fact.inverse();
                 }
-                
             }
             else {
                 if (lu_matrix[pivot_idx] == 0.0) {
@@ -172,9 +171,8 @@ class SparseLUSolver {
             // cache the inversed pivot directly in LU matrix
             lu_matrix[pivot_idx] = inverse_pivot;
 
-
             // start to calculate L below the pivot and U at the right of the pivot column
-            // because the matrix is symmetric, 
+            // because the matrix is symmetric,
             //    looking for col_indices at pivot_row_col, starting from the diagonal (pivot_row_col, pivot_row_col)
             //    we get also the non-zero row indices under the pivot
             for (Idx l_row_idx = pivot_idx + 1; l_row_idx < row_indptr[pivot_row_col + 1]; ++l_row_idx) {
@@ -186,16 +184,18 @@ class SparseLUSolver {
                 Tensor const l = dot(inverse_pivot, lu_matrix[l_col_idx]);
                 lu_matrix[l_col_idx] = l;
                 // for all entries in the right of (l_row, pivot_row_col)
-                //       (l_row, pivot_col) = (l_row, pivot_col) - l * (pivot_row_col, pivot_col), for pivot_col > pivot_row_col
+                //       (l_row, pivot_col) = (l_row, pivot_col) - l * (pivot_row_col, pivot_col), for pivot_col >
+                //       pivot_row_col
                 // it can create fill-ins, but the fill-ins are pre-allocated
                 // it is garanteed to have an entry at (l_row, pivot_col), if (pivot_row_col, pivot_col) is non-zero
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
-                for (Idx pivot_col_idx = pivot_idx + 1; pivot_col_idx < row_indptr[pivot_row_col + 1]; ++pivot_col_idx) {
+                for (Idx pivot_col_idx = pivot_idx + 1; pivot_col_idx < row_indptr[pivot_row_col + 1];
+                     ++pivot_col_idx) {
                     Idx const pivot_col = col_indices[pivot_col_idx];
                     // search the l_col_idx to the pivot_col,
                     while (col_indices[l_col_idx] != pivot_col) {
                         ++l_col_idx;
-                        // it should alway exist, so no overshooting of the end of the row
+                        // it should always exist, so no overshooting of the end of the row
                         assert(l_col_idx < row_indptr[l_row + 1]);
                     }
                     // subtract
@@ -236,6 +236,9 @@ template class SparseLUSolver<Eigen::Array22d, Eigen::Array2d, Eigen::Array2d>;
 template class SparseLUSolver<Eigen::Array<double, 6, 6>, Eigen::Array<double, 6, 1>, Eigen::Array<double, 6, 1>>;
 
 }  // namespace math_model_impl
+
+template <class Tensor, class RHSVector, class XVector>
+using SparseLUSolver = math_model_impl::SparseLUSolver<Tensor, RHSVector, XVector>;
 
 }  // namespace power_grid_model
 

@@ -153,6 +153,7 @@ J.L -= -dQ_cal_m/dV
 #include "../timer.hpp"
 #include "block_matrix.hpp"
 #include "bsr_solver.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -218,6 +219,10 @@ class NewtonRaphsonPFSolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
+    using Tensor = Eigen::Array<double, bsr_block_size_, bsr_block_size_, Eigen::RowMajor>;
+    using RHSVector = Eigen::Array<double, bsr_block_size_, 1, Eigen::ColMajor>;
+    using XVector = Eigen::Array<double, bsr_block_size_, 1, Eigen::ColMajor>;
+
    public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
@@ -229,7 +234,8 @@ class NewtonRaphsonPFSolver {
           x_(y_bus.size()),
           del_x_(y_bus.size()),
           del_pq_(y_bus.size()),
-          bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu(),
+                         y_bus.shared_map_y_bus_lu()} {
     }
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
@@ -274,7 +280,8 @@ class NewtonRaphsonPFSolver {
             sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
             calculate_jacobian_and_deviation(y_bus, input, output.u);
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
-            bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
+            sparse_solver_.solve((Tensor const*)data_jac_.data(), (RHSVector const*)del_pq_.data(),
+                                 (XVector*)del_x_.data());
             sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
             max_dev = iterate_unknown(output.u);
             sub_timer.stop();
@@ -310,7 +317,7 @@ class NewtonRaphsonPFSolver {
     // 1. negative power injection: - p/q_calculated
     // 2. power unbalance: p/q_specified - p/q_calculated
     std::vector<ComplexPower<sym>> del_pq_;
-    BSRSolver<double> bsr_solver_;
+    SparseLUSolver<Tensor, RHSVector, XVector> sparse_solver_;
 
     void calculate_jacobian_and_deviation(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                           ComplexValueVector<sym> const& u) {
