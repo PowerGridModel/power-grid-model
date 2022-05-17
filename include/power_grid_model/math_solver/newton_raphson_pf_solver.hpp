@@ -152,7 +152,6 @@ J.L -= -dQ_cal_m/dV
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 #include "block_matrix.hpp"
-#include "bsr_solver.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 

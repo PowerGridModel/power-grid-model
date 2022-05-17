@@ -35,7 +35,7 @@ if there are sources
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "bsr_solver.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -45,6 +45,12 @@ class LinearPFSolver {
    private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
+    using Tensor = std::conditional_t<sym, DoubleComplex,
+                                      Eigen::Array<DoubleComplex, bsr_block_size_, bsr_block_size_, Eigen::RowMajor>>;
+    using RHSVector =
+        std::conditional_t<sym, DoubleComplex, Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>>;
+    using XVector =
+        std::conditional_t<sym, DoubleComplex, Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>>;
 
    public:
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -53,7 +59,8 @@ class LinearPFSolver {
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           mat_data_(y_bus.nnz()),
           rhs_(n_bus_),
-          bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu(),
+                         y_bus.shared_map_y_bus_lu()} {
     }
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -100,7 +107,7 @@ class LinearPFSolver {
         // solve
         // u vector will have I_injection for slack bus for now
         sub_timer = Timer(calculation_info, 2222, "Solve sparse linear equation");
-        bsr_solver_.solve(mat_data_.data(), rhs_.data(), output.u.data());
+        sparse_solver_.solve((Tensor const*)mat_data_.data(), (RHSVector const*)rhs_.data(), (XVector*)output.u.data());
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");
@@ -119,7 +126,7 @@ class LinearPFSolver {
     ComplexTensorVector<sym> mat_data_;
     ComplexValueVector<sym> rhs_;
     // sparse solver
-    BSRSolver<DoubleComplex> bsr_solver_;
+    SparseLUSolver<Tensor, RHSVector, XVector> sparse_solver_;
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // call y bus
