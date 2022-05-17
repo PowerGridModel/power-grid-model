@@ -59,12 +59,11 @@ class SparseLUSolver {
     static constexpr Idx block_size = entry_trait::block_size;
     using Scalar = typename entry_trait::Scalar;
 
-    SparseLUSolver(std::shared_pointer<IdxVector const> const& row_indptr,
-                   std::shared_pointer<IdxVector const> const& col_indices,
-                   std::shared_pointer<IdxVector const> const& diag_lu,
-                   std::shared_pointer<IdxVector const> const& data_mapping)
-        : nnz_{(Idx)*data_mapping.size()},
-          nnz_lu_{*row_indptr.back()},
+    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,
+                   std::shared_ptr<IdxVector const> const& col_indices, std::shared_ptr<IdxVector const> const& diag_lu,
+                   std::shared_ptr<IdxVector const> const& data_mapping)
+        : nnz_{(Idx)data_mapping->size()},
+          nnz_lu_{row_indptr->back()},
           row_indptr_{row_indptr},
           col_indices_{col_indices},
           diag_lu_{diag_lu},
@@ -74,12 +73,17 @@ class SparseLUSolver {
    private:
     Idx nnz_;
     Idx nnz_lu_;
-    std::shared_pointer<IdxVector const> row_indptr_;
-    std::shared_pointer<IdxVector const> col_indices_;
-    std::shared_pointer<IdxVector const> diag_lu_;
-    std::shared_pointer<IdxVector const> data_mapping_;
-    std::shared_pointer<std::vector<Tensor> const> lu_matrix_;
+    std::shared_ptr<IdxVector const> row_indptr_;
+    std::shared_ptr<IdxVector const> col_indices_;
+    std::shared_ptr<IdxVector const> diag_lu_;
+    std::shared_ptr<IdxVector const> data_mapping_;
+    std::shared_ptr<std::vector<Tensor> const> lu_matrix_;
 };
+
+template class SparseLUSolver<DoubleComplex, DoubleComplex, DoubleComplex>;
+template class SparseLUSolver<Eigen::Array33cd, Eigen::Array3cd, Eigen::Array3cd>;
+template class SparseLUSolver<Eigen::Array22d, Eigen::Array2d, Eigen::Array2d>;
+template class SparseLUSolver<Eigen::Array<double, 6, 6>, Eigen::Array<double, 6, 1>, Eigen::Array<double, 6, 1>>;
 
 }  // namespace math_model_impl
 
