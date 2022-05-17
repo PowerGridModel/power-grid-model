@@ -96,16 +96,17 @@ class SparseLUSolver {
         // column position idx per row for L matrix
         IdxVector col_position_idx(row_indptr.cbegin(), row_indptr.cend() - 1);
 
-        // start pivoting
-        for (Idx pivot_row = 0; pivot_row != size_; ++pivot_row) {
-            Idx const pivot_idx = diag_lu[pivot_row];
+        // start pivoting, it is always the diagonal
+        for (Idx pivot_row_col = 0; pivot_row_col != size_; ++pivot_row_col) {
+            Idx const pivot_idx = diag_lu[pivot_row_col];
+
             // inverse pivot
+            Tensor inverse_pivot{};
             if constexpr (is_block) {
-                Tensor inverse{};
                 // direct inverse
                 if constexpr (block_size < 5) {
                     bool invertible{};
-                    lu_matrix[pivot_idx].matrix().computeInverseWithCheck(inverse, invertible);
+                    lu_matrix[pivot_idx].matrix().computeInverseWithCheck(inverse_pivot, invertible);
                     if (!invertible) {
                         throw SparseMatrixError{};
                     }
@@ -116,21 +117,59 @@ class SparseLUSolver {
                     if (lu_fact.rank() < block_size) {
                         throw SparseMatrixError{};
                     }
-                    inverse = lu_fact.inverse();
+                    inverse_pivot = lu_fact.inverse();
                 }
-                lu_matrix[pivot_idx] = inverse;
+                
             }
             else {
                 if (lu_matrix[pivot_idx] == 0.0) {
                     throw SparseMatrixError{};
                 }
-                lu_matrix[pivot_idx] = 1.0 / lu_matrix[pivot_idx];
+                inverse_pivot = 1.0 / lu_matrix[pivot_idx];
+            }
+            // cache the inversed pivot directly in LU matrix
+            lu_matrix[pivot_idx] = inverse_pivot;
+
+
+            // start to calculate L below the pivot and U at the right of the pivot column
+            // because the matrix is symmetric, 
+            //    looking for col_indices at pivot_row_col, starting from the diagonal (pivot_row_col, pivot_row_col)
+            //    we get also the non-zero row indices under the pivot
+            for (Idx l_row_idx = pivot_idx + 1; l_row_idx < row_indptr[pivot_row_col + 1]; ++l_row_idx) {
+                Idx const l_row = col_indices[l_row_idx];
+                // we should exactly find the current column
+                Idx col_idx_l = col_position_idx[l_row];
+                assert(col_indices[col_idx_l] == pivot_row_col);
+                // calculating l
+                Tensor const l = dot(inverse_pivot, lu_matrix[col_idx_l]);
+                lu_matrix[col_idx_l] = l;
+                // for all entries in the left of (l_row, pivot_row_col), (l_row, col), we need to subtract it by l * (pivot_row_col, col)
+                // it can create fill-ins, but the fill-ins are pre-allocated
+                // it is garanteed to have an entry at (l_row, pivot_col), if (pivot_row_col, pivot_col) is non-zero
+                // loop all columns in the right of (pivot_row_col, pivot_row_col)
+                for (Idx pivot_col_idx = pivot_idx + 1; pivot_col_idx < row_indptr[pivot_row_col + 1]; ++pivot_col_idx) {
+                    Idx const pivot_col = col_indices[pivot_col_idx];
+                    // search the col_idx_l to the pivot_col,
+                    while (col_indices[col_idx_l] != pivot_col) {
+                        ++col_idx_l;
+                        // it should alway exist, so no overshooting of the end of the row
+                        assert(col_idx_l < row_indptr[l_row + 1]);
+                    }
+                    // substract
+                    lu_matrix[col_idx_l] -= dot(l, lu_matrix[pivot_col_idx]);
+                }
+                // iterate column position
+                ++col_position_idx[l_row];
             }
         }
 
         // move to shared ptr
         lu_matrix_ = std::make_shared<std::vector<Tensor> const>(std::move(lu_matrix));
         prefactorized_ = true;
+    }
+
+    void invalidate_prefactorization() {
+        prefactorized_ = false;
     }
 
    private:
