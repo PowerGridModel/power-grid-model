@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 
@@ -62,7 +63,8 @@ class SparseLUSolver {
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,
                    std::shared_ptr<IdxVector const> const& col_indices, std::shared_ptr<IdxVector const> const& diag_lu,
                    std::shared_ptr<IdxVector const> const& data_mapping)
-        : nnz_{(Idx)data_mapping->size()},
+        : size_{(Idx)row_indptr->size() - 1},
+          nnz_{(Idx)data_mapping->size()},
           nnz_lu_{row_indptr->back()},
           row_indptr_{row_indptr},
           col_indices_{col_indices},
@@ -70,13 +72,79 @@ class SparseLUSolver {
           data_mapping_{data_mapping} {
     }
 
+    void prefactorize(Tensor const* data) {
+        // local reference
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        auto const& diag_lu = *diag_lu_;
+
+        // reset old lu matrix and create new
+        prefactorized_ = false;
+        lu_matrix_.reset();
+        std::vector<Tensor> lu_matrix;
+        if constexpr (is_block) {
+            lu_matrix.resize(nnz_lu_, Tensor::Zero());
+        }
+        else {
+            lu_matrix.resize(nnz_lu_, Scalar{});
+        }
+        // copy data
+        for (Idx i = 0; i != nnz_; ++i) {
+            lu_matrix[(*data_mapping_)[i]] = data[i];
+        }
+
+        // column position idx per row for L matrix
+        IdxVector col_position_idx(row_indptr.cbegin(), row_indptr.cend() - 1);
+
+        // start pivoting
+        for (Idx pivot_row = 0; pivot_row != size_; ++pivot_row) {
+            Idx const pivot_idx = diag_lu[pivot_row];
+            // inverse pivot
+            if constexpr (is_block) {
+                Tensor inverse{};
+                // direct inverse
+                if constexpr (block_size < 5) {
+                    bool invertible{};
+                    lu_matrix[pivot_idx].matrix().computeInverseWithCheck(inverse, invertible);
+                    if (!invertible) {
+                        throw SparseMatrixError{};
+                    }
+                }
+                // use full pivot lu
+                else {
+                    auto lu_fact = lu_matrix[pivot_idx].matrix().fullPivLu();
+                    if (lu_fact.rank() < block_size) {
+                        throw SparseMatrixError{};
+                    }
+                    inverse = lu_fact.inverse();
+                }
+                lu_matrix[pivot_idx] = inverse;
+            }
+            else {
+                if (lu_matrix[pivot_idx] == 0.0) {
+                    throw SparseMatrixError{};
+                }
+                lu_matrix[pivot_idx] = 1.0 / lu_matrix[pivot_idx];
+            }
+        }
+
+        // move to shared ptr
+        lu_matrix_ = std::make_shared<std::vector<Tensor> const>(std::move(lu_matrix));
+        prefactorized_ = true;
+    }
+
    private:
+    Idx size_;
     Idx nnz_;
     Idx nnz_lu_;
+    bool prefactorized_{false};
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
     std::shared_ptr<IdxVector const> data_mapping_;
+    // the LU matrix has the form A = L * U
+    // diagonals of L are one
+    // diagonals of U are inversed, (cached for later calculation)
     std::shared_ptr<std::vector<Tensor> const> lu_matrix_;
 };
 
