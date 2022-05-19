@@ -52,7 +52,7 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_tensor_lu_t<Tens
     static constexpr bool is_block = true;
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = typename Tensor::Scalar;
-    using LUFactor = Eigen::FullPivLU<Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>>;
+    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>>>;
     using LUFactorArray = std::vector<LUFactor>;
 };
 
@@ -123,8 +123,6 @@ class SparseLUSolver {
             else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }
-
-            
         }
     }
 
@@ -142,7 +140,7 @@ class SparseLUSolver {
         LUFactorArray diag_lu_factor{};
         if constexpr (is_block) {
             lu_matrix.resize(nnz_lu_, Tensor::Zero());
-            diag_lu_factor.resize(size_);
+            diag_lu_factor.reserve(size_);
         }
         else {
             lu_matrix.resize(nnz_lu_, Scalar{});
@@ -160,14 +158,12 @@ class SparseLUSolver {
             Idx const pivot_idx = diag_lu[pivot_row_col];
 
             // Dense LU factorize pivot for block matrix
-            Tensor const pivot = lu_matrix[pivot_idx];
-            LUFactor lu_factor;
             if constexpr (is_block) {
-                lu_factor.compute(pivot.matrix());
-                if (lu_factor.rank() < block_size) {
+                assert((Idx)diag_lu_factor.size() == pivot_row_col);
+                diag_lu_factor.emplace_back(lu_matrix[pivot_idx]);
+                if (diag_lu_factor[pivot_row_col].rank() < block_size) {
                     throw SparseMatrixError{};
                 }
-                diag_lu_factor[pivot_row_col] = lu_factor;
             }
 
             // start to calculate L below the pivot and U at the right of the pivot column
@@ -181,11 +177,11 @@ class SparseLUSolver {
                 assert(col_indices[l_col_idx] == pivot_row_col);
                 // calculating l at (l_row, pivot_row_col)
                 if constexpr (is_block) {
-                    lu_matrix[l_col_idx] = lu_factor.solve(lu_matrix[l_col_idx].matrix());
+                    lu_matrix[l_col_idx] = diag_lu_factor[pivot_row_col].solve(lu_matrix[l_col_idx].matrix());
                 }
                 else {
-                    lu_matrix[l_col_idx] = lu_matrix[l_col_idx] / pivot;
-                }   
+                    lu_matrix[l_col_idx] = lu_matrix[l_col_idx] / lu_matrix[pivot_idx];
+                }
                 Tensor const l = lu_matrix[l_col_idx];
                 // for all entries in the right of (l_row, pivot_row_col)
                 //       (l_row, pivot_col) = (l_row, pivot_col) - l * (pivot_row_col, pivot_col), for pivot_col >
