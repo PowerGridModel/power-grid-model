@@ -104,7 +104,7 @@ class SparseLUSolver {
         for (Idx row = 0; row != size_; ++row) {
             // permutation if needed
             if constexpr (is_block) {
-                x[row] = ((*block_perm_array_)[row].p * rhs[row].matrix()).eval();
+                x[row] = (*block_perm_array_)[row].p * rhs[row].matrix();
             }
             else {
                 x[row] = rhs[row];
@@ -159,7 +159,7 @@ class SparseLUSolver {
         // restore permutation for block matrix
         if constexpr (is_block) {
             for (Idx row = 0; row != size_; ++row) {
-                x[row] = ((*block_perm_array_)[row].q * x[row].matrix()).eval();
+                x[row] = (*block_perm_array_)[row].q * x[row].matrix();
             }
         }
     }
@@ -226,7 +226,7 @@ class SparseLUSolver {
                 for (Idx u_col_idx = pivot_idx + 1; u_col_idx < row_indptr[pivot_row_col + 1]; ++u_col_idx) {
                     Tensor& u = lu_matrix[u_col_idx];
                     // permutation
-                    u = (block_perm.p * u.matrix()).eval();
+                    u = block_perm.p * u.matrix();
                     // forward substitution, per row in u
                     for (Idx br = 0; br < block_size; ++br) {
                         for (Idx bc = 0; bc < br; ++bc) {
@@ -253,7 +253,7 @@ class SparseLUSolver {
                     // L_k,pivot * U_pivot = A_k_pivot * Q_pivot    k > pivot
                     Tensor& l = lu_matrix[l_col_idx];
                     // permutation
-                    l = (l.matrix() * block_perm.q).eval();
+                    l = l.matrix() * block_perm.q;
                     // forward substitution, per column in l
                     // l0 = [l00, l10]^T
                     // l1 = [l01, l11]^T
