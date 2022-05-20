@@ -148,7 +148,7 @@ TEST_CASE("Test Sparse LU solver") {
             {{5, 6}, {-7, 8}},   // 2, 0
             {{1, 0}, {0, 100}},  // 2, 2
         };
-        std::vector<Array> rhs = {{40, 355}, {-189, 3}, {44, 611}};
+        std::vector<Array> rhs = {{38, 356}, {-389, 2}, {44, 611}};
         std::vector<Array> x_ref = {{3, 4}, {-1, -2}, {5, 6}};
         std::vector<Array> x(3, Array::Zero());
         SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu, data_mapping};
