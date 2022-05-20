@@ -133,7 +133,7 @@ class SparseLUSolver {
         // backward substitution with U
         for (Idx row = size_ - 1; row != -1; --row) {
             // loop all columns from diagonal
-            for (Idx col_idx = row_indptr[row + 1] - 1; col_idx < diag_lu[row]; --col_idx) {
+            for (Idx col_idx = row_indptr[row + 1] - 1; col_idx > diag_lu[row]; --col_idx) {
                 Idx const col = col_indices[col_idx];
                 // always in upper diagonal
                 assert(col > row);
