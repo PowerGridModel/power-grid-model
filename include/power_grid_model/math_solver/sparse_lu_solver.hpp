@@ -220,24 +220,24 @@ class SparseLUSolver {
             Tensor const& pivot = lu_matrix[pivot_idx];
 
             // for block matrix
-            // permute columns of U's above the pivot
-            // U_pivot,k = U_pivot,k * Q_pivot    k < pivot
             // permute rows of L's in the left of the pivot
             // L_k,pivot = P_pivot * L_k,pivot    k < pivot
+            // permute columns of U's above the pivot
+            // U_pivot,k = U_pivot,k * Q_pivot    k < pivot
             if constexpr (is_block) {
                 // loop rows and columns at the same time
                 // since the matrix is symmetric
-                for (Idx u_idx = row_indptr[pivot_row_col]; u_idx < pivot_idx; ++u_idx) {
-                    // permute columns of U_pivot,k
-                    lu_matrix[u_idx] = lu_matrix[u_idx].matrix() * block_perm.q;
-                    // we should exactly find the current column in L
-                    Idx const l_row = col_indices[u_idx];
-                    Idx const l_idx = col_position_idx[l_row];
-                    assert(col_indices[l_idx] == pivot_row_col);
+                for (Idx l_idx = row_indptr[pivot_row_col]; l_idx < pivot_idx; ++l_idx) {
                     // permute rows of L_k,pivot
                     lu_matrix[l_idx] = block_perm.p * lu_matrix[l_idx].matrix();
+                    // we should exactly find the current column in L
+                    Idx const u_row = col_indices[l_idx];
+                    Idx const u_idx = col_position_idx[u_row];
+                    assert(col_indices[u_idx] == pivot_row_col);
+                    // permute columns of U_pivot,k
+                    lu_matrix[u_idx] = lu_matrix[u_idx].matrix() * block_perm.q;
                     // increment column position
-                    ++col_position_idx[l_row];
+                    ++col_position_idx[u_row];
                 }
             }
 
