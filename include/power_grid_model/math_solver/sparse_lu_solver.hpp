@@ -322,6 +322,8 @@ class SparseLUSolver {
                 // iterate column position
                 ++col_position_idx[l_row];
             }
+            // iterate column position for the pivot
+            ++col_position_idx[pivot_row_col];
         }
 
         // move to shared ptr
