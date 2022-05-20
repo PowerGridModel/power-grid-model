@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 Test case representing a typical distribution grid. 
 The grid has 2 identical parallel transformers. 
 They power a series of overhead lines and cables which supply different loads along with asymmetric voltage and power sensors
-at every nodes and lines respectively.
+at every node and lines respectively.
 
 The case is validated for ring and radial configuration by open/close position of 
 one end of Line 13 in asymmetrical batch calculation.
