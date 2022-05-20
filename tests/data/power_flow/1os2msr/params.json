@@ -1,5 +1,5 @@
 {
   "calculation_method": "newton_raphson",
-  "rtol": 2e-4,
+  "rtol": 1e-5,
   "atol": 1e-5
 }
