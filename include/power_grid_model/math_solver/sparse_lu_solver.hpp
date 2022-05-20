@@ -43,8 +43,10 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_scalar_lu_t<Tens
     static constexpr bool is_block = false;
     static constexpr Idx block_size = 1;
     using Scalar = Tensor;
-    using LUFactor = int;
-    using LUFactorArray = int;
+    using Matrix = Tensor;
+    using LUFactor = void;
+    struct BlockPerm {};
+    using BlockPermArray = int;
 };
 
 template <class Tensor, class RHSVector, class XVector>
@@ -52,8 +54,13 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_tensor_lu_t<Tens
     static constexpr bool is_block = true;
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = typename Tensor::Scalar;
-    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>>>;
-    using LUFactorArray = std::vector<LUFactor>;
+    using Matrix = Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>;
+    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Matrix>>;
+    struct BlockPerm {
+        typename LUFactor::PermutationPType p;
+        typename LUFactor::PermutationQType q;
+    };
+    using BlockPermArray = std::vector<BlockPerm>;
 };
 
 template <class Tensor, class RHSVector, class XVector>
@@ -64,7 +71,8 @@ class SparseLUSolver {
     static constexpr Idx block_size = entry_trait::block_size;
     using Scalar = typename entry_trait::Scalar;
     using LUFactor = typename entry_trait::LUFactor;
-    using LUFactorArray = typename entry_trait::LUFactorArray;
+    using BlockPerm = typename entry_trait::BlockPerm;
+    using BlockPermArray = typename entry_trait::BlockPermArray;
 
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,
                    std::shared_ptr<IdxVector const> const& col_indices, std::shared_ptr<IdxVector const> const& diag_lu,
@@ -91,11 +99,17 @@ class SparseLUSolver {
         auto const& col_indices = *col_indices_;
         auto const& diag_lu = *diag_lu_;
         auto const& lu_matrix = *lu_matrix_;
-        auto const& diag_lu_factor = *diag_lu_factor_;
 
         // forward substitution with L
         for (Idx row = 0; row != size_; ++row) {
-            x[row] = rhs[row];
+            // permutation if needed
+            if constexpr (is_block) {
+                x[row] = (*block_perm_array_)[row].p * rhs[row].matrix();
+            }
+            else {
+                x[row] = rhs[row];
+            }
+
             // loop all columns until diagonal
             for (Idx col_idx = row_indptr[row]; col_idx < diag_lu[row]; ++col_idx) {
                 Idx const col = col_indices[col_idx];
@@ -104,12 +118,22 @@ class SparseLUSolver {
                 // forward subtract
                 x[row] -= dot(lu_matrix[col_idx], x[col]);
             }
+            // forward substitution inside block, for block matrix
+            if constexpr (is_block) {
+                XVector& xb = x[row];
+                Tensor const& pivot = lu_matrix[diag_lu[row]];
+                for (Idx br = 0; br < block_size; ++br) {
+                    for (Idx bc = 0; bc < br; ++bc) {
+                        xb(br) -= pivot(br, bc) * xb(bc);
+                    }
+                }
+            }
         }
 
         // backward substitution with U
         for (Idx row = size_ - 1; row != -1; --row) {
             // loop all columns from diagonal
-            for (Idx col_idx = diag_lu[row] + 1; col_idx < row_indptr[row + 1]; ++col_idx) {
+            for (Idx col_idx = row_indptr[row + 1] - 1; col_idx < diag_lu[row]; --col_idx) {
                 Idx const col = col_indices[col_idx];
                 // always in upper diagonal
                 assert(col > row);
@@ -118,10 +142,24 @@ class SparseLUSolver {
             }
             // solve the diagonal pivot
             if constexpr (is_block) {
-                x[row] = diag_lu_factor[row].solve(x[row].matrix());
+                // backward substitution inside block
+                XVector& xb = x[row];
+                Tensor const& pivot = lu_matrix[diag_lu[row]];
+                for (Idx br = block_size - 1; br != -1; --br) {
+                    for (Idx bc = block_size - 1; bc > br; --bc) {
+                        xb(br) -= pivot(br, bc) * xb(bc);
+                    }
+                    xb(br) = xb(br) / pivot(br, br);
+                }
             }
             else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
+            }
+        }
+        // restore permutation for block matrix
+        if constexpr (is_block) {
+            for (Idx row = 0; row != size_; ++row) {
+                x[row] = (*block_perm_array_)[row].q * x[row].matrix();
             }
         }
     }
@@ -135,12 +173,13 @@ class SparseLUSolver {
         // reset old lu matrix and create new
         prefactorized_ = false;
         lu_matrix_.reset();
-        diag_lu_factor_.reset();
+        block_perm_array_.reset();
         std::vector<Tensor> lu_matrix;
-        LUFactorArray diag_lu_factor{};
+        BlockPermArray block_perm_array{};
         if constexpr (is_block) {
             lu_matrix.resize(nnz_lu_, Tensor::Zero());
-            diag_lu_factor.reserve(size_);
+            // add permutations for block
+            block_perm_array.resize(size_);
         }
         else {
             lu_matrix.resize(nnz_lu_, Scalar{});
@@ -157,12 +196,41 @@ class SparseLUSolver {
         for (Idx pivot_row_col = 0; pivot_row_col != size_; ++pivot_row_col) {
             Idx const pivot_idx = diag_lu[pivot_row_col];
 
-            // Dense LU factorize pivot for block matrix
+            // Dense LU factorize pivot for block matrix in-place
+            // A_pivot,pivot, becomes P_pivot^-1 * L_pivot * U_pivot * Q_pivot^-1
+            // return reference to pivot permutation
+            BlockPerm const& block_perm = [&]() -> std::conditional_t<is_block, BlockPerm const&, BlockPerm> {
+                if constexpr (is_block) {
+                    LUFactor const lu_factor(lu_matrix[pivot_idx]);
+                    if (lu_factor.rank() < block_size) {
+                        throw SparseMatrixError{};
+                    }
+                    // record block permutation
+                    block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
+                    return block_perm_array[pivot_row_col];
+                }
+                else {
+                    return {};
+                }
+            }();
+            // reference to pivot
+            Tensor const& pivot = lu_matrix[pivot_idx];
+
+            // for block matrix
+            // calculate U blocks in the right of the pivot, in-place
+            // L_pivot * U_pivot,k = P_pivot * A_pivot,k       k > pivot
             if constexpr (is_block) {
-                assert((Idx)diag_lu_factor.size() == pivot_row_col);
-                diag_lu_factor.emplace_back(lu_matrix[pivot_idx]);
-                if (diag_lu_factor[pivot_row_col].rank() < block_size) {
-                    throw SparseMatrixError{};
+                for (Idx u_col_idx = pivot_idx + 1; u_col_idx < row_indptr[pivot_row_col + 1]; ++u_col_idx) {
+                    Tensor& u = lu_matrix[u_col_idx];
+                    // permutation
+                    u = block_perm.p * u.matrix();
+                    // forward substitution, per row in u
+                    for (Idx br = 0; br < block_size; ++br) {
+                        for (Idx bc = 0; bc < br; ++bc) {
+                            // forward substract
+                            u.row(br) -= pivot(br, bc) * u.row(bc);
+                        }
+                    }
                 }
             }
 
@@ -177,12 +245,37 @@ class SparseLUSolver {
                 assert(col_indices[l_col_idx] == pivot_row_col);
                 // calculating l at (l_row, pivot_row_col)
                 if constexpr (is_block) {
-                    lu_matrix[l_col_idx] = diag_lu_factor[pivot_row_col].solve(lu_matrix[l_col_idx].matrix());
+                    // for block matrix
+                    // calculate L blocks below the pivot, in-place
+                    // L_k,pivot * U_pivot = A_k_pivot * Q_pivot    k > pivot
+                    Tensor& l = lu_matrix[l_col_idx];
+                    // permutation
+                    l = l.matrix() * block_perm.q;
+                    // forward substitution, per column in l
+                    // l0 = [l00, l10]^T
+                    // l1 = [l01, l11]^T
+                    // l = [l0, l1]
+                    // a = [a0, a1]
+                    // u = [[u00, u01]
+                    //      [0  , u11]]
+                    // l * u = a
+                    // l0 * u00 = a0
+                    // l0 * u01 + l1 * u11 = a1
+                    for (Idx bc = 0; bc < block_size; ++bc) {
+                        for (Idx br = 0; br < bc; ++br) {
+                            l.col(bc) -= pivot(br, bc) * l.col(br);
+                        }
+                        // divide diagonal
+                        l.col(bc) = l.col(bc) / pivot(bc, bc);
+                    }
                 }
                 else {
-                    lu_matrix[l_col_idx] = lu_matrix[l_col_idx] / lu_matrix[pivot_idx];
+                    // for scalar matrix, just divide
+                    // L_k,pivot = A_k,pivot / U_pivot    k > pivot
+                    lu_matrix[l_col_idx] = lu_matrix[l_col_idx] / pivot;
                 }
-                Tensor const l = lu_matrix[l_col_idx];
+                Tensor const& l = lu_matrix[l_col_idx];
+
                 // for all entries in the right of (l_row, pivot_row_col)
                 //       (l_row, pivot_col) = (l_row, pivot_col) - l * (pivot_row_col, pivot_col), for pivot_col >
                 //       pivot_row_col
@@ -208,7 +301,7 @@ class SparseLUSolver {
 
         // move to shared ptr
         lu_matrix_ = std::make_shared<std::vector<Tensor> const>(std::move(lu_matrix));
-        diag_lu_factor_ = std::make_shared<LUFactorArray const>(std::move(diag_lu_factor));
+        block_perm_array_ = std::make_shared<BlockPermArray const>(std::move(block_perm_array));
         prefactorized_ = true;
     }
 
@@ -231,7 +324,7 @@ class SparseLUSolver {
     std::shared_ptr<std::vector<Tensor> const> lu_matrix_;
     // dense LU factor of diagonals of LU matrix
     // only applicable for block matrix
-    std::shared_ptr<LUFactorArray const> diag_lu_factor_;
+    std::shared_ptr<BlockPermArray const> block_perm_array_;
 };
 
 }  // namespace math_model_impl
