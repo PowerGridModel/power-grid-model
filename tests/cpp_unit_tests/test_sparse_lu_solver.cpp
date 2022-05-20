@@ -158,8 +158,6 @@ TEST_CASE("Test Sparse LU solver") {
             check_result(x, x_ref);
         }
     }
-
 }
-
 
 }  // namespace power_grid_model
