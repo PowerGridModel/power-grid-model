@@ -388,7 +388,7 @@ TEST_CASE("Test math solver") {
     SECTION("Test not converge") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        pf_input.s_injection[6] = 1e15;
+        pf_input.s_injection[6] = 1e6;
         CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson),
                         IterationDiverge);
     }
