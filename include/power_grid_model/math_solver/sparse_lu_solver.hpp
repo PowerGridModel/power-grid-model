@@ -210,6 +210,9 @@ class SparseLUSolver {
                     return block_perm_array[pivot_row_col];
                 }
                 else {
+                    if (lu_matrix[pivot_idx] == 0.0) {
+                        throw SparseMatrixError{};
+                    }
                     return {};
                 }
             }();
