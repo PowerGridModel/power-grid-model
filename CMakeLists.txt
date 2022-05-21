@@ -85,3 +85,4 @@ if(DEFINED POWER_GRID_MODEL_BUILD_BENCHMARK AND POWER_GRID_MODEL_BUILD_BENCHMARK
 	add_subdirectory(tests/benchmark_cpp)
 endif()
 
+
