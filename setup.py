@@ -216,7 +216,7 @@ def get_version(pkg_dir: Path) -> str:
             # feature branch
             # major.minor.patch a 1 build_number short_hash
             version += f"a1{build_number}{short_hash}"
-    with open(pkg_dir / "PYPI_VERSION", 'w') as f:
+    with open(pkg_dir / "PYPI_VERSION", "w") as f:
         f.write(version)
     return version
 
