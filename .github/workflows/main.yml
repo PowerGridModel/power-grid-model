@@ -192,11 +192,20 @@ jobs:
         with:
           name: wheelhouse
           path: ./wheelhouse/*.whl
+      
+      - name: Keep version
+        uses: actions/upload-artifact@v3
+        if: matrix.platform == 'linux'
+        with:
+          name: version
+          path: PYPI_VERSION
 
 
   publish-wheels:
     needs: build-and-test-python
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
@@ -214,9 +223,20 @@ jobs:
         with:
           name: wheelhouse
           path: wheelhouse
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: version
+          path: .
 
-      - name: List wheels
-        run: ls ./wheelhouse/*.whl -al
+      - name: List assets
+        run: |
+          ls ./wheelhouse/*.whl -al
+          cat PYPI_VERSION
+      
+      - name: Get tag
+        id: tag
+        run: echo "::set-output name=tag::v$(cat PYPI_VERSION)"
 
       - name: Upload wheels
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
@@ -224,3 +244,13 @@ jobs:
           pip install twine
           echo "Publish to PyPI..."
           twine upload --verbose wheelhouse/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        with:
+          files: |
+            ./wheelhouse/*.whl
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
+          generate_release_notes: true
