@@ -214,8 +214,10 @@ def get_version(pkg_dir: Path) -> str:
             version += f"rc9{build_number}{short_hash}"
         else:
             # feature branch
-            # major.minor.patch a 0 build_number short_hash
-            version += f"a0{build_number}{short_hash}"
+            # major.minor.patch a 1 build_number short_hash
+            version += f"a1{build_number}{short_hash}"
+    with open(pkg_dir / "PYPI_VERSION", 'w') as f:
+        f.write(version)
     return version
 
 
