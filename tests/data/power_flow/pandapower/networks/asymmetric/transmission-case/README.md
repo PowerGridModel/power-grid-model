@@ -3,15 +3,24 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 
 SPDX-License-Identifier: MPL-2.0
 -->
-## Component Test Case: Transformer
+## Network Test Case: Transmission grid
 
-Test case for validation of the transformer component for symmetrical power flow calculations in pandapower. 
-- A transformer can be 4 states, closed on both ends, open on both ends and open on any one end.
+Test case representing a typical transmission grid. 
 
-The circuit diagram is as follows:
+The circuit diagram is as follows (The node 6 is same in both lines):
 ```
-source_7--node_1--transformer_3--node_2              (Transformer from_status=to_status=1)
-          node_1--transformer_4--node_2--load_6      (Transformer from_status=0)
-          node_1--transformer_5--node_2              (Transformer to_status=0)
-          node_1--transformer_8--node_2              (Transformer from_status=to_status=0)
+    Gen(_21)---|_1--transformer(_30)--|_3--line(_12)-----|              |---line(_14)----------|
+                                                         |--line(_13)---|                      |
+                       Gen(_22)---|_2--transformer(_31)--|_4            |_5-------line(_15)----|_6
+                                                                        |         shunt(_29)---|
+                                                           shunt(_28)---|-load(_24)
+
+    
+    
+    
+    
+    |----line(_16)-------|               |---line(_19)---|_9---transformer(_32)---|_11---source(_20)
+    |                    |---line(_18)---|
+    |_6-----line(_17)----|_7             |_8--transformer(_33)---|_10---gen(_23)
+    |---load(_25)
 ```

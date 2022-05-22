@@ -95,14 +95,22 @@
       "i_n": 1000.0
     }
   ],
-  "sym_load": [
+  "asym_load": [
     {
       "id": 9,
       "node": 5,
       "status": 1,
       "type": 0,
-      "p_specified": 10000.0,
-      "q_specified": 2000.0
+      "p_specified": [
+        10000.0,
+        10000.0,
+        10000.0
+      ],
+      "q_specified": [
+        2000.0,
+        2000.0,
+        2000.0
+      ]
     }
   ],
   "source": [
