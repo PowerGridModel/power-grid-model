@@ -504,4 +504,5 @@ python_cov_html/
 python_coverage.xml
 cpp_coverage.xml
 
+# generated version file
 PYPI_VERSION
