@@ -195,13 +195,6 @@ jobs:
         with:
           name: wheelhouse
           path: ./wheelhouse/*.whl
-      
-      - name: Keep version
-        uses: actions/upload-artifact@v3
-        if: matrix.platform == 'windows'
-        with:
-          name: version
-          path: PYPI_VERSION
 
 
   publish-wheels:
@@ -226,20 +219,17 @@ jobs:
         with:
           name: wheelhouse
           path: wheelhouse
-      
-      - uses: actions/download-artifact@v3
-        with:
-          name: version
-          path: .
 
       - name: List assets
         run: |
           ls ./wheelhouse/*.whl -al
-          cat PYPI_VERSION
-      
+
       - name: Get tag
         id: tag
-        run: echo "::set-output name=tag::v$(cat PYPI_VERSION)"
+        run: echo "::set-output name=tag::v$(ls ./wheelhouse/*cp310*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')"
+
+      - name: Display tag
+        run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
