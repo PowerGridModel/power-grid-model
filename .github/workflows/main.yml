@@ -54,8 +54,9 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Install conda environment
+        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2==2.13.9
 
       - name: Build and test
         run: |
@@ -95,8 +96,9 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
+        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json catch2
+          brew install ninja boost eigen nlohmann-json catch2@2.13.9  
           sudo pip3 install mkl mkl-devel mkl-include
 
       - name: Build and test
