@@ -98,7 +98,8 @@ jobs:
       - name: Install cpp dependencies
         # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json catch2@2.13.9  
+          brew install ninja boost eigen nlohmann-json 
+          brew install https://github.com/catchorg/Catch2/archive/v2.13.9.tar.gz
           sudo pip3 install mkl mkl-devel mkl-include
 
       - name: Build and test
