@@ -198,7 +198,7 @@ jobs:
       
       - name: Keep version
         uses: actions/upload-artifact@v3
-        if: matrix.platform == 'linux'
+        if: matrix.platform == 'windows'
         with:
           name: version
           path: PYPI_VERSION
