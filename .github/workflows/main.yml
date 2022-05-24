@@ -54,8 +54,9 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Install conda environment
+        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2==2.13.9
 
       - name: Build and test
         run: |
@@ -95,8 +96,10 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
+        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json catch2
+          brew install ninja boost eigen nlohmann-json 
+          curl https://raw.githubusercontent.com/Homebrew/homebrew-core/5e5abb11bf49787d01164c4066119365262c21ed/Formula/catch2.rb > $(find $(brew --repository) -name catch2.rb) && brew reinstall catch2
           sudo pip3 install mkl mkl-devel mkl-include
 
       - name: Build and test
@@ -197,6 +200,8 @@ jobs:
   publish-wheels:
     needs: build-and-test-python
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
@@ -215,8 +220,16 @@ jobs:
           name: wheelhouse
           path: wheelhouse
 
-      - name: List wheels
-        run: ls ./wheelhouse/*.whl -al
+      - name: List assets
+        run: |
+          ls ./wheelhouse/*.whl -al
+
+      - name: Get tag
+        id: tag
+        run: echo "::set-output name=tag::v$(ls ./wheelhouse/*cp310*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')"
+
+      - name: Display tag
+        run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
@@ -224,3 +237,13 @@ jobs:
           pip install twine
           echo "Publish to PyPI..."
           twine upload --verbose wheelhouse/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        with:
+          files: |
+            ./wheelhouse/*.whl
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
+          generate_release_notes: true
