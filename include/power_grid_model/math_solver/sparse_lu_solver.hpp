@@ -311,11 +311,9 @@ class SparseLUSolver {
                      ++pivot_col_idx) {
                     Idx const pivot_col = col_indices[pivot_col_idx];
                     // search the l_col_idx to the pivot_col,
-                    while (col_indices[l_col_idx] != pivot_col) {
-                        ++l_col_idx;
-                        // it should always exist, so no overshooting of the end of the row
-                        assert(l_col_idx < row_indptr[l_row + 1]);
-                    }
+                    auto const found = std::lower_bound(col_indices.cbegin() + l_col_idx,
+                                                        col_indices.cbegin() + row_indptr[l_row + 1], pivot_col);
+                    l_col_idx = (Idx)std::distance(col_indices.cbegin(), found);
                     // subtract
                     lu_matrix[l_col_idx] -= dot(l, lu_matrix[pivot_col_idx]);
                 }
