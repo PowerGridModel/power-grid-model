@@ -157,6 +157,69 @@ TEST_CASE("Test Sparse LU solver") {
             solver.solve(data.data(), rhs.data(), x.data());
             check_result(x, x_ref);
         }
+
+        SECTION("Test copy and move") {
+            SparseLUSolver<Tensor, Array, Array> s1{solver};
+            // copy construction
+            s1.solve(data.data(), rhs.data(), x.data());
+            check_result(x, x_ref);
+            // copy assignment
+            s1 = solver;
+            s1.solve(data.data(), rhs.data(), x.data());
+            check_result(x, x_ref);
+            // self assignment
+            auto& s2 = s1;
+            s1 = s2;
+            s1.solve(data.data(), rhs.data(), x.data());
+            check_result(x, x_ref);
+            // move construction
+            SparseLUSolver<Tensor, Array, Array> s3{std::move(solver)};
+            s3.solve(data.data(), rhs.data(), x.data());
+            check_result(x, x_ref);
+        }
+
+        SECTION("Test (pseudo) singular") {
+            data[0](0, 1) = 0.0;
+            CHECK_THROWS_AS(solver.solve(data.data(), rhs.data(), x.data()), SparseMatrixError);
+        }
+
+        SECTION("Test prefactorize") {
+            solver.prefactorize(data.data());
+            solver.solve(data.data(), rhs.data(), x.data(), true);
+            check_result(x, x_ref);
+
+            // basically data / 2
+            std::vector<Tensor> other_data = data;
+            for (Tensor& d : other_data) {
+                d /= 2.0;
+            }
+            // basically x * 2
+            std::vector<Array> other_x_ref = x_ref;
+            for (Array& p : other_x_ref) {
+                p *= 2.0;
+            }
+
+            // because all data should be prefactorized, changing the data should not
+            // change the result when use_prefactorization = true
+            solver.solve(other_data.data(), rhs.data(), x.data(), true);
+            check_result(x, x_ref);
+
+            // prefactorize other_data, then solve and compare with other_x_ref
+            solver.prefactorize(other_data.data());
+            solver.solve(other_data.data(), rhs.data(), x.data(), true);
+            check_result(x, other_x_ref);
+
+            // solve and compare with other_x without using prefactorization
+            solver.solve(other_data.data(), rhs.data(), x.data(), false);
+            check_result(x, other_x_ref);
+
+            // invalidate pre-factorization
+            // and re-run with original data with pre-factorization enabled
+            // it should still re-do the factorization
+            solver.invalidate_prefactorization();
+            solver.solve(data.data(), rhs.data(), x.data(), true);
+            check_result(x, x_ref);
+        }
     }
 }
 
