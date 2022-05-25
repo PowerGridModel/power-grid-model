@@ -157,7 +157,7 @@ struct PowerGridBenchmark {
     }
 
     template <bool sym>
-    CalculationInfo run_pf(CalculationMethod calculation_method) {
+    void run_pf(CalculationMethod calculation_method, CalculationInfo& info) {
         std::vector<NodeOutput<sym>> node(node_input.size());
         std::vector<BranchOutput<sym>> branch(line_input.size() + transformer_input.size() + link_input.size());
         std::vector<ApplianceOutput<sym>> appliance(source_input.size() + sym_load_input.size() +
@@ -166,13 +166,13 @@ struct PowerGridBenchmark {
         main_model.output_result<sym, Node>(math_output, node.begin());
         main_model.output_result<sym, Branch>(math_output, branch.begin());
         main_model.output_result<sym, Appliance>(math_output, appliance.begin());
-        CalculationInfo info = main_model.calculation_info();
+        CalculationInfo info_extra = main_model.calculation_info();
+        info.merge(info_extra);
         std::cout << "Number of nodes: " << node.size() << '\n';
         auto const [min_l, max_l] = std::minmax_element(branch.cbegin(), branch.cend(), [](auto x, auto y) {
             return x.loading < y.loading;
         });
         std::cout << "Min loading: " << min_l->loading << ", max loading: " << max_l->loading << '\n';
-        return info;
     }
 
     void run_benchmark(Idx n_node, bool sym, CalculationMethod calculation_method) {
@@ -191,22 +191,23 @@ struct PowerGridBenchmark {
                 build_network();
             }
             if (sym) {
-                info = run_pf<true>(calculation_method);
+                run_pf<true>(calculation_method, info);
             }
             else {
-                info = run_pf<false>(calculation_method);
+                run_pf<false>(calculation_method, info);
             }
         }
         print(info);
 
+        info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
             Timer t_total(info, 0000, "Total");
             if (sym) {
-                info = run_pf<true>(calculation_method);
+                run_pf<true>(calculation_method, info);
             }
             else {
-                info = run_pf<false>(calculation_method);
+                run_pf<false>(calculation_method, info);
             }
         }
         print(info);
