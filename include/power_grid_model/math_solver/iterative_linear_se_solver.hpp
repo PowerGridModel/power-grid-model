@@ -15,7 +15,6 @@ iterative linear state estimation solver
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "bsr_solver.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -568,6 +567,10 @@ class IterativeLinearSESolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
+    using Tensor = Eigen::Array<DoubleComplex, bsr_block_size_, bsr_block_size_, Eigen::RowMajor>;
+    using RHSVector = Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>;
+    using XVector = Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>;
+
    public:
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
@@ -575,7 +578,8 @@ class IterativeLinearSESolver {
           data_gain_(y_bus.nnz()),
           x_(y_bus.size()),
           rhs_(y_bus.size()),
-          bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu(),
+                         y_bus.shared_map_y_bus_lu()} {
     }
 
     MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
@@ -613,7 +617,8 @@ class IterativeLinearSESolver {
             prepare_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
-            bsr_solver_.solve(data_gain_.data(), rhs_.data(), x_.data(), true);
+            sparse_solver_.solve((Tensor const*)data_gain_.data(), (RHSVector const*)rhs_.data(), (XVector*)x_.data(),
+                                 true);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
         }
@@ -648,7 +653,7 @@ class IterativeLinearSESolver {
     std::vector<SEUnknown<sym>> x_;
     std::vector<SERhs<sym>> rhs_;
     // solver
-    BSRSolver<DoubleComplex> bsr_solver_;
+    SparseLUSolver<Tensor, RHSVector, XVector> sparse_solver_;
 
     void prepare_matrix(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value) {
         MathModelParam<sym> const& param = y_bus.math_model_param();
@@ -725,7 +730,7 @@ class IterativeLinearSESolver {
             data_gain_[data_idx].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
         }
         // prefactorize
-        bsr_solver_.prefactorize(data_gain_.data());
+        sparse_solver_.prefactorize((Tensor const*)data_gain_.data());
     }
 
     void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,

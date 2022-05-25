@@ -201,7 +201,9 @@ class SparseLUSolver {
             // return reference to pivot permutation
             BlockPerm const& block_perm = [&]() -> std::conditional_t<is_block, BlockPerm const&, BlockPerm> {
                 if constexpr (is_block) {
-                    LUFactor const lu_factor(lu_matrix[pivot_idx]);
+                    LUFactor lu_factor(lu_matrix[pivot_idx]);
+                    // set a low threshold, because state estimation can have large differences in eigen values
+                    lu_factor.setThreshold(1e-100);
                     if (lu_factor.rank() < block_size) {
                         throw SparseMatrixError{};
                     }
