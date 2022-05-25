@@ -122,11 +122,7 @@ class SparseLUSolver {
             if constexpr (is_block) {
                 XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = 0; br < block_size; ++br) {
-                    for (Idx bc = 0; bc < br; ++bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                }
+                pivot.matrix().template triangularView<Eigen::UnitLower>().solveInPlace(xb.matrix());
             }
         }
 
@@ -145,12 +141,7 @@ class SparseLUSolver {
                 // backward substitution inside block
                 XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = block_size - 1; br != -1; --br) {
-                    for (Idx bc = block_size - 1; bc > br; --bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                    xb(br) = xb(br) / pivot(br, br);
-                }
+                pivot.matrix().template triangularView<Eigen::Upper>().solveInPlace(xb.matrix());
             }
             else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
@@ -252,13 +243,8 @@ class SparseLUSolver {
                     Tensor& u = lu_matrix[u_idx];
                     // permutation
                     u = block_perm.p * u.matrix();
-                    // forward substitution, per row in u
-                    for (Idx br = 0; br < block_size; ++br) {
-                        for (Idx bc = 0; bc < br; ++bc) {
-                            // forward substract
-                            u.row(br) -= pivot(br, bc) * u.row(bc);
-                        }
-                    }
+                    // solver lower triangular
+                    pivot.matrix().template triangularView<Eigen::UnitLower>().solveInPlace(u.matrix());
                 }
             }
 
@@ -280,23 +266,9 @@ class SparseLUSolver {
                     Tensor& l = lu_matrix[l_idx];
                     // permutation
                     l = l.matrix() * block_perm.q;
-                    // forward substitution, per column in l
-                    // l0 = [l00, l10]^T
-                    // l1 = [l01, l11]^T
-                    // l = [l0, l1]
-                    // a = [a0, a1]
-                    // u = [[u00, u01]
-                    //      [0  , u11]]
-                    // l * u = a
-                    // l0 * u00 = a0
-                    // l0 * u01 + l1 * u11 = a1
-                    for (Idx bc = 0; bc < block_size; ++bc) {
-                        for (Idx br = 0; br < bc; ++br) {
-                            l.col(bc) -= pivot(br, bc) * l.col(br);
-                        }
-                        // divide diagonal
-                        l.col(bc) = l.col(bc) / pivot(bc, bc);
-                    }
+                    // solve upper triangular
+                    pivot.matrix().template triangularView<Eigen::Upper>().template solveInPlace<Eigen::OnTheRight>(
+                        l.matrix());
                 }
                 else {
                     // for scalar matrix, just divide
