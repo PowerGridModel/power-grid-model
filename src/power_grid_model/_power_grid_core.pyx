@@ -116,8 +116,6 @@ cdef extern from "power_grid_model/auxiliary/dataset.hpp" namespace "power_grid_
         ConstDataPointer(const void * ptr, const int32_t * indptr, int32_t size)
 
 cdef extern from "power_grid_model/main_model.hpp" namespace "power_grid_model":
-    bool has_mkl()
-
     cppclass CalculationMethodCPP "::power_grid_model::CalculationMethod":
         pass
     cppclass BatchParameter:
@@ -629,6 +627,3 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
 
 # external used meta data
 power_grid_meta_data = _generate_meta_data()
-
-# has mkl flag
-use_mkl_solver = has_mkl()
