@@ -111,12 +111,12 @@ class SparseLUSolver {
             }
 
             // loop all columns until diagonal
-            for (Idx col_idx = row_indptr[row]; col_idx < diag_lu[row]; ++col_idx) {
-                Idx const col = col_indices[col_idx];
+            for (Idx l_idx = row_indptr[row]; l_idx < diag_lu[row]; ++l_idx) {
+                Idx const col = col_indices[l_idx];
                 // never overshoot
                 assert(col < row);
                 // forward subtract
-                x[row] -= dot(lu_matrix[col_idx], x[col]);
+                x[row] -= dot(lu_matrix[l_idx], x[col]);
             }
             // forward substitution inside block, for block matrix
             if constexpr (is_block) {
@@ -133,12 +133,12 @@ class SparseLUSolver {
         // backward substitution with U
         for (Idx row = size_ - 1; row != -1; --row) {
             // loop all columns from diagonal
-            for (Idx col_idx = row_indptr[row + 1] - 1; col_idx > diag_lu[row]; --col_idx) {
-                Idx const col = col_indices[col_idx];
+            for (Idx u_idx = row_indptr[row + 1] - 1; u_idx > diag_lu[row]; --u_idx) {
+                Idx const col = col_indices[u_idx];
                 // always in upper diagonal
                 assert(col > row);
                 // backward subtract
-                x[row] -= dot(lu_matrix[col_idx], x[col]);
+                x[row] -= dot(lu_matrix[u_idx], x[col]);
             }
             // solve the diagonal pivot
             if constexpr (is_block) {
@@ -189,7 +189,7 @@ class SparseLUSolver {
             lu_matrix[(*data_mapping_)[i]] = data[i];
         }
 
-        // column position idx per row for L matrix
+        // column position idx per row for LU matrix
         IdxVector col_position_idx(row_indptr.cbegin(), row_indptr.cend() - 1);
 
         // start pivoting, it is always the diagonal
@@ -230,9 +230,10 @@ class SparseLUSolver {
                 for (Idx l_idx = row_indptr[pivot_row_col]; l_idx < pivot_idx; ++l_idx) {
                     // permute rows of L_k,pivot
                     lu_matrix[l_idx] = block_perm.p * lu_matrix[l_idx].matrix();
-                    // we should exactly find the current column in L
+                    // get row and idx of u
                     Idx const u_row = col_indices[l_idx];
                     Idx const u_idx = col_position_idx[u_row];
+                    // we should exactly find the current column
                     assert(col_indices[u_idx] == pivot_row_col);
                     // permute columns of U_pivot,k
                     lu_matrix[u_idx] = lu_matrix[u_idx].matrix() * block_perm.q;
@@ -245,8 +246,8 @@ class SparseLUSolver {
             // calculate U blocks in the right of the pivot, in-place
             // L_pivot * U_pivot,k = P_pivot * A_pivot,k       k > pivot
             if constexpr (is_block) {
-                for (Idx u_col_idx = pivot_idx + 1; u_col_idx < row_indptr[pivot_row_col + 1]; ++u_col_idx) {
-                    Tensor& u = lu_matrix[u_col_idx];
+                for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr[pivot_row_col + 1]; ++u_idx) {
+                    Tensor& u = lu_matrix[u_idx];
                     // permutation
                     u = block_perm.p * u.matrix();
                     // forward substitution, per row in u
@@ -263,17 +264,18 @@ class SparseLUSolver {
             // because the matrix is symmetric,
             //    looking for col_indices at pivot_row_col, starting from the diagonal (pivot_row_col, pivot_row_col)
             //    we get also the non-zero row indices under the pivot
-            for (Idx l_row_idx = pivot_idx + 1; l_row_idx < row_indptr[pivot_row_col + 1]; ++l_row_idx) {
-                Idx const l_row = col_indices[l_row_idx];
+            for (Idx l_ref_idx = pivot_idx + 1; l_ref_idx < row_indptr[pivot_row_col + 1]; ++l_ref_idx) {
+                // find index of l in corresponding row
+                Idx const l_row = col_indices[l_ref_idx];
+                Idx const l_idx = col_position_idx[l_row];
                 // we should exactly find the current column
-                Idx l_col_idx = col_position_idx[l_row];
-                assert(col_indices[l_col_idx] == pivot_row_col);
+                assert(col_indices[l_idx] == pivot_row_col);
                 // calculating l at (l_row, pivot_row_col)
                 if constexpr (is_block) {
                     // for block matrix
                     // calculate L blocks below the pivot, in-place
                     // L_k,pivot * U_pivot = A_k_pivot * Q_pivot    k > pivot
-                    Tensor& l = lu_matrix[l_col_idx];
+                    Tensor& l = lu_matrix[l_idx];
                     // permutation
                     l = l.matrix() * block_perm.q;
                     // forward substitution, per column in l
@@ -297,25 +299,30 @@ class SparseLUSolver {
                 else {
                     // for scalar matrix, just divide
                     // L_k,pivot = A_k,pivot / U_pivot    k > pivot
-                    lu_matrix[l_col_idx] = lu_matrix[l_col_idx] / pivot;
+                    lu_matrix[l_idx] = lu_matrix[l_idx] / pivot;
                 }
-                Tensor const& l = lu_matrix[l_col_idx];
+                Tensor const& l = lu_matrix[l_idx];
 
-                // for all entries in the right of (l_row, pivot_row_col)
-                //       (l_row, pivot_col) = (l_row, pivot_col) - l * (pivot_row_col, pivot_col), for pivot_col >
-                //       pivot_row_col
+                // for all entries in the right of (l_row, u_col)
+                //       A(l_row, u_col) = A(l_row, u_col) - l * U(pivot_row_col, u_col),
+                //          for u_col > pivot_row_col
                 // it can create fill-ins, but the fill-ins are pre-allocated
-                // it is garanteed to have an entry at (l_row, pivot_col), if (pivot_row_col, pivot_col) is non-zero
+                // it is garanteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
+                // starting A index from (l_row, pivot_row_col)
+                Idx a_idx = l_idx;
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
-                for (Idx pivot_col_idx = pivot_idx + 1; pivot_col_idx < row_indptr[pivot_row_col + 1];
-                     ++pivot_col_idx) {
-                    Idx const pivot_col = col_indices[pivot_col_idx];
-                    // search the l_col_idx to the pivot_col,
-                    auto const found = std::lower_bound(col_indices.cbegin() + l_col_idx,
-                                                        col_indices.cbegin() + row_indptr[l_row + 1], pivot_col);
-                    l_col_idx = (Idx)std::distance(col_indices.cbegin(), found);
+                for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr[pivot_row_col + 1]; ++u_idx) {
+                    Idx const u_col = col_indices[u_idx];
+                    assert(u_col > pivot_row_col);
+                    // search the a_idx to the u_col,
+                    auto const found = std::lower_bound(col_indices.cbegin() + a_idx,
+                                                        col_indices.cbegin() + row_indptr[l_row + 1], u_col);
+                    // should always found
+                    assert(found != col_indices.cbegin() + row_indptr[l_row + 1]);
+                    assert(*found == u_col);
+                    a_idx = (Idx)std::distance(col_indices.cbegin(), found);
                     // subtract
-                    lu_matrix[l_col_idx] -= dot(l, lu_matrix[pivot_col_idx]);
+                    lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }
                 // iterate column position
                 ++col_position_idx[l_row];
