@@ -46,7 +46,7 @@ class LinearPFSolver {
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
     using Tensor = std::conditional_t<sym, DoubleComplex,
-                                      Eigen::Array<DoubleComplex, bsr_block_size_, bsr_block_size_, Eigen::RowMajor>>;
+                                      Eigen::Array<DoubleComplex, bsr_block_size_, bsr_block_size_, Eigen::ColMajor>>;
     using RHSVector =
         std::conditional_t<sym, DoubleComplex, Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>>;
     using XVector =

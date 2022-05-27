@@ -26,7 +26,7 @@ class BlockEntry {
     static constexpr int size = block_size * block_size;
     static constexpr int size_in_double = (std::is_same_v<T, double> ? 1 : 2) * size;
 
-    using ArrayType = Eigen::Array<T, block_size, block_size, Eigen::RowMajor>;
+    using ArrayType = Eigen::Array<T, block_size, block_size, Eigen::ColMajor>;
     using GetterType = std::conditional_t<sym, T&, Eigen::Block<ArrayType, scalar_size, scalar_size>>;
 
    protected:

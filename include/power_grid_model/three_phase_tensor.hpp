@@ -28,7 +28,7 @@ namespace three_phase_tensor {
 template <class T>
 using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T>
-using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::RowMajor>;
+using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
 
 template <class T, class = enable_scalar_t<T>>
 class Vector : public Eigen3Vector<T> {

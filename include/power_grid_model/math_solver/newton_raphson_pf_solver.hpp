@@ -218,7 +218,7 @@ class NewtonRaphsonPFSolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
-    using Tensor = Eigen::Array<double, bsr_block_size_, bsr_block_size_, Eigen::RowMajor>;
+    using Tensor = Eigen::Array<double, bsr_block_size_, bsr_block_size_, Eigen::ColMajor>;
     using RHSVector = Eigen::Array<double, bsr_block_size_, 1, Eigen::ColMajor>;
     using XVector = Eigen::Array<double, bsr_block_size_, 1, Eigen::ColMajor>;
 

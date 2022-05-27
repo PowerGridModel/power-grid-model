@@ -33,7 +33,7 @@ void check_result(std::vector<T> const& x, std::vector<T> const& x_solver) {
 }
 
 // test block calculation with 2*2
-using Tensor = Eigen::Array<double, 2, 2, Eigen::RowMajor>;
+using Tensor = Eigen::Array<double, 2, 2, Eigen::ColMajor>;
 using Array = Eigen::Array<double, 2, 1, Eigen::ColMajor>;
 
 TEST_CASE("Test Sparse LU solver") {

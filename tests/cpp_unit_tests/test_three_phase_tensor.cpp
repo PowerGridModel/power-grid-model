@@ -87,8 +87,8 @@ TEST_CASE("Three phase tensor") {
         // test layout
         double* arr = (double*)&mat1;
         CHECK(arr[0] == 1);
-        CHECK(arr[2] == 3);
-        CHECK(arr[6] == 7);
+        CHECK(arr[2] == 7);
+        CHECK(arr[6] == 3);
     }
 
     SECTION("Test tensor initialization and inverse") {
