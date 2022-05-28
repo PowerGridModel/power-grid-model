@@ -193,23 +193,24 @@ static_assert(std::is_standard_layout_v<ComplexPower<false>>);
 // Hij = Gij .* sij - Bij .* cij = L
 // Nij = Gij .* cij + Bij .* sij = -M
 template <bool sym>
-class PFJacBlock : public BlockEntry<double, sym> {
+class PFJacBlock : public Block<double, sym, true, 2> {
    public:
-    using typename BlockEntry<double, sym>::GetterType;
-    GetterType h() {
+    template<int r, int c>
+    using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
+    
+    GetterType<0, 0> h() {
         return this->template get_val<0, 0>();
     }
-    GetterType n() {
+    GetterType<0, 1> n() {
         return this->template get_val<0, 1>();
     }
-    GetterType m() {
+    GetterType<1, 0> m() {
         return this->template get_val<1, 0>();
     }
-    GetterType l() {
+    GetterType<1, 1> l() {
         return this->template get_val<1, 1>();
     }
 };
-constexpr block_entry_trait<PFJacBlock> jac_trait{};
 
 // solver
 template <bool sym>

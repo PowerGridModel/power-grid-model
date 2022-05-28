@@ -57,12 +57,13 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     }
 
     template <int r, int c>
-    using GetterType = std::conditional_t<sym, T&, decltype(Block{}(get_asym_row_idx<r>(), get_asym_col_idx<c>()))>;
+    using GetterType =
+        std::conditional_t<sym, T&, decltype(std::declval<ArrayType>()(get_asym_row_idx<r>(), get_asym_col_idx<c>()))>;
 
     template <int r, int c>
-    GetterType get_val() {
+    GetterType<r, c> get_val() {
         if constexpr (sym) {
-            return (*this)(Eigen::fix<row>, Eigen::fix<col>);
+            return (*this)(r, c);
         }
         else {
             return (*this)(get_asym_row_idx<r>(), get_asym_col_idx<c>());
