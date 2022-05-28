@@ -17,6 +17,22 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
+template <class T, bool sym, bool is_tensor, int n_sub_block, class = std::enable_if_t<check_scalar_v<T>>>
+struct block_trait {
+    static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
+    static constexpr int n_col = is_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;
+    using ArrayType = Eigen::Array<T, n_row, n_col, Eigen::ColMajor>;
+};
+
+template <class T, bool sym, bool is_tensor, int n_sub_block>
+class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
+   public:
+   template<int r, int c>
+   using GetterType = std::conditional_t<sym, T&, decltype(Block{}(Eigen::seqN(Eigen::fix<r * 3>, Eigen::fix<3>)), )>;
+
+   private:
+};
+
 template <class T, bool sym, int n_sub_block = 2,
           class = std::enable_if_t<std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>>>
 class BlockEntry {
