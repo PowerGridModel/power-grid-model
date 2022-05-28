@@ -30,6 +30,18 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     using ArrayType = typename block_trait<T, sym, is_tensor, n_sub_block>::ArrayType;
     using ArrayType::operator();
 
+    // default zero
+    Block() : ArrayType{ArrayType::Zero()} {};
+    // eigen expression
+    template <typename OtherDerived>
+    Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {
+    }
+    template <typename OtherDerived>
+    Block& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+        this->ArrayType::operator=(other);
+        return *this;
+    }
+
     template <int r>
     static auto get_asym_row_idx() {
         return Eigen::seqN(Eigen::fix<r * 3>, Eigen::fix<3>);
