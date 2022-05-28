@@ -27,10 +27,35 @@ struct block_trait {
 template <class T, bool sym, bool is_tensor, int n_sub_block>
 class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
    public:
-   template<int r, int c>
-   using GetterType = std::conditional_t<sym, T&, decltype(Block{}(Eigen::seqN(Eigen::fix<r * 3>, Eigen::fix<3>)), )>;
+    using ArrayType = typename block_trait<T, sym, is_tensor, n_sub_block>::ArrayType;
+    using ArrayType::operator();
 
-   private:
+    template <int r>
+    static auto get_asym_row_idx() {
+        return Eigen::seqN(Eigen::fix<r * 3>, Eigen::fix<3>);
+    }
+    template <int c>
+    static auto get_asym_col_idx() {
+        if constexpr (is_tensor) {
+            return Eigen::seqN(Eigen::fix<c * 3>, Eigen::fix<3>);
+        }
+        else {
+            return Eigen::fix<0>;
+        }
+    }
+
+    template <int r, int c>
+    using GetterType = std::conditional_t<sym, T&, decltype(Block{}(get_asym_row_idx<r>(), get_asym_col_idx<c>()))>;
+
+    template <int r, int c>
+    GetterType get_val() {
+        if constexpr (sym) {
+            return (*this)(Eigen::fix<row>, Eigen::fix<col>);
+        }
+        else {
+            return (*this)(get_asym_row_idx<r>(), get_asym_col_idx<c>());
+        }
+    }
 };
 
 template <class T, bool sym, int n_sub_block = 2,
