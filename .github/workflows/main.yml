@@ -40,8 +40,6 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
-    env:
-
 
     steps:
       - uses: actions/checkout@v3
