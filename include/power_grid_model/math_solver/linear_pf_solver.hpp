@@ -45,12 +45,6 @@ class LinearPFSolver {
    private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
-    using Tensor = std::conditional_t<sym, DoubleComplex,
-                                      Eigen::Array<DoubleComplex, bsr_block_size_, bsr_block_size_, Eigen::ColMajor>>;
-    using RHSVector =
-        std::conditional_t<sym, DoubleComplex, Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>>;
-    using XVector =
-        std::conditional_t<sym, DoubleComplex, Eigen::Array<DoubleComplex, bsr_block_size_, 1, Eigen::ColMajor>>;
 
    public:
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -107,7 +101,7 @@ class LinearPFSolver {
         // solve
         // u vector will have I_injection for slack bus for now
         sub_timer = Timer(calculation_info, 2222, "Solve sparse linear equation");
-        sparse_solver_.solve((Tensor const*)mat_data_.data(), (RHSVector const*)rhs_.data(), (XVector*)output.u.data());
+        sparse_solver_.solve(mat_data_.data(), rhs_.data(), output.u.data());
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");
@@ -126,7 +120,7 @@ class LinearPFSolver {
     ComplexTensorVector<sym> mat_data_;
     ComplexValueVector<sym> rhs_;
     // sparse solver
-    SparseLUSolver<Tensor, RHSVector, XVector> sparse_solver_;
+    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // call y bus
