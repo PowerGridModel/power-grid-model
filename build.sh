@@ -7,7 +7,7 @@
 set -e
 
 usage() {
-  echo "$0 {Debug/Release} {EIGEN,MKL,MKL_RUNTIME}"
+  echo "$0 {Debug/Release}"
 }
 
 if [ ! "$1" = "Debug" ] && [ ! "$1" = "Release" ]; then
@@ -16,19 +16,13 @@ if [ ! "$1" = "Debug" ] && [ ! "$1" = "Release" ]; then
   exit 1;
 fi
 
-if [ ! "$2" = "EIGEN" ] && [ ! "$2" = "MKL" ] && [ ! "$2" = "MKL_RUNTIME" ]; then
-  echo "Missing second argument"
-  usage
-  exit 1;
-fi
-
-if [[ $3 == "Coverage" ]]; then
+if [[ $2 == "Coverage" ]]; then
   BUILD_COVERAGE=-DPOWER_GRID_MODEL_COVERAGE=1
 else
   BUILD_COVERAGE=
 fi
 
-BUILD_DIR=cpp_build_$1_$2
+BUILD_DIR=cpp_build_$1
 echo "Build dir: ${BUILD_DIR}"
 
 if [[ ! -z "${VCPKG_ROOT}" ]]; then
@@ -47,28 +41,19 @@ cd ${BUILD_DIR}
 # generate
 cmake .. -GNinja \
     -DCMAKE_BUILD_TYPE=$1 \
-    -DPOWER_GRID_MODEL_SPARSE_SOLVER=$2 \
     ${PATH_FOR_CMAKE} \
     -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 \
     ${BUILD_COVERAGE}
 # build
 VERBOSE=1 cmake --build .
 # test
+./tests/cpp_unit_tests/power_grid_model_unit_tests
 
-if [[ $2 == "MKL_RUNTIME" ]]; then
-  LD_LIBRARY_PATH= ./tests/cpp_unit_tests/power_grid_model_unit_tests
-  LD_LIBRARY_PATH= POWER_GRID_MODEL_SPARSE_SOLVER=MKL ./tests/cpp_unit_tests/power_grid_model_unit_tests
-  LD_LIBRARY_PATH=${MKL_LIB} ./tests/cpp_unit_tests/power_grid_model_unit_tests
-  LD_LIBRARY_PATH=${MKL_LIB} POWER_GRID_MODEL_SPARSE_SOLVER=MKL ./tests/cpp_unit_tests/power_grid_model_unit_tests
-  POWER_GRID_MODEL_SPARSE_SOLVER=EIGEN ./tests/cpp_unit_tests/power_grid_model_unit_tests
-else
-  LD_LIBRARY_PATH=${MKL_LIB} ./tests/cpp_unit_tests/power_grid_model_unit_tests
-fi
 
 
 cd ..
 # test coverage report for debug build and for linux
-if [[ "$1" = "Debug" ]] && [[ $3 == "Coverage" ]];  then
+if [[ "$1" = "Debug" ]] && [[ $2 == "Coverage" ]];  then
   echo "Generating coverage report..."
   if [[ ${CXX} == "clang++"* ]]; then
     GCOV_TOOL="--gcov-tool llvm-gcov.sh"

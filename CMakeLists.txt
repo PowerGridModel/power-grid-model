@@ -47,36 +47,6 @@ else()
   target_link_libraries(power_grid_model INTERFACE Threads::Threads)
 endif()
 
-
-# sparse solver, default eigen
-if (NOT DEFINED POWER_GRID_MODEL_SPARSE_SOLVER)
-	set(POWER_GRID_MODEL_SPARSE_SOLVER "EIGEN")
-endif()
-
-# use mkl solver
-if((POWER_GRID_MODEL_SPARSE_SOLVER STREQUAL "MKL") OR (POWER_GRID_MODEL_SPARSE_SOLVER STREQUAL "MKL_RUNTIME"))
-	# check load mkl at runtime or link-time
- 	if(POWER_GRID_MODEL_SPARSE_SOLVER STREQUAL "MKL_RUNTIME")
-		target_compile_definitions(power_grid_model INTERFACE POWER_GRID_MODEL_USE_MKL_AT_RUNTIME=1)
-		target_link_libraries(power_grid_model INTERFACE ${CMAKE_DL_LIBS})
-	else()
-		if(NOT DEFINED ENV{MKL_INCLUDE})
-			message(FATAL_ERROR "MKL include dir not found!")
-		endif()
-		if(NOT DEFINED ENV{MKL_LIB})
-			message(FATAL_ERROR "MKL lib dir not found!")
-		endif()
-		# mkl
-		target_include_directories(power_grid_model INTERFACE $ENV{MKL_INCLUDE})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{MKL_LIB}")
-		find_library(MKL_RT mkl_rt)
-		message("${MKL_RT}")
-		target_compile_definitions(power_grid_model INTERFACE POWER_GRID_MODEL_USE_MKL=1)
-		target_link_libraries(power_grid_model INTERFACE "${MKL_RT}")
-	endif()
-endif()
-
-
 # get tests
 add_subdirectory(tests/cpp_unit_tests)
 

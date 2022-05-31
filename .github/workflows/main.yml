@@ -27,13 +27,12 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
-        sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Run build script
-        run: ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
+        run: ./build.sh  ${{ matrix.build-option }}
 
 
   build-cpp-test-windows:
@@ -41,10 +40,8 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
-        sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
     env:
-      MKL_INCLUDE: C:\conda_envs\cpp_pkgs\Library\include
-      MKL_LIB: C:\conda_envs\cpp_pkgs\Library\lib
+
 
     steps:
       - uses: actions/checkout@v3
@@ -56,7 +53,7 @@ jobs:
       - name: Install conda environment
         # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2==2.13.9
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json catch2==2.13.9
 
       - name: Build and test
         run: |
@@ -64,13 +61,12 @@ jobs:
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
           $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
-          mkdir cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
-          cd cpp_build_${{ matrix.build-option }}_${{ matrix.sparse-solver }}
+          mkdir cpp_build_${{ matrix.build-option }}
+          cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
           cmake .. `
             -G "Ninja" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} `
-            -DPOWER_GRID_MODEL_SPARSE_SOLVER=${{ matrix.sparse-solver }} `
             -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
             -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
           # build
@@ -84,12 +80,9 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
-        sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
     env:
       CC: clang
       CXX: clang++
-      MKL_INCLUDE: /usr/local/include
-      MKL_LIB: /usr/local/lib
       CMAKE_PREFIX_PATH: /usr/local
 
     steps:
@@ -100,14 +93,11 @@ jobs:
         run: |
           brew install ninja boost eigen nlohmann-json 
           curl https://raw.githubusercontent.com/Homebrew/homebrew-core/5e5abb11bf49787d01164c4066119365262c21ed/Formula/catch2.rb > $(find $(brew --repository) -name catch2.rb) && brew reinstall catch2
-          sudo pip3 install mkl mkl-devel mkl-include
+          sudo pip3 install
 
       - name: Build and test
         run: |
-          # environment
-          export LD_LIBRARY_PATH=${MKL_LIB}:${LD_LIBRARY_PATH}
-          # bash
-          ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
+          ./build.sh  ${{ matrix.build-option }} 
 
 
   build-and-test-python:
@@ -170,10 +160,10 @@ jobs:
         which clang++ &&
         clang++ --version &&
         brew install boost eigen &&
-        sudo pip3 install mkl mkl-devel mkl-include
+        sudo pip3 install
       MACOSX_DEPLOYMENT_TARGET: 10.15
       CIBW_BEFORE_ALL_WINDOWS : >
-        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen mkl
+        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen
 
     steps:
       - uses: actions/checkout@v3
