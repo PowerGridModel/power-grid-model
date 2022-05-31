@@ -31,7 +31,6 @@ else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
   add_compile_options(-Wno-deprecated-copy)  # bug in boost
   if(UNIX AND NOT APPLE)
-	add_compile_options(-Wno-maybe-uninitialized)  # bug in boost
 	# test coverage for debug build in linux, if specified
 	if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND (DEFINED POWER_GRID_MODEL_COVERAGE) AND (POWER_GRID_MODEL_COVERAGE EQUAL 1))
 	  add_compile_options(-fprofile-arcs -ftest-coverage)
@@ -42,6 +41,11 @@ else()
   # thread
   find_package(Threads REQUIRED)
   target_link_libraries(power_grid_model INTERFACE Threads::Threads)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # using GCC
+  add_compile_options(-Wno-maybe-uninitialized)  # bug in boost
 endif()
 
 # get tests
