@@ -195,9 +195,13 @@ static_assert(std::is_standard_layout_v<ComplexPower<false>>);
 template <bool sym>
 class PFJacBlock : public Block<double, sym, true, 2> {
    public:
-    template<int r, int c>
+    template <int r, int c>
     using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
-    
+
+    // eigen expression
+    using Block<double, sym, true, 2>::Block;
+    using Block<double, sym, true, 2>::operator=;
+
     GetterType<0, 0> h() {
         return this->template get_val<0, 0>();
     }
@@ -219,7 +223,7 @@ class NewtonRaphsonPFSolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
-    using Tensor = Eigen::Array<double, bsr_block_size_, bsr_block_size_, Eigen::ColMajor>;
+    using Tensor = PFJacBlock<sym>;
     using RHSVector = Eigen::Array<double, bsr_block_size_, 1, Eigen::ColMajor>;
     using XVector = Eigen::Array<double, bsr_block_size_, 1, Eigen::ColMajor>;
 
@@ -280,8 +284,7 @@ class NewtonRaphsonPFSolver {
             sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
             calculate_jacobian_and_deviation(y_bus, input, output.u);
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
-            sparse_solver_.solve((Tensor const*)data_jac_.data(), (RHSVector const*)del_pq_.data(),
-                                 (XVector*)del_x_.data());
+            sparse_solver_.solve(data_jac_.data(), (RHSVector const*)del_pq_.data(), (XVector*)del_x_.data());
             sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
             max_dev = iterate_unknown(output.u);
             sub_timer.stop();

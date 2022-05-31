@@ -24,11 +24,16 @@ template <class Tensor, class RHSVector, class XVector>
 using enable_scalar_lu_t =
     std::enable_if_t<std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector> && check_scalar_v<Tensor>>;
 
+template <class Derived>
+int check_array_base(Eigen::ArrayBase<Derived> const&) {
+    return 0;
+}
+
 template <class Tensor, class RHSVector, class XVector>
 using enable_tensor_lu_t = std::enable_if_t<
-    std::is_base_of_v<Eigen::ArrayBase<Tensor>, Tensor> &&                  // tensor should be an eigen array
-    std::is_base_of_v<Eigen::ArrayBase<RHSVector>, RHSVector> &&            // rhs vector should be an eigen array
-    std::is_base_of_v<Eigen::ArrayBase<XVector>, XVector> &&                // x vector should be an eigen array
+    std::is_same_v<decltype(check_array_base(Tensor{})), int> &&            // tensor should be an eigen array
+    std::is_same_v<decltype(check_array_base(RHSVector{})), int> &&         // rhs vector should be an eigen array
+    std::is_same_v<decltype(check_array_base(XVector{})), int> &&           // x vector should be an eigen array
     Tensor::RowsAtCompileTime == Tensor::ColsAtCompileTime &&               // tensor should be square
     RHSVector::ColsAtCompileTime == 1 &&                                    // rhs vector should be column vector
     RHSVector::RowsAtCompileTime == Tensor::RowsAtCompileTime &&            // rhs vector should be column vector
@@ -222,14 +227,14 @@ class SparseLUSolver {
                 // since the matrix is symmetric
                 for (Idx l_idx = row_indptr[pivot_row_col]; l_idx < pivot_idx; ++l_idx) {
                     // permute rows of L_k,pivot
-                    lu_matrix[l_idx] = block_perm.p * lu_matrix[l_idx].matrix();
+                    lu_matrix[l_idx] = (block_perm.p * lu_matrix[l_idx].matrix()).array();
                     // get row and idx of u
                     Idx const u_row = col_indices[l_idx];
                     Idx const u_idx = col_position_idx[u_row];
                     // we should exactly find the current column
                     assert(col_indices[u_idx] == pivot_row_col);
                     // permute columns of U_pivot,k
-                    lu_matrix[u_idx] = lu_matrix[u_idx].matrix() * block_perm.q;
+                    lu_matrix[u_idx] = (lu_matrix[u_idx].matrix() * block_perm.q).array();
                     // increment column position
                     ++col_position_idx[u_row];
                 }
@@ -242,7 +247,7 @@ class SparseLUSolver {
                 for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr[pivot_row_col + 1]; ++u_idx) {
                     Tensor& u = lu_matrix[u_idx];
                     // permutation
-                    u = block_perm.p * u.matrix();
+                    u = (block_perm.p * u.matrix()).array();
                     // solver lower triangular
                     pivot.matrix().template triangularView<Eigen::UnitLower>().solveInPlace(u.matrix());
                 }
@@ -265,7 +270,7 @@ class SparseLUSolver {
                     // L_k,pivot * U_pivot = A_k_pivot * Q_pivot    k > pivot
                     Tensor& l = lu_matrix[l_idx];
                     // permutation
-                    l = l.matrix() * block_perm.q;
+                    l = (l.matrix() * block_perm.q).array();
                     // solve upper triangular
                     pivot.matrix().template triangularView<Eigen::Upper>().template solveInPlace<Eigen::OnTheRight>(
                         l.matrix());
