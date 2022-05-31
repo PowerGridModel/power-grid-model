@@ -127,7 +127,7 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 template <class T>
 constexpr bool check_vector_v = T::ColsAtCompileTime == 1;
 template <class T>
-constexpr bool check_tensor_v = T::RowsAtCompileTime == T::ColsAtCompileTime;
+constexpr bool check_tensor_v = (Idx)T::RowsAtCompileTime == (Idx)T::ColsAtCompileTime;
 template <class T>
 constexpr bool check_all_v = check_tensor_v<T> || check_vector_v<T>;
 template <class T>

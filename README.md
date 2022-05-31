@@ -168,35 +168,6 @@ Node Result
 
 Please refer to [Examples](examples) for more detailed examples for power flow and state estimation.
 
-
-# Boosting performance with MKL
-
-This library optionally depends on
-[Intel Math Kernel Library (mkl)](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html),
-for its [PARDISO](https://www.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-iface.html) sparse solver.
-If you are in `x86_64`, 
-it is recommended to install `mkl` because it gives huge performance boosts.
-
-The easiest way to install `mkl` is using `pip` or `conda`:
-
-```
-pip install mkl
-```
-
-or
-
-```
-conda install -c conda-forge mkl
-```
-
-You need to add the path to the `mkl` runtime file `libmkl_rt.so` or `mkl_rt.dll` the environment variable
-`LD_LIBRARY_PATH` in Linux or `Path` in Windows (`conda` does this automatically in the environment).
-If the library can find `mkl` runtime, it uses it as the sparse solver.
-It is recommended to set the environment variable `MKL_THREADING_LAYER` to `SEQUENTIAL`,
-as multi-threading is handled in a higher level.
-If the library cannot find `mkl` runtime (or in `arm64`), it will fall back to an internally built-in (and much slower)
-[Eigen SparseLU](https://eigen.tuxfamily.org/dox/classEigen_1_1SparseLU.html) solver.
-
 # License
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
 
@@ -205,13 +176,6 @@ This project includes third-party libraries,
 which are licensed under their own respective Open-Source licenses.
 SPDX-License-Identifier headers are used to show which license is applicable. 
 The concerning license files can be found in the LICENSES directory.
-
-## Intel Math Kernel Library License
-
-The `power-grid-model` does not bundle or redistribute any MKL runtime library. 
-It only detects if MKL library is installed in the target system. 
-If so, it will use the library to accelerate the calculation. 
-The user is responsible to acquire a suitable MKL license.
 
 # Contributing
 Please read [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) and [CONTRIBUTING](CONTRIBUTING.md) for details on the process 

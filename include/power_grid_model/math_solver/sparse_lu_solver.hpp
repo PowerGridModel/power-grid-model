@@ -34,11 +34,11 @@ using enable_tensor_lu_t = std::enable_if_t<
     std::is_same_v<decltype(check_array_base(Tensor{})), int> &&            // tensor should be an eigen array
     std::is_same_v<decltype(check_array_base(RHSVector{})), int> &&         // rhs vector should be an eigen array
     std::is_same_v<decltype(check_array_base(XVector{})), int> &&           // x vector should be an eigen array
-    Tensor::RowsAtCompileTime == Tensor::ColsAtCompileTime &&               // tensor should be square
+    (Idx)Tensor::RowsAtCompileTime == (Idx)Tensor::ColsAtCompileTime &&     // tensor should be square
     RHSVector::ColsAtCompileTime == 1 &&                                    // rhs vector should be column vector
-    RHSVector::RowsAtCompileTime == Tensor::RowsAtCompileTime &&            // rhs vector should be column vector
+    (Idx)RHSVector::RowsAtCompileTime == (Idx)Tensor::RowsAtCompileTime &&  // rhs vector should be column vector
     XVector::ColsAtCompileTime == 1 &&                                      // x vector should be column vector
-    XVector::RowsAtCompileTime == Tensor::RowsAtCompileTime &&              // x vector should be column vector
+    (Idx)XVector::RowsAtCompileTime == (Idx)Tensor::RowsAtCompileTime &&    // x vector should be column vector
     std::is_same_v<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
     std::is_same_v<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
     check_scalar_v<typename Tensor::Scalar>>;  // scalar can only be double or complex double
