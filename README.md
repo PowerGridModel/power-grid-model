@@ -29,39 +29,8 @@ Currently, it supports the following calculations:
 
 # Installation
 
-## Runtime Dependencies
+## Install from PyPI
 
-The only Python runtime dependency is
-[numpy](https://numpy.org/). It will be automatically installed as the requirements.
-Moreover, the library optionally depends on
-[Intel Math Kernel Library (mkl)](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html),
-for its [PARDISO](https://www.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-iface.html) sparse solver.
-It is recommended to install `mkl` because it gives huge performance boosts.
-
-The easiest way to install `mkl` is using `pip` or `conda`:
-
-```
-pip install mkl
-```
-
-or
-
-```
-conda install -c conda-forge mkl
-```
-
-You need to add the path to the `mkl` runtime file `libmkl_rt.so` or `mkl_rt.dll` the environment variable
-`LD_LIBRARY_PATH` in Linux or `Path` in Windows (`conda` does this automatically in the environment).
-If the library can find `mkl` runtime, it uses it as the sparse solver.
-It is recommended to set the environment variable `MKL_THREADING_LAYER` to `SEQUENTIAL`,
-as multi-threading is handled in a higher level.
-If the library cannot find `mkl` runtime, it will fall back to an internally built-in (and much slower)
-[Eigen SparseLU](https://eigen.tuxfamily.org/dox/classEigen_1_1SparseLU.html) solver.
-
-## Install from Pre-built Binary Package
-
-The `power-grid-model` python package is pre-built for Windows, Linux, and macOS (both Intel and Arm-based),
-for Python version 3.8, 3.9, and 3.10.
 You can directly install the package from PyPI.
 
 ```
@@ -198,6 +167,35 @@ Node Result
 # Examples
 
 Please refer to [Examples](examples) for more detailed examples for power flow and state estimation.
+
+
+# Boosting performance with MKL
+
+This library optionally depends on
+[Intel Math Kernel Library (mkl)](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html),
+for its [PARDISO](https://www.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-iface.html) sparse solver.
+If you are in `x86_64`, 
+it is recommended to install `mkl` because it gives huge performance boosts.
+
+The easiest way to install `mkl` is using `pip` or `conda`:
+
+```
+pip install mkl
+```
+
+or
+
+```
+conda install -c conda-forge mkl
+```
+
+You need to add the path to the `mkl` runtime file `libmkl_rt.so` or `mkl_rt.dll` the environment variable
+`LD_LIBRARY_PATH` in Linux or `Path` in Windows (`conda` does this automatically in the environment).
+If the library can find `mkl` runtime, it uses it as the sparse solver.
+It is recommended to set the environment variable `MKL_THREADING_LAYER` to `SEQUENTIAL`,
+as multi-threading is handled in a higher level.
+If the library cannot find `mkl` runtime (or in `arm64`), it will fall back to an internally built-in (and much slower)
+[Eigen SparseLU](https://eigen.tuxfamily.org/dox/classEigen_1_1SparseLU.html) solver.
 
 # License
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
