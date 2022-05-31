@@ -71,50 +71,6 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     }
 };
 
-template <class T, bool sym, int n_sub_block = 2,
-          class = std::enable_if_t<std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>>>
-class BlockEntry {
-   public:
-    static constexpr int scalar_size = sym ? 1 : 3;
-    static constexpr int block_size = scalar_size * n_sub_block;
-    static constexpr int size = block_size * block_size;
-    static constexpr int size_in_double = (std::is_same_v<T, double> ? 1 : 2) * size;
-
-    using ArrayType = Eigen::Array<T, block_size, block_size, Eigen::ColMajor>;
-    using GetterType = std::conditional_t<sym, T&, Eigen::Block<ArrayType, scalar_size, scalar_size>>;
-
-   protected:
-    // get position, can be 4 values
-    // 0, 0: upper left
-    // 0, 1: upper right
-    // 1, 0: lower left
-    // 1, 1: lower right
-    template <int row, int col>
-    GetterType get_val() {
-        if constexpr (sym) {
-            return data_(row, col);
-        }
-        else {
-            return data_.template block<scalar_size, scalar_size>(row * scalar_size, col * scalar_size);
-        }
-    }
-
-   private:
-    ArrayType data_{ArrayType::Zero()};
-};
-
-template <template <bool> class BlockType>
-struct block_entry_trait {
-    template <bool sym>
-    struct internal_trait {
-        static_assert(sizeof(BlockType<sym>) == sizeof(double[BlockType<sym>::size_in_double]));
-        static_assert(alignof(BlockType<sym>) >= alignof(double[BlockType<sym>::size_in_double]));
-        static_assert(std::is_standard_layout_v<BlockType<sym>>);
-    };
-    static constexpr internal_trait<true> sym_trait{};
-    static constexpr internal_trait<false> asym_trait{};
-};
-
 }  // namespace math_model_impl
 
 }  // namespace power_grid_model
