@@ -52,7 +52,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
             return Eigen::seqN(Eigen::fix<c * 3>, Eigen::fix<3>);
         }
         else {
-            return Eigen::fix<0>;
+            return Eigen::seqN(Eigen::fix<0>, Eigen::fix<1>);
         }
     }
 

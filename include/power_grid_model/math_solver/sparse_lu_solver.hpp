@@ -109,7 +109,7 @@ class SparseLUSolver {
         for (Idx row = 0; row != size_; ++row) {
             // permutation if needed
             if constexpr (is_block) {
-                x[row] = (*block_perm_array_)[row].p * rhs[row].matrix();
+                x[row] = ((*block_perm_array_)[row].p * rhs[row].matrix()).array();
             }
             else {
                 x[row] = rhs[row];
@@ -155,7 +155,7 @@ class SparseLUSolver {
         // restore permutation for block matrix
         if constexpr (is_block) {
             for (Idx row = 0; row != size_; ++row) {
-                x[row] = (*block_perm_array_)[row].q * x[row].matrix();
+                x[row] = ((*block_perm_array_)[row].q * x[row].matrix()).array();
             }
         }
     }
