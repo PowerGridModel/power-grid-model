@@ -193,7 +193,7 @@ for two input arguments, which will be passed into `cmake`. It includes debug or
 build test coverage or not.
 
 * Option 1
-    * Debug (default)
+    * Debug
     * Release
 * Option 2 (optional)
     * Coverage (if specified, the test coverage will be run and a web report will be generated in `cpp_cov_html` folder.)
@@ -207,9 +207,9 @@ As an example, go to the root folder of repo. Use the following command to build
 One can run the unit tests and benchmark by:
 
 ```shell
-./cpp_build_Relase/tests/cpp_unit_tests/power_grid_model_unit_tests
+./cpp_build_Release/tests/cpp_unit_tests/power_grid_model_unit_tests
 
-./cpp_build_Relase/tests/benchmark_cpp/power_grid_model_benchmark_cpp
+./cpp_build_Release/tests/benchmark_cpp/power_grid_model_benchmark_cpp
 ```
 
 # Example Setup for Windows 10
@@ -353,7 +353,7 @@ There is a convenient shell script to build the cmake project:
 with one input argument, which will be passed into `cmake`. It includes debug or release build.
 
 * Option 1
-    * Debug (default)
+    * Debug
     * Release
 
 **Note: the test coverage option is not supported in macOS.**
@@ -367,8 +367,8 @@ As an example, go to the root folder of repo. Use the following command to build
 One can run the unit tests and benchmark by:
 
 ```shell
-./cpp_build_Relase/tests/cpp_unit_tests/power_grid_model_unit_tests
+./cpp_build_Release/tests/cpp_unit_tests/power_grid_model_unit_tests
 
-./cpp_build_Relase/tests/benchmark_cpp/power_grid_model_benchmark_cpp
+./cpp_build_Release/tests/benchmark_cpp/power_grid_model_benchmark_cpp
 
 
