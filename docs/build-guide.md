@@ -23,9 +23,8 @@ section a list of general requirements are given. After this section there are e
 
 ## Architecture Support
 
-This library is written and tested on `x86_64` and `aarch64` architecture. Building the library in `x86_32` might be working, but is
-not tested. The MKL library is only
-available for `x86_64`. So only Eigen sparse solver is available for `aarch64`.
+This library is written and tested on `x86_64` and `arm64` architecture. Building the library in `x86_32` might be working, but is
+not tested.
 
 The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
 features as much as possible. In this way the effort to port the library to other platform/architecture might be
@@ -66,7 +65,6 @@ The table below shows the C++ build dependencies
 | [eigen3](https://eigen.tuxfamily.org/)                                                          | Define environment variable `EIGEN_INCLUDE` to the include folder of `eigen3`\*                                     | CMake needs to be able find `eigen3`                                                                                                                                                                                                                                                                  | header-only                                                                                                                                                                                                                              | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                                                                                                           |
 | [Catch2](https://github.com/catchorg/Catch2)                                                    | None                                                                                                                | CMake needs to be able find `Catch2`                                                                                                                                                                                                                                                                  | header-only                                                                                                                                                                                                                              | [Boost Software License 1.0](https://github.com/catchorg/Catch2/blob/devel/LICENSE.txt)                                                                                                                           |
 | [nlohmann-json](https://github.com/nlohmann/json)                                               | None                                                                                                                | CMake needs to be able find `nlohmann_json`                                                                                                                                                                                                                                                           | header-only                                                                                                                                                                                                                              | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                                                                                                             |
-| [MKL](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html) | Add path to MKL runtime library (`libmkl_rt.so` or `mkl_rt.dll`) into `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux) | <ul><li> Define environment variable `MKL_INCLUDE` to the include folder </li><li> Define environment variable `MKL_LIB` to the lib folder (`.lib` or `.so`) </li><li> Add path to MKL runtime library (`libmkl_rt.so` or `mkl_rt.dll`) into `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux) </li></ul> | Optional for use of MKL PARDISO sparse solver. | [Intel Simplified Software License (proprietary license)](https://www.intel.com/content/www/us/en/developer/articles/license/onemkl-license-faq.html) |
 
 \* The environment variables should point to the root include folder of the library, not a subfolder. For example in the
 path `BOOST_INCLUDE` there should be a folder called `boost` which has all the `boost` header files.
@@ -117,11 +115,10 @@ library `power_grid_model`. There are two sub-project defined in the root cmake 
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. When you
 use `cmake build` for the root cmake file, the following additional options are available besides the standard cmake
-option. If no option is defined, the cmake project will build the unit tests with *Eigen sparse solver*.
+option. If no option is defined, the cmake project will build the unit tests.
 
 | Option                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `POWER_GRID_MODEL_SPARSE_SOLVER`   | Specify which sparse solver to use during the build. There are three options: <br> `EIGEN`: use built-in `SparseLU` solver of `eigen3`. <br> `MKL`: use MKL PARDISO solver and link MKL library at link-time. <br> `MKL_RUNTIME`:  build the project using both Eigen sparse solver and MKL PARDISO solver. The MKL library `mkl_rt` is loaded at runtime. If the MKL library cannot be found, it falls back to the built-in Eigen sparse solver. This is the build option for Python package. |
 | `POWER_GRID_MODEL_BUILD_BENCHMARK` | When set to `1`, build the both sub-projects: unit test and benchmarks. Otherwise only build the unit test.                                                                                                                                                                                                                                                                                                                                                                                    |
 
 # Example Setup for Ubuntu 20.04 (in WSL or physical/virtual machine)
@@ -140,11 +137,6 @@ export VCPKG_FEATURE_FLAGS=-binarycaching
 export VCPKG_ROOT=${HOME}/vcpkg
 export EIGEN_INCLUDE=${VCPKG_ROOT}/installed/x64-linux/include/eigen3
 export BOOST_INCLUDE=${VCPKG_ROOT}/installed/x64-linux/include
-export MKL_THREADING_LAYER=SEQUENTIAL
-export MKL_INTERFACE_LAYER=LP64
-export LD_LIBRARY_PATH=${HOME}/.local/lib:${LD_LIBRARY_PATH}
-export MKL_LIB=${HOME}/.local/lib
-export MKL_INCLUDE=${HOME}/.local/include
 ```
 
 ## Ubuntu Software Packages
@@ -171,17 +163,6 @@ cd vcpkg
 
 **The installation of `boost` will take a long time, be patient**
 
-## MKL
-
-The easiest way to install `mkl` is through `pip`. Since you can have multiple Python environment which may depend on a
-single `mkl` library. It is better to install `mkl` without virtual environment. Make sure your current shell is **NOT**
-in a virtual environment (no parentheses before the prompt). Without `sudo`, it will install the `mkl` into the
-folder `${HOME}/.local`.
-
-```shell
-python3.9 -m pip install mkl mkl-include mkl-devel
-```
-
 ## Build Python Library from Source
 
 It is recommended to create a virtual environment. Clone repository, create and activate virtual environment, and
@@ -205,23 +186,20 @@ pytest
 ## Build CMake Project
 
 There is a convenient shell script to build the cmake project:
-[`build.sh`](../build.sh). You can study the file and write your own build script. Six configurations are pre-defined
+[`build.sh`](../build.sh). You can study the file and write your own build script. Four configurations are pre-defined
 for two input arguments, which will be passed into `cmake`. It includes debug or release build, as well as the option to
-use MKL at link-time, or at runtime, or not at all.
+build test coverage or not.
 
 * Option 1
     * Debug
     * Release
-* Option 2
-    * EIGEN
-    * MKL
-    * MKL_RUNTIME
+* Option 2 (optional)
+    * Coverage
 
-As an example, go to the root folder of repo. Use the following command to build the project with MKL at link-time and
-benchmark:
+As an example, go to the root folder of repo. Use the following command to build the project in release mode:
 
 ```shell
-./build.sh Release MKL
+./build.sh Release
 ```
 
 One can run the unit tests and benchmark by:
