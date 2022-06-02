@@ -72,7 +72,8 @@ struct PowerGridBenchmark {
         // random generator
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<Idx> clock_gen{0, 5}, load_type_gen{0, 2};
+        //std::uniform_int_distribution<Idx> clock_gen{0, 5}, load_type_gen{0, 2};
+        std::uniform_int_distribution<Idx> load_type_gen{0, 2};
         std::uniform_real_distribution<double> real_gen{0.8, 1.2};
 
         // input vector
@@ -92,7 +93,7 @@ struct PowerGridBenchmark {
             transformer_s.id = id_gen++;
             transformer_s.from_node = id_source_node;
             transformer_s.to_node = feeder_node.id;
-            transformer_s.clock = 1 + 2 * (IntS)clock_gen(gen);
+            // transformer_s.clock = 1 + 2 * (IntS)clock_gen(gen);
             node_input.push_back(feeder_node);
             transformer_input.push_back(transformer_s);
             Idx prev_node_id = feeder_node.id;
