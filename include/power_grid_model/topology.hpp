@@ -326,7 +326,6 @@ class Topology {
                     }
                 }
             }
-            return g;
         };
         ReorderGraph meshed_graph{n_cycle_node};
         build_graph(meshed_graph);
@@ -360,12 +359,16 @@ class Topology {
         BGL_FORALL_VERTICES(i, meshed_graph, ReorderGraph) {
             // double loop to loop all pairs of adjacent vertices
             BGL_FORALL_ADJ(i, j1, meshed_graph, ReorderGraph) {
+                // skip for already removed vertices
+                if (j1 < i) {
+                    continue;
+                }
                 BGL_FORALL_ADJ(i, j2, meshed_graph, ReorderGraph) {
                     // no self edges
                     assert(i != j1);
                     assert(i != j2);
                     // skip for already removed vertices
-                    if (j1 < i || j2 < i) {
+                    if (j2 < i) {
                         continue;
                     }
                     // only keep pair with j1 < j2

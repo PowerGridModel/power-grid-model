@@ -265,19 +265,19 @@ int main(int, char**) {
 #ifndef NDEBUG
     constexpr power_grid_model::Idx n_node = 100;
 #else
-    constexpr power_grid_model::Idx n_node = 1000000;
+    constexpr power_grid_model::Idx n_node = 100000;
 #endif
     using power_grid_model::CalculationMethod;
     power_grid_model::PowerGridBenchmark benchmarker{};
-    benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, false);
-    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, false);
-    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, false);
-    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, false);
+    //benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, false);
+    //benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, false);
+    //benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, false);
+    //benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, false);
 
     benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, true);
-    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
-    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
-    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
+    //benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
+    //benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
+    //benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
 
     return 0;
 }
