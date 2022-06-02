@@ -16,7 +16,7 @@ struct PowerGridBenchmark {
     PowerGridBenchmark() : main_model{50.0} {
     }
 
-    void generate_network(Idx n_nodes) {
+    void generate_network(Idx n_nodes, bool meshed) {
         sym_load_input.clear();
         asym_load_input.clear();
         transformer_input.clear();
@@ -80,6 +80,9 @@ struct PowerGridBenchmark {
         source_input = {source};
         link_input = {link_1, link_2, link_3};
 
+        // vector of node ids at far end
+        IdxVector far_end_nodes;
+
         // current id
         Idx id_gen = 10;
         for (Idx i = 0; i < n_feeders; i++) {
@@ -141,6 +144,29 @@ struct PowerGridBenchmark {
                 asym_load_input.push_back(asym_load_s);
                 prev_node_id = current_node_id;
             }
+            // far end nodes
+            far_end_nodes.push_back(node_input.back().id);
+        }
+        // add loop if needed and there are more than one feeder
+        if (n_feeders > 1 && meshed) {
+            far_end_nodes.push_back(far_end_nodes.front());
+            // loop all far end nodes
+            for (auto it = far_end_nodes.cbegin(); it != far_end_nodes.cend() - 1; ++it) {
+                // line
+                LineInput line_s = line;
+                line_s.id = id_gen++;
+                line_s.from_node = *it;
+                line_s.to_node = *(it + 1);
+                // scale r1, x1, r0, x0
+                double const cable_ratio = real_gen(gen);
+                line_s.r1 *= cable_ratio;
+                line_s.x1 *= cable_ratio;
+                line_s.c1 *= cable_ratio;
+                line_s.r0 *= cable_ratio;
+                line_s.x0 *= cable_ratio;
+                line_s.c0 *= cable_ratio;
+                line_input.push_back(line_s);
+            }
         }
     }
 
@@ -175,10 +201,11 @@ struct PowerGridBenchmark {
         std::cout << "Min loading: " << min_l->loading << ", max loading: " << max_l->loading << '\n';
     }
 
-    void run_benchmark(Idx n_node, bool sym, CalculationMethod calculation_method) {
+    void run_benchmark(Idx n_node, bool sym, CalculationMethod calculation_method, bool meshed) {
         CalculationInfo info;
-        generate_network(n_node);
+        generate_network(n_node, meshed);
         std::string title = "Benchmark case: ";
+        title += meshed ? "meshed grid, " : "radial grid, ";
         title += sym ? "symmetric, " : "asymmetric, ";
         title += calculation_method == CalculationMethod::newton_raphson ? "Newton-Raphson method" : "Linear method";
         std::cout << "=============" << title << "=============\n";
@@ -241,10 +268,15 @@ int main(int, char**) {
 #endif
     using power_grid_model::CalculationMethod;
     power_grid_model::PowerGridBenchmark benchmarker{};
-    benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson);
-    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear);
-    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson);
-    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, false);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, false);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, false);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, false);
+
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, true);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
 
     return 0;
 }
