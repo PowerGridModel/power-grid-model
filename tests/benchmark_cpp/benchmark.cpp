@@ -197,9 +197,12 @@ struct PowerGridBenchmark {
         std::vector<ApplianceOutput<sym>> appliance(source_input.size() + sym_load_input.size() +
                                                     asym_load_input.size());
         auto const math_output = main_model.calculate_power_flow<sym>(1e-8, 20, calculation_method);
-        main_model.output_result<sym, Node>(math_output, node.begin());
-        main_model.output_result<sym, Branch>(math_output, branch.begin());
-        main_model.output_result<sym, Appliance>(math_output, appliance.begin());
+        {
+            Timer t_output(info, 3000, "Calculate output");
+            main_model.output_result<sym, Node>(math_output, node.begin());
+            main_model.output_result<sym, Branch>(math_output, branch.begin());
+            main_model.output_result<sym, Appliance>(math_output, appliance.begin());
+        }
         CalculationInfo info_extra = main_model.calculation_info();
         info.merge(info_extra);
         std::cout << "Number of nodes: " << node.size() << '\n';
