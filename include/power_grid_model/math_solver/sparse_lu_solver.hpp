@@ -70,7 +70,6 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_tensor_lu_t<Tens
 
 template <class Tensor, class RHSVector, class XVector>
 class SparseLUSolver {
-   public:
     using entry_trait = sparse_lu_entry_trait<Tensor, RHSVector, XVector>;
     static constexpr bool is_block = entry_trait::is_block;
     static constexpr Idx block_size = entry_trait::block_size;
@@ -79,6 +78,7 @@ class SparseLUSolver {
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
 
+   public:
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,
                    std::shared_ptr<IdxVector const> const& col_indices, std::shared_ptr<IdxVector const> const& diag_lu,
                    std::shared_ptr<IdxVector const> const& data_mapping)
