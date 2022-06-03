@@ -10,7 +10,13 @@
 
 namespace power_grid_model {
 
+#ifndef NDEBUG
 constexpr Idx nodes_per_feeder = 10;
+#else
+constexpr Idx nodes_per_feeder = 100;
+#endif
+
+constexpr Idx ring_node_pos = 2;
 
 struct PowerGridBenchmark {
     PowerGridBenchmark() : main_model{50.0} {
@@ -40,7 +46,7 @@ struct PowerGridBenchmark {
         SymLoadGenInput const sym_load{{{{0}, 0, true}, LoadGenType::const_i}, 0.4e6, 0.3e6};
         AsymLoadGenInput const asym_load{
             {{{0}, 0, true}, LoadGenType::const_i}, RealValue<false>{0.0}, RealValue<false>{0.0}};
-        // transformer, 150/10.5kV, 20MVA, uk=20.3%
+        // transformer, 150/10.5kV, 30MVA, uk=20.3%
         TransformerInput const tranformer{{{0}, 0, 0, true, true},
                                           150.0e3,
                                           10.5e3,
@@ -66,15 +72,15 @@ struct PowerGridBenchmark {
                                           nan,
                                           nan,
                                           nan};
-        // cable 630Al XLPE 10kV with neutral conductor
+        // cable 630Al XLPE 10kV with neutral conductor, 1 km
         LineInput const line{{{0}, 0, 0, true, true}, 0.063, 0.103, 0.4e-6, 0.0, 0.156, 0.1, 0.66e-6, 0.0, 1e3};
 
         // random generator
         std::random_device rd;
         std::mt19937 gen(rd());
-        // std::uniform_int_distribution<Idx> clock_gen{0, 5}, load_type_gen{0, 2};
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
-        std::uniform_real_distribution<double> real_gen{0.8, 1.2};
+        // total 10 km feeder, divided by nodes per feeder
+        std::uniform_real_distribution<double> real_gen{0.8 * 10.0 / nodes_per_feeder, 1.2 * 10.0 / nodes_per_feeder};
 
         // input vector
         node_input = {source_node, cycle_node_1, cycle_node_2};
@@ -82,7 +88,7 @@ struct PowerGridBenchmark {
         link_input = {link_1, link_2, link_3};
 
         // vector of node ids at far end
-        IdxVector far_end_nodes;
+        IdxVector rind_nodes;
 
         // current id
         Idx id_gen = 10;
@@ -93,7 +99,6 @@ struct PowerGridBenchmark {
             transformer_s.id = id_gen++;
             transformer_s.from_node = id_source_node;
             transformer_s.to_node = feeder_node.id;
-            // transformer_s.clock = 1 + 2 * (IntS)clock_gen(gen);
             node_input.push_back(feeder_node);
             transformer_input.push_back(transformer_s);
             Idx prev_node_id = feeder_node.id;
@@ -144,15 +149,17 @@ struct PowerGridBenchmark {
                 sym_load_input.push_back(sym_load_s);
                 asym_load_input.push_back(asym_load_s);
                 prev_node_id = current_node_id;
+                // push to rind node
+                if (j == ring_node_pos) {
+                    rind_nodes.push_back(node_input.back().id);
+                }
             }
-            // far end nodes
-            far_end_nodes.push_back(node_input.back().id);
         }
-        // add loop if needed and there are more than one feeder
-        if (n_feeders > 1 && meshed) {
-            far_end_nodes.push_back(far_end_nodes.front());
+        // add loop if needed, and there are more than one feeder, and there are ring nodes
+        if (n_feeders > 1 && meshed && !rind_nodes.empty()) {
+            rind_nodes.push_back(rind_nodes.front());
             // loop all far end nodes
-            for (auto it = far_end_nodes.cbegin(); it != far_end_nodes.cend() - 1; ++it) {
+            for (auto it = rind_nodes.cbegin(); it != rind_nodes.cend() - 1; ++it) {
                 // line
                 LineInput line_s = line;
                 line_s.id = id_gen++;
@@ -265,19 +272,20 @@ int main(int, char**) {
 #ifndef NDEBUG
     constexpr power_grid_model::Idx n_node = 100;
 #else
-    constexpr power_grid_model::Idx n_node = 100000;
+    constexpr power_grid_model::Idx n_node = 1000000;
 #endif
     using power_grid_model::CalculationMethod;
     power_grid_model::PowerGridBenchmark benchmarker{};
-    //benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, false);
-    //benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, false);
-    //benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, false);
-    //benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, false);
-
+    // radial
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, false);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, false);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, false);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, false);
+    // with meshed ring
     benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, true);
-    //benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
-    //benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
-    //benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
 
     return 0;
 }
