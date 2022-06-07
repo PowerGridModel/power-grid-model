@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "catch2/catch_test_macros.hpp"
 #include "power_grid_model/math_solver/y_bus.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 

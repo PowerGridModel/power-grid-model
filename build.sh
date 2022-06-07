@@ -25,23 +25,12 @@ fi
 BUILD_DIR=cpp_build_$1
 echo "Build dir: ${BUILD_DIR}"
 
-if [[ ! -z "${VCPKG_ROOT}" ]]; then
-  PATH_FOR_CMAKE=-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
-elif [[ ! -z "${CMAKE_PREFIX_PATH}" ]]; then
-  PATH_FOR_CMAKE=-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-else 
-  PATH_FOR_CMAKE=
-fi
-
-echo ${PATH_FOR_CMAKE}
-
 rm -rf ${BUILD_DIR}/
 mkdir ${BUILD_DIR}
 cd ${BUILD_DIR}
 # generate
 cmake .. -GNinja \
     -DCMAKE_BUILD_TYPE=$1 \
-    ${PATH_FOR_CMAKE} \
     -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 \
     ${BUILD_COVERAGE}
 # build

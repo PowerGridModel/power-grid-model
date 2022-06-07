@@ -17,7 +17,7 @@ jobs:
   sonar-cloud:
     name: SonarCloud
     runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env-sonar:latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env-sonar:catch2-v3-remove-mkl
     env:
       SONAR_SCANNER_VERSION: 4.4.0.2170
       SONAR_SERVER_URL: "https://sonarcloud.io"

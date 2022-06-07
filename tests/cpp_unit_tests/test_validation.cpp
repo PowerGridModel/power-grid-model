@@ -10,7 +10,7 @@
 #include <iostream>
 #include <regex>
 
-#include "catch2/catch.hpp"
+#include "catch2/catch_test_macros.hpp"
 #include "nlohmann/json.hpp"
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"

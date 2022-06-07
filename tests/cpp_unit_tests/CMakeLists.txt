@@ -8,7 +8,6 @@ find_package(Catch2 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 set(PROJECT_SOURCES
- 	test_power_grid_model.cpp
  	test_main_model_se.cpp
  	test_main_model.cpp
 	test_main_model_static.cpp
@@ -36,7 +35,7 @@ add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
 
 target_link_libraries(power_grid_model_unit_tests
 	PRIVATE power_grid_model
-	PRIVATE Catch2::Catch2
+	PRIVATE Catch2::Catch2WithMain
 	PRIVATE nlohmann_json nlohmann_json::nlohmann_json
 )
 target_compile_definitions(power_grid_model_unit_tests PRIVATE CATCH_CONFIG_CONSOLE_WIDTH=120)

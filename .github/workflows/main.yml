@@ -23,7 +23,7 @@ jobs:
 
   build-cpp-test-linux:
     runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
+    container: ghcr.io/alliander-opensource/power-grid-model-build-env:catch2-v3-remove-mkl
     strategy:
       matrix:
         build-option: [ Debug, Release ]
@@ -40,6 +40,8 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
+    env:
+      CMAKE_PREFIX_PATH: C:\libs\cpp_pkgs\Library
 
     steps:
       - uses: actions/checkout@v3
@@ -49,23 +51,20 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Install conda environment
-        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json catch2==2.13.9
+          conda create --yes -p C:\libs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json catch2
 
       - name: Build and test
         run: |
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
           mkdir cpp_build_${{ matrix.build-option }}
           cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
           cmake .. `
             -G "Ninja" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} `
-            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
             -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
           # build
           cmake --build . --verbose
@@ -87,10 +86,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
-        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json 
-          curl https://raw.githubusercontent.com/Homebrew/homebrew-core/5e5abb11bf49787d01164c4066119365262c21ed/Formula/catch2.rb > $(find $(brew --repository) -name catch2.rb) && brew reinstall catch2
+          brew install ninja boost eigen nlohmann-json catch2
 
       - name: Build and test
         run: |

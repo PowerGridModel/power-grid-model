@@ -9,8 +9,7 @@
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1",
       "buildCommandArgs": "-v",
-      "ctestCommandArgs": "",
-      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+      "ctestCommandArgs": ""
     },
     {
       "name": "x64-Release",
@@ -21,8 +20,7 @@
       "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ],
-      "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+      "inheritEnvironments": [ "msvc_x64_x64" ]
     }
   ]
 }

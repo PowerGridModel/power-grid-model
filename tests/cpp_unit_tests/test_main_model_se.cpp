@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "catch2/catch_test_macros.hpp"
 #include "power_grid_model/main_model.hpp"
 
 #define s3 (1.7320508075688773433)  // sqrt(3)
