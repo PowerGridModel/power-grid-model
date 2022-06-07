@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "catch2/catch_approx.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"

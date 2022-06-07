@@ -10,13 +10,13 @@
 #include <iostream>
 #include <regex>
 
+#include "catch2/catch_approx.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "nlohmann/json.hpp"
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model/container.hpp"
 #include "power_grid_model/main_model.hpp"
-using namespace Catch::literals;
 
 namespace power_grid_model {
 

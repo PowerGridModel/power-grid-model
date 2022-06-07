@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "catch2/catch_approx.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "power_grid_model/auxiliary/output.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
-using namespace Catch::literals;
 
 namespace power_grid_model {
 
