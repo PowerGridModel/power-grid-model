@@ -180,8 +180,10 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test asym voltage sensor with sym param calculation
-        CHECK(real(asym_sensor_sym_param.value) == Catch::Approx((1.01 * cos(0.1) + 1.02 * cos(0.2) + 1.03 * cos(0.3)) / 3));
-        CHECK(imag(asym_sensor_sym_param.value) == Catch::Approx((1.01 * sin(0.1) + 1.02 * sin(0.2) + 1.03 * sin(0.3)) / 3));
+        CHECK(real(asym_sensor_sym_param.value) ==
+              Catch::Approx((1.01 * cos(0.1) + 1.02 * cos(0.2) + 1.03 * cos(0.3)) / 3));
+        CHECK(imag(asym_sensor_sym_param.value) ==
+              Catch::Approx((1.01 * sin(0.1) + 1.02 * sin(0.2) + 1.03 * sin(0.3)) / 3));
         CHECK(asym_sensor_sym_param.variance == Catch::Approx(3.0e-8));
 
         // Test asym voltage sensor with asym param calculation

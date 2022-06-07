@@ -483,15 +483,21 @@ TEST_CASE("Test main model") {
             CHECK(sym_voltage_sensor_asym_output[0].u_residual[0] == Catch::Approx(10.1e3 / sqrt3 - asym_node[0].u[0]));
             CHECK(sym_voltage_sensor_asym_output[0].u_residual[1] == Catch::Approx(10.1e3 / sqrt3 - asym_node[0].u[1]));
             CHECK(sym_voltage_sensor_asym_output[0].u_residual[2] == Catch::Approx(10.1e3 / sqrt3 - asym_node[0].u[2]));
-            CHECK(sym_voltage_sensor_asym_output[0].u_angle_residual[0] == Catch::Approx(0.1 - asym_node[0].u_angle[0]));
-            CHECK(sym_voltage_sensor_asym_output[0].u_angle_residual[1] == Catch::Approx(0.1 - asym_node[0].u_angle[1]));
-            CHECK(sym_voltage_sensor_asym_output[0].u_angle_residual[2] == Catch::Approx(0.1 - asym_node[0].u_angle[2]));
+            CHECK(sym_voltage_sensor_asym_output[0].u_angle_residual[0] ==
+                  Catch::Approx(0.1 - asym_node[0].u_angle[0]));
+            CHECK(sym_voltage_sensor_asym_output[0].u_angle_residual[1] ==
+                  Catch::Approx(0.1 - asym_node[0].u_angle[1]));
+            CHECK(sym_voltage_sensor_asym_output[0].u_angle_residual[2] ==
+                  Catch::Approx(0.1 - asym_node[0].u_angle[2]));
             CHECK(sym_voltage_sensor_asym_output[1].u_residual[0] == Catch::Approx(10.2e3 / sqrt3 - asym_node[1].u[0]));
             CHECK(sym_voltage_sensor_asym_output[1].u_residual[1] == Catch::Approx(10.2e3 / sqrt3 - asym_node[1].u[1]));
             CHECK(sym_voltage_sensor_asym_output[1].u_residual[2] == Catch::Approx(10.2e3 / sqrt3 - asym_node[1].u[2]));
-            CHECK(sym_voltage_sensor_asym_output[1].u_angle_residual[0] == Catch::Approx(0.2 - asym_node[1].u_angle[0]));
-            CHECK(sym_voltage_sensor_asym_output[1].u_angle_residual[1] == Catch::Approx(0.2 - asym_node[1].u_angle[1]));
-            CHECK(sym_voltage_sensor_asym_output[1].u_angle_residual[2] == Catch::Approx(0.2 - asym_node[1].u_angle[2]));
+            CHECK(sym_voltage_sensor_asym_output[1].u_angle_residual[0] ==
+                  Catch::Approx(0.2 - asym_node[1].u_angle[0]));
+            CHECK(sym_voltage_sensor_asym_output[1].u_angle_residual[1] ==
+                  Catch::Approx(0.2 - asym_node[1].u_angle[1]));
+            CHECK(sym_voltage_sensor_asym_output[1].u_angle_residual[2] ==
+                  Catch::Approx(0.2 - asym_node[1].u_angle[2]));
         }
 
         // Note that only 1/3 of the values is being checked
