@@ -40,8 +40,8 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensorOutput<true> vs_output = voltage_sensor.get_null_output<true>();
         CHECK(vs_output.id == 12);
         CHECK(vs_output.energized == 0);
-        CHECK(vs_output.u_residual == Approx(0.0));
-        CHECK(vs_output.u_angle_residual == Approx(0.0));
+        CHECK(vs_output.u_residual == Catch::Approx(0.0));
+        CHECK(vs_output.u_angle_residual == Catch::Approx(0.0));
     }
 
     SECTION("Test voltage sensor update - sym") {
@@ -61,7 +61,7 @@ TEST_CASE("Test voltage sensor") {
 
         ComplexValue<true> const expected_param_value{0.5 * exp(1i * 2.0)};
         SensorCalcParam<true> param = voltage_sensor.calc_param<true>();
-        CHECK(param.variance == Approx(2.25));
+        CHECK(param.variance == Catch::Approx(2.25));
         CHECK(param.value == expected_param_value);
     }
 
@@ -80,13 +80,13 @@ TEST_CASE("Test voltage sensor") {
         CHECK(update.topo == false);
 
         SensorCalcParam<false> param = voltage_sensor.calc_param<false>();
-        CHECK(param.variance == Approx(6.75));
+        CHECK(param.variance == Catch::Approx(6.75));
 
         ComplexValue<false> const expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
                                                        0.6 * sqrt(3) * exp(1i * 2.2)};
-        CHECK(cabs(param.value[0]) == Approx(cabs(expected_param_value[0])));
-        CHECK(cabs(param.value[1]) == Approx(cabs(expected_param_value[1])));
-        CHECK(cabs(param.value[2]) == Approx(cabs(expected_param_value[2])));
+        CHECK(cabs(param.value[0]) == Catch::Approx(cabs(expected_param_value[0])));
+        CHECK(cabs(param.value[1]) == Catch::Approx(cabs(expected_param_value[1])));
+        CHECK(cabs(param.value[2]) == Catch::Approx(cabs(expected_param_value[2])));
     }
 
     SECTION("Test sym/asym calc_param for symmetric voltage sensor, angle = 0") {
@@ -108,21 +108,21 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> const sym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test sym voltage sensor with sym param calculation
-        CHECK(real(sym_sensor_sym_param.value) == Approx(1.01));
-        CHECK(imag(sym_sensor_sym_param.value) == Approx(0.0));
-        CHECK(sym_sensor_sym_param.variance == Approx(1.0e-8));
+        CHECK(real(sym_sensor_sym_param.value) == Catch::Approx(1.01));
+        CHECK(imag(sym_sensor_sym_param.value) == Catch::Approx(0.0));
+        CHECK(sym_sensor_sym_param.variance == Catch::Approx(1.0e-8));
 
         // Test sym voltage sensor with asym param calculation
-        CHECK(real(sym_sensor_asym_param.value[0]) == Approx(1.01));
-        CHECK(imag(sym_sensor_asym_param.value[0]) == Approx(0.0));
+        CHECK(real(sym_sensor_asym_param.value[0]) == Catch::Approx(1.01));
+        CHECK(imag(sym_sensor_asym_param.value[0]) == Catch::Approx(0.0));
 
-        CHECK(cabs(sym_sensor_asym_param.value[1]) == Approx(1.01));
-        CHECK(arg(sym_sensor_asym_param.value[1]) == Approx(-2 * pi / 3));
+        CHECK(cabs(sym_sensor_asym_param.value[1]) == Catch::Approx(1.01));
+        CHECK(arg(sym_sensor_asym_param.value[1]) == Catch::Approx(-2 * pi / 3));
 
-        CHECK(cabs(sym_sensor_asym_param.value[2]) == Approx(1.01));
-        CHECK(arg(sym_sensor_asym_param.value[2]) == Approx(2 * pi / 3));
+        CHECK(cabs(sym_sensor_asym_param.value[2]) == Catch::Approx(1.01));
+        CHECK(arg(sym_sensor_asym_param.value[2]) == Catch::Approx(2 * pi / 3));
 
-        CHECK(sym_sensor_asym_param.variance == Approx(1.0e-8));
+        CHECK(sym_sensor_asym_param.variance == Catch::Approx(1.0e-8));
     }
 
     SECTION("Test sym/asym calc_param for symmetric voltage sensor, angle = nan") {
@@ -144,21 +144,21 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> const sym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test sym voltage sensor with sym param calculation
-        CHECK(real(sym_sensor_sym_param.value) == Approx(1.01));
+        CHECK(real(sym_sensor_sym_param.value) == Catch::Approx(1.01));
         CHECK(is_nan(imag(sym_sensor_sym_param.value)));
-        CHECK(sym_sensor_sym_param.variance == Approx(1.0e-8));
+        CHECK(sym_sensor_sym_param.variance == Catch::Approx(1.0e-8));
 
         // Test sym voltage sensor with asym param calculation
-        CHECK(real(sym_sensor_asym_param.value[0]) == Approx(1.01));
+        CHECK(real(sym_sensor_asym_param.value[0]) == Catch::Approx(1.01));
         CHECK(is_nan(imag(sym_sensor_asym_param.value[0])));
 
-        CHECK(real(sym_sensor_asym_param.value[1]) == Approx(1.01));
+        CHECK(real(sym_sensor_asym_param.value[1]) == Catch::Approx(1.01));
         CHECK(is_nan(imag(sym_sensor_asym_param.value[1])));
 
-        CHECK(real(sym_sensor_asym_param.value[2]) == Approx(1.01));
+        CHECK(real(sym_sensor_asym_param.value[2]) == Catch::Approx(1.01));
         CHECK(is_nan(imag(sym_sensor_asym_param.value[2])));
 
-        CHECK(sym_sensor_asym_param.variance == Approx(1.0e-8));
+        CHECK(sym_sensor_asym_param.variance == Catch::Approx(1.0e-8));
     }
 
     SECTION("Test sym/asym calc_param for asymmetric voltage sensor, angle") {
@@ -180,21 +180,21 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test asym voltage sensor with sym param calculation
-        CHECK(real(asym_sensor_sym_param.value) == Approx((1.01 * cos(0.1) + 1.02 * cos(0.2) + 1.03 * cos(0.3)) / 3));
-        CHECK(imag(asym_sensor_sym_param.value) == Approx((1.01 * sin(0.1) + 1.02 * sin(0.2) + 1.03 * sin(0.3)) / 3));
-        CHECK(asym_sensor_sym_param.variance == Approx(3.0e-8));
+        CHECK(real(asym_sensor_sym_param.value) == Catch::Approx((1.01 * cos(0.1) + 1.02 * cos(0.2) + 1.03 * cos(0.3)) / 3));
+        CHECK(imag(asym_sensor_sym_param.value) == Catch::Approx((1.01 * sin(0.1) + 1.02 * sin(0.2) + 1.03 * sin(0.3)) / 3));
+        CHECK(asym_sensor_sym_param.variance == Catch::Approx(3.0e-8));
 
         // Test asym voltage sensor with asym param calculation
-        CHECK(cabs(asym_sensor_asym_param.value[0]) == Approx(1.01));
-        CHECK(arg(asym_sensor_asym_param.value[0]) == Approx(0.1));
+        CHECK(cabs(asym_sensor_asym_param.value[0]) == Catch::Approx(1.01));
+        CHECK(arg(asym_sensor_asym_param.value[0]) == Catch::Approx(0.1));
 
-        CHECK(cabs(asym_sensor_asym_param.value[1]) == Approx(1.02));
-        CHECK(arg(asym_sensor_asym_param.value[1]) == Approx(-deg_120 + 0.2));
+        CHECK(cabs(asym_sensor_asym_param.value[1]) == Catch::Approx(1.02));
+        CHECK(arg(asym_sensor_asym_param.value[1]) == Catch::Approx(-deg_120 + 0.2));
 
-        CHECK(cabs(asym_sensor_asym_param.value[2]) == Approx(1.03));
-        CHECK(arg(asym_sensor_asym_param.value[2]) == Approx(deg_120 + 0.3));
+        CHECK(cabs(asym_sensor_asym_param.value[2]) == Catch::Approx(1.03));
+        CHECK(arg(asym_sensor_asym_param.value[2]) == Catch::Approx(deg_120 + 0.3));
 
-        CHECK(asym_sensor_asym_param.variance == Approx(3.0e-8));
+        CHECK(asym_sensor_asym_param.variance == Catch::Approx(3.0e-8));
     }
 
     SECTION("Test sym/asym calc_param for asymmetric voltage sensor, angle = nan") {
@@ -216,21 +216,21 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test asym voltage sensor with sym param calculation
-        CHECK(real(asym_sensor_sym_param.value) == Approx((1.01 + 1.02 + 1.03) / 3));
+        CHECK(real(asym_sensor_sym_param.value) == Catch::Approx((1.01 + 1.02 + 1.03) / 3));
         CHECK(is_nan(imag(asym_sensor_sym_param.value)));
-        CHECK(asym_sensor_sym_param.variance == Approx(3.0e-8));
+        CHECK(asym_sensor_sym_param.variance == Catch::Approx(3.0e-8));
 
         // Test asym voltage sensor with asym param calculation
-        CHECK(real(asym_sensor_asym_param.value[0]) == Approx(1.01));
+        CHECK(real(asym_sensor_asym_param.value[0]) == Catch::Approx(1.01));
         CHECK(is_nan(imag(asym_sensor_asym_param.value[0])));
 
-        CHECK(real(asym_sensor_asym_param.value[1]) == Approx(1.02));
+        CHECK(real(asym_sensor_asym_param.value[1]) == Catch::Approx(1.02));
         CHECK(is_nan(imag(asym_sensor_asym_param.value[1])));
 
-        CHECK(real(asym_sensor_asym_param.value[2]) == Approx(1.03));
+        CHECK(real(asym_sensor_asym_param.value[2]) == Catch::Approx(1.03));
         CHECK(is_nan(imag(asym_sensor_asym_param.value[2])));
 
-        CHECK(asym_sensor_asym_param.variance == Approx(3.0e-8));
+        CHECK(asym_sensor_asym_param.variance == Catch::Approx(3.0e-8));
     }
 
     SECTION("Test get_output sym/asym for symmetric voltage sensor") {
@@ -258,18 +258,18 @@ TEST_CASE("Test voltage sensor") {
             // Check sym output
             CHECK(sym_voltage_sensor_sym_output.id == 0);
             CHECK(sym_voltage_sensor_sym_output.energized == 1);
-            CHECK(sym_voltage_sensor_sym_output.u_residual == Approx(-100.0));
-            CHECK(sym_voltage_sensor_sym_output.u_angle_residual == Approx(-0.2));
+            CHECK(sym_voltage_sensor_sym_output.u_residual == Catch::Approx(-100.0));
+            CHECK(sym_voltage_sensor_sym_output.u_angle_residual == Catch::Approx(-0.2));
 
             // Check asym output
             CHECK(sym_voltage_sensor_asym_output.id == 0);
             CHECK(sym_voltage_sensor_asym_output.energized == 1);
-            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == Approx(-100.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == Approx(-200.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == Approx(-300.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[0] == Approx(-0.2));
-            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[1] == Approx(-0.3));
-            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[2] == Approx(-0.4));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == Catch::Approx(-100.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == Catch::Approx(-200.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == Catch::Approx(-300.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[0] == Catch::Approx(-0.2));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[1] == Catch::Approx(-0.3));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[2] == Catch::Approx(-0.4));
         }
 
         SECTION("Angle = 0.2") {
@@ -296,18 +296,18 @@ TEST_CASE("Test voltage sensor") {
             // Check sym output
             CHECK(sym_voltage_sensor_sym_output.id == 0);
             CHECK(sym_voltage_sensor_sym_output.energized == 1);
-            CHECK(sym_voltage_sensor_sym_output.u_residual == Approx(-100.0));
-            CHECK(sym_voltage_sensor_sym_output.u_angle_residual == Approx(0.0).margin(1e-12));
+            CHECK(sym_voltage_sensor_sym_output.u_residual == Catch::Approx(-100.0));
+            CHECK(sym_voltage_sensor_sym_output.u_angle_residual == Catch::Approx(0.0).margin(1e-12));
 
             // Check asym output
             CHECK(sym_voltage_sensor_asym_output.id == 0);
             CHECK(sym_voltage_sensor_asym_output.energized == 1);
-            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == Approx(-100.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == Approx(-200.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == Approx(-300.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[0] == Approx(0.0).margin(1e-12));
-            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[1] == Approx(-0.1));
-            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[2] == Approx(-0.2));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == Catch::Approx(-100.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == Catch::Approx(-200.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == Catch::Approx(-300.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[0] == Catch::Approx(0.0).margin(1e-12));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[1] == Catch::Approx(-0.1));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[2] == Catch::Approx(-0.2));
         }
 
         SECTION("Angle = nan") {
@@ -334,15 +334,15 @@ TEST_CASE("Test voltage sensor") {
             // Check sym output
             CHECK(sym_voltage_sensor_sym_output.id == 0);
             CHECK(sym_voltage_sensor_sym_output.energized == 1);
-            CHECK(sym_voltage_sensor_sym_output.u_residual == Approx(-100.0));
+            CHECK(sym_voltage_sensor_sym_output.u_residual == Catch::Approx(-100.0));
             CHECK(is_nan(sym_voltage_sensor_sym_output.u_angle_residual));
 
             // Check asym output
             CHECK(sym_voltage_sensor_asym_output.id == 0);
             CHECK(sym_voltage_sensor_asym_output.energized == 1);
-            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == Approx(-100.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == Approx(-200.0 / sqrt3));
-            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == Approx(-300.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == Catch::Approx(-100.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == Catch::Approx(-200.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == Catch::Approx(-300.0 / sqrt3));
             CHECK(is_nan(sym_voltage_sensor_asym_output.u_angle_residual[0]));
             CHECK(is_nan(sym_voltage_sensor_asym_output.u_angle_residual[1]));
             CHECK(is_nan(sym_voltage_sensor_asym_output.u_angle_residual[2]));
@@ -378,18 +378,18 @@ TEST_CASE("Test voltage sensor") {
             CHECK(asym_voltage_sensor_sym_output.id == 0);
             CHECK(asym_voltage_sensor_sym_output.energized == 1);
             CHECK(asym_voltage_sensor_sym_output.u_residual ==
-                  Approx((cabs(u1_measured) - cabs(u_calc_sym)) * u_rated));
-            CHECK(asym_voltage_sensor_sym_output.u_angle_residual == Approx(arg(u1_measured) - 0.2));
+                  Catch::Approx((cabs(u1_measured) - cabs(u_calc_sym)) * u_rated));
+            CHECK(asym_voltage_sensor_sym_output.u_angle_residual == Catch::Approx(arg(u1_measured) - 0.2));
 
             // Check asym output
             CHECK(asym_voltage_sensor_asym_output.id == 0);
             CHECK(asym_voltage_sensor_asym_output.energized == 1);
-            CHECK(asym_voltage_sensor_asym_output.u_residual[0] == Approx(-100.0 / sqrt3));
-            CHECK(asym_voltage_sensor_asym_output.u_residual[1] == Approx(-200.0 / sqrt3));
-            CHECK(asym_voltage_sensor_asym_output.u_residual[2] == Approx(-300.0 / sqrt3));
-            CHECK(asym_voltage_sensor_asym_output.u_angle_residual[0] == Approx(-0.1));
-            CHECK(asym_voltage_sensor_asym_output.u_angle_residual[1] == Approx(-0.2));
-            CHECK(asym_voltage_sensor_asym_output.u_angle_residual[2] == Approx(-0.3));
+            CHECK(asym_voltage_sensor_asym_output.u_residual[0] == Catch::Approx(-100.0 / sqrt3));
+            CHECK(asym_voltage_sensor_asym_output.u_residual[1] == Catch::Approx(-200.0 / sqrt3));
+            CHECK(asym_voltage_sensor_asym_output.u_residual[2] == Catch::Approx(-300.0 / sqrt3));
+            CHECK(asym_voltage_sensor_asym_output.u_angle_residual[0] == Catch::Approx(-0.1));
+            CHECK(asym_voltage_sensor_asym_output.u_angle_residual[1] == Catch::Approx(-0.2));
+            CHECK(asym_voltage_sensor_asym_output.u_angle_residual[2] == Catch::Approx(-0.3));
         }
 
         SECTION("Angle = nan") {
@@ -418,15 +418,15 @@ TEST_CASE("Test voltage sensor") {
             // Check sym output
             CHECK(asym_voltage_sensor_sym_output.id == 0);
             CHECK(asym_voltage_sensor_sym_output.energized == 1);
-            CHECK(asym_voltage_sensor_sym_output.u_residual == Approx(0.0).margin(1e-6));
+            CHECK(asym_voltage_sensor_sym_output.u_residual == Catch::Approx(0.0).margin(1e-6));
             CHECK(is_nan(asym_voltage_sensor_sym_output.u_angle_residual));
 
             // Check asym output
             CHECK(asym_voltage_sensor_asym_output.id == 0);
             CHECK(asym_voltage_sensor_asym_output.energized == 1);
-            CHECK(asym_voltage_sensor_asym_output.u_residual[0] == Approx(-100.0 / sqrt3));
-            CHECK(asym_voltage_sensor_asym_output.u_residual[1] == Approx(-200.0 / sqrt3));
-            CHECK(asym_voltage_sensor_asym_output.u_residual[2] == Approx(-300.0 / sqrt3));
+            CHECK(asym_voltage_sensor_asym_output.u_residual[0] == Catch::Approx(-100.0 / sqrt3));
+            CHECK(asym_voltage_sensor_asym_output.u_residual[1] == Catch::Approx(-200.0 / sqrt3));
+            CHECK(asym_voltage_sensor_asym_output.u_residual[2] == Catch::Approx(-300.0 / sqrt3));
             CHECK(is_nan(asym_voltage_sensor_asym_output.u_angle_residual[0]));
             CHECK(is_nan(asym_voltage_sensor_asym_output.u_angle_residual[1]));
             CHECK(is_nan(asym_voltage_sensor_asym_output.u_angle_residual[2]));

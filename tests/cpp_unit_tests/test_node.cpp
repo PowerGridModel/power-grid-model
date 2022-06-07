@@ -21,9 +21,9 @@ TEST_CASE("Test node") {
     ComplexValue<false> u;
     u << 1.0, a2, a;
     auto asym_res = node.get_output<false>(u);
-    CHECK(asym_res.u(1) == Approx(10.0e3 / sqrt3));
-    CHECK(asym_res.u_angle(2) == Approx(-deg_240 + 2 * pi));
-    CHECK(asym_res.u_pu(0) == Approx(1.0));
+    CHECK(asym_res.u(1) == Catch::Approx(10.0e3 / sqrt3));
+    CHECK(asym_res.u_angle(2) == Catch::Approx(-deg_240 + 2 * pi));
+    CHECK(asym_res.u_pu(0) == Catch::Approx(1.0));
     // not energized
     asym_res = node.get_null_output<false>();
     CHECK(asym_res.u(0) == 0.0);

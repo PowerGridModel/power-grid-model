@@ -41,17 +41,17 @@ TEST_CASE("Test shunt") {
         ApplianceOutput<true> sym_result = shunt.get_output<true>(u);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
-        CHECK(sym_result.p == Approx(p));
-        CHECK(sym_result.q == Approx(q));
-        CHECK(sym_result.s == Approx(s));
-        CHECK(sym_result.i == Approx(i));
-        CHECK(sym_result.pf == Approx(pf));
+        CHECK(sym_result.p == Catch::Approx(p));
+        CHECK(sym_result.q == Catch::Approx(q));
+        CHECK(sym_result.s == Catch::Approx(s));
+        CHECK(sym_result.i == Catch::Approx(i));
+        CHECK(sym_result.pf == Catch::Approx(pf));
         ApplianceOutput<false> asym_result = shunt.get_output<false>(ua);
-        CHECK(asym_result.p(0) == Approx(p / 3));
-        CHECK(asym_result.q(1) == Approx(q / 3));
-        CHECK(asym_result.s(2) == Approx(s / 3));
-        CHECK(asym_result.i(0) == Approx(i));
-        CHECK(asym_result.pf(1) == Approx(pf));
+        CHECK(asym_result.p(0) == Catch::Approx(p / 3));
+        CHECK(asym_result.q(1) == Catch::Approx(q / 3));
+        CHECK(asym_result.s(2) == Catch::Approx(s / 3));
+        CHECK(asym_result.i(0) == Catch::Approx(i));
+        CHECK(asym_result.pf(1) == Catch::Approx(pf));
     }
 
     SECTION("Symmetric test results; s, i as input") {
@@ -61,11 +61,11 @@ TEST_CASE("Test shunt") {
         ApplianceOutput<true> sym_result = shunt.get_output<true>(appliance_math_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
-        CHECK(sym_result.p == Approx(-3.0 * base_power<true>));
-        CHECK(sym_result.q == Approx(-4.0 * base_power<true>));
-        CHECK(sym_result.s == Approx(cabs(3.0 + 4.0i) * base_power<true>));
-        CHECK(sym_result.i == Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(sym_result.pf == Approx(-3.0 / cabs(3.0 + 4.0i)));
+        CHECK(sym_result.p == Catch::Approx(-3.0 * base_power<true>));
+        CHECK(sym_result.q == Catch::Approx(-4.0 * base_power<true>));
+        CHECK(sym_result.s == Catch::Approx(cabs(3.0 + 4.0i) * base_power<true>));
+        CHECK(sym_result.i == Catch::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(sym_result.pf == Catch::Approx(-3.0 / cabs(3.0 + 4.0i)));
     }
 
     SECTION("Asymmetric test results; s, i as input") {
@@ -77,11 +77,11 @@ TEST_CASE("Test shunt") {
         ApplianceOutput<false> asym_result = shunt.get_output<false>(appliance_math_output_asym);
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
-        CHECK(asym_result.p(0) == Approx(-3.0 * base_power<false>));
-        CHECK(asym_result.q(1) == Approx(-4.0 * base_power<false>));
-        CHECK(asym_result.s(2) == Approx(5.0 * base_power<false>));
-        CHECK(asym_result.i(0) == Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(asym_result.pf(1) == Approx(-3.0 / cabs(3.0 + 4.0i)));
+        CHECK(asym_result.p(0) == Catch::Approx(-3.0 * base_power<false>));
+        CHECK(asym_result.q(1) == Catch::Approx(-4.0 * base_power<false>));
+        CHECK(asym_result.s(2) == Catch::Approx(5.0 * base_power<false>));
+        CHECK(asym_result.i(0) == Catch::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(asym_result.pf(1) == Catch::Approx(-3.0 / cabs(3.0 + 4.0i)));
     }
 
     SECTION("test change") {

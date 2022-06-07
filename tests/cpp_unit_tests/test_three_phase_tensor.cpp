@@ -21,7 +21,7 @@ TEST_CASE("Three phase tensor") {
         RealValue<false> vec3 = vec1 * vec2;
         CHECK(vec3(0) == 4);
         RealValue<false> vec4 = cos(vec1);
-        CHECK(vec4(0) == Approx(cos(1)));
+        CHECK(vec4(0) == Catch::Approx(cos(1)));
         RealValue<false> vec5 = vec1 / vec2;
         CHECK(vec5(1) == 0.4_a);
         ComplexValue<false> vec6 = vec1 * exp(1.0i * vec2);
@@ -113,9 +113,9 @@ TEST_CASE("Three phase tensor") {
         NodeOutput<false> asym{};
         CHECK(asym.id == 0);
         CHECK(asym.energized == 0);
-        CHECK(asym.u_pu(0) == Approx(0.0));
-        CHECK(asym.u(1) == Approx(0.0));
-        CHECK(asym.u_angle(2) == Approx(0.0));
+        CHECK(asym.u_pu(0) == Catch::Approx(0.0));
+        CHECK(asym.u(1) == Catch::Approx(0.0));
+        CHECK(asym.u_angle(2) == Catch::Approx(0.0));
     }
 
     SECTION("Test symmetrical matrix") {
@@ -124,7 +124,7 @@ TEST_CASE("Three phase tensor") {
         ComplexValue<false> uabc{1.0};
         ComplexValue<false> u012 = dot(sym1, uabc);
         CHECK(cabs(u012(0)) < numerical_tolerance);
-        CHECK(cabs(u012(1)) == Approx(1.0));
+        CHECK(cabs(u012(1)) == Catch::Approx(1.0));
         CHECK(cabs(u012(2)) < numerical_tolerance);
         ComplexValue<false> uabc1 = dot(sym, u012);
         CHECK((cabs(uabc1 - uabc) < numerical_tolerance).all());

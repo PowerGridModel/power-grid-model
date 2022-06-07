@@ -54,8 +54,8 @@ TEST_CASE("Test line") {
         CHECK(branch.from_status() == true);
         CHECK(branch.to_status() == true);
         CHECK(branch.branch_status() == true);
-        CHECK(branch.base_i_from() == Approx(base_i));
-        CHECK(branch.base_i_to() == Approx(base_i));
+        CHECK(branch.base_i_from() == Catch::Approx(base_i));
+        CHECK(branch.base_i_to() == Catch::Approx(base_i));
         CHECK(branch.phase_shift() == 0.0);
         CHECK(!branch.is_param_mutable());
     }
@@ -118,15 +118,15 @@ TEST_CASE("Test line") {
         BranchOutput<true> output = branch.get_output<true>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == Approx(loading));
-        CHECK(output.i_from == Approx(cabs(i1f)));
-        CHECK(output.i_to == Approx(cabs(i1t)));
-        CHECK(output.s_from == Approx(cabs(s_f)));
-        CHECK(output.s_to == Approx(cabs(s_t)));
-        CHECK(output.p_from == Approx(real(s_f)));
-        CHECK(output.p_to == Approx(real(s_t)));
-        CHECK(output.q_from == Approx(imag(s_f)));
-        CHECK(output.q_to == Approx(imag(s_t)));
+        CHECK(output.loading == Catch::Approx(loading));
+        CHECK(output.i_from == Catch::Approx(cabs(i1f)));
+        CHECK(output.i_to == Catch::Approx(cabs(i1t)));
+        CHECK(output.s_from == Catch::Approx(cabs(s_f)));
+        CHECK(output.s_to == Catch::Approx(cabs(s_t)));
+        CHECK(output.p_from == Catch::Approx(real(s_f)));
+        CHECK(output.p_to == Catch::Approx(real(s_t)));
+        CHECK(output.q_from == Catch::Approx(imag(s_f)));
+        CHECK(output.q_to == Catch::Approx(imag(s_t)));
     }
 
     SECTION("Symmetric results with direct power and current output") {
@@ -138,15 +138,15 @@ TEST_CASE("Test line") {
         BranchOutput<true> output = branch.get_output<true>(branch_math_output);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == Approx(cabs(2.0 - 1.0i) * base_i / input.i_n));
-        CHECK(output.i_from == Approx(cabs(1.0 - 2.0i) * base_i));
-        CHECK(output.i_to == Approx(cabs(2.0 - 1.0i) * base_i));
-        CHECK(output.s_from == Approx(cabs(1.0 - 1.5i) * base_power<true>));
-        CHECK(output.s_to == Approx(cabs(1.5 - 1.5i) * base_power<true>));
-        CHECK(output.p_from == Approx(1.0 * base_power<true>));
-        CHECK(output.p_to == Approx(1.5 * base_power<true>));
-        CHECK(output.q_from == Approx(-1.5 * base_power<true>));
-        CHECK(output.q_to == Approx(-1.5 * base_power<true>));
+        CHECK(output.loading == Catch::Approx(cabs(2.0 - 1.0i) * base_i / input.i_n));
+        CHECK(output.i_from == Catch::Approx(cabs(1.0 - 2.0i) * base_i));
+        CHECK(output.i_to == Catch::Approx(cabs(2.0 - 1.0i) * base_i));
+        CHECK(output.s_from == Catch::Approx(cabs(1.0 - 1.5i) * base_power<true>));
+        CHECK(output.s_to == Catch::Approx(cabs(1.5 - 1.5i) * base_power<true>));
+        CHECK(output.p_from == Catch::Approx(1.0 * base_power<true>));
+        CHECK(output.p_to == Catch::Approx(1.5 * base_power<true>));
+        CHECK(output.q_from == Catch::Approx(-1.5 * base_power<true>));
+        CHECK(output.q_to == Catch::Approx(-1.5 * base_power<true>));
     }
 
     SECTION("No source results") {
@@ -168,15 +168,15 @@ TEST_CASE("Test line") {
         BranchOutput<false> output = branch.get_output<false>(uaf, uat);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == Approx(loading));
-        CHECK(output.i_from(0) == Approx(cabs(i1f)));
-        CHECK(output.i_to(1) == Approx(cabs(i1t)));
-        CHECK(output.s_from(2) == Approx(cabs(s_f) / 3.0));
-        CHECK(output.s_to(0) == Approx(cabs(s_t) / 3.0));
-        CHECK(output.p_from(1) == Approx(real(s_f) / 3.0));
-        CHECK(output.p_to(2) == Approx(real(s_t) / 3.0));
-        CHECK(output.q_from(0) == Approx(imag(s_f) / 3.0));
-        CHECK(output.q_to(1) == Approx(imag(s_t) / 3.0));
+        CHECK(output.loading == Catch::Approx(loading));
+        CHECK(output.i_from(0) == Catch::Approx(cabs(i1f)));
+        CHECK(output.i_to(1) == Catch::Approx(cabs(i1t)));
+        CHECK(output.s_from(2) == Catch::Approx(cabs(s_f) / 3.0));
+        CHECK(output.s_to(0) == Catch::Approx(cabs(s_t) / 3.0));
+        CHECK(output.p_from(1) == Catch::Approx(real(s_f) / 3.0));
+        CHECK(output.p_to(2) == Catch::Approx(real(s_t) / 3.0));
+        CHECK(output.q_from(0) == Catch::Approx(imag(s_f) / 3.0));
+        CHECK(output.q_to(1) == Catch::Approx(imag(s_t) / 3.0));
     }
 }
 

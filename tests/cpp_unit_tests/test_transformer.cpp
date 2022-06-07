@@ -123,8 +123,8 @@ TEST_CASE("Test transformer") {
     vec_asym.push_back({{y1, y4, y4t, y1}});
 
     SECTION("Test i base") {
-        CHECK(vec[0].base_i_from() == Approx(base_i_from));
-        CHECK(vec[0].base_i_to() == Approx(base_i_to));
+        CHECK(vec[0].base_i_from() == Catch::Approx(base_i_from));
+        CHECK(vec[0].base_i_to() == Catch::Approx(base_i_to));
     }
 
     SECTION("invalid input") {
@@ -250,11 +250,11 @@ TEST_CASE("Test transformer") {
         }
 
         SECTION("Test transformer phase shift") {
-            CHECK(YNyn12.phase_shift() == Approx(0.0));
+            CHECK(YNyn12.phase_shift() == Catch::Approx(0.0));
         }
 
         SECTION("Test transformer loading") {
-            CHECK(YNyn12.loading(60.0e6, 0.0) == Approx(2.0));
+            CHECK(YNyn12.loading(60.0e6, 0.0) == Catch::Approx(2.0));
         }
 
         SECTION("Test transformer set_limit - false") {
