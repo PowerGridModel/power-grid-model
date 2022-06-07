@@ -4,6 +4,7 @@
 
 #include "catch2/catch_test_macros.hpp"
 #include "power_grid_model/component/transformer.hpp"
+using namespace Catch::literals;
 
 namespace power_grid_model {
 

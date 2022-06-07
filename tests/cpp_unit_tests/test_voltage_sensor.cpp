@@ -9,6 +9,7 @@
 #include "power_grid_model/component/voltage_sensor.hpp"
 #include "power_grid_model/power_grid_model.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
+using namespace Catch::literals;
 
 namespace power_grid_model {
 

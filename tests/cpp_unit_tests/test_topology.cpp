@@ -6,6 +6,7 @@
 
 #include "catch2/catch_test_macros.hpp"
 #include "power_grid_model/topology.hpp"
+using namespace Catch::literals;
 
 /*
  *  [0]   = Node
