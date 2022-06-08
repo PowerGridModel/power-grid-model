@@ -4,7 +4,7 @@
 
 project (power_grid_model_unit_tests)
 
-find_package(Catch2 CONFIG REQUIRED)
+add_subdirectory(catch2)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 set(PROJECT_SOURCES
@@ -38,7 +38,6 @@ target_link_libraries(power_grid_model_unit_tests
 	PRIVATE Catch2::Catch2WithMain
 	PRIVATE nlohmann_json nlohmann_json::nlohmann_json
 )
-target_compile_definitions(power_grid_model_unit_tests PRIVATE CATCH_CONFIG_CONSOLE_WIDTH=120)
 target_compile_definitions(power_grid_model_unit_tests PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data")
 
 

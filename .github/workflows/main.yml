@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
 
       - name: Run build script
         run: ./build.sh  ${{ matrix.build-option }}
@@ -45,6 +47,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
 
       - name: Activate conda
         run: |
@@ -52,7 +56,7 @@ jobs:
 
       - name: Install conda environment
         run: |
-          conda create --yes -p C:\libs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json catch2
+          conda create --yes -p C:\libs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json
 
       - name: Build and test
         run: |
@@ -84,10 +88,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
 
       - name: Install cpp dependencies
         run: |
-          brew install ninja boost eigen nlohmann-json catch2
+          brew install ninja boost eigen nlohmann-json
 
       - name: Build and test
         run: |
