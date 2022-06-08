@@ -170,19 +170,34 @@ class SparseLUSolver {
         prefactorized_ = false;
         lu_matrix_.reset();
         block_perm_array_.reset();
-        std::vector<Tensor> lu_matrix;
+        // initialize permutation array
         BlockPermArray block_perm_array{};
         if constexpr (is_block) {
-            lu_matrix.resize(nnz_lu_, Tensor::Zero());
-            // add permutations for block
             block_perm_array.resize(size_);
         }
-        else {
-            lu_matrix.resize(nnz_lu_, Scalar{});
-        }
-        // copy data
-        for (Idx i = 0; i != nnz_; ++i) {
-            lu_matrix[(*data_mapping_)[i]] = data[i];
+        // initialize lu matrix
+        std::vector<Tensor> lu_matrix;
+        lu_matrix.reserve(nnz_lu_);
+        {
+            // matrix idx
+            Idx matrix_idx = 0;
+            // loop for all lu idx
+            for (Idx lu_idx = 0; lu_idx != nnz_lu_; ++lu_idx) {
+                if ((*data_mapping_)[matrix_idx] == lu_idx) {
+                    // fill value from matrix
+                    lu_matrix.push_back(data[matrix_idx]);
+                    ++matrix_idx;
+                }
+                else {
+                    // fill zero
+                    if constexpr (is_block) {
+                        lu_matrix.push_back(Tensor::Zero());
+                    }
+                    else {
+                        lu_matrix.push_back(Scalar{});
+                    }
+                }
+            }
         }
 
         // column position idx per row for LU matrix
