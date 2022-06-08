@@ -38,17 +38,52 @@
  *
  * Math model #0:                       Math model #1:
  *
- *      0 ----->+pt0 [3:lg0+pg0,v3]             1 -> [3:s0+ps0+ps1,lg0+pl0+pl1,v0] [0:h1+ps0+ps1]
+ *      0 ----->+pt0 [2:lg0+pg0,v3]             1 -> [3:s0+ps0+ps1,lg0+pl0+pl1,v0] [0:h1+ps0+ps1]
  *     /              ^             3 --X      /       /                     \       /
  *    /                4           /         [2] <- 0                         3     4
  *   /                  \         v                                            \   /
- *  [4:s0,lg1]          [2] -6-> [0:v0,v1]                                      [1]
+ *  [4:s0,lg1]          [3] -6-> [0:v0,v1]                                      [1]
  *   +pf0+pf1           /                                                        |
  *    \                5                                                         2
  *     \              v                                                          X
  *      1 ->+pt1+pt2 [1:h0,v2] -- 2 --X
  *
  *
+ *
+ *
+ * Topology for cycle reodering
+ *
+ *
+ *   [5]  <---4--[4] <--3- [3]
+ *    ^ \         ^       /  ^
+ *    |   9----   |     /    |
+ *    5        \  6   10     2
+ *    |         v |  v       |
+ * [0:s0] --0--> [1] --1--> [2]
+ *    ^        ^    <- 12-   ^
+ *    |   -11-/     parallel |
+ *    7  /                   |
+ *    | /                    |
+ *   [6] -----------------8--
+ *
+ * Math model after reodering
+ *
+ *   [1]  <---4--[6] <--3- [2]
+ *    ^ \         ^       /  ^
+ *    |   9----   |     /    |
+ *    5        \  6   10     2
+ *    |         v |  v       |
+ * [3:s0] --0--> [5] --1--> [4]
+ *    ^        ^    <- 12-   ^
+ *    |   -11-/     parallel |
+ *    7  /                   |
+ *    | /                    |
+ *   [0] -----------------8--
+ *
+ * Extra fill-in:
+ * (3, 4)  by removing node 0
+ * (3, 6)  by removing node 1
+ * (4, 6)  by removing node 2
  */
 
 namespace power_grid_model {
@@ -137,7 +172,7 @@ TEST_CASE("Test topology") {
     ComponentToMathCoupling comp_coup_ref{};
     comp_coup_ref.node = {         // 0 1 2 3
                           {0, 4},  // Topological node 0 has become node 4 in mathematical model (group) 0
-                          {0, 3},
+                          {0, 2},
                           {0, 0},
                           {0, 1},
                           // 4 5 6
@@ -152,7 +187,7 @@ TEST_CASE("Test topology") {
                           {-1, -1},
                           {-1, -1},
                           // b0, b1, b2
-                          {0, 2},  // Branch3 b0 is replaced by a virtual node 2, in mathematical model 0
+                          {0, 3},  // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
                           {-1, -1},
                           {1, 1}};
     comp_coup_ref.source = {
@@ -200,12 +235,12 @@ TEST_CASE("Test topology") {
     MathModelTopology math0;
     math0.slack_bus_ = 4;
     math0.source_bus_indptr = {0, 0, 0, 0, 0, 1};
-    math0.branch_bus_idx = {{4, 3}, {4, 1}, {1, -1}, {-1, 0}, {3, 2}, {1, 2}, {0, 2}};
+    math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
     math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
-    math0.load_gen_bus_indptr = {0, 0, 0, 0, 1, 2};
+    math0.load_gen_bus_indptr = {0, 0, 0, 1, 1, 2};
     math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
     math0.shunt_bus_indptr = {0, 0, 1, 1, 1, 1};
-    math0.voltage_sensor_indptr = {0, 2, 3, 3, 4, 4};
+    math0.voltage_sensor_indptr = {0, 2, 3, 4, 4, 4};
     math0.source_power_sensor_indptr = {0, 0};
     math0.shunt_power_sensor_indptr = {0, 0};
     math0.load_gen_power_sensor_indptr = {0, 1, 1};
@@ -269,6 +304,41 @@ TEST_CASE("Test topology") {
             CHECK(math.branch_to_power_sensor_indptr == math_ref.branch_to_power_sensor_indptr);
         }
     }
+}
+
+TEST_CASE("Test cycle reorder") {
+    // component topology
+    ComponentTopology comp_topo{};
+    comp_topo.n_node = 7;
+    comp_topo.branch_node_idx = {
+        {0, 1},  // 0
+        {1, 2},  // 1
+        {2, 3},  // 2
+        {3, 4},  // 3
+        {4, 5},  // 4
+        {0, 5},  // 5
+        {1, 4},  // 6
+        {6, 0},  // 7
+        {6, 2},  // 8
+        {5, 1},  // 9
+        {3, 1},  // 10
+        {6, 1},  // 11
+        {2, 1},  // 12
+    };
+    comp_topo.source_node_idx = {0};
+    // component connection
+    ComponentConnections comp_conn{};
+    comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
+    comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
+    comp_conn.source_connected = {1};
+    // result
+    ComponentToMathCoupling comp_coup_ref{};
+    comp_coup_ref.node = {{0, 3}, {0, 5}, {0, 4}, {0, 2}, {0, 6}, {0, 1}, {0, 0}};
+
+    Topology topo{comp_topo, comp_conn};
+    auto pair = topo.build_topology();
+    auto const& comp_coup = *pair.second;
+    CHECK(comp_coup.node == comp_coup_ref.node);
 }
 
 }  // namespace power_grid_model
