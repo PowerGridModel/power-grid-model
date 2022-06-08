@@ -1,0 +1,4 @@
+[submodule "tests/cpp_unit_tests/catch2"]
+	path = tests/cpp_unit_tests/catch2
+	url = git@github.com:catchorg/Catch2.git
+	branch = devel
