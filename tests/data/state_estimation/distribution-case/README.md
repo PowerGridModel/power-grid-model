@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 
 SPDX-License-Identifier: MPL-2.0
 -->
-## Network Test Case: Distribution grid
+## Network Test Case: Distribution grid 
 
 Test case representing a typical distribution grid. 
 The grid has 2 identical parallel transformers. 
