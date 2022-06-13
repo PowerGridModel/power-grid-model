@@ -18,8 +18,8 @@ The circuit diagram is as follows:
                                                         asym_load(22)            sym_load(19)
                                                         |                   |
             |------trafo(17)------|-----cable(9)-----|(3)----cable(11)---|(5)----OHL(13)---(On/off)-|
-source(16)--|(1)                  |(2)                                                              |(7)----OHL(15)-|(8)
-            |------trafo(18)------|----cable(10)-----|(4)----cable(12)---|(6)----OHL(14)------------|               |
-                                                        |                   |                                  Load(21)
+source(16)--|(1)                  |(2)                                                              |(7)---OHL(15)-|(8)
+            |------trafo(18)------|----cable(10)-----|(4)----cable(12)---|(6)----OHL(14)------------|              |
+                                                        |                   |                               Load(21)
                                                         asym_load(23)            sym_oad(20)
 ```
