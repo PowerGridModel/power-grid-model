@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 
 SPDX-License-Identifier: MPL-2.0
 -->
-## Network Test Case: Transmission grid
+## Network Test Case: Transmission grid.
 
 Test case representing a typical transmission grid.
 Symmetrical voltage sensors are installed on all nodes and power sensors are installed at both ends of lines and 
