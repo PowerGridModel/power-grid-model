@@ -57,8 +57,8 @@ TEST_CASE("Test y bus") {
     // output
     IdxVector row_indptr = {0, 2, 5, 8, 10};
 
-    /* Use col_indices and row_indices together to find the location in Y bus
-     *  e.g. col_indices = {0, 1, 0}, row_indices = {0, 0, 1} results in Y bus:
+    /* Use col_indices to find the location in Y bus
+     *  e.g. col_indices = {0, 1, 0} results in Y bus:
      * [
      *	x, x
      *   x, 0
@@ -66,7 +66,6 @@ TEST_CASE("Test y bus") {
      */
     IdxVector col_indices = {// Culumn col_indices for each non-zero element in Y bus.
                              0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
-    IdxVector row_indices = {0, 0, 1, 1, 1, 2, 2, 2, 3, 3};
     Idx nnz = 10;  // Number of non-zero elements in Y bus
     IdxVector bus_entry = {0, 3, 6, 9};
     IdxVector lu_transpose_entry = {// Flip the id's of non-diagonal elements
@@ -120,7 +119,6 @@ TEST_CASE("Test y bus") {
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
         CHECK(col_indices == ybus.col_indices());
-        CHECK(row_indices == ybus.row_indices());
         CHECK(bus_entry == ybus.bus_entry());
         CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
@@ -145,7 +143,6 @@ TEST_CASE("Test y bus") {
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
         CHECK(col_indices == ybus.col_indices());
-        CHECK(row_indices == ybus.row_indices());
         CHECK(bus_entry == ybus.bus_entry());
         CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
@@ -194,7 +191,6 @@ TEST_CASE("Test one bus system") {
     // output
     IdxVector indptr = {0, 1};
     IdxVector col_indices = {0};
-    IdxVector row_indices = {0};
     Idx nnz = 1;
     IdxVector bus_entry = {0};
     IdxVector lu_transpose_entry = {0};
@@ -207,7 +203,6 @@ TEST_CASE("Test one bus system") {
     CHECK(ybus.nnz() == nnz);
     CHECK(indptr == ybus.row_indptr());
     CHECK(col_indices == ybus.col_indices());
-    CHECK(row_indices == ybus.row_indices());
     CHECK(bus_entry == ybus.bus_entry());
     CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
     CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
@@ -237,7 +232,6 @@ TEST_CASE("Test fill-in y bus") {
 
     IdxVector row_indptr = {0, 3, 5, 7};
     IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
-    IdxVector row_indices = {0, 0, 0, 1, 1, 2, 2};
     IdxVector bus_entry = {0, 4, 6};
     IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
     IdxVector y_bus_entry_indptr = {0, 2,               // 0, 1 belong to element [0,0] in Ybus
@@ -252,7 +246,6 @@ TEST_CASE("Test fill-in y bus") {
 
     CHECK(row_indptr == ybus.row_indptr);
     CHECK(col_indices == ybus.col_indices);
-    CHECK(row_indices == ybus.row_indices);
     CHECK(bus_entry == ybus.bus_entry);
     CHECK(lu_transpose_entry == ybus.lu_transpose_entry);
     CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr);

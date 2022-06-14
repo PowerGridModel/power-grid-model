@@ -69,7 +69,6 @@ struct YBusStructure {
     // csr structure
     IdxVector row_indptr;
     IdxVector col_indices;
-    IdxVector row_indices;
     // element of ybus of all components
     std::vector<YBusElement> y_bus_element;
     std::vector<Idx> y_bus_entry_indptr;
@@ -174,9 +173,8 @@ struct YBusStructure {
             // assign to y bus structure if not fill-in
             if (it_element->element.element_type != YBusElementType::fill_in_ft &&
                 it_element->element.element_type != YBusElementType::fill_in_tf) {
-                // assign col, row
+                // assign col
                 col_indices.push_back(col);
-                row_indices.push_back(row);
                 // map between y bus and lu struct
                 map_lu_y_bus.push_back(nnz_counter);
                 // iterate row if needed
@@ -243,7 +241,6 @@ struct YBusStructure {
             nnz_counter_lu = 1;
             row_indptr = {0, 1};
             col_indices = {0};
-            row_indices = {0};
             bus_entry = {0};
             lu_transpose_entry = {0};
             y_bus_entry_indptr = {0, 0};
@@ -299,14 +296,20 @@ class YBus {
     Idx nnz() const {
         return row_indptr().back();
     }
+    Idx nnz_lu() const {
+        return row_indptr_lu().back();
+    }
     IdxVector const& row_indptr() const {
         return y_bus_struct_->row_indptr;
     }
     IdxVector const& col_indices() const {
         return y_bus_struct_->col_indices;
     }
-    IdxVector const& row_indices() const {
-        return y_bus_struct_->row_indices;
+    IdxVector const& row_indptr_lu() const {
+        return y_bus_struct_->row_indptr_lu;
+    }
+    IdxVector const& col_indices_lu() const {
+        return y_bus_struct_->col_indices_lu;
     }
     IdxVector const& lu_transpose_entry() const {
         return y_bus_struct_->lu_transpose_entry;
@@ -329,6 +332,9 @@ class YBus {
     }
     IdxVector const& bus_entry() const {
         return y_bus_struct_->bus_entry;
+    }
+    IdxVector const& lu_diag() const {
+        return y_bus_struct_->diag_lu;
     }
     IdxVector const& map_lu_y_bus() const {
         return y_bus_struct_->map_lu_y_bus;
