@@ -70,6 +70,7 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_tensor_lu_t<Tens
 
 template <class Tensor, class RHSVector, class XVector>
 class SparseLUSolver {
+   public:
     using entry_trait = sparse_lu_entry_trait<Tensor, RHSVector, XVector>;
     static constexpr bool is_block = entry_trait::is_block;
     static constexpr Idx block_size = entry_trait::block_size;
@@ -78,38 +79,40 @@ class SparseLUSolver {
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
 
-   public:
-    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,
-                   std::shared_ptr<IdxVector const> const& col_indices, std::shared_ptr<IdxVector const> const& diag_lu,
-                   std::shared_ptr<IdxVector const> const& data_mapping)
+    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,   // indptr including fill-ins
+                   std::shared_ptr<IdxVector const> const& col_indices,  // indices including fill-ins
+                   std::shared_ptr<IdxVector const> const& diag_lu)
         : size_{(Idx)row_indptr->size() - 1},
-          nnz_{(Idx)data_mapping->size()},
-          nnz_lu_{row_indptr->back()},
+          nnz_{row_indptr->back()},
           row_indptr_{row_indptr},
           col_indices_{col_indices},
-          diag_lu_{diag_lu},
-          data_mapping_{data_mapping} {
+          diag_lu_{diag_lu} {
     }
 
-    void solve(Tensor const* data, RHSVector const* rhs, XVector* x, bool use_prefactorization = false) {
-        // reset possible pre-factorization if we are not using prefactorization
-        prefactorized_ = prefactorized_ && use_prefactorization;
-        // run factorization
-        if (!prefactorized_) {
-            prefactorize(data);
-        }
+    // solve with new matrix data, need to factorize first
+    void solve(std::vector<Tensor>& data,         // matrix data, factorize in-place
+               BlockPermArray& block_perm_array,  // pre-allocated permutation array, will be overwritten
+               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+        prefactorize(data, block_perm_array);
+        // call solve with const method
+        solve((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
+    }
 
+    // solve with existing pre-factorization
+    void solve(std::vector<Tensor> const& data,         // pre-factoirzed data, const ref
+               BlockPermArray const& block_perm_array,  // pre-calculated permutation, const ref
+               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
         auto const& diag_lu = *diag_lu_;
-        auto const& lu_matrix = *lu_matrix_;
+        auto const& lu_matrix = data;
 
         // forward substitution with L
         for (Idx row = 0; row != size_; ++row) {
             // permutation if needed
             if constexpr (is_block) {
-                x[row] = ((*block_perm_array_)[row].p * rhs[row].matrix()).array();
+                x[row] = (block_perm_array[row].p * rhs[row].matrix()).array();
             }
             else {
                 x[row] = rhs[row];
@@ -164,50 +167,24 @@ class SparseLUSolver {
         // restore permutation for block matrix
         if constexpr (is_block) {
             for (Idx row = 0; row != size_; ++row) {
-                x[row] = ((*block_perm_array_)[row].q * x[row].matrix()).array();
+                x[row] = (block_perm_array[row].q * x[row].matrix()).array();
             }
         }
     }
 
-    void prefactorize(Tensor const* data) {
+    // prefactorize in-place
+    // the LU matrix has the form A = L * U
+    // diagonals of L are one
+    // diagonals of U have values
+    // fill-ins should be pre-allocated with zero
+    // block permutation array should be pre-allocated
+    void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array) {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
         auto const& diag_lu = *diag_lu_;
-
-        // reset old lu matrix and create new
-        prefactorized_ = false;
-        lu_matrix_.reset();
-        block_perm_array_.reset();
-        // initialize permutation array
-        BlockPermArray block_perm_array{};
-        if constexpr (is_block) {
-            block_perm_array.resize(size_);
-        }
-        // initialize lu matrix
-        std::vector<Tensor> lu_matrix;
-        lu_matrix.reserve(nnz_lu_);
-        {
-            // matrix idx
-            Idx matrix_idx = 0;
-            // loop for all lu idx
-            for (Idx lu_idx = 0; lu_idx != nnz_lu_; ++lu_idx) {
-                if ((*data_mapping_)[matrix_idx] == lu_idx) {
-                    // fill value from matrix
-                    lu_matrix.push_back(data[matrix_idx]);
-                    ++matrix_idx;
-                }
-                else {
-                    // fill zero
-                    if constexpr (is_block) {
-                        lu_matrix.push_back(Tensor::Zero());
-                    }
-                    else {
-                        lu_matrix.push_back(Scalar{});
-                    }
-                }
-            }
-        }
+        // lu matrix inplace
+        std::vector<Tensor>& lu_matrix = data;
 
         // column position idx per row for LU matrix
         IdxVector col_position_idx(row_indptr.cbegin(), row_indptr.cend() - 1);
@@ -352,33 +329,14 @@ class SparseLUSolver {
             // iterate column position for the pivot
             ++col_position_idx[pivot_row_col];
         }
-
-        // move to shared ptr
-        lu_matrix_ = std::make_shared<std::vector<Tensor> const>(std::move(lu_matrix));
-        block_perm_array_ = std::make_shared<BlockPermArray const>(std::move(block_perm_array));
-        prefactorized_ = true;
-    }
-
-    void invalidate_prefactorization() {
-        prefactorized_ = false;
     }
 
    private:
     Idx size_;
     Idx nnz_;
-    Idx nnz_lu_;
-    bool prefactorized_{false};
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
-    std::shared_ptr<IdxVector const> data_mapping_;
-    // the LU matrix has the form A = L * U
-    // diagonals of L are one
-    // diagonals of U have values
-    std::shared_ptr<std::vector<Tensor> const> lu_matrix_;
-    // dense LU factor of diagonals of LU matrix
-    // only applicable for block matrix
-    std::shared_ptr<BlockPermArray const> block_perm_array_;
 };
 
 }  // namespace math_model_impl
