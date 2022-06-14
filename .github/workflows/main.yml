@@ -68,7 +68,7 @@ jobs:
             -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
             -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
           # build
-          cmake --build . --verbose
+          cmake --build . --verbose -j 1
           # test
           .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
 
