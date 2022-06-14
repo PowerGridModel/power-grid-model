@@ -75,11 +75,6 @@ struct YBusStructure {
     std::vector<Idx> y_bus_entry_indptr;
     // sequence entry of bus data
     IdxVector bus_entry;
-    // transpose entry of the sparse matrix
-    // length of nnz Idx array.
-    // for transpose_entry[i] indicates the position i-th element in transposed matrix in CSR form
-    // for entry in the diagonal transpose_entry[i] = i
-    IdxVector transpose_entry;
     // LU csr structure for the y bus with sparse fill-ins
     // this is the structure when y bus is LU-factorized
     // it will contain all the elements plus the elements in fill_in from topology
@@ -88,10 +83,17 @@ struct YBusStructure {
     IdxVector col_indices_lu;
     // diagonal entry of lu matrices
     IdxVector diag_lu;
-    // map index between y bus structure and y bus LU structure
-    // for Element i in y bus, it is the element map_y_bus_lu[i] in LU matrix
-    // i.e. data_lu[map_y_bus_lu[i] = data_y_bus[i];
-    IdxVector map_y_bus_lu;
+
+    // map index between LU structure and y bus structure
+    // for Element i in lu matrix, it is the element map_lu_y_bus[i] in y bus
+    // if the element is a fill-in, map_lu_y_bus[i] = -1
+    // i.e. data_lu[i] = data_y_bus[map_lu_y_bus[i]]; if map_lu_y_bus[i] != -1
+    IdxVector map_lu_y_bus;
+    // transpose entry of the sparse matrix
+    // length of nnz_lu Idx array.
+    // for lu_transpose_entry[i] indicates the position i-th element in transposed lu matrix in CSR form
+    // for entry in the diagonal lu_transpose_entry[i] = i
+    IdxVector lu_transpose_entry;
 
     // construct ybus structure
     YBusStructure(MathModelTopology const& topo) {
@@ -104,7 +106,7 @@ struct YBusStructure {
         vec_map_element.reserve(total_number_entries);
         // add element
         // off diagonal element list
-        std::vector<OffDiagIdxMap> off_diag_map(n_branch);
+        std::vector<OffDiagIdxMap> off_diag_map(n_branch + n_fill_in);
         // loop branch
         for (Idx branch = 0; branch != n_branch; ++branch) {
             // ff, ft, tf, tt for branch
@@ -124,8 +126,8 @@ struct YBusStructure {
             Idx const bus1 = topo.fill_in[fill_in][0];
             Idx const bus2 = topo.fill_in[fill_in][1];
             // fill both direction
-            append_element_vector(vec_map_element, bus1, bus2, YBusElementType::fill_in, -1);
-            append_element_vector(vec_map_element, bus2, bus1, YBusElementType::fill_in, -1);
+            append_element_vector(vec_map_element, bus1, bus2, YBusElementType::fill_in_ft, fill_in);
+            append_element_vector(vec_map_element, bus2, bus1, YBusElementType::fill_in_tf, fill_in);
         }
         // sort element
         counting_sort_element(vec_map_element, n_bus);
@@ -146,7 +148,8 @@ struct YBusStructure {
         y_bus_entry_indptr.push_back(0);
         // copy all elements in y bus (excluding fill-in)
         for (YBusElementMap const& m : vec_map_element) {
-            if (m.element.element_type != YBusElementType::fill_in) {
+            if (m.element.element_type != YBusElementType::fill_in_ft &&
+                m.element.element_type != YBusElementType::fill_in_tf) {
                 y_bus_element.push_back(m.element);
             }
         }
@@ -169,12 +172,13 @@ struct YBusStructure {
             // so the row start (after increment once) should be the same as current row
             assert(row_start_lu == row);
             // assign to y bus structure if not fill-in
-            if (it_element->element.element_type != YBusElementType::fill_in) {
+            if (it_element->element.element_type != YBusElementType::fill_in_ft &&
+                it_element->element.element_type != YBusElementType::fill_in_tf) {
                 // assign col, row
                 col_indices.push_back(col);
                 row_indices.push_back(row);
                 // map between y bus and lu struct
-                map_y_bus_lu.push_back(nnz_counter_lu);
+                map_lu_y_bus.push_back(nnz_counter);
                 // iterate row if needed
                 if (row > row_start) {
                     row_indptr[++row_start] = nnz_counter;
@@ -187,18 +191,19 @@ struct YBusStructure {
                     bus_entry[row] = nnz_counter;
                     diag_lu[row] = nnz_counter_lu;
                 }
+                // record off diag entry
+                if (row != col) {
+                    off_diag_map[it_element->element.idx]
+                                // minus 1 because ft is 1 and tf is 2, mapped to 0 and 1
+                                [static_cast<Idx>(it_element->element.element_type) - 1] = nnz_counter_lu;
+                }
                 // inner loop of elements in the same position
                 for (  // use it_element to start
                     ;  // stop when reach end or new position
                     it_element != vec_map_element.cend() && it_element->pos == pos; ++it_element) {
                     // no fill-ins are allowed
-                    assert(it_element->element.element_type != YBusElementType::fill_in);
-                    // record off diag entry
-                    if (row != col) {
-                        off_diag_map[it_element->element.idx]
-                                    // minus 1 because ft is 1 and tf is 2, mapped to 0 and 1
-                                    [static_cast<Idx>(it_element->element.element_type) - 1] = nnz_counter;
-                    }
+                    assert(it_element->element.element_type != YBusElementType::fill_in_ft &&
+                           it_element->element.element_type != YBusElementType::fill_in_tf);
                 }
                 // all entries in the same position are looped, append indptr
                 // need to be offset by fill-in
@@ -215,6 +220,12 @@ struct YBusStructure {
                 assert(it_element + 1 != vec_map_element.cend());
                 // next element can never be the same
                 assert((it_element + 1)->pos != pos);
+                // record off diag entry
+                off_diag_map[it_element->element.idx + n_branch]
+                            // minus 1 because ft is 5 and tf is 6, mapped to 0 and 1
+                            [static_cast<Idx>(it_element->element.element_type) - 5] = nnz_counter_lu;
+                // map between y bus and lu struct
+                map_lu_y_bus.push_back(-1);
                 // iterate counter
                 ++fill_in_counter;
                 ++nnz_counter_lu;
@@ -229,16 +240,17 @@ struct YBusStructure {
         if (topo.n_branch() == 0 && topo.n_shunt() == 0) {
             assert(n_bus == 1);
             nnz_counter = 1;
+            nnz_counter_lu = 1;
             row_indptr = {0, 1};
             col_indices = {0};
             row_indices = {0};
             bus_entry = {0};
-            transpose_entry = {0};
+            lu_transpose_entry = {0};
             y_bus_entry_indptr = {0, 0};
             row_indptr_lu = {0, 1};
             col_indices_lu = {0};
             diag_lu = {0};
-            map_y_bus_lu = {0};
+            map_lu_y_bus = {0};
         }
         // no empty row is allowed
         assert(row_start == n_bus);
@@ -249,16 +261,14 @@ struct YBusStructure {
         assert(y_bus_entry_indptr.back() == (Idx)y_bus_element.size());
 
         // construct transpose entry
-        transpose_entry.resize(nnz_counter);
+        lu_transpose_entry.resize(nnz_counter_lu);
         // default transpose_entry[i] = i
-        std::iota(transpose_entry.begin(), transpose_entry.end(), 0);
+        std::iota(lu_transpose_entry.begin(), lu_transpose_entry.end(), 0);
         // fill off-diagonal, loop all the branches
-        for (Idx i = 0; i != n_branch; ++i) {
+        for (auto const [entry_1, entry_2] : off_diag_map) {
             // for each branch entry tf and ft, they are transpose to each other
-            Idx const entry_1 = off_diag_map[i][0];
-            Idx const entry_2 = off_diag_map[i][1];
-            transpose_entry[entry_1] = entry_2;
-            transpose_entry[entry_2] = entry_1;
+            lu_transpose_entry[entry_1] = entry_2;
+            lu_transpose_entry[entry_2] = entry_1;
         }
     }
 };
@@ -298,8 +308,8 @@ class YBus {
     IdxVector const& row_indices() const {
         return y_bus_struct_->row_indices;
     }
-    IdxVector const& transpose_entry() const {
-        return y_bus_struct_->transpose_entry;
+    IdxVector const& lu_transpose_entry() const {
+        return y_bus_struct_->lu_transpose_entry;
     }
     std::vector<YBusElement> const& y_bus_element() const {
         return y_bus_struct_->y_bus_element;
@@ -320,6 +330,10 @@ class YBus {
     IdxVector const& bus_entry() const {
         return y_bus_struct_->bus_entry;
     }
+    IdxVector const& map_lu_y_bus() const {
+        return y_bus_struct_->map_lu_y_bus;
+    }
+
     // getter of shared ptr
     std::shared_ptr<IdxVector const> shared_indptr() const {
         return {y_bus_struct_, &y_bus_struct_->row_indptr};
@@ -341,9 +355,6 @@ class YBus {
     }
     std::shared_ptr<IdxVector const> shared_diag_lu() const {
         return {y_bus_struct_, &y_bus_struct_->diag_lu};
-    }
-    std::shared_ptr<IdxVector const> shared_map_y_bus_lu() const {
-        return {y_bus_struct_, &y_bus_struct_->map_y_bus_lu};
     }
 
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {

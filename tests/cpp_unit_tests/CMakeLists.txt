@@ -21,7 +21,7 @@ set(PROJECT_SOURCES
 #  	test_shunt.cpp
 #  	test_transformer.cpp
    	test_sparse_lu_solver.cpp
-#  	test_y_bus.cpp
+  	test_y_bus.cpp
 #  	test_math_solver.cpp
 #  	test_topology.cpp
 #  	test_container.cpp

@@ -69,14 +69,14 @@ TEST_CASE("Test y bus") {
     IdxVector row_indices = {0, 0, 1, 1, 1, 2, 2, 2, 3, 3};
     Idx nnz = 10;  // Number of non-zero elements in Y bus
     IdxVector bus_entry = {0, 3, 6, 9};
-    IdxVector transpose_entry = {// Flip the id's of non-diagonal elements
-                                 0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
+    IdxVector lu_transpose_entry = {// Flip the id's of non-diagonal elements
+                                    0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
     IdxVector y_bus_entry_indptr = {0,  3,       // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
                                     5,  7,  10,  // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
                                     11, 12, 16,  // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
                                     18, 20,      // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
                                     23};
-    IdxVector map_y_bus_lu = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ComplexTensorVector<true> admittance_sym = {
         17.0 + 104.0i,   // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
         18.0 + 3.0i,     // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
@@ -122,7 +122,7 @@ TEST_CASE("Test y bus") {
         CHECK(col_indices == ybus.col_indices());
         CHECK(row_indices == ybus.row_indices());
         CHECK(bus_entry == ybus.bus_entry());
-        CHECK(transpose_entry == ybus.transpose_entry());
+        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
         CHECK(ybus.admittance().size() == admittance_sym.size());
         for (size_t i = 0; i < admittance_sym.size(); i++) {
@@ -133,7 +133,7 @@ TEST_CASE("Test y bus") {
         CHECK(*ybus.shared_indptr_lu() == row_indptr);
         CHECK(*ybus.shared_indices_lu() == col_indices);
         CHECK(*ybus.shared_diag_lu() == bus_entry);
-        CHECK(*ybus.shared_map_y_bus_lu() == map_y_bus_lu);
+        CHECK(ybus.map_lu_y_bus() == map_lu_y_bus);
     }
 
     SECTION("Test y bus construction (asymmetrical)") {
@@ -147,7 +147,7 @@ TEST_CASE("Test y bus") {
         CHECK(col_indices == ybus.col_indices());
         CHECK(row_indices == ybus.row_indices());
         CHECK(bus_entry == ybus.bus_entry());
-        CHECK(transpose_entry == ybus.transpose_entry());
+        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
         CHECK(ybus.admittance().size() == admittance_asym.size());
         for (size_t i = 0; i < admittance_asym.size(); i++) {
@@ -197,7 +197,7 @@ TEST_CASE("Test one bus system") {
     IdxVector row_indices = {0};
     Idx nnz = 1;
     IdxVector bus_entry = {0};
-    IdxVector transpose_entry = {0};
+    IdxVector lu_transpose_entry = {0};
     IdxVector y_bus_entry_indptr = {0, 0};
 
     YBus<true> ybus{std::make_shared<MathModelTopology const>(topo),
@@ -209,7 +209,7 @@ TEST_CASE("Test one bus system") {
     CHECK(col_indices == ybus.col_indices());
     CHECK(row_indices == ybus.row_indices());
     CHECK(bus_entry == ybus.bus_entry());
-    CHECK(transpose_entry == ybus.transpose_entry());
+    CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
     CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
 }
 
@@ -239,13 +239,13 @@ TEST_CASE("Test fill-in y bus") {
     IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
     IdxVector row_indices = {0, 0, 0, 1, 1, 2, 2};
     IdxVector bus_entry = {0, 4, 6};
-    IdxVector transpose_entry = {0, 3, 5, 1, 4, 2, 6};
+    IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
     IdxVector y_bus_entry_indptr = {0, 2,               // 0, 1 belong to element [0,0] in Ybus
                                     3, 4, 5, 6, 7, 8};  // everything else has only one entry
     // lu matrix
     IdxVector row_indptr_lu = {0, 3, 6, 9};
     IdxVector col_indices_lu = {0, 1, 2, 0, 1, 2, 0, 1, 2};
-    IdxVector map_y_bus_lu = {0, 1, 2, 3, 4, 6, 8};
+    IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, -1, 5, -1, 6};
     IdxVector diag_lu = {0, 4, 8};
 
     YBusStructure ybus{topo};
@@ -254,13 +254,13 @@ TEST_CASE("Test fill-in y bus") {
     CHECK(col_indices == ybus.col_indices);
     CHECK(row_indices == ybus.row_indices);
     CHECK(bus_entry == ybus.bus_entry);
-    CHECK(transpose_entry == ybus.transpose_entry);
+    CHECK(lu_transpose_entry == ybus.lu_transpose_entry);
     CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr);
     // check lu
     CHECK(ybus.row_indptr_lu == row_indptr_lu);
     CHECK(ybus.col_indices_lu == col_indices_lu);
     CHECK(ybus.diag_lu == diag_lu);
-    CHECK(ybus.map_y_bus_lu == map_y_bus_lu);
+    CHECK(ybus.map_lu_y_bus == map_lu_y_bus);
 }
 
 /*
