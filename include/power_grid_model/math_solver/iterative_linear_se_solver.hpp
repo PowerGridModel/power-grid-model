@@ -22,7 +22,7 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-// block class for the unknown vector in state estimation equation
+// block class for the unknown vector and/or right hand side in state estimation equation
 template <bool sym>
 struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
     template <int r, int c>
@@ -38,17 +38,6 @@ struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
     GetterType<1, 0> phi() {
         return this->template get_val<1, 0>();
     }
-};
-
-// block class for the right hand side in state estimation equation
-template <bool sym>
-struct SERhs : public Block<DoubleComplex, sym, false, 2> {
-    template <int r, int c>
-    using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
-
-    // eigen expression
-    using Block<DoubleComplex, sym, false, 2>::Block;
-    using Block<DoubleComplex, sym, false, 2>::operator=;
 
     GetterType<0, 0> eta() {
         return this->template get_val<0, 0>();
@@ -57,6 +46,10 @@ struct SERhs : public Block<DoubleComplex, sym, false, 2> {
         return this->template get_val<1, 0>();
     }
 };
+
+// block class for the right hand side in state estimation equation
+template <bool sym>
+using SERhs = SEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
 /*
@@ -587,11 +580,10 @@ class IterativeLinearSESolver {
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           math_topo_{topo_ptr},
-          data_gain_(y_bus.nnz()),
-          x_(y_bus.size()),
-          rhs_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu(),
-                         y_bus.shared_map_y_bus_lu()} {
+          data_gain_(y_bus.nnz_lu()),
+          x_rhs_(y_bus.size()),
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          perm_(y_bus.size()) {
     }
 
     MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
@@ -629,7 +621,7 @@ class IterativeLinearSESolver {
             prepare_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
-            sparse_solver_.solve(data_gain_.data(), rhs_.data(), x_.data(), true);
+            sparse_solver_.solve((std::vector<SEGainBlock<sym>> const&)data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
         }
@@ -661,87 +653,101 @@ class IterativeLinearSESolver {
     // data for gain matrix
     std::vector<SEGainBlock<sym>> data_gain_;
     // unknown and rhs
-    std::vector<SEUnknown<sym>> x_;
-    std::vector<SERhs<sym>> rhs_;
+    std::vector<SERhs<sym>> x_rhs_;
     // solver
     SparseLUSolver<SEGainBlock<sym>, SERhs<sym>, SEUnknown<sym>> sparse_solver_;
+    typename SparseLUSolver<SEGainBlock<sym>, SERhs<sym>, SEUnknown<sym>>::BlockPermArray perm_;
 
     void prepare_matrix(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value) {
         MathModelParam<sym> const& param = y_bus.math_model_param();
+        IdxVector const& row_indptr = y_bus.row_indptr_lu();
+        IdxVector const& col_indices = y_bus.col_indices_lu();
 
         // loop data index, all rows and columns
-        for (Idx data_idx = 0; data_idx != y_bus.nnz(); ++data_idx) {
-            Idx const row = y_bus.row_indices()[data_idx];
-            Idx const col = y_bus.col_indices()[data_idx];
-            // get a reference and reset block to zero
-            SEGainBlock<sym>& block = data_gain_[data_idx];
-            block = SEGainBlock<sym>{};
-            // fill block with voltage measurement, only diagonal
-            if ((row == col) && measured_value.has_voltage(row)) {
-                // G += 1.0 / variance
-                // for 3x3 tensor, fill diagonal
-                block.g() += ComplexTensor<sym>{1.0 / measured_value.voltage_var(row)};
-            }
-            // fill block with branch, shunt measurement
-            for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
-                 element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
-                Idx const obj = y_bus.y_bus_element()[element_idx].idx;
-                YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
-                // shunt
-                if (type == YBusElementType::shunt) {
-                    if (measured_value.has_shunt(obj)) {
-                        // G += Ys^H * Ys / variance
-                        block.g() += dot(hermitian_transpose(param.shunt_param[obj]), param.shunt_param[obj]) /
-                                     measured_value.shunt_power(obj).variance;
-                    }
+        for (Idx row = 0; row != n_bus_; ++row) {
+            for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
+                Idx const col = col_indices[data_idx_lu];
+                // get a reference and reset block to zero
+                SEGainBlock<sym>& block = data_gain_[data_idx_lu];
+                block = SEGainBlock<sym>{};
+                // get data idx of y bus,
+                // skip for a fill-in
+                Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
+                if (data_idx == -1) {
+                    continue;
                 }
-                // branch
-                else {
-                    // branch from- and to-side index at 0, and 1 position
-                    IntS const b0 = static_cast<IntS>(type) / 2;
-                    IntS const b1 = static_cast<IntS>(type) % 2;
-                    // measured at from-side: 0, to-side: 1
-                    for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
-                        // has measurement
-                        if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                            // G += Y{side, b0}^H * Y{side, b1} / variance
-                            block.g() += dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                             param.branch_param[obj].value[measured_side * 2 + b1]) /
-                                         std::invoke(branch_power_[measured_side], measured_value, obj).variance;
+                // fill block with voltage measurement, only diagonal
+                if ((row == col) && measured_value.has_voltage(row)) {
+                    // G += 1.0 / variance
+                    // for 3x3 tensor, fill diagonal
+                    block.g() += ComplexTensor<sym>{1.0 / measured_value.voltage_var(row)};
+                }
+                // fill block with branch, shunt measurement
+                for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
+                     element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
+                    Idx const obj = y_bus.y_bus_element()[element_idx].idx;
+                    YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
+                    // shunt
+                    if (type == YBusElementType::shunt) {
+                        if (measured_value.has_shunt(obj)) {
+                            // G += Ys^H * Ys / variance
+                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]), param.shunt_param[obj]) /
+                                         measured_value.shunt_power(obj).variance;
+                        }
+                    }
+                    // branch
+                    else {
+                        // branch from- and to-side index at 0, and 1 position
+                        IntS const b0 = static_cast<IntS>(type) / 2;
+                        IntS const b1 = static_cast<IntS>(type) % 2;
+                        // measured at from-side: 0, to-side: 1
+                        for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
+                            // has measurement
+                            if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
+                                // G += Y{side, b0}^H * Y{side, b1} / variance
+                                block.g() +=
+                                    dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
+                                        param.branch_param[obj].value[measured_side * 2 + b1]) /
+                                    std::invoke(branch_power_[measured_side], measured_value, obj).variance;
+                            }
                         }
                     }
                 }
-            }
-            // fill block with injection measurement
-            // injection measurement exist
-            if (measured_value.has_bus_injection(row)) {
-                // Q_ij = Y_bus_ij
-                block.q() = y_bus.admittance()[data_idx];
-                // R_ii = -variance, only diagonal
-                if (row == col) {
-                    // assign variance to diagonal of 3x3 tensor, for asym
-                    block.r() = ComplexTensor<sym>{-measured_value.bus_injection_power(row).variance};
+                // fill block with injection measurement
+                // injection measurement exist
+                if (measured_value.has_bus_injection(row)) {
+                    // Q_ij = Y_bus_ij
+                    block.q() = y_bus.admittance()[data_idx];
+                    // R_ii = -variance, only diagonal
+                    if (row == col) {
+                        // assign variance to diagonal of 3x3 tensor, for asym
+                        block.r() = ComplexTensor<sym>{-measured_value.bus_injection_power(row).variance};
+                    }
                 }
-            }
-            // injection measurement not exist
-            else {
-                // Q_ij = 0
-                // R_ii = -1.0, only diagonal
-                // assign -1.0 to diagonal of 3x3 tensor, for asym
-                if (row == col) {
-                    block.r() = ComplexTensor<sym>{-1.0};
+                // injection measurement not exist
+                else {
+                    // Q_ij = 0
+                    // R_ii = -1.0, only diagonal
+                    // assign -1.0 to diagonal of 3x3 tensor, for asym
+                    if (row == col) {
+                        block.r() = ComplexTensor<sym>{-1.0};
+                    }
                 }
             }
         }
 
         // loop all transpose entry for QH
         // assign the hermitian transpose of the transpose entry of Q
-        for (Idx data_idx = 0; data_idx != y_bus.nnz(); ++data_idx) {
-            Idx const data_idx_tranpose = y_bus.transpose_entry()[data_idx];
-            data_gain_[data_idx].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
+        for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
+            // skip for fill-in
+            if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
+                continue;
+            }
+            Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
+            data_gain_[data_idx_lu].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
         }
         // prefactorize
-        sparse_solver_.prefactorize(data_gain_.data());
+        sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
     void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
@@ -756,7 +762,7 @@ class IterativeLinearSESolver {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             Idx const data_idx = y_bus.bus_entry()[bus];
             // reset rhs block to fill values
-            SERhs<sym>& rhs_block = rhs_[bus];
+            SERhs<sym>& rhs_block = x_rhs_[bus];
             rhs_block = SERhs<sym>{};
             // fill block with voltage measurement
             if (measured_value.has_voltage(bus)) {
@@ -816,16 +822,16 @@ class IterativeLinearSESolver {
                 return 1.0;
             }
             if constexpr (sym) {
-                return cabs(x_[math_topo_->slack_bus_].u()) / x_[math_topo_->slack_bus_].u();
+                return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
             }
             else {
-                return cabs(x_[math_topo_->slack_bus_].u()(0)) / x_[math_topo_->slack_bus_].u()(0);
+                return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
             }
         }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // phase offset to calculated voltage as normalized
-            ComplexValue<sym> u_normalized = x_[bus].u() * angle_offset;
+            ComplexValue<sym> u_normalized = x_rhs_[bus].u() * angle_offset;
             // get dev of last iteration, get max
             double const dev = max_val(cabs(u_normalized - u[bus]));
             max_dev = std::max(dev, max_dev);

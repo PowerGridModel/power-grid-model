@@ -51,17 +51,16 @@ class LinearPFSolver {
         : n_bus_{y_bus.size()},
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          mat_data_(y_bus.nnz()),
-          rhs_(n_bus_),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu(),
-                         y_bus.shared_map_y_bus_lu()} {
+          mat_data_(y_bus.nnz_lu()),
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          perm_(n_bus_) {
     }
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    CalculationInfo& calculation_info) {
         // getter
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        IdxVector const& bus_entry = y_bus.bus_entry();
+        IdxVector const& bus_entry = y_bus.lu_diag();
         // output
         MathOutput<sym> output;
         output.u.resize(n_bus_);
@@ -72,9 +71,14 @@ class LinearPFSolver {
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
 
         // copy y bus data
-        std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
-        // set rhs to zero
-        std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
+        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
+            if (k == -1) {
+                return ComplexTensor<sym>{};
+            }
+            else {
+                return ydata[k];
+            }
+        });
 
         // loop to all loads and sources, j as load number
         IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
@@ -93,15 +97,15 @@ class LinearPFSolver {
                 // YBus_diag += Y_source
                 mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
                 // rhs += Y_source_j * U_ref_j
-                rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                        ComplexValue<sym>{input.source[source_number]});
+                output.u[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                            ComplexValue<sym>{input.source[source_number]});
             }
         }
 
         // solve
         // u vector will have I_injection for slack bus for now
         sub_timer = Timer(calculation_info, 2222, "Solve sparse linear equation");
-        sparse_solver_.solve(mat_data_.data(), rhs_.data(), output.u.data());
+        sparse_solver_.solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");
@@ -118,9 +122,9 @@ class LinearPFSolver {
     std::shared_ptr<IdxVector const> source_bus_indptr_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
-    ComplexValueVector<sym> rhs_;
     // sparse solver
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
+    typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // call y bus

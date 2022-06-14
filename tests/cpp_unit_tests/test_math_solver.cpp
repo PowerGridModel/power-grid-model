@@ -76,12 +76,12 @@ TEST_CASE("Test math solver") {
     network, m means measured, mm means double measured
     variance always 1.0
                                                           shunt0 (ys) (m)
-      (mm)                     (y0, ys0)           (y1)         |
+     (mm)                     (y0, ys0)           (y1)         |
     source --yref-- bus0(m) -m-branch0-mm- bus1 --branch1-m-  bus2(mm)
                      |                      |                   |
-                              load012                load345 (m)          load6 (not connected) (m, rubbish value)
-                                                      for const z,
-                                                              rubbish value for load3/4
+                  load012                load345 (m)          load6 (not connected) (m, rubbish value)
+                                          for const z,
+                                       rubbish value for load3/4
 
     uref = 1.10
     u0 = 1.08 -1deg
