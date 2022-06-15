@@ -37,6 +37,7 @@ while maximum deviation > error tolerance
 #include "../timer.hpp"
 #include "block_matrix.hpp"
 #include "bsr_solver.hpp"
+#include "iterative_pf_solver.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -46,18 +47,21 @@ namespace math_model_impl {
 
 // solver
 template <bool sym>
-class IterativecurrentPFSolver {
+class IterativecurrentPFSolver : public IterativePFSolver<sym> {
    private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
 
    public:
     IterativecurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : n_bus_{y_bus.size()},
+        : IterativePFSolver<sym>{y_bus, topo_ptr},
+          /*
+          n_bus_{y_bus.size()},
           phase_shift_{topo_ptr, &topo_ptr->phase_shift},
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type},
+          */
           updated_u_(y_bus.size()),
           rhs_(n_bus_),
           mat_data_(y_bus.nnz()),
@@ -66,10 +70,12 @@ class IterativecurrentPFSolver {
     }
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                   Idx max_iter, CalculationInfo& calculation_info) {
+                                   Idx max_iter, CalculationInfo& calculation_info) override {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
+
+        // Why not use the private variables?
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
         // prepare output
@@ -157,12 +163,12 @@ class IterativecurrentPFSolver {
     }
 
    private:
-    Idx n_bus_;
+    // Idx n_bus_;
     // shared topo data
-    std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
-    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+    // std::shared_ptr<DoubleVector const> phase_shift_;
+    // std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
+    // std::shared_ptr<IdxVector const> source_bus_indptr_;
+    // std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
     ComplexValueVector<sym> updated_u_;
     ComplexValueVector<sym> rhs_;
     ComplexTensorVector<sym> mat_data_;
@@ -224,6 +230,7 @@ class IterativecurrentPFSolver {
         return max_dev;
     }
 
+    /*
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // pending to correct
         // call y bus
@@ -268,6 +275,7 @@ class IterativecurrentPFSolver {
             }
         }
     }
+    */
 };
 
 template class IterativecurrentPFSolver<true>;
