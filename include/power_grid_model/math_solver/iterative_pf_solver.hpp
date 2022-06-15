@@ -28,7 +28,6 @@ namespace math_model_impl {
 // solver
 template <bool sym>
 class IterativePFSolver {
-
    public:
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
@@ -86,16 +85,12 @@ class IterativePFSolver {
     virtual MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                            Idx max_iter, CalculationInfo& calculation_info) = 0;
 
-
    public:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
     std::shared_ptr<IdxVector const> source_bus_indptr_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-    
-
-
 };
 
 template class IterativePFSolver<true>;
