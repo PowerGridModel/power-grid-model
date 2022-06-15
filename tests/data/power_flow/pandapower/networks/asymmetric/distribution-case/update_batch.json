@@ -1,0 +1,322 @@
+[
+  {
+    "line": [
+      {
+        "id": 13,
+        "to_status": 0
+      }
+    ],
+    "sym_voltage_sensor": [
+      {
+        "id": 24,
+        "u_sigma": 100.0,
+        "u_measured": 14323.72668
+      },
+      {
+        "id": 25,
+        "u_sigma": 100.0,
+        "u_measured": 284.4579757
+      },
+      {
+        "id": 26,
+        "u_sigma": 100.0,
+        "u_measured": 284.2855329
+      },
+      {
+        "id": 27,
+        "u_sigma": 100.0,
+        "u_measured": 284.1126605
+      },
+      {
+        "id": 28,
+        "u_sigma": 100.0,
+        "u_measured": 282.8973372
+      },
+      {
+        "id": 29,
+        "u_sigma": 100.0,
+        "u_measured": 279.6383203
+      },
+      {
+        "id": 30,
+        "u_sigma": 100.0,
+        "u_measured": 256.6848254
+      },
+      {
+        "id": 31,
+        "u_sigma": 100.0,
+        "u_measured": 231.5406048
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 32,
+        "power_sigma": 100.0,
+        "p_measured": 105936.9431,
+        "q_measured": 36639.4089
+      },
+      {
+        "id": 33,
+        "power_sigma": 100.0,
+        "p_measured": -105872.3446,
+        "q_measured": -36618.31556
+      },
+      {
+        "id": 34,
+        "power_sigma": 100.0,
+        "p_measured": 182797.1614,
+        "q_measured": 70540.00026
+      },
+      {
+        "id": 35,
+        "power_sigma": 100.0,
+        "p_measured": -182614.4985,
+        "q_measured": -70352.59282
+      },
+      {
+        "id": 36,
+        "power_sigma": 100.0,
+        "p_measured": 65872.34459,
+        "q_measured": 21618.31556
+      },
+      {
+        "id": 37,
+        "power_sigma": 100.0,
+        "p_measured": -65550.00004,
+        "q_measured": -21514.85752
+      },
+      {
+        "id": 38,
+        "power_sigma": 100.0,
+        "p_measured": 132614.4985,
+        "q_measured": 50352.59282
+      },
+      {
+        "id": 39,
+        "power_sigma": 100.0,
+        "p_measured": -130495.6073,
+        "q_measured": -49639.64825
+      },
+      {
+        "id": 40,
+        "power_sigma": 100.0,
+        "p_measured": 3.65,
+        "q_measured": -25.14247914
+      },
+      {
+        "id": 41,
+        "power_sigma": 100.0,
+        "p_measured": 1.35,
+        "q_measured": -7.994
+      },
+      {
+        "id": 42,
+        "power_sigma": 100.0,
+        "p_measured": 60495.60729,
+        "q_measured": 19639.64825
+      },
+      {
+        "id": 43,
+        "power_sigma": 100.0,
+        "p_measured": -55425.12038,
+        "q_measured": -18368.78947
+      },
+      {
+        "id": 44,
+        "power_sigma": 100.0,
+        "p_measured": 55425.12038,
+        "q_measured": 18368.78947
+      },
+      {
+        "id": 45,
+        "power_sigma": 100.0,
+        "p_measured": -50250.0,
+        "q_measured": -15800.0
+      },
+      {
+        "id": 46,
+        "power_sigma": 100.0,
+        "p_measured": 144876.3773,
+        "q_measured": 59765.58305
+      },
+      {
+        "id": 47,
+        "power_sigma": 100.0,
+        "p_measured": -144367.0523,
+        "q_measured": -53589.70458
+      },
+      {
+        "id": 48,
+        "power_sigma": 100.0,
+        "p_measured": 144876.3773,
+        "q_measured": 59765.58305
+      },
+      {
+        "id": 49,
+        "power_sigma": 100.0,
+        "p_measured": -144367.0523,
+        "q_measured": -53589.70458
+      }
+    ]
+  },
+  {
+    "line": [
+      {
+        "id": 13,
+        "to_status": 1
+      }
+    ],
+    "sym_voltage_sensor": [
+      {
+        "id": 24,
+        "u_sigma": 100.0,
+        "u_measured": 14601.09728
+      },
+      {
+        "id": 25,
+        "u_sigma": 100.0,
+        "u_measured": 290.0765975
+      },
+      {
+        "id": 26,
+        "u_sigma": 100.0,
+        "u_measured": 289.8337019
+      },
+      {
+        "id": 27,
+        "u_sigma": 100.0,
+        "u_measured": 289.8344423
+      },
+      {
+        "id": 28,
+        "u_sigma": 100.0,
+        "u_measured": 287.5132293
+      },
+      {
+        "id": 29,
+        "u_sigma": 100.0,
+        "u_measured": 287.1625661
+      },
+      {
+        "id": 30,
+        "u_sigma": 100.0,
+        "u_measured": 283.683642
+      },
+      {
+        "id": 31,
+        "u_sigma": 100.0,
+        "u_measured": 261.4192541
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 32,
+        "power_sigma": 100.0,
+        "p_measured": 151267.6434,
+        "q_measured": 55375.03728
+      },
+      {
+        "id": 33,
+        "power_sigma": 100.0,
+        "p_measured": -151139.3581,
+        "q_measured": -55333.12428
+      },
+      {
+        "id": 34,
+        "power_sigma": 100.0,
+        "p_measured": 131116.58,
+        "q_measured": 50050.50606
+      },
+      {
+        "id": 35,
+        "power_sigma": 100.0,
+        "p_measured": -131026.4588,
+        "q_measured": -49958.04408
+      },
+      {
+        "id": 36,
+        "power_sigma": 100.0,
+        "p_measured": 111139.3581,
+        "q_measured": 40333.12428
+      },
+      {
+        "id": 37,
+        "power_sigma": 100.0,
+        "p_measured": -110237.4363,
+        "q_measured": -40043.6036
+      },
+      {
+        "id": 38,
+        "power_sigma": 100.0,
+        "p_measured": 81026.45879,
+        "q_measured": 29958.04408
+      },
+      {
+        "id": 39,
+        "power_sigma": 100.0,
+        "p_measured": -80271.33339,
+        "q_measured": -29703.96659
+      },
+      {
+        "id": 40,
+        "power_sigma": 100.0,
+        "p_measured": 44687.43633,
+        "q_measured": 18503.6036
+      },
+      {
+        "id": 41,
+        "power_sigma": 100.0,
+        "p_measured": -44163.78699,
+        "q_measured": -18108.89488
+      },
+      {
+        "id": 42,
+        "power_sigma": 100.0,
+        "p_measured": 10271.33339,
+        "q_measured": -296.0334116
+      },
+      {
+        "id": 43,
+        "power_sigma": 100.0,
+        "p_measured": -10145.85937,
+        "q_measured": 302.4477326
+      },
+      {
+        "id": 44,
+        "power_sigma": 100.0,
+        "p_measured": 54309.64636,
+        "q_measured": 17806.44715
+      },
+      {
+        "id": 45,
+        "power_sigma": 100.0,
+        "p_measured": -50250.0,
+        "q_measured": -15800.0
+      },
+      {
+        "id": 46,
+        "power_sigma": 100.0,
+        "p_measured": 141721.5531,
+        "q_measured": 58778.3146
+      },
+      {
+        "id": 47,
+        "power_sigma": 100.0,
+        "p_measured": -141192.1117,
+        "q_measured": -52712.77167
+      },
+      {
+        "id": 48,
+        "power_sigma": 100.0,
+        "p_measured": 141721.5531,
+        "q_measured": 58778.3146
+      },
+      {
+        "id": 49,
+        "power_sigma": 100.0,
+        "p_measured": -141192.1117,
+        "q_measured": -52712.77167
+      }
+    ]
+  }
+]
