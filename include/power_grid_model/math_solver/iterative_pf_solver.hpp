@@ -85,7 +85,7 @@ class IterativePFSolver {
     virtual MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                            Idx max_iter, CalculationInfo& calculation_info) = 0;
 
-   public:
+   protected:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
