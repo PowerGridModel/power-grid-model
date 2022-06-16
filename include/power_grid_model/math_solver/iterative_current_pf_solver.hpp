@@ -55,8 +55,9 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
    public:
     IterativecurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym>{y_bus, topo_ptr},
+          n_bus(y_bus.size()),
           updated_u_(y_bus.size()),
-          rhs_(n_bus_),
+          rhs_(y_bus.size()),
           mat_data_(y_bus.nnz()),
           loaded_mat_data_(false),
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
@@ -69,11 +70,12 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
         IdxVector const& bus_entry = y_bus.bus_entry();
 
         // Why not use the private variables?
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        std::vector<double> const& phase_shift = *phase_shift_;
+        IdxVector const& source_bus_indptr = *get_source_bus_indptr();  //*source_bus_indptr_;
+        std::vector<double> const& phase_shift = *get_phase_shift();    //*phase_shift_;
+
         // prepare output
         MathOutput<sym> output;
-        output.u.resize(n_bus_);
+        output.u.resize(n_bus);
         double max_dev = std::numeric_limits<double>::max();
 
         Timer main_timer(calculation_info, 2220, "Math solver");
@@ -83,14 +85,14 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
         // average u_ref of all sources
         DoubleComplex const u_ref = [&]() {
             DoubleComplex sum_u_ref = 0.0;
-            for (Idx bus = 0; bus != n_bus_; ++bus) {
+            for (Idx bus = 0; bus != n_bus; ++bus) {
                 for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
                 }
             }
             return sum_u_ref / (double)input.source.size();
         }();
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != n_bus; ++i) {
             // always flat start
             // consider phase shift
             output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
@@ -101,7 +103,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
         if (!loaded_mat_data_) {
             std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
             // loop bus
-            for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+            for (Idx bus_number = 0; bus_number != n_bus; ++bus_number) {
                 Idx const data_sequence = bus_entry[bus_number];
                 // loop sources
                 for (Idx source_number = source_bus_indptr[bus_number];
@@ -161,16 +163,18 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
     ComplexTensorVector<sym> mat_data_;
     bool loaded_mat_data_;
     BSRSolver<DoubleComplex> bsr_solver_;
+    // 2 instance of n_bus variable
+    Idx n_bus;
 
     void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                     ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
+        IdxVector const& load_gen_bus_indptr = *get_load_gen_bus_indptr();     //*load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *get_source_bus_indptr();         //*source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *get_load_gen_type();  //*load_gen_type_;
 
         // rhs = I_inj + L'U
         // loop buses: i
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+        for (Idx bus_number = 0; bus_number != n_bus; ++bus_number) {
             // loop loads/generation: j
             for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
                  ++load_number) {
@@ -206,7 +210,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
     double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop all buses
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+        for (Idx bus_number = 0; bus_number != n_bus; ++bus_number) {
             // Get maximum iteration for a bus
             double const dev = max_val(cabs(updated_u_[bus_number] - u[bus_number]));
             // Keep maximum deviation of all buses

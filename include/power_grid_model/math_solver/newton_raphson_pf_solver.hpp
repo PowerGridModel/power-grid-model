@@ -222,6 +222,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
    public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym>{y_bus, topo_ptr},
+          n_bus(y_bus.size()),
           data_jac_(y_bus.nnz()),
           x_(y_bus.size()),
           del_x_(y_bus.size()),
@@ -231,11 +232,13 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
-        std::vector<double> const& phase_shift = *phase_shift_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        std::vector<double> const& phase_shift = *get_phase_shift();    //*phase_shift_;
+        IdxVector const& source_bus_indptr = *get_source_bus_indptr();  //*source_bus_indptr_;
+        // Change n_bus_ name
+        Idx n_bus = y_bus.size();
         // prepare
         MathOutput<sym> output;
-        output.u.resize(n_bus_);
+        output.u.resize(n_bus);
         double max_dev = std::numeric_limits<double>::max();
 
         Timer main_timer(calculation_info, 2220, "Math solver");
@@ -245,7 +248,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
         // average u_ref of all sources
         DoubleComplex const u_ref = [&]() {
             DoubleComplex sum_u_ref = 0.0;
-            for (Idx bus = 0; bus != n_bus_; ++bus) {
+            for (Idx bus = 0; bus != n_bus; ++bus) {
                 for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
                 }
@@ -253,7 +256,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
             return sum_u_ref / (double)input.source.size();
         }();
         // assign u_ref as flat start
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != n_bus; ++i) {
             // consider phase shift
             output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
             x_[i].v = cabs(output.u[i]);
@@ -302,19 +305,21 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
     // 2. power unbalance: p/q_specified - p/q_calculated
     std::vector<ComplexPower<sym>> del_pq_;
     BSRSolver<double> bsr_solver_;
+    // ! 2 instances of n_bus
+    Idx n_bus;
 
     void calculate_jacobian_and_deviation(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                           ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
+        IdxVector const& load_gen_bus_indptr = *get_load_gen_bus_indptr();     //*load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *get_source_bus_indptr();         //*source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *get_load_gen_type();  //*load_gen_type_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& indptr = y_bus.row_indptr();
         IdxVector const& indices = y_bus.col_indices();
         IdxVector const& bus_entry = y_bus.bus_entry();
 
         // loop for row indices as i for whole matrix
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != n_bus; ++i) {
             // reset power injection
             del_pq_[i].p = RealValue<sym>{0.0};
             del_pq_[i].q = RealValue<sym>{0.0};
@@ -346,7 +351,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
         }
 
         // loop individual load/source, i as bus number, j as load/source number
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != n_bus; ++i) {
             // k as data sequence number
             Idx const k = bus_entry[i];
 
@@ -416,7 +421,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
     double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop each bus as i
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != n_bus; ++i) {
             // angle
             x_[i].theta += del_x_[i].theta;
             // magnitude
