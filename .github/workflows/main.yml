@@ -37,6 +37,8 @@ jobs:
 
 
   build-cpp-test-windows:
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
+
     runs-on: windows-latest
     strategy:
       matrix:
@@ -80,6 +82,8 @@ jobs:
 
 
   build-cpp-test-macos:
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
+
     runs-on: macos-latest
     strategy:
       matrix:
@@ -111,6 +115,8 @@ jobs:
 
 
   build-and-test-python:
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
+
     strategy:
       matrix:
         platform: [ linux, macos, windows ]

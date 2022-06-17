@@ -15,6 +15,7 @@ on:
 
 jobs:
   sonar-cloud:
+    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     name: SonarCloud
     runs-on: ubuntu-latest
     container: ghcr.io/alliander-opensource/power-grid-model-build-env-sonar:latest
