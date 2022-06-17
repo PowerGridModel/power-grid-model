@@ -22,6 +22,7 @@ on:
 jobs:
 
   build-cpp-test-linux:
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
     strategy:
@@ -35,10 +36,8 @@ jobs:
       - name: Run build script
         run: ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
 
-
   build-cpp-test-windows:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
-
     runs-on: windows-latest
     strategy:
       matrix:
@@ -80,10 +79,8 @@ jobs:
           # test
           .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
 
-
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
-
     runs-on: macos-latest
     strategy:
       matrix:
@@ -113,10 +110,7 @@ jobs:
           # bash
           ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
 
-
   build-and-test-python:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
-
     strategy:
       matrix:
         platform: [ linux, macos, windows ]
@@ -201,7 +195,6 @@ jobs:
         with:
           name: wheelhouse
           path: ./wheelhouse/*.whl
-
 
   publish-wheels:
     needs: build-and-test-python
