@@ -402,7 +402,7 @@ cdef class PowerGridModel:
 
         for name, count in all_component_count.items():
             # intialize array
-            arr = initialize_array(output_type, name, (n_batch, count))
+            arr = initialize_array(output_type, name, (n_batch, count), empty=True)
             result_dict[name] = arr
 
         prepared_result = _prepare_cpp_array(data_type=output_type, array_dict=result_dict)
@@ -601,7 +601,7 @@ cdef class PowerGridModel:
         return self.copy()
 
 
-def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int]):
+def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty=False):
     """
     Initializes an array for use in Power Grid Model calculations
 
@@ -611,18 +611,26 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
         shape: shape of initialization
             integer, it is a 1-dimensional array
             tuple, it is an N-dimensional (tuple.shape) array
+        empty: if leave the memory block un-initialized
 
     Returns:
         np structured array with all entries as null value
     """
     if not isinstance(shape, tuple):
         shape = (shape, )
-    return np.full(
-        shape=shape,
-        fill_value=_power_grid_meta_data[data_type][component_type]['nan_scalar'],
-        dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
-        order='C'
-    )
+    if empty:
+        return np.empty(
+            shape=shape,
+            dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
+            order='C'
+        )
+    else:
+        return np.full(
+            shape=shape,
+            fill_value=_power_grid_meta_data[data_type][component_type]['nan_scalar'],
+            dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
+            order='C'
+        )
 
 
 # external used meta data
