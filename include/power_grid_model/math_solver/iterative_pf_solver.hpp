@@ -15,9 +15,8 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+#include "../timer.hpp"
 #include "y_bus.hpp"
-#include "newton_raphson_pf_solver.hpp"
-#include "iterative_current_pf_solver.hpp"
 
 namespace power_grid_model {
 
@@ -80,8 +79,110 @@ class IterativePFSolver {
             }
         }
     }
-    virtual MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                           Idx max_iter, CalculationInfo& calculation_info) = 0;
+
+    /*
+    initialize_unknown();
+
+    virtual initialize_matrix();
+    virtual prepare_matrix_rhs();
+    virtual solve_matrix();
+    virtual iterate_unkown();
+    virtual ~IterativePFSolver();
+
+
+    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
+                                    Idx max_iter, CalculationInfo& calculation_info) {
+
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<double> const& phase_shift = *this->phase_shift_;
+
+        // prepare
+        MathOutput<sym> output;
+        output.u.resize(n_bus);
+        double max_dev = std::numeric_limits<double>::max();
+
+        Timer main_timer(calculation_info, 2220, "Math solver");
+
+        // initialize
+        Timer sub_timer(calculation_info, 2221, "Initialize calculation");
+        // average u_ref of all sources
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (Idx bus = 0; bus != n_bus; ++bus) {
+                for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+                }
+            }
+            return sum_u_ref / (double)input.source.size();
+        }();
+
+        initialize_unknown();       // polar for NR complex for iterative
+        sub_timer.stop();
+
+        initialize_matrix();        // nothing for NR, factorize for iterative
+
+        // start calculation
+        // iteration
+        Idx num_iter = 0;
+        while (max_dev > err_tol) {
+            if (num_iter++ == max_iter) {
+                throw IterationDiverge{max_iter, max_dev, err_tol};
+            }
+            sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
+            prepare_matrix_rhs();  // jacobian for NR and injected for iterative current
+            sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
+            solve_matrix();  // bsr_solve for both
+            sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
+            max_dev = iterate_unknown();  // compare both iterate unknowns use virtual-like
+            sub_timer.stop();
+        }
+
+        // calculate math result
+        sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
+        calculate_result(y_bus, input, output);
+
+        // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
+        sub_timer.stop();
+        main_timer.stop();
+
+        const auto key = Timer::make_key(2226, "Max number of iterations");
+        calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
+
+        return output;
+    }
+
+
+    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
+                                   Idx max_iter, CalculationInfo& calculation_info) {
+
+
+        // intitialize_unknown
+        // assign u_ref as flat start
+        for (Idx i = 0; i != n_bus; ++i) {
+            // consider phase shift
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+            x_[i].v = cabs(output.u[i]);
+            x_[i].theta = arg(output.u[i]);
+        }
+
+
+
+        while (max_dev > err_tol) {
+            if (num_iter++ == max_iter) {
+                throw IterationDiverge{max_iter, max_dev, err_tol};
+            }
+            sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
+            calculate_jacobian_and_deviation(y_bus, input, output.u);
+            sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
+            bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
+            sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
+            max_dev = iterate_unknown(output.u);
+            sub_timer.stop();
+        }
+
+    }
+
+    */
 
     Idx get_n_bus() {
         return n_bus_;
@@ -99,7 +200,7 @@ class IterativePFSolver {
         return load_gen_type_;
     }
 
-   private:
+   protected:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;

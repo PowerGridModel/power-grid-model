@@ -64,14 +64,14 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
     }
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                   Idx max_iter, CalculationInfo& calculation_info) override {
+                                   Idx max_iter, CalculationInfo& calculation_info) {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
 
         // Why not use the private variables?
-        IdxVector const& source_bus_indptr = *get_source_bus_indptr();  //*source_bus_indptr_;
-        std::vector<double> const& phase_shift = *get_phase_shift();    //*phase_shift_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<double> const& phase_shift = *this->phase_shift_;
 
         // prepare output
         MathOutput<sym> output;
@@ -168,9 +168,9 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
 
     void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                     ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *get_load_gen_bus_indptr();     //*load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *get_source_bus_indptr();         //*source_bus_indptr_;
-        std::vector<LoadGenType> const& load_gen_type = *get_load_gen_type();  //*load_gen_type_;
+        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
 
         // rhs = I_inj + L'U
         // loop buses: i

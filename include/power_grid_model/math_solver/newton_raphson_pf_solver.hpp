@@ -232,8 +232,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
-        std::vector<double> const& phase_shift = *get_phase_shift();    //*phase_shift_;
-        IdxVector const& source_bus_indptr = *get_source_bus_indptr();  //*source_bus_indptr_;
+        std::vector<double> const& phase_shift = *this->phase_shift_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         // Change n_bus_ name
         Idx n_bus = y_bus.size();
         // prepare
@@ -310,9 +310,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
 
     void calculate_jacobian_and_deviation(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                           ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *get_load_gen_bus_indptr();     //*load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *get_source_bus_indptr();         //*source_bus_indptr_;
-        std::vector<LoadGenType> const& load_gen_type = *get_load_gen_type();  //*load_gen_type_;
+        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& indptr = y_bus.row_indptr();
         IdxVector const& indices = y_bus.col_indices();
