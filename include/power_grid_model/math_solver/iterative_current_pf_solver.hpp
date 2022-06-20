@@ -55,7 +55,6 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
    public:
     IterativecurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym>{y_bus, topo_ptr},
-          n_bus(y_bus.size()),
           updated_u_(y_bus.size()),
           rhs_(y_bus.size()),
           mat_data_(y_bus.nnz()),
@@ -68,6 +67,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
         // Get y bus data along with its entry
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
+        Idx n_bus = this->n_bus_;
 
         // Why not use the private variables?
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
@@ -139,7 +139,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
-        calculate_result(y_bus, input, output);
+        this->calculate_result(y_bus, input, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -163,14 +163,13 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
     ComplexTensorVector<sym> mat_data_;
     bool loaded_mat_data_;
     BSRSolver<DoubleComplex> bsr_solver_;
-    // 2 instance of n_bus variable
-    Idx n_bus;
 
     void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                     ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        Idx n_bus = this->n_bus_;
 
         // rhs = I_inj + L'U
         // loop buses: i
@@ -208,6 +207,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
     }
 
     double iterate_unknown(ComplexValueVector<sym>& u) {
+        Idx n_bus = this->n_bus_;
         double max_dev = 0.0;
         // loop all buses
         for (Idx bus_number = 0; bus_number != n_bus; ++bus_number) {

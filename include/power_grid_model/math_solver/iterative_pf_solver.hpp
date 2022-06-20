@@ -81,8 +81,7 @@ class IterativePFSolver {
     }
 
     /*
-    initialize_unknown();
-
+    virtual initialize_unknown();
     virtual initialize_matrix();
     virtual prepare_matrix_rhs();
     virtual solve_matrix();
@@ -182,7 +181,7 @@ class IterativePFSolver {
 
     }
 
-    */
+
 
     Idx get_n_bus() {
         return n_bus_;
@@ -199,6 +198,7 @@ class IterativePFSolver {
     std::shared_ptr<std::vector<LoadGenType> const> get_load_gen_type() {
         return load_gen_type_;
     }
+    */
 
    protected:
     Idx n_bus_;

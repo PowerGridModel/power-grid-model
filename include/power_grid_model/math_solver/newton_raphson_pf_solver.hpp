@@ -222,7 +222,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
    public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym>{y_bus, topo_ptr},
-          n_bus(y_bus.size()),
           data_jac_(y_bus.nnz()),
           x_(y_bus.size()),
           del_x_(y_bus.size()),
@@ -234,8 +233,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         std::vector<double> const& phase_shift = *this->phase_shift_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
-        // Change n_bus_ name
-        Idx n_bus = y_bus.size();
+        Idx n_bus = this->n_bus_;
         // prepare
         MathOutput<sym> output;
         output.u.resize(n_bus);
@@ -282,7 +280,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
-        calculate_result(y_bus, input, output);
+        this->calculate_result(y_bus, input, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -305,8 +303,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
     // 2. power unbalance: p/q_specified - p/q_calculated
     std::vector<ComplexPower<sym>> del_pq_;
     BSRSolver<double> bsr_solver_;
-    // ! 2 instances of n_bus
-    Idx n_bus;
 
     void calculate_jacobian_and_deviation(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                           ComplexValueVector<sym> const& u) {
@@ -317,6 +313,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
         IdxVector const& indptr = y_bus.row_indptr();
         IdxVector const& indices = y_bus.col_indices();
         IdxVector const& bus_entry = y_bus.bus_entry();
+        Idx n_bus = this->n_bus_;
 
         // loop for row indices as i for whole matrix
         for (Idx i = 0; i != n_bus; ++i) {
@@ -419,6 +416,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
     }
 
     double iterate_unknown(ComplexValueVector<sym>& u) {
+        Idx n_bus = this->n_bus_;
         double max_dev = 0.0;
         // loop each bus as i
         for (Idx i = 0; i != n_bus; ++i) {
