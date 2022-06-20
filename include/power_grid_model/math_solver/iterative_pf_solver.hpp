@@ -15,10 +15,9 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
-#include "block_matrix.hpp"
-#include "bsr_solver.hpp"
 #include "y_bus.hpp"
+#include "newton_raphson_pf_solver.hpp"
+#include "iterative_current_pf_solver.hpp"
 
 namespace power_grid_model {
 
