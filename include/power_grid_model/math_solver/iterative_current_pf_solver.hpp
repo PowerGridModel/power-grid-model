@@ -62,6 +62,95 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
+    void initialize_unknown() {
+        //empty for iterative current
+        int empty = 0;
+    }
+
+    void initialize_matrix(YBus<sym> const& y_bus) {
+        // replace these extra variables if needed
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        IdxVector const& bus_entry = y_bus.bus_entry();
+
+        // Build y bus data with source impedance
+        // copy y bus data.
+        if (!loaded_mat_data_) {
+            std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
+            // loop bus
+            for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+                Idx const data_sequence = bus_entry[bus_number];
+                // loop sources
+                for (Idx source_number = source_bus_indptr[bus_number];
+                     source_number != source_bus_indptr[bus_number + 1]; ++source_number) {
+                    // YBus_diag += Y_source
+                    mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                }
+            }
+            loaded_mat_data_ = true;
+        }
+    }
+
+    void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                    ComplexValueVector<sym> const& u) {
+        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        
+        // rhs = I_inj + L'U
+        // loop buses: i
+        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+            // loop loads/generation: j
+            for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
+                 ++load_number) {
+                // load type
+                LoadGenType const type = load_gen_type[load_number];
+                switch (type) {
+                    case LoadGenType::const_pq:
+                        // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
+                        rhs_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
+                        break;
+                    case LoadGenType::const_y:
+                        // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
+                        rhs_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
+                        break;
+                    case LoadGenType::const_i:
+                        // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
+                        rhs_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
+                        break;
+                    default:
+                        throw MissingCaseForEnumError("Injection current calculation", type);
+                }
+            }
+            // loop sources: j
+            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+                 ++source_number) {
+                // -L'U = Y_source_j * U_ref_j
+                rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                        ComplexValue<sym>{input.source[source_number]});
+            }
+        }
+    }
+
+    void solve_matrix() {
+        bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data(), true);
+    }
+
+    double iterate_unknown_2(ComplexValueVector<sym>& u) {
+        double max_dev = 0.0;
+        // loop all buses
+        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+            // Get maximum iteration for a bus
+            double const dev = max_val(cabs(updated_u_[bus_number] - u[bus_number]));
+            // Keep maximum deviation of all buses
+            max_dev = std::max(dev, max_dev);
+            // assign updated values
+            u[bus_number] = updated_u_[bus_number];
+        }
+        return max_dev;
+    }
+
+
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // Get y bus data along with its entry

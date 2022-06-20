@@ -81,12 +81,13 @@ class IterativePFSolver {
     }
 
     /*
-    virtual initialize_unknown();
-    virtual initialize_matrix();
-    virtual prepare_matrix_rhs();
-    virtual solve_matrix();
-    virtual iterate_unkown();
-    virtual ~IterativePFSolver();
+    // Not virtual but use from derived
+    virtual void initialize_unknown();
+    virtual void initialize_matrix();
+    virtual void prepare_matrix_rhs();
+    virtual void solve_matrix();
+    virtual void iterate_unkown();
+    virtual void ~IterativePFSolver();
 
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
@@ -114,11 +115,17 @@ class IterativePFSolver {
             }
             return sum_u_ref / (double)input.source.size();
         }();
+        
+        // assign u_ref as flat start
+        for (Idx i = 0; i != n_bus_; ++i) {
+            // consider phase shift
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * this->phase_shift_[i])};
+        }
 
-        initialize_unknown();       // polar for NR complex for iterative
+        initialize_unknown_polar(output);       // polar for NR complex nothing for iterative
         sub_timer.stop();
 
-        initialize_matrix();        // nothing for NR, factorize for iterative
+        initialize_matrix(y_bus);  // nothing for NR, factorize for iterative
 
         // start calculation
         // iteration
@@ -128,11 +135,11 @@ class IterativePFSolver {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
             sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
-            prepare_matrix_rhs();  // jacobian for NR and injected for iterative current
+            prepare_matrix_rhs(y_bus, input, output.u);  // jacobian for NR and injected for iterative current
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
             solve_matrix();  // bsr_solve for both
             sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
-            max_dev = iterate_unknown();  // compare both iterate unknowns use virtual-like
+            max_dev = iterate_unknown(output.u);  // compare both iterate unknowns use virtual-like
             sub_timer.stop();
         }
 
@@ -180,9 +187,9 @@ class IterativePFSolver {
         }
 
     }
+    */
 
-
-
+    /*
     Idx get_n_bus() {
         return n_bus_;
     }
@@ -199,6 +206,7 @@ class IterativePFSolver {
         return load_gen_type_;
     }
     */
+    
 
    protected:
     Idx n_bus_;

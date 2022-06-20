@@ -229,6 +229,157 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
+    void initialize_unknown_polar(MathOutput<sym> output) {
+        // assign u_ref as flat start
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            // consider phase shift
+            x_[i].v = cabs(output.u[i]);
+            x_[i].theta = arg(output.u[i]);
+        }
+    }
+
+    void initialize_matrix() {
+        // empty for NR
+        int empty = 0;
+    }
+
+    void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                          ComplexValueVector<sym> const& u) {
+        // Function for calculating jacobian and deviation
+        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        IdxVector const& indptr = y_bus.row_indptr();
+        IdxVector const& indices = y_bus.col_indices();
+        IdxVector const& bus_entry = y_bus.bus_entry();
+        Idx n_bus = y_bus.size();
+
+        // loop for row indices as i for whole matrix
+        for (Idx i = 0; i != n_bus; ++i) {
+            // reset power injection
+            del_pq_[i].p = RealValue<sym>{0.0};
+            del_pq_[i].q = RealValue<sym>{0.0};
+            // loop for column for incomplete jacobian and injection
+            // k as data indices
+            // j as column indices
+            for (Idx k = indptr[i]; k != indptr[i + 1]; ++k) {
+                Idx const j = indices[k];
+                // incomplete jacobian
+                data_jac_[k] = calculate_hnml(ydata[k], u[i], u[j]);
+                // accumulate negative power injection
+                // -P = sum(-N)
+                del_pq_[i].p -= sum_row(data_jac_[k].n());
+                // -Q = sum (-H)
+                del_pq_[i].q -= sum_row(data_jac_[k].h());
+            }
+            // correct diagonal part of jacobian
+            Idx const k = bus_entry[i];
+            // diagonal correction
+            // del_pq has negative injection
+            // H += (-Q)
+            add_diag(data_jac_[k].h(), del_pq_[i].q);
+            // N -= (-P)
+            add_diag(data_jac_[k].n(), -del_pq_[i].p);
+            // M -= (-P)
+            add_diag(data_jac_[k].m(), -del_pq_[i].p);
+            // L -= (-Q)
+            add_diag(data_jac_[k].l(), -del_pq_[i].q);
+        }
+
+        // loop individual load/source, i as bus number, j as load/source number
+        for (Idx i = 0; i != n_bus; ++i) {
+            // k as data sequence number
+            Idx const k = bus_entry[i];
+
+            // loop load
+            for (Idx j = load_gen_bus_indptr[i]; j != load_gen_bus_indptr[i + 1]; ++j) {
+                // load type
+                LoadGenType const type = load_gen_type[j];
+                // modify jacobian and del_pq based on type
+                switch (type) {
+                    case LoadGenType::const_pq:
+                        // PQ_sp = PQ_base
+                        del_pq_[i].p += real(input.s_injection[j]);
+                        del_pq_[i].q += imag(input.s_injection[j]);
+                        // -dPQ_sp/dV * V = 0
+                        break;
+                    case LoadGenType::const_y:
+                        // PQ_sp = PQ_base * V^2
+                        del_pq_[i].p += real(input.s_injection[j]) * x_[i].v * x_[i].v;
+                        del_pq_[i].q += imag(input.s_injection[j]) * x_[i].v * x_[i].v;
+                        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
+                        add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * 2.0 * x_[i].v * x_[i].v);
+                        add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * 2.0 * x_[i].v * x_[i].v);
+                        break;
+                    case LoadGenType::const_i:
+                        // PQ_sp = PQ_base * V
+                        del_pq_[i].p += real(input.s_injection[j]) * x_[i].v;
+                        del_pq_[i].q += imag(input.s_injection[j]) * x_[i].v;
+                        // -dPQ_sp/dV * V = -PQ_base * V
+                        add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * x_[i].v);
+                        add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * x_[i].v);
+                        break;
+                    default:
+                        throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
+                }
+            }
+
+            // loop source
+            for (Idx j = source_bus_indptr[i]; j != source_bus_indptr[i + 1]; ++j) {
+                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[j];
+                ComplexValue<sym> const u_ref{input.source[j]};
+                // calculate block, um = ui, us = uref
+                PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[i], u[i]);
+                PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[i], u_ref);
+                // P_cal_m = (Nmm + Nms) * I
+                RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
+                // Q_cal_m = (Hmm + Hms) * I
+                RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
+                // correct hnml for mm
+                add_diag(block_mm.h(), -q_cal);
+                add_diag(block_mm.n(), p_cal);
+                add_diag(block_mm.m(), p_cal);
+                add_diag(block_mm.l(), q_cal);
+                // append to del_pq
+                del_pq_[i].p -= p_cal;
+                del_pq_[i].q -= q_cal;
+                // append to jacobian block
+                // hnml -= -dPQ_cal/(dtheta,dV)
+                // hnml += dPQ_cal/(dtheta,dV)
+                data_jac_[k].h() += block_mm.h();
+                data_jac_[k].n() += block_mm.n();
+                data_jac_[k].m() += block_mm.m();
+                data_jac_[k].l() += block_mm.l();
+            }
+        }
+    }
+    
+    void solve_matrix() {
+        bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
+    }
+
+    double iterate_unknown_2(ComplexValueVector<sym>& u) {
+        double max_dev = 0.0;
+        // loop each bus as i
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            // angle
+            x_[i].theta += del_x_[i].theta;
+            // magnitude
+            x_[i].v += x_[i].v * del_x_[i].v;
+            // temporary complex phasor
+            // U = V * exp(1i*theta)
+            ComplexValue<sym> const& u_tmp = x_[i].v * exp(1.0i * x_[i].theta);
+            // get dev of last iteration, get max
+            double const dev = max_val(cabs(u_tmp - u[i]));
+            max_dev = std::max(dev, max_dev);
+            // assign
+            u[i] = u_tmp;
+        }
+        return max_dev;
+    }
+
+
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         std::vector<double> const& phase_shift = *this->phase_shift_;
