@@ -47,8 +47,7 @@ class MathSolver {
                 // IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>>& base_solver =
                 //        static_cast<IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>>>((newton_pf_solver_.value()));
             }
-            return run_power_flow_iterative(newton_pf_solver_.value(), y_bus_, input, err_tol, max_iter,
-                                            calculation_info);
+            return run_power_flow_iterative(newton_pf_solver_.value(), input, err_tol, max_iter, calculation_info);
             // return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
             // return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
         }
@@ -69,7 +68,7 @@ class MathSolver {
                 //    static_cast<IterativePFSolver<sym,
                 //    IterativecurrentPFSolver<sym>>>((iterative_current_pf_solver_.value()));
             }
-            return run_power_flow_iterative(iterative_current_pf_solver_.value(), y_bus_, input, err_tol, max_iter,
+            return run_power_flow_iterative(iterative_current_pf_solver_.value(), input, err_tol, max_iter,
                                             calculation_info);
             // return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
             // return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
@@ -113,8 +112,8 @@ class MathSolver {
     }
 
     template <typename T>
-    MathOutput<sym> run_power_flow_iterative(T& base_solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                             double err_tol, Idx max_iter, CalculationInfo& calculation_info) {
+    MathOutput<sym> run_power_flow_iterative(T& base_solver, PowerFlowInput<sym> const& input, double err_tol,
+                                             Idx max_iter, CalculationInfo& calculation_info) {
         return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
     }
 
