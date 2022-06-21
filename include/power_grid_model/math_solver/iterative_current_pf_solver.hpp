@@ -47,14 +47,14 @@ namespace math_model_impl {
 
 // solver
 template <bool sym>
-class IterativecurrentPFSolver : public IterativePFSolver<sym> {
+class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentPFSolver<sym>> {
    private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
 
    public:
     IterativecurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym>{y_bus, topo_ptr},
+        : IterativePFSolver<sym, IterativecurrentPFSolver>{y_bus, topo_ptr},
           updated_u_(y_bus.size()),
           rhs_(y_bus.size()),
           mat_data_(y_bus.nnz()),
@@ -62,8 +62,8 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
-    void initialize_unknown() {
-        //empty for iterative current
+    void initialize_unknown_polar() {
+        // empty for iterative current
         int empty = 0;
     }
 
@@ -92,11 +92,11 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
     }
 
     void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                    ComplexValueVector<sym> const& u) {
+                            ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
-        
+
         // rhs = I_inj + L'U
         // loop buses: i
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
@@ -149,7 +149,6 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym> {
         }
         return max_dev;
     }
-
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {

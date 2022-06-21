@@ -44,8 +44,13 @@ class MathSolver {
             if (!newton_pf_solver_.has_value()) {
                 Timer timer(calculation_info, 2210, "Create math solver");
                 newton_pf_solver_.emplace(y_bus_, topo_ptr_);
+                // IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>>& base_solver =
+                //        static_cast<IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>>>((newton_pf_solver_.value()));
             }
-            return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+            return run_power_flow_iterative(newton_pf_solver_.value(), y_bus_, input, err_tol, max_iter,
+                                            calculation_info);
+            // return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+            // return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
         }
         else if (calculation_method == CalculationMethod::linear) {
             if (!linear_pf_solver_.has_value()) {
@@ -60,9 +65,15 @@ class MathSolver {
             if (!iterative_current_pf_solver_.has_value()) {
                 Timer timer(calculation_info, 2210, "Create math solver");
                 iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
+                // IterativePFSolver<sym, IterativecurrentPFSolver<sym>>& base_solver =
+                //    static_cast<IterativePFSolver<sym,
+                //    IterativecurrentPFSolver<sym>>>((iterative_current_pf_solver_.value()));
             }
-            return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
-                                                                       calculation_info);
+            return run_power_flow_iterative(iterative_current_pf_solver_.value(), y_bus_, input, err_tol, max_iter,
+                                            calculation_info);
+            // return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+            // return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
+            //                                                           calculation_info);
         }
 
         else {
@@ -99,6 +110,12 @@ class MathSolver {
         if (iterative_current_pf_solver_.has_value()) {
             iterative_current_pf_solver_.value().reset_lhs();
         }
+    }
+
+    template <typename T>
+    MathOutput<sym> run_power_flow_iterative(T& base_solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                             double err_tol, Idx max_iter, CalculationInfo& calculation_info) {
+        return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
     }
 
    private:

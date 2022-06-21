@@ -214,14 +214,14 @@ constexpr block_entry_trait<PFJacBlock> jac_trait{};
 
 // solver
 template <bool sym>
-class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
+class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
    private:
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
    public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym>{y_bus, topo_ptr},
+        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
           data_jac_(y_bus.nnz()),
           x_(y_bus.size()),
           del_x_(y_bus.size()),
@@ -244,7 +244,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
     }
 
     void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                          ComplexValueVector<sym> const& u) {
+                            ComplexValueVector<sym> const& u) {
         // Function for calculating jacobian and deviation
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
@@ -354,7 +354,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
             }
         }
     }
-    
+
     void solve_matrix() {
         bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
     }
@@ -378,7 +378,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym> {
         }
         return max_dev;
     }
-
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
