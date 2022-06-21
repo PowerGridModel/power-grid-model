@@ -17,10 +17,9 @@
 // clang-format off
 #include "newton_raphson_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
+#include "iterative_current_pf_solver.hpp"
 // clang-format on
 #include "y_bus.hpp"
-// iterative current addition
-#include "iterative_current_pf_solver.hpp"
 
 namespace power_grid_model {
 
@@ -31,7 +30,11 @@ class MathSolver {
                std::shared_ptr<MathModelParam<sym> const> const& param)
         : topo_ptr_{topo_ptr},
           y_bus_{topo_ptr, param},
-          all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(), [](LoadGenType x) {
+          all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(),
+                                   [](LoadGenType x) {
+                                       return x == LoadGenType::const_y;
+                                   })},
+          all_const_i_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(), [](LoadGenType x) {
               return x == LoadGenType::const_y;
           })} {
     }
@@ -40,16 +43,13 @@ class MathSolver {
                                    CalculationInfo& calculation_info, CalculationMethod calculation_method) {
         // set method to always linear if there are all load_gen with const_y
         calculation_method = all_const_y_ ? CalculationMethod::linear : calculation_method;
+        // calculation_method = all_const_i_ ? CalculationMethod::linear_current : calculation_method;
         if (calculation_method == CalculationMethod::newton_raphson) {
             if (!newton_pf_solver_.has_value()) {
                 Timer timer(calculation_info, 2210, "Create math solver");
                 newton_pf_solver_.emplace(y_bus_, topo_ptr_);
-                // IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>>& base_solver =
-                //        static_cast<IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>>>((newton_pf_solver_.value()));
             }
             return run_power_flow_iterative(newton_pf_solver_.value(), input, err_tol, max_iter, calculation_info);
-            // return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
-            // return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
         }
         else if (calculation_method == CalculationMethod::linear) {
             if (!linear_pf_solver_.has_value()) {
@@ -64,15 +64,21 @@ class MathSolver {
             if (!iterative_current_pf_solver_.has_value()) {
                 Timer timer(calculation_info, 2210, "Create math solver");
                 iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
-                // IterativePFSolver<sym, IterativecurrentPFSolver<sym>>& base_solver =
-                //    static_cast<IterativePFSolver<sym,
-                //    IterativecurrentPFSolver<sym>>>((iterative_current_pf_solver_.value()));
             }
             return run_power_flow_iterative(iterative_current_pf_solver_.value(), input, err_tol, max_iter,
                                             calculation_info);
-            // return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
-            // return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
-            //                                                           calculation_info);
+        }
+
+        else if (calculation_method == CalculationMethod::linear_current) {
+            if (!linear_current_pf_solver_.has_value()) {
+                Timer timer(calculation_info, 2210, "Create math solver");
+                linear_current_pf_solver_.emplace(y_bus_, topo_ptr_);
+            }
+            // High error tolerance for single iteration
+            double err_tol_linear = 1000;
+            Idx max_iter_linear = 2;
+            return run_power_flow_iterative(linear_current_pf_solver_.value(), input, err_tol_linear,
+                                            max_iter_linear, calculation_info);
         }
 
         else {
@@ -101,19 +107,24 @@ class MathSolver {
         newton_pf_solver_.reset();
         linear_pf_solver_.reset();
         iterative_current_pf_solver_.reset();
+        linear_current_pf_solver_.reset();
     }
 
     void update_value(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         y_bus_.update_admittance(math_model_param);
-        // Invalidate prefactorization of iterative current solver
+        // Invalidate prefactorization of iterative/linear current solvers
         if (iterative_current_pf_solver_.has_value()) {
             iterative_current_pf_solver_.value().reset_lhs();
+        }
+        if (linear_current_pf_solver_.has_value()) {
+            linear_current_pf_solver_.value().reset_lhs();
         }
     }
 
     template <typename T>
     MathOutput<sym> run_power_flow_iterative(T& base_solver, PowerFlowInput<sym> const& input, double err_tol,
                                              Idx max_iter, CalculationInfo& calculation_info) {
+        // Calling function of CRTP implemented iterative solvers
         return base_solver.run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
     }
 
@@ -121,11 +132,13 @@ class MathSolver {
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     YBus<sym> y_bus_;
     bool all_const_y_;  // if all the load_gen is const element_admittance (impedance) type
+    bool all_const_i_;  // if all the load_gen is const current type
     std::optional<NewtonRaphsonPFSolver<sym>> newton_pf_solver_;
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
-    // iterative current addition
     std::optional<IterativecurrentPFSolver<sym>> iterative_current_pf_solver_;
+    // Linear current is single iteration of iterative current
+    std::optional<IterativecurrentPFSolver<sym>> linear_current_pf_solver_;
 };
 
 template class MathSolver<true>;

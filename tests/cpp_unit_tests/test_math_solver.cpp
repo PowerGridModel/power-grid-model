@@ -183,6 +183,24 @@ TEST_CASE("Test math solver") {
         }
     }
 
+    /*
+    // const i
+    PowerFlowInput<true> pf_input_i = pf_input;
+    MathOutput<true> output_ref_i = output_ref;
+    for (size_t i = 0; i < 6; i++) {
+        if (i % 3 == 1) {
+            pf_input_i.s_injection[i] *= 3.0;
+            output_ref_i.load_gen[i].i *= 3.0;
+            output_ref_i.load_gen[i].s *= 3.0;
+        }
+        else {
+            pf_input_i.s_injection[i] = 0.0;
+            output_ref_i.load_gen[i] = {};
+        }
+    }
+    */
+    
+
     // asymmetric param
     // network param
     MathModelParam<false> param_asym;
@@ -258,6 +276,23 @@ TEST_CASE("Test math solver") {
             output_ref_asym_z.load_gen[i] = {};
         }
     }
+
+    /*
+    // const i
+    PowerFlowInput<false> pf_input_asym_i = pf_input_asym;
+    MathOutput<false> output_ref_asym_i = output_ref_asym;
+    for (size_t i = 0; i < 6; i++) {
+        if (i % 3 == 1) {
+            pf_input_asym_i.s_injection[i] *= 3.0;
+            output_ref_asym_i.load_gen[i].i *= 3.0;
+            output_ref_asym_i.load_gen[i].s *= 3.0;
+        }
+        else {
+            pf_input_asym_i.s_injection[i] = ComplexValue<false>{0.0};
+            output_ref_asym_i.load_gen[i] = {};
+        }
+    }
+    */
 
     // topo and param ptr
     auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
@@ -394,6 +429,18 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_z);
     }
 
+    /*
+    SECTION("Test const i pf solver") {
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+
+        // const i
+        MathOutput<true> output = solver.run_power_flow(pf_input_i, 1e-12, 20, info, CalculationMethod::linear_current);
+        // verify
+        assert_output(output, output_ref_i);
+    }
+    */
+
     SECTION("Test not converge") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
@@ -438,6 +485,17 @@ TEST_CASE("Test math solver") {
         // verify
         assert_output(output, output_ref_asym_z);
     }
+
+    /*
+    SECTION("Test asym const i pf solver") {
+        MathSolver<false> solver{topo_ptr, param_asym_ptr};
+        CalculationInfo info;
+        // const i
+        MathOutput<false> output = solver.run_power_flow(pf_input_asym_i, 1e-12, 20, info, CalculationMethod::linear_current);
+        // verify
+        assert_output(output, output_ref_asym_i);
+    }
+    */
 
     SECTION("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};

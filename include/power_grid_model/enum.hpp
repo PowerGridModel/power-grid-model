@@ -20,7 +20,13 @@ enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigza
 
 enum class BranchSide : IntS { from = 0, to = 1 };
 
-enum class CalculationMethod : IntS { linear = 0, newton_raphson = 1, iterative_linear = 2, iterative_current = 3 };
+enum class CalculationMethod : IntS {
+    linear = 0,
+    newton_raphson = 1,
+    iterative_linear = 2,
+    iterative_current = 3,
+    linear_current = 4
+};
 
 enum class MeasuredTerminalType : IntS {
     branch_from = 0,
