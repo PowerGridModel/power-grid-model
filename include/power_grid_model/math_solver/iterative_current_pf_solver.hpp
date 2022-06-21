@@ -6,6 +6,8 @@
 #pragma once
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
+// To avoid unused parameter and variable error
+#define UNUSED(x) (void)(x)
 
 /*
 Iterative Power Flow
@@ -64,7 +66,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
 
     void initialize_unknown_polar(MathOutput<sym> output) {
         // empty for iterative current
-        int empty = 0;
+        UNUSED(output);
     }
 
     void initialize_matrix(YBus<sym> const& y_bus) {
@@ -316,7 +318,6 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
     }
     */
 };
-
 
 template class IterativecurrentPFSolver<true>;
 template class IterativecurrentPFSolver<false>;

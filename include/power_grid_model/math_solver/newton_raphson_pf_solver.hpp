@@ -5,6 +5,8 @@
 #pragma once
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
+// To avoid unused parameter and variable error
+#define UNUSED(x) (void)(x)
 
 /*
 Newton Raphson Power Flow
@@ -240,7 +242,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
 
     void initialize_matrix(YBus<sym> const& y_bus) {
         // empty for NR
-        int empty = 0;
+        UNUSED(y_bus);
     }
 
     void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -568,7 +570,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
     }
 
-    
+
     double iterate_unknown(ComplexValueVector<sym>& u) {
         Idx n_bus = this->n_bus_;
         double max_dev = 0.0;

@@ -29,11 +29,8 @@ namespace math_model_impl {
 template <bool sym, typename DerivedSolver>
 class IterativePFSolver {
    public:
-    
-
-
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                    Idx max_iter, CalculationInfo& calculation_info) {
+                                   Idx max_iter, CalculationInfo& calculation_info) {
         // get derived pointer for this
         DerivedSolver& derived_solver = static_cast<DerivedSolver&>(*this);
         // Extra variables?
@@ -59,14 +56,14 @@ class IterativePFSolver {
             }
             return sum_u_ref / (double)input.source.size();
         }();
-        
+
         // assign u_ref as flat start
         for (Idx i = 0; i != n_bus_; ++i) {
             // consider phase shift
             output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
         }
 
-        derived_solver.initialize_unknown_polar(output);       // polar for NR complex nothing for iterative
+        derived_solver.initialize_unknown_polar(output);  // polar for NR complex nothing for iterative
         sub_timer.stop();
 
         derived_solver.initialize_matrix(y_bus);  // nothing for NR, factorize for iterative
@@ -79,7 +76,8 @@ class IterativePFSolver {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
             sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
-            derived_solver.prepare_matrix_rhs(y_bus, input, output.u);  // jacobian for NR and injected for iterative current
+            derived_solver.prepare_matrix_rhs(y_bus, input,
+                                              output.u);  // jacobian for NR and injected for iterative current
             sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
             derived_solver.solve_matrix();  // bsr_solve for both
             sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
@@ -146,7 +144,6 @@ class IterativePFSolver {
         }
     }
 
-
     /*
     // Not virtual but use from derived
     virtual void initialize_unknown();
@@ -155,7 +152,7 @@ class IterativePFSolver {
     virtual void solve_matrix();
     virtual void iterate_unkown();
     virtual void ~IterativePFSolver();
-    
+
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
 
@@ -204,7 +201,6 @@ class IterativePFSolver {
         return load_gen_type_;
     }
     */
-    
 
    protected:
     Idx n_bus_;
@@ -222,13 +218,10 @@ class IterativePFSolver {
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {
     }
     friend DerivedSolver;
-
 };
 
 // template class IterativePFSolver<true>;
 // template class IterativePFSolver<false>;
-
-
 
 }  // namespace math_model_impl
 
