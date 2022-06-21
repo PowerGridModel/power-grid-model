@@ -238,7 +238,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
     }
 
-    void initialize_matrix() {
+    void initialize_matrix(YBus<sym> const& y_bus) {
         // empty for NR
         int empty = 0;
     }
@@ -359,7 +359,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
     }
 
-    double iterate_unknown_2(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop each bus as i
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -379,6 +379,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         return max_dev;
     }
 
+    /*
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         std::vector<double> const& phase_shift = *this->phase_shift_;
@@ -441,6 +442,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
 
         return output;
     }
+    */
 
    private:
     // data for jacobian
@@ -454,6 +456,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     std::vector<ComplexPower<sym>> del_pq_;
     BSRSolver<double> bsr_solver_;
 
+    /*
     void calculate_jacobian_and_deviation(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                           ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
@@ -565,6 +568,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
     }
 
+    
     double iterate_unknown(ComplexValueVector<sym>& u) {
         Idx n_bus = this->n_bus_;
         double max_dev = 0.0;
@@ -585,6 +589,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
         return max_dev;
     }
+    */
 
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {

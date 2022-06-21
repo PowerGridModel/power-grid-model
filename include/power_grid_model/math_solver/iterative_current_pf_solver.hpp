@@ -62,7 +62,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
-    void initialize_unknown_polar() {
+    void initialize_unknown_polar(MathOutput<sym> output) {
         // empty for iterative current
         int empty = 0;
     }
@@ -96,6 +96,9 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+
+        // set rhs to zero for iteration start
+        std::fill(rhs_.begin(), rhs_.end(), ComplexValue<sym>{0.0});
 
         // rhs = I_inj + L'U
         // loop buses: i
@@ -136,7 +139,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data(), true);
     }
 
-    double iterate_unknown_2(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop all buses
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
@@ -150,6 +153,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         return max_dev;
     }
 
+    /*
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // Get y bus data along with its entry
@@ -238,6 +242,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
 
         return output;
     }
+    */
 
     void reset_lhs() {
         // Invalidate prefactorization when parameters change
@@ -252,6 +257,7 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
     bool loaded_mat_data_;
     BSRSolver<DoubleComplex> bsr_solver_;
 
+    /*
     void calculate_injected_current(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                     ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
@@ -308,7 +314,9 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         }
         return max_dev;
     }
+    */
 };
+
 
 template class IterativecurrentPFSolver<true>;
 template class IterativecurrentPFSolver<false>;

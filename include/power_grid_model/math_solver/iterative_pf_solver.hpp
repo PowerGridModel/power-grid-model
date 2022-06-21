@@ -37,12 +37,12 @@ class IterativePFSolver {
         // get derived pointer for this
         DerivedSolver& derived_solver = static_cast<DerivedSolver&>(*this);
         // Extra variables?
-        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
-        std::vector<double> const& phase_shift = *this->phase_shift_;
+        IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        std::vector<double> const& phase_shift = *phase_shift_;
 
         // prepare
         MathOutput<sym> output;
-        output.u.resize(n_bus);
+        output.u.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
         Timer main_timer(calculation_info, 2220, "Math solver");
@@ -52,7 +52,7 @@ class IterativePFSolver {
         // average u_ref of all sources
         DoubleComplex const u_ref = [&]() {
             DoubleComplex sum_u_ref = 0.0;
-            for (Idx bus = 0; bus != n_bus; ++bus) {
+            for (Idx bus = 0; bus != n_bus_; ++bus) {
                 for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
                 }
@@ -63,7 +63,7 @@ class IterativePFSolver {
         // assign u_ref as flat start
         for (Idx i = 0; i != n_bus_; ++i) {
             // consider phase shift
-            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * this->phase_shift_[i])};
+            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
         }
 
         derived_solver.initialize_unknown_polar(output);       // polar for NR complex nothing for iterative
