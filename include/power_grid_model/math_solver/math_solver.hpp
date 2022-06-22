@@ -77,8 +77,8 @@ class MathSolver {
             // High error tolerance for single iteration
             double err_tol_linear = 1000;
             Idx max_iter_linear = 2;
-            return run_power_flow_iterative(linear_current_pf_solver_.value(), input, err_tol_linear,
-                                            max_iter_linear, calculation_info);
+            return run_power_flow_iterative(linear_current_pf_solver_.value(), input, err_tol_linear, max_iter_linear,
+                                            calculation_info);
         }
 
         else {
