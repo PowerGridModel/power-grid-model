@@ -6,29 +6,34 @@
 #pragma once
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
-// To avoid unused parameter and variable error
-#define UNUSED(x) (void)(x)
 
 /*
 Iterative Power Flow
-I = YU
-Split this with U_1 having all source buses, U_2 having all other buses
-[I_1] = [ K  L ] [U_1]
-[I_2]   [ L' M ] [U_2]
 
-I_2 = MU_2 + L'U_1
-MU_2 = I_2 - L'U_1 = RHS
-
+I_inj = YU
 
 Steps:
-Initialize U_2 with flat start and phase shifts accounted
-Add source admittance to Y bus matrix
+Initialize U with flat start and phase shifts accounted
+Source admittance is not included in Y bus matrix here. Include that to complete the Y bus matrix.
 while maximum deviation > error tolerance
-    Calculate I_2 with U_2 of previous iteration as per load/gen types.
-    Solve MU_2 = RHS using prefactorization.
-    Find maximum deviation in voltage
-    Update U_2
+    Calculate I_inj with U of previous iteration as per load/gen types.
+    Solve YU = I_inj using prefactorization.
+    Find maximum deviation in voltage buses U
+    Update U
 (Invalidate prefactorization if parameters change, ie y bus values changes)
+
+Prefactorization:
+The Y bus matrix is only factorized once and the same result is used in subsequent iteration.
+Same factorization is also used in subsequent batches if Y bus matrix does not change in the new batch.
+
+Calculating Injected current:
+For each bus i
+    For source on bus i, I_inj_i = y_ref * u_uref
+    For Loads on bus i:
+        If type is constant PQ: I_inj_i = conj(S_inj_j/U_i)
+        If type is constant impedance: I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i
+        If type is constant current: I_inj_i = conj(S_inj_j*abs(U_i)/U_i)
+
 
 */
 
@@ -49,14 +54,14 @@ namespace math_model_impl {
 
 // solver
 template <bool sym>
-class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentPFSolver<sym>> {
+class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
    private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
 
    public:
-    IterativecurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym, IterativecurrentPFSolver>{y_bus, topo_ptr},
+    IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
           updated_u_(y_bus.size()),
           rhs_(y_bus.size()),
           mat_data_(y_bus.nnz()),
@@ -64,18 +69,14 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
-    void initialize_unknown_polar(MathOutput<sym> output) {
-        // empty for iterative current
-        UNUSED(output);
-    }
-
-    void initialize_matrix(YBus<sym> const& y_bus) {
-        // replace these extra variables if needed
+    // For iterative current, add source admittance to Y bus and set variable for prepared y bus to true
+    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> output) {
+        (void)(output);
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
 
-        // Build y bus data with source impedance
+        // Build y bus data with source admittance
         // copy y bus data.
         if (!loaded_mat_data_) {
             std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
@@ -93,8 +94,8 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         }
     }
 
-    void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                            ComplexValueVector<sym> const& u) {
+    // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
+    void prepare_matrix(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
@@ -137,10 +138,12 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         }
     }
 
+    // Solve the linear equations I_inj = YU
     void solve_matrix() {
         bsr_solver_.solve(mat_data_.data(), rhs_.data(), updated_u_.data(), true);
     }
 
+    // Find maximum deviation in voltage among all buses
     double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop all buses
@@ -155,8 +158,8 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
         return max_dev;
     }
 
+    // Invalidate prefactorization if parameters change
     void reset_lhs() {
-        // Invalidate prefactorization when parameters change
         bsr_solver_.invalidate_prefactorization();
         loaded_mat_data_ = false;
     }
@@ -169,13 +172,13 @@ class IterativecurrentPFSolver : public IterativePFSolver<sym, IterativecurrentP
     BSRSolver<DoubleComplex> bsr_solver_;
 };
 
-template class IterativecurrentPFSolver<true>;
-template class IterativecurrentPFSolver<false>;
+template class IterativeCurrentPFSolver<true>;
+template class IterativeCurrentPFSolver<false>;
 
 }  // namespace math_model_impl
 
 template <bool sym>
-using IterativecurrentPFSolver = math_model_impl::IterativecurrentPFSolver<sym>;
+using IterativeCurrentPFSolver = math_model_impl::IterativeCurrentPFSolver<sym>;
 
 }  // namespace power_grid_model
 

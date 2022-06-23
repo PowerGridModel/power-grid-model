@@ -5,8 +5,6 @@
 #pragma once
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
-// To avoid unused parameter and variable error
-#define UNUSED(x) (void)(x)
 
 /*
 Newton Raphson Power Flow
@@ -231,7 +229,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
-    void initialize_unknown_polar(MathOutput<sym> output) {
+    // Initilize the unknown variable in polar form
+    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> output) {
+        (void)(y_bus);
         // assign u_ref as flat start
         for (Idx i = 0; i != this->n_bus_; ++i) {
             // consider phase shift
@@ -240,14 +240,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
     }
 
-    void initialize_matrix(YBus<sym> const& y_bus) {
-        // empty for NR
-        UNUSED(y_bus);
-    }
-
-    void prepare_matrix_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                            ComplexValueVector<sym> const& u) {
-        // Function for calculating jacobian and deviation
+    // Calculate the Jacobian and deviation
+    void prepare_matrix(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
@@ -255,10 +249,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         IdxVector const& indptr = y_bus.row_indptr();
         IdxVector const& indices = y_bus.col_indices();
         IdxVector const& bus_entry = y_bus.bus_entry();
-        Idx n_bus = y_bus.size();
 
         // loop for row indices as i for whole matrix
-        for (Idx i = 0; i != n_bus; ++i) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
             // reset power injection
             del_pq_[i].p = RealValue<sym>{0.0};
             del_pq_[i].q = RealValue<sym>{0.0};
@@ -290,7 +283,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
 
         // loop individual load/source, i as bus number, j as load/source number
-        for (Idx i = 0; i != n_bus; ++i) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
             // k as data sequence number
             Idx const k = bus_entry[i];
 
@@ -357,10 +350,12 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         }
     }
 
+    // Solve the linear Equations
     void solve_matrix() {
         bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
     }
 
+    // Get maximum deviation among all bus voltages
     double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop each bus as i

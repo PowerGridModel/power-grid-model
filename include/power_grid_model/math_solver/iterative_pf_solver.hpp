@@ -26,10 +26,25 @@ namespace math_model_impl {
 // solver
 template <bool sym, typename DerivedSolver>
 class IterativePFSolver {
+   private:
+    friend DerivedSolver;
+    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+        : n_bus_{y_bus.size()},
+          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
+          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
+          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {
+    }
+    Idx n_bus_;
+    std::shared_ptr<DoubleVector const> phase_shift_;
+    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
+    std::shared_ptr<IdxVector const> source_bus_indptr_;
+    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+
    public:
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
-        // get derived pointer for derived solver class
+        // get derived reference for derived solver class
         DerivedSolver& derived_solver = static_cast<DerivedSolver&>(*this);
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
@@ -42,28 +57,28 @@ class IterativePFSolver {
         Timer main_timer(calculation_info, 2220, "Math solver");
 
         // initialize
-        Timer sub_timer(calculation_info, 2221, "Initialize calculation");
-        // average u_ref of all sources
-        DoubleComplex const u_ref = [&]() {
-            DoubleComplex sum_u_ref = 0.0;
-            for (Idx bus = 0; bus != n_bus_; ++bus) {
-                for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
-                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+        {
+            Timer sub_timer(calculation_info, 2221, "Initialize calculation");
+            // average u_ref of all sources
+            DoubleComplex const u_ref = [&]() {
+                DoubleComplex sum_u_ref = 0.0;
+                for (Idx bus = 0; bus != n_bus_; ++bus) {
+                    for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
+                        sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+                    }
                 }
-            }
-            return sum_u_ref / (double)input.source.size();
-        }();
+                return sum_u_ref / (double)input.source.size();
+            }();
 
-        // assign u_ref as flat start
-        for (Idx i = 0; i != n_bus_; ++i) {
-            // consider phase shift
-            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+            // assign u_ref as flat start
+            for (Idx i = 0; i != n_bus_; ++i) {
+                // consider phase shift
+                output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+            }
+
+            // Further initialization specific to the derived solver
+            derived_solver.initialize_derived_solver(y_bus, output);
         }
-        // initialize unknown for polar complex for NR, nothing for iterative current
-        derived_solver.initialize_unknown_polar(output);
-        sub_timer.stop();
-        // Not used in NR, initialize non changing lhs for iterative current
-        derived_solver.initialize_matrix(y_bus);
 
         // start calculation
         // iteration
@@ -72,23 +87,29 @@ class IterativePFSolver {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
-            sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
-            // jacobian calculation for NR, injected currents calculation for iterative current
-            derived_solver.prepare_matrix_rhs(y_bus, input, output.u);
-            sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
-            derived_solver.solve_matrix();  // bsr_solve for both
-            sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
-            // Max deviation of polar complex for NR, rectangular complex for iterative current
-            max_dev = derived_solver.iterate_unknown(output.u);
-            sub_timer.stop();
+            {
+                // Prepare the matrices of linear equations to be solved
+                Timer sub_timer(calculation_info, 2222, "Prepare the matrices");
+                derived_solver.prepare_matrix(y_bus, input, output.u);
+            }
+            {
+                // Solve the linear equations
+                Timer sub_timer(calculation_info, 2223, "Solve sparse linear equation");
+                derived_solver.solve_matrix();
+            }
+            {
+                // Calculate maximum deviation of voltage at any bus
+                Timer sub_timer(calculation_info, 2224, "Iterate unknown");
+                max_dev = derived_solver.iterate_unknown(output.u);
+            }
         }
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
-        calculate_result(y_bus, input, output);
-
+        {
+            Timer sub_timer(calculation_info, 2225, "Calculate Math Result");
+            calculate_result(y_bus, input, output);
+        }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
-        sub_timer.stop();
         main_timer.stop();
 
         const auto key = Timer::make_key(2226, "Max number of iterations");
@@ -141,29 +162,9 @@ class IterativePFSolver {
             }
         }
     }
-
-   protected:
-    Idx n_bus_;
-    std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
-    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-
-   private:
-    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : n_bus_{y_bus.size()},
-          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
-          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
-          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {
-    }
-    friend DerivedSolver;
 };
 
 }  // namespace math_model_impl
-
-template <bool sym, typename DerivedSolver>
-using IterativePFSolver = math_model_impl::IterativePFSolver<sym, DerivedSolver>;
 
 }  // namespace power_grid_model
 
