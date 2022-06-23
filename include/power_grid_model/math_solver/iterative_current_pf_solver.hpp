@@ -70,8 +70,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     }
 
     // For iterative current, add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> output) {
-        (void)(output);
+    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym>) {
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();

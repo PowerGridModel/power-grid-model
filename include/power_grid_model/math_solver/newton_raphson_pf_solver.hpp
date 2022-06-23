@@ -230,8 +230,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     }
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> output) {
-        (void)(y_bus);
+    void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> output) {
         // assign u_ref as flat start
         for (Idx i = 0; i != this->n_bus_; ++i) {
             // consider phase shift
