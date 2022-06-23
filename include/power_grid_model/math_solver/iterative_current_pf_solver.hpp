@@ -65,7 +65,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
           updated_u_(y_bus.size()),
           rhs_(y_bus.size()),
           mat_data_(y_bus.nnz()),
-          loaded_mat_data_(false),
+          y_data_ptr_(nullptr),
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
@@ -75,10 +75,9 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
-
         // Build y bus data with source admittance
         // copy y bus data.
-        if (!loaded_mat_data_) {
+        if (y_data_ptr_ != &y_bus.admittance()) {
             std::copy(ydata.begin(), ydata.end(), mat_data_.begin());
             // loop bus
             for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
@@ -90,7 +89,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                     mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
                 }
             }
-            loaded_mat_data_ = true;
+            bsr_solver_.invalidate_prefactorization();
+            y_data_ptr_ = &y_bus.admittance();
         }
     }
 
@@ -158,17 +158,11 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         return max_dev;
     }
 
-    // Invalidate prefactorization if parameters change
-    void reset_lhs() {
-        bsr_solver_.invalidate_prefactorization();
-        loaded_mat_data_ = false;
-    }
-
    private:
     ComplexValueVector<sym> updated_u_;
     ComplexValueVector<sym> rhs_;
     ComplexTensorVector<sym> mat_data_;
-    bool loaded_mat_data_;
+    ComplexTensorVector<sym> const* y_data_ptr_;
     BSRSolver<DoubleComplex> bsr_solver_;
 };
 
