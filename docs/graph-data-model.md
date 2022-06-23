@@ -27,7 +27,7 @@ The underlying type of enumeration is `int8_t`.
 | `WindingType` | `wye = 0` <br> `wye_n = 1` <br> `delta = 2` <br> `zigzag = 3` <br> `zigzag_n = 4`                                                                                                                                                                                                                                                                                                                                                              | transformer winding type |
 | `BranchSide` | `from_side = 0` <br> `to_side = 1`                                                                                                                                                                                                                                                                                                                                                                                                             | the side of a branch |
 | `MeasuredTerminalType` | `branch_from = 0`, measuring the from-terminal between a branch and a node <br> `branch_to = 1`, measuring the to-terminal between a branch and a node <br> `source = 2`, measuring the terminal between a source and a node <br> `shunt = 3`, measuring the terminal between a shunt and a node <br> `load = 4`, measuring the terminal between a load and a node <br> `generator = 5`, measuring the terminal between a generator and a node | type of flow (e.g. power) measurement |
-| `CalculationMethod` | `linear = 0` <br> `newton_raphson = 1` <br> `iterative_linear = 2`                                                                                                                                                                                                                                                                                                                                                                             | method of calculation |
+| `CalculationMethod` | `linear = 0` <br> `newton_raphson = 1` <br> `iterative_linear = 2` <br> `iterative_current = 3` <br> `linear_current = 4`                                                                                                                                                                                                                                                                                                                                                                            | method of calculation |
 
 
 # Component Type Hierarchy and Graph Data Model
@@ -429,3 +429,16 @@ The table below shows a list of attributes.
 | `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; |
 | `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | &#10004; | &#10060; | &#10060; | &#10004; |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | &#10004; | &#10060; | &#10060; | &#10004; |
+
+
+# Selection of calculation method
+
+Following are guidelines to be considered while selecting a `CalculationMethod` for your application:
+## Iterative methods
+These should be selected when exact solution is required within specified `error_tolerance`.
+* `CalculationMethod.newton_raphson`: Traditional Newton-Raphson method.
+* `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less iterations. However, Iterative current can be faster most times. It is especially faster in batch calculations where the Y bus matrix do not change over batches. The matrix does not change when switching status or specified power values of load/generation are modified or source reference voltage is changed. It changes when topology or grid parameters are modified, i.e. in switching of branches, shunt, sources or change in transformer tap positions.
+## Linear methods
+Linear approximation methods are many times faster than the iterative methods. Can be used where approximate solutions are acceptable. Both methods have equal computation time for a single powerflow calculation.
+* `CalculationMethod.linear`: It will be more accurate when most of the load/generation types are of constant impedance.
+* `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power or constant current. Similar to Iterative current, batch calculations will be faster than linear method when Y bus matrix does not change over batches.
