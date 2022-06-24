@@ -456,7 +456,7 @@ Linear approximation methods are many times faster than the iterative methods. C
 
 Following are guidelines to be considered while selecting a state estimation `CalculationMethod` for your application:
 
-* `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true solution. Newton-Raphson estimation would be more robust with less iterations. However, iterative linear would be much faster because matrix prefactorization is possible here and Jacobian calculation for Newton-Raphson is very expensive.
+* `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true solution. Matrix prefactorization is possible.
 
 ## Matrix Prefactorization
 
