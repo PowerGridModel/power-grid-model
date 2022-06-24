@@ -109,9 +109,6 @@ jobs:
             boost:
             eigen:
             cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
-            test_cmd: >
-              pytest {package}/tests &&
-              LD_LIBRARY_PATH= pytest {package}/tests
             archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
@@ -121,9 +118,6 @@ jobs:
             eigen: /usr/local/include/eigen3
             cibw_build: cp*-macosx_*
             archs: "x86_64 arm64"
-            test_cmd: >
-              pytest {package}/tests &&
-              LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH} pytest {package}/tests
           - platform: windows
             os: windows-latest
             cc:
@@ -132,7 +126,6 @@ jobs:
             eigen: C:\conda_envs\cpp_pkgs\Library\include\eigen3
             cibw_build: cp*-win_amd64
             archs: AMD64
-            test_cmd: pytest {package}/tests
 
     runs-on: ${{ matrix.os }}
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
@@ -147,7 +140,7 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS: ${{ matrix.archs }}
       CIBW_TEST_REQUIRES: pytest pytest-cov
-      CIBW_TEST_COMMAND: ${{ matrix.test_cmd }}
+      CIBW_TEST_COMMAND: pytest {package}/tests
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
