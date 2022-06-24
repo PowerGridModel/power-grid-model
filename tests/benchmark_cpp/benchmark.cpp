@@ -218,7 +218,15 @@ struct PowerGridBenchmark {
         std::string title = "Benchmark case: ";
         title += meshed ? "meshed grid, " : "radial grid, ";
         title += sym ? "symmetric, " : "asymmetric, ";
-        title += calculation_method == CalculationMethod::newton_raphson ? "Newton-Raphson method" : "Linear method";
+        if (calculation_method == CalculationMethod::newton_raphson) {
+            title += "Newton-Raphson method";
+        }
+        else if (calculation_method == CalculationMethod::linear) {
+            title += "Linear method";
+        }
+        else {
+            title += "Iterative current method";
+        }
         std::cout << "=============" << title << "=============\n";
 
         {
@@ -282,13 +290,16 @@ int main(int, char**) {
     // radial
     benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, false);
     benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, false);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::iterative_current, false);
     benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, false);
     benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, false);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::iterative_current, false);
     // with meshed ring
     benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, true);
     benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::iterative_current, true);
     benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
     benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
-
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::iterative_current, true);
     return 0;
 }

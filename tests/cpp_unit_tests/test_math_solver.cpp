@@ -366,6 +366,15 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
+    SECTION("Test symmetric iterative current pf solver") {
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+        MathOutput<true> output =
+            solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_current);
+        // verify
+        assert_output(output, output_ref);
+    }
+
     SECTION("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
@@ -410,6 +419,15 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        // verify
+        assert_output(output, output_ref_asym);
+    }
+
+    SECTION("Test iterative current asymmetric pf solver") {
+        MathSolver<false> solver{topo_ptr, param_asym_ptr};
+        CalculationInfo info;
+        MathOutput<false> output =
+            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::iterative_current);
         // verify
         assert_output(output, output_ref_asym);
     }
