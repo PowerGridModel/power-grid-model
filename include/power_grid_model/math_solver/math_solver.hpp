@@ -45,7 +45,6 @@ class MathSolver {
                 newton_pf_solver_.emplace(y_bus_, topo_ptr_);
             }
             return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
-            // return run_power_flow_iterative(newton_pf_solver_.value(), input, err_tol, max_iter, calculation_info);
         }
         else if (calculation_method == CalculationMethod::linear) {
             if (!linear_pf_solver_.has_value()) {

@@ -230,7 +230,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     }
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> output) {
+    void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> const& output) {
         // assign u_ref as flat start
         for (Idx i = 0; i != this->n_bus_; ++i) {
             // consider phase shift
@@ -240,7 +240,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     }
 
     // Calculate the Jacobian and deviation
-    void prepare_matrix(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;

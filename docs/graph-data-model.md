@@ -433,12 +433,33 @@ The table below shows a list of attributes.
 
 # Selection of calculation method
 
-Following are guidelines to be considered while selecting a `CalculationMethod` for your application:
-## Iterative methods
+There are four power-flow algorithms and one state estimation algorithm available in power-grid-model. Some methods use a prefactorization feature which is also described in this section.
+
+## Power-flow algorithms
+
+Following are guidelines to be considered while selecting a power-flow `CalculationMethod` for your application:
+
+### Iterative methods
+
 These should be selected when exact solution is required within specified `error_tolerance`.
+* 
 * `CalculationMethod.newton_raphson`: Traditional Newton-Raphson method.
-* `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less iterations. However, Iterative current can be faster most times. It is especially faster in batch calculations where the Y bus matrix do not change over batches. The matrix does not change when switching status or specified power values of load/generation are modified or source reference voltage is changed. It changes when topology or grid parameters are modified, i.e. in switching of branches, shunt, sources or change in transformer tap positions.
-## Linear methods
+* `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less iterations. However, Iterative current can be faster most times because it uses matrix prefactorization.
+ 
+### Linear methods
+
 Linear approximation methods are many times faster than the iterative methods. Can be used where approximate solutions are acceptable. Both methods have equal computation time for a single powerflow calculation.
 * `CalculationMethod.linear`: It will be more accurate when most of the load/generation types are of constant impedance.
-* `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power or constant current. Similar to Iterative current, batch calculations will be faster than linear method when Y bus matrix does not change over batches.
+* `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power or constant current. Batch calculations will be faster because matrix prefacorization is possible.
+
+## State Estimation algorithms
+
+Following are guidelines to be considered while selecting a state estimation `CalculationMethod` for your application:
+
+* `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true solution. Newton-Raphson estimation would be more robust with less iterations. However, iterative linear would be much faster because matrix prefactorization is possible here and Jacobian calculation for Newton-Raphson is very expensive.
+
+## Matrix Prefactorization
+
+Every iteration of power-flow or state estimation has a step of solving large number of sparse linear equations i.e. `AX=b` in matrix form. Computation wise this is a very expensive step. One major component of this step is factorization of the `A` matrix. In certain calculation methods, this `A` matrix and its factorization remains unchanged over iterations and batches (only specific cases) which makes it possible reuse the factorization, skip this step and improve performance. 
+
+**Note:** Prefactorization over batches is possible when switching status or specified power values of load/generation or source reference voltage is modified. It is not possible when topology or grid parameters are modified, i.e. in switching of branches, shunt, sources or change in transformer tap positions.

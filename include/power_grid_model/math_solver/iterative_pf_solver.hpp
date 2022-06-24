@@ -26,22 +26,8 @@ namespace math_model_impl {
 // solver
 template <bool sym, typename DerivedSolver>
 class IterativePFSolver {
-   private:
-    friend DerivedSolver;
-    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : n_bus_{y_bus.size()},
-          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
-          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
-          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {
-    }
-    Idx n_bus_;
-    std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
-    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-
    public:
+    friend DerivedSolver;
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
@@ -54,11 +40,11 @@ class IterativePFSolver {
         output.u.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
-        Timer main_timer(calculation_info, 2220, "Math solver");
+        Timer main_timer{calculation_info, 2220, "Math solver"};
 
         // initialize
         {
-            Timer sub_timer(calculation_info, 2221, "Initialize calculation");
+            Timer sub_timer{calculation_info, 2221, "Initialize calculation"};
             // average u_ref of all sources
             DoubleComplex const u_ref = [&]() {
                 DoubleComplex sum_u_ref = 0.0;
@@ -89,24 +75,24 @@ class IterativePFSolver {
             }
             {
                 // Prepare the matrices of linear equations to be solved
-                Timer sub_timer(calculation_info, 2222, "Prepare the matrices");
-                derived_solver.prepare_matrix(y_bus, input, output.u);
+                Timer sub_timer{calculation_info, 2222, "Prepare the matrices"};
+                derived_solver.prepare_matrix_and_rhs(y_bus, input, output.u);
             }
             {
                 // Solve the linear equations
-                Timer sub_timer(calculation_info, 2223, "Solve sparse linear equation");
+                Timer sub_timer{calculation_info, 2223, "Solve sparse linear equation"};
                 derived_solver.solve_matrix();
             }
             {
                 // Calculate maximum deviation of voltage at any bus
-                Timer sub_timer(calculation_info, 2224, "Iterate unknown");
+                Timer sub_timer{calculation_info, 2224, "Iterate unknown"};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
         }
 
         // calculate math result
         {
-            Timer sub_timer(calculation_info, 2225, "Calculate Math Result");
+            Timer sub_timer{calculation_info, 2225, "Calculate Math Result"};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
@@ -161,6 +147,20 @@ class IterativePFSolver {
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
             }
         }
+    }
+
+   private:
+    Idx n_bus_;
+    std::shared_ptr<DoubleVector const> phase_shift_;
+    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
+    std::shared_ptr<IdxVector const> source_bus_indptr_;
+    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+        : n_bus_{y_bus.size()},
+          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
+          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
+          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {
     }
 };
 

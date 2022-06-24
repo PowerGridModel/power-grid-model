@@ -86,8 +86,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
-    // For iterative current, add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym>) {
+    // Add source admittance to Y bus and set variable for prepared y bus to true
+    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const&) {
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.bus_entry();
@@ -111,7 +111,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     }
 
     // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
-    void prepare_matrix(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
