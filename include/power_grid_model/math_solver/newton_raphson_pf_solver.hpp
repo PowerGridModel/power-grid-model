@@ -153,6 +153,7 @@ J.L -= -dQ_cal_m/dV
 #include "../timer.hpp"
 #include "block_matrix.hpp"
 #include "bsr_solver.hpp"
+#include "iterative_pf_solver.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -213,18 +214,14 @@ constexpr block_entry_trait<PFJacBlock> jac_trait{};
 
 // solver
 template <bool sym>
-class NewtonRaphsonPFSolver {
+class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
    private:
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
    public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : n_bus_{y_bus.size()},
-          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
-          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
-          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type},
+        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
           data_jac_(y_bus.nnz()),
           x_(y_bus.size()),
           del_x_(y_bus.size()),
@@ -232,98 +229,29 @@ class NewtonRaphsonPFSolver {
           bsr_solver_{y_bus.size(), bsr_block_size_, y_bus.shared_indptr(), y_bus.shared_indices()} {
     }
 
-    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                   Idx max_iter, CalculationInfo& calculation_info) {
-        std::vector<double> const& phase_shift = *phase_shift_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        // prepare
-        MathOutput<sym> output;
-        output.u.resize(n_bus_);
-        double max_dev = std::numeric_limits<double>::max();
-
-        Timer main_timer(calculation_info, 2220, "Math solver");
-
-        // initialize
-        Timer sub_timer(calculation_info, 2221, "Initialize calculation");
-        // average u_ref of all sources
-        DoubleComplex const u_ref = [&]() {
-            DoubleComplex sum_u_ref = 0.0;
-            for (Idx bus = 0; bus != n_bus_; ++bus) {
-                for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
-                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
-                }
-            }
-            return sum_u_ref / (double)input.source.size();
-        }();
+    // Initilize the unknown variable in polar form
+    void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> const& output) {
         // assign u_ref as flat start
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
             // consider phase shift
-            output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
             x_[i].v = cabs(output.u[i]);
             x_[i].theta = arg(output.u[i]);
         }
-        sub_timer.stop();
-
-        // start calculation
-        // iteration
-        Idx num_iter = 0;
-        while (max_dev > err_tol) {
-            if (num_iter++ == max_iter) {
-                throw IterationDiverge{max_iter, max_dev, err_tol};
-            }
-            sub_timer = Timer(calculation_info, 2222, "Calculate jacobian and rhs");
-            calculate_jacobian_and_deviation(y_bus, input, output.u);
-            sub_timer = Timer(calculation_info, 2223, "Solve sparse linear equation");
-            bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
-            sub_timer = Timer(calculation_info, 2224, "Iterate unknown");
-            max_dev = iterate_unknown(output.u);
-            sub_timer.stop();
-        }
-
-        // calculate math result
-        sub_timer = Timer(calculation_info, 2225, "Calculate Math Result");
-        calculate_result(y_bus, input, output);
-
-        // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
-        sub_timer.stop();
-        main_timer.stop();
-
-        const auto key = Timer::make_key(2226, "Max number of iterations");
-        calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
-
-        return output;
     }
 
-   private:
-    Idx n_bus_;
-    // shared topo data
-    std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
-    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-    // data for jacobian
-    std::vector<PFJacBlock<sym>> data_jac_;
-    // calculation data
-    std::vector<PolarPhasor<sym>> x_;      // unknown
-    std::vector<PolarPhasor<sym>> del_x_;  // unknown iterative
-    // this stores in different steps
-    // 1. negative power injection: - p/q_calculated
-    // 2. power unbalance: p/q_specified - p/q_calculated
-    std::vector<ComplexPower<sym>> del_pq_;
-    BSRSolver<double> bsr_solver_;
-
-    void calculate_jacobian_and_deviation(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                          ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        std::vector<LoadGenType> const& load_gen_type = *load_gen_type_;
+    // Calculate the Jacobian and deviation
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                ComplexValueVector<sym> const& u) {
+        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& indptr = y_bus.row_indptr();
         IdxVector const& indices = y_bus.col_indices();
         IdxVector const& bus_entry = y_bus.bus_entry();
 
         // loop for row indices as i for whole matrix
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
             // reset power injection
             del_pq_[i].p = RealValue<sym>{0.0};
             del_pq_[i].q = RealValue<sym>{0.0};
@@ -355,7 +283,7 @@ class NewtonRaphsonPFSolver {
         }
 
         // loop individual load/source, i as bus number, j as load/source number
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
             // k as data sequence number
             Idx const k = bus_entry[i];
 
@@ -422,15 +350,21 @@ class NewtonRaphsonPFSolver {
         }
     }
 
+    // Solve the linear Equations
+    void solve_matrix() {
+        bsr_solver_.solve(data_jac_.data(), del_pq_.data(), del_x_.data());
+    }
+
+    // Get maximum deviation among all bus voltages
     double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         // loop each bus as i
-        for (Idx i = 0; i != n_bus_; ++i) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
             // angle
             x_[i].theta += del_x_[i].theta;
             // magnitude
             x_[i].v += x_[i].v * del_x_[i].v;
-            // temperary complex phasor
+            // temporary complex phasor
             // U = V * exp(1i*theta)
             ComplexValue<sym> const& u_tmp = x_[i].v * exp(1.0i * x_[i].theta);
             // get dev of last iteration, get max
@@ -442,48 +376,17 @@ class NewtonRaphsonPFSolver {
         return max_dev;
     }
 
-    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        // call y bus
-        output.branch = y_bus.calculate_branch_flow(output.u);
-        output.shunt = y_bus.calculate_shunt_flow(output.u);
-
-        // prepare source and load gen
-        output.source.resize(source_bus_indptr_->back());
-        output.load_gen.resize(load_gen_bus_indptr_->back());
-        // loop all bus
-        for (Idx bus = 0; bus != n_bus_; ++bus) {
-            // source
-            for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
-                ComplexValue<sym> const u_ref{input.source[source]};
-                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-                output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
-                output.source[source].s = output.u[bus] * conj(output.source[source].i);
-            }
-
-            // load_gen
-            for (Idx load_gen = (*load_gen_bus_indptr_)[bus]; load_gen != (*load_gen_bus_indptr_)[bus + 1];
-                 ++load_gen) {
-                LoadGenType const type = (*load_gen_type_)[load_gen];
-                switch (type) {
-                    case LoadGenType::const_pq:
-                        // always same power
-                        output.load_gen[load_gen].s = input.s_injection[load_gen];
-                        break;
-                    case LoadGenType::const_y:
-                        // power is quadratic relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * x_[bus].v * x_[bus].v;
-                        break;
-                    case LoadGenType::const_i:
-                        // power is linear relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * x_[bus].v;
-                        break;
-                    default:
-                        throw MissingCaseForEnumError("Power injection", type);
-                }
-                output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
-            }
-        }
-    }
+   private:
+    // data for jacobian
+    std::vector<PFJacBlock<sym>> data_jac_;
+    // calculation data
+    std::vector<PolarPhasor<sym>> x_;      // unknown
+    std::vector<PolarPhasor<sym>> del_x_;  // unknown iterative
+    // this stores in different steps
+    // 1. negative power injection: - p/q_calculated
+    // 2. power unbalance: p/q_specified - p/q_calculated
+    std::vector<ComplexPower<sym>> del_pq_;
+    BSRSolver<double> bsr_solver_;
 
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {

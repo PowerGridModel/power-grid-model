@@ -17,6 +17,7 @@
 // clang-format off
 #include "newton_raphson_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
+#include "iterative_current_pf_solver.hpp"
 // clang-format on
 #include "y_bus.hpp"
 
@@ -52,6 +53,21 @@ class MathSolver {
             }
             return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
         }
+
+        else if (calculation_method == CalculationMethod::iterative_current ||
+                 calculation_method == CalculationMethod::linear_current) {
+            if (!iterative_current_pf_solver_.has_value()) {
+                Timer timer(calculation_info, 2210, "Create math solver");
+                iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
+            }
+            if (calculation_method == CalculationMethod::linear_current) {
+                err_tol = 1000;
+                max_iter = 2;
+            }
+            return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
+                                                                       calculation_info);
+        }
+
         else {
             throw InvalidCalculationMethod{};
         }
@@ -77,6 +93,7 @@ class MathSolver {
     void clear_solver() {
         newton_pf_solver_.reset();
         linear_pf_solver_.reset();
+        iterative_current_pf_solver_.reset();
     }
 
     void update_value(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
@@ -90,6 +107,7 @@ class MathSolver {
     std::optional<NewtonRaphsonPFSolver<sym>> newton_pf_solver_;
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
+    std::optional<IterativeCurrentPFSolver<sym>> iterative_current_pf_solver_;
 };
 
 template class MathSolver<true>;
