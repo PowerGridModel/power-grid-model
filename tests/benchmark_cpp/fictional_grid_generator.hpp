@@ -92,36 +92,35 @@ class FictionalGridGenerator {
         for (Idx i = 0; i != option_.n_parallel_hv_mv_transformer; ++i) {
             // transformer, 150/10.5kV, 60MVA, uk=20.3%
             TransformerInput const transformer{{{id_gen_++}, id_source_node, id_mv_busbar, true, true},
-                                              150.0e3,
-                                              10.5e3,
-                                              60.0e6,
-                                              0.203,
-                                              200e3,
-                                              0.01,
-                                              40e3,
-                                              WindingType::wye_n,
-                                              WindingType::delta,
-                                              5,
-                                              BranchSide::from,
-                                              0,
-                                              -10,
-                                              10,
-                                              0,
-                                              2.5e3,
-                                              nan,
-                                              nan,
-                                              nan,
-                                              nan,
-                                              nan,
-                                              nan,
-                                              nan,
-                                              nan};
+                                               150.0e3,
+                                               10.5e3,
+                                               60.0e6,
+                                               0.203,
+                                               200e3,
+                                               0.01,
+                                               40e3,
+                                               WindingType::wye_n,
+                                               WindingType::delta,
+                                               5,
+                                               BranchSide::from,
+                                               0,
+                                               -10,
+                                               10,
+                                               0,
+                                               2.5e3,
+                                               nan,
+                                               nan,
+                                               nan,
+                                               nan,
+                                               nan,
+                                               nan,
+                                               nan,
+                                               nan};
             input_.transformer.push_back(transformer);
             // shunt, Z0 = 0 + j7 ohm
             ShuntInput const shunt{{{id_gen_++}, id_mv_busbar, true}, 0.0, 0.0, 0.0, -1.0 / 7.0};
             input_.shunt.push_back(shunt);
         }
-
 
         // template input
         NodeInput const mv_node{{0}, 10.5e3};
@@ -179,7 +178,6 @@ class FictionalGridGenerator {
                     mv_ring_.push_back(current_node_id);
                 }
             }
-
         }
         // add loop if needed, and there are more than one feeder, and there are ring nodes
         if (mv_ring_.size() > 1 && option_.has_mv_ring) {
@@ -202,10 +200,51 @@ class FictionalGridGenerator {
                 input_.line.push_back(line);
             }
         }
-
     }
 
     void generate_lv_grid(Idx mv_node) {
+        Idx const id_lv_busbar = id_gen_++;
+        NodeInput const lv_busbar{{id_lv_busbar}, 400.0};
+        input_.node.push_back(lv_busbar);
+        // transformer, 1000 kVA, uk=6%, pk=8.8kW
+        TransformerInput const transformer{{{id_gen_++}, mv_node, id_lv_busbar, true, true},
+                                           10.5e3,
+                                           420.0,
+                                           1000e3,
+                                           0.06,
+                                           8.8e3,
+                                           0.01,
+                                           1e3,
+                                           WindingType::delta,
+                                           WindingType::wye_n,
+                                           11,
+                                           BranchSide::from,
+                                           3,
+                                           5,
+                                           1,
+                                           3,
+                                           250.0,
+                                           nan,
+                                           nan,
+                                           nan,
+                                           nan,
+                                           nan,
+                                           nan,
+                                           nan,
+                                           nan};
+        input_.transformer.push_back(transformer);
+
+        // template
+        NodeInput const lv_node{{0}, 400.0};
+        double const scaler = 1e6 / option_.n_lv_feeder / option_.n_node_per_mv_feeder / 1.2;
+        AsymLoadGenInput const lv_asym_load{
+            {{{0}, 0, true}, LoadGenType::const_i}, RealValue<false>{0.8 * scaler}, RealValue<false>{0.6 * scaler}};
+        // 4*150 Al
+        LineInput const lv_main_line{
+            {{0}, 0, 0, true, true}, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387, 0.36e-6, 0.0, 300.0};
+        // 4*16 Cu
+        LineInput const lv_connection_line{
+            {{0}, 0, 0, true, true}, 1.15, 0.096, 0.43e-6, 0.0004, 4.6, 0.408, 0.258e-6, 0.0, 80.0};
     }
 
    private:
