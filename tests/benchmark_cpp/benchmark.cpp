@@ -7,6 +7,7 @@
 
 #include "power_grid_model/main_model.hpp"
 #include "power_grid_model/timer.hpp"
+#include "fictional_grid_generator.hpp"
 
 namespace power_grid_model {
 
