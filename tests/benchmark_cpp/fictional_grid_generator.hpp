@@ -20,8 +20,8 @@ struct Option {
     Idx n_parallel_hv_mv_transformer;  // will be calculated
     Idx n_lv_grid;                     // will be calculated
     double ratio_lv_grid;              // ratio when lv grid will be generated
-    bool mv_ring;
-    bool lv_ring;
+    bool has_mv_ring;
+    bool has_lv_ring;
 };
 
 struct InputData {
@@ -174,8 +174,17 @@ class FictionalGridGenerator {
                 sym_load.p_specified *= sym_scale;
                 sym_load.q_specified *= sym_scale;
                 input_.sym_load.push_back(sym_load);
+                // push to ring node
+                if (j == option_.n_node_per_mv_feeder - 1) {
+                    mv_ring_.push_back(current_node_id);
+                }
             }
+
         }
+        // add loop if needed, and there are more than one feeder, and there are ring nodes
+        if (mv_ring_.size() > 1 && option_.has_mv_ring) {
+        }
+
     }
 
     void generate_lv_grid(Idx mv_node) {
