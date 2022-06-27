@@ -183,6 +183,24 @@ class FictionalGridGenerator {
         }
         // add loop if needed, and there are more than one feeder, and there are ring nodes
         if (mv_ring_.size() > 1 && option_.has_mv_ring) {
+            mv_ring_.push_back(mv_ring_.front());
+            // loop all far end nodes
+            for (auto it = mv_ring_.cbegin(); it != mv_ring_.cend() - 1; ++it) {
+                // line
+                LineInput line = mv_line;
+                line.id = id_gen_++;
+                line.from_node = *it;
+                line.to_node = *(it + 1);
+                // scale r1, x1, r0, x0
+                double const cable_ratio = real_gen(gen_);
+                line.r1 *= cable_ratio;
+                line.x1 *= cable_ratio;
+                line.c1 *= cable_ratio;
+                line.r0 *= cable_ratio;
+                line.x0 *= cable_ratio;
+                line.c0 *= cable_ratio;
+                input_.line.push_back(line);
+            }
         }
 
     }
