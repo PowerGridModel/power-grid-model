@@ -21,6 +21,7 @@ from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages
 from pathlib import Path
+from pybuild_header_dependency import HeaderResolver
 
 
 # determine platform, only windows or linux
@@ -80,12 +81,16 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     Returns:
 
     """
+    # fetch dependent headers
+    resolver = HeaderResolver({
+        "eigen": None,
+        "boost": None
+    })
     # include-folders
     include_dirs = [
+        str(resolver.get_include()),
         np.get_include(),  # The include-folder of numpy header
         str(pkg_dir / "include"),  # The include-folder of the repo self
-        os.environ["EIGEN_INCLUDE"],  # eigen3 library
-        os.environ["BOOST_INCLUDE"],  # boost library
     ]
     # compiler and link flag
     cflags = []

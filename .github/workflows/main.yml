@@ -106,24 +106,18 @@ jobs:
             os: ubuntu-latest
             cc: gcc
             cxx: g++
-            boost:
-            eigen:
             cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
             archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
             cc: clang
             cxx: clang++
-            boost: /usr/local/include
-            eigen: /usr/local/include/eigen3
             cibw_build: cp*-macosx_*
             archs: "x86_64 arm64"
           - platform: windows
             os: windows-latest
             cc:
             cxx:
-            boost: C:\conda_envs\cpp_pkgs\Library\include
-            eigen: C:\conda_envs\cpp_pkgs\Library\include\eigen3
             cibw_build: cp*-win_amd64
             archs: AMD64
 
@@ -133,8 +127,6 @@ jobs:
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
-      BOOST_INCLUDE: ${{ matrix.boost }}
-      EIGEN_INCLUDE: ${{ matrix.eigen }}
       CIBW_BUILD_VERBOSITY: 1
       CIBW_BUILD_FRONTEND: "build"
       CIBW_BUILD: ${{ matrix.cibw_build }}
@@ -143,16 +135,8 @@ jobs:
       CIBW_TEST_COMMAND: pytest {package}/tests
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
-      CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env-arm64
-      CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
-      CIBW_BEFORE_ALL_MACOS: >
-        which clang++ &&
-        clang++ --version &&
-        brew install boost eigen
+      CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER CC CXX
       MACOSX_DEPLOYMENT_TARGET: 10.15
-      CIBW_BEFORE_ALL_WINDOWS : >
-        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen
 
     steps:
       - uses: actions/checkout@v3
@@ -160,11 +144,6 @@ jobs:
       - name: Set up QEMU
         if: matrix.platform == 'linux'
         uses: docker/setup-qemu-action@v2
-
-      - name: Activate conda for windows
-        if: matrix.platform == 'windows'
-        run: |
-          & "$env:CONDA\condabin\conda" init
 
       - name: Build wheels
         uses: pypa/cibuildwheel@2.7.0

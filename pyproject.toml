@@ -8,7 +8,8 @@ requires = [
     "wheel",
     "cython",
     "oldest-supported-numpy",
-    "requests"
+    "requests",
+    "pybuild-header-dependency"
 ]
 build-backend = "setuptools.build_meta"
 
