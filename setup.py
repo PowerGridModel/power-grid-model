@@ -82,10 +82,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
 
     """
     # fetch dependent headers
-    resolver = HeaderResolver({
-        "eigen": None,
-        "boost": None
-    })
+    resolver = HeaderResolver({"eigen": None, "boost": None})
     # include-folders
     include_dirs = [
         str(resolver.get_include()),
