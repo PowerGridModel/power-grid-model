@@ -17,16 +17,6 @@
 #include "power_grid_model/container.hpp"
 #include "power_grid_model/main_model.hpp"
 
-// TODO remove this when doctest support full value parameterization
-#define DOCTEST_VALUE_PARAMETERIZED_DATA(data, data_container)                                                       \
-    static size_t _doctest_subcase_idx = 0;                                                                          \
-    std::for_each(data_container.begin(), data_container.end(), [&](const auto& in) {                                \
-        DOCTEST_SUBCASE((std::string(#data_container "[") + std::to_string(_doctest_subcase_idx++) + "]").c_str()) { \
-            data = in;                                                                                               \
-        }                                                                                                            \
-    });                                                                                                              \
-    _doctest_subcase_idx = 0
-
 namespace power_grid_model {
 
 namespace meta_data {
@@ -463,15 +453,19 @@ void validate_batch_case(CaseParam const& param) {
 }
 
 TEST_CASE("Validation test single") {
-    CaseParam param{};
-    DOCTEST_VALUE_PARAMETERIZED_DATA(param, all_cases);
-    validate_single_case(param);
+    for (CaseParam const& param : all_cases) {
+        SUBCASE(param.case_name.c_str()) {
+            validate_single_case(param);
+        }
+    }
 }
 
 TEST_CASE("Validation test batch") {
-    CaseParam param{};
-    DOCTEST_VALUE_PARAMETERIZED_DATA(param, all_cases);
-    validate_batch_case(param);
+    for (CaseParam const& param : all_cases) {
+        SUBCASE(param.case_name.c_str()) {
+            validate_batch_case(param);
+        }
+    }
 }
 
 }  // namespace meta_data
