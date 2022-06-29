@@ -134,6 +134,8 @@ jobs:
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
       CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER CC CXX
       MACOSX_DEPLOYMENT_TARGET: 10.15
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
     steps:
       - uses: actions/checkout@v3
