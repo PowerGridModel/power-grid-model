@@ -35,7 +35,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build lcov
+          sudo apt-get install -y ninja-build lcov gcovr
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json doctest
