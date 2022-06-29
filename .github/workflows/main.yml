@@ -23,15 +23,24 @@ jobs:
 
   build-cpp-test-linux:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
-    runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         build-option: [ Debug, Release ]
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      CC: clang-14
+      CXX: clang++-14
 
     steps:
       - uses: actions/checkout@v3
-
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json doctest
       - name: Run build script
         run: ./build.sh  ${{ matrix.build-option }}
 
