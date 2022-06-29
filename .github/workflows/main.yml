@@ -50,9 +50,8 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Install conda environment
-        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json catch2==2.13.9
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
 
       - name: Build and test
         run: |
@@ -88,10 +87,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
-        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json 
-          curl https://raw.githubusercontent.com/Homebrew/homebrew-core/5e5abb11bf49787d01164c4066119365262c21ed/Formula/catch2.rb > $(find $(brew --repository) -name catch2.rb) && brew reinstall catch2
+          brew install ninja boost eigen nlohmann-json doctest
 
       - name: Build and test
         run: |
