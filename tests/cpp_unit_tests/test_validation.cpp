@@ -10,12 +10,22 @@
 #include <iostream>
 #include <regex>
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "nlohmann/json.hpp"
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model/container.hpp"
 #include "power_grid_model/main_model.hpp"
+
+// TODO remove this when doctest support full value parameterization
+#define DOCTEST_VALUE_PARAMETERIZED_DATA(data, data_container)                                                       \
+    static size_t _doctest_subcase_idx = 0;                                                                          \
+    std::for_each(data_container.begin(), data_container.end(), [&](const auto& in) {                                \
+        DOCTEST_SUBCASE((std::string(#data_container "[") + std::to_string(_doctest_subcase_idx++) + "]").c_str()) { \
+            data = in;                                                                                               \
+        }                                                                                                            \
+    });                                                                                                              \
+    _doctest_subcase_idx = 0
 
 namespace power_grid_model {
 
@@ -245,12 +255,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         component_meta.compare_attr(result_ptr, reference_result_ptr, dynamic_atol, rtol, attr, obj);
                     std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
                                                  " #" + std::to_string(obj) + ", attribute: " + attr.name;
-                    if (match) {
-                        SUCCEED("Assertion ok for " + case_str);
-                    }
-                    else {
-                        FAIL_CHECK("Assertion failure for " + case_str);
-                    }
+                    CHECK_MESSAGE(match, case_str);
                 }
             }
         }
@@ -404,77 +409,69 @@ TEST_CASE("Check existence of validation data path") {
     std::cout << "Total test cases: " << all_cases.size() << '\n';
 }
 
-TEST_CASE("Validation test") {
-    if (data_path.empty()) {
+void validate_single_case(CaseParam const& param) {
+    if (param.is_batch) {
         return;
     }
+    std::cout << "Validation test: " << param.case_name << std::endl;
+    ValidationCase const validation_case = create_validation_case(param);
+    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
+    SingleData result = create_result_dataset(validation_case.input, output_prefix);
+    // create model and run
+    MainModel model{50.0, validation_case.input.const_dataset, 0};
+    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+    (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+    assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol, param.rtol);
+}
 
-    SECTION("Test single validation") {
-        for (CaseParam const& param : all_cases) {
-            if (param.is_batch) {
-                continue;
-            }
-            SECTION(param.case_name) {
-                std::cout << "Validation test: " << param.case_name << std::endl;
-                ValidationCase const validation_case = create_validation_case(param);
-                std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-                SingleData result = create_result_dataset(validation_case.input, output_prefix);
-                // create model and run
-                MainModel model{50.0, validation_case.input.const_dataset, 0};
-                CalculationFunc const func =
-                    calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
-                (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {},
-                              -1);
-                assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol,
-                              param.rtol);
-            }
-        }
+void validate_batch_case(CaseParam const& param) {
+    if (!param.is_batch) {
+        return;
+    }
+    std::cout << "Validation test: " << param.case_name << std::endl;
+    ValidationCase const validation_case = create_validation_case(param);
+    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
+    SingleData result = create_result_dataset(validation_case.input, output_prefix);
+    // create model
+    MainModel model{50.0, validation_case.input.const_dataset, 0};
+    Idx const n_batch = (Idx)validation_case.update_batch.individual_batch.size();
+    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+
+    // run in loops
+    for (Idx batch = 0; batch != n_batch; ++batch) {
+        MainModel model_copy{model};
+        // update and run
+        model_copy.update_component(validation_case.update_batch.individual_batch[batch].const_dataset);
+        (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+        // check
+        assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
+                      output_prefix, param.atol, param.rtol);
     }
 
-    SECTION("Test batch validation") {
-        for (CaseParam const& param : all_cases) {
-            if (!param.is_batch) {
-                continue;
-            }
-            SECTION(param.case_name) {
-                std::cout << "Validation test: " << param.case_name << std::endl;
-                ValidationCase const validation_case = create_validation_case(param);
-                std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-                SingleData result = create_result_dataset(validation_case.input, output_prefix);
-                // create model
-                MainModel model{50.0, validation_case.input.const_dataset, 0};
-                Idx const n_batch = (Idx)validation_case.update_batch.individual_batch.size();
-                CalculationFunc const func =
-                    calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
-
-                // run in loops
-                for (Idx batch = 0; batch != n_batch; ++batch) {
-                    MainModel model_copy{model};
-                    // update and run
-                    model_copy.update_component(validation_case.update_batch.individual_batch[batch].const_dataset);
-                    (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method),
-                                       result.dataset, {}, -1);
-                    // check
-                    assert_result(result.const_dataset,
-                                  validation_case.output_batch.individual_batch[batch].const_dataset, output_prefix,
-                                  param.atol, param.rtol);
-                }
-
-                // run in one-go, with different threading possibility
-                SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
-                for (Idx threading : {-1, 0, 1, 2}) {
-                    BatchParameter batch_parameter =
-                        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method),
-                                      batch_result.dataset, validation_case.update_batch.const_dataset, threading);
-                    assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix,
-                                  param.atol, param.rtol);
-                    // check batch parameters
-                    CHECK(batch_parameter.independent == param.batch_parameter.independent);
-                    CHECK(batch_parameter.cache_topology == param.batch_parameter.cache_topology);
-                }
-            }
-        }
+    // run in one-go, with different threading possibility
+    SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+    for (Idx threading : {-1, 0, 1, 2}) {
+        BatchParameter batch_parameter =
+            (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
+                          validation_case.update_batch.const_dataset, threading);
+        assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
+                      param.rtol);
+        // check batch parameters
+        CHECK(batch_parameter.independent == param.batch_parameter.independent);
+        CHECK(batch_parameter.cache_topology == param.batch_parameter.cache_topology);
     }
+}
+
+TEST_CASE("Validation test single") {
+    CaseParam param{};
+    DOCTEST_VALUE_PARAMETERIZED_DATA(param, all_cases);
+    validate_single_case(param);
+}
+
+TEST_CASE("Validation test batch") {
+    CaseParam param{};
+    DOCTEST_VALUE_PARAMETERIZED_DATA(param, all_cases);
+    validate_batch_case(param);
 }
 
 }  // namespace meta_data
