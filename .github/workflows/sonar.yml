@@ -66,8 +66,7 @@ jobs:
 
       - name: Python test and coverage
         run: |
-          pip install -e .
-          pip install -r dev-requirements.txt
+          pip install -e .[dev]
           pytest
           # remove cython generated cpp file
           rm -rf src/power_grid_model/*.cpp
