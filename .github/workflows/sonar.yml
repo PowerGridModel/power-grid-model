@@ -88,7 +88,8 @@ jobs:
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 
       - name: Run sonar-scanner
-        if: github.event_name == 'push'  # only run sonar server in push event
+        # only run sonar server in push event or pull request event from own repo
+        if: github.event_name == 'push' || ${{ github.event.pull_request.head.repo.owner.login }} == 'alliander-opensource'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
