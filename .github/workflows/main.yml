@@ -136,7 +136,7 @@ jobs:
       CIBW_BUILD_FRONTEND: "build"
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS: ${{ matrix.archs }}
-      CIBW_TEST_REQUIRES: pytest pytest-cov
+      CIBW_TEST_EXTRAS: "dev"
       CIBW_TEST_COMMAND: pytest {package}/tests
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
