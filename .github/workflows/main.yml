@@ -67,7 +67,6 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
           mkdir cpp_build_${{ matrix.build-option }}
           cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
