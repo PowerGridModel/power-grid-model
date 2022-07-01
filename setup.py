@@ -264,6 +264,9 @@ def prepare_pkg(setup_file: Path) -> dict:
     with open(pkg_dir / "requirements.txt") as f:
         required = f.read().splitlines()
         required = [x for x in required if x.strip() and x.strip()[0] != "#"]
+    with open(pkg_dir / "dev-requirements.txt") as f:
+        dev_required = f.read().splitlines()
+        dev_required = [x for x in dev_required if x.strip() and x.strip()[0] != "#"]
     version = get_version(pkg_dir)
 
     return dict(
@@ -271,6 +274,7 @@ def prepare_pkg(setup_file: Path) -> dict:
         version=version,
         long_description=long_description,
         install_requires=required,
+        extras_require={"dev": dev_required},
         **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
     )
 
