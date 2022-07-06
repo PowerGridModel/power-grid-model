@@ -377,13 +377,8 @@ ValidationCase create_validation_case(CaseParam const& param) {
     return validation_case;
 }
 
-// all test cases
-std::vector<CaseParam> all_cases;
-
-TEST_CASE("Check existence of validation data path") {
-    REQUIRE(std::filesystem::exists(data_path));
-    std::cout << "Validation test dataset: " << data_path << '\n';
-
+inline std::vector<CaseParam> read_all_cases() {
+    std::vector<CaseParam> all_cases;
     // detect all test cases
     for (std::string calculation_type : {"power_flow", "state_estimation"}) {
         // loop all sub-directories
@@ -397,12 +392,20 @@ TEST_CASE("Check existence of validation data path") {
         }
     }
     std::cout << "Total test cases: " << all_cases.size() << '\n';
+    return all_cases;
+}
+
+inline std::vector<CaseParam> const& get_all_cases() {
+    static std::vector<CaseParam> const all_cases = read_all_cases();
+    return all_cases;
+}
+
+TEST_CASE("Check existence of validation data path") {
+    REQUIRE(std::filesystem::exists(data_path));
+    std::cout << "Validation test dataset: " << data_path << '\n';
 }
 
 void validate_single_case(CaseParam const& param) {
-    if (param.is_batch) {
-        return;
-    }
     std::cout << "Validation test: " << param.case_name << std::endl;
     ValidationCase const validation_case = create_validation_case(param);
     std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
@@ -415,9 +418,6 @@ void validate_single_case(CaseParam const& param) {
 }
 
 void validate_batch_case(CaseParam const& param) {
-    if (!param.is_batch) {
-        return;
-    }
     std::cout << "Validation test: " << param.case_name << std::endl;
     ValidationCase const validation_case = create_validation_case(param);
     std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
@@ -453,7 +453,11 @@ void validate_batch_case(CaseParam const& param) {
 }
 
 TEST_CASE("Validation test single") {
+    std::vector<CaseParam> const& all_cases = get_all_cases();
     for (CaseParam const& param : all_cases) {
+        if (param.is_batch) {
+            continue;
+        }
         SUBCASE(param.case_name.c_str()) {
             validate_single_case(param);
         }
@@ -461,7 +465,11 @@ TEST_CASE("Validation test single") {
 }
 
 TEST_CASE("Validation test batch") {
+    std::vector<CaseParam> const& all_cases = get_all_cases();
     for (CaseParam const& param : all_cases) {
+        if (!param.is_batch) {
+            continue;
+        }
         SUBCASE(param.case_name.c_str()) {
             validate_batch_case(param);
         }
