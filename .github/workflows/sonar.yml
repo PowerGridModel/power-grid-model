@@ -66,8 +66,7 @@ jobs:
 
       - name: Python test and coverage
         run: |
-          pip install -e .
-          pip install -r dev-requirements.txt
+          pip install -e .[dev]
           pytest
           # remove cython generated cpp file
           rm -rf src/power_grid_model/*.cpp
@@ -75,7 +74,7 @@ jobs:
       - name: Run build-wrapper for C++
         run: |
           mkdir cpp_build
-          cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} -DPOWER_GRID_MODEL_COVERAGE=1
+          cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DPOWER_GRID_MODEL_COVERAGE=1
           VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build cpp_build/
 
       - name: C++ test and coverage
@@ -88,7 +87,8 @@ jobs:
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 
       - name: Run sonar-scanner
-        if: github.event_name == 'push'  # only run sonar server in push event
+        # only run sonar server in push event or pull request event from own repo
+        if: github.event_name == 'push' || ${{ github.event.pull_request.head.repo.owner.login }} == 'alliander-opensource'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

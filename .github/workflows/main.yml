@@ -27,10 +27,10 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
+        cpp-compiler: [g++-11, clang++-14]
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CC: clang-14
-      CXX: clang++-14
+      CXX: ${{ matrix.cpp-compiler }}
 
     steps:
       - uses: actions/checkout@v3
@@ -67,7 +67,6 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
           mkdir cpp_build_${{ matrix.build-option }}
           cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
@@ -137,7 +136,7 @@ jobs:
       CIBW_BUILD_FRONTEND: "build"
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS: ${{ matrix.archs }}
-      CIBW_TEST_REQUIRES: pytest pytest-cov
+      CIBW_TEST_EXTRAS: "dev"
       CIBW_TEST_COMMAND: pytest {package}/tests
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
