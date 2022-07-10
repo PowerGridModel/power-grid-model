@@ -38,7 +38,7 @@ The components types are organized in an inheritance-like hierarchy.
 A sub-type has all the attributes from its parent type.
 The hierarchy of the component types is shown below.
 
-``
+```
 base ──┬─────────────────────────────────────────────── node
        │
        ├── branch ──────────────────────────────────┬── line
@@ -235,7 +235,8 @@ There is no additional attribute for `link`.
 
 **Note: it can happen that `tap_min > tap_max`.
 In this case the winding voltage is decreased if the tap position is increased.**
-                                                                                                                                                                                                             | required | input | update | output | valid values |
+
+| name | data type | unit | description                                                                                                                                                                                                                        | required | input | update | output | valid values |
 | --- | --- | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| :---: | :---: | :---: | :---: | :---: |
 | `u1` | `double` | volt (V) | rated voltage at from-side                                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
 | `u2` | `double` | volt (V) | rated voltage at to-side                                                                                                                                                                                                           | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
@@ -261,6 +262,7 @@ In this case the winding voltage is decreased if the tap position is increased.*
 | `x_grounding_from` | `double` | ohm (Ω) | grounding reactance at from-side, if relevant                                                                                                                                                                                      | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 | `r_grounding_to` | `double` | ohm (Ω) | grounding resistance at to-side, if relevant                                                                                                                                                                                       | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 | `x_grounding_to` | `double` | ohm (Ω) | grounding reactance at to-side, if relevant                                                                                                                                                                                        | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
+
 
 ## Branch3
 
