@@ -17,20 +17,10 @@
 #include "topology.hpp"
 
 // component include
+#include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/input.hpp"
 #include "auxiliary/output.hpp"
-#include "component/appliance.hpp"
-#include "component/line.hpp"
-#include "component/link.hpp"
-#include "component/load_gen.hpp"
-#include "component/node.hpp"
-#include "component/power_sensor.hpp"
-#include "component/sensor.hpp"
-#include "component/shunt.hpp"
-#include "component/source.hpp"
-#include "component/transformer.hpp"
-#include "component/voltage_sensor.hpp"
 
 // math model include
 #include "math_solver/math_solver.hpp"
@@ -41,11 +31,11 @@
 namespace power_grid_model {
 
 // main model implementation template
-template <class T, class... U>
+template <class T, class U>
 class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
-class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...> final {
+class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> final {
    private:
     // internal type traits
     // container class
@@ -540,21 +530,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentTyp
             }
         }
 
-        for (auto it = exceptions.begin(); it != exceptions.end();) {
-            if (it->empty()) {
-                it = exceptions.erase(it);
-            }
-            else {
-                it++;
+        // handle exception message
+        std::string combined_error_message;
+        for (Idx batch = 0; batch != n_batch; ++batch) {
+            // append exception if it is not empty
+            if (!exceptions[batch].empty()) {
+                combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
             }
         }
-
-        if (!exceptions.empty()) {
-            std::string combined_error_message;
-            for (const auto& ex : exceptions) {
-                combined_error_message.append(ex + "\n");
-            }
-            throw BatchCalculationError(combined_error_message.substr(0, combined_error_message.length() - 1));
+        if (!combined_error_message.empty()) {
+            throw BatchCalculationError(combined_error_message);
         }
 
         return BatchParameter{independent, cache_topology};
@@ -983,6 +968,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentTyp
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             math_param[i].branch_param.resize(math_topology_[i]->n_branch());
             math_param[i].shunt_param.resize(math_topology_[i]->n_shunt());
+            math_param[i].source_param.resize(math_topology_[i]->n_source());
         }
         // loop all branch
         for (Idx i = 0; i != (Idx)comp_topo_->branch_node_idx.size(); ++i) {
@@ -1004,6 +990,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentTyp
             // assign parameters
             math_param[math_idx.group].shunt_param[math_idx.pos] =
                 components_.template get_item_by_seq<Shunt>(i).template calc_param<sym>();
+        }
+        // loop all source
+        for (Idx i = 0; i != (Idx)comp_topo_->source_node_idx.size(); ++i) {
+            Idx2D const math_idx = comp_coup_->source[i];
+            if (math_idx.group == -1) {
+                continue;
+            }
+            // assign parameters
+            math_param[math_idx.group].source_param[math_idx.pos] =
+                components_.template get_item_by_seq<Source>(i).template math_param<sym>();
         }
         return math_param;
     }
@@ -1102,8 +1098,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentTyp
             pf_input[i].s_injection.resize(math_topology_[i]->n_load_gen());
             pf_input[i].source.resize(math_topology_[i]->n_source());
         }
-        prepare_input<sym, PowerFlowInput<sym>, SourceCalcParam<sym>, &PowerFlowInput<sym>::source, Source>(
-            comp_coup_->source, pf_input);
+        prepare_input<sym, PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(comp_coup_->source,
+                                                                                                     pf_input);
 
         prepare_input<sym, PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
             comp_coup_->load_gen, pf_input);
@@ -1205,8 +1201,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentTyp
 
 using MainModel = MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Appliance, GenericLoadGen, GenericLoad,
                                                       GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
-                                Node, Line, Link, Transformer, Shunt, Source, SymGenerator, AsymGenerator, SymLoad,
-                                AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor>;
+                                AllComponents>;
 
 }  // namespace power_grid_model
 

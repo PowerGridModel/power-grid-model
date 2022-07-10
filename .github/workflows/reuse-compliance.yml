@@ -16,9 +16,10 @@ on:
 
 jobs:
   reuse-compliance-check:
+    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: REUSE Compliance Check
       uses: fsfe/reuse-action@v1

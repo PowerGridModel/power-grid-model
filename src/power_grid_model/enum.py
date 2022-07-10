@@ -29,6 +29,8 @@ class WindingType(IntEnum):
     wye = 0
     wye_n = 1
     delta = 2
+    zigzag = 3
+    zigzag_n = 4
 
 
 class BranchSide(IntEnum):
@@ -51,6 +53,8 @@ class CalculationMethod(IntEnum):
     linear = 0
     newton_raphson = 1
     iterative_linear = 2
+    iterative_current = 3
+    linear_current = 4
 
 
 class MeasuredTerminalType(IntEnum):

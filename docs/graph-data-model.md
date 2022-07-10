@@ -21,13 +21,15 @@ The table below for a list of enumerations.
 They are all defined in the module `power_grid_model.enum`.
 The underlying type of enumeration is `int8_t`.
 
+
 | enum type name in Python | possible values                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | usage |
 | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| --- |
 | `LoadGenType` | `const_power = 0` <br> `const_impedance = 1` <br> `const_current = 2`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | load/generation types |
-| `WindingType` | `wye = 0` <br> `wye_n = 1` <br> `delta = 2`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | transformer winding type |
+| `WindingType` | `wye = 0` <br> `wye_n = 1` <br> `delta = 2` <br> `zigzag = 3` <br> `zigzag_n = 4`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | transformer winding type |
 | `BranchSide` | `from_side = 0` <br> `to_side = 1` <br> `side_1 = 2` <br> `side_2 = 3` <br> `side_3 = 4`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | the side of a branch |
 | `MeasuredTerminalType` | `branch_from = 0`, measuring the from-terminal between a branch and a node <br> `branch_to = 1`, measuring the to-terminal between a branch and a node <br> `source = 2`, measuring the terminal between a source and a node <br> `shunt = 3`, measuring the terminal between a shunt and a node <br> `load = 4`, measuring the terminal between a load and a node <br> `generator = 5`, measuring the terminal between a generator and a node <br> `branch3_1 = 6`, measuring the terminal-1 between a branch3 and a node <br> `branch3_2 = 7`, measuring the terminal-2 between a branch3 and a node <br> `branch3_3 = 8`, measuring the terminal-3 between a branch3 and a node | type of flow (e.g. power) measurement |
-| `CalculationMethod` | `linear = 0` <br> `newton_raphson = 1` <br> `iterative_linear = 2`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | method of calculation |
+| `CalculationMethod` | `linear = 0` <br> `newton_raphson = 1` <br> `iterative_linear = 2` <br> `iterative_current = 3` <br> `linear_current = 4`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | method of calculation |
+
 
 
 # Component Type Hierarchy and Graph Data Model
@@ -36,47 +38,37 @@ The components types are organized in an inheritance-like hierarchy.
 A sub-type has all the attributes from its parent type.
 The hierarchy of the component types is shown below.
 
+``
+base ──┬─────────────────────────────────────────────── node
+       │
+       ├── branch ──────────────────────────────────┬── line
+       │                                            ├── link
+       │                                            └── transformer
+       |
+       |── branch3 ──────────────────────────────────── three_winding_transformer
+       │
+       ├── appliance ──┬─────────────────────────────── source
+       │               │
+       │               ├─────────────────────────────── shunt
+       │               │
+       │               └── generic_load_gen ────────┬── sym_load
+       │                                            ├── sym_gen
+       │                                            ├── asym_load
+       │                                            └── asym_gen
+       │
+       └── sensor ─────┬── generic_voltage_sensor ──┬── sym_voltage_sensor
+                       │                            └── asym_voltage_sensor
+                       │
+                       └── generic_power_sensor ────┬── sym_power_sensor
+                                                    └── asym_power_sensor
+```
+
 **NOTE: the type names in the hierarchy are exactly the same as the component type names
 in the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
 
-```
-                    base
-                     |
-                     |
-    -----------------------------------------------------------------------------------------
-    |           |              |               |                                            |
-    |           |              |               |                                            |
-   node       branch        branch3         appliance                                       |
-                |              |               |                                            |
-                |              |               |                                            |
-        -------------------    |     ---------------------------------                      |
-        |          |      |    |     |          |                    |                      |
-        |          |      |    |     |          |                    |                      |
-     transformer  line   link  |   source     shunt          generic_load_gen             sensor
-                               |                                     |                      |
-                               |                                     |                      |
-                               |   ----------------------------------------                 |
-                               |   |            |            |            |                 |
-                               |   |            |            |            |                 |
-                               | sym_load   asym_load      sym_gen     asym_gen             |
-                               |                                                            |
-                               |                            ----------------------------------
-                               |                            |                                |
-                               |                            |                                |
-                    three_winding_transformer      generic_voltage_sensor           generic_power_sensor
-                                                            |                                |
-                                                            |                                |
-                                           --------------------------                --------------------------
-                                           |                        |                |                        |
-                                           |                        |                |                        |
-                                  sym_voltage_sensor      asym_voltage_sensor   sym_power_sensor      asym_power_sensor
-```
-
-This library uses a graph data model with four generic component types: `node`, `branch`, `branch3`, and `appliance`.
-* A node is similar to a vertex in the graph
-* A branch is similar to an edge in the graph 
-* A branch3 connects three nodes together
-* An appliance is a component which is connected (coupled) to a node, it is seen as a user of this node.
+This library uses a graph data model with three generic component types: `node`, `branch`, `branch3` and `appliance`.
+A node is similar to a vertex in the graph, a branch is similar to an edge in the graph and a branch3 connects threee nodes together.
+An appliance is a component which is connected (coupled) to a node, it is seen as a user of this node.
 
 The figure below shows a simple example:
 
@@ -243,33 +235,32 @@ There is no additional attribute for `link`.
 
 **Note: it can happen that `tap_min > tap_max`.
 In this case the winding voltage is decreased if the tap position is increased.**
-
-| name | data type | unit | description | required | input | update | output |                              valid values                              |
-| --- | --- | --- | --- | :---: | :---: | :---: | :---: |:----------------------------------------------------------------------:|
-| `u1` | `double` | volt (V) | rated voltage at from-side | &#10004; | &#10004; | &#10060; | &#10060; |                                 `> 0`                                  |
-| `u2` | `double` | volt (V) | rated voltage at to-side | &#10004; | &#10004; | &#10060; | &#10060; |                                 `> 0`                                  |
-| `sn` | `double` | volt-ampere (VA) | rated power | &#10004; | &#10004; | &#10060; | &#10060; |                                 `> 0`                                  |
-| `uk` | `double` | - | relative short circuit voltage, `0.1` means 10% | &#10004; | &#10004; | &#10060; | &#10060; |                    `>= pk / sn` and `> 0` and `< 1`                    |
-| `pk` | `double` | watt (W) | short circuit (copper) loss | &#10004; | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
-| `i0` | `double` | - | relative no-load current | &#10004; | &#10004; | &#10060; | &#10060; |                         `>= p0 / sn` and `< 1`                         |
-| `p0` | `double` | watt (W) | no-load (iron) loss | &#10004; | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
-| `winding_from` | `WindingType` | - | from-side winding type | &#10004; | &#10004; | &#10060; | &#10060; |                                                                        |
-| `winding_to` | `WindingType` | - | to-side winding type | &#10004; | &#10004; | &#10060; | &#10060; |                                                                        |
-| `clock` | `int8_t` | - | clock number of phase shift, odd number is only allowed for Dy(n) or Y(N)d configuration.| &#10004; | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
-| `tap_side` | `BranchSide` | - | side of tap changer | &#10004; | &#10004; | &#10060; | &#10060; |                        `from_side` or `to_side`                         |
-| `tap_pos`   | `int8_t` | - | current position of tap changer | &#10004; | &#10004; | &#10004; | &#10060; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
-| `tap_min` | `int8_t` | - | position of tap changer at minimum voltage | &#10004; | &#10004; | &#10060; | &#10060; |                                                                        |
-| `tap_max` | `int8_t` | - | position of tap changer at maximum voltage | &#10004; | &#10004; | &#10060; | &#10060; |                                                                        |
-| `tap_nom`   | `int8_t` | - | nominal position of tap changer | &#10060; default zero | &#10004; | &#10060; | &#10060; | `(tap_min <= tap_nom <= tap_max)` or `(tap_min >= tap_nom >= tap_max)` |
-| `tap_size` | `double` | volt (V) | size of each tap of the tap changer | &#10004; | &#10004; | &#10060; | &#10060; |                                 `> 0`                                  |
-| `uk_min` | `double` | - | relative short circuit voltage at minimum tap | &#10060; default same as `uk` | &#10004; | &#10060; | &#10060; |                  `>= pk_min / sn` and `> 0` and `< 1`                  |
-| `uk_max` | `double` | - | relative short circuit voltage at maximum tap | &#10060; default same as `uk` | &#10004; | &#10060; | &#10060; |                  `>= pk_max / sn` and `> 0` and `< 1`                  |
-| `pk_min` | `double` | watt (W) | short circuit (copper) loss at minimum tap | &#10060; default same as `pk` | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
-| `pk_max` | `double` | watt (W) | short circuit (copper) loss at maximum tap | &#10060; default same as `pk` | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
-| `r_grounding_from` | `double` | ohm (Ω) | grounding resistance at from-side, if relevant | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
-| `x_grounding_from` | `double` | ohm (Ω) | grounding reactance at from-side, if relevant | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
-| `r_grounding_to` | `double` | ohm (Ω) | grounding resistance at to-side, if relevant | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
-| `x_grounding_to` | `double` | ohm (Ω) | grounding reactance at to-side, if relevant | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
+                                                                                                                                                                                                             | required | input | update | output | valid values |
+| --- | --- | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| :---: | :---: | :---: | :---: | :---: |
+| `u1` | `double` | volt (V) | rated voltage at from-side                                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
+| `u2` | `double` | volt (V) | rated voltage at to-side                                                                                                                                                                                                           | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
+| `sn` | `double` | volt-ampere (VA) | rated power                                                                                                                                                                                                                        | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
+| `uk` | `double` | - | relative short circuit voltage, `0.1` means 10%                                                                                                                                                                                    | &#10004; | &#10004; | &#10060; | &#10060; | `>= pk / sn` and `> 0` and `< 1` |
+| `pk` | `double` | watt (W) | short circuit (copper) loss                                                                                                                                                                                                        | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` |
+| `i0` | `double` | - | relative no-load current                                                                                                                                                                                                           | &#10004; | &#10004; | &#10060; | &#10060; | `>= p0 / sn` and `< 1` |
+| `p0` | `double` | watt (W) | no-load (iron) loss                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` |
+| `winding_from` | `WindingType` | - | from-side winding type                                                                                                                                                                                                             | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `winding_to` | `WindingType` | - | to-side winding type                                                                                                                                                                                                               | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `clock` | `int8_t` | - | clock number of phase shift. <br> Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. <br> Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` and `<= 12` |
+| `tap_side` | `BranchSide` | - | side of tap changer                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `tap_pos`   | `int8_t` | - | current position of tap changer                                                                                                                                                                                                    | &#10004; | &#10004; | &#10004; | &#10060; |  `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
+| `tap_min` | `int8_t` | - | position of tap changer at minimum voltage                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `tap_max` | `int8_t` | - | position of tap changer at maximum voltage                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `tap_nom`   | `int8_t` | - | nominal position of tap changer                                                                                                                                                                                                    | &#10060; default zero | &#10004; | &#10060; | &#10060; | `(tap_min <= tap_nom <= tap_max)` or `(tap_min >= tap_nom >= tap_max)` |
+| `tap_size` | `double` | volt (V) | size of each tap of the tap changer                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
+| `uk_min` | `double` | - | relative short circuit voltage at minimum tap                                                                                                                                                                                      | &#10060; default same as `uk` | &#10004; | &#10060; | &#10060; | `>= pk_min / sn` and `> 0` and `< 1` |
+| `uk_max` | `double` | - | relative short circuit voltage at maximum tap                                                                                                                                                                                      | &#10060; default same as `uk` | &#10004; | &#10060; | &#10060; | `>= pk_max / sn` and `> 0` and `< 1` |
+| `pk_min` | `double` | watt (W) | short circuit (copper) loss at minimum tap                                                                                                                                                                                         | &#10060; default same as `pk` | &#10004; | &#10060; | &#10060; | `>= 0` |
+| `pk_max` | `double` | watt (W) | short circuit (copper) loss at maximum tap                                                                                                                                                                                         | &#10060; default same as `pk` | &#10004; | &#10060; | &#10060; | `>= 0` |
+| `r_grounding_from` | `double` | ohm (Ω) | grounding resistance at from-side, if relevant                                                                                                                                                                                     | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
+| `x_grounding_from` | `double` | ohm (Ω) | grounding reactance at from-side, if relevant                                                                                                                                                                                      | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
+| `r_grounding_to` | `double` | ohm (Ω) | grounding resistance at to-side, if relevant                                                                                                                                                                                       | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
+| `x_grounding_to` | `double` | ohm (Ω) | grounding reactance at to-side, if relevant                                                                                                                                                                                        | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 
 ## Branch3
 
@@ -388,12 +379,13 @@ For each `appliance` a switch is defined between the `appliance` and the `node`.
 It has an infinite voltage source with an internal impedance.
 The impedance is specified by convention as short circuit power.
 
-| name | data type | unit | description | required | input | update | output | valid values |
-| --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
-| `u_ref` | `double` | - | reference voltage in per-unit | &#10024; only for power flow | &#10004; | &#10004; | &#10060; | `> 0` | 
-| `sk` | `double` | volt-ampere (VA) | short circuit power | &#10060; default 1e10 | &#10004; | &#10060; | &#10060; | `> 0` | 
-| `rx_ratio` | `double` | - | R to X ratio | &#10060; default 0.1 | &#10004; | &#10060; | &#10060; | `>= 0` |
-| `z01_ratio` | `double` | - | zero sequence to positive sequence impedance ratio | &#10060; default 1.0 | &#10004; | &#10060; | &#10060; | `> 0` | 
+| name          | data type | unit | description                                        |           required           | input | update | output | valid values |
+|---------------| --- | --- |----------------------------------------------------|:----------------------------:| :---: | :---: | :---: |:------------:|
+| `u_ref`       | `double` | - | reference voltage in per-unit                      | &#10024; only for power flow | &#10004; | &#10004; | &#10060; |    `> 0`     | 
+| `u_ref_angle` | `double` | rad | reference voltage angle                            |     &#10060; default 0.0     | &#10004; | &#10004; | &#10060; |              |
+| `sk`          | `double` | volt-ampere (VA) | short circuit power                                |    &#10060; default 1e10     | &#10004; | &#10060; | &#10060; | `> 0` | 
+| `rx_ratio`    | `double` | - | R to X ratio                                       |     &#10060; default 0.1     | &#10004; | &#10060; | &#10060; | `>= 0` |
+| `z01_ratio`   | `double` | - | zero sequence to positive sequence impedance ratio |     &#10060; default 1.0     | &#10004; | &#10060; | &#10060; | `> 0` | 
 
 ### Generic Load and Generator
 
@@ -525,3 +517,37 @@ The table below shows a list of attributes.
 | `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; |
 | `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | &#10004; | &#10060; | &#10060; | &#10004; |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | &#10004; | &#10060; | &#10060; | &#10004; |
+
+
+# Selection of calculation method
+
+There are four power-flow algorithms and one state estimation algorithm available in power-grid-model. Some methods use a prefactorization feature which is also described in this section.
+
+## Power-flow algorithms
+
+Following are guidelines to be considered while selecting a power-flow `CalculationMethod` for your application:
+
+### Iterative methods
+
+These should be selected when exact solution is required within specified `error_tolerance`.
+* 
+* `CalculationMethod.newton_raphson`: Traditional Newton-Raphson method.
+* `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less iterations. However, Iterative current can be faster most times because it uses matrix prefactorization.
+ 
+### Linear methods
+
+Linear approximation methods are many times faster than the iterative methods. Can be used where approximate solutions are acceptable. Both methods have equal computation time for a single powerflow calculation.
+* `CalculationMethod.linear`: It will be more accurate when most of the load/generation types are of constant impedance.
+* `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power or constant current. Batch calculations will be faster because matrix prefacorization is possible.
+
+## State Estimation algorithms
+
+Following are guidelines to be considered while selecting a state estimation `CalculationMethod` for your application:
+
+* `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true solution. Matrix prefactorization is possible.
+
+## Matrix Prefactorization
+
+Every iteration of power-flow or state estimation has a step of solving large number of sparse linear equations i.e. `AX=b` in matrix form. Computation wise this is a very expensive step. One major component of this step is factorization of the `A` matrix. In certain calculation methods, this `A` matrix and its factorization remains unchanged over iterations and batches (only specific cases) which makes it possible reuse the factorization, skip this step and improve performance. 
+
+**Note:** Prefactorization over batches is possible when switching status or specified power values of load/generation or source reference voltage is modified. It is not possible when topology or grid parameters are modified, i.e. in switching of branches, shunt, sources or change in transformer tap positions.

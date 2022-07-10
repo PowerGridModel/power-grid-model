@@ -34,7 +34,7 @@ struct PowerGridBenchmark {
         LinkInput const link_2{{{4}, 1, 2, true, true}};
         LinkInput const link_3{{{5}, 2, 0, true, true}};
 
-        SourceInput const source{{{6}, 0, true}, 1.05, 1e20, nan, nan};
+        SourceInput const source{{{6}, 0, true}, 1.05, nan, 1e20, nan, nan};
         // template input
         NodeInput const node{{0}, 10.0e3};
         SymLoadGenInput const sym_load{{{{0}, 0, true}, LoadGenType::const_i}, 0.4e6, 0.3e6};
@@ -180,7 +180,15 @@ struct PowerGridBenchmark {
         generate_network(n_node);
         std::string title = "Benchmark case: ";
         title += sym ? "symmetric, " : "asymmetric, ";
-        title += calculation_method == CalculationMethod::newton_raphson ? "Newton-Raphson method" : "Linear method";
+        if (calculation_method == CalculationMethod::newton_raphson) {
+            title += "Newton-Raphson method";
+        }
+        else if (calculation_method == CalculationMethod::linear) {
+            title += "Linear method";
+        }
+        else {
+            title += "Iterative current method";
+        }
         std::cout << "=============" << title << "=============\n";
 
         {
@@ -242,8 +250,10 @@ int main(int, char**) {
     power_grid_model::PowerGridBenchmark benchmarker{};
     benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson);
     benchmarker.run_benchmark(n_node, true, CalculationMethod::linear);
+    benchmarker.run_benchmark(n_node, true, CalculationMethod::iterative_current);
     benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson);
     benchmarker.run_benchmark(n_node, false, CalculationMethod::linear);
+    benchmarker.run_benchmark(n_node, false, CalculationMethod::iterative_current);
 
     return 0;
 }

@@ -66,13 +66,6 @@ struct ApplianceMathOutput {
     ComplexValue<sym> i;
 };
 
-// source calculation parameters
-template <bool sym>
-struct SourceCalcParam {
-    double u_ref;              // source reference voltage
-    ComplexTensor<sym> y_ref;  // source internal element_admittance
-};
-
 // sensor calculation parameters for state estimation
 template <bool sym>
 struct SensorCalcParam {
@@ -158,11 +151,12 @@ template <bool sym>
 struct MathModelParam {
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
+    ComplexTensorVector<sym> source_param;
 };
 
 template <bool sym>
 struct PowerFlowInput {
-    std::vector<SourceCalcParam<sym>> source;
+    ComplexVector source;
     ComplexValueVector<sym> s_injection;
 };
 

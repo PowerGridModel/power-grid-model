@@ -79,7 +79,7 @@ TEST_CASE("Test math solver") {
       (mm)                     (y0, ys0)           (y1)         |
     source --yref-- bus0(m) -m-branch0-mm- bus1 --branch1-m-  bus2(mm)
                      |                      |                   |
-                              load012                load345 (m)          load6 (not connected) (m, rubbish value)
+                 load012                load345 (m)          load6 (not connected) (m, rubbish value)
                                                       for const z,
                                                               rubbish value for load3/4
 
@@ -139,8 +139,9 @@ TEST_CASE("Test math solver") {
     // source input
     DoubleComplex const uref = vref;
     DoubleComplex const yref = 10.0 - 50.0i;
-    pf_input.source = {SourceCalcParam<true>{vref, yref}};
-    // source result
+    pf_input.source = {vref};
+    // source param and result
+    param.source_param = {yref};
     output_ref.source.resize(1);
     output_ref.source[0].i = yref * (uref - u0);
     output_ref.source[0].s = conj(output_ref.source[0].i) * u0;
@@ -202,10 +203,12 @@ TEST_CASE("Test math solver") {
     ComplexTensor<false> ysa{2.0 * ys + ys_0, ys_0 - ys};
     ysa /= 3.0;
     param_asym.shunt_param = {ysa};
+    // source
+    param_asym.source_param = {ComplexTensor<false>{yref}};
 
     // load and source
     PowerFlowInput<false> pf_input_asym;
-    pf_input_asym.source = {SourceCalcParam<false>{vref, ComplexTensor<false>{yref}}};
+    pf_input_asym.source = {vref};
     pf_input_asym.s_injection.resize(pf_input.s_injection.size());
     for (size_t i = 0; i < pf_input.s_injection.size(); i++) {
         pf_input_asym.s_injection[i] =
@@ -363,6 +366,15 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
+    SECTION("Test symmetric iterative current pf solver") {
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+        MathOutput<true> output =
+            solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_current);
+        // verify
+        assert_output(output, output_ref);
+    }
+
     SECTION("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
@@ -405,6 +417,15 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        // verify
+        assert_output(output, output_ref_asym);
+    }
+
+    SECTION("Test iterative current asymmetric pf solver") {
+        MathSolver<false> solver{topo_ptr, param_asym_ptr};
+        CalculationInfo info;
+        MathOutput<false> output =
+            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::iterative_current);
         // verify
         assert_output(output, output_ref_asym);
     }

@@ -24,9 +24,9 @@ template <class T>
 using enable_scalar_t = std::enable_if_t<std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>>;
 
 template <class T>
-using Eigen3Vector = Eigen::Array<T, 3, 1, Eigen::DontAlign>;
+using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T>
-using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::RowMajor | Eigen::DontAlign>;
+using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::RowMajor>;
 
 template <class T, class = enable_scalar_t<T>>
 class Vector : public Eigen3Vector<T> {
@@ -109,7 +109,7 @@ static_assert(alignof(RealTensor<false>) == alignof(double[9]));
 static_assert(std::is_standard_layout_v<RealTensor<false>>);
 static_assert(std::is_trivially_destructible_v<RealTensor<false>>);
 static_assert(sizeof(ComplexTensor<false>) == sizeof(double[18]));
-static_assert(alignof(ComplexTensor<false>) == alignof(double[18]));
+static_assert(alignof(ComplexTensor<false>) >= alignof(double[18]));
 static_assert(std::is_standard_layout_v<ComplexTensor<false>>);
 static_assert(std::is_trivially_destructible_v<ComplexTensor<false>>);
 static_assert(sizeof(RealValue<false>) == sizeof(double[3]));
@@ -117,7 +117,7 @@ static_assert(alignof(RealValue<false>) == alignof(double[3]));
 static_assert(std::is_standard_layout_v<RealValue<false>>);
 static_assert(std::is_trivially_destructible_v<RealValue<false>>);
 static_assert(sizeof(ComplexValue<false>) == sizeof(double[6]));
-static_assert(alignof(ComplexValue<false>) == alignof(double[6]));
+static_assert(alignof(ComplexValue<false>) >= alignof(double[6]));
 static_assert(std::is_standard_layout_v<ComplexValue<false>>);
 static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 

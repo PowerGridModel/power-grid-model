@@ -22,21 +22,21 @@ on:
 
 jobs:
   code-format-check:
-
+    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
         
       - name: Install Black and clang-format
         run: |
-          pip install black[juypter]
+          pip install black
           sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Run black

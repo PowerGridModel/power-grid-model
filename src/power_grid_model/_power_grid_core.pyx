@@ -37,10 +37,7 @@ cdef extern from "power_grid_model/auxiliary/meta_data_gen.hpp" namespace "power
         vector[DataAttribute] attributes
 
     bool is_little_endian()
-    map[string, MetaData] get_input_meta_data()
-    map[string, MetaData] get_sym_output_meta_data "::power_grid_model::meta_data::get_output_meta_data<true>"()
-    map[string, MetaData] get_asym_output_meta_data "::power_grid_model::meta_data::get_output_meta_data<false>"()
-    map[string, MetaData] get_update_meta_data()
+    map[string, map[string, MetaData]] meta_data()
 
 cdef _endianness = '<' if is_little_endian() else '>'
 cdef _nan_value_map = {
@@ -50,16 +47,17 @@ cdef _nan_value_map = {
 }
 
 cpdef _generate_meta_data():
-    meta_data = {}
-    cdef map[string, MetaData] input_meta_data = get_input_meta_data()
-    cdef map[string, MetaData] sym_output_meta_data = get_sym_output_meta_data()
-    cdef map[string, MetaData] asym_output_meta_data = get_asym_output_meta_data()
-    cdef map[string, MetaData] update_meta_data = get_update_meta_data()
-    meta_data['input'] = _generate_cluster_meta_data(input_meta_data)
-    meta_data['sym_output'] = _generate_cluster_meta_data(sym_output_meta_data)
-    meta_data['asym_output'] = _generate_cluster_meta_data(asym_output_meta_data)
-    meta_data['update'] = _generate_cluster_meta_data(update_meta_data)
-    return meta_data
+    py_meta_data = {}
+    cdef map[string, map[string, MetaData]] all_meta_data = meta_data()
+    cdef map[string, MetaData] input_meta_data = all_meta_data[b'input']
+    cdef map[string, MetaData] sym_output_meta_data = all_meta_data[b'sym_output']
+    cdef map[string, MetaData] asym_output_meta_data = all_meta_data[b'asym_output']
+    cdef map[string, MetaData] update_meta_data = all_meta_data[b'update']
+    py_meta_data['input'] = _generate_cluster_meta_data(input_meta_data)
+    py_meta_data['sym_output'] = _generate_cluster_meta_data(sym_output_meta_data)
+    py_meta_data['asym_output'] = _generate_cluster_meta_data(asym_output_meta_data)
+    py_meta_data['update'] = _generate_cluster_meta_data(update_meta_data)
+    return py_meta_data
 
 cdef _generate_cluster_meta_data(map[string, MetaData] & cpp_meta_data):
     py_meta_data = {}
@@ -118,6 +116,8 @@ cdef extern from "power_grid_model/auxiliary/dataset.hpp" namespace "power_grid_
         ConstDataPointer(const void * ptr, const int32_t * indptr, int32_t size)
 
 cdef extern from "power_grid_model/main_model.hpp" namespace "power_grid_model":
+    bool has_mkl()
+
     cppclass CalculationMethodCPP "::power_grid_model::CalculationMethod":
         pass
     cppclass BatchParameter:
@@ -629,3 +629,6 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
 
 # external used meta data
 power_grid_meta_data = _generate_meta_data()
+
+# has mkl flag
+use_mkl_solver = has_mkl()

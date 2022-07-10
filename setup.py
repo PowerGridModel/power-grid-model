@@ -3,15 +3,23 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import os
-from glob import glob
+import re
 import shutil
+from itertools import chain
+
+# noinspection PyPackageRequirements
 import numpy as np
+
+# noinspection PyPackageRequirements
+import Cython.Compiler.Main as CythonCompiler
+
+# noinspection PyPackageRequirements
+import requests
 import platform
 from sysconfig import get_paths
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages
-import Cython.Compiler.Main as CythonCompiler
 from pathlib import Path
 
 
@@ -32,16 +40,18 @@ class MyBuildExt(build_ext):
                 cxx = os.environ["CXX"]
             else:
                 cxx = self.compiler.compiler_cxx[0]
-            if "clang" in cxx:
-                lto_flag = "-flto=thin"
-            else:
-                lto_flag = "-flto"
             # customize compiler and linker options
             self.compiler.compiler_so[0] = cxx
-            self.compiler.compiler_so += [lto_flag]
             self.compiler.linker_so[0] = cxx
-            self.compiler.linker_so += [lto_flag]
             self.compiler.compiler_cxx = [cxx]
+            # add optional link time optimization
+            if os.environ.get("POWER_GRID_MODEL_ENABLE_LTO", "OFF") == "ON":
+                if "clang" in cxx:
+                    lto_flag = "-flto=thin"
+                else:
+                    lto_flag = "-flto"
+                self.compiler.compiler_so += [lto_flag]
+                self.compiler.linker_so += [lto_flag]
             # remove -g and -O2
             self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
             self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
@@ -54,14 +64,13 @@ class MyBuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-def get_ext_name(src_file, pkg_dir, pkg_name):
-    base_name = os.path.dirname(os.path.relpath(src_file, os.path.join(pkg_dir, "src", pkg_name)))
-    base_name = base_name.replace("\\", ".").replace("/", ".")
-    module_name = Path(src_file).resolve().stem
-    return f"{base_name}.{module_name}"
+def get_ext_name(src_file: Path, pkg_dir: Path, pkg_name: str):
+    module_name = str(src_file.relative_to(pkg_dir / "src" / pkg_name).with_suffix(""))
+    module_name = module_name.replace("\\", ".").replace("/", ".")
+    return module_name
 
 
-def generate_build_ext(pkg_dir: str, pkg_name: str):
+def generate_build_ext(pkg_dir: Path, pkg_name: str):
     """
     Generate extension dict for setup.py
     the return value ext_dict, can be called in setup(**ext_dict)
@@ -74,7 +83,7 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     # include-folders
     include_dirs = [
         np.get_include(),  # The include-folder of numpy header
-        os.path.join(pkg_dir, "include"),  # The include-folder of the repo self
+        str(pkg_dir / "include"),  # The include-folder of the repo self
         os.environ["EIGEN_INCLUDE"],  # eigen3 library
         os.environ["BOOST_INCLUDE"],  # boost library
     ]
@@ -88,33 +97,34 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
         ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1),  # use mkl runtime loading
     ]
+    pkg_bin_dir = pkg_dir / "src" / pkg_name
 
     # remove old extension build
-    shutil.rmtree(os.path.join(pkg_dir, "build"), ignore_errors=True)
+    build_dir = pkg_dir / "build"
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
     # remove binary
-    bin_files = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.so"), recursive=True) + glob(
-        os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyd"), recursive=True
-    )
+    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.pyd")))
     for bin_file in bin_files:
-        os.remove(bin_file)
+        print(f"Remove binary file: {bin_file}")
+        bin_file.unlink()
 
     # build steps for Windows and Linux
     # path of python env
-    env_base_path = get_paths()["data"]
+    env_base_path = Path(get_paths()["data"])
     # different treat for windows and linux
     # determine platform specific options
     if if_win:
         # flag for C++17
         cflags += ["/std:c++17"]
-        include_dirs += [os.path.join(env_base_path, "Library", "include")]
-        library_dirs += [os.path.join(env_base_path, "Library", "lib")]
+        include_dirs += [str(env_base_path / "Library" / "include")]
+        library_dirs += [str(env_base_path / "Library" / "lib")]
     else:
-        include_dirs += [os.path.join(env_base_path, "include"), get_paths()["platinclude"], get_paths()["include"]]
-        library_dirs += [os.path.join(env_base_path, "lib")]
+        include_dirs += [str(env_base_path / "include"), get_paths()["platinclude"], get_paths()["include"]]
+        library_dirs += [str(env_base_path / "lib")]
         # flags for Linux and Mac
         cflags += [
             "-std=c++17",
-            "-m64",
             "-O3",
             "-fvisibility=hidden",
         ]
@@ -125,14 +135,14 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
             cflags.append("-mmacosx-version-min=10.15")
 
     # list of compiled cython files, without file extension
-    cython_src = glob(os.path.join(pkg_dir, "src", pkg_name, "**", r"*.pyx"), recursive=True)
-    cython_src = [os.path.splitext(x)[0] for x in cython_src]
+    cython_src = list(pkg_bin_dir.rglob(r"*.pyx"))
+    cython_src = [x.with_suffix("") for x in cython_src]
     # compile cython
-    cython_src_pyx = [f"{x}.pyx" for x in cython_src]
+    cython_src_pyx = [x.with_suffix(".pyx") for x in cython_src]
     print("Compile Cython extensions")
     print(cython_src_pyx)
     CythonCompiler.compile(cython_src_pyx, cplus=True, language_level=3)
-    cython_src_cpp = [f"{x}.cpp" for x in cython_src]
+    cython_src_cpp = [x.with_suffix(".cpp") for x in cython_src]
     print("Generated cpp files")
     print(cython_src_cpp)
     # for linux add visibility to the init function
@@ -151,7 +161,7 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     exts = [
         Extension(
             name=get_ext_name(src_file=src_file, pkg_dir=pkg_dir, pkg_name=pkg_name),
-            sources=[os.path.relpath(src_file, pkg_dir)],
+            sources=[str(src_file.relative_to(pkg_dir))],
             include_dirs=include_dirs,
             library_dirs=library_dirs,
             libraries=libraries,
@@ -167,19 +177,23 @@ def generate_build_ext(pkg_dir: str, pkg_name: str):
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
 
 
-def package_files(directory):
-    include_extensions = {".json"}
-    paths = []
-    for (path, directories, filenames) in os.walk(directory):
-        for filename in filenames:
-            if os.path.splitext(filename)[1] in include_extensions:
-                paths.append(os.path.join("..", path, filename))
-    return paths
+def convert_long_description(raw_readme: str):
+    if "GITHUB_SHA" not in os.environ:
+        return raw_readme
+    else:
+        sha = os.environ["GITHUB_SHA"].lower()
+        url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
+        return re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
 
 
-def get_version(pkg_dir):
-    with open(os.path.join(pkg_dir, "VERSION")) as f:
+def get_version(pkg_dir: Path) -> str:
+    with open(pkg_dir / "VERSION") as f:
         version = f.read().strip().strip("\n")
+    major, minor = (int(x) for x in version.split("."))
+    latest_major, latest_minor, latest_patch = get_pypi_latest()
+    # get version
+    version = get_new_version(major, minor, latest_major, latest_minor, latest_patch)
+    # mutate version in GitHub Actions
     if ("GITHUB_SHA" in os.environ) and ("GITHUB_REF" in os.environ) and ("GITHUB_RUN_NUMBER" in os.environ):
         sha = os.environ["GITHUB_SHA"]
         ref = os.environ["GITHUB_REF"]
@@ -189,83 +203,103 @@ def get_version(pkg_dir):
 
         if "main" in ref:
             # main branch
-            # major.minor.build_number
-            version += f".{build_number}"
+            # major.minor.patch
+            # do nothing
+            pass
         elif "release" in ref:
             # release branch
-            # major.minor.build_number rc short_hash
+            # major.minor.patch rc 9 build_number short_hash
             # NOTE: the major.minor in release branch is usually higher than the main branch
             # this is the leading version if you enable test version in pip install
-            version += f".{build_number}rc{short_hash}"
+            version += f"rc9{build_number}{short_hash}"
         else:
             # feature branch
-            # major.minor.0a build_number short_hash
-            version += f".0a{build_number}{short_hash}"
+            # major.minor.patch a 1 build_number short_hash
+            version += f"a1{build_number}{short_hash}"
+    with open(pkg_dir / "PYPI_VERSION", "w") as f:
+        f.write(version)
     return version
 
 
-def build_pkg(setup_file, author, author_email, description, url):
+def get_pypi_latest():
+    r = requests.get("https://pypi.org/pypi/power-grid-model/json")
+    data = r.json()
+    version: str = data["info"]["version"]
+    return (int(x) for x in version.split("."))
+
+
+def get_new_version(major, minor, latest_major, latest_minor, latest_patch):
+    if (major > latest_major) or ((major == latest_major) and minor > latest_minor):
+        # brand-new version with patch zero
+        return f"{major}.{minor}.0"
+    elif major == latest_major and minor == latest_minor:
+        # current version, increment path
+        return f"{major}.{minor}.{latest_patch + 1}"
+    else:
+        # does not allow building older version
+        raise ValueError(
+            "Invalid version number!\n"
+            f"latest version: {latest_major}.{latest_minor}.{latest_patch}\n"
+            f"to be built version: {major}.{minor}\n"
+        )
+
+
+def prepare_pkg(setup_file: Path) -> dict:
     """
 
     Args:
         setup_file:
-        author:
-        author_email:
-        description:
-        url:
     Returns:
 
     """
-    pkg_dir = os.path.dirname(os.path.realpath(setup_file))
+    print(f"Build wheel from {setup_file}")
+    pkg_dir = setup_file.parent
     # package description
     pkg_pip_name = "power-grid-model"
     pkg_name = pkg_pip_name.replace("-", "_")
-    with open(os.path.join(pkg_dir, "README.md")) as f:
+    with open(pkg_dir / "README.md") as f:
         long_description = f.read()
-    with open(os.path.join(pkg_dir, "requirements.txt")) as f:
+        long_description = convert_long_description(long_description)
+    with open(pkg_dir / "requirements.txt") as f:
         required = f.read().splitlines()
-        required = [x for x in required if "#" not in x]
+        required = [x for x in required if x.strip() and x.strip()[0] != "#"]
     version = get_version(pkg_dir)
 
-    setup(
+    return dict(
         name=pkg_pip_name,
         version=version,
-        author=author,
-        author_email=author_email,
-        description=description,
         long_description=long_description,
-        long_description_content_type="text/markdown",
-        url=url,
-        package_dir={"": "src"},
-        packages=find_packages("src"),
-        license="MPL-2.0",
-        classifiers=[
-            "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
-            "Programming Language :: Python :: 3.9",
-            "Programming Language :: Python :: 3.10",
-            "Programming Language :: Python :: Implementation :: CPython",
-            "Programming Language :: C++",
-            "Programming Language :: Cython",
-            r"Development Status :: 5 - Production/Stable",
-            "Intended Audience :: Developers",
-            "Intended Audience :: Science/Research",
-            r"License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
-            "Operating System :: Microsoft :: Windows",
-            "Operating System :: POSIX :: Linux",
-            "Operating System :: MacOS",
-            "Topic :: Scientific/Engineering :: Physics",
-        ],
         install_requires=required,
-        python_requires=">=3.8",
         **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
     )
 
 
-build_pkg(
-    setup_file=__file__,
+setup(
+    **prepare_pkg(setup_file=Path(__file__).resolve()),
     author="Alliander Dynamic Grid Calculation",
     author_email="dynamic.grid.calculation@alliander.com",
-    description="Python/C++ library for distribution power system analysis",
     url="https://github.com/alliander-opensource/power-grid-model",
+    description="Python/C++ library for distribution power system analysis",
+    long_description_content_type="text/markdown",
+    package_dir={"": "src"},
+    packages=find_packages("src"),
+    license="MPL-2.0",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: C++",
+        "Programming Language :: Cython",
+        r"Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        r"License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS",
+        "Topic :: Scientific/Engineering :: Physics",
+    ],
+    python_requires=">=3.8",
 )
