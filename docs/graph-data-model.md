@@ -71,7 +71,7 @@ The figure below shows a simple example:
 node_1 ---line_3 (branch)--- node_2
  |                             |
 source_5 (appliance)       sym_load_4 (appliance)
-```q
+```
 
 There are two nodes (points/vertices) in the graph of this simple grid.
 The two nodes are connected by `line_3` which is a branch (edge).
