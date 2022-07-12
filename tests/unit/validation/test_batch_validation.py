@@ -6,8 +6,9 @@ from typing import Dict
 
 import numpy as np
 import pytest
-from power_grid_model import initialize_array
-from power_grid_model.validation import validate_batch_data
+
+from power_grid_model import CalculationType, LoadGenType, initialize_array
+from power_grid_model.validation import validate_input_data, validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
 
@@ -28,7 +29,16 @@ def input_data() -> Dict[str, np.ndarray]:
     line["c1"] = 3.0
     line["tan1"] = 4.0
     line["i_n"] = 5.0
-    return {"node": node, "line": line}
+
+    asym_load = initialize_array("input", "asym_load", 2)
+    asym_load["id"] = [9, 10]
+    asym_load["node"] = [1, 2]
+    asym_load["status"] = [1, 1]
+    asym_load["type"] = [LoadGenType.const_power, LoadGenType.const_power]
+    asym_load["p_specified"] = [[11e6, 12e6, 13e6], [21e6, 22e6, 23e6]]
+    asym_load["q_specified"] = [[11e5, 12e5, 13e5], [21e5, 22e5, 23e5]]
+
+    return {"node": node, "line": line, "asym_load": asym_load}
 
 
 @pytest.fixture
@@ -36,7 +46,18 @@ def batch_data() -> Dict[str, np.ndarray]:
     line = initialize_array("update", "line", (3, 2))
     line["id"] = [[5, 6], [6, 7], [7, 5]]
     line["from_status"] = [[1, 1], [1, 1], [1, 1]]
-    return {"line": line}
+
+    # There is a bug when validating asym_load batch data:
+    # IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed
+    asym_load = initialize_array("update", "asym_load", (3, 2))
+    asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
+
+    return {"line": line, "asym_load": asym_load}
+
+
+def test_validate_batch_data(input_data, batch_data):
+    errors = validate_batch_data(input_data, batch_data)
+    assert not errors
 
 
 def test_validate_batch_data_input_error(input_data, batch_data):
