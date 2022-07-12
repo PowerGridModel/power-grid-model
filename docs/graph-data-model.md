@@ -71,7 +71,7 @@ The figure below shows a simple example:
 node_1 ---line_3 (branch)--- node_2
  |                             |
 source_5 (appliance)       sym_load_4 (appliance)
-```
+```q
 
 There are two nodes (points/vertices) in the graph of this simple grid.
 The two nodes are connected by `line_3` which is a branch (edge).
@@ -152,7 +152,7 @@ The base type for all power grid components.
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
 | `id` | `int32_t` | - | ID of a component, the id should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. | &#10004; | &#10004; | &#10060; (id needs to be specified in the update query, but cannot be changed) | &#10004; |
-| `energized` | `int8_t` | - | Indicates if a component is energized, i.e. connected to a source | &#10004; | &#10060; | &#10060; | &#10004; |
+| `energized` | `int8_t` | - | Indicates if a component is energized, i.e. connected to a source | | &#10060; | &#10060; | &#10004; |
 
 ## Node
 
@@ -163,9 +163,9 @@ The base type for all power grid components.
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | `u_rated` | `double` | volt (V) | rated line-line voltage | &#10004; | &#10004; | &#10060; | &#10060; | `> 0` |
-| `u_pu` | `RealValueOutput` | - | per-unit voltage magnitude | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `u_angle` | `RealValueOutput` | rad | voltage angle | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `u` | `RealValueOutput` | volt (V) | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `u_pu` | `RealValueOutput` | - | per-unit voltage magnitude | | &#10060; | &#10060; | &#10004; | |
+| `u_angle` | `RealValueOutput` | rad | voltage angle | | &#10060; | &#10060; | &#10004; | |
+| `u` | `RealValueOutput` | volt (V) | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation | | &#10060; | &#10060; | &#10004; | |
 
 
 ## Branch
@@ -184,15 +184,15 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | `to_node` | `int32_t` | - | ID of node at to-side | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
 | `from_status` | `int8_t` | - | connection status at from-side | &#10004; | &#10004; | &#10004; | &#10060; | `0` or `1` |
 | `to_status` | `int8_t` | - | connection status at to-side | &#10004; | &#10004; | &#10004; | &#10060; | `0` or `1` |
-| `p_from` | `RealValueOutput` | watt (W) | active power flowing into the branch at from-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `q_from` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at from-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `i_from` | `RealValueOutput` | ampere (A) | current at from-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `s_from` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at from-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `p_to` | `RealValueOutput` | watt (W) | active power flowing into the branch at to-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `q_to` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `i_to` | `RealValueOutput` | ampere (A) | current at to-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `s_to` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at to-side | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `loading` | `double` | - | relative loading of the line, `1.0` meaning 100% loaded. | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `p_from` | `RealValueOutput` | watt (W) | active power flowing into the branch at from-side | | &#10060; | &#10060; | &#10004; | |
+| `q_from` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at from-side | | &#10060; | &#10060; | &#10004; | |
+| `i_from` | `RealValueOutput` | ampere (A) | current at from-side | | &#10060; | &#10060; | &#10004; | |
+| `s_from` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at from-side | | &#10060; | &#10060; | &#10004; | |
+| `p_to` | `RealValueOutput` | watt (W) | active power flowing into the branch at to-side | | &#10060; | &#10060; | &#10004; | |
+| `q_to` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side | | &#10060; | &#10060; | &#10004; | |
+| `i_to` | `RealValueOutput` | ampere (A) | current at to-side | | &#10060; | &#10060; | &#10004; | |
+| `s_to` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at to-side | | &#10060; | &#10060; | &#10004; | |
+| `loading` | `double` | - | relative loading of the line, `1.0` meaning 100% loaded. | | &#10060; | &#10060; | &#10004; | |
 
 
 ### Line
@@ -275,11 +275,11 @@ For each `appliance` a switch is defined between the `appliance` and the `node`.
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | `node` | `int32_t` | - | ID of the coupled node | &#10004; | &#10004; | &#10060; | &#10060; | a valid node id |
 | `status` | `int8_t` | - | connection status to the node | &#10004; | &#10004; | &#10004; | &#10060; | `0` or `1` |
-| `p` | `RealValueOutput` | watt (W) | active power | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `q` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `i` | `RealValueOutput` | ampere (A) | current | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `s` | `RealValueOutput` | volt-ampere (VA) | apparent power | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `pf` | `RealValueOutput` | - | power factor | &#10004; | &#10060; | &#10060; | &#10004; | |
+| `p` | `RealValueOutput` | watt (W) | active power | | &#10060; | &#10060; | &#10004; | |
+| `q` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power | | &#10060; | &#10060; | &#10004; | |
+| `i` | `RealValueOutput` | ampere (A) | current | | &#10060; | &#10060; | &#10004; | |
+| `s` | `RealValueOutput` | volt-ampere (VA) | apparent power | | &#10060; | &#10060; | &#10004; | |
+| `pf` | `RealValueOutput` | - | power factor | | &#10060; | &#10060; | &#10004; | |
 
 ### Source
 
@@ -387,8 +387,8 @@ The table below shows a list of attributes.
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | `u_measured` | `RealValueInput` | volt (V) | measured voltage magnitude | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; | `> 0` |
 | `u_angle_measured` | `RealValueInput` | rad | measured voltage angle (only possible with phasor measurement units) |&#10060; | &#10004; | &#10004; | &#10060; | |
-| `u_residual` | `RealValueOutput` | volt (V) | residual value between measured voltage magnitude and calculated voltage magnitude | &#10004; | &#10060; | &#10060; | &#10004; | |
-| `u_angle_residual` | `RealValueOutput` | rad | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) | &#10060; | &#10060; | &#10060; | &#10004; | |
+| `u_residual` | `RealValueOutput` | volt (V) | residual value between measured voltage magnitude and calculated voltage magnitude | | &#10060; | &#10060; | &#10004; | |
+| `u_angle_residual` | `RealValueOutput` | rad | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) | | &#10060; | &#10060; | &#10004; | |
 
 
 ### Generic Power Sensor
@@ -427,5 +427,5 @@ The table below shows a list of attributes.
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
 | `p_measured` | `RealValueInput` | watt (W) | measured active power | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; |
 | `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; |
-| `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | &#10004; | &#10060; | &#10060; | &#10004; |
-| `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | &#10004; | &#10060; | &#10060; | &#10004; |
+| `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | | &#10060; | &#10060; | &#10004; |
+| `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | | &#10060; | &#10060; | &#10004; |
