@@ -243,9 +243,14 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                     }
                     bool const match =
                         component_meta.compare_attr(result_ptr, reference_result_ptr, dynamic_atol, rtol, attr, obj);
-                    std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
-                                                 " #" + std::to_string(obj) + ", attribute: " + attr.name;
-                    CHECK_MESSAGE(match, case_str);
+                    if (match) {
+                        CHECK(match);
+                    }
+                    else {
+                        std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
+                                                     " #" + std::to_string(obj) + ", attribute: " + attr.name;
+                        CHECK_MESSAGE(match, case_str);
+                    }
                 }
             }
         }
@@ -298,7 +303,7 @@ struct CaseParam {
     }
 };
 
-inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type,
+inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
                       std::vector<CaseParam>& cases) {
     std::filesystem::path const param_file = case_dir / "params.json";
     json const j = read_json(param_file);
@@ -313,37 +318,34 @@ inline void add_cases(std::filesystem::path const& case_dir, std::string const& 
     // loop sym and batch
     for (bool const sym : {true, false}) {
         std::string const output_prefix = sym ? "sym_output" : "asym_output";
-        for (bool const is_batch : {true, false}) {
-            for (std::string const& calculation_method : calculation_methods) {
-                std::string const batch_suffix = is_batch ? "_batch" : "";
-                // add a case if output file exists
-                std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
-                if (std::filesystem::exists(output_file)) {
-                    CaseParam param{};
-                    param.case_dir = case_dir;
-                    param.case_name =
-                        CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
-                    param.calculation_type = calculation_type;
-                    param.calculation_method = calculation_method;
-                    param.sym = sym;
-                    param.is_batch = is_batch;
-                    j.at("rtol").get_to(param.rtol);
-                    json const j_atol = j.at("atol");
-                    if (j_atol.type() != json::value_t::object) {
-                        param.atol = {{"default", j_atol.get<double>()}};
-                    }
-                    else {
-                        j_atol.get_to(param.atol);
-                    }
-                    if (param.is_batch) {
-                        j.at("independent").get_to(param.batch_parameter.independent);
-                        j.at("cache_topology").get_to(param.batch_parameter.cache_topology);
-                    }
-                    param.case_name += sym ? "-sym" : "-asym";
-                    param.case_name += "-" + param.calculation_method;
-                    param.case_name += is_batch ? "-batch" : "";
-                    cases.push_back(param);
+        for (std::string const& calculation_method : calculation_methods) {
+            std::string const batch_suffix = is_batch ? "_batch" : "";
+            // add a case if output file exists
+            std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
+            if (std::filesystem::exists(output_file)) {
+                CaseParam param{};
+                param.case_dir = case_dir;
+                param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
+                param.calculation_type = calculation_type;
+                param.calculation_method = calculation_method;
+                param.sym = sym;
+                param.is_batch = is_batch;
+                j.at("rtol").get_to(param.rtol);
+                json const j_atol = j.at("atol");
+                if (j_atol.type() != json::value_t::object) {
+                    param.atol = {{"default", j_atol.get<double>()}};
                 }
+                else {
+                    j_atol.get_to(param.atol);
+                }
+                if (param.is_batch) {
+                    j.at("independent").get_to(param.batch_parameter.independent);
+                    j.at("cache_topology").get_to(param.batch_parameter.cache_topology);
+                }
+                param.case_name += sym ? "-sym" : "-asym";
+                param.case_name += "-" + param.calculation_method;
+                param.case_name += is_batch ? "-batch" : "";
+                cases.push_back(param);
             }
         }
     }
@@ -377,7 +379,7 @@ ValidationCase create_validation_case(CaseParam const& param) {
     return validation_case;
 }
 
-inline std::vector<CaseParam> read_all_cases() {
+inline std::vector<CaseParam> read_all_cases(bool is_batch) {
     std::vector<CaseParam> all_cases;
     // detect all test cases
     for (std::string calculation_type : {"power_flow", "state_estimation"}) {
@@ -388,15 +390,20 @@ inline std::vector<CaseParam> read_all_cases() {
                 continue;
             }
             // try to add cases
-            add_cases(case_dir, calculation_type, all_cases);
+            add_cases(case_dir, calculation_type, is_batch, all_cases);
         }
     }
     std::cout << "Total test cases: " << all_cases.size() << '\n';
     return all_cases;
 }
 
-inline std::vector<CaseParam> const& get_all_cases() {
-    static std::vector<CaseParam> const all_cases = read_all_cases();
+inline std::vector<CaseParam> const& get_all_single_cases() {
+    static std::vector<CaseParam> const all_cases = read_all_cases(false);
+    return all_cases;
+}
+
+inline std::vector<CaseParam> const& get_all_batch_cases() {
+    static std::vector<CaseParam> const all_cases = read_all_cases(true);
     return all_cases;
 }
 
@@ -453,25 +460,31 @@ void validate_batch_case(CaseParam const& param) {
 }
 
 TEST_CASE("Validation test single") {
-    std::vector<CaseParam> const& all_cases = get_all_cases();
+    std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.is_batch) {
-            continue;
-        }
         SUBCASE(param.case_name.c_str()) {
-            validate_single_case(param);
+            try {
+                validate_single_case(param);
+            }
+            catch (std::exception& e) {
+                auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                FAIL_CHECK(msg);
+            }
         }
     }
 }
 
 TEST_CASE("Validation test batch") {
-    std::vector<CaseParam> const& all_cases = get_all_cases();
+    std::vector<CaseParam> const& all_cases = get_all_batch_cases();
     for (CaseParam const& param : all_cases) {
-        if (!param.is_batch) {
-            continue;
-        }
         SUBCASE(param.case_name.c_str()) {
-            validate_batch_case(param);
+            try {
+                validate_batch_case(param);
+            }
+            catch (std::exception& e) {
+                auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                FAIL_CHECK(msg);
+            }
         }
     }
 }
