@@ -99,6 +99,9 @@ using BaseUpdate = BaseInput;
 POWER_GRID_MODEL_DATA_STRUCT_DEF(BranchUpdate, 1, BaseUpdate,
     IntS, from_status, IntS, to_status);
 
+POWER_GRID_MODEL_DATA_STRUCT_DEF(Branch3Update, 1, BaseUpdate,
+    IntS, status_1, IntS, status_2, IntS, status_3);
+
 POWER_GRID_MODEL_DATA_STRUCT_DEF(TransformerUpdate, 1, BranchUpdate,
     IntS, tap_pos);
 

@@ -14,6 +14,7 @@ namespace power_grid_model {
 class Branch3 : public Base {
    public:
 	   using InputType = Branch3Input;
+	   using UpdateType = Branch3Update;
 
 };
 
