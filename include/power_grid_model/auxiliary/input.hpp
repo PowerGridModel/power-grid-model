@@ -24,6 +24,9 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(NodeInput, 1, BaseInput,
 POWER_GRID_MODEL_DATA_STRUCT_DEF(BranchInput, 1, BaseInput, 
     ID, from_node, ID, to_node, IntS, from_status, IntS, to_status);
 
+POWER_GRID_MODEL_DATA_STRUCT_DEF(Branch3Input, 1, BaseInput, 
+    ID, node_1, ID, node_2, ID, node_3, IntS, status_1, IntS, status_2, IntS, status_3);
+
 POWER_GRID_MODEL_DATA_STRUCT_DEF(ApplianceInput, 1, BaseInput, 
     ID, node, IntS, status);
 
