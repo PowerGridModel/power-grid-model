@@ -363,7 +363,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
 
     // Solve the linear Equations
     void solve_matrix() {
-        sparse_solver_.solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
+        sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
     }
 
     // Get maximum deviation among all bus voltages

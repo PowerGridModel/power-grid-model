@@ -211,7 +211,7 @@ TEST_CASE("Test one bus system") {
 TEST_CASE("Test fill-in y bus") {
     /*
      * struct
-     * [1] --0--> [0] --[1]--> [2]
+     * [1] --0--> [0] --1--> [2]
      * extra fill-in: (1, 2) by removing node 0
      *
      * [

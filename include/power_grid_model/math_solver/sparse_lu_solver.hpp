@@ -64,7 +64,7 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_tensor_lu_t<Tens
     struct BlockPerm {
         typename LUFactor::PermutationPType p;
         typename LUFactor::PermutationQType q;
-    };  //Extract permutation matrices p and q from LUFactor
+    };  // Extract permutation matrices p and q from LUFactor
     using BlockPermArray = std::vector<BlockPerm>;
 };
 
@@ -90,18 +90,19 @@ class SparseLUSolver {
     }
 
     // solve with new matrix data, need to factorize first
-    void solve(std::vector<Tensor>& data,         // matrix data, factorize in-place
-               BlockPermArray& block_perm_array,  // pre-allocated permutation array, will be overwritten
-               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+    void prefactorize_and_solve(
+        std::vector<Tensor>& data,         // matrix data, factorize in-place
+        BlockPermArray& block_perm_array,  // pre-allocated permutation array, will be overwritten
+        std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         prefactorize(data, block_perm_array);
         // call solve with const method
-        solve((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
+        solve_with_prefactorization((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
     }
 
     // solve with existing pre-factorization
-    void solve(std::vector<Tensor> const& data,         // pre-factoirzed data, const ref
-               BlockPermArray const& block_perm_array,  // pre-calculated permutation, const ref
-               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+    void solve_with_prefactorization(std::vector<Tensor> const& data,         // pre-factoirzed data, const ref
+                                     BlockPermArray const& block_perm_array,  // pre-calculated permutation, const ref
+                                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
@@ -333,7 +334,7 @@ class SparseLUSolver {
 
    private:
     Idx size_;
-    Idx nnz_;
+    Idx nnz_;  // number of non zeroes (in block)
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
