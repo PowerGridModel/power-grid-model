@@ -364,7 +364,7 @@ def validate_transformer(data: InputData) -> List[ValidationError]:
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
-    errors += all_greater_than_zero(data, "transformer", "tap_size")
+    errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
     errors += all_greater_or_equal(data, "transformer", "uk_min", "pk_min/sn")
     errors += all_between(data, "transformer", "uk_min", 0, 1)
     errors += all_greater_or_equal(data, "transformer", "uk_max", "pk_max/sn")
