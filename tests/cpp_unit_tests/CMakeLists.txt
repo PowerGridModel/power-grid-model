@@ -8,7 +8,7 @@ find_package(Catch2 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 set(PROJECT_SOURCES
-	test_power_grid_model.cpp
+  	test_power_grid_model.cpp
  	test_main_model_se.cpp
  	test_main_model.cpp
 	test_main_model_static.cpp
@@ -20,8 +20,8 @@ set(PROJECT_SOURCES
  	test_source.cpp
  	test_shunt.cpp
  	test_transformer.cpp
- 	test_bsr_solver.cpp
- 	test_y_bus.cpp
+   	test_sparse_lu_solver.cpp
+  	test_y_bus.cpp
  	test_math_solver.cpp
  	test_topology.cpp
  	test_container.cpp

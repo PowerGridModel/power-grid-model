@@ -95,7 +95,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
-        ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1),  # use mkl runtime loading
     ]
     pkg_bin_dir = pkg_dir / "src" / pkg_name
 

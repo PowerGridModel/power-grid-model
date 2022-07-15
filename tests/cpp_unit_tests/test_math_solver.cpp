@@ -76,12 +76,12 @@ TEST_CASE("Test math solver") {
     network, m means measured, mm means double measured
     variance always 1.0
                                                           shunt0 (ys) (m)
-      (mm)                     (y0, ys0)           (y1)         |
+     (mm)                     (y0, ys0)           (y1)         |
     source --yref-- bus0(m) -m-branch0-mm- bus1 --branch1-m-  bus2(mm)
                      |                      |                   |
-                 load012                load345 (m)          load6 (not connected) (m, rubbish value)
-                                                      for const z,
-                                                              rubbish value for load3/4
+                  load012                load345 (m)          load6 (not connected) (m, rubbish value)
+                                          for const z,
+                                       rubbish value for load3/4
 
     uref = 1.10
     u0 = 1.08 -1deg
@@ -397,7 +397,7 @@ TEST_CASE("Test math solver") {
     SECTION("Test not converge") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        pf_input.s_injection[6] = 1e15;
+        pf_input.s_injection[6] = 1e6;
         CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson),
                         IterationDiverge);
     }
@@ -413,7 +413,9 @@ TEST_CASE("Test math solver") {
     }
 
     SECTION("Test asymmetric pf solver") {
-        MathSolver<false> solver{topo_ptr, param_asym_ptr};
+        MathSolver<true> solver_sym{topo_ptr, param_ptr};
+        // construct from existing y bus struct
+        MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
         CalculationInfo info;
         MathOutput<false> output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::newton_raphson);
