@@ -49,7 +49,8 @@ enum class ComponentType : IntS {
     generic_voltage_sensor = 5,
     generic_load_gen = 6,
     shunt = 7,
-    source = 8
+    source = 8,
+    branch3 = 9
 };
 
 // DO NOT change the order of enumerations

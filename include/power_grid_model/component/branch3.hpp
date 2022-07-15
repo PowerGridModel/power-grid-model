@@ -18,6 +18,10 @@ class Branch3 : public Base {
     using UpdateType = Branch3Update;
     template <bool sym>
     using OutputType = Branch3Output<sym>;
+    static constexpr char const* name = "branch3";
+    ComponentType math_model_type() const final {
+        return ComponentType::branch3;
+    }
 };
 
 }  // namespace power_grid_model
