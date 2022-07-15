@@ -73,7 +73,7 @@ TEST_CASE("Test Sparse LU solver") {
 
         SECTION("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            solver.solve_with_prefactorization((std::vector<double> const&)data, block_perm, rhs, x);
+            solver.solve_with_prefactorized_matrix((std::vector<double> const&)data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
 
@@ -123,7 +123,7 @@ TEST_CASE("Test Sparse LU solver") {
 
         SECTION("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            solver.solve_with_prefactorization((std::vector<Tensor> const&)data, block_perm, rhs, x);
+            solver.solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
     }

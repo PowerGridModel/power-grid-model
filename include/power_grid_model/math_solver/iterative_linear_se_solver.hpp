@@ -621,7 +621,7 @@ class IterativeLinearSESolver {
             prepare_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
-            sparse_solver_.solve_with_prefactorization(data_gain_, perm_, x_rhs_, x_rhs_);
+            sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
         }

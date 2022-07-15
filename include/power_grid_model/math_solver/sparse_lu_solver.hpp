@@ -96,13 +96,14 @@ class SparseLUSolver {
         std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         prefactorize(data, block_perm_array);
         // call solve with const method
-        solve_with_prefactorization((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
+        solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
     }
 
     // solve with existing pre-factorization
-    void solve_with_prefactorization(std::vector<Tensor> const& data,         // pre-factoirzed data, const ref
-                                     BlockPermArray const& block_perm_array,  // pre-calculated permutation, const ref
-                                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+    void solve_with_prefactorized_matrix(
+        std::vector<Tensor> const& data,         // pre-factoirzed data, const ref
+        BlockPermArray const& block_perm_array,  // pre-calculated permutation, const ref
+        std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;

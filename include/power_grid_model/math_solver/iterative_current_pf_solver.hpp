@@ -171,7 +171,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     // Solve the linear equations I_inj = YU
     // inplace
     void solve_matrix() {
-        sparse_solver_.solve_with_prefactorization(*mat_data_, *perm_, rhs_u_, rhs_u_);
+        sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_);
     }
 
     // Find maximum deviation in voltage among all buses
