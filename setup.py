@@ -129,7 +129,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             "-O3",
             "-fvisibility=hidden",
         ]
-        lflags += ["-lpthread", "-ldl", "-O3"]
+        lflags += ["-lpthread", "-O3"]
         # # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
