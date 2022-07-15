@@ -7,15 +7,17 @@
 #define POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
 
 #include "../auxiliary/input.hpp"
+#include "../auxiliary/output.hpp"
 #include "base.hpp"
 
 namespace power_grid_model {
 
 class Branch3 : public Base {
    public:
-	   using InputType = Branch3Input;
-	   using UpdateType = Branch3Update;
-
+    using InputType = Branch3Input;
+    using UpdateType = Branch3Update;
+    template <bool sym>
+    using OutputType = Branch3Output<sym>;
 };
 
 }  // namespace power_grid_model
