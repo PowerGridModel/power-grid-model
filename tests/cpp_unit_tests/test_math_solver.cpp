@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/exception.hpp"
 #include "power_grid_model/math_solver/math_solver.hpp"
 #include "power_grid_model/math_solver/newton_raphson_pf_solver.hpp"
@@ -11,7 +11,7 @@
 namespace power_grid_model {
 
 TEST_CASE("Test block") {
-    SECTION("symmetric") {
+    SUBCASE("symmetric") {
         math_model_impl::PFJacBlock<true> b{};
         b.h() += 1.0;
         b.n() += 2.0;
@@ -23,7 +23,7 @@ TEST_CASE("Test block") {
         CHECK(b.l() == 4.0);
     }
 
-    SECTION("Asymmetric") {
+    SUBCASE("Asymmetric") {
         math_model_impl::PFJacBlock<false> b{};
         RealTensor<false> h{1.0}, n{2.0}, m{3.0}, l{4.0};
         b.h() += h;
@@ -347,7 +347,7 @@ TEST_CASE("Test math solver") {
     se_input_asym_angle_const_z.load_gen_status[4] = 0;
     se_input_asym_angle_const_z.measured_load_gen_power[2].value *= 3.0;
 
-    SECTION("Test symmetric pf solver") {
+    SUBCASE("Test symmetric pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
@@ -366,7 +366,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
-    SECTION("Test symmetric iterative current pf solver") {
+    SUBCASE("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> output =
@@ -375,7 +375,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
-    SECTION("Test wrong calculation type") {
+    SUBCASE("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_linear),
@@ -384,7 +384,7 @@ TEST_CASE("Test math solver") {
                         InvalidCalculationMethod);
     }
 
-    SECTION("Test const z pf solver") {
+    SUBCASE("Test const z pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
 
@@ -394,7 +394,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_z);
     }
 
-    SECTION("Test not converge") {
+    SUBCASE("Test not converge") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         pf_input.s_injection[6] = 1e6;
@@ -402,7 +402,7 @@ TEST_CASE("Test math solver") {
                         IterationDiverge);
     }
 
-    SECTION("Test singular ybus") {
+    SUBCASE("Test singular ybus") {
         param.branch_param[0] = BranchCalcParam<true>{};
         param.branch_param[1] = BranchCalcParam<true>{};
         param.shunt_param[0] = 0.0;
@@ -412,7 +412,7 @@ TEST_CASE("Test math solver") {
                         SparseMatrixError);
     }
 
-    SECTION("Test asymmetric pf solver") {
+    SUBCASE("Test asymmetric pf solver") {
         MathSolver<true> solver_sym{topo_ptr, param_ptr};
         // construct from existing y bus struct
         MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
@@ -423,7 +423,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_asym);
     }
 
-    SECTION("Test iterative current asymmetric pf solver") {
+    SUBCASE("Test iterative current asymmetric pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> output =
@@ -432,7 +432,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_asym);
     }
 
-    SECTION("Test asym const z pf solver") {
+    SUBCASE("Test asym const z pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         // const z
@@ -441,7 +441,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_asym_z);
     }
 
-    SECTION("Test sym se with angle") {
+    SUBCASE("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> output =
@@ -450,7 +450,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
-    SECTION("Test sym se without angle") {
+    SUBCASE("Test sym se without angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> output =
@@ -459,7 +459,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref, true);
     }
 
-    SECTION("Test sym se with angle, const z") {
+    SUBCASE("Test sym se with angle, const z") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> output =
@@ -468,7 +468,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_z);
     }
 
-    SECTION("Test asym se with angle") {
+    SUBCASE("Test asym se with angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> output =
@@ -477,7 +477,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_asym);
     }
 
-    SECTION("Test asym se without angle") {
+    SUBCASE("Test asym se without angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> output =
@@ -486,7 +486,7 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref_asym, true);
     }
 
-    SECTION("Test asym se with angle, const z") {
+    SUBCASE("Test asym se with angle, const z") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,

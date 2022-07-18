@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/main_model.hpp"
 
 namespace power_grid_model {
@@ -30,27 +30,27 @@ TEST_CASE("Test main model static") {
     update_data_independent["link"] = ConstDataPointer{link.data(), link_indptr.data(), batches - 1};
     update_data_independent["source"] = ConstDataPointer{source.data(), source_indptr.data(), batches - 1};
 
-    SECTION("Independent update data") {
+    SUBCASE("Independent update data") {
         CHECK(MainModel::is_update_independent(update_data_independent) == true);
     }
 
-    SECTION("Dependent update data") {
+    SUBCASE("Dependent update data") {
         CHECK(MainModel::is_update_independent(update_data_dependent) == false);
     }
 
-    SECTION("Cacheable topology") {
+    SUBCASE("Cacheable topology") {
         REQUIRE(is_nan(na_IntS));
         CHECK(MainModel::is_topology_cacheable(update_data_dependent) == true);
         CHECK(MainModel::is_topology_cacheable(update_data_independent) == true);
     }
 
-    SECTION("Non-cacheable topology") {
+    SUBCASE("Non-cacheable topology") {
         link[1].from_status = true;
         CHECK(MainModel::is_topology_cacheable(update_data_dependent) == false);
         CHECK(MainModel::is_topology_cacheable(update_data_independent) == false);
     }
 
-    SECTION("Non-cacheable topology source") {
+    SUBCASE("Non-cacheable topology source") {
         source[1].status = true;
         CHECK(MainModel::is_topology_cacheable(update_data_dependent) == false);
         CHECK(MainModel::is_topology_cacheable(update_data_independent) == false);

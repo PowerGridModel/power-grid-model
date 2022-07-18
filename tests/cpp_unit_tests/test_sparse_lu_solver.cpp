@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/math_solver/sparse_lu_solver.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 
@@ -46,7 +46,7 @@ TEST_CASE("Test Sparse LU solver") {
     auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 2, 0, 1, 2, 0, 1, 2});
     auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 4, 8});
 
-    SECTION("Test scalar(double) calculation") {
+    SUBCASE("Scalar(double) calculation") {
         // [4 1 5        3          21
         //  3 7 f     * [-1]   =  [ 2 ]
         //  2 f 6]       2          18
@@ -61,28 +61,36 @@ TEST_CASE("Test Sparse LU solver") {
         SparseLUSolver<double, double, double> solver{row_indptr, col_indices, diag_lu};
         SparseLUSolver<double, double, double>::BlockPermArray block_perm{};
 
-        SECTION("Test calculation") {
-            solver.solve(data, block_perm, rhs, x);
+        SUBCASE("Test calculation") {
+            solver.prefactorize_and_solve(data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
 
-        SECTION("Test (pseudo) singular") {
+        SUBCASE("Test (pseudo) singular") {
             data[0] = 0.0;
-            CHECK_THROWS_AS(solver.solve(data, block_perm, rhs, x), SparseMatrixError);
+            CHECK_THROWS_AS(solver.prefactorize_and_solve(data, block_perm, rhs, x), SparseMatrixError);
         }
 
-        SECTION("Test prefactorize") {
+        SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            solver.solve((std::vector<double> const&)data, block_perm, rhs, x);
+            solver.solve_with_prefactorized_matrix((std::vector<double> const&)data, block_perm, rhs, x);
             check_result(x, x_ref);
+        }
+
+        SUBCASE("Data is prefactorized by solve") {
+            auto prefactorized_data = data;
+            auto prefactorized_block_perm = block_perm;
+            solver.prefactorize(prefactorized_data, prefactorized_block_perm);
+            solver.prefactorize_and_solve(data, block_perm, rhs, x);
+            CHECK(prefactorized_data == data);
         }
     }
 
-    SECTION("Test block(double 2*2) calculation") {
-        // [  0 1   1   2   3   4           3             40
-        //  100 0   7  -1   5   6           4            355
-        //    1 2   0 200   f   f       * [ -1 ]   =  [ -189 ]
-        //   -3 4   3   1   f   f       *   -2             3
+    SUBCASE("Block(double 2*2) calculation") {
+        // [  0 1   1   2   3   4           3             38
+        //  100 0   7  -1   5   6           4            356
+        //    1 2   0 200   f   f       * [ -1 ]   =  [ -389 ]
+        //   -3 4   3   1   f   f       *   -2             2
         //    5 6   f   f   1   0           5             44
         //   -7 8   f   f   0 100           6            611
 
@@ -104,18 +112,18 @@ TEST_CASE("Test Sparse LU solver") {
         SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu};
         SparseLUSolver<Tensor, Array, Array>::BlockPermArray block_perm(3);
 
-        SECTION("Test calculation") {
-            solver.solve(data, block_perm, rhs, x);
+        SUBCASE("Test calculation") {
+            solver.prefactorize_and_solve(data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
-        SECTION("Test (pseudo) singular") {
+        SUBCASE("Test (pseudo) singular") {
             data[0](0, 1) = 0.0;
-            CHECK_THROWS_AS(solver.solve(data, block_perm, rhs, x), SparseMatrixError);
+            CHECK_THROWS_AS(solver.prefactorize_and_solve(data, block_perm, rhs, x), SparseMatrixError);
         }
 
-        SECTION("Test prefactorize") {
+        SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            solver.solve((std::vector<Tensor> const&)data, block_perm, rhs, x);
+            solver.solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
     }

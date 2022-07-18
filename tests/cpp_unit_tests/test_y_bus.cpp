@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/math_solver/y_bus.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 
@@ -113,7 +113,7 @@ TEST_CASE("Test y bus") {
         admittance_asym[i] = ComplexTensor<false>{admittance_sym[i]};
     }
 
-    SECTION("Test y bus construction (symmetrical)") {
+    SUBCASE("Test y bus construction (symmetrical)") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
@@ -134,7 +134,7 @@ TEST_CASE("Test y bus") {
         CHECK(ybus.map_lu_y_bus() == map_lu_y_bus);
     }
 
-    SECTION("Test y bus construction (asymmetrical)") {
+    SUBCASE("Test y bus construction (asymmetrical)") {
         YBus<true> ybus_sym{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         // construct from existing structure
         YBus<false> ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym),
@@ -152,7 +152,7 @@ TEST_CASE("Test y bus") {
         }
     }
 
-    SECTION("Test branch flow calculation") {
+    SUBCASE("Test branch flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
         auto branch_flow = ybus.calculate_branch_flow(u);
@@ -168,7 +168,7 @@ TEST_CASE("Test y bus") {
         CHECK(cabs(branch_flow[2].s_t - (-324.0i)) < numerical_tolerance);
     }
 
-    SECTION("Test shunt flow calculation") {
+    SUBCASE("Test shunt flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
         auto shunt_flow = ybus.calculate_shunt_flow(u);
@@ -211,7 +211,7 @@ TEST_CASE("Test one bus system") {
 TEST_CASE("Test fill-in y bus") {
     /*
      * struct
-     * [1] --0--> [0] --[1]--> [2]
+     * [1] --0--> [0] --1--> [2]
      * extra fill-in: (1, 2) by removing node 0
      *
      * [

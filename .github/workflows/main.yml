@@ -23,15 +23,24 @@ jobs:
 
   build-cpp-test-linux:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
-    runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env:latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         build-option: [ Debug, Release ]
+        cpp-compiler: [g++-11, clang++-14]
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      CXX: ${{ matrix.cpp-compiler }}
 
     steps:
       - uses: actions/checkout@v3
-
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json doctest
       - name: Run build script
         run: ./build.sh  ${{ matrix.build-option }}
 
@@ -50,16 +59,14 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Install conda environment
-        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json catch2==2.13.9
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
 
       - name: Build and test
         run: |
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          $env:Path += ";C:\conda_envs\cpp_pkgs\Library\bin"
           mkdir cpp_build_${{ matrix.build-option }}
           cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
@@ -88,10 +95,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
-        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json 
-          curl https://raw.githubusercontent.com/Homebrew/homebrew-core/5e5abb11bf49787d01164c4066119365262c21ed/Formula/catch2.rb > $(find $(brew --repository) -name catch2.rb) && brew reinstall catch2
+          brew install ninja boost eigen nlohmann-json doctest
 
       - name: Build and test
         run: |
@@ -106,24 +111,18 @@ jobs:
             os: ubuntu-latest
             cc: gcc
             cxx: g++
-            boost:
-            eigen:
             cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
             archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
             cc: clang
             cxx: clang++
-            boost: /usr/local/include
-            eigen: /usr/local/include/eigen3
             cibw_build: cp*-macosx_*
             archs: "x86_64 arm64"
           - platform: windows
             os: windows-latest
             cc:
             cxx:
-            boost: C:\conda_envs\cpp_pkgs\Library\include
-            eigen: C:\conda_envs\cpp_pkgs\Library\include\eigen3
             cibw_build: cp*-win_amd64
             archs: AMD64
 
@@ -133,26 +132,18 @@ jobs:
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
-      BOOST_INCLUDE: ${{ matrix.boost }}
-      EIGEN_INCLUDE: ${{ matrix.eigen }}
       CIBW_BUILD_VERBOSITY: 1
       CIBW_BUILD_FRONTEND: "build"
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS: ${{ matrix.archs }}
-      CIBW_TEST_REQUIRES: pytest pytest-cov
+      CIBW_TEST_EXTRAS: "dev"
       CIBW_TEST_COMMAND: pytest {package}/tests
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
-      CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env-arm64
-      CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
-      CIBW_BEFORE_ALL_MACOS: >
-        which clang++ &&
-        clang++ --version &&
-        brew install boost eigen
+      CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER CC CXX
       MACOSX_DEPLOYMENT_TARGET: 10.15
-      CIBW_BEFORE_ALL_WINDOWS : >
-        conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
     steps:
       - uses: actions/checkout@v3
@@ -160,11 +151,6 @@ jobs:
       - name: Set up QEMU
         if: matrix.platform == 'linux'
         uses: docker/setup-qemu-action@v2
-
-      - name: Activate conda for windows
-        if: matrix.platform == 'windows'
-        run: |
-          & "$env:CONDA\condabin\conda" init
 
       - name: Build wheels
         uses: pypa/cibuildwheel@2.7.0

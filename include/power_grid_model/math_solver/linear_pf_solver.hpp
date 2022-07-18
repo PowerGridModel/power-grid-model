@@ -105,7 +105,7 @@ class LinearPFSolver {
         // solve
         // u vector will have I_injection for slack bus for now
         sub_timer = Timer(calculation_info, 2222, "Solve sparse linear equation");
-        sparse_solver_.solve(mat_data_, perm_, output.u, output.u);
+        sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");

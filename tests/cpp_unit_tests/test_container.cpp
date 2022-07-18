@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/container.hpp"
 
 namespace power_grid_model {
@@ -50,13 +50,13 @@ TEST_CASE("Test component container") {
     auto const& const_container = container;
     auto const& const_container2 = container2;
 
-    SECTION("Test start index") {
+    SUBCASE("Test start index") {
         CHECK(const_container.get_start_idx<C, C1>() == 3);
         CHECK(const_container.get_start_idx<C, C2>() == 5);
         CHECK(const_container.get_start_idx<C, C>() == 0);
     }
 
-    SECTION("Test iteration") {
+    SUBCASE("Test iteration") {
         Idx i = 0;
         for (C& c : container.iter<C>()) {
             c.a = i;
@@ -88,7 +88,7 @@ TEST_CASE("Test component container") {
         CHECK(((const_it_end - 6) == it_begin));
     }
 
-    SECTION("Test get item by idx_2d") {
+    SUBCASE("Test get item by idx_2d") {
         C const& c = const_container.get_item<C>({0, 0});
         C const& c1 = const_container.get_item<C>({1, 0});
         C const& c2 = const_container.get_item<C2>({2, 0});
@@ -97,7 +97,7 @@ TEST_CASE("Test component container") {
         CHECK(c2.a == 7);
     }
 
-    SECTION("Test get item by id") {
+    SUBCASE("Test get item by id") {
         C const& c = const_container.get_item<C>(1);
         C const& c1 = const_container.get_item<C>(2);
         C const& c2 = const_container.get_item<C2>(3);
@@ -108,13 +108,13 @@ TEST_CASE("Test component container") {
         CHECK_THROWS_AS(container.get_item<C>(8), IDNotFound);
     }
 
-    SECTION("Test size of a component class collection") {
+    SUBCASE("Test size of a component class collection") {
         CHECK(const_container.size<C>() == 6);
         CHECK(const_container.size<C1>() == 2);
         CHECK(const_container.size<C2>() == 1);
     }
 
-    SECTION("Test get sequence based on id") {
+    SUBCASE("Test get sequence based on id") {
         CHECK(const_container.get_seq<C>(1) == 0);
         CHECK(const_container.get_seq<C>(11) == 1);
         CHECK(const_container.get_seq<C>(111) == 2);
@@ -126,7 +126,7 @@ TEST_CASE("Test component container") {
         CHECK(const_container.get_seq<C2>(3) == 0);
     }
 
-    SECTION("Test get idx_2d based on sequence") {
+    SUBCASE("Test get idx_2d based on sequence") {
         CHECK(const_container.get_idx_2d_by_seq<C>(0) == Idx2D{0, 0});
         CHECK(const_container.get_idx_2d_by_seq<C>(1) == Idx2D{0, 1});
         CHECK(const_container.get_idx_2d_by_seq<C>(2) == Idx2D{0, 2});
@@ -138,7 +138,7 @@ TEST_CASE("Test component container") {
         CHECK(const_container.get_idx_2d_by_seq<C2>(0) == Idx2D{2, 0});
     }
 
-    SECTION("Test get component based on sequence") {
+    SUBCASE("Test get component based on sequence") {
         CHECK(const_container.get_item_by_seq<C>(0).a == 5);
         CHECK(const_container.get_item_by_seq<C>(1).a == 55);
         CHECK(const_container.get_item_by_seq<C>(2).a == 555);
@@ -150,7 +150,7 @@ TEST_CASE("Test component container") {
         CHECK(const_container.get_item_by_seq<C2>(0).b == 70);
     }
 
-    SECTION("Test only one retrievable type") {
+    SUBCASE("Test only one retrievable type") {
         CHECK(const_container2.get_seq<C>(2) == 0);
         CHECK(const_container2.get_seq<C>(22) == 1);
         CHECK(const_container2.get_seq<C>(3) == 2);
