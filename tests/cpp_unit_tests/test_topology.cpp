@@ -4,7 +4,7 @@
 
 #include <ostream>
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/topology.hpp"
 
 /*
@@ -272,7 +272,7 @@ TEST_CASE("Test topology") {
 
     std::vector<MathModelTopology> math_topology_ref = {math0, math1};
 
-    SECTION("Test topology result") {
+    SUBCASE("Test topology result") {
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
         auto const& math_topology = pair.first;

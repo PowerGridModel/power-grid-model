@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/component/line.hpp"
 
 namespace power_grid_model {
@@ -43,23 +43,23 @@ TEST_CASE("Test line") {
 
     CHECK(line.math_model_type() == ComponentType::branch);
 
-    SECTION("Voltge error") {
+    SUBCASE("Voltge error") {
         CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage);
     }
 
-    SECTION("General") {
+    SUBCASE("General") {
         CHECK(branch.from_node() == 2);
         CHECK(branch.to_node() == 3);
         CHECK(branch.from_status() == true);
         CHECK(branch.to_status() == true);
         CHECK(branch.branch_status() == true);
-        CHECK(branch.base_i_from() == Approx(base_i));
-        CHECK(branch.base_i_to() == Approx(base_i));
+        CHECK(branch.base_i_from() == doctest::Approx(base_i));
+        CHECK(branch.base_i_to() == doctest::Approx(base_i));
         CHECK(branch.phase_shift() == 0.0);
         CHECK(!branch.is_param_mutable());
     }
 
-    SECTION("Symmetric parameters") {
+    SUBCASE("Symmetric parameters") {
         // double connected
         BranchCalcParam<true> param = branch.calc_param<true>();
         CHECK(cabs(param.yff() - yff1) < numerical_tolerance);
@@ -91,7 +91,7 @@ TEST_CASE("Test line") {
         CHECK(cabs(param.yft() - 0.0) < numerical_tolerance);
     }
 
-    SECTION("Asymmetric parameters") {
+    SUBCASE("Asymmetric parameters") {
         // double connected
         BranchCalcParam<false> param = line.calc_param<false>();
         CHECK((cabs(param.yff() - yffa) < numerical_tolerance).all());
@@ -113,22 +113,22 @@ TEST_CASE("Test line") {
         CHECK((cabs(param.yft() - 0.0) < numerical_tolerance).all());
     }
 
-    SECTION("Symmetric results") {
+    SUBCASE("Symmetric results") {
         BranchOutput<true> output = branch.get_output<true>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == Approx(loading));
-        CHECK(output.i_from == Approx(cabs(i1f)));
-        CHECK(output.i_to == Approx(cabs(i1t)));
-        CHECK(output.s_from == Approx(cabs(s_f)));
-        CHECK(output.s_to == Approx(cabs(s_t)));
-        CHECK(output.p_from == Approx(real(s_f)));
-        CHECK(output.p_to == Approx(real(s_t)));
-        CHECK(output.q_from == Approx(imag(s_f)));
-        CHECK(output.q_to == Approx(imag(s_t)));
+        CHECK(output.loading == doctest::Approx(loading));
+        CHECK(output.i_from == doctest::Approx(cabs(i1f)));
+        CHECK(output.i_to == doctest::Approx(cabs(i1t)));
+        CHECK(output.s_from == doctest::Approx(cabs(s_f)));
+        CHECK(output.s_to == doctest::Approx(cabs(s_t)));
+        CHECK(output.p_from == doctest::Approx(real(s_f)));
+        CHECK(output.p_to == doctest::Approx(real(s_t)));
+        CHECK(output.q_from == doctest::Approx(imag(s_f)));
+        CHECK(output.q_to == doctest::Approx(imag(s_t)));
     }
 
-    SECTION("Symmetric results with direct power and current output") {
+    SUBCASE("Symmetric results with direct power and current output") {
         BranchMathOutput<true> branch_math_output{};
         branch_math_output.i_f = 1.0 - 2.0i;
         branch_math_output.i_t = 2.0 - 1.0i;
@@ -137,18 +137,18 @@ TEST_CASE("Test line") {
         BranchOutput<true> output = branch.get_output<true>(branch_math_output);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == Approx(cabs(2.0 - 1.0i) * base_i / input.i_n));
-        CHECK(output.i_from == Approx(cabs(1.0 - 2.0i) * base_i));
-        CHECK(output.i_to == Approx(cabs(2.0 - 1.0i) * base_i));
-        CHECK(output.s_from == Approx(cabs(1.0 - 1.5i) * base_power<true>));
-        CHECK(output.s_to == Approx(cabs(1.5 - 1.5i) * base_power<true>));
-        CHECK(output.p_from == Approx(1.0 * base_power<true>));
-        CHECK(output.p_to == Approx(1.5 * base_power<true>));
-        CHECK(output.q_from == Approx(-1.5 * base_power<true>));
-        CHECK(output.q_to == Approx(-1.5 * base_power<true>));
+        CHECK(output.loading == doctest::Approx(cabs(2.0 - 1.0i) * base_i / input.i_n));
+        CHECK(output.i_from == doctest::Approx(cabs(1.0 - 2.0i) * base_i));
+        CHECK(output.i_to == doctest::Approx(cabs(2.0 - 1.0i) * base_i));
+        CHECK(output.s_from == doctest::Approx(cabs(1.0 - 1.5i) * base_power<true>));
+        CHECK(output.s_to == doctest::Approx(cabs(1.5 - 1.5i) * base_power<true>));
+        CHECK(output.p_from == doctest::Approx(1.0 * base_power<true>));
+        CHECK(output.p_to == doctest::Approx(1.5 * base_power<true>));
+        CHECK(output.q_from == doctest::Approx(-1.5 * base_power<true>));
+        CHECK(output.q_to == doctest::Approx(-1.5 * base_power<true>));
     }
 
-    SECTION("No source results") {
+    SUBCASE("No source results") {
         BranchOutput<false> output = branch.get_null_output<false>();
         CHECK(output.id == 1);
         CHECK(!output.energized);
@@ -163,19 +163,19 @@ TEST_CASE("Test line") {
         CHECK(output.q_to(1) == 0.0);
     }
 
-    SECTION("Asymmetric results") {
+    SUBCASE("Asymmetric results") {
         BranchOutput<false> output = branch.get_output<false>(uaf, uat);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == Approx(loading));
-        CHECK(output.i_from(0) == Approx(cabs(i1f)));
-        CHECK(output.i_to(1) == Approx(cabs(i1t)));
-        CHECK(output.s_from(2) == Approx(cabs(s_f) / 3.0));
-        CHECK(output.s_to(0) == Approx(cabs(s_t) / 3.0));
-        CHECK(output.p_from(1) == Approx(real(s_f) / 3.0));
-        CHECK(output.p_to(2) == Approx(real(s_t) / 3.0));
-        CHECK(output.q_from(0) == Approx(imag(s_f) / 3.0));
-        CHECK(output.q_to(1) == Approx(imag(s_t) / 3.0));
+        CHECK(output.loading == doctest::Approx(loading));
+        CHECK(output.i_from(0) == doctest::Approx(cabs(i1f)));
+        CHECK(output.i_to(1) == doctest::Approx(cabs(i1t)));
+        CHECK(output.s_from(2) == doctest::Approx(cabs(s_f) / 3.0));
+        CHECK(output.s_to(0) == doctest::Approx(cabs(s_t) / 3.0));
+        CHECK(output.p_from(1) == doctest::Approx(real(s_f) / 3.0));
+        CHECK(output.p_to(2) == doctest::Approx(real(s_t) / 3.0));
+        CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
+        CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
     }
 }
 
