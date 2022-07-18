@@ -12,7 +12,9 @@ namespace power_grid_model {
 
 class ThreeWindingTransformer : public Branch3 {
    public:
-	   using InputType = ThreeWindingTransformerInput;
+    using InputType = ThreeWindingTransformerInput;
+    using UpdateType = ThreeWindingTransformerUpdate;
+    static constexpr char const* name = "three_winding_transformer";
 };
 
 }  // namespace power_grid_model

@@ -58,11 +58,10 @@ class Branch3 : public Base {
     bool branch3_status() {
         return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
     }
-    
+
     // TODO calc_param()
 
     // TODO energized()
-
 
    private:
     ID node_1_;

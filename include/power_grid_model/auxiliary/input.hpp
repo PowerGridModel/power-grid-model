@@ -120,6 +120,9 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(Branch3Update, 1, BaseUpdate,
 POWER_GRID_MODEL_DATA_STRUCT_DEF(TransformerUpdate, 1, BranchUpdate,
     IntS, tap_pos);
 
+POWER_GRID_MODEL_DATA_STRUCT_DEF(ThreeWindingTransformerUpdate, 1, Branch3Update,
+    IntS, tap_pos);
+
 POWER_GRID_MODEL_DATA_STRUCT_DEF(ApplianceUpdate, 1, BaseUpdate,
     IntS, status);
 
