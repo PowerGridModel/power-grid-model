@@ -36,6 +36,34 @@ class Branch3 : public Base {
         }
     }
 
+    // getter
+    ID node_1() const {
+        return node_1_;
+    }
+    ID node_2() const {
+        return node_2_;
+    }
+    ID node_3() const {
+        return node_3_;
+    }
+    bool status_1() {
+        return status_1_;
+    }
+    bool status_2() {
+        return status_2_;
+    }
+    bool status_3() {
+        return status_3_;
+    }
+    bool branch3_status() {
+        return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
+    }
+    
+    // TODO calc_param()
+
+    // TODO energized()
+
+
    private:
     ID node_1_;
     ID node_2_;

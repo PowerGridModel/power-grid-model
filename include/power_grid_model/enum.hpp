@@ -20,6 +20,8 @@ enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigza
 
 enum class BranchSide : IntS { from = 0, to = 1 };
 
+enum class Branch3Side : IntS {side_1 = 0, side_2 = 1, side_3 = 2};
+
 enum class CalculationMethod : IntS {
     linear = 0,
     newton_raphson = 1,
