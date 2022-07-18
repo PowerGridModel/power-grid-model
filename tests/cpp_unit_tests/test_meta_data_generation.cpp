@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
@@ -12,7 +12,7 @@
 namespace power_grid_model {
 
 TEST_CASE("Test column row conversion") {
-    SECTION("Test meta input data generation") {
+    SUBCASE("Test meta input data generation") {
         auto const meta_map = meta_data::meta_data().at("input");
         auto const node = meta_map.at("node");
         auto const node_attr = node.attributes;
@@ -29,7 +29,7 @@ TEST_CASE("Test column row conversion") {
         CHECK(sensor_attr[1].numpy_type == "i4");
     }
 
-    SECTION("Test meta ouput data generation") {
+    SUBCASE("Test meta ouput data generation") {
         auto const meta_map = meta_data::meta_data().at("asym_output");
         auto const node = meta_map.at("node");
         auto const node_attr = node.attributes;
@@ -47,7 +47,7 @@ TEST_CASE("Test column row conversion") {
         CHECK(sensor_attr[2].numpy_type == "f8");
     }
 
-    SECTION("Test meta update data generation") {
+    SUBCASE("Test meta update data generation") {
         auto const meta_map = meta_data::meta_data().at("update");
         auto const load = meta_map.at("asym_load");
         auto const load_attr = load.attributes;

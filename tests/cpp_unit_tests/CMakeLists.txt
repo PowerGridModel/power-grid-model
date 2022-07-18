@@ -4,11 +4,11 @@
 
 project (power_grid_model_unit_tests)
 
-find_package(Catch2 CONFIG REQUIRED)
+find_package(doctest REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 set(PROJECT_SOURCES
-	test_power_grid_model.cpp
+  	test_power_grid_model.cpp
  	test_main_model_se.cpp
  	test_main_model.cpp
 	test_main_model_static.cpp
@@ -20,8 +20,8 @@ set(PROJECT_SOURCES
  	test_source.cpp
  	test_shunt.cpp
  	test_transformer.cpp
- 	test_bsr_solver.cpp
- 	test_y_bus.cpp
+   	test_sparse_lu_solver.cpp
+  	test_y_bus.cpp
  	test_math_solver.cpp
  	test_topology.cpp
  	test_container.cpp
@@ -36,12 +36,17 @@ add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
 
 target_link_libraries(power_grid_model_unit_tests
 	PRIVATE power_grid_model
-	PRIVATE Catch2::Catch2
+	PRIVATE doctest::doctest
 	PRIVATE nlohmann_json nlohmann_json::nlohmann_json
 )
-target_compile_definitions(power_grid_model_unit_tests PRIVATE CATCH_CONFIG_CONSOLE_WIDTH=120)
 target_compile_definitions(power_grid_model_unit_tests PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data")
 
+
+# add address sanitizer for Linux/Mac build
+if(UNIX)
+	target_compile_options(power_grid_model_unit_tests PRIVATE -fsanitize=address)
+	target_link_options(power_grid_model_unit_tests PRIVATE -fsanitize=address)
+endif()
 
 # set_target_properties(power_grid_model_unit_tests PROPERTIES SKIP_BUILD_RPATH TRUE)
 # set_target_properties(power_grid_model_unit_tests PROPERTIES LINK_WHAT_YOU_USE TRUE)
