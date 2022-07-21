@@ -83,6 +83,22 @@ class ThreeWindingTransformer : public Branch3 {
         // TODO
     }
 
+    // setter
+    bool set_tap(IntS new_tap) {
+        if (new_tap == na_IntS || new_tap == tap_pos_) {
+            return false;
+        }
+        tap_pos_ = tap_limit(new_tap);
+        return true;
+    }
+
+    UpdateChange update(ThreeWindingTransformerUpdate const& update) {
+        assert(update.id = id());
+        bool topo_changed = set_status(update.status_1, update.status_2, update.status_3);
+        bool param_changed = set_tap(update.tap_pos) || topo_changed;
+        return {topo_changed, param_changed};
+    }
+
    private:
     double u1_, u2_, u3_;
     double sn_1_, sn_2_, sn_3_;
@@ -101,6 +117,12 @@ class ThreeWindingTransformer : public Branch3 {
         x = is_nan(x) ? 0 : x;
         double const base_z = u * u / base_power_3p;
         return {r / base_z, x / base_z};
+    }
+
+    IntS tap_limit(IntS new_tap) const {
+        new_tap = std::min(new_tap, std::max(tap_max_, tap_min_));
+        new_tap = std::max(new_tap, std::min(tap_max_, tap_min_));
+        return new_tap;
     }
 };
 
