@@ -71,16 +71,15 @@ class ThreeWindingTransformer : public Branch3 {
                                                                        : three_winding_transformer_input.pk_23_min},
           pk_23_max_{is_nan(three_winding_transformer_input.pk_23_max) ? pk_23_
                                                                        : three_winding_transformer_input.pk_23_max},
+          base_i_1{base_power_3p / u1_rated / sqrt3},
+          base_i_2{base_power_3p / u2_rated / sqrt3},
+          base_i_3{base_power_3p / u3_rated / sqrt3},
           z_grounding_1{calculate_z_pu(three_winding_transformer_input.r_grounding_1,
                                        three_winding_transformer_input.x_grounding_1, u1_rated)},
           z_grounding_2{calculate_z_pu(three_winding_transformer_input.r_grounding_2,
                                        three_winding_transformer_input.x_grounding_2, u2_rated)},
           z_grounding_3{calculate_z_pu(three_winding_transformer_input.r_grounding_3,
-                                       three_winding_transformer_input.x_grounding_3, u3_rated)}
-
-    // base_i_1/2/3
-
-    {
+                                       three_winding_transformer_input.x_grounding_3, u3_rated)} {
         // TODO
     }
 
