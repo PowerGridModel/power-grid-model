@@ -8,6 +8,7 @@
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
+#include "../calculation_parameters.hpp"
 #include "base.hpp"
 
 namespace power_grid_model {
@@ -62,6 +63,35 @@ class Branch3 : public Base {
     // TODO calc_param()
 
     // TODO energized()
+
+    // setter
+    bool set_status(IntS new_status_1, IntS new_status_2, IntS new_status_3) {
+        bool const set_1 = new_status_1 != na_IntS;
+        bool const set_2 = new_status_2 != na_IntS;
+        bool const set_3 = new_status_3 != na_IntS;
+        bool changed = false;
+        if (set_1) {
+            changed = changed || (status_1_ != (bool)new_status_1);
+            status_1_ = (bool)new_status_1;
+        }
+        if (set_2) {
+            changed = changed || (status_2_ != (bool)new_status_2);
+            status_2_ = (bool)new_status_2;
+        }
+        if (set_3) {
+            changed = changed || (status_3_ != (bool)new_status_3);
+            status_3_ = (bool)new_status_3;
+        }
+        return changed;
+    }
+
+    // default update for branch3, will be hidden for three winding transformer
+    UpdateChange update(Branch3Update const& update) {
+        assert(update.id == id());
+        bool const changed = set_status(update.status_1, update.status_2, update.status_3);
+        // change in branch3 connection will change both topo and param
+        return {changed, changed};
+    }
 
    private:
     ID node_1_;
