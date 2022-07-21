@@ -242,7 +242,7 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotBetweenOrAtError("transformer", "clock", [1, 14], (0, 12)) in validation_errors
     assert NotBetweenOrAtError("transformer", "tap_pos", [14, 15], ("tap_min", "tap_max")) in validation_errors
     assert NotBetweenOrAtError("transformer", "tap_nom", [1, 15], ("tap_min", "tap_max")) in validation_errors
-    assert NotGreaterThanError("transformer", "tap_size", [14, 15], 0) in validation_errors
+    assert NotGreaterOrEqualError("transformer", "tap_size", [15], 0) in validation_errors
     assert NotGreaterOrEqualError("transformer", "uk_min", [1], "pk_min/sn") in validation_errors
     assert NotBetweenError("transformer", "uk_min", [14], (0, 1)) in validation_errors
     assert NotGreaterOrEqualError("transformer", "uk_max", [1], "pk_max/sn") in validation_errors

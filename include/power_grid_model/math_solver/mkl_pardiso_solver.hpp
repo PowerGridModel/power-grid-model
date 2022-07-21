@@ -108,7 +108,7 @@ struct PardisoHandle {
     // constructor to load pardiso either from link time or runtime
     PardisoHandle() {
 #ifdef __aarch64__
-        std::cout << "\nMKL is not available in Mac Arm64. Eigen solver is used.\n";
+        std::cout << "\nMKL is not available in arm64. Eigen solver is used.\n";
 #else
         // load pardiso from runtime
         // check environment variable to see if

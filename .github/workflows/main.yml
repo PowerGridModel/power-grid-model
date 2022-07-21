@@ -30,7 +30,7 @@ jobs:
         sparse-solver: [ EIGEN, MKL, MKL_RUNTIME ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run build script
         run: ./build.sh  ${{ matrix.build-option }} ${{ matrix.sparse-solver }}
@@ -47,15 +47,16 @@ jobs:
       MKL_LIB: C:\conda_envs\cpp_pkgs\Library\lib
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Activate conda
         run: |
           & "$env:CONDA\condabin\conda" init
 
       - name: Install conda environment
+        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json mkl mkl-devel mkl-include catch2==2.13.9
 
       - name: Build and test
         run: |
@@ -92,11 +93,13 @@ jobs:
       CMAKE_PREFIX_PATH: /usr/local
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install cpp dependencies
+        # TODO removed pinned v2 of catch2, see https://github.com/alliander-opensource/power-grid-model/issues/73
         run: |
-          brew install ninja boost eigen nlohmann-json catch2
+          brew install ninja boost eigen nlohmann-json 
+          curl https://raw.githubusercontent.com/Homebrew/homebrew-core/5e5abb11bf49787d01164c4066119365262c21ed/Formula/catch2.rb > $(find $(brew --repository) -name catch2.rb) && brew reinstall catch2
           sudo pip3 install mkl mkl-devel mkl-include
 
       - name: Build and test
@@ -118,11 +121,11 @@ jobs:
             cxx: g++
             boost:
             eigen:
-            cibw_build: cp*-manylinux_x86_64
+            cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
             test_cmd: >
               pytest {package}/tests &&
               LD_LIBRARY_PATH= pytest {package}/tests
-            archs: x86_64
+            archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
             cc: clang
@@ -161,6 +164,7 @@ jobs:
       # Skip trying to test arm64 builds on Intel Macs
       CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
       CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env
+      CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/alliander-opensource/power-grid-model-build-env-arm64
       CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
       CIBW_BEFORE_ALL_MACOS: >
         which clang++ &&
@@ -172,7 +176,11 @@ jobs:
         conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen mkl
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        if: matrix.platform == 'linux'
+        uses: docker/setup-qemu-action@v2
 
       - name: Activate conda for windows
         if: matrix.platform == 'windows'
@@ -180,10 +188,10 @@ jobs:
           & "$env:CONDA\condabin\conda" init
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
+        uses: pypa/cibuildwheel@v2.8.0
 
       - name: Keep wheel files
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheelhouse
           path: ./wheelhouse/*.whl
@@ -192,26 +200,36 @@ jobs:
   publish-wheels:
     needs: build-and-test-python
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           architecture: x64
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheelhouse
           path: wheelhouse
 
-      - name: List wheels
-        run: ls ./wheelhouse/*.whl -ral
+      - name: List assets
+        run: |
+          ls ./wheelhouse/*.whl -al
+
+      - name: Get tag
+        id: tag
+        run: echo "::set-output name=tag::v$(ls ./wheelhouse/*cp310*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')"
+
+      - name: Display tag
+        run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
@@ -219,3 +237,13 @@ jobs:
           pip install twine
           echo "Publish to PyPI..."
           twine upload --verbose wheelhouse/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        with:
+          files: |
+            ./wheelhouse/*.whl
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
+          generate_release_notes: true

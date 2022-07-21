@@ -40,16 +40,18 @@ class MyBuildExt(build_ext):
                 cxx = os.environ["CXX"]
             else:
                 cxx = self.compiler.compiler_cxx[0]
-            if "clang" in cxx:
-                lto_flag = "-flto=thin"
-            else:
-                lto_flag = "-flto"
             # customize compiler and linker options
             self.compiler.compiler_so[0] = cxx
-            self.compiler.compiler_so += [lto_flag]
             self.compiler.linker_so[0] = cxx
-            self.compiler.linker_so += [lto_flag]
             self.compiler.compiler_cxx = [cxx]
+            # add optional link time optimization
+            if os.environ.get("POWER_GRID_MODEL_ENABLE_LTO", "OFF") == "ON":
+                if "clang" in cxx:
+                    lto_flag = "-flto=thin"
+                else:
+                    lto_flag = "-flto"
+                self.compiler.compiler_so += [lto_flag]
+                self.compiler.linker_so += [lto_flag]
             # remove -g and -O2
             self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
             self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
@@ -123,7 +125,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # flags for Linux and Mac
         cflags += [
             "-std=c++17",
-            "-m64",
             "-O3",
             "-fvisibility=hidden",
         ]
@@ -213,8 +214,10 @@ def get_version(pkg_dir: Path) -> str:
             version += f"rc9{build_number}{short_hash}"
         else:
             # feature branch
-            # major.minor.patch a 0 build_number short_hash
-            version += f"a0{build_number}{short_hash}"
+            # major.minor.patch a 1 build_number short_hash
+            version += f"a1{build_number}{short_hash}"
+    with open(pkg_dir / "PYPI_VERSION", "w") as f:
+        f.write(version)
     return version
 
 
