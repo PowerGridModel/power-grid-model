@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import io
 from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
 
@@ -13,6 +14,7 @@ from power_grid_model.manual_testing import (
     convert_python_to_numpy,
     export_json_data,
     is_nan,
+    compact_json_dump,
 )
 
 
@@ -75,9 +77,9 @@ def test_is_nan():
     assert is_nan(single_value)
     array_f8 = np.array([0.1, 0.2, np.nan], dtype=np.dtype("f8"))
     assert not is_nan(array_f8)
-    array_i4 = np.array([10, 2, -(2**31), 40], dtype=np.dtype("i4"))
+    array_i4 = np.array([10, 2, -(2 ** 31), 40], dtype=np.dtype("i4"))
     assert not is_nan(array_i4)
-    array_i1 = np.array([1, 0, -(2**7), 1], dtype=np.dtype("i1"))
+    array_i1 = np.array([1, 0, -(2 ** 7), 1], dtype=np.dtype("i1"))
     assert not is_nan(array_i1)
     nan_array = np.array([np.nan, np.nan, np.nan])
     assert is_nan(nan_array)
@@ -132,3 +134,106 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
     export_json_data(json_file=Path("output.json"), data={}, indent=2)
     convert_mock.assert_called_once()
     json_dump_mock.assert_called_once_with({"foo": [{"val": 123}]}, open_mock(), indent=2)
+
+
+def test_compact_json_dump():
+    data = {
+        "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+        "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
+    }
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=0)
+    assert string_stream.getvalue() == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=1)
+    assert string_stream.getvalue() == """{
+  "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+  "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
+}"""
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=2)
+    assert string_stream.getvalue() == """{
+  "node":
+    [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+  "line":
+    [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
+}"""
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=3)
+    assert string_stream.getvalue() == """{
+  "node":
+    [
+      {"id": 1, "x": 2},
+      {"id": 3, "x": 4}
+    ],
+  "line":
+    [
+      {"id": 5, "x": 6},
+      {"id": 7, "x": {"y": 8.1, "z": 8.2}}
+    ]
+}"""
+
+
+def test_compact_json_dump_string():
+    data = "test"
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=2)
+    assert string_stream.getvalue() == "\"test\""
+
+
+def test_compact_json_dump_deep():
+    data = {
+        "foo": 1,
+        "bar": {"x": 2, "y": 3},
+    }
+
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=10)
+    assert string_stream.getvalue() == """{
+  "foo": 1,
+  "bar":
+    {
+      "x": 2,
+      "y": 3
+    }
+}"""
+
+
+def test_compact_json_dump_batch():
+    data = [
+        {
+            "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+            "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
+        },
+        {
+            "line": [{"id": 9, "x": 10}, {"id": 11, "x": 12}],
+        },
+    ]
+    string_stream = io.StringIO()
+    compact_json_dump(data, string_stream, indent=2, max_level=4)
+    assert string_stream.getvalue() == """[
+  {
+    "node":
+      [
+        {"id": 1, "x": 2},
+        {"id": 3, "x": 4}
+      ],
+    "line":
+      [
+        {"id": 5, "x": 6},
+        {"id": 7, "x": {"y": 8.1, "z": 8.2}}
+      ]
+  },
+  {
+    "line":
+      [
+        {"id": 9, "x": 10},
+        {"id": 11, "x": 12}
+      ]
+  }
+]"""

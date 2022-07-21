@@ -23,7 +23,8 @@ calculation_function_map = {
     pytest_cases(get_batch_cases=False),
 )
 def test_single_validation(
-    case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float
+        case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float,
+        atol: float
 ):
     # Initialization
     case_data = import_case_data(case_path, sym=sym)
@@ -56,15 +57,15 @@ def test_single_validation(
     pytest_cases(get_batch_cases=True),
 )
 def test_batch_validation(
-    case_id: str,
-    case_path: Path,
-    sym: bool,
-    calculation_type: str,
-    calculation_method: str,
-    rtol: float,
-    atol: float,
-    independent: bool,
-    cache_topology: bool,
+        case_id: str,
+        case_path: Path,
+        sym: bool,
+        calculation_type: str,
+        calculation_method: str,
+        rtol: float,
+        atol: float,
+        independent: bool,
+        cache_topology: bool,
 ):
     # Initialization
     case_data = import_case_data(case_path, sym=sym)
