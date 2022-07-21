@@ -16,7 +16,7 @@ BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
 OUPUT_PATH = BASE_PATH / "output"
 EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
-        os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
+    os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
 
 
@@ -108,8 +108,7 @@ def save_json_data(json_file: str, data: Union[dict, list]):
 
 
 def compare_result(
-        actual: Dict[str, np.ndarray], expected: Dict[str, np.ndarray], rtol: float,
-        atol: Union[float, Dict[str, float]]
+    actual: Dict[str, np.ndarray], expected: Dict[str, np.ndarray], rtol: float, atol: Union[float, Dict[str, float]]
 ):
     for key, expected_data in expected.items():
         for col_name in expected_data.dtype.names:

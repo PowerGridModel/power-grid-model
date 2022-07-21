@@ -77,9 +77,9 @@ def test_is_nan():
     assert is_nan(single_value)
     array_f8 = np.array([0.1, 0.2, np.nan], dtype=np.dtype("f8"))
     assert not is_nan(array_f8)
-    array_i4 = np.array([10, 2, -(2 ** 31), 40], dtype=np.dtype("i4"))
+    array_i4 = np.array([10, 2, -(2**31), 40], dtype=np.dtype("i4"))
     assert not is_nan(array_i4)
-    array_i1 = np.array([1, 0, -(2 ** 7), 1], dtype=np.dtype("i1"))
+    array_i1 = np.array([1, 0, -(2**7), 1], dtype=np.dtype("i1"))
     assert not is_nan(array_i1)
     nan_array = np.array([np.nan, np.nan, np.nan])
     assert is_nan(nan_array)
@@ -144,27 +144,38 @@ def test_compact_json_dump():
 
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=0)
-    assert string_stream.getvalue() == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
+    assert (
+        string_stream.getvalue()
+        == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
+    )
 
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=1)
-    assert string_stream.getvalue() == """{
+    assert (
+        string_stream.getvalue()
+        == """{
   "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
   "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
 }"""
+    )
 
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=2)
-    assert string_stream.getvalue() == """{
+    assert (
+        string_stream.getvalue()
+        == """{
   "node":
     [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
   "line":
     [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
 }"""
+    )
 
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=3)
-    assert string_stream.getvalue() == """{
+    assert (
+        string_stream.getvalue()
+        == """{
   "node":
     [
       {"id": 1, "x": 2},
@@ -176,6 +187,7 @@ def test_compact_json_dump():
       {"id": 7, "x": {"y": 8.1, "z": 8.2}}
     ]
 }"""
+    )
 
 
 def test_compact_json_dump_string():
@@ -183,7 +195,7 @@ def test_compact_json_dump_string():
 
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=2)
-    assert string_stream.getvalue() == "\"test\""
+    assert string_stream.getvalue() == '"test"'
 
 
 def test_compact_json_dump_deep():
@@ -194,7 +206,9 @@ def test_compact_json_dump_deep():
 
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=10)
-    assert string_stream.getvalue() == """{
+    assert (
+        string_stream.getvalue()
+        == """{
   "foo": 1,
   "bar":
     {
@@ -202,6 +216,7 @@ def test_compact_json_dump_deep():
       "y": 3
     }
 }"""
+    )
 
 
 def test_compact_json_dump_batch():
@@ -216,7 +231,9 @@ def test_compact_json_dump_batch():
     ]
     string_stream = io.StringIO()
     compact_json_dump(data, string_stream, indent=2, max_level=4)
-    assert string_stream.getvalue() == """[
+    assert (
+        string_stream.getvalue()
+        == """[
   {
     "node":
       [
@@ -237,3 +254,4 @@ def test_compact_json_dump_batch():
       ]
   }
 ]"""
+    )
