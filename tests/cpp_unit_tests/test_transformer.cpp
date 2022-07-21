@@ -154,6 +154,39 @@ TEST_CASE("Test transformer") {
         }
     }
 
+    SUBCASE("update - check changed") {
+        SUBCASE("update tap") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, -2});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update from_status") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, false, true}, na_IntS});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update to_status") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, true, false}, na_IntS});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update status") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, false, false}, na_IntS});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update status & tap") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, false, false}, -2});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update none") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, na_IntS});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+        }
+    }
+
     SUBCASE("asymmetric paramters") {
         for (size_t i = 0; i < 5; i++) {
             vec[i].set_tap(-2);

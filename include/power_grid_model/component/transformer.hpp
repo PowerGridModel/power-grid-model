@@ -103,7 +103,7 @@ class Transformer : public Branch {
     UpdateChange update(TransformerUpdate const& update) {
         assert(update.id == id());
         bool topo_changed = set_status(update.from_status, update.to_status);
-        bool param_changed = set_tap(update.tap_pos);
+        bool param_changed = set_tap(update.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
     }
 
