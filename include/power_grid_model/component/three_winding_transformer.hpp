@@ -16,8 +16,8 @@ class ThreeWindingTransformer : public Branch3 {
     using UpdateType = ThreeWindingTransformerUpdate;
     static constexpr char const* name = "three_winding_transformer";
 
-    ThreeWindingTransformer(ThreeWindingTransformerInput const& transformer_input, double u1_rated, double u2_rated,
-                            double u3_rated)
+    ThreeWindingTransformer(ThreeWindingTransformerInput const& three_winding_transformer_input, double u1_rated,
+                            double u2_rated, double u3_rated)
         : Branch3{three_winding_transformer_input},
           u1_{three_winding_transformer_input.u1},
           u2_{three_winding_transformer_input.u2},
@@ -70,9 +70,16 @@ class ThreeWindingTransformer : public Branch3 {
           pk_23_min_{is_nan(three_winding_transformer_input.pk_23_min) ? pk_23_
                                                                        : three_winding_transformer_input.pk_23_min},
           pk_23_max_{is_nan(three_winding_transformer_input.pk_23_max) ? pk_23_
-                                                                       : three_winding_transformer_input.pk_23_max}
+                                                                       : three_winding_transformer_input.pk_23_max},
+          z_grounding_1{calculate_z_pu(three_winding_transformer_input.r_grounding_1,
+                                       three_winding_transformer_input.x_grounding_1, u1_rated)},
+          z_grounding_2{calculate_z_pu(three_winding_transformer_input.r_grounding_2,
+                                       three_winding_transformer_input.x_grounding_2, u2_rated)},
+          z_grounding_3{calculate_z_pu(three_winding_transformer_input.r_grounding_3,
+                                       three_winding_transformer_input.x_grounding_3, u3_rated)}
+
     // base_i_1/2/3
-    // z_grounding_1/2/3
+
     {
         // TODO
     }
@@ -88,6 +95,14 @@ class ThreeWindingTransformer : public Branch3 {
     double tap_size_;
     double uk_12_min_, uk_12_max_, uk_13_min_, uk_13_max_, uk_23_min_, uk_23_max_;
     double pk_12_min_, pk_12_max_, pk_13_min_, pk_13_max_, pk_23_min_, pk_23_max_;
+
+    // calculate z in per unit with NaN detection
+    DoubleComplex calculate_z_pu(double r, double x, double u) {
+        r = is_nan(r) ? 0 : r;
+        x = is_nan(x) ? 0 : x;
+        double const base_z = u * u / base_power_3p;
+        return {r / base_z, x / base_z};
+    }
 };
 
 }  // namespace power_grid_model
