@@ -83,6 +83,17 @@ class ThreeWindingTransformer : public Branch3 {
         // TODO
     }
 
+    // override getter
+    double base_i_1() const final {
+        return base_i_1;
+    }
+    double base_i_2() const final {
+        return base_i_2;
+    }
+    double base_i_3() const final {
+        return base_i_3;
+    }
+
     // setter
     bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {

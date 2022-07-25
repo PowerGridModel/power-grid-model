@@ -60,6 +60,11 @@ class Branch3 : public Base {
         return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
     }
 
+    // virtual getter
+    virtual double base_i_1 const = 0;
+    virtual double base_i_2 const = 0;
+    virtual double base_i_3 const = 0;
+
     // TODO calc_param()
 
     // TODO energized()
