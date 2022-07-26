@@ -209,18 +209,33 @@ def convert_numpy_to_python(
         A json list for batch dataset
 
     """
-    # check the dataset is single or batch
-    if data:
-        one_data = next(iter(data.values()))
-        # it is batch dataset if it is 2D array of a dict of indptr/data
-        if isinstance(one_data, dict) or one_data.ndim == 2:
-            list_data = convert_batch_to_list_data(data)
-            return [convert_numpy_to_python(x) for x in list_data]
-    # otherwise it is single dataset
-    single_dataset: Dict[str, np.ndarray] = data
+    # Check if the dataset is a single dataset or batch dataset
+    # It is batch dataset if it is 2D array or a indptr/data structure
+    example_data = next(iter(data.values()))
+    is_dense_batch = isinstance(example_data, np.ndarray) and example_data.ndim == 2
+    is_sparse_batch = isinstance(example_data, dict) and "indptr" in example_data and "data" in example_data
+
+    # If it is a batch, convert the batch data to a list of batches, then convert each batch individually.
+    if is_dense_batch or is_sparse_batch:
+        list_data = convert_batch_to_list_data(data)
+        return [convert_numpy_to_python(x) for x in list_data]
+
+    # Otherwise it should be a single data set
+    if not isinstance(example_data, np.ndarray) or example_data.ndim != 1:
+        raise ValueError("Invalid data format")
+
+    # Convert each numpy array to a list of objects, which contains only the non-NaN properties:
+    # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
     return {
-        name: [{k: item[k].tolist() for k in array.dtype.names if not is_nan(item[k])} for item in array]
-        for name, array in single_dataset.items()
+        component: [
+            {
+                property: obj[property].tolist()
+                for property in objects.dtype.names
+                if not is_nan(obj[property])
+            }
+            for obj in objects
+        ]
+        for component, objects in data.items()
     }
 
 
