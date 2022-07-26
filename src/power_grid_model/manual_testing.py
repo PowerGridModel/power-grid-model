@@ -34,12 +34,12 @@ def is_nan(data) -> bool:
 
 
 def convert_list_to_batch_data(
-    list_data: List[Dict[str, np.ndarray]]
+        datasets: List[Dict[str, np.ndarray]]
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
-    Convert list of dataset to one single batch dataset
+    Convert a list of datasets to one single batch dataset
     Args:
-        list_data: list of dataset
+        datasets: list of dataset
 
     Returns:
         batch dataset
@@ -48,30 +48,43 @@ def convert_list_to_batch_data(
     """
 
     # List all *unique* types
-    all_types = list({x for single_batch in list_data for x in single_batch.keys()})
+    components = {x for dataset in datasets for x in dataset.keys()}
 
     batch_data = {}
-    for comp_type in all_types:
-        # use 2D array if the type exists in all single dataset and the size is the same
-        if np.all([comp_type in x for x in list_data]) and np.unique([x[comp_type].size for x in list_data]).size == 1:
-            batch_data[comp_type] = np.stack([x[comp_type] for x in list_data], axis=0)
+    for component in components:
+
+        # Create a 2D array if the component exists in all datasets and number of objects is the same in each dataset
+        comp_exists_in_all_datasets = all(component in x for x in datasets)
+        all_sizes_are_the_same = lambda: all(x[component].size == datasets[0][component].size for x in datasets)
+        if comp_exists_in_all_datasets and all_sizes_are_the_same():
+            batch_data[component] = np.stack([x[component] for x in datasets], axis=0)
             continue
+
         # otherwise use indptr/data dict
         indptr = [0]
         data = []
-        for single_batch in list_data:
-            if comp_type not in single_batch:
-                indptr.append(indptr[-1])
+        for dataset in datasets:
+
+            # If the current dataset contains the component, increase the indptr for this batch and append the data
+            if component in dataset:
+                objects = dataset[component]
+                indptr.append(indptr[-1] + len(objects))
+                data.append(objects)
+
+            # If the current dataset does not contain the component, add the last indptr again.
             else:
-                single_data = single_batch[comp_type]
-                indptr.append(indptr[-1] + single_data.shape[0])
-                data.append(single_data)
-        batch_data[comp_type] = {"indptr": np.array(indptr, dtype=np.int32), "data": np.concatenate(data, axis=0)}
+                indptr.append(indptr[-1])
+
+            # Convert the index pointers to a numpy array and combine the list of object numpy arrays into a singe
+            # numpy array. All objects of all batches are now stores in one large array, the index pointers define
+            # which elemets of the array (rows) belong to which batch.
+            batch_data[component] = {"indptr": np.array(indptr, dtype=np.int32), "data": np.concatenate(data, axis=0)}
+
     return batch_data
 
 
 def convert_python_to_numpy(
-    data: Union[Dict, List], data_type: str
+        data: Union[Dict, List], data_type: str
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert native python data to internal numpy
@@ -109,7 +122,7 @@ def convert_python_to_numpy(
 
 
 def convert_batch_to_list_data(
-    batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+        batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
 ) -> List[Dict[str, np.ndarray]]:
     """
     Convert list of dataset to one single batch dataset
@@ -134,7 +147,7 @@ def convert_batch_to_list_data(
         single_dataset = {}
         for key, batch in batch_data.items():
             if isinstance(batch, dict):
-                single_dataset[key] = batch["data"][batch["indptr"][i] : batch["indptr"][i + 1]]
+                single_dataset[key] = batch["data"][batch["indptr"][i]: batch["indptr"][i + 1]]
             else:
                 single_dataset[key] = batch[i, ...]
         list_data.append(single_dataset)
@@ -142,7 +155,7 @@ def convert_batch_to_list_data(
 
 
 def convert_numpy_to_python(
-    data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+        data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
 ) -> Union[Dict[str, List[Dict[str, Union[int, float]]]], List[Dict[str, List[Dict[str, Union[int, float]]]]]]:
     """
     Convert internal numpy arrays to native python data
@@ -186,11 +199,11 @@ def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndar
 
 
 def export_json_data(
-    json_file: Path,
-    data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
-    indent: Optional[int] = 2,
-    compact: bool = False,
-    extra_info: Optional[Dict[int, Any]] = None,
+        json_file: Path,
+        data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
+        indent: Optional[int] = 2,
+        compact: bool = False,
+        extra_info: Optional[Dict[int, Any]] = None,
 ):
     """
     export json data
