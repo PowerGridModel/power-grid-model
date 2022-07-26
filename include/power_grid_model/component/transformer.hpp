@@ -152,7 +152,7 @@ class Transformer : public Branch {
             else {
                 u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            return std::pair<double, double>{u1, u2};
+            return std::pair{u1, u2};
         }();
         double const k = (u1 / u2) / nominal_ratio_;
         // pk and uk
