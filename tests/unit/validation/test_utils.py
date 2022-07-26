@@ -395,7 +395,7 @@ def test_update_input_data_asym_nans():
     update_load["id"] = [1, 2, 3]
     update_load["p_specified"] = [[np.nan, np.nan, np.nan], [np.nan, np.nan, 5.3], [6.1, 6.2, 6.3]]
 
-    merged = update_input_data(input_data={"asym_load": input_load}, update_data={"asym_load": input_load})
+    merged = update_input_data(input_data={"asym_load": input_load}, update_data={"asym_load": update_load})
 
     np.testing.assert_array_equal(
         merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [2.1, np.nan, 5.3], [6.1, 6.2, 6.3]]
