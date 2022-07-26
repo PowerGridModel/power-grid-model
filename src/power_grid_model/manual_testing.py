@@ -34,7 +34,7 @@ def is_nan(data) -> bool:
 
 
 def convert_list_to_batch_data(
-        datasets: List[Dict[str, np.ndarray]]
+    datasets: List[Dict[str, np.ndarray]]
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert a list of datasets to one single batch dataset
@@ -89,7 +89,7 @@ def convert_list_to_batch_data(
 
 
 def convert_python_to_numpy(
-        data: Union[Dict, List], data_type: str
+    data: Union[Dict, List], data_type: str
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert native python data to internal numpy
@@ -144,7 +144,7 @@ def convert_python_to_numpy(
 
 
 def convert_batch_to_list_data(
-        batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+    batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
 ) -> List[Dict[str, np.ndarray]]:
     """
     Convert list of dataset to one single batch dataset
@@ -197,7 +197,7 @@ def convert_batch_to_list_data(
 
 
 def convert_numpy_to_python(
-        data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+    data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
 ) -> Union[Dict[str, List[Dict[str, Union[int, float]]]], List[Dict[str, List[Dict[str, Union[int, float]]]]]]:
     """
     Convert internal numpy arrays to native python data
@@ -228,11 +228,7 @@ def convert_numpy_to_python(
     # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
     return {
         component: [
-            {
-                property: obj[property].tolist()
-                for property in objects.dtype.names
-                if not is_nan(obj[property])
-            }
+            {property: obj[property].tolist() for property in objects.dtype.names if not is_nan(obj[property])}
             for obj in objects
         ]
         for component, objects in data.items()
@@ -256,11 +252,11 @@ def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndar
 
 
 def export_json_data(
-        json_file: Path,
-        data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
-        indent: Optional[int] = 2,
-        compact: bool = False,
-        extra_info: Optional[Dict[int, Any]] = None,
+    json_file: Path,
+    data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
+    indent: Optional[int] = 2,
+    compact: bool = False,
+    extra_info: Optional[Dict[int, Any]] = None,
 ):
     """
     export json data
