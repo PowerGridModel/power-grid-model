@@ -38,6 +38,11 @@ def convert_list_to_batch_data(
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert a list of datasets to one single batch dataset
+
+    Example data formats:
+        input:  [{"node": <1d-array>, "line": <1d-array>}, {"node": <1d-array>, "line": <1d-array>}]
+        output: {"node": <2d-array>, "line": <2d-array>}
+         -or-:  {"indptr": <1d-array>, "data": <1d-array>}
     Args:
         datasets: list of dataset
 
@@ -65,14 +70,14 @@ def convert_list_to_batch_data(
         data = []
         for dataset in datasets:
 
-            # If the current dataset contains the component, increase the indptr for this batch and append the data
             if component in dataset:
+                # If the current dataset contains the component, increase the indptr for this batch and append the data
                 objects = dataset[component]
                 indptr.append(indptr[-1] + len(objects))
                 data.append(objects)
 
-            # If the current dataset does not contain the component, add the last indptr again.
             else:
+                # If the current dataset does not contain the component, add the last indptr again.
                 indptr.append(indptr[-1])
 
             # Convert the index pointers to a numpy array and combine the list of object numpy arrays into a singe
@@ -132,25 +137,45 @@ def convert_batch_to_list_data(
     Returns:
         list of single dataset
     """
-    list_data = []
-    # return empty list
+
+    # If the batch data is empty, return an empty list
     if not batch_data:
-        return list_data
-    # get n_batch
-    one_data = next(iter(batch_data.values()))
-    if isinstance(one_data, dict):
-        n_batch = one_data["indptr"].size - 1
+        return []
+
+    # Get the data for an arbitrary component; assuming that the number of batches of each component is the same.
+    # The structure may differ per component
+    example_batch_data = next(iter(batch_data.values()))
+
+    if isinstance(example_batch_data, np.ndarray):
+        # We expect the batch data to be a 2d numpy array of n_batches x n_objects
+        if len(example_batch_data.shape) != 2:
+            raise ValueError("Invalid batch data format")
+        n_batches = example_batch_data.shape[0]
+    elif isinstance(example_batch_data, dict):
+        # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
+        # invalid dictionary). There is always one indptr more than there are batches.
+        if "indptr" not in example_batch_data:
+            raise ValueError("Invalid batch data format")
+        n_batches = example_batch_data["indptr"].size - 1
     else:
-        n_batch = one_data.shape[0]
-    # convert
-    for i in range(n_batch):
-        single_dataset = {}
-        for key, batch in batch_data.items():
-            if isinstance(batch, dict):
-                single_dataset[key] = batch["data"][batch["indptr"][i]: batch["indptr"][i + 1]]
-            else:
-                single_dataset[key] = batch[i, ...]
-        list_data.append(single_dataset)
+        # If the batch data is not a numpy array and not a dictionary, it is invalid
+        raise ValueError("Invalid batch data format")
+
+    # Initialize an empty list with dictionaries
+    # Note that [{}] * n_batches would result in n copies of the same dict.
+    list_data = [{} for _ in range(n_batches)]
+
+    # While the number of batches must be the same for each component, the structure (2d numpy array or indptr/data)
+    # doesn't have to be. Therefore, we'll check the structure for each component and copy the data accordingly.
+    for component, data in batch_data.items():
+        if isinstance(data, np.ndarray):
+            # For 2d numpy arrays, copy each batch into an element of the list
+            for i, batch in enumerate(data):
+                list_data[i][component] = batch
+        else:
+            # For indptr/data structures,
+            for i, (idx0, idx1) in enumerate(zip(data["indptr"][:-1], data["indptr"][1:])):
+                list_data[i][component] = data["data"][idx0:idx1]
     return list_data
 
 
