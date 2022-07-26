@@ -164,7 +164,7 @@ def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.nd
 
 
 def split_compressed_sparse_structure_in_batches(
-    data: np.ndarray, indptr: np.ndarray, component: str
+        data: np.ndarray, indptr: np.ndarray, component: str
 ) -> List[np.ndarray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
@@ -198,7 +198,7 @@ def split_compressed_sparse_structure_in_batches(
             "and be monotonic increasing)."
         )
 
-    return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
+    return [data[indptr[i]: indptr[i + 1]] for i in range(len(indptr) - 1)]
 
 
 def update_input_data(input_data: Dict[str, np.ndarray], update_data: Dict[str, np.ndarray]):
@@ -217,7 +217,7 @@ def update_input_data(input_data: Dict[str, np.ndarray], update_data: Dict[str, 
             else:
                 mask = np.not_equal(array[field], nan)
             if mask.ndim == 2:
-                mask = mask.prod(axis=1, dtype=np.bool)
+                mask = mask.prod(axis=1, dtype=bool)
             data = array[["id", field]][mask]
             idx = np.where(merged_data[component]["id"] == np.reshape(data["id"], (-1, 1)))
             if isinstance(idx, tuple):
@@ -226,10 +226,10 @@ def update_input_data(input_data: Dict[str, np.ndarray], update_data: Dict[str, 
 
 
 def errors_to_string(
-    errors: Union[List[ValidationError], Dict[int, List[ValidationError]], None],
-    name: str = "the data",
-    details: bool = False,
-    id_lookup: Optional[Union[List[str], Dict[int, str]]] = None,
+        errors: Union[List[ValidationError], Dict[int, List[ValidationError]], None],
+        name: str = "the data",
+        details: bool = False,
+        id_lookup: Optional[Union[List[str], Dict[int, str]]] = None,
 ) -> str:
     """
     Convert a set of errors (list or dict) to a human readable string representation.
