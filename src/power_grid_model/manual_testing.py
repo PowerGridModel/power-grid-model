@@ -190,8 +190,9 @@ def convert_batch_to_list_data(
             for i, batch in enumerate(data):
                 list_data[i][component] = batch
         else:
-            # For indptr/data structures,
-            for i, (idx0, idx1) in enumerate(zip(data["indptr"][:-1], data["indptr"][1:])):
+            # For indptr/data structures, use the indptr to select the items for each batch.
+            indptr = data["indptr"]
+            for i, (idx0, idx1) in enumerate(zip(indptr[:-1], indptr[1:])):
                 list_data[i][component] = data["data"][idx0:idx1]
     return list_data
 
