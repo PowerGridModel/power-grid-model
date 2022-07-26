@@ -34,7 +34,7 @@ def is_nan(data) -> bool:
 
 
 def convert_list_to_batch_data(
-    datasets: List[Dict[str, np.ndarray]]
+    list_data: List[Dict[str, np.ndarray]]
 ) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Convert a list of datasets to one single batch dataset
@@ -44,7 +44,7 @@ def convert_list_to_batch_data(
         output: {"node": <2d-array>, "line": <2d-array>}
          -or-:  {"indptr": <1d-array>, "data": <1d-array>}
     Args:
-        datasets: list of dataset
+        list_data: list of dataset
 
     Returns:
         batch dataset
@@ -53,22 +53,22 @@ def convert_list_to_batch_data(
     """
 
     # List all *unique* types
-    components = {x for dataset in datasets for x in dataset.keys()}
+    components = {x for dataset in list_data for x in dataset.keys()}
 
     batch_data = {}
     for component in components:
 
         # Create a 2D array if the component exists in all datasets and number of objects is the same in each dataset
-        comp_exists_in_all_datasets = all(component in x for x in datasets)
-        all_sizes_are_the_same = lambda: all(x[component].size == datasets[0][component].size for x in datasets)
+        comp_exists_in_all_datasets = all(component in x for x in list_data)
+        all_sizes_are_the_same = lambda: all(x[component].size == list_data[0][component].size for x in list_data)
         if comp_exists_in_all_datasets and all_sizes_are_the_same():
-            batch_data[component] = np.stack([x[component] for x in datasets], axis=0)
+            batch_data[component] = np.stack([x[component] for x in list_data], axis=0)
             continue
 
         # otherwise use indptr/data dict
         indptr = [0]
         data = []
-        for dataset in datasets:
+        for dataset in list_data:
 
             if component in dataset:
                 # If the current dataset contains the component, increase the indptr for this batch and append the data
