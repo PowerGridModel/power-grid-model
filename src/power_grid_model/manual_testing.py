@@ -101,29 +101,46 @@ def convert_python_to_numpy(
         A single or batch dataset for power-grid-model
 
     """
-    if isinstance(data, dict):
-        return_dict = {}
-        for component_name, component_list in data.items():
-            arr: np.ndarray = initialize_array(data_type, component_name, len(component_list))
-            for i, component in enumerate(component_list):
-                for property_name, value in component.items():
-                    if property_name == "extra":
-                        continue
-                    if property_name not in arr[i].dtype.names:
-                        raise ValueError(f"Invalid property '{property_name}' for {component_name} {data_type} data.")
-                    try:
-                        arr[i][property_name] = value
-                    except ValueError as ex:
-                        raise ValueError(f"Invalid '{property_name}' value for {component_name} {data_type} data: {ex}")
 
-            return_dict[component_name] = arr
-        return return_dict
-
+    # If the inpute data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
+    # first convert each batch seperately, by recusively calling this function for each batch. Then the numpy
+    # data for all batches in converted into a proper and compact numpy structure.
     if isinstance(data, list):
         list_data = [convert_python_to_numpy(json_dict, data_type=data_type) for json_dict in data]
         return convert_list_to_batch_data(list_data)
 
-    raise TypeError("Only list or dict is allowed in JSON data!")
+    # This should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
+    if not isinstance(data, dict):
+        raise TypeError("Only list or dict is allowed in JSON data!")
+
+    dataset: Dict[str, np.ndarray] = {}
+    for component, objects in data.items():
+
+        # We'll initialize an 1d-array with NaN values for all the objects of this component type
+        dataset[component] = initialize_array(data_type, component, len(objects))
+
+        for i, obj in enumerate(objects):
+            # As each object is a separate dictionary, and the properties may differ per object, we need to check
+            # all properties. Non-existing properties
+            for property, value in obj.items():
+                if property == "extra":
+                    # The "extra" property is a special one. It can store any type of information associated with
+                    # an object, but it will not be used in the calculations. Therefore it is not included in the
+                    # numpy array, so we can skip this property
+                    continue
+
+                if property not in dataset[component].dtype.names:
+                    # If a property doen't exist, the user made a mistake. Let's be merciless in that case,
+                    # for their own good.
+                    raise ValueError(f"Invalid property '{property}' for {component} {data_type} data.")
+
+                # Now just assign the value and raise an error if the value cannot be stored in the specific
+                # numpy array data format for this property.
+                try:
+                    dataset[component][i][property] = value
+                except ValueError as ex:
+                    raise ValueError(f"Invalid '{property}' value for {component} {data_type} data: {ex}")
+    return dataset
 
 
 def convert_batch_to_list_data(
