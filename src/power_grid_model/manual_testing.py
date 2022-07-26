@@ -299,7 +299,7 @@ def _compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: in
             {"id": 1, "u_rated": 10500.0, "extra": {"original_id": 456}},
         ],
         "line": [
-            {"id": 0, "node_from": 0, "node_to": 1, ...}
+            {"id": 2, "node_from": 0, "node_to": 1, ...}
         ]
     }
 
