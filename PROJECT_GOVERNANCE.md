@@ -20,12 +20,11 @@ The Technical Steering Committee (TSC) is responsible for:
 1. Raise subjects/issues that are important for the direction/development of this project
 
 The community council consists of the following members:
-1. Aditya Hekker
 1. Tony Xiang
 1. Werner van Westering
 1. Jonas van den Bogaard
 
-Aditya Hekker will chair the TSC.
+Tony Xiang will chair the TSC.
 
 Any community member or Contributor can ask that something 
 be reviewed by the TSC by contacting the TSC at <dynamic.grid.calculation@alliander.com>.
@@ -59,7 +58,7 @@ To become a contributor, a community member simply has to perform one or more ac
 ### Notable Non-Code Contributors
 
 The code contributors (who pushed commits into the repository) are automatically maintained by GitHub.
-However, many people have been contributing to this project in other forms with commiting any code, e.g., 
+However, many people have been contributing to this project in other forms without commiting any code, e.g., 
 developing new mathematical algorithms.
 To honor their contribution, we mention their names as non-code contributors as below:
 
