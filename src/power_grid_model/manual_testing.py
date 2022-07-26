@@ -8,7 +8,7 @@ This file contains all the helper functions for testing purpose
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, IO, Optional, Union
+from typing import IO, Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -256,7 +256,7 @@ def export_json_data(
     data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
     indent: Optional[int] = 2,
     compact: bool = False,
-    extra_info: Optional[Dict[int, Any]] = None,
+    extra_info: Optional[Union[Dict[int, Any], List[Dict[int, Any]]]] = None,
 ):
     """
     export json data
@@ -272,13 +272,8 @@ def export_json_data(
         Save to file
     """
     json_data = convert_numpy_to_python(data)
-
-    # Inject extra info
     if extra_info is not None:
-        for component, objects in json_data.items():
-            for obj in objects:
-                if obj["id"] in extra_info:
-                    obj["extra"] = extra_info[obj["id"]]
+        _inject_extra_info(data=json_data, extra_info=extra_info)
 
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
         if compact and indent:
@@ -287,6 +282,38 @@ def export_json_data(
             _compact_json_dump(json_data, file_pointer, indent=indent, max_level=max_level)
         else:
             json.dump(json_data, file_pointer, indent=indent)
+
+
+def _inject_extra_info(
+    data: Union[Dict[str, List[Dict[str, Union[float, int]]]], List[Dict[str, List[Dict[str, Union[float, int]]]]]],
+    extra_info: Union[Dict[int, Any], List[Dict[int, Any]]],
+):
+    """
+    Injects extra info to the objects by ID
+
+    Args:
+        data: Power Grid Model Python data, as written to pgm json files.
+        extra_info: A dictionary indexed by object id. The value may be anything.
+
+    """
+    if isinstance(data, list):
+        if isinstance(extra_info, list):
+            # If both data and extra_info are lists, expect one extra info set per batch
+            for batch, info in zip(data, extra_info):
+                _inject_extra_info(batch, info)
+        else:
+            # If only data is a list, copy extra_info for each batch
+            for batch in data:
+                _inject_extra_info(batch, extra_info)
+    elif isinstance(data, dict):
+        if not isinstance(extra_info, dict):
+            raise TypeError("Invalid extra info data type")
+        for component, objects in data.items():
+            for obj in objects:
+                if obj["id"] in extra_info:
+                    obj["extra"] = extra_info[obj["id"]]
+    else:
+        raise TypeError("Invalid data type")
 
 
 def _compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):
