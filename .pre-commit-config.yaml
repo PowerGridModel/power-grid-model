@@ -14,9 +14,16 @@ repos:
         language_version: python3.8
   - repo: local
     hooks:
-    - id: pytest
-      name: pytest
-      entry: pytest
-      language: system
-      pass_filenames: false
-      always_run: true
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        files: ^src/.+\.py$
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
