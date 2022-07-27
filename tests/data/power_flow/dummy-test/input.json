@@ -2,15 +2,18 @@
   "node": [
     {
       "id": 1,
-      "u_rated": 10e3
+      "u_rated": 10e3,
+      "extra": "First Node"
     },
     {
       "id": 2,
-      "u_rated": 10e3
+      "u_rated": 10e3,
+      "extra": "Second Node"
     },
     {
       "id": 3,
-      "u_rated": 10e3
+      "u_rated": 10e3,
+      "extra": "Third Node"
     }
   ],
   "line": [
