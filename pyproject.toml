@@ -67,3 +67,6 @@ addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "ht
 [tool.black]
 line-length = 120
 target-version = ['py38']
+
+[tool.pylint]
+max-line-length = 120

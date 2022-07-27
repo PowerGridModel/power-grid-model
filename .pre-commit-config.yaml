@@ -17,10 +17,10 @@ repos:
       - id: pylint
         name: pylint
         entry: pylint
-        language: system
         files: ^src/.+\.py$
-  - repo: local
-    hooks:
+        language: system
+        types: [ python ]
+        args: [ "--rcfile=pyproject.toml" ]
       - id: pytest
         name: pytest
         entry: pytest
