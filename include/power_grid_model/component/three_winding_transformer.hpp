@@ -42,7 +42,6 @@ class ThreeWindingTransformer : public Branch3 {
           winding_3_{three_winding_transformer_input.winding_3},
           clock_12_{three_winding_transformer_input.clock_12},
           clock_13_{three_winding_transformer_input.clock_13},
-          clock_23_{three_winding_transformer_input.clock_23},
           tap_side_{three_winding_transformer_input.tap_side},
           tap_pos_{three_winding_transformer_input.tap_pos},
           tap_min_{three_winding_transformer_input.tap_min},
@@ -121,7 +120,7 @@ class ThreeWindingTransformer : public Branch3 {
     double sn_1_, sn_2_, sn_3_;
     double uk_12_, uk_13_, uk_23_, pk_12_, pk_13_, pk_23_, i0_, p0_;
     WindingType winding_1_, winding_2_, winding_3_;
-    IntS clock_12_, clock_13_, clock_23_;
+    IntS clock_12_, clock_13_;
     Branch3Side tap_side_;
     IntS tap_pos_, tap_min_, tap_max_, tap_nom_, tap_direction_;
     double tap_size_;
@@ -326,7 +325,6 @@ class ThreeWindingTransformer : public Branch3 {
         return std::make_tuple(transformer_input_T1, transformer_input_T2, transformer_input_T3);
     }
 };
-// TODO clock 23 can be removed
 
 }  // namespace power_grid_model
 

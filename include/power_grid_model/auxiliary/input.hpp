@@ -51,7 +51,7 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(ThreeWindingTransformerInputBasics, 1, Branch3I
     double, u1, double, u2, double, u3, double, sn_1, double, sn_2, double, sn_3, 
     double, uk_12, double, uk_13, double, uk_23, double, pk_12, double, pk_13, double, pk_23, double, i0, double, p0, 
     WindingType, winding_1, WindingType, winding_2, WindingType, winding_3,
-    IntS, clock_12, IntS, clock_13, IntS, clock_23, 
+    IntS, clock_12, IntS, clock_13,
     Branch3Side, tap_side, IntS, tap_pos, IntS, tap_min, IntS, tap_max, IntS, tap_nom, double, tap_size);
 
 POWER_GRID_MODEL_DATA_STRUCT_DEF(ThreeWindingTransformerInput, 1, ThreeWindingTransformerInputBasics, 

@@ -6,21 +6,18 @@ SPDX-License-Identifier: MPL-2.0
 
 # Graph Data Model
 
-To represent the physical grid components, and the calculation results,
-this library uses a graph data model.
-In this document, the graph data model is presented with the list of all components types,
-and their relevant input/output attributes.
+To represent the physical grid components, and the calculation results, this library uses a graph data model. In this
+document, the graph data model is presented with the list of all components types, and their relevant input/output
+attributes.
 
 # Enumerations
 
-Some attributes of components are enumerations.
-The enumerations are implemented using 8-bit signed integer, as explained in
+Some attributes of components are enumerations. The enumerations are implemented using 8-bit signed integer, as
+explained in
 [Native Data Interface](native-data-interface.md).
 
-The table below for a list of enumerations.
-They are all defined in the module `power_grid_model.enum`.
-The underlying type of enumeration is `int8_t`.
-
+The table below for a list of enumerations. They are all defined in the module `power_grid_model.enum`. The underlying
+type of enumeration is `int8_t`.
 
 | enum type name in Python | possible values                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | usage |
 | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| --- |
@@ -30,13 +27,10 @@ The underlying type of enumeration is `int8_t`.
 | `MeasuredTerminalType` | `branch_from = 0`, measuring the from-terminal between a branch and a node <br> `branch_to = 1`, measuring the to-terminal between a branch and a node <br> `source = 2`, measuring the terminal between a source and a node <br> `shunt = 3`, measuring the terminal between a shunt and a node <br> `load = 4`, measuring the terminal between a load and a node <br> `generator = 5`, measuring the terminal between a generator and a node <br> `branch3_1 = 6`, measuring the terminal-1 between a branch3 and a node <br> `branch3_2 = 7`, measuring the terminal-2 between a branch3 and a node <br> `branch3_3 = 8`, measuring the terminal-3 between a branch3 and a node | type of flow (e.g. power) measurement |
 | `CalculationMethod` | `linear = 0` <br> `newton_raphson = 1` <br> `iterative_linear = 2` <br> `iterative_current = 3` <br> `linear_current = 4`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | method of calculation |
 
-
-
 # Component Type Hierarchy and Graph Data Model
 
-The components types are organized in an inheritance-like hierarchy.
-A sub-type has all the attributes from its parent type.
-The hierarchy of the component types is shown below.
+The components types are organized in an inheritance-like hierarchy. A sub-type has all the attributes from its parent
+type. The hierarchy of the component types is shown below.
 
 ```
 base ──┬─────────────────────────────────────────────── node
@@ -63,12 +57,12 @@ base ──┬──────────────────────
                                                     └── asym_power_sensor
 ```
 
-**NOTE: the type names in the hierarchy are exactly the same as the component type names
-in the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
+**NOTE: the type names in the hierarchy are exactly the same as the component type names in
+the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
 
-This library uses a graph data model with three generic component types: `node`, `branch`, `branch3` and `appliance`.
-A node is similar to a vertex in the graph, a branch is similar to an edge in the graph and a branch3 connects threee nodes together.
-An appliance is a component which is connected (coupled) to a node, it is seen as a user of this node.
+This library uses a graph data model with three generic component types: `node`, `branch`, `branch3` and `appliance`. A
+node is similar to a vertex in the graph, a branch is similar to an edge in the graph and a branch3 connects threee
+nodes together. An appliance is a component which is connected (coupled) to a node, it is seen as a user of this node.
 
 The figure below shows a simple example:
 
@@ -81,50 +75,49 @@ source_5 (appliance)       sym_load_4 (appliance)             node_7
 * There are four nodes (points/vertices) in the graph of this simple grid.
 * The `node_1` and `node_2` are connected by `line_3` which is a branch (edge).
 * The `node_2`, `node_6`, and `node_7` are connected by `three_winding_transformer_8` which is a branch3.
-* There are two appliances in the grid. 
-The `source_5` is coupled to `node_1` and the `sym_load_4` is coupled to `node_2`.
+* There are two appliances in the grid. The `source_5` is coupled to `node_1` and the `sym_load_4` is coupled
+  to `node_2`.
 
 # Symmetry of Components and Calculation
 
-It should be emphasized that the symmetry of components and calculation are two independent concepts in the model.
-For example, a power grid model can consist of both `sym_load` and `asym_load`.
-They are symmetric or asymmetric load components.
-On the other hand, the same model can execute symmetric or asymmetric calculations.
-* In case of symmetric calculation, the `asym_load` will be treated as a symmetric load
-by averaging the specified power through three phases.
-* In case of asymmetric calculation, the `sym_load` will be treated as an asymmetric load
-by dividing the total specified power equally into three phases.
+It should be emphasized that the symmetry of components and calculation are two independent concepts in the model. For
+example, a power grid model can consist of both `sym_load` and `asym_load`. They are symmetric or asymmetric load
+components. On the other hand, the same model can execute symmetric or asymmetric calculations.
+
+* In case of symmetric calculation, the `asym_load` will be treated as a symmetric load by averaging the specified power
+  through three phases.
+* In case of asymmetric calculation, the `sym_load` will be treated as an asymmetric load by dividing the total
+  specified power equally into three phases.
 
 # Attributes of Components
 
-The attributes of components are listed in the tables in the sections below.
-The column names of the tables are as follows:
+The attributes of components are listed in the tables in the sections below. The column names of the tables are as
+follows:
 
-* name: name of the attribute.
-  It is exactly the same as the attribute name in `power_grid_model.power_grid_meta_data`.
-* data type: data type of the attribute.
-  It is either a type from the table in [Native Data Interface](native-data-interface.md).
-  Or it can be an enumeration as above defined. There is two special data types `RealValueInput` and `RealValueOutput`.
-    * `RealValueInput` is used for some input attributes.
-      It is a `double` for a symmetric class (e.g. `sym_load`) and `double[3]` an asymmetric class (e.g. `asym_load`).
-      It is explained in detail in the corresponding types.
-    * `RealValueOutput` is used for many output attributes.
-      It is a `double` in symmetric calculation and `double[3]` for asymmetric calculation.
+* name: name of the attribute. It is exactly the same as the attribute name in `power_grid_model.power_grid_meta_data`.
+* data type: data type of the attribute. It is either a type from the table
+  in [Native Data Interface](native-data-interface.md). Or it can be an enumeration as above defined. There is two
+  special data types `RealValueInput` and `RealValueOutput`.
+    * `RealValueInput` is used for some input attributes. It is a `double` for a symmetric class (e.g. `sym_load`)
+      and `double[3]` an asymmetric class (e.g. `asym_load`). It is explained in detail in the corresponding types.
+    * `RealValueOutput` is used for many output attributes. It is a `double` in symmetric calculation and `double[3]`
+      for asymmetric calculation.
     * As noted above, these two special types are independent.
-* unit: unit of the attribute, if it is applicable. As a general rule, only standard SI units without any prefix are used.
+* unit: unit of the attribute, if it is applicable. As a general rule, only standard SI units without any prefix are
+  used.
 * description: description of the attribute.
-* required: if the attribute is required. If not, then it is optional.
-  Note if you choose not to specify an optional attribute,
-  it should have the null value as defined in [Native Data Interface](native-data-interface.md).
+* required: if the attribute is required. If not, then it is optional. Note if you choose not to specify an optional
+  attribute, it should have the null value as defined in [Native Data Interface](native-data-interface.md).
 * input: if the attribute is part of an input dataset.
-* update: if the attribute can be mutated by the update call `PowerGridModel.update` on an existing instance,
-  only applicable when this attribute is part of an input dataset.
+* update: if the attribute can be mutated by the update call `PowerGridModel.update` on an existing instance, only
+  applicable when this attribute is part of an input dataset.
 * output: if the attribute is part of an output dataset.
 * valid values: if applicable, an indication which values are valid for the input data
 
 # Validation
-For performance reasons, the input/update data is not automatically validated.
-There are validation functions available in the `power_grid_model.validation` module:
+
+For performance reasons, the input/update data is not automatically validated. There are validation functions available
+in the `power_grid_model.validation` module:
 
 ```python
 # Manual validation
@@ -136,16 +129,20 @@ validate_batch_data(input_data, update_data, calculation_type, symmetric) -> Dic
 # Assertions
 #   assert_valid_input_data() and assert_valid_batch_data() raise a ValidationException,
 #   containing the list/dict of errors, when the data is invalid.
-assert_valid_input_data(input_data, calculation_type, symmetric) raises ValidationException
-assert_valid_batch_data(input_data, calculation_type, update_data, symmetric) raises ValidationException
+assert_valid_input_data(input_data, calculation_type, symmetric)
+raises
+ValidationException
+assert_valid_batch_data(input_data, calculation_type, update_data, symmetric)
+raises
+ValidationException
 
 # Utilities
 #   errors_to_string() converts a set of errors to a human readable (multi-line) string representation
 errors_to_string(errors, name, details)
 ```
 
-Have a look at the Jupyter Notebook "[Validation Examples](../examples/Validation%20Examples.ipynb)" for more information 
-on how to apply these functions.
+Have a look at the Jupyter Notebook "[Validation Examples](../examples/Validation%20Examples.ipynb)" for more
+information on how to apply these functions.
 
 # Component Types
 
@@ -173,16 +170,13 @@ The base type for all power grid components.
 | `u_angle` | `RealValueOutput` | rad | voltage angle | &#10004; | &#10060; | &#10060; | &#10004; | |
 | `u` | `RealValueOutput` | volt (V) | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation | &#10004; | &#10060; | &#10060; | &#10004; | |
 
-
 ## Branch
 
 * type name: `branch`
 
-`branch` is the abstract base type for the component which connects two *different* nodes.
-For each branch two switches are always defined at from- and to-side of the branch.
-In reality such switches may not exist.
-For example, a cable usually permanently connects two joints.
-In this case, the attribute `from_status` and `to_status` is always 1.
+`branch` is the abstract base type for the component which connects two *different* nodes. For each branch two switches
+are always defined at from- and to-side of the branch. In reality such switches may not exist. For example, a cable
+usually permanently connects two joints. In this case, the attribute `from_status` and `to_status` is always 1.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -200,13 +194,12 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | `s_to` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at to-side | &#10004; | &#10060; | &#10060; | &#10004; | |
 | `loading` | `double` | - | relative loading of the line, `1.0` meaning 100% loaded. | &#10004; | &#10060; | &#10060; | &#10004; | |
 
-
 ### Line
 
 * type name: 'line'
 
-`line` is a branch with specified serial impedance and shunt admittance. A cable is also modeled as `line`.
-A `line` can only connect two nodes with the same rated voltage.
+`line` is a branch with specified serial impedance and shunt admittance. A cable is also modeled as `line`. A `line` can
+only connect two nodes with the same rated voltage.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -224,17 +217,16 @@ A `line` can only connect two nodes with the same rated voltage.
 
 * type name: `link`
 
-`link` usually represents a short internal cable/connection between two busbars inside a substation.
-It has a very high admittance (small impedance) which is set to a fixed per-unit value
-(equivalent to 10e6 siemens for 10kV network).
-There is no additional attribute for `link`.
+`link` usually represents a short internal cable/connection between two busbars inside a substation. It has a very high
+admittance (small impedance) which is set to a fixed per-unit value
+(equivalent to 10e6 siemens for 10kV network). There is no additional attribute for `link`.
 
 ### Transformer
 
 `transformer` connects two nodes with possibly different voltage levels.
 
-**Note: it can happen that `tap_min > tap_max`.
-In this case the winding voltage is decreased if the tap position is increased.**
+**Note: it can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
+increased.**
 
 | name | data type | unit | description                                                                                                                                                                                                                        | required | input | update | output | valid values |
 | --- | --- | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| :---: | :---: | :---: | :---: | :---: |
@@ -263,14 +255,12 @@ In this case the winding voltage is decreased if the tap position is increased.*
 | `r_grounding_to` | `double` | ohm (Ω) | grounding resistance at to-side, if relevant                                                                                                                                                                                       | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 | `x_grounding_to` | `double` | ohm (Ω) | grounding reactance at to-side, if relevant                                                                                                                                                                                        | &#10060; default zero | &#10004; | &#10060; | &#10060; | |
 
-
 ## Branch3
 
 * type name: `branch3`
 
-`branch3` is the abstract base type for the component which connects three *different* nodes.
-For each branch3 three switches are always defined at side 1, 2, or 3 of the branch.
-In reality such switches may not exist.
+`branch3` is the abstract base type for the component which connects three *different* nodes. For each branch3 three
+switches are always defined at side 1, 2, or 3 of the branch. In reality such switches may not exist.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -294,13 +284,12 @@ In reality such switches may not exist.
 | `s_3` | `RealValueOutput` | volt-ampere (VA) | apparent power flowing at side 3 | &#10004; | &#10060; | &#10060; | &#10004; | |
 | `loading` | `double` | - | relative loading of the branch, `1.0` meaning 100% loaded. | &#10004; | &#10060; | &#10060; | &#10004; | |
 
-
 ### Three-Winding Transformer
 
 `three_winding_transformer` connects three nodes with possibly different voltage levels.
 
-**Note: it can happen that `tap_min > tap_max`.
-In this case the winding voltage is decreased if the tap position is increased.**
+**Note: it can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
+increased.**
 
 | name        | data type | unit | description                                                                                               |             required             | input | update | output |                   valid values                   |
 |-------------| --- | --- |-----------------------------------------------------------------------------------------------------------|:--------------------------------:| :---: | :---: | :---: |:------------------------------------------------:|
@@ -323,7 +312,6 @@ In this case the winding voltage is decreased if the tap position is increased.*
 | `winding_3` | `WindingType` | - | side 3 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
 | `clock_12`  | `int8_t` | - | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
 | `clock_13`  | `int8_t` | - | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
-| `clock_23`  | `int8_t` | - | clock number of phase shift across side 2-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
 | `tap_side` | `BranchSide` | - | side of tap changer                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                        `side_1` or `side_2` or `side_3`                         |
 | `tap_pos`   | `int8_t` | - | current position of tap changer                                                                           |             &#10004;             | &#10004; | &#10004; | &#10060; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min` | `int8_t` | - | position of tap changer at minimum voltage                                                                |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
@@ -347,14 +335,14 @@ In this case the winding voltage is decreased if the tap position is increased.*
 | `r_grounding_2` | `double` | ohm (Ω) | grounding resistance at side 2, if relevant                                                               | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
 | `x_grounding_2` | `double` | ohm (Ω) | grounding reactance at side 2, if relevant                                                                | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
 | `r_grounding_3` | `double` | ohm (Ω) | grounding resistance at side 3, if relevant                                                               | &#10060; default zero | &#10004; | &#10060; | &#10060; |                                                                        |
-| `x_grounding_3` | `double` | ohm (Ω) | grounding reactance at side 3, if relevant                                                                | &#10060; default zero | &#10004; | &#10060; | &#10060; |   
+| `x_grounding_3` | `double` | ohm (Ω) | grounding reactance at side 3, if relevant                                                                | &#10060; default zero | &#10004; | &#10060; | &#10060; |
 
 ## Appliance
 
 * type name: `appliance`
 
-`appliance` is an abstract user which is coupled to a `node`.
-For each `appliance` a switch is defined between the `appliance` and the `node`.
+`appliance` is an abstract user which is coupled to a `node`. For each `appliance` a switch is defined between
+the `appliance` and the `node`.
 
 **The sign of active/reactive power of the appliance depends on the reference direction.**
 
@@ -377,9 +365,8 @@ For each `appliance` a switch is defined between the `appliance` and the `node`.
 * reference direction: generator
 
 `source` is representing the external network with a
-[Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem).
-It has an infinite voltage source with an internal impedance.
-The impedance is specified by convention as short circuit power.
+[Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem). It has an infinite voltage source
+with an internal impedance. The impedance is specified by convention as short circuit power.
 
 | name          | data type | unit | description                                        |           required           | input | update | output | valid values |
 |---------------| --- | --- |----------------------------------------------------|:----------------------------:| :---: | :---: | :---: |:------------:|
@@ -393,8 +380,8 @@ The impedance is specified by convention as short circuit power.
 
 * type name: `generic_load_gen`
 
-`generic_load_gen` is an abstract load/generation
-which contains only the type of the load/generation with response to voltage.
+`generic_load_gen` is an abstract load/generation which contains only the type of the load/generation with response to
+voltage.
 
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
@@ -419,14 +406,13 @@ The table below shows a list of attributes.
 | `p_specified` | `RealValueInput` | watt (W) | specified active power | &#10024; only for power flow  | &#10004; | &#10004; | &#10060; |
 | `q_specified` | `RealValueInput` | volt-ampere-reactive (var) | specified reactive power | &#10024; only for power flow | &#10004; | &#10004; | &#10060; |
 
-
 ### Shunt
 
 * type name: `shunt`
 * reference direction: load
 
-`shunt` is an `appliance` with a fixed admittance (impedance).
-It behaves similar to a load/generator with type `const_impedance`.
+`shunt` is an `appliance` with a fixed admittance (impedance). It behaves similar to a load/generator with
+type `const_impedance`.
 
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
@@ -435,14 +421,13 @@ It behaves similar to a load/generator with type `const_impedance`.
 | `g0` | `double` | siemens (S) | zero-sequence shunt conductance | &#10024; only for asymmetric calculation | &#10004; | &#10060; | &#10060; |
 | `b0` | `double` | siemens (S) | zero-sequence shunt susceptance | &#10024; only for asymmetric calculation | &#10004; | &#10060; | &#10060; |
 
-
 ## Sensor
 
 * type name: `sensor`
 
-`sensor` is an abstract type for all the sensor types.
-A sensor does not have any physical meaning. Rather, it provides measurement data for the state estimation algorithm.
-The state estimator uses the data to evaluate the state of the grid with the highest probability.
+`sensor` is an abstract type for all the sensor types. A sensor does not have any physical meaning. Rather, it provides
+measurement data for the state estimation algorithm. The state estimator uses the data to evaluate the state of the grid
+with the highest probability.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -452,19 +437,18 @@ The state estimator uses the data to evaluate the state of the grid with the hig
 
 * type name: `generic_voltage_sensor`
 
-`generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor.
-It measures the magnitude and (optionally) the angle of the voltage of a `node`.
+`generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor. It measures the magnitude
+and (optionally) the angle of the voltage of a `node`.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | `u_sigma` | `double` | volt (V) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; | `> 0` |
 
-
 #### Voltage Sensor Concrete Types
 
 There are two concrete types of voltage sensor. They share similar attributes:
-the meaning of `RealValueInput` is different, as shown in the table below. In a `sym_voltage_sensor` the measured voltage is a line-to-line voltage.
-In a `asym_voltage_sensor` the measured voltage is a 3-phase line-to-ground voltage.
+the meaning of `RealValueInput` is different, as shown in the table below. In a `sym_voltage_sensor` the measured
+voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured voltage is a 3-phase line-to-ground voltage.
 
 | type name | meaning of `RealValueInput` |
 | --- | --- |
@@ -480,25 +464,20 @@ The table below shows a list of attributes.
 | `u_residual` | `RealValueOutput` | volt (V) | residual value between measured voltage magnitude and calculated voltage magnitude | &#10004; | &#10060; | &#10060; | &#10004; | |
 | `u_angle_residual` | `RealValueOutput` | rad | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) | &#10060; | &#10060; | &#10060; | &#10004; | |
 
-
 ### Generic Power Sensor
 
 * type name: `generic_power_sensor`
 
-`power_sensor` is an abstract class for symmetric and asymmetric power sensor.
-It measures the active/reactive power flow of a terminal.
-The terminal is either connecting an `appliance` and a `node`,
-or connecting the from/to end of a `branch` and a `node`.
-In case of a terminal between an `appliance` and a `node`,
-the power reference direction in the measurement data is the same as the reference direction of the `appliance`.
-For example, if a `power_sensor` is measuring a `source`,
-a positive `p_measured` indicates that the active power flows from the source to the node.
+`power_sensor` is an abstract class for symmetric and asymmetric power sensor. It measures the active/reactive power
+flow of a terminal. The terminal is either connecting an `appliance` and a `node`, or connecting the from/to end of
+a `branch` and a `node`. In case of a terminal between an `appliance` and a `node`, the power reference direction in the
+measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
+measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
 | name | data type | unit | description | required | input | update | output |                    valid values                     |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |:---------------------------------------------------:|
 | `measured_terminal_type` | `MeasuredTerminalType` | - | indicate if it measures an `appliance` or a `branch`| &#10004; | &#10004; | &#10060; | &#10060; | the terminal type should match the `measured_object` |
 | `power_sigma` | `double` | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation| &#10004; | &#10004; | &#10060; |                        `> 0`                        |
-
 
 #### Power Sensor Concrete Types
 
@@ -512,7 +491,6 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 
 The table below shows a list of attributes.
 
-
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
 | `p_measured` | `RealValueInput` | watt (W) | measured active power | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; |
@@ -520,10 +498,10 @@ The table below shows a list of attributes.
 | `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | &#10004; | &#10060; | &#10060; | &#10004; |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | &#10004; | &#10060; | &#10060; | &#10004; |
 
-
 # Selection of calculation method
 
-There are four power-flow algorithms and one state estimation algorithm available in power-grid-model. Some methods use a prefactorization feature which is also described in this section.
+There are four power-flow algorithms and one state estimation algorithm available in power-grid-model. Some methods use
+a prefactorization feature which is also described in this section.
 
 ## Power-flow algorithms
 
@@ -532,24 +510,36 @@ Following are guidelines to be considered while selecting a power-flow `Calculat
 ### Iterative methods
 
 These should be selected when exact solution is required within specified `error_tolerance`.
-* 
+
+*
 * `CalculationMethod.newton_raphson`: Traditional Newton-Raphson method.
-* `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less iterations. However, Iterative current can be faster most times because it uses matrix prefactorization.
- 
+* `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less
+  iterations. However, Iterative current can be faster most times because it uses matrix prefactorization.
+
 ### Linear methods
 
-Linear approximation methods are many times faster than the iterative methods. Can be used where approximate solutions are acceptable. Both methods have equal computation time for a single powerflow calculation.
+Linear approximation methods are many times faster than the iterative methods. Can be used where approximate solutions
+are acceptable. Both methods have equal computation time for a single powerflow calculation.
+
 * `CalculationMethod.linear`: It will be more accurate when most of the load/generation types are of constant impedance.
-* `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power or constant current. Batch calculations will be faster because matrix prefacorization is possible.
+* `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power
+  or constant current. Batch calculations will be faster because matrix prefacorization is possible.
 
 ## State Estimation algorithms
 
 Following are guidelines to be considered while selecting a state estimation `CalculationMethod` for your application:
 
-* `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true solution. Matrix prefactorization is possible.
+* `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true solution. Matrix
+  prefactorization is possible.
 
 ## Matrix Prefactorization
 
-Every iteration of power-flow or state estimation has a step of solving large number of sparse linear equations i.e. `AX=b` in matrix form. Computation wise this is a very expensive step. One major component of this step is factorization of the `A` matrix. In certain calculation methods, this `A` matrix and its factorization remains unchanged over iterations and batches (only specific cases) which makes it possible reuse the factorization, skip this step and improve performance. 
+Every iteration of power-flow or state estimation has a step of solving large number of sparse linear equations
+i.e. `AX=b` in matrix form. Computation wise this is a very expensive step. One major component of this step is
+factorization of the `A` matrix. In certain calculation methods, this `A` matrix and its factorization remains unchanged
+over iterations and batches (only specific cases) which makes it possible reuse the factorization, skip this step and
+improve performance.
 
-**Note:** Prefactorization over batches is possible when switching status or specified power values of load/generation or source reference voltage is modified. It is not possible when topology or grid parameters are modified, i.e. in switching of branches, shunt, sources or change in transformer tap positions.
+**Note:** Prefactorization over batches is possible when switching status or specified power values of load/generation
+or source reference voltage is modified. It is not possible when topology or grid parameters are modified, i.e. in
+switching of branches, shunt, sources or change in transformer tap positions.
