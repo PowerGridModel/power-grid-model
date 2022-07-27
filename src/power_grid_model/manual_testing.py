@@ -60,10 +60,11 @@ def convert_list_to_batch_data(
 
         # Create a 2D array if the component exists in all datasets and number of objects is the same in each dataset
         comp_exists_in_all_datasets = all(component in x for x in list_data)
-        all_sizes_are_the_same = lambda: all(x[component].size == list_data[0][component].size for x in list_data)
-        if comp_exists_in_all_datasets and all_sizes_are_the_same():
-            batch_data[component] = np.stack([x[component] for x in list_data], axis=0)
-            continue
+        if comp_exists_in_all_datasets:
+            all_sizes_are_the_same = all(x[component].size == list_data[0][component].size for x in list_data)
+            if all_sizes_are_the_same:
+                batch_data[component] = np.stack([x[component] for x in list_data], axis=0)
+                continue
 
         # otherwise use indptr/data dict
         indptr = [0]
@@ -122,24 +123,24 @@ def convert_python_to_numpy(
         for i, obj in enumerate(objects):
             # As each object is a separate dictionary, and the properties may differ per object, we need to check
             # all properties. Non-existing properties
-            for property, value in obj.items():
-                if property == "extra":
+            for prop, value in obj.items():
+                if prop == "extra":
                     # The "extra" property is a special one. It can store any type of information associated with
                     # an object, but it will not be used in the calculations. Therefore it is not included in the
                     # numpy array, so we can skip this property
                     continue
 
-                if property not in dataset[component].dtype.names:
+                if prop not in dataset[component].dtype.names:
                     # If a property doen't exist, the user made a mistake. Let's be merciless in that case,
                     # for their own good.
-                    raise ValueError(f"Invalid property '{property}' for {component} {data_type} data.")
+                    raise ValueError(f"Invalid property '{prop}' for {component} {data_type} data.")
 
                 # Now just assign the value and raise an error if the value cannot be stored in the specific
                 # numpy array data format for this property.
                 try:
-                    dataset[component][i][property] = value
+                    dataset[component][i][prop] = value
                 except ValueError as ex:
-                    raise ValueError(f"Invalid '{property}' value for {component} {data_type} data: {ex}")
+                    raise ValueError(f"Invalid '{prop}' value for {component} {data_type} data: {ex}") from ex
     return dataset
 
 
@@ -309,7 +310,7 @@ def _inject_extra_info(
     elif isinstance(data, dict):
         if not isinstance(extra_info, dict):
             raise TypeError("Invalid extra info data type")
-        for component, objects in data.items():
+        for _, objects in data.items():
             for obj in objects:
                 if obj["id"] in extra_info:
                     obj["extra"] = extra_info[obj["id"]]
