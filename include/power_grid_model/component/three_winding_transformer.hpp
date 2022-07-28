@@ -107,7 +107,7 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     UpdateChange update(ThreeWindingTransformerUpdate const& update) {
-        assert(update.id = id());
+        assert(update.id == id());
         bool topo_changed = set_status(update.status_1, update.status_2, update.status_3);
         bool param_changed = set_tap(update.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
@@ -153,7 +153,7 @@ class ThreeWindingTransformer : public Branch3 {
         // convert all short circuit voltages relative to side 1
         double uk_12 = uk_12_ * sn_1_ / std::min(sn_1_, sn_2_);
         double uk_13 = uk_13_ * sn_1_ / std::min(sn_1_, sn_3_);
-        double uk_23 = uk_23_ * sn_1_ / std : min(sn_2_, sn_3_);
+        double uk_23 = uk_23_ * sn_1_ / std::min(sn_2_, sn_3_);
 
         // delta-wye conversion (12, 13, 23 -> 1, 2, 3)
         double uk_T1_ = 0.5 * (uk_12 + uk_13 - uk_23);
@@ -235,7 +235,7 @@ class ThreeWindingTransformer : public Branch3 {
             else {
                 u3 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            return std::make_tuple{u1, u2, u3};
+            return std::make_tuple(u1, u2, u3);
         }();
 
         auto const [uk_T1, uk_T2, uk_T3] = calculate_uk();

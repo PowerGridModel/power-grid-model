@@ -29,9 +29,9 @@ class Branch3 : public Base {
           node_1_{branch3_input.node_1},
           node_2_{branch3_input.node_2},
           node_3_{branch3_input.node_3},
-          status_1_{branch3_input.status_1},
-          status_2_{branch3_input.status_2},
-          status_3_{branch3_input.status_3} {
+          status_1_{(bool)branch3_input.status_1},
+          status_2_{(bool)branch3_input.status_2},
+          status_3_{(bool)branch3_input.status_3} {
         if (node_1_ == node_2_ || node_1_ == node_3_ || node_2_ == node_3_) {
             throw InvalidBranch3{id(), node_1_, node_2_, node_3_};
         }
@@ -47,23 +47,23 @@ class Branch3 : public Base {
     ID node_3() const {
         return node_3_;
     }
-    bool status_1() {
+    bool status_1() const {
         return status_1_;
     }
-    bool status_2() {
+    bool status_2() const {
         return status_2_;
     }
-    bool status_3() {
+    bool status_3() const {
         return status_3_;
     }
-    bool branch3_status() {
+    bool branch3_status() const {
         return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
     }
 
     // virtual getter
-    virtual double base_i_1 const = 0;
-    virtual double base_i_2 const = 0;
-    virtual double base_i_3 const = 0;
+    virtual double base_i_1() const = 0;
+    virtual double base_i_2() const = 0;
+    virtual double base_i_3() const = 0;
 
     // TODO calc_param()
 
