@@ -120,7 +120,7 @@ def test_convert_python_to_numpy__raises_value_error():
 
 
 def test_convert_python_to_numpy__raises_type_error():
-    with pytest.raises(TypeError, match="Only list or dict is allowed in JSON data!"):
+    with pytest.raises(TypeError, match="Data should be either a list or a dictionary!"):
         convert_python_to_numpy(123, "input")
 
 

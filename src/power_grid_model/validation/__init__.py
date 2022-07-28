@@ -10,5 +10,5 @@ from .assertions import (
     assert_valid_input_data,
 )
 from .errors import ValidationError
-from .utils import InputData, UpdateData, errors_to_string
+from .utils import errors_to_string
 from .validation import validate_batch_data, validate_input_data

@@ -6,14 +6,13 @@ import numpy as np
 import pytest
 
 from power_grid_model import initialize_array
+from power_grid_model.data_types import BatchDataset, BatchList
 from power_grid_model.validation.errors import NotGreaterThanError
 from power_grid_model.validation.utils import (
-    BatchData,
-    UpdateData,
     errors_to_string,
     eval_field_expression,
-    split_compressed_sparse_structure_in_batches,
     split_numpy_array_in_batches,
+    split_sparse_batches_in_batches,
     split_update_data_in_batches,
     update_input_data,
 )
@@ -133,7 +132,7 @@ def test_normalize_batch_data_structure_n3_sparse():
         np.array([], dtype=foo),
         np.array([(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
     ]
-    actual = split_compressed_sparse_structure_in_batches(update_data, indptr, "")
+    actual = split_sparse_batches_in_batches(update_data, indptr, "")
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
@@ -142,9 +141,9 @@ def test_split_compressed_sparse_structure_in_batches_wrong_data():
     data_2 = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # wrong dimension
     indptr = np.array([0, 4, 4, 8])
     with pytest.raises(TypeError, match="Invalid data type list in sparse update data for 'foo' "):
-        split_compressed_sparse_structure_in_batches(data=data_1, indptr=indptr, component="foo")  # type: ignore
+        split_sparse_batches_in_batches(data=data_1, indptr=indptr, component="foo")  # type: ignore
     with pytest.raises(TypeError, match="Invalid data type ndarray in sparse update data for 'bar' "):
-        split_compressed_sparse_structure_in_batches(data=data_2, indptr=indptr, component="bar")
+        split_sparse_batches_in_batches(data=data_2, indptr=indptr, component="bar")
 
 
 def test_split_compressed_sparse_structure_in_batches_wrong_indptr():
@@ -166,11 +165,11 @@ def test_split_compressed_sparse_structure_in_batches_wrong_indptr():
     indptr_2 = np.array([[0, 4], [4, 8]])  # wrong dimension
     indptr_3 = np.array([0.0, 4.0, 4.0, 8.0])  # wrong dtype
     with pytest.raises(TypeError, match="Invalid indptr data type list in update data for 'foo' "):
-        split_compressed_sparse_structure_in_batches(data=update_data, indptr=indptr_1, component="foo")  # type: ignore
+        split_sparse_batches_in_batches(data=update_data, indptr=indptr_1, component="foo")  # type: ignore
     with pytest.raises(TypeError, match="Invalid indptr data type ndarray in update data for 'foo' "):
-        split_compressed_sparse_structure_in_batches(data=update_data, indptr=indptr_2, component="foo")  # type: ignore
+        split_sparse_batches_in_batches(data=update_data, indptr=indptr_2, component="foo")  # type: ignore
     with pytest.raises(TypeError, match="Invalid indptr data type ndarray in update data for 'foo' "):
-        split_compressed_sparse_structure_in_batches(data=update_data, indptr=indptr_3, component="foo")  # type: ignore
+        split_sparse_batches_in_batches(data=update_data, indptr=indptr_3, component="foo")  # type: ignore
 
 
 def test_split_compressed_sparse_structure_in_batches_wrong_indptr_values():
@@ -197,31 +196,31 @@ def test_split_compressed_sparse_structure_in_batches_wrong_indptr_values():
         r"\(should start with 0, end with the number of objects \(8\) "
         r"and be monotonic increasing\).",
     ):
-        split_compressed_sparse_structure_in_batches(data=update_data, indptr=indptr_1, component="foo")
+        split_sparse_batches_in_batches(data=update_data, indptr=indptr_1, component="foo")
     with pytest.raises(
         TypeError,
         match="Invalid indptr in update data for 'foo' "
         r"\(should start with 0, end with the number of objects \(8\) "
         r"and be monotonic increasing\).",
     ):
-        split_compressed_sparse_structure_in_batches(data=update_data, indptr=indptr_2, component="foo")
+        split_sparse_batches_in_batches(data=update_data, indptr=indptr_2, component="foo")
     with pytest.raises(
         TypeError,
         match="Invalid indptr in update data for 'foo' "
         r"\(should start with 0, end with the number of objects \(8\) "
         r"and be monotonic increasing\).",
     ):
-        split_compressed_sparse_structure_in_batches(data=update_data, indptr=indptr_3, component="foo")
+        split_sparse_batches_in_batches(data=update_data, indptr=indptr_3, component="foo")
 
 
 def test_split_update_data_in_batches_one_batch_dense():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     bar = [("x", "i4"), ("y", "i4"), ("z", "i4")]
-    update_data: UpdateData = {
+    update_data: BatchDataset = {
         "foo": np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo),
         "bar": np.array([(211, 221, 231), (212, 222, 232), (213, 223, 233), (214, 224, 234)], dtype=bar),
     }
-    expected: BatchData = [
+    expected: BatchList = [
         {
             "foo": np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo),
             "bar": np.array([(211, 221, 231), (212, 222, 232), (213, 223, 233), (214, 224, 234)], dtype=bar),
@@ -234,7 +233,7 @@ def test_split_update_data_in_batches_one_batch_dense():
 def test_split_update_data_in_batches_two_batches_dense():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     bar = [("x", "i4"), ("y", "i4"), ("z", "i4")]
-    update_data: UpdateData = {
+    update_data: BatchDataset = {
         "foo": np.array(
             [
                 [(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)],
@@ -250,7 +249,7 @@ def test_split_update_data_in_batches_two_batches_dense():
             dtype=bar,
         ),
     }
-    expected: BatchData = [
+    expected: BatchList = [
         {
             "foo": np.array([(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
             "bar": np.array([(1211, 1221, 1231), (1212, 1222, 232), (1213, 1223, 1233), (1214, 1224, 1234)], dtype=bar),
@@ -267,7 +266,7 @@ def test_split_update_data_in_batches_two_batches_dense():
 def test_split_update_data_in_batches_three_batches_sparse():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     bar = [("x", "i4"), ("y", "i4"), ("z", "i4")]
-    update_data: UpdateData = {
+    update_data: BatchDataset = {
         "foo": {
             "indptr": np.array([0, 4, 8, 8]),
             "data": np.array(
@@ -301,7 +300,7 @@ def test_split_update_data_in_batches_three_batches_sparse():
             ),
         },
     }
-    expected: BatchData = [
+    expected: BatchList = [
         {
             "foo": np.array([(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
             "bar": np.array([(1211, 1221, 1231), (1212, 1222, 232), (1213, 1223, 1233), (1214, 1224, 1234)], dtype=bar),
@@ -316,7 +315,7 @@ def test_split_update_data_in_batches_three_batches_sparse():
 
 
 def test_split_update_data_in_batches_inconsistent_batch_sizes_two_components():
-    update_data: UpdateData = {"foo": np.empty(shape=(3, 3)), "bar": np.empty(shape=(2, 3))}
+    update_data: BatchDataset = {"foo": np.empty(shape=(3, 3)), "bar": np.empty(shape=(2, 3))}
     with pytest.raises(
         ValueError,
         match="Inconsistent number of batches in update data. "
@@ -326,7 +325,7 @@ def test_split_update_data_in_batches_inconsistent_batch_sizes_two_components():
 
 
 def test_split_update_data_in_batches_inconsistent_batch_sizes_more_than_two_components():
-    update_data: UpdateData = {
+    update_data: BatchDataset = {
         "foo": np.empty(shape=(3, 3)),
         "bar": np.empty(shape=(3, 3)),
         "baz": np.empty(shape=(2, 3)),
@@ -340,7 +339,7 @@ def test_split_update_data_in_batches_inconsistent_batch_sizes_more_than_two_com
 
 
 def test_split_update_data_in_batches_missing_key_sparse():
-    update_data: UpdateData = {"foo": {"a": np.empty(3), "data": np.empty(3)}}
+    update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}
     with pytest.raises(
         KeyError,
         match="Missing 'indptr' in sparse update data for 'foo' "
@@ -350,7 +349,7 @@ def test_split_update_data_in_batches_missing_key_sparse():
 
 
 def test_split_update_data_in_batches_invalid_type_sparse():
-    update_data: UpdateData = {"foo": "wrong type"}  # type: ignore
+    update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
         TypeError,
         match="Invalid data type str in update data for 'foo' "

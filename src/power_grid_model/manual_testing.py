@@ -8,11 +8,21 @@ This file contains all the helper functions for testing purpose
 
 import json
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional, Union
+from typing import IO, Any, List, Optional, Union, cast
 
 import numpy as np
 
 from . import initialize_array
+from .data_types import (
+    BatchDataset,
+    BatchList,
+    Dataset,
+    ExtraInfo,
+    Nominal,
+    PythonDataset,
+    SingleDataset,
+    SinglePythonDataset,
+)
 
 
 def is_nan(data) -> bool:
@@ -30,12 +40,10 @@ def is_nan(data) -> bool:
         np.dtype("i4"): lambda x: np.all(x == np.iinfo("i4").min),
         np.dtype("i1"): lambda x: np.all(x == np.iinfo("i1").min),
     }
-    return nan_func[data.dtype](data)
+    return bool(nan_func[data.dtype](data))
 
 
-def convert_list_to_batch_data(
-    list_data: List[Dict[str, np.ndarray]]
-) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
     """
     Convert a list of datasets to one single batch dataset
 
@@ -55,7 +63,7 @@ def convert_list_to_batch_data(
     # List all *unique* types
     components = {x for dataset in list_data for x in dataset.keys()}
 
-    batch_data = {}
+    batch_data: BatchDataset = {}
     for component in components:
 
         # Create a 2D array if the component exists in all datasets and number of objects is the same in each dataset
@@ -89,9 +97,7 @@ def convert_list_to_batch_data(
     return batch_data
 
 
-def convert_python_to_numpy(
-    data: Union[Dict, List], data_type: str
-) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
     """
     Convert native python data to internal numpy
     Args:
@@ -103,18 +109,33 @@ def convert_python_to_numpy(
 
     """
 
-    # If the inpute data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
-    # first convert each batch seperately, by recusively calling this function for each batch. Then the numpy
+    # If the input data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
+    # first convert each batch separately, by recursively calling this function for each batch. Then the numpy
     # data for all batches in converted into a proper and compact numpy structure.
     if isinstance(data, list):
-        list_data = [convert_python_to_numpy(json_dict, data_type=data_type) for json_dict in data]
+        list_data = [_convert_python_to_numpy_single(json_dict, data_type=data_type) for json_dict in data]
         return convert_list_to_batch_data(list_data)
 
-    # This should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
+    # Otherwise this should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
     if not isinstance(data, dict):
-        raise TypeError("Only list or dict is allowed in JSON data!")
+        raise TypeError("Data should be either a list or a dictionary!")
 
-    dataset: Dict[str, np.ndarray] = {}
+    return _convert_python_to_numpy_single(data=data, data_type=data_type)
+
+
+def _convert_python_to_numpy_single(data: SinglePythonDataset, data_type: str) -> SingleDataset:
+    """
+    Convert native python data to internal numpy
+    Args:
+        data: data in dict
+        data_type: type of data: input, update, sym_output, or asym_output
+
+    Returns:
+        A single dataset for power-grid-model
+
+    """
+
+    dataset: SingleDataset = {}
     for component, objects in data.items():
 
         # We'll initialize an 1d-array with NaN values for all the objects of this component type
@@ -131,7 +152,7 @@ def convert_python_to_numpy(
                     continue
 
                 if attribute not in dataset[component].dtype.names:
-                    # If a attribute doen't exist, the user made a mistake. Let's be merciless in that case,
+                    # If an attribute doesn't exist, the user made a mistake. Let's be merciless in that case,
                     # for their own good.
                     raise ValueError(f"Invalid attribute '{attribute}' for {component} {data_type} data.")
 
@@ -144,9 +165,7 @@ def convert_python_to_numpy(
     return dataset
 
 
-def convert_batch_to_list_data(
-    batch_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
-) -> List[Dict[str, np.ndarray]]:
+def convert_batch_to_list_data(batch_data: BatchDataset) -> BatchList:
     """
     Convert list of dataset to one single batch dataset
     Args:
@@ -157,7 +176,7 @@ def convert_batch_to_list_data(
     """
 
     # If the batch data is empty, return an empty list
-    if not batch_data:
+    if len(batch_data) == 0:
         return []
 
     # Get the data for an arbitrary component; assuming that the number of batches of each component is the same.
@@ -181,7 +200,7 @@ def convert_batch_to_list_data(
 
     # Initialize an empty list with dictionaries
     # Note that [{}] * n_batches would result in n copies of the same dict.
-    list_data = [{} for _ in range(n_batches)]
+    list_data: BatchList = [{} for _ in range(n_batches)]
 
     # While the number of batches must be the same for each component, the structure (2d numpy array or indptr/data)
     # doesn't have to be. Therefore, we'll check the structure for each component and copy the data accordingly.
@@ -198,33 +217,57 @@ def convert_batch_to_list_data(
     return list_data
 
 
-def convert_numpy_to_python(
-    data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
-) -> Union[Dict[str, List[Dict[str, Union[int, float]]]], List[Dict[str, List[Dict[str, Union[int, float]]]]]]:
+def convert_numpy_to_python(data: Dataset) -> PythonDataset:
     """
     Convert internal numpy arrays to native python data
     If an attribute is not available (NaN value), it will not be exported.
     Args:
         data: A single or batch dataset for power-grid-model
     Returns:
-        A json dict for single dataset
-        A json list for batch dataset
+        A python dict for single dataset
+        A python list for batch dataset
 
     """
+
     # Check if the dataset is a single dataset or batch dataset
     # It is batch dataset if it is 2D array or a indptr/data structure
-    example_data = next(iter(data.values()))
-    is_dense_batch = isinstance(example_data, np.ndarray) and example_data.ndim == 2
-    is_sparse_batch = isinstance(example_data, dict) and "indptr" in example_data and "data" in example_data
+    is_batch: Optional[bool] = None
+    for component, array in data.items():
+        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
+        is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
+        if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
+            raise ValueError(
+                f"Mixed {'' if is_batch else 'non-'}batch data "
+                f"with {'non-' if is_batch else ''}batch data ({component})."
+            )
+        is_batch = is_dense_batch or is_sparse_batch
 
     # If it is a batch, convert the batch data to a list of batches, then convert each batch individually.
-    if is_dense_batch or is_sparse_batch:
+    if is_batch:
+        # We have established that this is batch data, so let's tell the type checker that this is a BatchDataset
+        data = cast(BatchDataset, data)
         list_data = convert_batch_to_list_data(data)
-        return [convert_numpy_to_python(x) for x in list_data]
+        return [_convert_numpy_to_python_single(x) for x in list_data]
 
-    # Otherwise it should be a single data set
-    if not isinstance(example_data, np.ndarray) or example_data.ndim != 1:
-        raise ValueError("Invalid data format")
+    # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
+    data = cast(SingleDataset, data)
+    return _convert_numpy_to_python_single(data=data)
+
+
+def _convert_numpy_to_python_single(data: SingleDataset) -> SinglePythonDataset:
+    """
+    Convert internal numpy arrays to native python data
+    If an attribute is not available (NaN value), it will not be exported.
+    Args:
+        data: A single dataset for power-grid-model
+    Returns:
+        A python dict for single dataset
+    """
+
+    # This should be a single data set
+    for component, array in data.items():
+        if not isinstance(array, np.ndarray) or array.ndim != 1:
+            raise ValueError("Invalid data format")
 
     # Convert each numpy array to a list of objects, which contains only the non-NaN attributes:
     # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
@@ -237,7 +280,7 @@ def convert_numpy_to_python(
     }
 
 
-def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]]:
+def import_json_data(json_file: Path, data_type: str) -> Dataset:
     """
     import json data
     for a list, import individual entry as dictionary of arrays
@@ -255,10 +298,10 @@ def import_json_data(json_file: Path, data_type: str) -> Union[Dict[str, np.ndar
 
 def export_json_data(
     json_file: Path,
-    data: Union[Dict[str, np.ndarray], List[Dict[str, np.ndarray]]],
+    data: Dataset,
     indent: Optional[int] = 2,
     compact: bool = False,
-    extra_info: Optional[Union[Dict[int, Any], List[Dict[int, Any]]]] = None,
+    extra_info: Optional[Union[ExtraInfo, List[ExtraInfo]]] = None,
 ):
     """
     export json data
@@ -287,8 +330,8 @@ def export_json_data(
 
 
 def _inject_extra_info(
-    data: Union[Dict[str, List[Dict[str, Union[float, int]]]], List[Dict[str, List[Dict[str, Union[float, int]]]]]],
-    extra_info: Union[Dict[int, Any], List[Dict[int, Any]]],
+    data: PythonDataset,
+    extra_info: Union[ExtraInfo, List[ExtraInfo]],
 ):
     """
     Injects extra info to the objects by ID
@@ -313,7 +356,9 @@ def _inject_extra_info(
         for _, objects in data.items():
             for obj in objects:
                 if obj["id"] in extra_info:
-                    obj["extra"] = extra_info[obj["id"]]
+                    # IDs are always nominal values, so let's tell the type checker:
+                    obj_id = cast(Nominal, obj["id"])
+                    obj["extra"] = extra_info[obj_id]
     else:
         raise TypeError("Invalid data type")
 

@@ -12,11 +12,14 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 
 from .. import power_grid_meta_data
+from ..data_types import (
+    BatchDataset,
+    BatchList,
+    DenseBatchArray,
+    SingleArray,
+    SingleDataset,
+)
 from .errors import ValidationError
-
-InputData = Dict[str, np.ndarray]
-UpdateData = Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
-BatchData = List[Dict[str, np.ndarray]]
 
 
 def eval_expression(data: np.ndarray, expression: Union[int, float, str]) -> np.ndarray:
@@ -89,7 +92,7 @@ def eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
     return np.true_divide(data[fields[0]], data[fields[1]])
 
 
-def split_update_data_in_batches(update_data: UpdateData) -> BatchData:
+def split_update_data_in_batches(update_data: BatchDataset) -> BatchList:
     """
 
     Args:
@@ -98,7 +101,7 @@ def split_update_data_in_batches(update_data: UpdateData) -> BatchData:
     Returns: List[Dict[str, np.ndarray]]
 
     """
-    batches = []
+    batches: BatchList = []
     for component, data in update_data.items():
         if isinstance(data, np.ndarray):
             component_batches = split_numpy_array_in_batches(data, component)
@@ -109,7 +112,7 @@ def split_update_data_in_batches(update_data: UpdateData) -> BatchData:
                         f"Missing '{key}' in sparse update data for '{component}' "
                         "(expected a python dictionary containing two keys: 'indptr' and 'data')."
                     )
-            component_batches = split_compressed_sparse_structure_in_batches(data["data"], data["indptr"], component)
+            component_batches = split_sparse_batches_in_batches(data["data"], data["indptr"], component)
         else:
             raise TypeError(
                 f"Invalid data type {type(data).__name__} in update data for '{component}' "
@@ -120,13 +123,13 @@ def split_update_data_in_batches(update_data: UpdateData) -> BatchData:
         elif len(component_batches) != len(batches):
             previous_components = set(chain(*(batch.keys() for batch in batches)))
             if len(previous_components) == 1:
-                previous_components = f"'{previous_components.pop()}'"
+                previous_components_str = f"'{previous_components.pop()}'"
             else:
-                previous_components = "/".join(sorted(previous_components))
+                previous_components_str = "/".join(sorted(previous_components))
             raise ValueError(
                 f"Inconsistent number of batches in update data. "
                 f"Component '{component}' contains {len(component_batches)} batches, "
-                f"while {previous_components} contained {len(batches)} batches."
+                f"while {previous_components_str} contained {len(batches)} batches."
             )
 
         for i, batch_data in enumerate(component_batches):
@@ -135,7 +138,7 @@ def split_update_data_in_batches(update_data: UpdateData) -> BatchData:
     return batches
 
 
-def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.ndarray]:
+def split_numpy_array_in_batches(data: Union[SingleArray, DenseBatchArray], component: str) -> List[SingleArray]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -162,9 +165,7 @@ def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.nd
     )
 
 
-def split_compressed_sparse_structure_in_batches(
-    data: np.ndarray, indptr: np.ndarray, component: str
-) -> List[np.ndarray]:
+def split_sparse_batches_in_batches(data: np.ndarray, indptr: np.ndarray, component: str) -> List[SingleArray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
@@ -200,7 +201,7 @@ def split_compressed_sparse_structure_in_batches(
     return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
 
 
-def update_input_data(input_data: Dict[str, np.ndarray], update_data: Dict[str, np.ndarray]):
+def update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     """
     Update the input data using the available non-nan values in the update data.
     """

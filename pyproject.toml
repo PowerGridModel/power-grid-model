@@ -74,3 +74,11 @@ profile = "black"
 
 [tool.pylint]
 max-line-length = 120
+
+[tool.mypy]
+files = "src/**/*.py"
+follow_imports = "silent"
+ignore_missing_imports = true
+show_column_numbers = true
+non_interactive = true
+install_types = true

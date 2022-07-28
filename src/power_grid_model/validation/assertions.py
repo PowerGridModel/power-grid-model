@@ -8,9 +8,10 @@ ValidationException if the validation results in one or more errors.
 """
 from typing import Dict, List, Optional, Union
 
+from ..data_types import BatchDataset, SingleDataset
 from ..enum import CalculationType
 from .errors import ValidationError
-from .utils import InputData, UpdateData, errors_to_string
+from .utils import errors_to_string
 from .validation import validate_batch_data, validate_input_data
 
 
@@ -30,7 +31,7 @@ class ValidationException(ValueError):
 
 
 def assert_valid_input_data(
-    input_data: InputData, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
+    input_data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
 ):
     """
     Validates the entire input dataset:
@@ -57,8 +58,8 @@ def assert_valid_input_data(
 
 
 def assert_valid_batch_data(
-    input_data: InputData,
-    update_data: UpdateData,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
     calculation_type: Optional[CalculationType] = None,
     symmetric: bool = True,
 ):
