@@ -7,7 +7,12 @@ from typing import cast
 
 from power_grid_model import CalculationType
 from power_grid_model.manual_testing import import_json_data
-from power_grid_model.validation import errors_to_string, validate_batch_data, InputData, UpdateData
+from power_grid_model.validation import (
+    InputData,
+    UpdateData,
+    errors_to_string,
+    validate_batch_data,
+)
 
 input_file = Path("../tests/data/power_flow/dummy-test-batch/input.json")
 update_file = Path("../tests/data/power_flow/dummy-test-batch/update_batch.json")

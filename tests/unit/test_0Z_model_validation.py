@@ -8,9 +8,15 @@ from pathlib import Path
 import pytest
 
 from power_grid_model import PowerGridModel
-
-from .utils import EXPORT_OUTPUT, compare_result, import_case_data, pytest_cases, save_json_data
 from power_grid_model.manual_testing import convert_batch_to_list_data
+
+from .utils import (
+    EXPORT_OUTPUT,
+    compare_result,
+    import_case_data,
+    pytest_cases,
+    save_json_data,
+)
 
 calculation_function_map = {
     "power_flow": PowerGridModel.calculate_power_flow,

@@ -4,17 +4,19 @@
 
 import numpy as np
 import pytest
+
 from power_grid_model import initialize_array
 from power_grid_model.validation.errors import NotGreaterThanError
 from power_grid_model.validation.utils import (
-    UpdateData,
     BatchData,
-    split_update_data_in_batches,
-    split_numpy_array_in_batches,
-    split_compressed_sparse_structure_in_batches,
+    UpdateData,
     errors_to_string,
+    eval_field_expression,
+    split_compressed_sparse_structure_in_batches,
+    split_numpy_array_in_batches,
+    split_update_data_in_batches,
+    update_input_data,
 )
-from power_grid_model.validation.utils import eval_field_expression, update_input_data
 
 
 def test_eval_field_expression():

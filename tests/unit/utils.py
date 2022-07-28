@@ -10,7 +10,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pytest
-from power_grid_model.manual_testing import import_json_data, export_json_data
+
+from power_grid_model.manual_testing import export_json_data, import_json_data
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"

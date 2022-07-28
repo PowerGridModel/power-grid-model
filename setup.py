@@ -3,26 +3,24 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import os
+import platform
 import re
 import shutil
 from itertools import chain
-
-# noinspection PyPackageRequirements
-import numpy as np
+from pathlib import Path
+from sysconfig import get_paths
 
 # noinspection PyPackageRequirements
 import Cython.Compiler.Main as CythonCompiler
 
 # noinspection PyPackageRequirements
-import requests
-import platform
-from sysconfig import get_paths
-from setuptools import Extension
-from setuptools.command.build_ext import build_ext
-from setuptools import setup
-from pathlib import Path
-from pybuild_header_dependency import HeaderResolver
+import numpy as np
 
+# noinspection PyPackageRequirements
+import requests
+from pybuild_header_dependency import HeaderResolver
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 # determine platform, only windows or linux
 if platform.system() == "Windows":
