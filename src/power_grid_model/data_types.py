@@ -10,26 +10,30 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 
-try:
-    from typing import TypeAlias
-except ImportError:
-    from typing_extensions import TypeAlias
 
-SingleArray: TypeAlias = np.ndarray[Any, Any]
-"""
-A single array is a one-dimensional structured numpy array. The exact dtype depends on the type of component.
+class SingleArray(np.ndarray):
+    """
+    A single array is a one-dimensional structured numpy array. The exact dtype depends on the type of component.
 
-Further on in this document, a one-dimensional array is denoted as: <1d-array>
-"""
+    Further on in this document, a one-dimensional array is denoted as: <1d-array>
 
-DenseBatchArray: TypeAlias = np.ndarray[Any, Any]
-"""
-A dense batch array is a a two-dimensional structured numpy array. The exact dtype depends on the type of component.
+    TODO: From version 3.9 we should use:
+    SingleArray: TypeAlias = np.ndarray
+    """
 
-Further on in this document, a two-dimensional array is denoted as: <2d-array>
-"""
 
-SparseBatchArray: TypeAlias = dict[str, np.ndarray]
+class DenseBatchArray(np.ndarray):
+    """
+    A dense batch array is a a two-dimensional structured numpy array. The exact dtype depends on the type of component.
+
+    Further on in this document, a two-dimensional array is denoted as: <2d-array>
+
+    TODO: From version 3.9 we should use:
+    DenseBatchArray: TypeAlias = np.ndarray
+    """
+
+
+SparseBatchArray = Dict[str, np.ndarray]
 """
 A sparse batch array is a dictionary containing the keys "indptr" and "data".
     indptr: a one-dimensional numpy int32 array
@@ -38,7 +42,7 @@ A sparse batch array is a dictionary containing the keys "indptr" and "data".
 Example: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
-BatchArray: TypeAlias = Union[DenseBatchArray, SparseBatchArray]
+BatchArray = Union[DenseBatchArray, SparseBatchArray]
 """
 A batch is a either a dense or a sparse batch array
 
@@ -47,7 +51,7 @@ Examples:
     sparse: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
-SingleDataset: TypeAlias = Dict[str, SingleArray]
+SingleDataset = Dict[str, SingleArray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are one-dimensional
 structured numpy arrays.
@@ -55,7 +59,7 @@ structured numpy arrays.
 Example: {"node": <1d-array>, "line": <1d-array>}
 """
 
-BatchDataset: TypeAlias = Dict[str, BatchArray]
+BatchDataset = Dict[str, BatchArray]
 """
 A batch dataset is a dictionary where the keys are the component types and the values are either two-dimensional
 structured numpy arrays (dense batch array) or dictionaries with an indptr and a one-dimensional structured numpy
@@ -64,7 +68,7 @@ array (sparse batch array).
 Example: {"node": <2d-array>, "line": {"indptr": <1d-array>, "data": <1d-array>}}
 """
 
-Dataset: TypeAlias = Union[SingleDataset, BatchDataset]
+Dataset = Union[SingleDataset, BatchDataset]
 """
 A general data set can be a single or a batch dataset.
 
@@ -74,7 +78,7 @@ Examples:
 
 """
 
-BatchList: TypeAlias = List[SingleDataset]
+BatchList = List[SingleDataset]
 """
 A batch list is an alternative representation of a batch. It is a list of single datasets, where each single dataset
 is actually a batch. The batch list is intended as an intermediate data type, during conversions.
@@ -82,28 +86,28 @@ is actually a batch. The batch list is intended as an intermediate data type, du
 Example: [{"node": <1d-array>, "line": <1d-array>}, {"node": <1d-array>, "line": <1d-array>}]
 """
 
-Nominal: TypeAlias = int
+Nominal = int
 """
 Nominal values can be IDs, booleans, enums, tap pos
 
 Example: 123
 """
 
-RealValue: TypeAlias = float
+RealValue = float
 """
 Symmetrical values can be anything like cable properties, symmetric loads, etc.
 
 Example: 10500.0
 """
 
-AsymValue: TypeAlias = Tuple[RealValue, RealValue, RealValue]
+AsymValue = Tuple[RealValue, RealValue, RealValue]
 """
 Asymmetrical values are three-phase values like p or u_measured.
 
 Example: (10400.0, 10500.0, 10600.0)
 """
 
-AttributeValue: TypeAlias = Union[Nominal, RealValue, AsymValue]
+AttributeValue = Union[Nominal, RealValue, AsymValue]
 """
 When representing a grid as a native python structure, each attribute (u_rated etc) is either a nominal value,
 a real value, or a tuple of three real values.
@@ -115,7 +119,7 @@ Examples:
 
 """
 
-Component: TypeAlias = Dict[str, AttributeValue]
+Component = Dict[str, AttributeValue]
 """
 A component, when represented in native python format, is a dictionary, where the keys are the attributes and the values
 are the corresponding values.
@@ -123,7 +127,7 @@ are the corresponding values.
 Example: {"id": 1, "u_rated": 10500.0}
 """
 
-ComponentList: TypeAlias = List[Component]
+ComponentList = List[Component]
 """
 A component list is a list containing components. In essence it stores the same information as a SingleArray,
 but in a native python format, without using numpy.
@@ -131,7 +135,7 @@ but in a native python format, without using numpy.
 Example: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}]
 """
 
-SinglePythonDataset: TypeAlias = Dict[str, ComponentList]
+SinglePythonDataset = Dict[str, ComponentList]
 """
 A single dataset in native python representation is a dictionary, where the keys are the component names and the
 values are a list of all the instances of such a component. In essence it stores the same information as a
@@ -144,7 +148,7 @@ Example:
     }
 """
 
-BatchPythonDataset: TypeAlias = List[SinglePythonDataset]
+BatchPythonDataset = List[SinglePythonDataset]
 """
 A batch dataset in native python representation is a list of dictionaries, where the keys are the component names and
 the values are a list of all the instances of such a component. In essence it stores the same information as a
@@ -161,7 +165,7 @@ Example:
     ]
 """
 
-PythonDataset: TypeAlias = Union[SinglePythonDataset, BatchPythonDataset]
+PythonDataset = Union[SinglePythonDataset, BatchPythonDataset]
 """
 A general python data set can be a single or a batch python dataset.
 
@@ -182,7 +186,7 @@ Examples:
         ]
 """
 
-ExtraInfo: TypeAlias = Dict[int, Any]
+ExtraInfo = Dict[int, Any]
 """
 Extra info is a dictionary that contains information about the objects. It is indexed on the object IDs and the
 actual information can be anything.
