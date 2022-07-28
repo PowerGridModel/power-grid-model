@@ -11,8 +11,8 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 
-from .errors import ValidationError
 from .. import power_grid_meta_data
+from .errors import ValidationError
 
 InputData = Dict[str, np.ndarray]
 UpdateData = Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
@@ -154,13 +154,12 @@ def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.nd
         )
     if data.ndim == 1:
         return [data]
-    elif data.ndim == 2:
+    if data.ndim == 2:
         return [data[i, :] for i in range(data.shape[0])]
-    else:
-        raise TypeError(
-            f"Invalid data dimension {data.ndim} in update data for '{component}' "
-            "(should be a 1D/2D Numpy structured array)."
-        )
+    raise TypeError(
+        f"Invalid data dimension {data.ndim} in update data for '{component}' "
+        "(should be a 1D/2D Numpy structured array)."
+    )
 
 
 def split_compressed_sparse_structure_in_batches(
