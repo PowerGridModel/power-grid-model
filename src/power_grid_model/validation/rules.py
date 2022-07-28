@@ -39,9 +39,9 @@ from typing import Any, Dict, List, Protocol, Tuple, Type, TypeVar, Union
 
 import numpy as np
 
-from ..data_types import SingleDataset
-from ..enum import WindingType
-from .errors import (
+from power_grid_model.data_types import SingleDataset
+from power_grid_model.enum import WindingType
+from power_grid_model.validation.errors import (
     ComparisonError,
     IdNotInDatasetError,
     InfinityError,
@@ -62,7 +62,7 @@ from .errors import (
     TwoValuesZeroError,
     ValidationError,
 )
-from .utils import eval_expression, nan_type
+from power_grid_model.validation.utils import eval_expression, nan_type
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)

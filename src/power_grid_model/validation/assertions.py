@@ -8,11 +8,14 @@ ValidationException if the validation results in one or more errors.
 """
 from typing import Dict, List, Optional, Union
 
-from ..data_types import BatchDataset, SingleDataset
-from ..enum import CalculationType
-from .errors import ValidationError
-from .utils import errors_to_string
-from .validation import validate_batch_data, validate_input_data
+from power_grid_model.data_types import BatchDataset, SingleDataset
+from power_grid_model.enum import CalculationType
+from power_grid_model.validation.errors import ValidationError
+from power_grid_model.validation.utils import errors_to_string
+from power_grid_model.validation.validation import (
+    validate_batch_data,
+    validate_input_data,
+)
 
 
 class ValidationException(ValueError):

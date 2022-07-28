@@ -13,22 +13,22 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from .. import power_grid_meta_data
-from ..data_types import BatchDataset, Dataset, SingleDataset
-from ..enum import (
+from power_grid_model import power_grid_meta_data
+from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.enum import (
     BranchSide,
     CalculationType,
     LoadGenType,
     MeasuredTerminalType,
     WindingType,
 )
-from .errors import (
+from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     MissingValueError,
     MultiComponentNotUniqueError,
     ValidationError,
 )
-from .rules import (
+from power_grid_model.validation.rules import (
     all_between,
     all_between_or_at,
     all_boolean,
@@ -47,7 +47,10 @@ from .rules import (
     all_valid_ids,
     none_missing,
 )
-from .utils import split_update_data_in_batches, update_input_data
+from power_grid_model.validation.utils import (
+    split_update_data_in_batches,
+    update_input_data,
+)
 
 
 def validate_input_data(

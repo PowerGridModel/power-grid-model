@@ -11,15 +11,15 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 
-from .. import power_grid_meta_data
-from ..data_types import (
+from power_grid_model import power_grid_meta_data
+from power_grid_model.data_types import (
     BatchDataset,
     BatchList,
     DenseBatchArray,
     SingleArray,
     SingleDataset,
 )
-from .errors import ValidationError
+from power_grid_model.validation.errors import ValidationError
 
 
 def eval_expression(data: np.ndarray, expression: Union[int, float, str]) -> np.ndarray:

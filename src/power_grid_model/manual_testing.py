@@ -12,8 +12,8 @@ from typing import IO, Any, List, Optional, Union, cast
 
 import numpy as np
 
-from . import initialize_array
-from .data_types import (
+from power_grid_model import initialize_array
+from power_grid_model.data_types import (
     BatchDataset,
     BatchList,
     Dataset,
