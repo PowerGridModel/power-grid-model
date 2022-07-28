@@ -7,7 +7,7 @@ from typing import cast
 
 from power_grid_model import CalculationType
 from power_grid_model.manual_testing import import_json_data
-from power_grid_model.validation import errors_to_string, validate_input_data, InputData
+from power_grid_model.validation import InputData, errors_to_string, validate_input_data
 
 input_file = Path("../tests/data/state_estimation/dummy-test-sym/input.json")
 

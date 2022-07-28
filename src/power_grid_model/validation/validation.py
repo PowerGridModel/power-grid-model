@@ -13,29 +13,45 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 
-from .errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError, ValidationError
+from .. import power_grid_meta_data
+from ..enum import (
+    BranchSide,
+    CalculationType,
+    LoadGenType,
+    MeasuredTerminalType,
+    WindingType,
+)
+from .errors import (
+    IdNotInDatasetError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    ValidationError,
+)
 from .rules import (
-    none_missing,
-    all_finite,
-    all_ids_exist_in_data_set,
-    all_greater_than_zero,
-    all_greater_than_or_equal_to_zero,
-    all_greater_or_equal,
-    all_less_than,
     all_between,
     all_between_or_at,
-    all_unique,
-    all_cross_unique,
-    all_not_two_values_equal,
-    all_valid_enum_values,
     all_boolean,
-    all_valid_ids,
-    all_not_two_values_zero,
     all_clocks_valid,
+    all_cross_unique,
+    all_finite,
+    all_greater_or_equal,
+    all_greater_than_or_equal_to_zero,
+    all_greater_than_zero,
+    all_ids_exist_in_data_set,
+    all_less_than,
+    all_not_two_values_equal,
+    all_not_two_values_zero,
+    all_unique,
+    all_valid_enum_values,
+    all_valid_ids,
+    none_missing,
 )
-from .utils import InputData, UpdateData, split_update_data_in_batches, update_input_data
-from .. import power_grid_meta_data
-from ..enum import BranchSide, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
+from .utils import (
+    InputData,
+    UpdateData,
+    split_update_data_in_batches,
+    update_input_data,
+)
 
 
 def validate_input_data(

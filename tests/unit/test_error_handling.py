@@ -5,6 +5,7 @@
 from copy import copy
 
 import pytest
+
 from power_grid_model import PowerGridModel
 
 
