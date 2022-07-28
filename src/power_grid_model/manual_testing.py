@@ -121,26 +121,26 @@ def convert_python_to_numpy(
         dataset[component] = initialize_array(data_type, component, len(objects))
 
         for i, obj in enumerate(objects):
-            # As each object is a separate dictionary, and the properties may differ per object, we need to check
-            # all properties. Non-existing properties
-            for prop, value in obj.items():
-                if prop == "extra":
-                    # The "extra" property is a special one. It can store any type of information associated with
+            # As each object is a separate dictionary, and the attributes may differ per object, we need to check
+            # all attributes. Non-existing attributes
+            for attribute, value in obj.items():
+                if attribute == "extra":
+                    # The "extra" attribute is a special one. It can store any type of information associated with
                     # an object, but it will not be used in the calculations. Therefore it is not included in the
-                    # numpy array, so we can skip this property
+                    # numpy array, so we can skip this attribute
                     continue
 
-                if prop not in dataset[component].dtype.names:
-                    # If a property doen't exist, the user made a mistake. Let's be merciless in that case,
+                if attribute not in dataset[component].dtype.names:
+                    # If a attribute doen't exist, the user made a mistake. Let's be merciless in that case,
                     # for their own good.
-                    raise ValueError(f"Invalid property '{prop}' for {component} {data_type} data.")
+                    raise ValueError(f"Invalid attribute '{attribute}' for {component} {data_type} data.")
 
                 # Now just assign the value and raise an error if the value cannot be stored in the specific
-                # numpy array data format for this property.
+                # numpy array data format for this attribute.
                 try:
-                    dataset[component][i][prop] = value
+                    dataset[component][i][attribute] = value
                 except ValueError as ex:
-                    raise ValueError(f"Invalid '{prop}' value for {component} {data_type} data: {ex}") from ex
+                    raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
     return dataset
 
 
@@ -226,11 +226,11 @@ def convert_numpy_to_python(
     if not isinstance(example_data, np.ndarray) or example_data.ndim != 1:
         raise ValueError("Invalid data format")
 
-    # Convert each numpy array to a list of objects, which contains only the non-NaN properties:
+    # Convert each numpy array to a list of objects, which contains only the non-NaN attributes:
     # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
     return {
         component: [
-            {property: obj[property].tolist() for property in objects.dtype.names if not is_nan(obj[property])}
+            {attribute: obj[attribute].tolist() for attribute in objects.dtype.names if not is_nan(obj[attribute])}
             for obj in objects
         ]
         for component, objects in data.items()

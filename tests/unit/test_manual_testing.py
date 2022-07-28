@@ -113,7 +113,7 @@ def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
 
 
 def test_convert_python_to_numpy__raises_value_error():
-    with pytest.raises(ValueError, match="Invalid property 'u' for line input data."):
+    with pytest.raises(ValueError, match="Invalid attribute 'u' for line input data."):
         convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input")
     with pytest.raises(ValueError, match="Invalid 'id' value for line input data."):
         convert_python_to_numpy({"line": [{"id": "my_line", "u_rated": 10.5e3}]}, "input")
