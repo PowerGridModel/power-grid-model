@@ -8,7 +8,7 @@ requires = [
     "wheel",
     "cython",
     "oldest-supported-numpy",
-    "requests"
+    "requests",
 ]
 build-backend = "setuptools.build_meta"
 
