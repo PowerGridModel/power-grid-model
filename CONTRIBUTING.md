@@ -58,6 +58,33 @@ This project uses Google Format Style (NOTE: not Google C++ Programming Style) t
 
 Tip: Use [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to format your C++ code.
 
+## pre-commit hooks
+This project uses [pre-commit](https://pre-commit.com/) to run a list of checks (and perform some automatic
+corrections) to your code (style) before each commit. It is up to the developer to choose whether you would like to 
+use this tool or not. The goal is to make sure that each commit will pass the quality checks in the github actions
+workflow. Currently, these hooks are defined in [`.pre-commit-config.yaml`](.pre-commit-config.yaml):
+* **reuse**: check if all licence headers and files are in place
+* **isort**: sort import statements
+* **black**: check and correct code style
+* **pylint**: check code style
+* **pytest**: run all unit tests
+
+You can manually run pre-commit whenever you like:
+```bash
+pre-commit run
+```
+
+Or you can install it as a git pre-commit hook. In this case a commit will be aborted whenever one of the hooks fail.
+```bash
+pre-commit install
+```
+
+As using the pre-commit tool is not mandatory, you can always skip the tool:
+
+```bash
+git commit ... --no-verify
+```
+
 ## REUSE Compliance
 
 All the files in the repository need to be [REUSE compliant](https://reuse.software/). 
