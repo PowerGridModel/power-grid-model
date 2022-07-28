@@ -6,9 +6,14 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file
 """
 
-from typing import Any, Dict, List, Tuple, TypeAlias, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 SingleArray: TypeAlias = np.ndarray[Any, Any]
 """
