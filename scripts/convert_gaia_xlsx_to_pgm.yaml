@@ -42,40 +42,40 @@ grid:
       from_status: From.Switch state
       to_node: To.Number
       to_status: To.Switch state
-      u1: Unom1           # crosreference uitzoeken!
+      u1: Unom1
       u2: Unom2
-      sn: Snom
+      sn: Snom    # Cross reference Type r 47 tm 49
       uk: uk
       pk: Pk
 
       i0:
         power_grid_model.conversion.filters.relative_no_load_current:
-          - Io
-          - Po
+          - Inul    # cross reference type r53 tm 55
+          - Pnul
           - Snom
           - Unom2
-      p0: Po
+      p0: Pnul
       winding_from:
         power_grid_model.conversion.filters.get_winding_from:
-          - s1
+          - s1  # cross reference type
           - N1                                 #Navragen bij Gaia expert
       winding_to:
         power_grid_model.conversion.filters.get_winding_to:
-          - s2
+          - s2  # cross reference type
           - N2                                #Navragen bij Gaia expert
       clock:
         power_grid_model.conversion.filters.get_clock:
-          - Clock
-      tap_side: Tap side                      # crosreference uitzoeken! alle onderstaande regels van trafo
+          - Clock    # cross reference type
+      tap_side: Tap side      # cross reference type
       tap_pos: Tap
-      tap_min: Tap min
-      tap_max: Tap max
-      tap_nom: Tap nom
-      tap_size: Tap size
-      uk_min: uk
-      uk_max: uk
-      pk_min: Pk
-      pk_max: Pk
+      tap_min: Tap min        # cross reference type
+      tap_max: Tap max        # cross reference type
+      tap_nom: Tap nom        # cross reference type
+      tap_size: Tap size      # cross reference type
+      uk_min: uk              # cross reference type
+      uk_max: uk              # cross reference type
+      pk_min: Pk              # cross reference type
+      pk_max: Pk              # cross reference type
       r_grounding_from: Re1      # kan alleen Re vinden
       x_grounding_from: Xe1      # niet gevonden
       r_grounding_to: Re2        # kan alleen Re vinden
