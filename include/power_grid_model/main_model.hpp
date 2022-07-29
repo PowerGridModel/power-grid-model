@@ -285,7 +285,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                            return BranchIdx{components_.template get_seq<Node>(branch.from_node()),
                                             components_.template get_seq<Node>(branch.to_node())};
                        });
-        // skip branch3
+        comp_topo.branch3_node_idx.resize(components_.template size<Branch3>());
+        std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
+                       comp_topo.branch3_node_idx.begin(), [this](Branch3 const& branch3) {
+                           return Branch3Idx{components_.template get_seq<Node>(branch3.node_1()),
+                                             components_.template get_seq<Node>(branch3.node_2()),
+                                             components_.template get_seq<Node>(branch3.node_3())};
+                       });
         comp_topo.source_node_idx.resize(components_.template size<Source>());
         std::transform(components_.template citer<Source>().begin(), components_.template citer<Source>().end(),
                        comp_topo.source_node_idx.begin(), [this](Source const& source) {
@@ -948,7 +954,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        comp_conn.branch_phase_shift.begin(), [](Branch const& branch) {
                            return branch.phase_shift();
                        });
-        // skip branch3 for now
+        std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
+                       comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
+                           return Branch3Connected{branch3.status_1(), branch3.status_2(), branch3.status_3()};
+                       });
+        std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
+                       comp_conn.branch3_phase_shift.begin(), [](Branch3 const& branch3) {
+                           return branch3.phase_shift();
+                       });
         std::transform(components_.template citer<Source>().begin(), components_.template citer<Source>().end(),
                        comp_conn.source_connected.begin(), [](Source const& source) {
                            return source.status();

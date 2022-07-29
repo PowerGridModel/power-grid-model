@@ -96,6 +96,10 @@ class ThreeWindingTransformer : public Branch3 {
     double base_i_3() const final {
         return base_i_3_;
     }
+    // 3-way branch, phase shift = phase_node_x - phase_internal_node
+    std::array<double, 3> phase_shift() const final {
+        return {0.0, clock_12_ * deg_30, clock_13_ * deg_30};
+    }
 
     // setter
     bool set_tap(IntS new_tap) {

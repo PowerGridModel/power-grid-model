@@ -64,6 +64,7 @@ class Branch3 : public Base {
     virtual double base_i_1() const = 0;
     virtual double base_i_2() const = 0;
     virtual double base_i_3() const = 0;
+    virtual std::array<double, 3> phase_shift() const = 0;
 
     // TODO calc_param()
 
