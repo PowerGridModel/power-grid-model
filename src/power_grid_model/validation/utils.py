@@ -216,7 +216,7 @@ def update_input_data(input_data: Dict[str, np.ndarray], update_data: Dict[str, 
             else:
                 mask = np.not_equal(array[field], nan)
             if mask.ndim == 2:
-                mask = mask.prod(axis=1, dtype=bool)
+                mask = np.any(mask, axis=1)
             data = array[["id", field]][mask]
             idx = np.where(merged_data[component]["id"] == np.reshape(data["id"], (-1, 1)))
             if isinstance(idx, tuple):
