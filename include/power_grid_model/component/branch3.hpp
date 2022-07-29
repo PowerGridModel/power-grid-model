@@ -61,12 +61,27 @@ class Branch3 : public Base {
     }
 
     // virtual getter
+    bool energized(bool is_connected_to_source = true) const final {
+        return is_connected_to_source && (status_1_ || status_2_ || status_3_);
+    }
     virtual double base_i_1() const = 0;
     virtual double base_i_2() const = 0;
     virtual double base_i_3() const = 0;
     virtual std::array<double, 3> phase_shift() const = 0;
 
     // TODO calc_param()
+    template <bool sym>
+    std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
+        if (!energized(is_connected_to_source)) {
+            return std::array<BranchCalcParam<sym>, 3>{};
+        }
+        if constexpr (sym) {
+            return sym_calc_param();
+        }
+        else {
+            return asym_calc_param();
+        }
+    }
 
     // TODO energized()
 
@@ -106,6 +121,9 @@ class Branch3 : public Base {
     bool status_1_;
     bool status_2_;
     bool status_3_;
+
+    virtual std::array<BranchCalcParam<true>, 3> sym_calc_param() const = 0;
+    virtual std::array<BranchCalcParam<false>, 3> asym_calc_param() const = 0;
 };
 
 }  // namespace power_grid_model

@@ -195,16 +195,7 @@ class ThreeWindingTransformer : public Branch3 {
         - T1: node 1 -> dummy node
         - T2: node 2 -> dummy node
         - T3: node 3 -> dummy node
-    */
-    std::tuple<Transformer, Transformer, Transformer> convert_to_two_winding_transformers() {
-        const auto [transformer_input_T1, transformer_input_T2, transformer_input_T3] =
-            get_two_winding_transformer_inputs();
-        Transformer T1{transformer_input_T1, u1_rated_, u1_rated_};
-        Transformer T2{transformer_input_T2, u2_rated_, u1_rated_};
-        Transformer T3{transformer_input_T3, u3_rated_, u1_rated_};
-    }
 
-    /*
     The three two winding transformers look as follows:
 
                                 node_2
@@ -226,7 +217,7 @@ class ThreeWindingTransformer : public Branch3 {
     - The voltage levels will be calculated in advance, so tap_pos/min/max/nom/size can all be set to zero
     - uk and pk are calculated in advance, so uk_min/max and pk_min/max can be set to nan
     */
-    std::tuple<TransformerInput, TransformerInput, TransformerInput> get_two_winding_transformer_inputs() const {
+    std::array<Transformer, 3> convert_to_two_winding_transformers() const {
         // off nominal tap ratio
         auto const [u1, u2, u3] = [this]() {
             double u1 = u1_, u2 = u2_, u3 = u3_;
@@ -326,7 +317,30 @@ class ThreeWindingTransformer : public Branch3 {
             0,                              // r_grounding_to
             0                               // x_grounding_to
         };
-        return std::make_tuple(transformer_input_T1, transformer_input_T2, transformer_input_T3);
+
+        Transformer T1{transformer_input_T1, u1_rated_, u1_rated_};
+        Transformer T2{transformer_input_T2, u2_rated_, u1_rated_};
+        Transformer T3{transformer_input_T3, u3_rated_, u1_rated_};
+
+        return std::array<Transformer, 3>{T1, T2, T3};
+    }
+
+    // calculate branch parameters
+    std::array<BranchCalcParam<true>, 3> sym_calc_param() const final {
+        std::array<Transformer, 3> transformer_array = convert_to_two_winding_transformers();
+        std::array<BranchCalcParam<true>, 3> transformer_params{};
+        for (size_t i = 0; i < transformer_array.size(); i++) {
+            transformer_params[i] = transformer_array[i].calc_param<true>();
+        }
+        return transformer_params;
+    }
+    std::array<BranchCalcParam<false>, 3> asym_calc_param() const final {
+        std::array<Transformer, 3> transformer_array = convert_to_two_winding_transformers();
+        std::array<BranchCalcParam<false>, 3> transformer_params{};
+        for (size_t i = 0; i < transformer_array.size(); i++) {
+            transformer_params[i] = transformer_array[i].calc_param<false>();
+        }
+        return transformer_params;
     }
 };
 
