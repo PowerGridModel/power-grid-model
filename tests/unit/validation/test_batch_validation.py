@@ -47,8 +47,7 @@ def batch_data() -> Dict[str, np.ndarray]:
     line["id"] = [[5, 6], [6, 7], [7, 5]]
     line["from_status"] = [[1, 1], [1, 1], [1, 1]]
 
-    # There is a bug when validating asym_load batch data:
-    # IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed
+    # Add batch for asym_load, which has 2-D array for p_specified
     asym_load = initialize_array("update", "asym_load", (3, 2))
     asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
