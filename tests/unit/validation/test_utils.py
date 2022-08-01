@@ -388,6 +388,28 @@ def test_update_input_data_int_nan():
     np.testing.assert_array_equal(merged["line"]["from_status"], [0, -128, 1])
 
 
+def test_update_input_data_asym_nans():
+    input_load = initialize_array("input", "asym_load", 3)
+    input_load["id"] = [1, 2, 3]
+    input_load["p_specified"] = [[1.1, 1.2, 1.3], [2.1, np.nan, np.nan], [np.nan, np.nan, np.nan]]
+
+    update_load = initialize_array("update", "asym_load", 3)
+    update_load["id"] = [1, 2, 3]
+    update_load["p_specified"] = [[np.nan, np.nan, np.nan], [np.nan, np.nan, 5.3], [6.1, 6.2, 6.3]]
+
+    merged = update_input_data(input_data={"asym_load": input_load}, update_data={"asym_load": update_load})
+
+    # The desired result would be to update all non-NaN values individually:
+    # np.testing.assert_array_equal(
+    #     merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [2.1, np.nan, 5.3], [6.1, 6.2, 6.3]]
+    # )
+
+    # The current C++ implementation updates the entire 3-phase value is one of the elements is non-NaN:
+    np.testing.assert_array_equal(
+        merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [np.nan, np.nan, 5.3], [6.1, 6.2, 6.3]]
+    )
+
+
 def test_errors_to_string_no_errors():
     assert errors_to_string(errors=None) == "the data: OK"
     assert errors_to_string(errors=[]) == "the data: OK"
