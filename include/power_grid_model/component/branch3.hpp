@@ -67,9 +67,9 @@ class Branch3 : public Base {
     virtual double base_i_1() const = 0;
     virtual double base_i_2() const = 0;
     virtual double base_i_3() const = 0;
+    virtual double loading(double s_1, double s_2, double s_3) const = 0;
     virtual std::array<double, 3> phase_shift() const = 0;
 
-    // TODO calc_param()
     template <bool sym>
     std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
@@ -83,7 +83,40 @@ class Branch3 : public Base {
         }
     }
 
-    // TODO energized()
+    template <bool sym>
+    Branch3Output<sym> get_output(BranchMathOutput<sym> const& branch_math_output1,
+                                  BranchMathOutput<sym> const& branch_math_output2,
+                                  BranchMathOutput<sym> const& branch_math_output3) const {
+        // result object
+        Branch3Output<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        // calculate result
+        output.p_1 = base_power<sym> * real(branch_math_output1.s_f);
+        output.q_1 = base_power<sym> * imag(branch_math_output1.s_f);
+        output.i_1 = base_i_1() * cabs(branch_math_output1.i_f);
+        output.s_1 = base_power<sym> * cabs(branch_math_output1.s_f);
+
+        output.p_2 = base_power<sym> * real(branch_math_output2.s_f);
+        output.q_2 = base_power<sym> * imag(branch_math_output2.s_f);
+        output.i_2 = base_i_2() * cabs(branch_math_output2.i_f);
+        output.s_2 = base_power<sym> * cabs(branch_math_output2.s_f);
+
+        output.p_3 = base_power<sym> * real(branch_math_output3.s_f);
+        output.q_3 = base_power<sym> * imag(branch_math_output3.s_f);
+        output.i_3 = base_i_3() * cabs(branch_math_output3.i_f);
+        output.s_3 = base_power<sym> * cabs(branch_math_output3.s_f);
+
+        output.loading = loading(sum_val(output.s_1), sum_val(output.s_2), sum_val(output.s_3));
+
+        return output;
+    }
+
+    template <bool sym>
+    Branch3Output<sym> get_null_output() const {
+        Branch3Output<sym> output;
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
 
     // setter
     bool set_status(IntS new_status_1, IntS new_status_2, IntS new_status_3) {

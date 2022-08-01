@@ -96,6 +96,9 @@ class ThreeWindingTransformer : public Branch3 {
     double base_i_3() const final {
         return base_i_3_;
     }
+    double loading(double s_1, double s_2, double s_3) const final {
+        return std::max(std::max(s_1 / sn_1_, s_2 / sn_2_), s_3 / sn_3_);
+    }
     // 3-way branch, phase shift = phase_node_x - phase_internal_node
     std::array<double, 3> phase_shift() const final {
         return {0.0, clock_12_ * deg_30, clock_13_ * deg_30};

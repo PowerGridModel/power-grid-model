@@ -726,6 +726,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                               });
     }
 
+    // output branch3
+    template <bool sym, class Component, class ResIt>
+    std::enable_if_t<
+        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
+            std::is_base_of_v<Branch3, Component>,
+        ResIt>
+    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+        assert(construction_complete_);
+        return std::transform(components_.template citer<Component>().begin(),
+                              components_.template citer<Component>().end(),
+                              comp_coup_->branch3.cbegin() + components_.template get_start_idx<Branch3, Component>(),
+                              res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
+                                  if (math_id.group == -1) {
+                                      return branch3.get_null_output<sym>();
+                                  }
+
+                                  return branch3.get_output<sym>(math_output[math_id.group].branch[math_id.pos[0]],
+                                                                 math_output[math_id.group].branch[math_id.pos[1]],
+                                                                 math_output[math_id.group].branch[math_id.pos[2]]);
+                              });
+    }
+
     // output source, loadgen, shunt individually
     template <bool sym, class Component, class ResIt>
     std::enable_if_t<
