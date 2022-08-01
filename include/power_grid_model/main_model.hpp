@@ -993,7 +993,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             math_param[math_idx.group].branch_param[math_idx.pos] =
                 components_.template get_item_by_seq<Branch>(i).template calc_param<sym>();
         }
-        // skip branch3
+        // loop all branch3
+        for (Idx i = 0; i != (Idx)comp_topo_->branch3_node_idx.size(); ++i) {
+            Idx2DBranch3 const math_idx = comp_coup_->branch3[i];
+            if (math_idx.group == -1) {
+                continue;
+            }
+            // assign parameters, branch3 param consists of three branch parameters
+            auto const branch3_param = components_.template get_item_by_seq<Branch3>(i).template calc_param<sym>();
+            for (size_t branch2 = 0; branch2 < 3; ++branch2) {
+                math_param[math_idx.group].branch_param[math_idx.pos[branch2]] = branch3_param[branch2];
+            }
+        }
         // loop all shunt
         for (Idx i = 0; i != (Idx)comp_topo_->shunt_node_idx.size(); ++i) {
             Idx2D const math_idx = comp_coup_->shunt[i];
