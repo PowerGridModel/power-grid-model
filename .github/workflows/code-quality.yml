@@ -54,7 +54,7 @@ jobs:
 
       - name: Install and run pylint
         run: |
-          pip install numpy pylint
+          pip install pylint .
           pylint src
 
       - name: Install and run clang-format
