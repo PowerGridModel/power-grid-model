@@ -160,6 +160,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     components_.template emplace<CompType>(id, input, u1, u2);
                 }
             }
+            else if constexpr (std::is_base_of_v<Branch3, CompType>) {
+                double const u1 = components_.template get_item<Node>(input.node_1).u_rated();
+                double const u2 = components_.template get_item<Node>(input.node_2).u_rated();
+                double const u3 = components_.template get_item<Node>(input.node_3).u_rated();
+                components_.template emplace<CompType>(id, input, u1, u2, u3);
+            }
             else if constexpr (std::is_base_of_v<Appliance, CompType>) {
                 double const u = components_.template get_item<Node>(input.node).u_rated();
                 components_.template emplace<CompType>(id, input, u);
