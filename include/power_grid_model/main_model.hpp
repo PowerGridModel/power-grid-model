@@ -633,6 +633,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return is_nan(update.from_status) && is_nan(update.to_status);
             });
         }
+        else if constexpr (std::is_base_of_v<Branch3, Component>) {
+            // Check for all batches
+            return std::all_of(it_begin, it_end, [](Branch3Update const& update) {
+                return is_nan(update.status_1) && is_nan(update.status_2) && is_nan(update.status_3);
+            });
+        }
         else if constexpr (std::is_base_of_v<Source, Component>) {
             // Check for all batches
             return std::all_of(it_begin, it_end, [](SourceUpdate const& update) {
