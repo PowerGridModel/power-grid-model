@@ -36,28 +36,28 @@ jobs:
 
       - name: Install and run isort
         run: |
-        pip install isort
-        isort src tests scripts
+          pip install isort
+          isort src tests scripts
 
       - name: Install and run black
         run: |
-        pip install black
-        black src tests scripts
+          pip install black
+          black src tests scripts
 
       - name: Install and run mypy
         run: |
-        pip install mypy
-        mypy src tests scripts
+          pip install mypy
+          mypy src tests scripts
 
       - name: Install and run pylint
         run: |
-        pip install pylint -e .
-        pylint src tests scripts
+          pip install pylint -e .
+          pylint src tests scripts
 
       - name: Install and runclang-format
         run: |
-        sudo apt update && sudo apt install -y clang-format
-        find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
+          sudo apt update && sudo apt install -y clang-format
+          find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
 
       - name: If needed raise error
         run: |
