@@ -2,12 +2,16 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import io
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
 import pytest
+
 from power_grid_model.manual_testing import (
+    _compact_json_dump,
+    _inject_extra_info,
     convert_batch_to_list_data,
     convert_numpy_to_python,
     convert_python_to_numpy,
@@ -109,7 +113,7 @@ def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
 
 
 def test_convert_python_to_numpy__raises_value_error():
-    with pytest.raises(ValueError, match="Invalid property 'u' for line input data."):
+    with pytest.raises(ValueError, match="Invalid attribute 'u' for line input data."):
         convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input")
     with pytest.raises(ValueError, match="Invalid 'id' value for line input data."):
         convert_python_to_numpy({"line": [{"id": "my_line", "u_rated": 10.5e3}]}, "input")
@@ -132,3 +136,191 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
     export_json_data(json_file=Path("output.json"), data={}, indent=2)
     convert_mock.assert_called_once()
     json_dump_mock.assert_called_once_with({"foo": [{"val": 123}]}, open_mock(), indent=2)
+
+
+@patch("json.dump")
+@patch("builtins.open", new_callable=mock_open)
+@patch("power_grid_model.manual_testing.convert_numpy_to_python")
+@patch("power_grid_model.manual_testing._inject_extra_info")
+def test_export_json_data_extra_info(
+    extra_info_mock: MagicMock, convert_mock: MagicMock, _open_mock: MagicMock, _json_dump_mock: MagicMock
+):
+    convert_mock.return_value = {"foo": [{"id": 123}]}
+    export_json_data(json_file=Path(), data={}, extra_info={123: "Extra information"})
+    extra_info_mock.assert_called_once_with(data={"foo": [{"id": 123}]}, extra_info={123: "Extra information"})
+
+
+def test_inject_extra_info_single():
+    data = {"node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456}], "line": [{"id": 2, "baz": 789}]}
+    extra_info = {2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}
+    _inject_extra_info(data=data, extra_info=extra_info)
+    assert data == {
+        "node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456, "extra": {"sheet": "Nodes", "Number": "00123"}}],
+        "line": [{"id": 2, "baz": 789, "extra": 42}],
+    }
+
+
+def test_inject_extra_info_batch():
+    data = [
+        {"node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222}], "line": [{"id": 2, "baz": 333}]},
+        {"node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555}], "line": [{"id": 2, "baz": 666}]},
+    ]
+    extra_info = [{2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}, {2: 43, 0: None}]
+    _inject_extra_info(data=data, extra_info=extra_info)
+    assert data == [
+        {
+            "node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222, "extra": {"sheet": "Nodes", "Number": "00123"}}],
+            "line": [{"id": 2, "baz": 333, "extra": 42}],
+        },
+        {
+            "node": [{"id": 0, "foo": 444, "extra": None}, {"id": 1, "bar": 555}],
+            "line": [{"id": 2, "baz": 666, "extra": 43}],
+        },
+    ]
+
+
+def test_inject_extra_info_batch_copy_info():
+    data = [
+        {"node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222}], "line": [{"id": 2, "baz": 333}]},
+        {"node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555}], "line": [{"id": 2, "baz": 666}]},
+    ]
+    extra_info = {2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}
+    _inject_extra_info(data=data, extra_info=extra_info)
+    assert data == [
+        {
+            "node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222, "extra": {"sheet": "Nodes", "Number": "00123"}}],
+            "line": [{"id": 2, "baz": 333, "extra": 42}],
+        },
+        {
+            "node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555, "extra": {"sheet": "Nodes", "Number": "00123"}}],
+            "line": [{"id": 2, "baz": 666, "extra": 42}],
+        },
+    ]
+
+
+def test_inject_extra_info_single_dataset_with_batch_info():
+    data = {"node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456}], "line": [{"id": 2, "baz": 789}]}
+    extra_info = [{2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}, {2: 43, 0: None}]
+    with pytest.raises(TypeError):
+        _inject_extra_info(data=data, extra_info=extra_info)
+
+
+def test_compact_json_dump():
+    data = {
+        "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+        "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
+    }
+
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=0)
+    assert (
+        string_stream.getvalue()
+        == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
+    )
+
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=1)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+  "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
+}"""
+    )
+
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=2)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "node":
+    [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+  "line":
+    [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
+}"""
+    )
+
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=3)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "node":
+    [
+      {"id": 1, "x": 2},
+      {"id": 3, "x": 4}
+    ],
+  "line":
+    [
+      {"id": 5, "x": 6},
+      {"id": 7, "x": {"y": 8.1, "z": 8.2}}
+    ]
+}"""
+    )
+
+
+def test_compact_json_dump_string():
+    data = "test"
+
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=2)
+    assert string_stream.getvalue() == '"test"'
+
+
+def test_compact_json_dump_deep():
+    data = {
+        "foo": 1,
+        "bar": {"x": 2, "y": 3},
+    }
+
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=10)
+    assert (
+        string_stream.getvalue()
+        == """{
+  "foo": 1,
+  "bar":
+    {
+      "x": 2,
+      "y": 3
+    }
+}"""
+    )
+
+
+def test_compact_json_dump_batch():
+    data = [
+        {
+            "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
+            "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
+        },
+        {
+            "line": [{"id": 9, "x": 10}, {"id": 11, "x": 12}],
+        },
+    ]
+    string_stream = io.StringIO()
+    _compact_json_dump(data, string_stream, indent=2, max_level=4)
+    assert (
+        string_stream.getvalue()
+        == """[
+  {
+    "node":
+      [
+        {"id": 1, "x": 2},
+        {"id": 3, "x": 4}
+      ],
+    "line":
+      [
+        {"id": 5, "x": 6},
+        {"id": 7, "x": {"y": 8.1, "z": 8.2}}
+      ]
+  },
+  {
+    "line":
+      [
+        {"id": 9, "x": 10},
+        {"id": 11, "x": 12}
+      ]
+  }
+]"""
+    )

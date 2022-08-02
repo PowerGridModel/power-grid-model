@@ -10,7 +10,6 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-
 # No need to explain each class, as the class name shoul dbe self explanatory
 
 

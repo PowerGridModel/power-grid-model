@@ -11,7 +11,6 @@ Note: these enumeration match the C++ arithmetic core, so dont change the values
 
 from enum import Enum, IntEnum
 
-
 # pylint: disable=invalid-name
 
 

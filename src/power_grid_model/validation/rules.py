@@ -35,34 +35,33 @@ Output data:
 
 """
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Type, TypeVar, Union
-from typing import Protocol
+from typing import Any, Dict, List, Protocol, Tuple, Type, TypeVar, Union
 
 import numpy as np
 
+from ..enum import WindingType
 from .errors import (
-    ValidationError,
-    NotUniqueError,
-    MultiComponentNotUniqueError,
-    InvalidEnumValueError,
-    SameValueError,
-    NotBooleanError,
-    InvalidIdError,
-    TwoValuesZeroError,
     ComparisonError,
-    NotGreaterThanError,
-    NotGreaterOrEqualError,
-    NotLessThanError,
-    NotLessOrEqualError,
     IdNotInDatasetError,
+    InfinityError,
+    InvalidEnumValueError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
     NotBetweenError,
     NotBetweenOrAtError,
-    MissingValueError,
-    InfinityError,
+    NotBooleanError,
+    NotGreaterOrEqualError,
+    NotGreaterThanError,
+    NotLessOrEqualError,
+    NotLessThanError,
+    NotUniqueError,
+    SameValueError,
     TransformerClockError,
+    TwoValuesZeroError,
+    ValidationError,
 )
 from .utils import eval_expression, nan_type
-from ..enum import WindingType
 
 Error = TypeVar("Error", bound=ValidationError)
 

@@ -9,7 +9,7 @@ requires = [
     "cython",
     "oldest-supported-numpy",
     "requests",
-    "pybuild-header-dependency"
+    "pybuild-header-dependency",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -38,15 +38,16 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "numpy>=1.21.0"
+    "numpy>=1.21.0",
 ]
 dynamic = ["version"]
 
 
 [project.optional-dependencies]
 dev = [
+    "pre-commit",
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
 ]
 
 [project.urls]
@@ -66,3 +67,10 @@ addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "ht
 [tool.black]
 line-length = 120
 target-version = ['py38']
+
+[tool.isort]
+src_paths = ["src", "tests/unit", "scripts"]
+profile = "black"
+
+[tool.pylint]
+max-line-length = 120

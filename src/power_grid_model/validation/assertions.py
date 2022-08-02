@@ -8,10 +8,10 @@ ValidationException if the validation results in one or more errors.
 """
 from typing import Dict, List, Optional, Union
 
+from ..enum import CalculationType
 from .errors import ValidationError
 from .utils import InputData, UpdateData, errors_to_string
-from .validation import validate_input_data, validate_batch_data
-from ..enum import CalculationType
+from .validation import validate_batch_data, validate_input_data
 
 
 class ValidationException(ValueError):
