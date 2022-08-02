@@ -19,7 +19,15 @@ class SingleArray(np.ndarray):
 
     TODO: From version 3.9 we should use:
     SingleArray: TypeAlias = np.ndarray
+
+    NOTE: This class should only be used as a type hint! Do not construct objects of this type.
     """
+
+    def __new__(cls, *args, **kwargs):
+        raise NotImplementedError(
+            "The SingleArray class should only be used as a type hint! "
+            "It is an alias for np.ndarray. Do not construct objects of this type."
+        )
 
 
 class DenseBatchArray(np.ndarray):
@@ -30,7 +38,15 @@ class DenseBatchArray(np.ndarray):
 
     TODO: From version 3.9 we should use:
     DenseBatchArray: TypeAlias = np.ndarray
+
+    NOTE: This class should only be used as a type hint! Do not construct objects of this type.
     """
+
+    def __new__(cls, *args, **kwargs):
+        raise NotImplementedError(
+            "The DenseBatchArray class should only be used as a type hint! "
+            "It is an alias for np.ndarray. Do not construct objects of this type."
+        )
 
 
 SparseBatchArray = Dict[str, np.ndarray]
