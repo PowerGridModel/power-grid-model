@@ -10,44 +10,9 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 
-
-class SingleArray(np.ndarray):
-    """
-    A single array is a one-dimensional structured numpy array. The exact dtype depends on the type of component.
-
-    Further on in this document, a one-dimensional array is denoted as: <1d-array>
-
-    TODO: From version 3.9 we should use:
-    SingleArray: TypeAlias = np.ndarray
-
-    NOTE: This class should only be used as a type hint! Do not construct objects of this type.
-    """
-
-    def __new__(cls, *args, **kwargs):
-        raise NotImplementedError(
-            "The SingleArray class should only be used as a type hint! "
-            "It is an alias for np.ndarray. Do not construct objects of this type."
-        )
-
-
-class DenseBatchArray(np.ndarray):
-    """
-    A dense batch array is a a two-dimensional structured numpy array. The exact dtype depends on the type of component.
-
-    Further on in this document, a two-dimensional array is denoted as: <2d-array>
-
-    TODO: From version 3.9 we should use:
-    DenseBatchArray: TypeAlias = np.ndarray
-
-    NOTE: This class should only be used as a type hint! Do not construct objects of this type.
-    """
-
-    def __new__(cls, *args, **kwargs):
-        raise NotImplementedError(
-            "The DenseBatchArray class should only be used as a type hint! "
-            "It is an alias for np.ndarray. Do not construct objects of this type."
-        )
-
+# When we're dropping python 3.8, we should introduce
+#  SingleArray = np.ndarray (ndim=1)
+#  DenseBatchArray = np.ndarray (ndim=2)
 
 SparseBatchArray = Dict[str, np.ndarray]
 """
@@ -58,7 +23,7 @@ A sparse batch array is a dictionary containing the keys "indptr" and "data".
 Example: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
-BatchArray = Union[DenseBatchArray, SparseBatchArray]
+BatchArray = Union[np.ndarray, SparseBatchArray]
 """
 A batch is a either a dense or a sparse batch array
 
@@ -67,7 +32,7 @@ Examples:
     sparse: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
-SingleDataset = Dict[str, SingleArray]
+SingleDataset = Dict[str, np.ndarray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are one-dimensional
 structured numpy arrays.
@@ -145,7 +110,7 @@ Example: {"id": 1, "u_rated": 10500.0}
 
 ComponentList = List[Component]
 """
-A component list is a list containing components. In essence it stores the same information as a SingleArray,
+A component list is a list containing components. In essence it stores the same information as a np.ndarray,
 but in a native python format, without using numpy.
 
 Example: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}]

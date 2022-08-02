@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import numpy as np
 import pytest
 
+from power_grid_model.data_types import Dataset
 from power_grid_model.file_io import (
     _compact_json_dump,
     _inject_extra_info,
@@ -133,7 +134,8 @@ def test_convert_batch_to_list_data__zero_batches():
 @patch("power_grid_model.file_io.convert_numpy_to_python")
 def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_dump_mock: MagicMock):
     convert_mock.return_value = {"foo": [{"val": 123}]}
-    export_json_data(json_file=Path("output.json"), data={}, indent=2)
+    data: Dataset = {}  # type: ignore
+    export_json_data(json_file=Path("output.json"), data=data, indent=2)
     convert_mock.assert_called_once()
     json_dump_mock.assert_called_once_with({"foo": [{"val": 123}]}, open_mock(), indent=2)
 
@@ -145,8 +147,9 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
 def test_export_json_data_extra_info(
     extra_info_mock: MagicMock, convert_mock: MagicMock, _open_mock: MagicMock, _json_dump_mock: MagicMock
 ):
+    data: Dataset = {}  # type: ignore
     convert_mock.return_value = {"foo": [{"id": 123}]}
-    export_json_data(json_file=Path(), data={}, extra_info={123: "Extra information"})
+    export_json_data(json_file=Path(), data=data, extra_info={123: "Extra information"})
     extra_info_mock.assert_called_once_with(data={"foo": [{"id": 123}]}, extra_info={123: "Extra information"})
 
 

@@ -283,7 +283,6 @@ def _convert_numpy_to_python_single(data: SingleDataset) -> SinglePythonDataset:
 def import_json_data(json_file: Path, data_type: str) -> Dataset:
     """
     import json data
-    for a list, import individual entry as dictionary of arrays
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output
@@ -294,6 +293,33 @@ def import_json_data(json_file: Path, data_type: str) -> Dataset:
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         json_data = json.load(file_pointer)
     return convert_python_to_numpy(json_data, data_type)
+
+
+def import_input_data(json_file: Path) -> SingleDataset:
+    """
+    import input json data
+    Args:
+        json_file: path to the json file
+
+    Returns:
+         A single dataset for power-grid-model
+    """
+    data = import_json_data(json_file=json_file, data_type="input")
+    assert isinstance(data, dict)
+    assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
+    return data
+
+
+def import_update_data(json_file: Path) -> BatchDataset:
+    """
+    import update json data
+    Args:
+        json_file: path to the json file
+
+    Returns:
+         A batch dataset for power-grid-model
+    """
+    return import_json_data(json_file=json_file, data_type="update")
 
 
 def export_json_data(

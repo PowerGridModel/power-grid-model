@@ -5,12 +5,12 @@
 from pathlib import Path
 
 from power_grid_model import CalculationType
-from power_grid_model.file_io import import_json_data
+from power_grid_model.file_io import import_input_data
 from power_grid_model.validation import errors_to_string, validate_input_data
 
 input_file = Path("../tests/data/state_estimation/dummy-test-sym/input.json")
 
-input_data = import_json_data(json_file=input_file, data_type="input")
+input_data = import_input_data(json_file=input_file)
 
 input_errors = validate_input_data(
     input_data=input_data, calculation_type=CalculationType.state_estimation, symmetric=True

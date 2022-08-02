@@ -12,13 +12,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
-from power_grid_model.data_types import (
-    BatchDataset,
-    BatchList,
-    DenseBatchArray,
-    SingleArray,
-    SingleDataset,
-)
+from power_grid_model.data_types import BatchDataset, BatchList, SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -138,7 +132,7 @@ def split_update_data_in_batches(update_data: BatchDataset) -> BatchList:
     return batches
 
 
-def split_numpy_array_in_batches(data: Union[SingleArray, DenseBatchArray], component: str) -> List[SingleArray]:
+def split_numpy_array_in_batches(data: Union[np.ndarray, np.ndarray], component: str) -> List[np.ndarray]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -165,7 +159,7 @@ def split_numpy_array_in_batches(data: Union[SingleArray, DenseBatchArray], comp
     )
 
 
-def split_sparse_batches_in_batches(data: np.ndarray, indptr: np.ndarray, component: str) -> List[SingleArray]:
+def split_sparse_batches_in_batches(data: np.ndarray, indptr: np.ndarray, component: str) -> List[np.ndarray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 

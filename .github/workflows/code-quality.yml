@@ -4,7 +4,7 @@
 
 
 # GitHub Action that uses
-#     Black to reformat the Python code in an incoming pull request.
+#     isort, black, mypy and pylint to reformat the Python code in an incoming pull request.
 #     clang-format to reformat the C++ code in an incoming pull request.
 # If all code in the pull request is compliant with Black and clang-format then this Action
 # does nothing. Otherwise, it will print the files which need to be reformatted and raise an error.
@@ -38,16 +38,16 @@ jobs:
         run: pip install isort black mypy pylint
 
       - name: Run isort
-        run: isort .
+        run: isort src tests scripts
 
       - name: Run black
-        run: black .
+        run: black src tests scripts
 
       - name: Run mypy
-        run: mypy .
+        run: mypy src tests scripts
 
       - name: Run pylint
-        run: pylint .
+        run: pylint src tests scripts
 
       - name: Install clang-format
         run: sudo apt-get update && sudo apt-get install -y clang-format
