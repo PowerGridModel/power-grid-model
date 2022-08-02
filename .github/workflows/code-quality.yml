@@ -33,27 +33,31 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
-        
-      - name: Install python code-quality tools
-        run: pip install isort black mypy pylint
 
-      - name: Run isort
-        run: isort src tests scripts
+      - name: Install and run isort
+        run: |
+        pip install isort
+        isort src tests scripts
 
-      - name: Run black
-        run: black src tests scripts
+      - name: Install and run black
+        run: |
+        pip install black
+        black src tests scripts
 
-      - name: Run mypy
-        run: mypy src tests scripts
+      - name: Install and run mypy
+        run: |
+        pip install mypy
+        mypy src tests scripts
 
-      - name: Run pylint
-        run: pylint src tests scripts
+      - name: Install and run pylint
+        run: |
+        pip install pylint -e .
+        pylint src tests scripts
 
-      - name: Install clang-format
-        run: sudo apt-get update && sudo apt-get install -y clang-format
-
-      - name: Run clang-format
-        run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
+      - name: Install and runclang-format
+        run: |
+        sudo apt update && sudo apt install -y clang-format
+        find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
 
       - name: If needed raise error
         run: |
