@@ -344,18 +344,18 @@ def export_json_data(
     """
     json_data = convert_numpy_to_python(data)
     if extra_info is not None:
-        _inject_extra_info(data=json_data, extra_info=extra_info)
+        inject_extra_info(data=json_data, extra_info=extra_info)
 
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
         if compact and indent:
             is_batch_data = isinstance(json_data, list)
             max_level = 4 if is_batch_data else 3
-            _compact_json_dump(json_data, file_pointer, indent=indent, max_level=max_level)
+            compact_json_dump(json_data, file_pointer, indent=indent, max_level=max_level)
         else:
             json.dump(json_data, file_pointer, indent=indent)
 
 
-def _inject_extra_info(
+def inject_extra_info(
     data: PythonDataset,
     extra_info: Union[ExtraInfo, List[ExtraInfo]],
 ):
@@ -371,11 +371,11 @@ def _inject_extra_info(
         if isinstance(extra_info, list):
             # If both data and extra_info are lists, expect one extra info set per batch
             for batch, info in zip(data, extra_info):
-                _inject_extra_info(batch, info)
+                inject_extra_info(batch, info)
         else:
             # If only data is a list, copy extra_info for each batch
             for batch in data:
-                _inject_extra_info(batch, extra_info)
+                inject_extra_info(batch, extra_info)
     elif isinstance(data, dict):
         if not isinstance(extra_info, dict):
             raise TypeError("Invalid extra info data type")
@@ -389,7 +389,7 @@ def _inject_extra_info(
         raise TypeError("Invalid data type")
 
 
-def _compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):
+def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):
     """Custom compact JSON writer that is intended to put data belonging to a single object on a single line.
 
     For example:
@@ -428,7 +428,7 @@ def _compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: in
     if isinstance(data, list):
         io_stream.write(tab + "[\n")
         for i, obj in enumerate(data, start=1):
-            _compact_json_dump(obj, io_stream, indent, max_level, level + 1)
+            compact_json_dump(obj, io_stream, indent, max_level, level + 1)
             io_stream.write(",\n" if i < n_obj else "\n")
         io_stream.write(tab + "]")
         return
@@ -448,6 +448,6 @@ def _compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: in
             json.dump(obj, io_stream, indent=None)
         else:
             io_stream.write("\n")
-            _compact_json_dump(obj, io_stream, indent, max_level, level + 2)
+            compact_json_dump(obj, io_stream, indent, max_level, level + 2)
         io_stream.write(",\n" if i < n_obj else "\n")
     io_stream.write(tab + "}")

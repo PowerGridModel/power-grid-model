@@ -11,12 +11,12 @@ import pytest
 
 from power_grid_model.data_types import Dataset
 from power_grid_model.file_io import (
-    _compact_json_dump,
-    _inject_extra_info,
+    compact_json_dump,
     convert_batch_to_list_data,
     convert_numpy_to_python,
     convert_python_to_numpy,
     export_json_data,
+    inject_extra_info,
     is_nan,
 )
 
@@ -143,7 +143,7 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
 @patch("json.dump")
 @patch("builtins.open", new_callable=mock_open)
 @patch("power_grid_model.file_io.convert_numpy_to_python")
-@patch("power_grid_model.file_io._inject_extra_info")
+@patch("power_grid_model.file_io.inject_extra_info")
 def test_export_json_data_extra_info(
     extra_info_mock: MagicMock, convert_mock: MagicMock, _open_mock: MagicMock, _json_dump_mock: MagicMock
 ):
@@ -156,7 +156,7 @@ def test_export_json_data_extra_info(
 def test_inject_extra_info_single():
     data = {"node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456}], "line": [{"id": 2, "baz": 789}]}
     extra_info = {2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}
-    _inject_extra_info(data=data, extra_info=extra_info)
+    inject_extra_info(data=data, extra_info=extra_info)
     assert data == {
         "node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456, "extra": {"sheet": "Nodes", "Number": "00123"}}],
         "line": [{"id": 2, "baz": 789, "extra": 42}],
@@ -169,7 +169,7 @@ def test_inject_extra_info_batch():
         {"node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555}], "line": [{"id": 2, "baz": 666}]},
     ]
     extra_info = [{2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}, {2: 43, 0: None}]
-    _inject_extra_info(data=data, extra_info=extra_info)
+    inject_extra_info(data=data, extra_info=extra_info)
     assert data == [
         {
             "node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222, "extra": {"sheet": "Nodes", "Number": "00123"}}],
@@ -188,7 +188,7 @@ def test_inject_extra_info_batch_copy_info():
         {"node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555}], "line": [{"id": 2, "baz": 666}]},
     ]
     extra_info = {2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}
-    _inject_extra_info(data=data, extra_info=extra_info)
+    inject_extra_info(data=data, extra_info=extra_info)
     assert data == [
         {
             "node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222, "extra": {"sheet": "Nodes", "Number": "00123"}}],
@@ -205,7 +205,7 @@ def test_inject_extra_info_single_dataset_with_batch_info():
     data = {"node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456}], "line": [{"id": 2, "baz": 789}]}
     extra_info = [{2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}, {2: 43, 0: None}]
     with pytest.raises(TypeError):
-        _inject_extra_info(data=data, extra_info=extra_info)
+        inject_extra_info(data=data, extra_info=extra_info)
 
 
 def test_compact_json_dump():
@@ -215,14 +215,14 @@ def test_compact_json_dump():
     }
 
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=0)
+    compact_json_dump(data, string_stream, indent=2, max_level=0)
     assert (
         string_stream.getvalue()
         == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
     )
 
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=1)
+    compact_json_dump(data, string_stream, indent=2, max_level=1)
     assert (
         string_stream.getvalue()
         == """{
@@ -232,7 +232,7 @@ def test_compact_json_dump():
     )
 
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=2)
+    compact_json_dump(data, string_stream, indent=2, max_level=2)
     assert (
         string_stream.getvalue()
         == """{
@@ -244,7 +244,7 @@ def test_compact_json_dump():
     )
 
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=3)
+    compact_json_dump(data, string_stream, indent=2, max_level=3)
     assert (
         string_stream.getvalue()
         == """{
@@ -266,7 +266,7 @@ def test_compact_json_dump_string():
     data = "test"
 
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=2)
+    compact_json_dump(data, string_stream, indent=2, max_level=2)
     assert string_stream.getvalue() == '"test"'
 
 
@@ -277,7 +277,7 @@ def test_compact_json_dump_deep():
     }
 
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=10)
+    compact_json_dump(data, string_stream, indent=2, max_level=10)
     assert (
         string_stream.getvalue()
         == """{
@@ -302,7 +302,7 @@ def test_compact_json_dump_batch():
         },
     ]
     string_stream = io.StringIO()
-    _compact_json_dump(data, string_stream, indent=2, max_level=4)
+    compact_json_dump(data, string_stream, indent=2, max_level=4)
     assert (
         string_stream.getvalue()
         == """[
