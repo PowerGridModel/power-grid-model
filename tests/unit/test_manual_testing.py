@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import numpy as np
 import pytest
 
-from power_grid_model.manual_testing import (
+from power_grid_model.file_io import (
     _compact_json_dump,
     _inject_extra_info,
     convert_batch_to_list_data,
@@ -130,7 +130,7 @@ def test_convert_batch_to_list_data__zero_batches():
 
 @patch("json.dump")
 @patch("builtins.open", new_callable=mock_open)
-@patch("power_grid_model.manual_testing.convert_numpy_to_python")
+@patch("power_grid_model.file_io.convert_numpy_to_python")
 def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_dump_mock: MagicMock):
     convert_mock.return_value = {"foo": [{"val": 123}]}
     export_json_data(json_file=Path("output.json"), data={}, indent=2)
@@ -140,8 +140,8 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
 
 @patch("json.dump")
 @patch("builtins.open", new_callable=mock_open)
-@patch("power_grid_model.manual_testing.convert_numpy_to_python")
-@patch("power_grid_model.manual_testing._inject_extra_info")
+@patch("power_grid_model.file_io.convert_numpy_to_python")
+@patch("power_grid_model.file_io._inject_extra_info")
 def test_export_json_data_extra_info(
     extra_info_mock: MagicMock, convert_mock: MagicMock, _open_mock: MagicMock, _json_dump_mock: MagicMock
 ):

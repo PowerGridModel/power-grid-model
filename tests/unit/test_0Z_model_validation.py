@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from power_grid_model import PowerGridModel
-from power_grid_model.manual_testing import convert_batch_to_list_data
+from power_grid_model.file_io import convert_batch_to_list_data
 
 from .utils import (
     EXPORT_OUTPUT,

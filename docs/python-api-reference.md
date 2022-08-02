@@ -17,7 +17,7 @@ The Python API consists of the following components:
   This is a pure Python module.
 * `power_grid_model.PowerGridModel`: the main class.
   This is inside a C++ extension module.
-* `power_grid_model.manual_testing`: containing the functions for load and save test dataset.
+* `power_grid_model.file_io`: containing the functions for load and save test dataset.
   See [Make Test Dataset](../examples/Make%20Test%20Dataset.ipynb) for examples of how to make test datasets.
 * `power_grid_model.validation`: optional validation and assertion functions.
   See [Validation Examples](../examples/Validation%20Examples.ipynb) for more information on how to validate input 
