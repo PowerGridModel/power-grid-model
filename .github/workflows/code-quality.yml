@@ -55,7 +55,7 @@ jobs:
       - name: Install and run pylint
         run: |
           pip install pylint .
-          pylint src
+          pylint power_grid_model
 
       - name: Install and run clang-format
         run: |
