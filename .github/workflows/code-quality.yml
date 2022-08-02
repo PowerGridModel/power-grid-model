@@ -34,6 +34,9 @@ jobs:
         with:
           python-version: 3.8
 
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
       - name: Install and run isort
         run: |
           pip install isort
@@ -51,10 +54,10 @@ jobs:
 
       - name: Install and run pylint
         run: |
-          pip install pylint -e .
-          pylint src tests scripts
+          pip install numpy pylint
+          pylint src
 
-      - name: Install and runclang-format
+      - name: Install and run clang-format
         run: |
           sudo apt update && sudo apt install -y clang-format
           find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
