@@ -34,13 +34,23 @@ jobs:
         with:
           python-version: 3.8
         
-      - name: Install Black and clang-format
-        run: |
-          pip install black
-          sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Install python code-quality tools
+        run: pip install isort black mypy pylint
+
+      - name: Run isort
+        run: isort .
 
       - name: Run black
         run: black .
+
+      - name: Run mypy
+        run: mypy .
+
+      - name: Run pylint
+        run: pylint .
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Run clang-format
         run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
