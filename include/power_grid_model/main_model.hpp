@@ -1267,9 +1267,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 };
 
-using MainModel = MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Appliance, GenericLoadGen, GenericLoad,
-                                                      GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
-                                AllComponents>;
+using MainModel =
+    MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad,
+                                        GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
+                  AllComponents>;
 
 }  // namespace power_grid_model
 
