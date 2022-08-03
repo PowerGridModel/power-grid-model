@@ -15,7 +15,7 @@ grid:
       from_status: From.Switch state
       to_node: To.Number
       to_status: To.Switch state
-      r1: R    # Checken met bram tm r 25 van ander bestand, cross reference to Cable type * lengte * 10^-3
+      r1: 'Cables!R[Shortname=Type short]'
       x1: X
       c1: C
       tan1: Tan_delta
@@ -94,7 +94,7 @@ grid:
       u_ref: Uref         # Uprofile / urated van node
       sk: Sk"nom
 
-  Connections:          # van connections naar loads, maak cable, node eind vd cable, load verbonden met de node bram vragen
+  Connections: # van connections naar loads, maak cable, node eind vd cable, load verbonden met de node bram vragen
     sym_load:
       id:
         - Node.Number      # niet gevonden
@@ -124,7 +124,7 @@ enums: #met bram doorlopen
   N2:
     none: false    #niet gevonden
     own: true      #niet gevonden
-  Behaviour:       #niet gevonden
+  Behaviour: #niet gevonden
     Constant admittance: 1
     Constant impedance: 1
     ~Constant current: 2
@@ -137,9 +137,11 @@ enums: #met bram doorlopen
   Tap side:
     '1': 1
     '2': 2
-  Q:             # Q-regeling? 0,1,2 gaia manual
+  Q: # Q-regeling? 0,1,2 gaia manual
     absorb: -1
     supply: 1
+  Short type:
+    4x50A: 50AL+25
 units:
   pu: 1
   Ohm: 1
@@ -152,4 +154,5 @@ units:
   Mvar: 1000000
   MW: 1000000
   MWp: 1000000
+  ohm/km: 0.001
   '%': 0.01
