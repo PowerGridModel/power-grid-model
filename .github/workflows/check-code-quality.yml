@@ -40,17 +40,17 @@ jobs:
       - name: Install and run isort
         run: |
           pip install isort
-          isort src tests scripts
+          isort .
 
       - name: Install and run black
         run: |
           pip install black
-          black src tests scripts
+          black .
 
       - name: Install and run mypy
         run: |
           pip install mypy
-          mypy src tests scripts
+          mypy .
 
       - name: Install and run pylint
         run: |
