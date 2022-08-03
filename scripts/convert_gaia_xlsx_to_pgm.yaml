@@ -1,0 +1,155 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+---
+grid:
+  Nodes:
+    node:
+      id: Number
+      u_rated: Unom
+      meta: ID
+  Cables:
+    line:
+      id: Number
+      from_node: From.Number
+      from_status: From.Switch state
+      to_node: To.Number
+      to_status: To.Switch state
+      r1: R    # Checken met bram tm r 25 van ander bestand, cross reference to Cable type * lengte * 10^-3
+      x1: X
+      c1: C
+      tan1: Tan_delta
+      r0: R0
+      x0: X0
+      c0: C0
+      tan0: Tan_delta
+      i_n: Inom'
+      meta:
+        - Name
+        - ID
+  Links:
+    link:
+      id: Number
+      from_node: From.Number
+      from_status: From.Switch state
+      to_node: To.Number
+      to_status: To.Switch state
+
+  Transformers:
+    transformer:
+      id: Number
+      from_node: From.Number
+      from_status: From.Switch state
+      to_node: To.Number
+      to_status: To.Switch state
+      u1: Unom1
+      u2: Unom2
+      sn: Snom    # Cross reference Type r 47 tm 49
+      uk: uk
+      pk: Pk
+
+      i0:
+        power_grid_model.conversion.filters.relative_no_load_current:
+          - Inul    # cross reference type r53 tm 55
+          - Pnul
+          - Snom
+          - Unom2
+      p0: Pnul
+      winding_from:
+        power_grid_model.conversion.filters.get_winding_from:
+          - s1  # cross reference type
+          - N1                                 #Navragen bij Gaia expert
+      winding_to:
+        power_grid_model.conversion.filters.get_winding_to:
+          - s2  # cross reference type
+          - N2                                #Navragen bij Gaia expert
+      clock:
+        power_grid_model.conversion.filters.get_clock:
+          - Clock    # cross reference type
+      tap_side: Tap side      # cross reference type
+      tap_pos: Tap
+      tap_min: Tap min        # cross reference type
+      tap_max: Tap max        # cross reference type
+      tap_nom: Tap nom        # cross reference type
+      tap_size: Tap size      # cross reference type
+      uk_min: uk              # cross reference type
+      uk_max: uk              # cross reference type
+      pk_min: Pk              # cross reference type
+      pk_max: Pk              # cross reference type
+      r_grounding_from: Re1      # kan alleen Re vinden
+      x_grounding_from: Xe1      # niet gevonden
+      r_grounding_to: Re2        # kan alleen Re vinden
+      x_grounding_to: Xe2        # niet gevonden
+      meta:
+        - Name
+        - ID
+
+  Sources:
+    source:
+      id:
+        - Node.Number
+        - Subnumber
+      node: Node.Number
+      status: Switch state
+      u_ref: Uref         # Uprofile / urated van node
+      sk: Sk"nom
+
+  Connections:          # van connections naar loads, maak cable, node eind vd cable, load verbonden met de node bram vragen
+    sym_load:
+      id:
+        - Node.Number      # niet gevonden
+        - Subnumber        # niet gevonden
+      node: Node.Number    # niet gevonden
+      status: Switch state # niet gevonden
+      type: Behaviour      # niet gevonden
+      p_specified:
+        power_grid_model.conversion.filters.multiply:
+          - P             # niet gevonden
+          - 'Nodes!Simultaneity[Number=Node.Number]'   # niet gevonden
+      q_specified:
+        power_grid_model.conversion.filters.multiply:
+          - Q    # niet gevonden
+          - 'Nodes!Simultaneity[Number=Node.Number]'   # niet gevonden
+      meta:
+        - Name
+        - ID     # niet gevonden
+
+enums: #met bram doorlopen
+  Switch state:
+    'off': 'off'    #checken
+    in: 'in'        #checken
+  N1:
+    none: false    #niet gevonden
+    own: true      #niet gevonden
+  N2:
+    none: false    #niet gevonden
+    own: true      #niet gevonden
+  Behaviour:       #niet gevonden
+    Constant admittance: 1
+    Constant impedance: 1
+    ~Constant current: 2
+    Constant power: 0
+    Default: 0
+    Industry: 0
+    Business: 0
+    Residential: 0
+    Living: 0
+  Tap side:
+    '1': 1
+    '2': 2
+  Q:             # Q-regeling? 0,1,2 gaia manual
+    absorb: -1
+    supply: 1
+units:
+  pu: 1
+  Ohm: 1
+  A: 1
+  µF: 0.000001
+  kV: 1000
+  kA: 1000
+  kW: 1000
+  MVA: 1000000
+  Mvar: 1000000
+  MW: 1000000
+  MWp: 1000000
+  '%': 0.01
