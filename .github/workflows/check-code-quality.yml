@@ -9,7 +9,7 @@
 # If all code in the pull request is compliant with Black and clang-format then this Action
 # does nothing. Otherwise, it will print the files which need to be reformatted and raise an error.
 
-name: Format Code
+name: Check Code Quality
 
 on:
   # run pipeline on push event of main or release branch
@@ -21,7 +21,7 @@ on:
   pull_request:
 
 jobs:
-  code-format-check:
+  check-code-quality:
     if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
 
@@ -56,6 +56,7 @@ jobs:
         run: |
           pip install pylint .
           pylint power_grid_model
+          git restore README.md
 
       - name: Install and run clang-format
         run: |
