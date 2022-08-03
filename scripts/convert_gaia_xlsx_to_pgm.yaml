@@ -95,21 +95,31 @@ grid:
       sk: Sk"nom
 
   Connections: # van connections naar loads, maak cable, node eind vd cable, load verbonden met de node bram vragen
+
+    line:
+      id:
+        - Node.Number
+        - Subnumber
+      from_node: Node.Number
+      to_node:
+        - Node.Number
+        - Subnumber
+    node:
+      id:
+        - Node.Number
+        - Subnumber
     sym_load:
       id:
         - Node.Number      # niet gevonden
         - Subnumber        # niet gevonden
-      node: Node.Number    # niet gevonden
+      node:
+        - Node.Number
+        - Subnumber
       status: Switch state # niet gevonden
       type: Behaviour      # niet gevonden
-      p_specified:
-        power_grid_model.conversion.filters.multiply:
-          - P             # niet gevonden
-          - 'Nodes!Simultaneity[Number=Node.Number]'   # niet gevonden
+      p_specified: Load.P
       q_specified:
-        power_grid_model.conversion.filters.multiply:
-          - Q    # niet gevonden
-          - 'Nodes!Simultaneity[Number=Node.Number]'   # niet gevonden
+        Load.Q
       meta:
         - Name
         - ID     # niet gevonden
