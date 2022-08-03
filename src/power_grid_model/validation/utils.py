@@ -91,22 +91,30 @@ def update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     """
 
     merged_data = {component: array.copy() for component, array in input_data.items()}
-    for component, array in update_data.items():
-        for field in array.dtype.names:
-            if field == "id":
-                continue
-            nan = nan_type(component, field, "update")
-            if np.isnan(nan):
-                mask = ~np.isnan(array[field])
-            else:
-                mask = np.not_equal(array[field], nan)
-            if mask.ndim == 2:
-                mask = np.any(mask, axis=1)
-            data = array[["id", field]][mask]
-            idx = np.where(merged_data[component]["id"] == np.reshape(data["id"], (-1, 1)))
-            if isinstance(idx, tuple):
-                merged_data[component][field][idx[1]] = data[field]
+    for component in update_data.keys():
+        update_component_data(component, merged_data[component], update_data[component])
     return merged_data
+
+
+def update_component_data(component: str, input_data: np.ndarray, update_data: np.ndarray) -> None:
+    """
+    Update the data in a numpy array, with another numpy array,
+    indexed on the "id" field and only non-NaN values are overwritten.
+    """
+    for field in update_data.dtype.names:
+        if field == "id":
+            continue
+        nan = nan_type(component, field, "update")
+        if np.isnan(nan):
+            mask = ~np.isnan(update_data[field])
+        else:
+            mask = np.not_equal(update_data[field], nan)
+        if mask.ndim == 2:
+            mask = np.any(mask, axis=1)
+        data = update_data[["id", field]][mask]
+        idx = np.where(input_data["id"] == np.reshape(data["id"], (-1, 1)))
+        if isinstance(idx, tuple):
+            input_data[field][idx[1]] = data[field]
 
 
 def errors_to_string(
