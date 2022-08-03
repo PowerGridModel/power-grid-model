@@ -5,7 +5,7 @@
 from pathlib import Path
 
 from power_grid_model import CalculationType
-from power_grid_model.file_io import import_input_data, import_update_data
+from power_grid_model.utils import import_input_data, import_update_data
 from power_grid_model.validation import errors_to_string, validate_batch_data
 
 input_file = Path("../tests/data/power_flow/dummy-test-batch/input.json")

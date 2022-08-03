@@ -7,6 +7,7 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
+from itertools import chain
 from pathlib import Path
 from typing import IO, Any, List, Optional, Union, cast
 
@@ -14,8 +15,11 @@ import numpy as np
 
 from power_grid_model import initialize_array
 from power_grid_model.data_types import (
+    BatchArray,
     BatchDataset,
     BatchList,
+    BatchPythonDataset,
+    ComponentList,
     Dataset,
     ExtraInfo,
     Nominal,
@@ -113,17 +117,19 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
     # first convert each batch separately, by recursively calling this function for each batch. Then the numpy
     # data for all batches in converted into a proper and compact numpy structure.
     if isinstance(data, list):
-        list_data = [_convert_python_to_numpy_single(json_dict, data_type=data_type) for json_dict in data]
+        list_data = [
+            convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type) for json_dict in data
+        ]
         return convert_list_to_batch_data(list_data)
 
     # Otherwise this should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
     if not isinstance(data, dict):
         raise TypeError("Data should be either a list or a dictionary!")
 
-    return _convert_python_to_numpy_single(data=data, data_type=data_type)
+    return convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type)
 
 
-def _convert_python_to_numpy_single(data: SinglePythonDataset, data_type: str) -> SingleDataset:
+def convert_python_single_dataset_to_single_dataset(data: SinglePythonDataset, data_type: str) -> SingleDataset:
     """
     Convert native python data to internal numpy
     Args:
@@ -137,66 +143,65 @@ def _convert_python_to_numpy_single(data: SinglePythonDataset, data_type: str) -
 
     dataset: SingleDataset = {}
     for component, objects in data.items():
+        dataset[component] = convert_component_list_to_numpy(objects=objects, component=component, data_type=data_type)
 
-        # We'll initialize an 1d-array with NaN values for all the objects of this component type
-        dataset[component] = initialize_array(data_type, component, len(objects))
-
-        for i, obj in enumerate(objects):
-            # As each object is a separate dictionary, and the attributes may differ per object, we need to check
-            # all attributes. Non-existing attributes
-            for attribute, value in obj.items():
-                if attribute == "extra":
-                    # The "extra" attribute is a special one. It can store any type of information associated with
-                    # an object, but it will not be used in the calculations. Therefore it is not included in the
-                    # numpy array, so we can skip this attribute
-                    continue
-
-                if attribute not in dataset[component].dtype.names:
-                    # If an attribute doesn't exist, the user made a mistake. Let's be merciless in that case,
-                    # for their own good.
-                    raise ValueError(f"Invalid attribute '{attribute}' for {component} {data_type} data.")
-
-                # Now just assign the value and raise an error if the value cannot be stored in the specific
-                # numpy array data format for this attribute.
-                try:
-                    dataset[component][i][attribute] = value
-                except ValueError as ex:
-                    raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
     return dataset
 
 
-def convert_batch_to_list_data(batch_data: BatchDataset) -> BatchList:
+def convert_component_list_to_numpy(objects: ComponentList, component: str, data_type: str) -> np.ndarray:
     """
-    Convert list of dataset to one single batch dataset
+    Convert native python data to internal numpy
     Args:
-        batch_data: a batch dataset for power-grid-model
+        objects: data in dict
+        component: the name of the component
+        data_type: type of data: input, update, sym_output, or asym_output
 
     Returns:
-        list of single dataset
+        A single numpy array
+
+    """
+
+    # We'll initialize an 1d-array with NaN values for all the objects of this component type
+    array = initialize_array(data_type, component, len(objects))
+
+    for i, obj in enumerate(objects):
+        # As each object is a separate dictionary, and the attributes may differ per object, we need to check
+        # all attributes. Non-existing attributes
+        for attribute, value in obj.items():
+            if attribute == "extra":
+                # The "extra" attribute is a special one. It can store any type of information associated with
+                # an object, but it will not be used in the calculations. Therefore it is not included in the
+                # numpy array, so we can skip this attribute
+                continue
+
+            if attribute not in array.dtype.names:
+                # If an attribute doesn't exist, the user made a mistake. Let's be merciless in that case,
+                # for their own good.
+                raise ValueError(f"Invalid attribute '{attribute}' for {component} {data_type} data.")
+
+            # Now just assign the value and raise an error if the value cannot be stored in the specific
+            # numpy array data format for this attribute.
+            try:
+                array[i][attribute] = value
+            except ValueError as ex:
+                raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
+    return array
+
+
+def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
+    """
+    Convert batch datasets to a list of individual batches
+    Args:
+        batch_data: a batch dataset for power-grid-model
+    Returns:
+        A list of individual batches
     """
 
     # If the batch data is empty, return an empty list
     if len(batch_data) == 0:
         return []
 
-    # Get the data for an arbitrary component; assuming that the number of batches of each component is the same.
-    # The structure may differ per component
-    example_batch_data = next(iter(batch_data.values()))
-
-    if isinstance(example_batch_data, np.ndarray):
-        # We expect the batch data to be a 2d numpy array of n_batches x n_objects
-        if len(example_batch_data.shape) != 2:
-            raise ValueError("Invalid batch data format")
-        n_batches = example_batch_data.shape[0]
-    elif isinstance(example_batch_data, dict):
-        # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
-        # invalid dictionary). There is always one indptr more than there are batches.
-        if "indptr" not in example_batch_data:
-            raise ValueError("Invalid batch data format")
-        n_batches = example_batch_data["indptr"].size - 1
-    else:
-        # If the batch data is not a numpy array and not a dictionary, it is invalid
-        raise ValueError("Invalid batch data format")
+    n_batches = get_and_verify_batch_sizes(batch_data=batch_data)
 
     # Initialize an empty list with dictionaries
     # Note that [{}] * n_batches would result in n copies of the same dict.
@@ -206,18 +211,160 @@ def convert_batch_to_list_data(batch_data: BatchDataset) -> BatchList:
     # doesn't have to be. Therefore, we'll check the structure for each component and copy the data accordingly.
     for component, data in batch_data.items():
         if isinstance(data, np.ndarray):
-            # For 2d numpy arrays, copy each batch into an element of the list
-            for i, batch in enumerate(data):
-                list_data[i][component] = batch
+            component_batches = split_numpy_array_in_batches(data, component)
+        elif isinstance(data, dict):
+            for key in ["indptr", "data"]:
+                if key not in data:
+                    raise KeyError(
+                        f"Missing '{key}' in sparse batch data for '{component}' "
+                        "(expected a python dictionary containing two keys: 'indptr' and 'data')."
+                    )
+            component_batches = split_sparse_batches_in_batches(data["data"], data["indptr"], component)
         else:
-            # For indptr/data structures, use the indptr to select the items for each batch.
-            indptr = data["indptr"]
-            for i, (idx0, idx1) in enumerate(zip(indptr[:-1], indptr[1:])):
-                list_data[i][component] = data["data"][idx0:idx1]
+            raise TypeError(
+                f"Invalid data type {type(data).__name__} in batch data for '{component}' "
+                "(should be a Numpy structured array or a python dictionary)."
+            )
+        if len(component_batches) != len(list_data):
+            checked_components = set(chain(*(batch.keys() for batch in list_data)))
+            if len(checked_components) == 1:
+                checked_components_str = f"'{checked_components.pop()}'"
+            else:
+                checked_components_str = "/".join(sorted(checked_components))
+            raise ValueError(
+                f"Inconsistent number of batches in batch data. "
+                f"Component '{component}' contains {len(component_batches)} batches, "
+                f"while {checked_components_str} contained {len(list_data)} batches."
+            )
+
+        for i, batch in enumerate(component_batches):
+            if batch.size > 0:
+                list_data[i][component] = batch
     return list_data
 
 
-def convert_numpy_to_python(data: Dataset) -> PythonDataset:
+def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
+    """
+    Determine the number of batches for each component and verify that each component has the same number of batches
+    Args:
+        batch_data: a batch dataset for power-grid-model
+
+    Returns:
+        The number of batches
+    """
+
+    n_batch_size = 0
+    checked_components: List[str] = []
+    for component, data in batch_data.items():
+        n_component_batch_size = get_batch_size(data)
+        if checked_components and n_component_batch_size != n_batch_size:
+            if len(checked_components) == 1:
+                checked_components_str = f"'{checked_components.pop()}'"
+            else:
+                checked_components_str = "/".join(sorted(checked_components))
+            raise ValueError(
+                f"Inconsistent number of batches in batch data. "
+                f"Component '{component}' contains {n_component_batch_size} batches, "
+                f"while {checked_components_str} contained {n_batch_size} batches."
+            )
+        n_batch_size = n_component_batch_size
+        checked_components.append(component)
+    return n_batch_size
+
+
+def get_batch_size(batch_data: BatchArray) -> int:
+    """
+    Determine the number of batches and verify the data structure while we're at it.
+    Args:
+        batch_data: a batch array for power-grid-model
+
+    Returns:
+        The number of batches
+    """
+    if isinstance(batch_data, np.ndarray):
+        # We expect the batch data to be a 2d numpy array of n_batches x n_objects. If it is a 1d numpy array instead,
+        # we assume that it is a single batch.
+        if batch_data.ndim == 1:
+            return 1
+        n_batches = batch_data.shape[0]
+    elif isinstance(batch_data, dict):
+        # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
+        # invalid dictionary). There is always one indptr more than there are batches.
+        if "indptr" not in batch_data:
+            raise ValueError("Invalid batch data format, expected 'indptr' and 'data' entries")
+        n_batches = batch_data["indptr"].size - 1
+    else:
+        # If the batch data is not a numpy array and not a dictionary, it is invalid
+        raise ValueError(
+            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
+        )
+    return n_batches
+
+
+def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.ndarray]:
+    """
+    Split a single dense numpy array into one or more batches
+
+    Args:
+        data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
+        component: The name of the component to which the data belongs, only used for errors.
+
+    Returns:
+        A list with a single numpy structured array per batch
+
+    """
+    if not isinstance(data, np.ndarray):
+        raise TypeError(
+            f"Invalid data type {type(data).__name__} in batch data for '{component}' "
+            "(should be a 1D/2D Numpy structured array)."
+        )
+    if data.ndim == 1:
+        return [data]
+    if data.ndim == 2:
+        return [data[i, :] for i in range(data.shape[0])]
+    raise TypeError(
+        f"Invalid data dimension {data.ndim} in batch data for '{component}' "
+        "(should be a 1D/2D Numpy structured array)."
+    )
+
+
+def split_sparse_batches_in_batches(data: np.ndarray, indptr: np.ndarray, component: str) -> List[np.ndarray]:
+    """
+    Split a single numpy array representing, a compressed sparse structure, into one or more batches
+
+    Args:
+        data: A 1D Numpy structured array
+        indptr: A 1D numpy integer array
+        component: The name of the component to which the data belongs, only used for errors.
+
+    Returns:
+        A list with a single numpy structured array per batch
+
+    """
+    if not isinstance(data, np.ndarray) or data.ndim != 1:
+        raise TypeError(
+            f"Invalid data type {type(data).__name__} in sparse batch data for '{component}' "
+            "(should be a 1D Numpy structured array (i.e. a single 'table'))."
+        )
+
+    if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
+        raise TypeError(
+            f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
+            "(should be a 1D Numpy array (i.e. a single 'list'), "
+            "containing indices (i.e. integers))."
+        )
+
+    if indptr[0] != 0 or indptr[-1] != len(data) or any(indptr[i] > indptr[i + 1] for i in range(len(indptr) - 1)):
+        raise TypeError(
+            f"Invalid indptr in batch data for '{component}' "
+            f"(should start with 0, end with the number of objects ({len(data)}) "
+            "and be monotonic increasing)."
+        )
+
+    return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
+
+
+def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     """
     Convert internal numpy arrays to native python data
     If an attribute is not available (NaN value), it will not be exported.
@@ -246,15 +393,15 @@ def convert_numpy_to_python(data: Dataset) -> PythonDataset:
     if is_batch:
         # We have established that this is batch data, so let's tell the type checker that this is a BatchDataset
         data = cast(BatchDataset, data)
-        list_data = convert_batch_to_list_data(data)
-        return [_convert_numpy_to_python_single(x) for x in list_data]
+        list_data = convert_batch_dataset_to_batch_list(data)
+        return [convert_single_dataset_to_python_single_dataset(data=x) for x in list_data]
 
     # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
     data = cast(SingleDataset, data)
-    return _convert_numpy_to_python_single(data=data)
+    return convert_single_dataset_to_python_single_dataset(data=data)
 
 
-def _convert_numpy_to_python_single(data: SingleDataset) -> SinglePythonDataset:
+def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> SinglePythonDataset:
     """
     Convert internal numpy arrays to native python data
     If an attribute is not available (NaN value), it will not be exported.
@@ -342,7 +489,7 @@ def export_json_data(
     Returns:
         Save to file
     """
-    json_data = convert_numpy_to_python(data)
+    json_data = convert_dataset_to_python_dataset(data)
     if extra_info is not None:
         inject_extra_info(data=json_data, extra_info=extra_info)
 
@@ -355,10 +502,7 @@ def export_json_data(
             json.dump(json_data, file_pointer, indent=indent)
 
 
-def inject_extra_info(
-    data: PythonDataset,
-    extra_info: Union[ExtraInfo, List[ExtraInfo]],
-):
+def inject_extra_info(data: PythonDataset, extra_info: Union[ExtraInfo, List[ExtraInfo]]):
     """
     Injects extra info to the objects by ID
 
@@ -368,25 +512,50 @@ def inject_extra_info(
 
     """
     if isinstance(data, list):
-        if isinstance(extra_info, list):
-            # If both data and extra_info are lists, expect one extra info set per batch
-            for batch, info in zip(data, extra_info):
-                inject_extra_info(batch, info)
-        else:
-            # If only data is a list, copy extra_info for each batch
-            for batch in data:
-                inject_extra_info(batch, extra_info)
+        _inject_extra_info_batch(data=data, extra_info=extra_info)
     elif isinstance(data, dict):
-        if not isinstance(extra_info, dict):
-            raise TypeError("Invalid extra info data type")
-        for _, objects in data.items():
-            for obj in objects:
-                if obj["id"] in extra_info:
-                    # IDs are always nominal values, so let's tell the type checker:
-                    obj_id = cast(Nominal, obj["id"])
-                    obj["extra"] = extra_info[obj_id]
+        _inject_extra_info_single(data=data, extra_info=cast(ExtraInfo, extra_info))
     else:
         raise TypeError("Invalid data type")
+
+
+def _inject_extra_info_single(data: SinglePythonDataset, extra_info: ExtraInfo):
+    """
+    Injects extra info to the objects by ID
+
+    Args:
+        data: Power Grid Model Python data, as written to pgm json files.
+        extra_info: A dictionary indexed by object id. The value may be anything.
+
+    """
+    if not isinstance(extra_info, dict):
+        raise TypeError("Invalid extra info data type")
+
+    for _, objects in data.items():
+        for obj in objects:
+            if obj["id"] in extra_info:
+                # IDs are always nominal values, so let's tell the type checker:
+                obj_id = cast(Nominal, obj["id"])
+                obj["extra"] = extra_info[obj_id]
+
+
+def _inject_extra_info_batch(data: BatchPythonDataset, extra_info: Union[ExtraInfo, List[ExtraInfo]]):
+    """
+    Injects extra info to the objects by ID
+
+    Args:
+        data: Power Grid Model Python data, as written to pgm json files.
+        extra_info: A dictionary indexed by object id. The value may be anything.
+
+    """
+    if isinstance(extra_info, list):
+        # If both data and extra_info are lists, expect one extra info set per batch
+        for batch, info in zip(data, extra_info):
+            _inject_extra_info_single(batch, info)
+    else:
+        # If only data is a list, copy extra_info for each batch
+        for batch in data:
+            _inject_extra_info_single(batch, extra_info)
 
 
 def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):

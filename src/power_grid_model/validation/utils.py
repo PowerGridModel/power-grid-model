@@ -6,13 +6,12 @@
 Utilities used for validation. Only errors_to_string() is intended for end users.
 """
 import re
-from itertools import chain
 from typing import Dict, List, Optional, Union
 
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
-from power_grid_model.data_types import BatchDataset, BatchList, SingleDataset
+from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -84,115 +83,6 @@ def eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
         np.true_divide(data[fields[0]], data[fields[1]], out=result, where=~zero_div)
         return result
     return np.true_divide(data[fields[0]], data[fields[1]])
-
-
-def split_update_data_in_batches(update_data: BatchDataset) -> BatchList:
-    """
-
-    Args:
-        update_data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
-
-    Returns: List[Dict[str, np.ndarray]]
-
-    """
-    batches: BatchList = []
-    for component, data in update_data.items():
-        if isinstance(data, np.ndarray):
-            component_batches = split_numpy_array_in_batches(data, component)
-        elif isinstance(data, dict):
-            for key in ["indptr", "data"]:
-                if key not in data:
-                    raise KeyError(
-                        f"Missing '{key}' in sparse update data for '{component}' "
-                        "(expected a python dictionary containing two keys: 'indptr' and 'data')."
-                    )
-            component_batches = split_sparse_batches_in_batches(data["data"], data["indptr"], component)
-        else:
-            raise TypeError(
-                f"Invalid data type {type(data).__name__} in update data for '{component}' "
-                "(should be a Numpy structured array or a python dictionary)."
-            )
-        if not batches:
-            batches = [{} for _ in component_batches]
-        elif len(component_batches) != len(batches):
-            previous_components = set(chain(*(batch.keys() for batch in batches)))
-            if len(previous_components) == 1:
-                previous_components_str = f"'{previous_components.pop()}'"
-            else:
-                previous_components_str = "/".join(sorted(previous_components))
-            raise ValueError(
-                f"Inconsistent number of batches in update data. "
-                f"Component '{component}' contains {len(component_batches)} batches, "
-                f"while {previous_components_str} contained {len(batches)} batches."
-            )
-
-        for i, batch_data in enumerate(component_batches):
-            if batch_data.size > 0:
-                batches[i][component] = batch_data
-    return batches
-
-
-def split_numpy_array_in_batches(data: Union[np.ndarray, np.ndarray], component: str) -> List[np.ndarray]:
-    """
-    Split a single dense numpy array into one or more batches
-
-    Args:
-        data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
-        component: The name of the component to which the data belongs, only used for errors.
-
-    Returns:
-        A list with a single numpy structured array per batch
-
-    """
-    if not isinstance(data, np.ndarray):
-        raise TypeError(
-            f"Invalid data type {type(data).__name__} in update data for '{component}' "
-            "(should be a 1D/2D Numpy structured array)."
-        )
-    if data.ndim == 1:
-        return [data]
-    if data.ndim == 2:
-        return [data[i, :] for i in range(data.shape[0])]
-    raise TypeError(
-        f"Invalid data dimension {data.ndim} in update data for '{component}' "
-        "(should be a 1D/2D Numpy structured array)."
-    )
-
-
-def split_sparse_batches_in_batches(data: np.ndarray, indptr: np.ndarray, component: str) -> List[np.ndarray]:
-    """
-    Split a single numpy array representing, a compressed sparse structure, into one or more batches
-
-    Args:
-        data: A 1D Numpy structured array
-        indptr: A 1D numpy integer array
-        component: The name of the component to which the data belongs, only used for errors.
-
-    Returns:
-        A list with a single numpy structured array per batch
-
-    """
-    if not isinstance(data, np.ndarray) or data.ndim != 1:
-        raise TypeError(
-            f"Invalid data type {type(data).__name__} in sparse update data for '{component}' "
-            "(should be a 1D Numpy structured array (i.e. a single 'table'))."
-        )
-
-    if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
-        raise TypeError(
-            f"Invalid indptr data type {type(indptr).__name__} in update data for '{component}' "
-            "(should be a 1D Numpy array (i.e. a single 'list'), "
-            "containing indices (i.e. integers))."
-        )
-
-    if indptr[0] != 0 or indptr[-1] != len(data) or any(indptr[i] > indptr[i + 1] for i in range(len(indptr) - 1)):
-        raise TypeError(
-            f"Invalid indptr in update data for '{component}' "
-            f"(should start with 0, end with the number of objects ({len(data)}) "
-            "and be monotonic increasing)."
-        )
-
-    return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
 
 
 def update_input_data(input_data: SingleDataset, update_data: SingleDataset):

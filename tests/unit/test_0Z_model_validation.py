@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from power_grid_model import PowerGridModel
-from power_grid_model.file_io import convert_batch_to_list_data
+from power_grid_model.utils import convert_batch_dataset_to_batch_list
 
 from .utils import (
     EXPORT_OUTPUT,
@@ -76,9 +76,9 @@ def test_batch_validation(
     case_data = import_case_data(case_path, sym=sym)
     model = PowerGridModel(case_data["input"], system_frequency=50.0)
     update_batch = case_data["update_batch"]
-    update_list = convert_batch_to_list_data(update_batch)
+    update_list = convert_batch_dataset_to_batch_list(update_batch)
     reference_output_batch = case_data["output_batch"]
-    reference_output_list = convert_batch_to_list_data(reference_output_batch)
+    reference_output_list = convert_batch_dataset_to_batch_list(reference_output_batch)
 
     # execute batch calculation by applying update method
     for update_data, reference_result in zip(update_list, reference_output_list):
@@ -94,7 +94,7 @@ def test_batch_validation(
         result_batch = calculation_function_map[calculation_type](
             model, symmetric=sym, calculation_method=calculation_method, update_data=update_batch, threading=threading
         )
-        result_list = convert_batch_to_list_data(result_batch)
+        result_list = convert_batch_dataset_to_batch_list(result_batch)
         for result, reference_result in zip(result_list, reference_output_list):
             compare_result(result, reference_result, rtol, atol)
         # assert batch parameters

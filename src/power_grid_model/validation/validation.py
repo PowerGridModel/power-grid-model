@@ -22,6 +22,7 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
+from power_grid_model.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     MissingValueError,
@@ -47,10 +48,7 @@ from power_grid_model.validation.rules import (
     all_valid_ids,
     none_missing,
 )
-from power_grid_model.validation.utils import (
-    split_update_data_in_batches,
-    update_input_data,
-)
+from power_grid_model.validation.utils import update_input_data
 
 
 def validate_input_data(
@@ -122,7 +120,7 @@ def validate_batch_data(
     input_errors: List[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
     # Splitting update_data_into_batches may raise TypeErrors and ValueErrors
-    batch_data = split_update_data_in_batches(update_data)
+    batch_data = convert_batch_dataset_to_batch_list(update_data)
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
