@@ -68,6 +68,7 @@ jobs:
           if [[ `git status --porcelain --untracked-files=no` ]]; then
             echo "Formatting not correct! See below the files which need to be reformatted!"
             git status --porcelain --untracked-files=no
+            git diff
             exit 1
           fi
      
