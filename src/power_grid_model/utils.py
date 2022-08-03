@@ -7,7 +7,6 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
-from itertools import chain
 from pathlib import Path
 from typing import IO, Any, List, Optional, Union, cast
 
@@ -26,6 +25,7 @@ from power_grid_model.data_types import (
     PythonDataset,
     SingleDataset,
     SinglePythonDataset,
+    SparseBatchArray,
 )
 
 
@@ -213,30 +213,12 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
         if isinstance(data, np.ndarray):
             component_batches = split_numpy_array_in_batches(data, component)
         elif isinstance(data, dict):
-            for key in ["indptr", "data"]:
-                if key not in data:
-                    raise KeyError(
-                        f"Missing '{key}' in sparse batch data for '{component}' "
-                        "(expected a python dictionary containing two keys: 'indptr' and 'data')."
-                    )
-            component_batches = split_sparse_batches_in_batches(data["data"], data["indptr"], component)
+            component_batches = split_sparse_batches_in_batches(data, component)
         else:
             raise TypeError(
                 f"Invalid data type {type(data).__name__} in batch data for '{component}' "
                 "(should be a Numpy structured array or a python dictionary)."
             )
-        if len(component_batches) != len(list_data):
-            checked_components = set(chain(*(batch.keys() for batch in list_data)))
-            if len(checked_components) == 1:
-                checked_components_str = f"'{checked_components.pop()}'"
-            else:
-                checked_components_str = "/".join(sorted(checked_components))
-            raise ValueError(
-                f"Inconsistent number of batches in batch data. "
-                f"Component '{component}' contains {len(component_batches)} batches, "
-                f"while {checked_components_str} contained {len(list_data)} batches."
-            )
-
         for i, batch in enumerate(component_batches):
             if batch.size > 0:
                 list_data[i][component] = batch
@@ -328,19 +310,29 @@ def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.nd
     )
 
 
-def split_sparse_batches_in_batches(data: np.ndarray, indptr: np.ndarray, component: str) -> List[np.ndarray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: str) -> List[np.ndarray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
     Args:
-        data: A 1D Numpy structured array
-        indptr: A 1D numpy integer array
+        batch_data: Sparse batch data
         component: The name of the component to which the data belongs, only used for errors.
 
     Returns:
         A list with a single numpy structured array per batch
 
     """
+
+    for key in ["indptr", "data"]:
+        if key not in batch_data:
+            raise KeyError(
+                f"Missing '{key}' in sparse batch data for '{component}' "
+                "(expected a python dictionary containing two keys: 'indptr' and 'data')."
+            )
+
+    data = batch_data["data"]
+    indptr = batch_data["indptr"]
+
     if not isinstance(data, np.ndarray) or data.ndim != 1:
         raise TypeError(
             f"Invalid data type {type(data).__name__} in sparse batch data for '{component}' "
@@ -454,7 +446,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
     data = import_json_data(json_file=json_file, data_type="input")
     assert isinstance(data, dict)
     assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
-    return data
+    return cast(SingleDataset, data)
 
 
 def import_update_data(json_file: Path) -> BatchDataset:
@@ -466,7 +458,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
     Returns:
          A batch dataset for power-grid-model
     """
-    return import_json_data(json_file=json_file, data_type="update")
+    return cast(BatchDataset, import_json_data(json_file=json_file, data_type="update"))
 
 
 def export_json_data(
