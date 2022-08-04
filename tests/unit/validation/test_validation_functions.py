@@ -7,11 +7,7 @@ import pytest
 
 from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
-from power_grid_model.validation.errors import (
-    IdNotInDatasetError,
-    MissingValueError,
-    MultiComponentNotUniqueError,
-)
+from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
     validate_ids_exist,

@@ -64,9 +64,10 @@ corrections) to your code (style) before each commit. It is up to the developer 
 use this tool or not. The goal is to make sure that each commit will pass the quality checks in the github actions
 workflow. Currently, these hooks are defined in [`.pre-commit-config.yaml`](.pre-commit-config.yaml):
 * **reuse**: check if all licence headers and files are in place
-* **isort**: sort import statements
-* **black**: check and correct code style
-* **pylint**: check code style
+* **isort**: group and sort import statements 
+* **black**: check and correct code style in a very strict manner
+* **mypy**: checks type hinting and data types in general (static type checker) 
+* **pylint**: check code style and comments
 * **pytest**: run all unit tests
 
 You can manually run pre-commit whenever you like:

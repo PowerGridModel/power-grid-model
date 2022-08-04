@@ -8,11 +8,7 @@ import numpy as np
 import pytest
 
 from power_grid_model.enum import CalculationType
-from power_grid_model.validation.assertions import (
-    ValidationException,
-    assert_valid_batch_data,
-    assert_valid_input_data,
-)
+from power_grid_model.validation.assertions import ValidationException, assert_valid_batch_data, assert_valid_input_data
 from power_grid_model.validation.errors import ValidationError
 
 

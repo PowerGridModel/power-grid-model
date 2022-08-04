@@ -7,13 +7,7 @@ from typing import Dict
 import numpy as np
 import pytest
 
-from power_grid_model import (
-    BranchSide,
-    LoadGenType,
-    MeasuredTerminalType,
-    WindingType,
-    initialize_array,
-)
+from power_grid_model import BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     InvalidEnumValueError,
