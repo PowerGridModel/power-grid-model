@@ -5,14 +5,15 @@
 from enum import IntEnum
 
 import pytest
+
 from power_grid_model.validation.errors import (
-    ValidationError,
-    SingleFieldValidationError,
-    MultiFieldValidationError,
-    MultiComponentValidationError,
+    ComparisonError,
     InvalidEnumValueError,
     InvalidIdError,
-    ComparisonError,
+    MultiComponentValidationError,
+    MultiFieldValidationError,
+    SingleFieldValidationError,
+    ValidationError,
 )
 
 

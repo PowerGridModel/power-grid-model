@@ -9,37 +9,44 @@ Although all functions are 'public', you probably only need validate_input_data(
 
 """
 from itertools import chain
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import numpy as np
 
-from .errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError, ValidationError
-from .rules import (
-    none_missing,
-    all_finite,
-    all_ids_exist_in_data_set,
-    all_greater_than_zero,
-    all_greater_than_or_equal_to_zero,
-    all_greater_or_equal,
-    all_less_than,
+from power_grid_model import power_grid_meta_data
+from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.enum import BranchSide, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
+from power_grid_model.utils import convert_batch_dataset_to_batch_list
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    ValidationError,
+)
+from power_grid_model.validation.rules import (
     all_between,
     all_between_or_at,
-    all_unique,
-    all_cross_unique,
-    all_not_two_values_equal,
-    all_valid_enum_values,
     all_boolean,
-    all_valid_ids,
-    all_not_two_values_zero,
     all_clocks_valid,
+    all_cross_unique,
+    all_finite,
+    all_greater_or_equal,
+    all_greater_than_or_equal_to_zero,
+    all_greater_than_zero,
+    all_ids_exist_in_data_set,
+    all_less_than,
+    all_not_two_values_equal,
+    all_not_two_values_zero,
+    all_unique,
+    all_valid_enum_values,
+    all_valid_ids,
+    none_missing,
 )
-from .utils import InputData, UpdateData, split_update_data_in_batches, update_input_data
-from .. import power_grid_meta_data
-from ..enum import BranchSide, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
+from power_grid_model.validation.utils import update_input_data
 
 
 def validate_input_data(
-    input_data: InputData, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
+    input_data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
 ) -> Optional[List[ValidationError]]:
     """
     Validates the entire input dataset:
@@ -70,8 +77,8 @@ def validate_input_data(
 
 
 def validate_batch_data(
-    input_data: InputData,
-    update_data: UpdateData,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
     calculation_type: Optional[CalculationType] = None,
     symmetric: bool = True,
 ) -> Optional[Dict[int, List[ValidationError]]]:
@@ -103,16 +110,17 @@ def validate_batch_data(
         where the key is the batch number (0-indexed).
     """
     assert_valid_data_structure(input_data, "input")
-    input_errors: List[ValidationError] = validate_unique_ids_across_components(input_data)
+
+    input_errors: List[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
     # Splitting update_data_into_batches may raise TypeErrors and ValueErrors
-    batch_data = split_update_data_in_batches(update_data)
+    batch_data = convert_batch_dataset_to_batch_list(update_data)
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
 
         assert_valid_data_structure(batch_update_data, "update")
-        id_errors: List[ValidationError] = validate_ids_exist(batch_update_data, input_data)
+        id_errors: List[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
 
         batch_errors = input_errors + id_errors
         if not id_errors:
@@ -126,7 +134,7 @@ def validate_batch_data(
     return errors if errors else None
 
 
-def assert_valid_data_structure(data: Union[InputData, UpdateData], data_type: str) -> None:
+def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
     """
     Checks if all component names are valid and if the data inside the component matches the required Numpy
     structured array as defined in the Power Grid Model meta data.
@@ -165,7 +173,7 @@ def assert_valid_data_structure(data: Union[InputData, UpdateData], data_type: s
             )
 
 
-def validate_unique_ids_across_components(data: InputData) -> List[MultiComponentNotUniqueError]:
+def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComponentNotUniqueError]:
     """
     Checks if all ids in the input dataset are unique
 
@@ -179,7 +187,7 @@ def validate_unique_ids_across_components(data: InputData) -> List[MultiComponen
     return all_cross_unique(data, [(component, "id") for component in data])
 
 
-def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: InputData) -> List[IdNotInDatasetError]:
+def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDataset) -> List[IdNotInDatasetError]:
     """
     Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
     can only update existing components.
@@ -199,7 +207,7 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: InputData
 
 
 def validate_required_values(
-    data: InputData, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
+    data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
 ) -> List[MissingValueError]:
     """
     Checks if all required data is available.
@@ -272,7 +280,7 @@ def validate_required_values(
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 
 
-def validate_values(data: InputData) -> List[ValidationError]:  # pylint: disable=too-many-branches
+def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: disable=too-many-branches
     """
     For each component supplied in the data, call the appropriate validation function
 
@@ -282,7 +290,7 @@ def validate_values(data: InputData) -> List[ValidationError]:  # pylint: disabl
     Returns: an empty list if all required data is valid, or a list of ValidationErrors.
 
     """
-    errors: List[ValidationError] = all_finite(data)
+    errors: List[ValidationError] = list(all_finite(data))
     if "node" in data:
         errors += validate_node(data)
     if "line" in data:
@@ -317,18 +325,18 @@ def validate_values(data: InputData) -> List[ValidationError]:  # pylint: disabl
 # pylint: disable=missing-function-docstring
 
 
-def validate_base(data: InputData, component: str) -> List[ValidationError]:
-    errors = all_unique(data, component, "id")
+def validate_base(data: SingleDataset, component: str) -> List[ValidationError]:
+    errors: List[ValidationError] = list(all_unique(data, component, "id"))
     return errors
 
 
-def validate_node(data: InputData) -> List[ValidationError]:
+def validate_node(data: SingleDataset) -> List[ValidationError]:
     errors = validate_base(data, "node")
     errors += all_greater_than_zero(data, "node", "u_rated")
     return errors
 
 
-def validate_branch(data: InputData, component: str) -> List[ValidationError]:
+def validate_branch(data: SingleDataset, component: str) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(data, component, "from_node", "node")
     errors += all_valid_ids(data, component, "to_node", "node")
@@ -338,7 +346,7 @@ def validate_branch(data: InputData, component: str) -> List[ValidationError]:
     return errors
 
 
-def validate_line(data: InputData) -> List[ValidationError]:
+def validate_line(data: SingleDataset) -> List[ValidationError]:
     errors = validate_branch(data, "line")
     errors += all_not_two_values_zero(data, "line", "r1", "x1")
     errors += all_not_two_values_zero(data, "line", "r0", "x0")
@@ -346,7 +354,7 @@ def validate_line(data: InputData) -> List[ValidationError]:
     return errors
 
 
-def validate_transformer(data: InputData) -> List[ValidationError]:
+def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors = validate_branch(data, "transformer")
     errors += all_greater_than_zero(data, "transformer", "u1")
     errors += all_greater_than_zero(data, "transformer", "u2")
@@ -364,7 +372,7 @@ def validate_transformer(data: InputData) -> List[ValidationError]:
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
-    errors += all_greater_than_zero(data, "transformer", "tap_size")
+    errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
     errors += all_greater_or_equal(data, "transformer", "uk_min", "pk_min/sn")
     errors += all_between(data, "transformer", "uk_min", 0, 1)
     errors += all_greater_or_equal(data, "transformer", "uk_max", "pk_max/sn")
@@ -376,14 +384,14 @@ def validate_transformer(data: InputData) -> List[ValidationError]:
     return errors
 
 
-def validate_appliance(data: InputData, component: str) -> List[ValidationError]:
+def validate_appliance(data: SingleDataset, component: str) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_boolean(data, component, "status")
     errors += all_valid_ids(data, component, "node", "node")
     return errors
 
 
-def validate_source(data: InputData) -> List[ValidationError]:
+def validate_source(data: SingleDataset) -> List[ValidationError]:
     errors = validate_appliance(data, "source")
     errors += all_greater_than_zero(data, "source", "u_ref")
     errors += all_greater_than_zero(data, "source", "sk")
@@ -392,18 +400,18 @@ def validate_source(data: InputData) -> List[ValidationError]:
     return errors
 
 
-def validate_generic_load_gen(data: InputData, component: str) -> List[ValidationError]:
+def validate_generic_load_gen(data: SingleDataset, component: str) -> List[ValidationError]:
     errors = validate_appliance(data, component)
     errors += all_valid_enum_values(data, component, "type", LoadGenType)
     return errors
 
 
-def validate_shunt(data: InputData) -> List[ValidationError]:
+def validate_shunt(data: SingleDataset) -> List[ValidationError]:
     errors = validate_appliance(data, "shunt")
     return errors
 
 
-def validate_generic_voltage_sensor(data: InputData, component: str) -> List[ValidationError]:
+def validate_generic_voltage_sensor(data: SingleDataset, component: str) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "u_sigma")
     errors += all_greater_than_zero(data, component, "u_measured")
@@ -411,7 +419,7 @@ def validate_generic_voltage_sensor(data: InputData, component: str) -> List[Val
     return errors
 
 
-def validate_generic_power_sensor(data: InputData, component: str) -> List[ValidationError]:
+def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "power_sigma")
     errors += all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)

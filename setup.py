@@ -3,26 +3,25 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import os
+import platform
 import re
 import shutil
 from itertools import chain
-
-# noinspection PyPackageRequirements
-import numpy as np
+from pathlib import Path
+from sysconfig import get_paths
+from typing import List
 
 # noinspection PyPackageRequirements
 import Cython.Compiler.Main as CythonCompiler
 
 # noinspection PyPackageRequirements
-import requests
-import platform
-from sysconfig import get_paths
-from setuptools import Extension
-from setuptools.command.build_ext import build_ext
-from setuptools import setup
-from pathlib import Path
-from pybuild_header_dependency import HeaderResolver
+import numpy as np
 
+# noinspection PyPackageRequirements
+import requests
+from pybuild_header_dependency import HeaderResolver
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 # determine platform, only windows or linux
 if platform.system() == "Windows":
@@ -90,10 +89,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pkg_dir / "include"),  # The include-folder of the repo self
     ]
     # compiler and link flag
-    cflags = []
-    lflags = []
-    library_dirs = []
-    libraries = []
+    cflags: List[str] = []
+    lflags: List[str] = []
+    library_dirs: List[str] = []
+    libraries: List[str] = []
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3

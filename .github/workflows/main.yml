@@ -153,7 +153,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@2.7.0
+        uses: pypa/cibuildwheel@v2.8.1
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v3

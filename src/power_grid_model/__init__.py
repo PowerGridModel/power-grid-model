@@ -2,12 +2,16 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+"""Power Grid Model"""
+
 # pylint: disable=no-name-in-module
 
-# Helper functions
-# Power Grid metadata
-# Power Grid Model
-from ._power_grid_core import PowerGridModel, initialize_array, power_grid_meta_data
-
-# Enumerations
-from .enum import BranchSide, CalculationMethod, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
+from power_grid_model._power_grid_core import PowerGridModel, initialize_array, power_grid_meta_data
+from power_grid_model.enum import (
+    BranchSide,
+    CalculationMethod,
+    CalculationType,
+    LoadGenType,
+    MeasuredTerminalType,
+    WindingType,
+)
