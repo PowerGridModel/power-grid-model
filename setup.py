@@ -9,6 +9,7 @@ import shutil
 from itertools import chain
 from pathlib import Path
 from sysconfig import get_paths
+from typing import List
 
 # noinspection PyPackageRequirements
 import Cython.Compiler.Main as CythonCompiler
@@ -88,10 +89,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pkg_dir / "include"),  # The include-folder of the repo self
     ]
     # compiler and link flag
-    cflags = []
-    lflags = []
-    library_dirs = []
-    libraries = []
+    cflags: List[str] = []
+    lflags: List[str] = []
+    library_dirs: List[str] = []
+    libraries: List[str] = []
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3

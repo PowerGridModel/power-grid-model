@@ -10,8 +10,6 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-# No need to explain each class, as the class name shoul dbe self explanatory
-
 
 class ValidationError(ABC):
     """
@@ -43,7 +41,7 @@ class ValidationError(ABC):
     components are being addressed.
     """
 
-    ids: Union[List[int], List[Tuple[str, int]]] = []
+    ids: Optional[Union[List[int], List[Tuple[str, int]]]] = None
     """
     The object identifiers to which the error applies. A field object identifier can also be a tuple (component, id)
     when multiple components are being addressed.
@@ -77,14 +75,16 @@ class ValidationError(ABC):
         if id_lookup:
             if isinstance(id_lookup, list):
                 id_lookup = dict(enumerate(id_lookup))
-            context["ids"] = {i: id_lookup.get(i[1] if isinstance(i, tuple) else i) for i in self.ids}
+            context["ids"] = (
+                {i: id_lookup.get(i[1] if isinstance(i, tuple) else i) for i in self.ids} if self.ids else set()
+            )
         for key in context:
             if hasattr(self, key + "_str"):
                 context[key] = str(getattr(self, key + "_str"))
         return context
 
     def __str__(self) -> str:
-        n_objects = len(self.ids)
+        n_objects = len(self.ids) if self.ids else 0
         context = self.get_context()
         context["n"] = n_objects
         context["objects"] = context.get("component", "object")

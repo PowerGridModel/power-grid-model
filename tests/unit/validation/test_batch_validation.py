@@ -9,10 +9,7 @@ import pytest
 
 from power_grid_model import LoadGenType, initialize_array
 from power_grid_model.validation import validate_batch_data
-from power_grid_model.validation.errors import (
-    MultiComponentNotUniqueError,
-    NotBooleanError,
-)
+from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
 
 @pytest.fixture
