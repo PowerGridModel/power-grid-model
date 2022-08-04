@@ -72,6 +72,7 @@ target-version = ['py38']
 [tool.isort]
 src_paths = ["src", "tests/unit", "scripts"]
 profile = "black"
+line_length = 120
 
 [tool.pylint]
 max-line-length = 120
