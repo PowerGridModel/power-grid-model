@@ -83,7 +83,35 @@ class ThreeWindingTransformer : public Branch3 {
                                         three_winding_transformer_input.x_grounding_2, u2_rated)},
           z_grounding_3_{calculate_z_pu(three_winding_transformer_input.r_grounding_3,
                                         three_winding_transformer_input.x_grounding_3, u3_rated)} {
-        // TODO
+        // check clock number
+        bool const is_1_wye = winding_1_ == WindingType::wye || winding_1_ == WindingType::wye_n;
+        bool const is_2_wye = winding_2_ == WindingType::wye || winding_2_ == WindingType::wye_n;
+        bool const is_3_wye = winding_3_ == WindingType::wye || winding_3_ == WindingType::wye_n;
+
+        // check clock 12
+        if (  // clock should be between 0 and 12
+            clock_12_ < 0 || clock_12_ > 12 ||
+            // even number is not possible if one side is wye winding and the other side is not wye winding.
+            ((clock_12_ % 2) == 0 && (is_1_wye != is_2_wye)) ||
+            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
+            ((clock_12_ % 2) == 1 && (is_1_wye == is_2_wye))) {
+            throw InvalidTransformerClock{id(), clock_12_};
+        }
+        // check clock 13
+        if (  // clock should be between 0 and 12
+            clock_13_ < 0 || clock_13_ > 12 ||
+            // even number is not possible if one side is wye winding and the other side is not wye winding.
+            ((clock_13_ % 2) == 0 && (is_1_wye != is_3_wye)) ||
+            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
+            ((clock_13_ % 2) == 1 && (is_1_wye == is_3_wye))) {
+            throw InvalidTransformerClock{id(), clock_13_};
+        }
+
+        // set clock to zero if it is 12
+        clock_12_ = clock_12_ % 12;
+        clock_13_ = clock_13_ % 12;
+        // check tap bounds
+        tap_pos_ = tap_limit(tap_pos_);
     }
 
     // override getter
@@ -100,8 +128,11 @@ class ThreeWindingTransformer : public Branch3 {
         return std::max(std::max(s_1 / sn_1_, s_2 / sn_2_), s_3 / sn_3_);
     }
     // 3-way branch, phase shift = phase_node_x - phase_internal_node
+    // the clock_12 and clock_13 is reverted
+    // because clock_12 is the phase shift node_1 - node_2
+    // and the phase shift in the math model is node_x - node_internal
     std::array<double, 3> phase_shift() const final {
-        return {0.0, clock_12_ * deg_30, clock_13_ * deg_30};
+        return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30};
     }
 
     // setter
@@ -277,7 +308,7 @@ class ThreeWindingTransformer : public Branch3 {
             0.0,                            // p0
             winding_2_,                     // winding_from
             WindingType::wye_n,             // winding_to
-            clock_12_,                      // clock
+            12 - clock_12_,                 // clock, reversed
             BranchSide::from,               // tap_side
             0,                              // tap_pos
             0,                              // tap_min
@@ -304,7 +335,7 @@ class ThreeWindingTransformer : public Branch3 {
             0.0,                            // p0
             winding_3_,                     // winding_from
             WindingType::wye_n,             // winding_to
-            clock_13_,                      // clock
+            12 - clock_13_,                 // clock, reversed
             BranchSide::from,               // tap_side
             0,                              // tap_pos
             0,                              // tap_min
