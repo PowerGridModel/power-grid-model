@@ -8,11 +8,7 @@ import pytest
 from power_grid_model import initialize_array
 from power_grid_model.data_types import BatchDataset, BatchList
 from power_grid_model.validation.errors import NotGreaterThanError
-from power_grid_model.validation.utils import (
-    errors_to_string,
-    eval_field_expression,
-    update_input_data,
-)
+from power_grid_model.validation.utils import errors_to_string, eval_field_expression, update_input_data
 
 
 def test_eval_field_expression():

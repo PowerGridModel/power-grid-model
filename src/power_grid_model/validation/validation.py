@@ -15,13 +15,7 @@ import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.enum import (
-    BranchSide,
-    CalculationType,
-    LoadGenType,
-    MeasuredTerminalType,
-    WindingType,
-)
+from power_grid_model.enum import BranchSide, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
 from power_grid_model.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
