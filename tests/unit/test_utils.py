@@ -27,7 +27,7 @@ from power_grid_model.utils import (
 @pytest.fixture(name="two_nodes_one_line")
 def two_nodes_one_line_fixture():
     return {
-        "node": [{"id": 11, "u_rated": 10.5e3}, {"id": 12, "u_rated": 10.5e3}],
+        "node": [{"id": 11, "u_rated": 10.5e3, "extra": "Node11"}, {"id": 12, "u_rated": 10.5e3, "extra": "Node12"}],
         "line": [
             {
                 "id": 21,
@@ -40,6 +40,7 @@ def two_nodes_one_line_fixture():
                 "c1": 4.1380285203892784e-05,
                 "tan1": 0.1076923076923077,
                 "i_n": 510.0,
+                "extra": "Line21",
             }
         ],
     }
@@ -48,7 +49,7 @@ def two_nodes_one_line_fixture():
 @pytest.fixture(name="two_nodes_two_lines")
 def two_nodes_two_lines_fixture():
     return {
-        "node": [{"id": 11, "u_rated": 10.5e3}, {"id": 12, "u_rated": 10.5e3}],
+        "node": [{"id": 11, "u_rated": 10.5e3, "extra": "Node11"}, {"id": 12, "u_rated": 10.5e3, "extra": "Node12"}],
         "line": [
             {
                 "id": 21,
@@ -61,6 +62,7 @@ def two_nodes_two_lines_fixture():
                 "c1": 4.1380285203892784e-05,
                 "tan1": 0.1076923076923077,
                 "i_n": 510.0,
+                "extra": "Line21",
             },
             {
                 "id": 31,
@@ -73,6 +75,7 @@ def two_nodes_two_lines_fixture():
                 "c1": 4.1380285203892784e-05,
                 "tan1": 0.1076923076923077,
                 "i_n": 510.0,
+                "extra": "Line31",
             },
         ],
     }
@@ -109,29 +112,47 @@ def test_is_nan():
     assert is_nan(nan_array)
 
 
-def test_convert_json_to_numpy(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
+def test_convert_json_to_numpy_single(two_nodes_one_line, two_nodes_two_lines):
+    pgm_data, extra_info = convert_python_to_numpy(two_nodes_one_line, "input")
     assert len(pgm_data) == 2
     assert len(pgm_data["node"]) == 2
     assert pgm_data["node"][0]["id"] == 11
     assert pgm_data["node"][0]["u_rated"] == 10.5e3
     assert len(pgm_data["line"]) == 1
+    assert extra_info == {11: "Node11", 12: "Node12", 21: "Line21"}
 
+
+def test_convert_json_to_numpy_batch(two_nodes_one_line, two_nodes_two_lines):
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_batch = convert_python_to_numpy(json_list, "input")
+    pgm_data_batch, extra_info = convert_python_to_numpy(json_list, "input")
     assert pgm_data_batch["node"].shape == (3, 2)
     assert np.allclose(pgm_data_batch["line"]["indptr"], [0, 1, 3, 4])
+    assert extra_info == [
+        {11: "Node11", 12: "Node12", 21: "Line21"},
+        {11: "Node11", 12: "Node12", 21: "Line21", 31: "Line31"},
+        {11: "Node11", 12: "Node12", 21: "Line21"},
+    ]
 
 
-def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
+def test_round_trip_json_numpy_json_single(two_nodes_one_line, two_nodes_two_lines):
+    pgm_data, extra_info = convert_python_to_numpy(two_nodes_one_line, "input")
     json_dict = convert_dataset_to_python_dataset(pgm_data)
+    inject_extra_info(json_dict, extra_info)
     assert json_dict == two_nodes_one_line
+    assert extra_info == {11: "Node11", 12: "Node12", 21: "Line21"}
 
+
+def test_round_trip_json_numpy_json_batch(two_nodes_one_line, two_nodes_two_lines):
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_list = convert_python_to_numpy(json_list, "input")
+    pgm_data_list, extra_info = convert_python_to_numpy(json_list, "input")
     json_return_list = convert_dataset_to_python_dataset(pgm_data_list)
+    inject_extra_info(json_return_list, extra_info)
     assert json_return_list == json_list
+    assert extra_info == [
+        {11: "Node11", 12: "Node12", 21: "Line21"},
+        {11: "Node11", 12: "Node12", 21: "Line21", 31: "Line31"},
+        {11: "Node11", 12: "Node12", 21: "Line21"},
+    ]
 
 
 def test_convert_python_to_numpy__raises_value_error():

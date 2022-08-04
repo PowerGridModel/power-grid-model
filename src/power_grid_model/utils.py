@@ -8,7 +8,7 @@ This file contains all the helper functions for testing purpose
 
 import json
 from pathlib import Path
-from typing import IO, Any, List, Optional, Union, cast
+from typing import IO, Any, List, Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -101,7 +101,7 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
     return batch_data
 
 
-def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
+def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Tuple[Dataset, Union[ExtraInfo, List[ExtraInfo]]]:
     """
     Convert native python data to internal numpy
     Args:
@@ -120,7 +120,8 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
         list_data = [
             convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type) for json_dict in data
         ]
-        return convert_list_to_batch_data(list_data)
+        batch_list, extra_info = zip(*list_data)
+        return convert_list_to_batch_data(batch_list), list(extra_info)
 
     # Otherwise this should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
     if not isinstance(data, dict):
@@ -129,7 +130,9 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
     return convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type)
 
 
-def convert_python_single_dataset_to_single_dataset(data: SinglePythonDataset, data_type: str) -> SingleDataset:
+def convert_python_single_dataset_to_single_dataset(
+    data: SinglePythonDataset, data_type: str
+) -> Tuple[SingleDataset, ExtraInfo]:
     """
     Convert native python data to internal numpy
     Args:
@@ -142,13 +145,19 @@ def convert_python_single_dataset_to_single_dataset(data: SinglePythonDataset, d
     """
 
     dataset: SingleDataset = {}
+    extra_info: ExtraInfo = {}
     for component, objects in data.items():
-        dataset[component] = convert_component_list_to_numpy(objects=objects, component=component, data_type=data_type)
+        dataset[component], component_info = convert_component_list_to_numpy(
+            objects=objects, component=component, data_type=data_type
+        )
+        extra_info.update(component_info)
 
-    return dataset
+    return dataset, extra_info
 
 
-def convert_component_list_to_numpy(objects: ComponentList, component: str, data_type: str) -> np.ndarray:
+def convert_component_list_to_numpy(
+    objects: ComponentList, component: str, data_type: str
+) -> Tuple[np.ndarray, ExtraInfo]:
     """
     Convert native python data to internal numpy
     Args:
@@ -158,20 +167,22 @@ def convert_component_list_to_numpy(objects: ComponentList, component: str, data
 
     Returns:
         A single numpy array
-
+        A dictionary with extra info
     """
 
     # We'll initialize an 1d-array with NaN values for all the objects of this component type
     array = initialize_array(data_type, component, len(objects))
+    extra_info: ExtraInfo = {}
 
     for i, obj in enumerate(objects):
         # As each object is a separate dictionary, and the attributes may differ per object, we need to check
-        # all attributes. Non-existing attributes
+        # all attributes. Non-existing attributes are not allowed.
         for attribute, value in obj.items():
             if attribute == "extra":
                 # The "extra" attribute is a special one. It can store any type of information associated with
-                # an object, but it will not be used in the calculations. Therefore it is not included in the
-                # numpy array, so we can skip this attribute
+                # an object, but it will not be used in the calculations.
+                assert isinstance(obj["id"], int)
+                extra_info[obj["id"]] = value
                 continue
 
             if attribute not in array.dtype.names:
@@ -185,7 +196,7 @@ def convert_component_list_to_numpy(objects: ComponentList, component: str, data
                 array[i][attribute] = value
             except ValueError as ex:
                 raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
-    return array
+    return array, extra_info
 
 
 def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
@@ -431,7 +442,8 @@ def import_json_data(json_file: Path, data_type: str) -> Dataset:
     """
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         json_data = json.load(file_pointer)
-    return convert_python_to_numpy(json_data, data_type)
+    numpy_data, _extra_info = convert_python_to_numpy(json_data, data_type)
+    return numpy_data
 
 
 def import_input_data(json_file: Path) -> SingleDataset:
