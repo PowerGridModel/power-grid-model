@@ -159,12 +159,18 @@ class Transformer : public Branch {
         double const pk = get_pk(), uk = get_uk();
         // series
         DoubleComplex z_series, y_series;
-        // Z = uk*U2^2/S
-        double const z_series_abs = uk * u2 * u2 / sn_;
+        // sign of uk
+        // uk can be negative for aritificual transformer from 3-winding
+        // in this case, the imaginary part of z_series should be negative
+        double const uk_sign = (uk >= 0) ? 1.0 : -1.0;
+        // Z = abs(uk)*U2^2/S
+        double const z_series_abs = cabs(uk) * u2 * u2 / sn_;
         // R = pk * U2^2/S^2
+        // pk can be negative for aritificual transformer from 3-winding
+        // in this case, the real part of z_series should be negative
         z_series.real(pk * u2 * u2 / sn_ / sn_);
-        // X = sqrt(Z^2 - R^2)
-        z_series.imag(std::sqrt(z_series_abs * z_series_abs - z_series.real() * z_series.real()));
+        // X = uk_sign * sqrt(Z^2 - R^2)
+        z_series.imag(uk_sign * std::sqrt(z_series_abs * z_series_abs - z_series.real() * z_series.real()));
         // y series
         y_series = (1.0 / z_series) / base_y_to;
         // shunt
