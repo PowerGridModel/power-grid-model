@@ -298,58 +298,58 @@ class ThreeWindingTransformer : public Branch3 {
             0                               // x_grounding_to
         };
         TransformerInput transformer_input_T2{
-            {{2}, 0, 1, status_2(), true},  // {{id}, from_node, to_node, from_status, to_status}
-            u2,                             // u1
-            u1,                             // u2
-            sn_2_,                          // sn
-            uk_T2,                          // uk
-            pk_T2,                          // pk
-            0.0,                            // i0
-            0.0,                            // p0
-            winding_2_,                     // winding_from
-            WindingType::wye_n,             // winding_to
-            (IntS)12 - clock_12_,           // clock, reversed
-            BranchSide::from,               // tap_side
-            0,                              // tap_pos
-            0,                              // tap_min
-            0,                              // tap_max
-            0,                              // tap_nom
-            0.0,                            // tap_size
-            nan,                            // uk_min
-            nan,                            // uk_max
-            nan,                            // pk_min
-            nan,                            // pk_max
-            z_grounding_2_.real(),          // r_grounding_from
-            z_grounding_2_.imag(),          // x_grounding_from
-            0,                              // r_grounding_to
-            0                               // x_grounding_to
+            {{2}, 0, 1, status_2(), true},      // {{id}, from_node, to_node, from_status, to_status}
+            u2,                                 // u1
+            u1,                                 // u2
+            sn_2_,                              // sn
+            uk_T2,                              // uk
+            pk_T2,                              // pk
+            0.0,                                // i0
+            0.0,                                // p0
+            winding_2_,                         // winding_from
+            WindingType::wye_n,                 // winding_to
+            static_cast<IntS>(12 - clock_12_),  // clock, reversed
+            BranchSide::from,                   // tap_side
+            0,                                  // tap_pos
+            0,                                  // tap_min
+            0,                                  // tap_max
+            0,                                  // tap_nom
+            0.0,                                // tap_size
+            nan,                                // uk_min
+            nan,                                // uk_max
+            nan,                                // pk_min
+            nan,                                // pk_max
+            z_grounding_2_.real(),              // r_grounding_from
+            z_grounding_2_.imag(),              // x_grounding_from
+            0,                                  // r_grounding_to
+            0                                   // x_grounding_to
         };
         TransformerInput transformer_input_T3{
-            {{2}, 0, 1, status_3(), true},  // {{id}, from_node, to_node, from_status, to_status}
-            u3,                             // u1
-            u1,                             // u2
-            sn_3_,                          // sn
-            uk_T3,                          // uk
-            pk_T3,                          // pk
-            0.0,                            // i0
-            0.0,                            // p0
-            winding_3_,                     // winding_from
-            WindingType::wye_n,             // winding_to
-            (IntS)12 - clock_13_,           // clock, reversed
-            BranchSide::from,               // tap_side
-            0,                              // tap_pos
-            0,                              // tap_min
-            0,                              // tap_max
-            0,                              // tap_nom
-            0.0,                            // tap_size
-            nan,                            // uk_min
-            nan,                            // uk_max
-            nan,                            // pk_min
-            nan,                            // pk_max
-            z_grounding_3_.real(),          // r_grounding_from
-            z_grounding_3_.imag(),          // x_grounding_from
-            0,                              // r_grounding_to
-            0                               // x_grounding_to
+            {{2}, 0, 1, status_3(), true},      // {{id}, from_node, to_node, from_status, to_status}
+            u3,                                 // u1
+            u1,                                 // u2
+            sn_3_,                              // sn
+            uk_T3,                              // uk
+            pk_T3,                              // pk
+            0.0,                                // i0
+            0.0,                                // p0
+            winding_3_,                         // winding_from
+            WindingType::wye_n,                 // winding_to
+            static_cast<IntS>(12 - clock_13_),  // clock, reversed
+            BranchSide::from,                   // tap_side
+            0,                                  // tap_pos
+            0,                                  // tap_min
+            0,                                  // tap_max
+            0,                                  // tap_nom
+            0.0,                                // tap_size
+            nan,                                // uk_min
+            nan,                                // uk_max
+            nan,                                // pk_min
+            nan,                                // pk_max
+            z_grounding_3_.real(),              // r_grounding_from
+            z_grounding_3_.imag(),              // x_grounding_from
+            0,                                  // r_grounding_to
+            0                                   // x_grounding_to
         };
 
         Transformer T1{transformer_input_T1, u1_rated_, u1_rated_};
