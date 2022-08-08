@@ -308,7 +308,7 @@ class ThreeWindingTransformer : public Branch3 {
             0.0,                            // p0
             winding_2_,                     // winding_from
             WindingType::wye_n,             // winding_to
-            12 - clock_12_,                 // clock, reversed
+            (IntS)12 - clock_12_,           // clock, reversed
             BranchSide::from,               // tap_side
             0,                              // tap_pos
             0,                              // tap_min
@@ -335,7 +335,7 @@ class ThreeWindingTransformer : public Branch3 {
             0.0,                            // p0
             winding_3_,                     // winding_from
             WindingType::wye_n,             // winding_to
-            12 - clock_13_,                 // clock, reversed
+            (IntS)12 - clock_13_,           // clock, reversed
             BranchSide::from,               // tap_side
             0,                              // tap_pos
             0,                              // tap_min
