@@ -134,7 +134,7 @@ class FictionalGridGenerator {
         // this will result in total length of the cable for about 10.0 km
         //    and total load for about 10 MVA
         std::uniform_real_distribution<double> scaling_gen{0.8 * 10.0 / option_.n_node_per_mv_feeder,
-                                                        1.2 * 10.0 / option_.n_node_per_mv_feeder};
+                                                           1.2 * 10.0 / option_.n_node_per_mv_feeder};
         std::bernoulli_distribution lv_gen{option_.ratio_lv_grid};
 
         // loop all feeder
@@ -152,30 +152,33 @@ class FictionalGridGenerator {
                 line.id = id_gen_++;
                 line.from_node = prev_node_id;
                 line.to_node = current_node_id;
-                // scale
-                double const cable_ratio = scaling_gen(gen_);
-                scale_cable(line, cable_ratio);
+                scale_cable(line, scaling_gen(gen_));
                 input_.line.push_back(line);
                 // generate lv grid
                 if (lv_gen(gen_)) {
                     generate_lv_grid(current_node_id);
-                    continue;
                 }
-                // generate mv sym load
-                SymLoadGenInput sym_load = mv_sym_load;
-                sym_load.id = id_gen_++;
-                sym_load.node = current_node_id;
-                sym_load.type = static_cast<LoadGenType>((IntS)load_type_gen(gen_));
-                double const sym_scale = scaling_gen(gen_);
-                sym_load.p_specified *= sym_scale;
-                sym_load.q_specified *= sym_scale;
-                input_.sym_load.push_back(sym_load);
+                else {
+                    // generate mv sym load
+                    SymLoadGenInput sym_load = mv_sym_load;
+                    sym_load.id = id_gen_++;
+                    sym_load.node = current_node_id;
+                    sym_load.type = static_cast<LoadGenType>((IntS)load_type_gen(gen_));
+                    double const sym_scale = scaling_gen(gen_);
+                    sym_load.p_specified *= sym_scale;
+                    sym_load.q_specified *= sym_scale;
+                    input_.sym_load.push_back(sym_load);
+                }
+
                 // push to ring node
                 if (j == option_.n_node_per_mv_feeder - 1) {
                     mv_ring_.push_back(current_node_id);
                 }
+                // iterate previous node
+                prev_node_id = current_node_id;
             }
         }
+
         // add loop if needed, and there are more than one feeder, and there are ring nodes
         if (mv_ring_.size() > 1 && option_.has_mv_ring) {
             mv_ring_.push_back(mv_ring_.front());
@@ -187,8 +190,7 @@ class FictionalGridGenerator {
                 line.from_node = *it;
                 line.to_node = *(it + 1);
                 // scale
-                double const cable_ratio = scaling_gen(gen_);
-                scale_cable(line, cable_ratio);
+                scale_cable(line, scaling_gen(gen_));
                 input_.line.push_back(line);
             }
         }
@@ -228,15 +230,93 @@ class FictionalGridGenerator {
 
         // template
         NodeInput const lv_node{{0}, 400.0};
-        double const scaler = 1e6 / option_.n_lv_feeder / option_.n_node_per_mv_feeder / 1.2;
         AsymLoadGenInput const lv_asym_load{
-            {{{0}, 0, true}, LoadGenType::const_i}, RealValue<false>{0.8 * scaler}, RealValue<false>{0.6 * scaler}};
+            {{{0}, 0, true}, LoadGenType::const_i}, RealValue<false>{0.0}, RealValue<false>{0.0}};
         // 4*150 Al, per km
         LineInput const lv_main_line{
             {{0}, 0, 0, true, true}, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387, 0.36e-6, 0.0, 300.0};
         // 4*16 Cu, per km
         LineInput const lv_connection_line{
             {{0}, 0, 0, true, true}, 1.15, 0.096, 0.43e-6, 0.0004, 4.6, 0.408, 0.258e-6, 0.0, 80.0};
+
+        // generator
+        std::uniform_int_distribution<Idx> load_type_gen{0, 2};
+        std::uniform_int_distribution<Idx> load_phase_gen{0, 2};
+        // 1MVA in total, divided by all users, scale down by 20%
+        double const base_load = 1e6 / option_.n_lv_feeder / option_.n_node_per_mv_feeder / 1.2;
+        std::uniform_real_distribution<double> load_scaling_gen{0.8 * base_load, 1.2 * base_load};
+        // main cable length generation
+        // total length 0.5 km +/- 20%
+        std::uniform_real_distribution<double> main_cable_gen{0.8 * 0.5 / option_.n_connection_per_lv_feeder,
+                                                              1.2 * 0.5 / option_.n_connection_per_lv_feeder};
+        // connection cable length generation
+        // length 5 m - 20 m
+        std::uniform_real_distribution<double> connection_cable_gen{5e-3, 20e-3};
+
+        // loop feeders
+        for (Idx i = 0; i < option_.n_lv_feeder; ++i) {
+            Idx prev_main_node_id = id_lv_busbar;
+            // loop all LV connection
+            for (Idx j = 0; j < option_.n_connection_per_lv_feeder; ++j) {
+                // main node
+                Idx const current_main_node_id = id_gen_++;
+                NodeInput main_node = lv_node;
+                main_node.id = current_main_node_id;
+                input_.node.push_back(main_node);
+                // connection node
+                Idx const connection_node_id = id_gen_++;
+                NodeInput connection_node = lv_node;
+                connection_node.id = connection_node_id;
+                input_.node.push_back(connection_node);
+                // main line
+                LineInput main_line = lv_main_line;
+                main_line.id = id_gen_++;
+                main_line.from_node = prev_main_node_id;
+                main_line.to_node = current_main_node_id;
+                scale_cable(main_line, main_cable_gen(gen_));
+                input_.line.push_back(main_line);
+                // connection line
+                LineInput connection_line = lv_connection_line;
+                connection_line.id = id_gen_++;
+                connection_line.from_node = current_main_node_id;
+                connection_line.to_node = connection_node_id;
+                scale_cable(connection_line, connection_cable_gen(gen_));
+                input_.line.push_back(connection_line);
+                // asym load
+                AsymLoadGenInput asym_load = lv_asym_load;
+                asym_load.id = id_gen_++;
+                asym_load.node = connection_node_id;
+                asym_load.type = static_cast<LoadGenType>((IntS)load_type_gen(gen_));
+                Idx const phase = load_phase_gen(gen_);
+                double const apparent_power = load_scaling_gen(gen_);
+                asym_load.p_specified(phase) = apparent_power * 0.8;
+                asym_load.q_specified(phase) = apparent_power * 0.6;
+                input_.asym_load.push_back(asym_load);
+
+                // push to ring node
+                if (j == option_.n_connection_per_lv_feeder - 1) {
+                    lv_ring_.push_back(current_main_node_id);
+                }
+                // iterate previous node
+                prev_main_node_id = current_main_node_id;
+            }
+        }
+
+        // add loop if needed, and there are more than one feeder, and there are ring nodes
+        if (lv_ring_.size() > 1 && option_.has_lv_ring) {
+            lv_ring_.push_back(lv_ring_.front());
+            // loop all far end nodes
+            for (auto it = lv_ring_.cbegin(); it != lv_ring_.cend() - 1; ++it) {
+                // line
+                LineInput line = lv_main_line;
+                line.id = id_gen_++;
+                line.from_node = *it;
+                line.to_node = *(it + 1);
+                // scale
+                scale_cable(line, main_cable_gen(gen_));
+                input_.line.push_back(line);
+            }
+        }
     }
 
    private:
