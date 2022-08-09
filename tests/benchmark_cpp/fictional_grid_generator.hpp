@@ -82,7 +82,7 @@ class FictionalGridGenerator {
         Idx const id_source_node = id_gen_++;
         NodeInput const source_node{{id_source_node}, 150.0e3};
         input_.node.push_back(source_node);
-        SourceInput const source{{{id_gen_++}, id_source_node, true}, 1.05, nan, 1e20, nan, nan};
+        SourceInput const source{{{id_gen_++}, id_source_node, true}, 1.05, nan, 2000e6, nan, nan};
         input_.source.push_back(source);
 
         // transformer and mv busbar
@@ -125,13 +125,15 @@ class FictionalGridGenerator {
         // template input
         NodeInput const mv_node{{0}, 10.5e3};
         SymLoadGenInput const mv_sym_load{{{{0}, 0, true}, LoadGenType::const_i}, 0.8e6, 0.6e6};
-        // cable 630Al XLPE 10kV with neutral conductor, 1 km
+        // cable 3 * 630Al XLPE 10kV, per km
         LineInput const mv_line{{{0}, 0, 0, true, true}, 0.063, 0.103, 0.4e-6, 0.0004, 0.275, 0.101, 0.66e-6, 0.0, 1e3};
 
         // random generator
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
-        // scaled with 10 times
-        std::uniform_real_distribution<double> real_gen{0.8 * 10.0 / option_.n_node_per_mv_feeder,
+        // scaling factor: (from 0.8 to 1.2) * 10.0 / n_node_per_feeder
+        // this will result in total length of the cable for about 10.0 km
+        //    and total load for about 10 MVA
+        std::uniform_real_distribution<double> scaling_gen{0.8 * 10.0 / option_.n_node_per_mv_feeder,
                                                         1.2 * 10.0 / option_.n_node_per_mv_feeder};
         std::bernoulli_distribution lv_gen{option_.ratio_lv_grid};
 
@@ -150,14 +152,9 @@ class FictionalGridGenerator {
                 line.id = id_gen_++;
                 line.from_node = prev_node_id;
                 line.to_node = current_node_id;
-                // scale r1, x1, r0, x0
-                double const cable_ratio = real_gen(gen_);
-                line.r1 *= cable_ratio;
-                line.x1 *= cable_ratio;
-                line.c1 *= cable_ratio;
-                line.r0 *= cable_ratio;
-                line.x0 *= cable_ratio;
-                line.c0 *= cable_ratio;
+                // scale
+                double const cable_ratio = scaling_gen(gen_);
+                scale_cable(line, cable_ratio);
                 input_.line.push_back(line);
                 // generate lv grid
                 if (lv_gen(gen_)) {
@@ -169,7 +166,7 @@ class FictionalGridGenerator {
                 sym_load.id = id_gen_++;
                 sym_load.node = current_node_id;
                 sym_load.type = static_cast<LoadGenType>((IntS)load_type_gen(gen_));
-                double const sym_scale = real_gen(gen_);
+                double const sym_scale = scaling_gen(gen_);
                 sym_load.p_specified *= sym_scale;
                 sym_load.q_specified *= sym_scale;
                 input_.sym_load.push_back(sym_load);
@@ -189,14 +186,9 @@ class FictionalGridGenerator {
                 line.id = id_gen_++;
                 line.from_node = *it;
                 line.to_node = *(it + 1);
-                // scale r1, x1, r0, x0
-                double const cable_ratio = real_gen(gen_);
-                line.r1 *= cable_ratio;
-                line.x1 *= cable_ratio;
-                line.c1 *= cable_ratio;
-                line.r0 *= cable_ratio;
-                line.x0 *= cable_ratio;
-                line.c0 *= cable_ratio;
+                // scale
+                double const cable_ratio = scaling_gen(gen_);
+                scale_cable(line, cable_ratio);
                 input_.line.push_back(line);
             }
         }
@@ -239,10 +231,10 @@ class FictionalGridGenerator {
         double const scaler = 1e6 / option_.n_lv_feeder / option_.n_node_per_mv_feeder / 1.2;
         AsymLoadGenInput const lv_asym_load{
             {{{0}, 0, true}, LoadGenType::const_i}, RealValue<false>{0.8 * scaler}, RealValue<false>{0.6 * scaler}};
-        // 4*150 Al
+        // 4*150 Al, per km
         LineInput const lv_main_line{
             {{0}, 0, 0, true, true}, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387, 0.36e-6, 0.0, 300.0};
-        // 4*16 Cu
+        // 4*16 Cu, per km
         LineInput const lv_connection_line{
             {{0}, 0, 0, true, true}, 1.15, 0.096, 0.43e-6, 0.0004, 4.6, 0.408, 0.258e-6, 0.0, 80.0};
     }
@@ -256,6 +248,15 @@ class FictionalGridGenerator {
     OutputData<false> asym_output_;
     std::vector<Idx> mv_ring_;
     std::vector<Idx> lv_ring_;
+
+    static void scale_cable(LineInput& line, double cable_ratio) {
+        line.r1 *= cable_ratio;
+        line.x1 *= cable_ratio;
+        line.c1 *= cable_ratio;
+        line.r0 *= cable_ratio;
+        line.x0 *= cable_ratio;
+        line.c0 *= cable_ratio;
+    }
 };
 
 }  // namespace power_grid_model::benchmark
