@@ -98,8 +98,9 @@ TEST_CASE("Test three winding transformer") {
     double const pk_t2 = 0.5 * (200e3 / 50 / 50 + 150e3 / 10 / 10 - 100e3 / 10 / 10) * 50 * 50;
     double const pk_t3 = 0.5 * (-200e3 / 50 / 50 + 150e3 / 10 / 10 + 100e3 / 10 / 10) * 10 * 10;
 
-    // calculation parameters
+    // check with calculation parameters or only transformer?
     // virtual node has same base_i as node_1
+    // *********************
     double const base_i_1 = base_power_3p / 138e3 / sqrt3;
     double const base_i_2 = base_power_3p / 69e3 / sqrt3;
     double const base_i_3 = base_power_3p / 13.8e3 / sqrt3;
@@ -124,6 +125,7 @@ TEST_CASE("Test three winding transformer") {
     DoubleComplex const y_t1 = 1.0 / z_series_1 / base_y_1;
     DoubleComplex const y_t2 = 1.0 / z_series_2 / base_y_2;
     DoubleComplex const y_t3 = 1.0 / z_series_3 / base_y_3;
+    //*******************
 
     // tap functioning
     // add for reverse tap and different side taps
@@ -241,7 +243,9 @@ TEST_CASE("Test three winding transformer") {
         // s_f, s_t, i_f, i_t
         // sum of s_t and i_t = 0
         BranchMathOutput<true> branch_math_output{};
-        b1_output = {s_f = (1.0 - 2.0i), s_t = ()}
+        b1_output = {s_f = (1.0 - 2.0i), s_t = (2.0 - 3.0i), i_f = (1.5 - 2.5i), i_t = (2.5 - 3.5i)};
+        b2_output = {s_f = (1.0 - 2.0i), s_t = (-3.0 + 2.0i), i_f = (1.5 - 2.5i), i_t = (-3.5 - 3.5i)};
+        b3_output = {s_f = (1.0 - 2.0i), s_t = (1.0 + 1.0i), i_f = (1.5 - 2.5i), i_t = (1.5 - 3.5i)};
         b1_output.i_f = 1.0 - 2.0i;
         b1_output.i_t = 2.0 - 1.0i;
         b1_output.s_f = 1.0 - 1.5i;
