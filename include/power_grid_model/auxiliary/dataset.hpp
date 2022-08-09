@@ -16,10 +16,13 @@ namespace power_grid_model {
 // the void pointers can be cast to relevant types
 // the dataset is either one set of data
 //     the indptr is a nullptr
-//     and the size indicates the number of *data points* in the set
-// the dataset can also be a batch of sets
-//     the indptr is an integer array, for i-th sets, the set data is in the range [ indptr[i], indptr[i + 1] )
-//     the size indicates the number of *batches* in the whole set
+// the dataset can also be a batch of sets with different length per batch
+//     the indptr is an integer array, for i-th sets,
+//          the set data is in the range [ indptr[i], indptr[i + 1] )
+// the dataset can also be a batch of sets with the same length per batch
+//     the indptr is a nullptr, for i-th sets,
+//          the set data is in the range [ i * length_per_batch, (i + 1) * length_per_batch )
+
 template <bool is_const>
 class DataPointer {
     template <class T>
@@ -112,7 +115,7 @@ class DataPointer {
    private:
     ptr_t<void> ptr_;
     Idx const* indptr_;
-    Idx batch_size_;       // number of batches
+    Idx batch_size_;        // number of batches
     Idx length_per_batch_;  // number of data points per batch, -1 for variable batches
 };
 
