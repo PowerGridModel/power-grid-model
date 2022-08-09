@@ -486,22 +486,32 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         MainModelImpl const& base_model = *this;
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
+        // calculation info
+        std::vector<CalculationInfo> infos(n_batch);
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, n_batch, independent,
-                          err_tol, max_iter, calculation_method](Idx start, Idx stride) {
+        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, &infos, n_batch,
+                          independent, err_tol, max_iter, calculation_method](Idx start, Idx stride) {
             // copy base model
             MainModelImpl model{base_model};
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
-                // duplicate model if updates are not independent
-                if (!independent) {
-                    model = base_model;
-                }
                 // try to update model and run calculation
                 try {
-                    model.update_component(update_data, batch_number, sequence_idx_map);
+                    {
+                        Timer t_prepare(infos[batch_number], 1000, "Prepare model");
+                        // duplicate model if updates are not independent
+                        if (!independent) {
+                            Timer t_copy_model(infos[batch_number], 1100, "Copy model");
+                            model = base_model;
+                        }
+                        Timer t_update_model(infos[batch_number], 1200, "Update model");
+                        model.update_component(update_data, batch_number, sequence_idx_map);
+                    }
                     auto const math_output = (model.*calculation_fn)(err_tol, max_iter, calculation_method);
-                    model.output_result(math_output, result_data, batch_number);
+                    {
+                        Timer t_output(infos[batch_number], 3000, "Calculate output");
+                        model.output_result(math_output, result_data, batch_number);
+                    }
                 }
                 catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
@@ -509,6 +519,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 catch (...) {
                     exceptions[batch_number] = "unknown exception";
                 }
+                infos[batch_number].merge(model.calculation_info_);
             }
         };
 
@@ -546,6 +557,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         if (!combined_error_message.empty()) {
             throw BatchCalculationError(combined_error_message);
+        }
+
+        // merge calculation info
+        calculation_info_.clear();
+        for (auto const& info : infos) {
+            for (auto const& [k, v] : info) {
+                calculation_info_[k] += v;
+            }
         }
 
         return BatchParameter{independent, cache_topology};

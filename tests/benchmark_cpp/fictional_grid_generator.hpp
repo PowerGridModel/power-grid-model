@@ -32,6 +32,18 @@ struct InputData {
     std::vector<SymLoadGenInput> sym_load;
     std::vector<AsymLoadGenInput> asym_load;
     std::vector<ShuntInput> shunt;
+
+    ConstDataset get_dataset() const {
+        ConstDataset dataset;
+        dataset.try_emplace("node", node.data(), (Idx)node.size());
+        dataset.try_emplace("transformer", transformer.data(), (Idx)transformer.size());
+        dataset.try_emplace("line", line.data(), (Idx)line.size());
+        dataset.try_emplace("source", source.data(), (Idx)source.size());
+        dataset.try_emplace("sym_load", sym_load.data(), (Idx)sym_load.size());
+        dataset.try_emplace("asym_load", asym_load.data(), (Idx)asym_load.size());
+        dataset.try_emplace("shunt", shunt.data(), (Idx)shunt.size());
+        return dataset;
+    }
 };
 
 template <bool sym>
@@ -43,6 +55,18 @@ struct OutputData {
     std::vector<ApplianceOutput<sym>> sym_load;
     std::vector<ApplianceOutput<sym>> asym_load;
     std::vector<ApplianceOutput<sym>> shunt;
+
+    Dataset get_dataset() {
+        Dataset dataset;
+        dataset.try_emplace("node", node.data(), (Idx)node.size());
+        dataset.try_emplace("transformer", transformer.data(), (Idx)transformer.size());
+        dataset.try_emplace("line", line.data(), (Idx)line.size());
+        dataset.try_emplace("source", source.data(), (Idx)source.size());
+        dataset.try_emplace("sym_load", sym_load.data(), (Idx)sym_load.size());
+        dataset.try_emplace("asym_load", asym_load.data(), (Idx)asym_load.size());
+        dataset.try_emplace("shunt", shunt.data(), (Idx)shunt.size());
+        return dataset;
+    }
 };
 
 class FictionalGridGenerator {
@@ -63,19 +87,51 @@ class FictionalGridGenerator {
         gen_ = std::mt19937_64{seed};
         id_gen_ = 0;
         // process option to calculate n_lv_grid
-        Idx total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder;
+        Idx total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder + 2;
         Idx const node_per_lv_grid = option_.n_lv_feeder * option_.n_connection_per_lv_feeder * 2 + 1;
-        option_.n_lv_grid = (option_.n_node_total_specified - total_mv_connection) / node_per_lv_grid;
+        if (total_mv_connection > option_.n_node_total_specified) {
+            option_.n_lv_grid = 0;
+            option_.n_mv_feeder = (option_.n_node_total_specified - 2) / option_.n_node_per_mv_feeder;
+            total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder;
+        }
+        else {
+            option_.n_lv_grid = (option_.n_node_total_specified - total_mv_connection) / node_per_lv_grid;
+        }
         if (option_.n_lv_grid > total_mv_connection) {
             option_.n_mv_feeder = option_.n_lv_grid / option_.n_node_per_mv_feeder + 1;
         }
         total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder;
         option_.ratio_lv_grid = (double)option_.n_lv_grid / (double)total_mv_connection;
-        // each mv connection 1MVA, each transformer 60 MVA, scaled by 10%
-        option_.n_parallel_hv_mv_transformer = (int)((double)total_mv_connection * 1.1 / 60.0) + 1;
+        // each mv feeder 10 MVA, each transformer 60 MVA, scaled up by 10%
+        option_.n_parallel_hv_mv_transformer = (int)((double)option.n_mv_feeder * 10.0 * 1.1 / 60.0) + 1;
         // start generating grid
         generate_mv_grid();
     }
+
+    InputData const& input_data() const {
+        return input_;
+    }
+
+    template <bool sym>
+    OutputData<sym> generate_output_data() const {
+        OutputData<sym> output;
+        output.node.resize(input_.node.size());
+        output.transformer.resize(input_.transformer.size());
+        output.line.resize(input_.line.size());
+        output.source.resize(input_.source.size());
+        output.sym_load.resize(input_.sym_load.size());
+        output.asym_load.resize(input_.asym_load.size());
+        output.shunt.resize(input_.shunt.size());
+        return output;
+    }
+
+   private:
+    Option option_{};
+    std::mt19937_64 gen_;
+    Idx id_gen_;
+    InputData input_;
+    std::vector<Idx> mv_ring_;
+    std::vector<Idx> lv_ring_;
 
     void generate_mv_grid() {
         // source node
@@ -156,7 +212,7 @@ class FictionalGridGenerator {
                 input_.line.push_back(line);
                 // generate lv grid
                 if (lv_gen(gen_)) {
-                    generate_lv_grid(current_node_id);
+                    generate_lv_grid(current_node_id, 10.0 / option_.n_node_per_mv_feeder);
                 }
                 else {
                     // generate mv sym load
@@ -196,15 +252,15 @@ class FictionalGridGenerator {
         }
     }
 
-    void generate_lv_grid(Idx mv_node) {
+    void generate_lv_grid(Idx mv_node, double mv_base_load) {
         Idx const id_lv_busbar = id_gen_++;
         NodeInput const lv_busbar{{id_lv_busbar}, 400.0};
         input_.node.push_back(lv_busbar);
-        // transformer, 1000 kVA, uk=6%, pk=8.8kW
+        // transformer, 1500 kVA or mv base load, uk=6%, pk=8.8kW
         TransformerInput const transformer{{{id_gen_++}, mv_node, id_lv_busbar, true, true},
                                            10.5e3,
                                            420.0,
-                                           1000e3,
+                                           std::max(1500e3, mv_base_load * 1.2),
                                            0.06,
                                            8.8e3,
                                            0.01,
@@ -242,13 +298,13 @@ class FictionalGridGenerator {
         // generator
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
         std::uniform_int_distribution<Idx> load_phase_gen{0, 2};
-        // 1MVA in total, divided by all users, scale down by 20%
-        double const base_load = 1e6 / option_.n_lv_feeder / option_.n_node_per_mv_feeder / 1.2;
+        // mv_base_load in total, divided by all users, scale down by 20%
+        double const base_load = mv_base_load / option_.n_lv_feeder / option_.n_connection_per_lv_feeder / 1.2;
         std::uniform_real_distribution<double> load_scaling_gen{0.8 * base_load, 1.2 * base_load};
         // main cable length generation
-        // total length 0.5 km +/- 20%
-        std::uniform_real_distribution<double> main_cable_gen{0.8 * 0.5 / option_.n_connection_per_lv_feeder,
-                                                              1.2 * 0.5 / option_.n_connection_per_lv_feeder};
+        // total length 0.2 km +/- 20%
+        std::uniform_real_distribution<double> main_cable_gen{0.8 * 0.2 / option_.n_connection_per_lv_feeder,
+                                                              1.2 * 0.2 / option_.n_connection_per_lv_feeder};
         // connection cable length generation
         // length 5 m - 20 m
         std::uniform_real_distribution<double> connection_cable_gen{5e-3, 20e-3};
@@ -318,16 +374,6 @@ class FictionalGridGenerator {
             }
         }
     }
-
-   private:
-    Option option_{};
-    std::mt19937_64 gen_;
-    Idx id_gen_;
-    InputData input_;
-    OutputData<true> sym_output_;
-    OutputData<false> asym_output_;
-    std::vector<Idx> mv_ring_;
-    std::vector<Idx> lv_ring_;
 
     static void scale_cable(LineInput& line, double cable_ratio) {
         line.r1 *= cable_ratio;
