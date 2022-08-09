@@ -450,6 +450,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         });
         if (all_empty) {
             auto const math_output = (this->*calculation_fn)(err_tol, max_iter, calculation_method);
+            Timer t_output(calculation_info_, 3000, "Calculate output");
             output_result(math_output, result_data);
             return BatchParameter{};
         }
@@ -476,13 +477,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // otherwise reset solvers
             reset_solvers();
         }
-        // const ref of current instance
-        MainModelImpl const& base_model = *this;
 
         // get component sequence idx cache if update dataset is independent
         std::map<std::string, std::vector<Idx2D>> const sequence_idx_map =
             independent ? get_sequence_idx_map(update_data) : std::map<std::string, std::vector<Idx2D>>{};
 
+        // const ref of current instance
+        MainModelImpl const& base_model = *this;
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
 
