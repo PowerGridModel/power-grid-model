@@ -18,6 +18,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <new>
 #include <numeric>
 #include <string>
 #include <tuple>
@@ -84,7 +85,12 @@ constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
 
 // calculation info
-using CalculationInfo = std::map<std::string, double>;
+#if defined(__cpp_lib_hardware_interference_size)
+constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
+#else
+constexpr size_t cache_line_size = 64;
+#endif
+class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double> {};
 using Clock = std::chrono::high_resolution_clock;
 using Duration = std::chrono::duration<double>;
 

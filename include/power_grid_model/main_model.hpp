@@ -363,18 +363,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
-        Timer timer(calculation_info_, 2100, "Prepare");
-        prepare_solvers<sym>();
-        auto const& input = (this->*PrepareInputFn)();
+        auto const input = [&]() {
+            Timer timer(calculation_info_, 2100, "Prepare");
+            prepare_solvers<sym>();
+            return (this->*PrepareInputFn)();
+        }();
         // calculate
-        timer = Timer(calculation_info_, 2200, "Math Calculation");
-        std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
-        std::vector<MathOutput<sym>> math_output(n_math_solvers_);
-        std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(),
-                       [&](MathSolver<sym>& math_solver, InputType const& y) {
-                           return (math_solver.*SolveFn)(y, err_tol, max_iter, calculation_info_, calculation_method);
-                       });
-        return math_output;
+        return [&]() {
+            Timer timer(calculation_info_, 2200, "Math Calculation");
+            std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
+            std::vector<MathOutput<sym>> math_output(n_math_solvers_);
+            std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(),
+                           [&](MathSolver<sym>& math_solver, InputType const& y) {
+                               return (math_solver.*SolveFn)(y, err_tol, max_iter, calculation_info_,
+                                                             calculation_method);
+                           });
+            return math_output;
+        }();
     }
 
     template <bool sym>
