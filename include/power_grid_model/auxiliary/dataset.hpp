@@ -106,14 +106,14 @@ class DataPointer {
     // conversion to const iterator
     template <class UX = DataPointer<true>>
     operator std::enable_if_t<!is_const, UX>() const {
-        return DataPointer<true>{ptr_, indptr_, size_};
+        return DataPointer<true>{ptr_, indptr_, batch_size_, length_per_batch_};
     }
 
    private:
     ptr_t<void> ptr_;
     Idx const* indptr_;
     Idx batch_size_;       // number of batches
-    Idx length_per_batch_  // number of data points per batch, -1 for variable batches
+    Idx length_per_batch_;  // number of data points per batch, -1 for variable batches
 };
 
 using MutableDataPointer = DataPointer<false>;
