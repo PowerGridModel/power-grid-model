@@ -16,19 +16,20 @@ struct PowerGridBenchmark {
     }
 
     template <bool sym>
-    void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1) {
+    void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
         OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
         BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
         // calculate
         main_model.value().calculate_power_flow<sym>(1e-8, 20, calculation_method, output.get_dataset(),
-                                                     batch_data.get_dataset());
+                                                     batch_data.get_dataset(), threading);
         CalculationInfo info_extra = main_model.value().calculation_info();
         info.merge(info_extra);
         std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
     }
 
     template <bool sym>
-    void run_benchmark(Option const& option, CalculationMethod calculation_method, Idx batch_size = -1) {
+    void run_benchmark(Option const& option, CalculationMethod calculation_method, Idx batch_size = -1,
+                       Idx threading = -1) {
         CalculationInfo info;
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
@@ -69,7 +70,7 @@ struct PowerGridBenchmark {
             info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
             Timer t_total(info, 0000, "Total");
-            run_pf<sym>(calculation_method, info, batch_size);
+            run_pf<sym>(calculation_method, info, batch_size, threading);
         }
         print(info);
 
@@ -100,7 +101,7 @@ int main(int, char**) {
     option.n_lv_feeder = 2;
     option.n_connection_per_lv_feeder = 4;
 #else
-    option.n_node_total_specified = 1000000;
+    option.n_node_total_specified = 2000;
     option.n_mv_feeder = 40;
     option.n_node_per_mv_feeder = 30;
     option.n_lv_feeder = 10;
@@ -110,7 +111,8 @@ int main(int, char**) {
     option.has_lv_ring = false;
 
     // radial
-    benchmarker.run_benchmark<true>(option, CalculationMethod::newton_raphson, 5);
+    benchmarker.run_benchmark<true>(option, CalculationMethod::newton_raphson, 5000);
+    benchmarker.run_benchmark<true>(option, CalculationMethod::newton_raphson, 5000, 6);
     // benchmarker.run_benchmark(option, true, CalculationMethod::linear);
     // benchmarker.run_benchmark(option, true, CalculationMethod::iterative_current);
     // benchmarker.run_benchmark<false>(option, CalculationMethod::newton_raphson);

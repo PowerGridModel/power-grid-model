@@ -495,6 +495,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // copy base model
             MainModelImpl model{base_model};
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
+                Timer t_total(infos[batch_number], 0000, "Total in threads");
                 // try to update model and run calculation
                 try {
                     {
