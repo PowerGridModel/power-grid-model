@@ -561,12 +561,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // merge calculation info
         calculation_info_.clear();
+        const auto key = Timer::make_key(2226, "Max number of iterations");
         for (auto const& info : infos) {
             for (auto const& [k, v] : info) {
-                calculation_info_[k] += v;
+                if (k == key) {
+                    calculation_info_[k] = std::max(calculation_info_[k], v);
+                }
+                else {
+                    calculation_info_[k] += v;
+                }
             }
         }
-
         return BatchParameter{independent, cache_topology};
     }
 

@@ -75,8 +75,11 @@ struct BatchData {
     std::vector<AsymLoadGenUpdate> asym_load;
     Idx batch_size{0};
 
-    ConstDataset get_dataset() {
+    ConstDataset get_dataset() const {
         ConstDataset dataset;
+        if (batch_size == 0) {
+            return dataset;
+        }
         dataset.try_emplace("sym_load", sym_load.data(), batch_size, (Idx)(sym_load.size() / batch_size));
         dataset.try_emplace("asym_load", asym_load.data(), batch_size, (Idx)(asym_load.size() / batch_size));
         return dataset;
@@ -128,6 +131,7 @@ class FictionalGridGenerator {
 
     template <bool sym>
     OutputData<sym> generate_output_data(Idx batch_size = 1) const {
+        batch_size = std::max(batch_size, 1);
         OutputData<sym> output{};
         output.batch_size = batch_size;
         output.node.resize(input_.node.size() * batch_size);
@@ -145,6 +149,7 @@ class FictionalGridGenerator {
     }
 
     BatchData generate_batch_input(Idx batch_size, std::random_device::result_type seed) {
+        batch_size = std::max(batch_size, 0);
         gen_ = std::mt19937_64{seed};
         BatchData batch_data{};
         batch_data.batch_size = batch_size;
