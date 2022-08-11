@@ -55,16 +55,17 @@ struct OutputData {
     std::vector<ApplianceOutput<sym>> sym_load;
     std::vector<ApplianceOutput<sym>> asym_load;
     std::vector<ApplianceOutput<sym>> shunt;
+    Idx batch_size{1};
 
     Dataset get_dataset() {
         Dataset dataset;
-        dataset.try_emplace("node", node.data(), (Idx)node.size());
-        dataset.try_emplace("transformer", transformer.data(), (Idx)transformer.size());
-        dataset.try_emplace("line", line.data(), (Idx)line.size());
-        dataset.try_emplace("source", source.data(), (Idx)source.size());
-        dataset.try_emplace("sym_load", sym_load.data(), (Idx)sym_load.size());
-        dataset.try_emplace("asym_load", asym_load.data(), (Idx)asym_load.size());
-        dataset.try_emplace("shunt", shunt.data(), (Idx)shunt.size());
+        dataset.try_emplace("node", node.data(), batch_size, (Idx)(node.size() / batch_size));
+        dataset.try_emplace("transformer", transformer.data(), batch_size, (Idx)(transformer.size() / batch_size));
+        dataset.try_emplace("line", line.data(), batch_size, (Idx)(line.size() / batch_size));
+        dataset.try_emplace("source", source.data(), batch_size, (Idx)(source.size() / batch_size));
+        dataset.try_emplace("sym_load", sym_load.data(), batch_size, (Idx)(sym_load.size() / batch_size));
+        dataset.try_emplace("asym_load", asym_load.data(), batch_size, (Idx)(asym_load.size() / batch_size));
+        dataset.try_emplace("shunt", shunt.data(), batch_size, (Idx)(shunt.size() / batch_size));
         return dataset;
     }
 };
@@ -114,7 +115,7 @@ class FictionalGridGenerator {
 
     template <bool sym>
     OutputData<sym> generate_output_data() const {
-        OutputData<sym> output;
+        OutputData<sym> output{};
         output.node.resize(input_.node.size());
         output.transformer.resize(input_.transformer.size());
         output.line.resize(input_.line.size());

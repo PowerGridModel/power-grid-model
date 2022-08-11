@@ -33,28 +33,27 @@ class DataPointer {
     }
 
     // single batch dataset
-    DataPointer(ptr_t<void> ptr, Idx single_length)
+    DataPointer(ptr_t<void> ptr, ptrdiff_t single_length)
         : ptr_{ptr}, indptr_{nullptr}, batch_size_{1}, length_per_batch_{single_length} {
     }
 
     // fix batch length
-    DataPointer(ptr_t<void> ptr, Idx batch_size, Idx length_per_batch)
+    DataPointer(ptr_t<void> ptr, ptrdiff_t batch_size, ptrdiff_t length_per_batch)
         : ptr_{ptr}, indptr_{nullptr}, batch_size_{batch_size}, length_per_batch_{length_per_batch} {
     }
 
     // variable batches
-    DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size)
+    DataPointer(ptr_t<void> ptr, Idx const* indptr, ptrdiff_t batch_size)
         : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, length_per_batch_{-1} {
     }
 
     // copy to const constructor
-    DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size, Idx length_per_batch)
+    DataPointer(ptr_t<void> ptr, Idx const* indptr, ptrdiff_t batch_size, ptrdiff_t length_per_batch)
         : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, length_per_batch_{length_per_batch} {
     }
 
     template <class T>
     std::pair<ptr_t<T>, ptr_t<T>> get_iterators(Idx pos) const {
-        ;
         assert(pos < batch_size_);
         ptr_t<T> const ptr = reinterpret_cast<ptr_t<T>>(ptr_);
         if (indptr_) {
@@ -76,7 +75,7 @@ class DataPointer {
     }
 
     Idx batch_size() const {
-        return batch_size_;
+        return (Idx)batch_size_;
     }
 
     Idx length_per_batch(Idx pos) const {
@@ -86,7 +85,7 @@ class DataPointer {
             return indptr_[pos + 1] - indptr_[pos];
         }
         else {
-            return length_per_batch_;
+            return (Idx)length_per_batch_;
         }
     }
 
@@ -115,8 +114,8 @@ class DataPointer {
    private:
     ptr_t<void> ptr_;
     Idx const* indptr_;
-    Idx batch_size_;        // number of batches
-    Idx length_per_batch_;  // number of data points per batch, -1 for variable batches
+    ptrdiff_t batch_size_;        // number of batches
+    ptrdiff_t length_per_batch_;  // number of data points per batch, -1 for variable batches
 };
 
 using MutableDataPointer = DataPointer<false>;
