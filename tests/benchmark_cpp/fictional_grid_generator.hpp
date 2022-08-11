@@ -70,6 +70,19 @@ struct OutputData {
     }
 };
 
+struct BatchData {
+    std::vector<SymLoadGenUpdate> sym_load;
+    std::vector<AsymLoadGenUpdate> asym_load;
+    Idx batch_size{0};
+
+    ConstDataset get_dataset() {
+        ConstDataset dataset;
+        dataset.try_emplace("sym_load", sym_load.data(), batch_size, (Idx)(sym_load.size() / batch_size));
+        dataset.try_emplace("asym_load", asym_load.data(), batch_size, (Idx)(asym_load.size() / batch_size));
+        return dataset;
+    }
+};
+
 class FictionalGridGenerator {
    public:
     FictionalGridGenerator() {
@@ -114,16 +127,30 @@ class FictionalGridGenerator {
     }
 
     template <bool sym>
-    OutputData<sym> generate_output_data() const {
+    OutputData<sym> generate_output_data(Idx batch_size = 1) const {
         OutputData<sym> output{};
-        output.node.resize(input_.node.size());
-        output.transformer.resize(input_.transformer.size());
-        output.line.resize(input_.line.size());
-        output.source.resize(input_.source.size());
-        output.sym_load.resize(input_.sym_load.size());
-        output.asym_load.resize(input_.asym_load.size());
-        output.shunt.resize(input_.shunt.size());
+        output.batch_size = batch_size;
+        output.node.resize(input_.node.size() * batch_size);
+        output.transformer.resize(input_.transformer.size() * batch_size);
+        output.line.resize(input_.line.size() * batch_size);
+        output.source.resize(input_.source.size() * batch_size);
+        output.sym_load.resize(input_.sym_load.size() * batch_size);
+        output.asym_load.resize(input_.asym_load.size() * batch_size);
+        output.shunt.resize(input_.shunt.size() * batch_size);
         return output;
+    }
+
+    BatchData generate_batch_input(Idx batch_size) {
+        return generate_batch_input(batch_size, std::random_device{}());
+    }
+
+    BatchData generate_batch_input(Idx batch_size, std::random_device::result_type seed) {
+        gen_ = std::mt19937_64{seed};
+        BatchData batch_data{};
+        batch_data.batch_size = batch_size;
+        generate_load_series(input_.sym_load, batch_data.sym_load, batch_size);
+        generate_load_series(input_.asym_load, batch_data.asym_load, batch_size);
+        return batch_data;
     }
 
    private:
@@ -383,6 +410,23 @@ class FictionalGridGenerator {
         line.r0 *= cable_ratio;
         line.x0 *= cable_ratio;
         line.c0 *= cable_ratio;
+    }
+
+    template <class T, class U>
+    void generate_load_series(std::vector<T> const& input, std::vector<U>& load_series, Idx batch_size) {
+        std::uniform_real_distribution<double> load_scaling_gen{0.0, 1.0};
+        load_series.resize(input.size() * batch_size);
+        ptrdiff_t const n_object = (ptrdiff_t)input.size();
+        for (ptrdiff_t batch = 0; batch < batch_size; ++batch) {
+            for (ptrdiff_t object = 0; object < (ptrdiff_t)input.size(); ++object) {
+                T const& input_obj = input[object];
+                U& update_obj = load_series[batch * n_object + object];
+                update_obj.id = input_obj.id;
+                update_obj.status = na_IntS;
+                update_obj.p_specified *= load_scaling_gen(gen_);
+                update_obj.q_specified *= load_scaling_gen(gen_);
+            }
+        }
     }
 };
 

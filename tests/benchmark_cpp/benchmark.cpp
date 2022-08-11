@@ -26,7 +26,8 @@ struct PowerGridBenchmark {
         std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
     }
 
-    void run_benchmark(Option const& option, bool sym, CalculationMethod calculation_method) {
+    template <bool sym>
+    void run_benchmark(Option const& option, CalculationMethod calculation_method) {
         CalculationInfo info;
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
@@ -52,12 +53,7 @@ struct PowerGridBenchmark {
                 Timer t_build(info, 1000, "Build model");
                 main_model.emplace(50.0, input.get_dataset());
             }
-            if (sym) {
-                run_pf<true>(calculation_method, info);
-            }
-            else {
-                run_pf<false>(calculation_method, info);
-            }
+            run_pf<sym>(calculation_method, info);
         }
         print(info);
 
@@ -65,12 +61,7 @@ struct PowerGridBenchmark {
         {
             std::cout << "\n*****Run without initialization*****\n";
             Timer t_total(info, 0000, "Total");
-            if (sym) {
-                run_pf<true>(calculation_method, info);
-            }
-            else {
-                run_pf<false>(calculation_method, info);
-            }
+            run_pf<sym>(calculation_method, info);
         }
         print(info);
         std::cout << "\n\n";
@@ -95,10 +86,10 @@ int main(int, char**) {
 
 #ifndef NDEBUG
     option.n_node_total_specified = 200;
-    option.n_mv_feeder = 2;
+    option.n_mv_feeder = 3;
     option.n_node_per_mv_feeder = 6;
-    option.n_lv_feeder = 3;
-    option.n_connection_per_lv_feeder = 5;
+    option.n_lv_feeder = 2;
+    option.n_connection_per_lv_feeder = 4;
 #else
     option.n_node_total_specified = 1000000;
     option.n_mv_feeder = 40;
@@ -110,12 +101,12 @@ int main(int, char**) {
     option.has_lv_ring = false;
 
     // radial
-    benchmarker.run_benchmark(option, true, CalculationMethod::newton_raphson);
-    benchmarker.run_benchmark(option, true, CalculationMethod::linear);
-    benchmarker.run_benchmark(option, true, CalculationMethod::iterative_current);
-    benchmarker.run_benchmark(option, false, CalculationMethod::newton_raphson);
-    benchmarker.run_benchmark(option, false, CalculationMethod::linear);
-    benchmarker.run_benchmark(option, false, CalculationMethod::iterative_current);
+    benchmarker.run_benchmark<true>(option, CalculationMethod::newton_raphson);
+    // benchmarker.run_benchmark(option, true, CalculationMethod::linear);
+    // benchmarker.run_benchmark(option, true, CalculationMethod::iterative_current);
+    benchmarker.run_benchmark<false>(option, CalculationMethod::newton_raphson);
+    // benchmarker.run_benchmark(option, false, CalculationMethod::linear);
+    // benchmarker.run_benchmark(option, false, CalculationMethod::iterative_current);
     //// with meshed ring
     // benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, true);
     // benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
