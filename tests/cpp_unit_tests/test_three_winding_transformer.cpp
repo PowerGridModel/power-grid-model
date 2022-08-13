@@ -56,14 +56,15 @@ TEST_CASE("Test three winding transformer") {
         nan,  // pk_13_max
         nan,  // pk_23_min
         nan,  // pk_23_max
-        nan,  // r1_grounding
-        nan,  // x1_grounding
+        1.0,  // r1_grounding
+        4.0,  // x1_grounding
         nan,  // r2_grounding
         nan,  // x2_grounding
         nan,  // r3_grounding
         nan   // x3_grounding
     };
 
+    // Check what transformers should be tested
     std::vector<ThreeWindingTransformer> vec;
     // 0 YNd1d1
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
@@ -88,18 +89,17 @@ TEST_CASE("Test three winding transformer") {
     double const pk_t3 = 0.5 * (-200e3 / 50 / 50 + 150e3 / 10 / 10 + 100e3 / 10 / 10) * 10 * 10;
 
     double const u_t1 = 138e3 + 1 * 2 * 1380;
-    
+
     // ********************
     double const base_i_1 = base_power_3p / 138e3 / sqrt3;
     double const base_i_2 = base_power_3p / 69e3 / sqrt3;
     double const base_i_3 = base_power_3p / 13.8e3 / sqrt3;
 
-    
     /*
     double const base_y_1 = base_i_1 / (138e3 / sqrt3);
     double const base_y_2 = base_i_2 / (69e3 / sqrt3);
     double const base_y_3 = base_i_3 / (13.8e3 / sqrt3);
-    
+
     double const z_series_abs_1 = uk_t1 * 138e3 * 138e3 / 60e6;
     double const z_series_abs_2 = uk_t2 * 69e3 * 69e3 / 50e6;
     double const z_series_abs_3 = uk_t3 * 13.8e3 * 13.8e3 / 10e6;
@@ -123,7 +123,6 @@ TEST_CASE("Test three winding transformer") {
 
     // tap functioning
     // add for reverse tap and different side taps
-
 
     // Add test for grounding too
 
@@ -149,8 +148,8 @@ TEST_CASE("Test three winding transformer") {
         nan,                      // uk_max
         nan,                      // pk_min
         nan,                      // pk_max
-        0,                        // r_grounding_from
-        0,                        // x_grounding_from
+        1.0,                      // r_grounding_from
+        4.0,                      // x_grounding_from
         0,                        // r_grounding_to
         0                         // x_grounding_to
     };
@@ -212,9 +211,11 @@ TEST_CASE("Test three winding transformer") {
     Transformer t1{T1_input, 138e3, 138e3}, t2{T2_input, 138e3, 69e3}, t3{T3_input, 13.8e3, 138e3};
     std::array<Transformer, 3> calc_trafos{t1, t2, t3};
 
+    std::array<Transformer, 3> conv_trafos = vec[0].convert_to_two_winding_transformers_pub();
+
     std::array<BranchCalcParam<true>, 3> calc_params{}, test_params = vec[0].calc_param<true>();
     // TODO: Replace loop of both sym and asym vec. CHeck for all loop
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 1; i++) {
         calc_params[i] = calc_trafos[i].calc_param<true>();
         for (size_t value_no = 0; value_no < calc_params[i].value.size(); ++value_no) {
             CHECK((cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance));
@@ -222,14 +223,13 @@ TEST_CASE("Test three winding transformer") {
     }
 
     std::array<BranchCalcParam<false>, 3> asym_params{}, asym_test_params = vec[0].calc_param<false>();
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 1; i++) {
         asym_params[i] = calc_trafos[i].calc_param<false>();
         for (size_t value_no = 0; value_no < asym_params[i].value.size(); ++value_no) {
             CHECK((cabs(asym_params[i].value[value_no] - asym_test_params[i].value[value_no]) < numerical_tolerance)
                       .all());
         }
     }
-    
 
     SUBCASE("Check output") {
         // TODO asym output check
@@ -260,7 +260,7 @@ TEST_CASE("Test three winding transformer") {
         double const out_loading = 0.316227766;
 
         CHECK(sym_output.id == 1);
-        CHECK (sym_output.energized);
+        CHECK(sym_output.energized);
         CHECK(sym_output.p_1 == doctest::Approx(out_p_1));
         CHECK(sym_output.q_1 == doctest::Approx(out_q_1));
         CHECK(sym_output.i_1 == doctest::Approx(out_i_1));
@@ -287,15 +287,13 @@ TEST_CASE("Test three winding transformer") {
                           {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
                           {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
                           {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
-
-
     }
 
     SUBCASE("invalid input") {
         input.node_2 = 2;
         CHECK_THROWS_AS(ThreeWindingTransformer(input, 138e3, 69e3, 13.8e3), InvalidBranch3);
         input.node_2 = 3;
-        
+
         // Should we check transformer windings and clocks and tap limits? covered from transformer
     }
 
@@ -350,7 +348,7 @@ TEST_CASE("Test three winding transformer") {
     }
 }
 
-// output checking 
+// output checking
 // update test
 // invalid inputs: same nodes, clock, tap position limits
 // base_i check

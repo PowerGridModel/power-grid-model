@@ -77,12 +77,9 @@ class ThreeWindingTransformer : public Branch3 {
           base_i_1_{base_power_3p / u1_rated / sqrt3},
           base_i_2_{base_power_3p / u2_rated / sqrt3},
           base_i_3_{base_power_3p / u3_rated / sqrt3},
-          z_grounding_1_{calculate_z_pu(three_winding_transformer_input.r_grounding_1,
-                                        three_winding_transformer_input.x_grounding_1, u1_rated)},
-          z_grounding_2_{calculate_z_pu(three_winding_transformer_input.r_grounding_2,
-                                        three_winding_transformer_input.x_grounding_2, u2_rated)},
-          z_grounding_3_{calculate_z_pu(three_winding_transformer_input.r_grounding_3,
-                                        three_winding_transformer_input.x_grounding_3, u3_rated)} {
+          z_grounding_1_{three_winding_transformer_input.r_grounding_1, three_winding_transformer_input.x_grounding_1},
+          z_grounding_2_{three_winding_transformer_input.r_grounding_2, three_winding_transformer_input.x_grounding_2},
+          z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
         // check clock number
         bool const is_1_wye = winding_1_ == WindingType::wye || winding_1_ == WindingType::wye_n;
         bool const is_2_wye = winding_2_ == WindingType::wye || winding_2_ == WindingType::wye_n;
@@ -172,14 +169,6 @@ class ThreeWindingTransformer : public Branch3 {
     DoubleComplex z_grounding_1_;
     DoubleComplex z_grounding_2_;
     DoubleComplex z_grounding_3_;
-
-    // calculate z in per unit with NaN detection
-    DoubleComplex calculate_z_pu(double r, double x, double u) {
-        r = is_nan(r) ? 0 : r;
-        x = is_nan(x) ? 0 : x;
-        double const base_z = u * u / base_power_3p;
-        return {r / base_z, x / base_z};
-    }
 
     IntS tap_limit(IntS new_tap) const {
         new_tap = std::min(new_tap, std::max(tap_max_, tap_min_));
