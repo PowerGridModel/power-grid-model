@@ -11,36 +11,34 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test three winding transformer") {
-    using TransformerArray = std::array<Transformer, 3>;
-    double const u1 = 138e3, u2 = 69e3, u3 = 13.8e3, s1 = 60e6, s2 = 50e6, s3 = 10e6;
-
     ThreeWindingTransformerInputBasics input_basics{
-        {1, 2, 3, 4, true, true, true},  // Create branch3 {{id}, node_1, node_2, node_3, status_1, status_2, status_3}
-        138e3,                           // u1
-        69e3,                            // u2
-        13.8e3,                          // u3
-        60e6,                            // s1
-        50e6,                            // s2
-        10e6,                            // s3
-        0.09,                            // uk12
-        0.06,                            // uk13
-        0.03,                            // uk23
-        200e3,                           // pk_12
-        150e3,                           // pk_13
-        100e3,                           // pk_23
-        0.1,                             // i0
-        50e3,                            // p0
-        WindingType::wye_n,              // winding_12
-        WindingType::delta,              // winding_13
-        WindingType::delta,              // winding_23
-        1,                               // clock_12
-        1,                               // clock_13
-        Branch3Side::side_1,             // tap side
-        2,                               // tap_pos
-        -8,                              // tap_min
-        10,                              // tap_max
-        0,                               // tap_nom
-        1380                             // tap size
+        {{1}, 2, 3, 4, true, true, true},  // Create branch3 {{id}, node_1, node_2, node_3, status_1, status_2,
+                                           // status_3}
+        138e3,                             // u1
+        69e3,                              // u2
+        13.8e3,                            // u3
+        60e6,                              // s1
+        50e6,                              // s2
+        10e6,                              // s3
+        0.09,                              // uk12
+        0.06,                              // uk13
+        0.03,                              // uk23
+        200e3,                             // pk_12
+        150e3,                             // pk_13
+        100e3,                             // pk_23
+        0.1,                               // i0
+        50e3,                              // p0
+        WindingType::wye_n,                // winding_12
+        WindingType::delta,                // winding_13
+        WindingType::delta,                // winding_23
+        1,                                 // clock_12
+        1,                                 // clock_13
+        Branch3Side::side_1,               // tap side
+        2,                                 // tap_pos
+        -8,                                // tap_min
+        10,                                // tap_max
+        0,                                 // tap_nom
+        1380                               // tap size
     };
 
     ThreeWindingTransformerInput input{
@@ -86,7 +84,6 @@ TEST_CASE("Test three winding transformer") {
     input.tap_side = Branch3Side::side_3;
     input.tap_pos = -14;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-
 
     for (ThreeWindingTransformer& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
@@ -220,6 +217,7 @@ TEST_CASE("Test three winding transformer") {
         0                         // x_grounding_to
     };
 
+    using TransformerArray = std::array<Transformer, 3>;
     auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
         Transformer t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
         return TransformerArray{t1, t2, t3};
@@ -249,7 +247,6 @@ TEST_CASE("Test three winding transformer") {
     T2_input.u1 = 69e3;
     T3_input.u1 = 13.8e3 + 1 * (-8) * 1380;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-
 
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
@@ -319,6 +316,7 @@ TEST_CASE("Test three winding transformer") {
         CHECK(sym_output.q_3 == doctest::Approx(out_q_3));
         CHECK(sym_output.i_3 == doctest::Approx(out_i_3));
         CHECK(sym_output.s_3 == doctest::Approx(out_s_3));
+        CHECK(sym_output.loading == doctest::Approx(out_loading));
 
         BranchMathOutput<false> asym_b1_output, asym_b2_output, asym_b3_output;
         asym_b1_output = {{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
