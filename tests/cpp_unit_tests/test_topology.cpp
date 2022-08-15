@@ -4,7 +4,7 @@
 
 #include <ostream>
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/topology.hpp"
 
 /*
@@ -48,7 +48,8 @@
  *     \              v                                                          X
  *      1 ->+pt1+pt2 [1:h0,v2] -- 2 --X
  *
- *
+ * Extra fill-in:
+ * (3, 4)  by removing node 1
  *
  *
  * Topology for cycle reodering
@@ -245,9 +246,11 @@ TEST_CASE("Test topology") {
     math0.shunt_power_sensor_indptr = {0, 0};
     math0.load_gen_power_sensor_indptr = {0, 1, 1};
     math0.branch_from_power_sensor_indptr = {0, 0, 2, 2, 2, 2, 2, 2};
-    math0.branch_to_power_sensor_indptr = {0, 1, 3, 3, 3, 3, 3, 3};  // 7 branches, 3 branch-to power sensors
-                                                                     // sensor 0 is connected to branch 0
-                                                                     // sensor 1 and 2 are connected to branch 1
+    // 7 branches, 3 branch-to power sensors
+    // sensor 0 is connected to branch 0
+    // sensor 1 and 2 are connected to branch 1
+    math0.branch_to_power_sensor_indptr = {0, 1, 3, 3, 3, 3, 3, 3};
+    math0.fill_in = {{3, 4}};
 
     // Sub graph / math model 1
     MathModelTopology math1;
@@ -269,7 +272,7 @@ TEST_CASE("Test topology") {
 
     std::vector<MathModelTopology> math_topology_ref = {math0, math1};
 
-    SECTION("Test topology result") {
+    SUBCASE("Test topology result") {
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
         auto const& math_topology = pair.first;
@@ -302,6 +305,7 @@ TEST_CASE("Test topology") {
             CHECK(math.load_gen_power_sensor_indptr == math_ref.load_gen_power_sensor_indptr);
             CHECK(math.branch_from_power_sensor_indptr == math_ref.branch_from_power_sensor_indptr);
             CHECK(math.branch_to_power_sensor_indptr == math_ref.branch_to_power_sensor_indptr);
+            CHECK(math.fill_in == math_ref.fill_in);
         }
     }
 }
@@ -334,11 +338,14 @@ TEST_CASE("Test cycle reorder") {
     // result
     ComponentToMathCoupling comp_coup_ref{};
     comp_coup_ref.node = {{0, 3}, {0, 5}, {0, 4}, {0, 2}, {0, 6}, {0, 1}, {0, 0}};
+    std::vector<BranchIdx> const fill_in_ref{{3, 4}, {3, 6}, {4, 6}};
 
     Topology topo{comp_topo, comp_conn};
     auto pair = topo.build_topology();
     auto const& comp_coup = *pair.second;
+    auto const& math_topo = *pair.first[0];
     CHECK(comp_coup.node == comp_coup_ref.node);
+    CHECK(math_topo.fill_in == fill_in_ref);
 }
 
 }  // namespace power_grid_model

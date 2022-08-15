@@ -11,7 +11,6 @@ Note: these enumeration match the C++ arithmetic core, so dont change the values
 
 from enum import Enum, IntEnum
 
-
 # pylint: disable=invalid-name
 
 
@@ -53,6 +52,8 @@ class CalculationMethod(IntEnum):
     linear = 0
     newton_raphson = 1
     iterative_linear = 2
+    iterative_current = 3
+    linear_current = 4
 
 
 class MeasuredTerminalType(IntEnum):

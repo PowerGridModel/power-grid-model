@@ -20,7 +20,13 @@ enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigza
 
 enum class BranchSide : IntS { from = 0, to = 1 };
 
-enum class CalculationMethod : IntS { linear = 0, newton_raphson = 1, iterative_linear = 2 };
+enum class CalculationMethod : IntS {
+    linear = 0,
+    newton_raphson = 1,
+    iterative_linear = 2,
+    iterative_current = 3,
+    linear_current = 4
+};
 
 enum class MeasuredTerminalType : IntS {
     branch_from = 0,
@@ -48,7 +54,15 @@ enum class ComponentType : IntS {
 // for 0b00 - 0b11
 //     0bXY, where X, Y means the from(0)/to(1) side of branch
 //        i.e. 0b01 is the branch element for Yft
-enum class YBusElementType : IntS { bff = 0b00, bft = 0b01, btf = 0b10, btt = 0b11, shunt = 0b100 };
+enum class YBusElementType : IntS {
+    bff = 0b00,
+    bft = 0b01,
+    btf = 0b10,
+    btt = 0b11,
+    shunt = 0b100,
+    fill_in_ft = 0b101,
+    fill_in_tf = 0b110
+};
 
 }  // namespace power_grid_model
 

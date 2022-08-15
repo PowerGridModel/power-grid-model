@@ -2,17 +2,16 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/auxiliary/output.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
-using namespace Catch::literals;
 using namespace std::complex_literals;
 
 TEST_CASE("Three phase tensor") {
-    SECTION("Test vectors") {
+    SUBCASE("Test vectors") {
         RealValue<false> vec1;
         vec1 << 1, 2, 3;
         RealValue<false> vec2;
@@ -20,9 +19,9 @@ TEST_CASE("Three phase tensor") {
         RealValue<false> vec3 = vec1 * vec2;
         CHECK(vec3(0) == 4);
         RealValue<false> vec4 = cos(vec1);
-        CHECK(vec4(0) == Approx(cos(1)));
+        CHECK(vec4(0) == doctest::Approx(cos(1)));
         RealValue<false> vec5 = vec1 / vec2;
-        CHECK(vec5(1) == 0.4_a);
+        CHECK(vec5(1) == doctest::Approx(0.4));
         ComplexValue<false> vec6 = vec1 * exp(1.0i * vec2);
         CHECK(cabs(vec6(1) - DoubleComplex(2.0 * cos(5.0), 2.0 * sin(5.0))) < 1e-8);
         CHECK(max_val(vec1) == 3.0);
@@ -35,11 +34,11 @@ TEST_CASE("Three phase tensor") {
         CHECK(real(mean_val(DoubleComplex{1.0, 0.0})) == 1.0);
     }
 
-    SECTION("Test vector initialization with single value") {
+    SUBCASE("Test vector initialization with single value") {
         RealValue<false> vec6{5.0};
-        CHECK(vec6(0) == 5.0_a);
-        CHECK(vec6(1) == 5.0_a);
-        CHECK(vec6(2) == 5.0_a);
+        CHECK(vec6(0) == doctest::Approx(5.0));
+        CHECK(vec6(1) == doctest::Approx(5.0));
+        CHECK(vec6(2) == doctest::Approx(5.0));
         ComplexValue<false> vec7{1.0};
         CHECK(cabs(vec7(0) - 1.0) < 1e-8);
         CHECK(cabs(vec7(1) - a2) < 1e-8);
@@ -49,14 +48,14 @@ TEST_CASE("Three phase tensor") {
         CHECK(real(vec7)(0) == 1.0);
     }
 
-    SECTION("Test complex vector piecewise initialization with single value") {
+    SUBCASE("Test complex vector piecewise initialization with single value") {
         ComplexValue<false> vec7 = piecewise_complex_value<false>(1.0);
         CHECK(cabs(vec7(0) - 1.0) < 1e-8);
         CHECK(cabs(vec7(1) - 1.0) < 1e-8);
         CHECK(cabs(vec7(2) - 1.0) < 1e-8);
     }
 
-    SECTION("Test tensors") {
+    SUBCASE("Test tensors") {
         RealValue<false> vec1;
         vec1 << 1, 2, 3;
         RealValue<false> vec2;
@@ -87,11 +86,11 @@ TEST_CASE("Three phase tensor") {
         // test layout
         double* arr = (double*)&mat1;
         CHECK(arr[0] == 1);
-        CHECK(arr[2] == 3);
-        CHECK(arr[6] == 7);
+        CHECK(arr[2] == 7);
+        CHECK(arr[6] == 3);
     }
 
-    SECTION("Test tensor initialization and inverse") {
+    SUBCASE("Test tensor initialization and inverse") {
         ComplexTensor<false> mat{1.0 + 1.0i};
         ComplexTensor<false> mat2;
         mat2 << (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i);
@@ -102,7 +101,7 @@ TEST_CASE("Three phase tensor") {
         CHECK(cabs(inv((1.0 + 1.0i)) - 1.0 / (1.0 + 1.0i)) < 1e-8);
     }
 
-    SECTION("Test value initialization") {
+    SUBCASE("Test value initialization") {
         NodeOutput<true> sym{};
         CHECK(sym.id == 0);
         CHECK(sym.energized == 0);
@@ -112,24 +111,24 @@ TEST_CASE("Three phase tensor") {
         NodeOutput<false> asym{};
         CHECK(asym.id == 0);
         CHECK(asym.energized == 0);
-        CHECK(asym.u_pu(0) == Approx(0.0));
-        CHECK(asym.u(1) == Approx(0.0));
-        CHECK(asym.u_angle(2) == Approx(0.0));
+        CHECK(asym.u_pu(0) == doctest::Approx(0.0));
+        CHECK(asym.u(1) == doctest::Approx(0.0));
+        CHECK(asym.u_angle(2) == doctest::Approx(0.0));
     }
 
-    SECTION("Test symmetrical matrix") {
+    SUBCASE("Test symmetrical matrix") {
         ComplexTensor<false> sym = get_sym_matrix();
         ComplexTensor<false> sym1 = get_sym_matrix_inv();
         ComplexValue<false> uabc{1.0};
         ComplexValue<false> u012 = dot(sym1, uabc);
         CHECK(cabs(u012(0)) < numerical_tolerance);
-        CHECK(cabs(u012(1)) == Approx(1.0));
+        CHECK(cabs(u012(1)) == doctest::Approx(1.0));
         CHECK(cabs(u012(2)) < numerical_tolerance);
         ComplexValue<false> uabc1 = dot(sym, u012);
         CHECK((cabs(uabc1 - uabc) < numerical_tolerance).all());
     }
 
-    SECTION("Test diagonal add") {
+    SUBCASE("Test diagonal add") {
         RealTensor<false> mat1;
         mat1 << 1, 2, 3, 4, 5, 6, 7, 8, 9;
         RealValue<false> vec1;
@@ -145,7 +144,7 @@ TEST_CASE("Three phase tensor") {
         CHECK(x == -5);
     }
 
-    SECTION("Test Hermitian transpose") {
+    SUBCASE("Test Hermitian transpose") {
         double const x = 1.0;
         DoubleComplex const y{1.0, 5.0};
         RealTensor<false> const z1{1.0, 2.0};
@@ -160,7 +159,7 @@ TEST_CASE("Three phase tensor") {
         CHECK((hermitian_transpose(z2) == z2ht).all());
     }
 
-    SECTION("Test average of nan") {
+    SUBCASE("Test average of nan") {
         DoubleComplex const x{1.0, nan};
         DoubleComplex const y{2.0, 2.0};
         DoubleComplex const z{3.0, 5.0};

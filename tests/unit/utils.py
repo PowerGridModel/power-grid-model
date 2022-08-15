@@ -10,7 +10,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pytest
-from power_grid_model.manual_testing import import_json_data, export_json_data
+
+from power_grid_model.data_types import Dataset, SingleDataset
+from power_grid_model.utils import export_json_data, import_json_data
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
@@ -100,16 +102,14 @@ def import_case_data(data_path: Path, sym: bool):
     return return_dict
 
 
-def save_json_data(json_file: str, data: Union[dict, list]):
+def save_json_data(json_file: str, data: Dataset):
     OUPUT_PATH.mkdir(parents=True, exist_ok=True)
     data_file = OUPUT_PATH / json_file
     data_file.parent.mkdir(parents=True, exist_ok=True)
     export_json_data(data_file, data)
 
 
-def compare_result(
-    actual: Dict[str, np.ndarray], expected: Dict[str, np.ndarray], rtol: float, atol: Union[float, Dict[str, float]]
-):
+def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: Union[float, Dict[str, float]]):
     for key, expected_data in expected.items():
         for col_name in expected_data.dtype.names:
             actual_col = actual[key][col_name]

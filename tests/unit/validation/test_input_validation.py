@@ -6,20 +6,21 @@ from typing import Dict
 
 import numpy as np
 import pytest
-from power_grid_model import initialize_array, BranchSide, MeasuredTerminalType, WindingType, LoadGenType
+
+from power_grid_model import BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
-    NotGreaterThanError,
-    NotUniqueError,
-    NotBooleanError,
+    InvalidEnumValueError,
     InvalidIdError,
-    TwoValuesZeroError,
-    NotGreaterOrEqualError,
-    NotLessThanError,
+    MultiComponentNotUniqueError,
     NotBetweenError,
     NotBetweenOrAtError,
-    InvalidEnumValueError,
-    MultiComponentNotUniqueError,
+    NotBooleanError,
+    NotGreaterOrEqualError,
+    NotGreaterThanError,
+    NotLessThanError,
+    NotUniqueError,
+    TwoValuesZeroError,
 )
 
 

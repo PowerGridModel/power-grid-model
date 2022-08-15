@@ -1166,24 +1166,34 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     void prepare_solvers() {
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
+        // also get the vector of other solvers (sym -> asym, or asym -> sym)
+        std::vector<MathSolver<!sym>>& other_solvers = get_solvers<!sym>();
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
         // if solvers do not exist, build them
         if (n_math_solvers_ != (Idx)solvers.size()) {
+            // check if other (sym/asym) solver exist
+            bool const other_solver_exist = (n_math_solvers_ == (Idx)other_solvers.size());
             assert(solvers.size() == 0);
             solvers.reserve(n_math_solvers_);
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
-            // use transform to build
-            std::transform(math_topology_.cbegin(), math_topology_.cend(), math_params.begin(),
-                           std::back_inserter(solvers),
-                           [](std::shared_ptr<MathModelTopology const> const& topo_ptr, MathModelParam<sym>& param) {
-                               return MathSolver{topo_ptr,
-                                                 // move parameter into a shared ownership for the math solver
-                                                 std::make_shared<MathModelParam<sym> const>(std::move(param))};
-                           });
+            // loop to build
+            for (Idx i = 0; i != n_math_solvers_; ++i) {
+                // if other solver exists, construct from existing y bus struct
+                if (other_solver_exist) {
+                    solvers.emplace_back(math_topology_[i],
+                                         std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
+                                         other_solvers[i].shared_y_bus_struct());
+                }
+                // else construct from scratch
+                else {
+                    solvers.emplace_back(math_topology_[i],
+                                         std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
+                }
+            }
         }
         // if parameters are not up to date, update them
         else if (!is_parameter_up_to_date<sym>()) {
