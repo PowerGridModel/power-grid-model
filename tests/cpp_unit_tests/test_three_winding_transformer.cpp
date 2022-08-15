@@ -78,6 +78,15 @@ TEST_CASE("Test three winding transformer") {
     // 2 Yn y12 d1
     input.winding_2 = WindingType::wye;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+    // 3 tap max limit and side 2
+    input.tap_side = Branch3Side::side_2;
+    input.tap_pos = 12;
+    vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+    // 4 tap min limit and side 3
+    input.tap_side = Branch3Side::side_3;
+    input.tap_pos = -14;
+    vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+
 
     for (ThreeWindingTransformer& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
@@ -229,6 +238,19 @@ TEST_CASE("Test three winding transformer") {
     T2_input.winding_from = WindingType::wye;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
 
+    // 3 tap max limit and side 2
+    T1_input.u1 = 138e3;
+    T1_input.u2 = 138e3;
+    T2_input.u1 = 69e3 + 1 * 10 * 1380;
+    T2_input.u2 = 138e3;
+    T3_input.u2 = 138e3;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
+    // 4 tap min limit and side 3
+    T2_input.u1 = 69e3;
+    T3_input.u1 = 13.8e3 + 1 * (-8) * 1380;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
+
+
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
         std::array<BranchCalcParam<true>, 3> calc_params, test_params = vec[trafo].calc_param<true>();
@@ -242,7 +264,7 @@ TEST_CASE("Test three winding transformer") {
         }
     }
     // asym admittance
-    for (size_t trafo = 0; trafo < vec.size(); ++trafo) {
+    for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
         std::array<BranchCalcParam<false>, 3> calc_params, test_params = vec[trafo].calc_param<false>();
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<false>();
