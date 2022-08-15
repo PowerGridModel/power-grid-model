@@ -11,6 +11,7 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test three winding transformer") {
+    using TransformerArray = std::array<Transformer, 3>;
     double const u1 = 138e3, u2 = 69e3, u3 = 13.8e3, s1 = 60e6, s2 = 50e6, s3 = 10e6;
 
     ThreeWindingTransformerInputBasics input_basics{
@@ -27,7 +28,7 @@ TEST_CASE("Test three winding transformer") {
         200e3,                           // pk_12
         150e3,                           // pk_13
         100e3,                           // pk_23
-        0.005,                           // i0
+        0.1,                             // i0
         50e3,                            // p0
         WindingType::wye_n,              // winding_12
         WindingType::delta,              // winding_13
@@ -66,13 +67,15 @@ TEST_CASE("Test three winding transformer") {
 
     // Check what transformers should be tested
     std::vector<ThreeWindingTransformer> vec;
-    // 0 YNd1d1
+    // 0 YN d1 d1
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 1 YNyn12d1
+    // 1 YN yn12 d1
     input.winding_2 = WindingType::wye_n;
     input.clock_12 = 12;
+    input.r_grounding_2 = 2.0;
+    input.x_grounding_2 = 6.0;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 2 Yny12d1
+    // 2 Yn y12 d1
     input.winding_2 = WindingType::wye;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
 
@@ -133,7 +136,7 @@ TEST_CASE("Test three winding transformer") {
         60e6,                     // sn
         uk_t1,                    // uk
         pk_t1,                    // pk
-        0.005,                    // i0
+        0.1,                      // i0
         50e3,                     // p0
         WindingType::wye_n,       // winding_from
         WindingType::wye_n,       // winding_to
@@ -208,26 +211,47 @@ TEST_CASE("Test three winding transformer") {
         0                         // x_grounding_to
     };
 
-    Transformer t1{T1_input, 138e3, 138e3}, t2{T2_input, 138e3, 69e3}, t3{T3_input, 13.8e3, 138e3};
-    std::array<Transformer, 3> calc_trafos{t1, t2, t3};
+    auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
+        Transformer t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
+        return TransformerArray{t1, t2, t3};
+    };
 
-    std::array<Transformer, 3> conv_trafos = vec[0].convert_to_two_winding_transformers_pub();
+    std::vector<TransformerArray> trafos_vec;
+    // 0 YN d1 d1
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
+    // 1 YN yn12 d1
+    T2_input.winding_from = WindingType::wye_n;
+    T2_input.clock = 12;
+    T2_input.r_grounding_from = 2.0;
+    T2_input.x_grounding_from = 6.0;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
+    // 2 Yn y12 d1
+    T2_input.winding_from = WindingType::wye;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
 
-    std::array<BranchCalcParam<true>, 3> calc_params{}, test_params = vec[0].calc_param<true>();
-    // TODO: Replace loop of both sym and asym vec. CHeck for all loop
-    for (size_t i = 0; i < 1; i++) {
-        calc_params[i] = calc_trafos[i].calc_param<true>();
-        for (size_t value_no = 0; value_no < calc_params[i].value.size(); ++value_no) {
-            CHECK((cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance));
+    // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
+    for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
+        std::array<BranchCalcParam<true>, 3> calc_params, test_params = vec[trafo].calc_param<true>();
+        for (size_t i = 0; i < 3; ++i) {
+            calc_params[i] = trafos_vec[trafo][i].calc_param<true>();
+        }
+        for (size_t i = 0; i < 3; ++i) {
+            for (size_t value_no = 0; value_no < 3; ++value_no) {
+                CHECK(cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance);
+            }
         }
     }
-
-    std::array<BranchCalcParam<false>, 3> asym_params{}, asym_test_params = vec[0].calc_param<false>();
-    for (size_t i = 0; i < 1; i++) {
-        asym_params[i] = calc_trafos[i].calc_param<false>();
-        for (size_t value_no = 0; value_no < asym_params[i].value.size(); ++value_no) {
-            CHECK((cabs(asym_params[i].value[value_no] - asym_test_params[i].value[value_no]) < numerical_tolerance)
-                      .all());
+    // asym admittance
+    for (size_t trafo = 0; trafo < vec.size(); ++trafo) {
+        std::array<BranchCalcParam<false>, 3> calc_params, test_params = vec[trafo].calc_param<false>();
+        for (size_t i = 0; i < 3; ++i) {
+            calc_params[i] = trafos_vec[trafo][i].calc_param<false>();
+        }
+        for (size_t i = 0; i < 3; i++) {
+            for (size_t value_no = 0; value_no < calc_params[i].value.size(); ++value_no) {
+                CHECK((cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance)
+                          .all());
+            }
         }
     }
 
@@ -342,9 +366,6 @@ TEST_CASE("Test three winding transformer") {
             CHECK(!changed.topo);
             CHECK(!changed.param);
         }
-    }
-
-    SUBCASE("3 winding specifics") {
     }
 }
 
