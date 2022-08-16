@@ -252,6 +252,13 @@ TEST_CASE("Test three winding transformer") {
         }
     }
 
+    // Check phase shift
+    std::array<double, 3> test_shift = vec[0].phase_shift();
+    std::array<double, 3> shift = {0.0, -1 * deg_30, -1 * deg_30};
+    for (size_t i = 0; i < 3; i++) {
+        CHECK(test_shift[i] == shift[i]);
+    }
+
     SUBCASE("Check output of branch 3") {
         // TODO asym output check
         BranchMathOutput<true> b1_output, b2_output, b3_output;
@@ -326,6 +333,25 @@ TEST_CASE("Test three winding transformer") {
         CHECK(asym_output.i_3(1) == doctest::Approx(out_i_3));
         CHECK(asym_output.s_3(2) == doctest::Approx(out_s_3 / 3));
         CHECK(asym_output.loading == doctest::Approx(out_loading));
+    }
+
+    SUBCASE("No source results") {
+        Branch3Output<false> output = vec[0].get_null_output<false>();
+        CHECK(output.id == 1);
+        CHECK(!output.energized);
+        CHECK(output.p_1(0) == 0);
+        CHECK(output.q_1(1) == 0);
+        CHECK(output.i_1(2) == 0);
+        CHECK(output.s_1(0) == 0);
+        CHECK(output.p_2(1) == 0);
+        CHECK(output.q_2(2) == 0);
+        CHECK(output.i_2(0) == 0);
+        CHECK(output.s_2(1) == 0);
+        CHECK(output.p_3(2) == 0);
+        CHECK(output.q_3(0) == 0);
+        CHECK(output.i_3(1) == 0);
+        CHECK(output.s_3(2) == 0);
+        CHECK(output.loading == 0);
     }
 
     SUBCASE("invalid input") {

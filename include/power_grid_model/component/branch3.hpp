@@ -113,7 +113,7 @@ class Branch3 : public Base {
 
     template <bool sym>
     Branch3Output<sym> get_null_output() const {
-        Branch3Output<sym> output;
+        Branch3Output<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
