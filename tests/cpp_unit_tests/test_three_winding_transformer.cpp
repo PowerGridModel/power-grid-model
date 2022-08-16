@@ -194,7 +194,7 @@ TEST_CASE("Test three winding transformer") {
         0,                        // r_grounding_to
         0                         // x_grounding_to
     };
-    
+
     auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
         Transformer t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
         return std::array<Transformer, 3>{t1, t2, t3};
@@ -333,7 +333,7 @@ TEST_CASE("Test three winding transformer") {
         CHECK_THROWS_AS(ThreeWindingTransformer(input, 138e3, 69e3, 13.8e3), InvalidBranch3);
         input.node_2 = 3;
     }
-    
+
     SUBCASE("Test i base") {
         CHECK(vec[0].base_i_1() == doctest::Approx(base_i_1));
         CHECK(vec[0].base_i_2() == doctest::Approx(base_i_2));
