@@ -8,6 +8,7 @@
 
 #include "branch3.hpp"
 #include "transformer.hpp"
+#include "transformer_utils.hpp"
 
 namespace power_grid_model {
 
@@ -177,10 +178,15 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     std::tuple<double, double, double> calculate_uk() const {
+        // adjust uk for tap from min to max range
+        double uk_12_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_12_, uk_12_min_, uk_12_max_);
+        double uk_13_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_13_, uk_13_min_, uk_13_max_);
+        double uk_23_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_23_, uk_23_min_, uk_23_max_);
+
         // convert all short circuit voltages relative to side 1
-        double uk_12 = uk_12_ * sn_1_ / std::min(sn_1_, sn_2_);
-        double uk_13 = uk_13_ * sn_1_ / std::min(sn_1_, sn_3_);
-        double uk_23 = uk_23_ * sn_1_ / std::min(sn_2_, sn_3_);
+        double uk_12 = uk_12_tap * sn_1_ / std::min(sn_1_, sn_2_);
+        double uk_13 = uk_13_tap * sn_1_ / std::min(sn_1_, sn_3_);
+        double uk_23 = uk_23_tap * sn_1_ / std::min(sn_2_, sn_3_);
 
         // delta-wye conversion (12, 13, 23 -> 1, 2, 3)
         double uk_T1_ = 0.5 * (uk_12 + uk_13 - uk_23);
@@ -195,10 +201,15 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     std::tuple<double, double, double> calculate_pk() const {
+        // adjust pk for tap from min to max range
+        double pk_12_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_12_, pk_12_min_, pk_12_max_);
+        double pk_13_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_13_, pk_13_min_, pk_13_max_);
+        double pk_23_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_23_, pk_23_min_, pk_23_max_);
+
         // convert all short circuit losses relative to side 1
-        double pk_12 = pk_12_ * (sn_1_ / std::min(sn_1_, sn_2_)) * (sn_1_ / std::min(sn_1_, sn_2_));
-        double pk_13 = pk_13_ * (sn_1_ / std::min(sn_1_, sn_3_)) * (sn_1_ / std::min(sn_1_, sn_3_));
-        double pk_23 = pk_23_ * (sn_1_ / std::min(sn_2_, sn_3_)) * (sn_1_ / std::min(sn_2_, sn_3_));
+        double pk_12 = pk_12_tap * (sn_1_ / std::min(sn_1_, sn_2_)) * (sn_1_ / std::min(sn_1_, sn_2_));
+        double pk_13 = pk_13_tap * (sn_1_ / std::min(sn_1_, sn_3_)) * (sn_1_ / std::min(sn_1_, sn_3_));
+        double pk_23 = pk_23_tap * (sn_1_ / std::min(sn_2_, sn_3_)) * (sn_1_ / std::min(sn_2_, sn_3_));
 
         // delta-wye conversion (12, 13, 23 -> 1, 2, 3)
         double pk_T1_ = 0.5 * (pk_12 + pk_13 - pk_23);
