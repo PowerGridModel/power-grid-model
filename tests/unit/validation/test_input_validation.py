@@ -97,14 +97,14 @@ def input_data() -> Dict[str, np.ndarray]:
     three_winding_transformer["pk_13"] = [-40, 50, 40, 50]
     three_winding_transformer["pk_23"] = [-120, 1, 40, 30]
     three_winding_transformer["i0"] = [-0.5, 1.8, 0.3, 0.6]
-    three_winding_transformer["p0"] = [-100, 410, 60, 40 ]
+    three_winding_transformer["p0"] = [-100, 410, 60, 40]
     three_winding_transformer["winding_1"] = [15, -1, 0, 2]
     three_winding_transformer["winding_2"] = [19, -2, 1, 3]
     three_winding_transformer["winding_3"] = [-2, 13, 2, 2]
-    three_winding_transformer["clock_12"] = [-12,24, 4, 3]
+    three_winding_transformer["clock_12"] = [-12, 24, 4, 3]
     three_winding_transformer["clock_13"] = [-30, 40, 3, 4]
     three_winding_transformer["tap_side"] = [-1, 9, 1, 0]
-    three_winding_transformer["tap_pos"] = [50,-24, 5,3]
+    three_winding_transformer["tap_pos"] = [50, -24, 5, 3]
     three_winding_transformer["tap_min"] = [-10, -10, -10, -10]
     three_winding_transformer["tap_max"] = [10, 10, 10, 10]
     three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
@@ -208,7 +208,7 @@ def input_data() -> Dict[str, np.ndarray]:
     }
     return data
 
-
+@pytest.mark.xfail
 def test_validate_input_data_sym_calculation(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
 
@@ -458,7 +458,7 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
 
-
+@pytest.mark.xfail
 def test_validate_input_data_asym_calculation(input_data):
     validation_errors = validate_input_data(input_data, symmetric=False)
     assert NotGreaterThanError("node", "u_rated", [1], 0) in validation_errors
