@@ -494,7 +494,7 @@ class Topology {
     // Only connect the component if include(component_i) returns true
     template <IdxVector MathModelTopology::*indptr, Idx (MathModelTopology::*n_obj_fn)() const,
               typename Predicate = decltype(include_all)>
-    void couple_object_components(IdxVector const& component_obj_idx, std::vector<Idx2D>& objects,
+    void couple_object_components(IdxVector const& component_obj_idx, std::vector<Idx2D> const& objects,
                                   std::vector<Idx2D>& coupling, Predicate include = include_all) {
         auto const n_math_topologies((Idx)math_topology_.size());
         auto const n_components = (Idx)component_obj_idx.size();
