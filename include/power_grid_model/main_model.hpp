@@ -187,6 +187,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     case MeasuredTerminalType::branch_to:
                         components_.template get_item<Branch>(measured_object);
                         break;
+                    case MeasuredTerminalType::branch3_1:
+                    case MeasuredTerminalType::branch3_2:
+                    case MeasuredTerminalType::branch3_3:
+                        components_.template get_item<Branch3>(measured_object);
+                        break;
                     case MeasuredTerminalType::shunt:
                         components_.template get_item<Shunt>(measured_object);
                         break;
@@ -341,6 +346,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                case MeasuredTerminalType::load:
                                case MeasuredTerminalType::generator:
                                    return components_.template get_seq<GenericLoadGen>(power_sensor.measured_object());
+                               case MeasuredTerminalType::branch3_1:
+                               case MeasuredTerminalType::branch3_2:
+                               case MeasuredTerminalType::branch3_3:
+                                   return components_.template get_seq<Branch3>(power_sensor.measured_object());
                                default:
                                    throw MissingCaseForEnumError("Power sensor idx to seq transformation",
                                                                  power_sensor.get_terminal_type());
@@ -864,7 +873,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 components_.template get_start_idx<GenericPowerSensor, Component>(),
             res_it, [this, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
                 auto const terminal_type = power_sensor.get_terminal_type();
-                const Idx2D obj_math_id = [&]() {
+                Idx2D const obj_math_id = [&]() {
                     switch (terminal_type) {
                         case MeasuredTerminalType::branch_from:
                         case MeasuredTerminalType::branch_to:
@@ -876,6 +885,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         case MeasuredTerminalType::load:
                         case MeasuredTerminalType::generator:
                             return comp_coup_->load_gen[obj_seq];
+                        // from branch3, get relevant math object branch based on the measured side
+                        case MeasuredTerminalType::branch3_1:
+                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[0]};
+                        case MeasuredTerminalType::branch3_2:
+                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[1]};
+                        case MeasuredTerminalType::branch3_3:
+                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[2]};
                         default:
                             throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
                                                           terminal_type);
@@ -888,6 +904,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
                 switch (terminal_type) {
                     case MeasuredTerminalType::branch_from:
+                    // all power sensors in branch3 are at from side in the mathematical model
+                    case MeasuredTerminalType::branch3_1:
+                    case MeasuredTerminalType::branch3_2:
+                    case MeasuredTerminalType::branch3_3:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
                     case MeasuredTerminalType::branch_to:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
@@ -1210,7 +1230,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
             comp_coup_->power_sensor, se_input, [&](Idx i) {
-                return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from;
+                return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
+                       // all branch3 sensors are at from side in the mathemtical model
+                       comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
+                       comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
+                       comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
