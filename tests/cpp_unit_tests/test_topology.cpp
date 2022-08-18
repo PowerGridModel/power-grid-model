@@ -26,26 +26,26 @@
  *
  *                                              7 -> [5:s1+p1+p12,lg2+p4+p8,v4]     [6:h1+p5+p9] -X-4-> [7] -3-> [8,v5]
  *      0 ----->+p13 [1:lg3+p7,v1]             /     /                       \        /                  \        /
- *     /              \            5 ---X--- [4] <- 6                         $2     $1                   $1     $2
+ *     /          +p14\            5 ---X--- [4] <- 6                         $2     $1                   $1     $2
  *    /                $0         /          ^                                 \    /                      \    /
  *   /                  \        v          /                                   (b2)                        (b1)
  *  [0:s0,lg0]         (b0)-$2- [2:v0,v2]  /                                     |                           |
- *   +p0+p11            /                 X                                      $0                          $0
+ *   +p0+p11            /    +p15         X                                      $0                          $0
  *    \                $1                /         [9:s2X+p3,h2]                 X                           |
- *     \              /                 /                                       [10]                        [11:lg1+p6]
+ *     \          +p16/                 /                                       [10]                        [11:lg1+p6]
  *      1 -->+p2+p10 [3:s3X,h0,v3] -- 2
  *
  *
  * Math model #0:                       Math model #1:
  *
  *      0 ----->+pt0 [2:lg0+pg0,v3]             1 -> [3:s0+ps0+ps1,lg0+pl0+pl1,v0] [0:h1+ps0+ps1]
- *     /              \             3 --X      /       /                     \       /
+ *     /          +pf2\             3 --X      /       /                     \       /
  *    /                4           /         [2] <- 0                         3     4
  *   /                  v         v                                            v   v
  *  [4:s0,lg1]          [3] <-6- [0:v0,v1]                                      [1]
- *   +pf0+pf1           ^                                                        ^
+ *   +pf0+pf1           ^     +pf4                                               ^
  *    \                5                                                         2
- *     \              /                                                          X
+ *     \          +pf3/                                                          X
  *      1 ->+pt1+pt2 [1:h0,v2] -- 2 --X
  *
  * Extra fill-in:
@@ -125,7 +125,7 @@ TEST_CASE("Test topology") {
                                LoadGenType::const_y};
     comp_topo.shunt_node_idx = {3, 6, 9};
     comp_topo.voltage_sensor_node_idx = {2, 1, 2, 3, 5, 8};
-    comp_topo.power_sensor_object_idx = {1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0};
+    comp_topo.power_sensor_object_idx = {1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0, 0, 0, 0};
     comp_topo.power_sensor_terminal_type = {
         MeasuredTerminalType::branch_from,  // 0 (branch   1)
         MeasuredTerminalType::source,       // 1 (source   1)
@@ -141,6 +141,9 @@ TEST_CASE("Test topology") {
         MeasuredTerminalType::branch_from,  // 11 (branch   1)
         MeasuredTerminalType::source,       // 12 (source   1)
         MeasuredTerminalType::branch_to,    // 13 (branch   0)
+        MeasuredTerminalType::branch3_1,    // 14 (branch3  0)
+        MeasuredTerminalType::branch3_3,    // 15 (branch3  0)
+        MeasuredTerminalType::branch3_2,    // 16 (branch3  0)
     };
 
     // component connection
@@ -229,7 +232,10 @@ TEST_CASE("Test topology") {
         {0, 2},    // 10 branch_to
         {0, 1},    // 11 branch_from
         {1, 1},    // 12 source
-        {0, 0}     // 13 branch_to
+        {0, 0},    // 13 branch_to
+        {0, 2},    // 14 branch_from
+        {0, 4},    // 15 branch_from
+        {0, 3}     // 16 branch_from
     };
 
     // Sub graph / math model 0
@@ -245,7 +251,7 @@ TEST_CASE("Test topology") {
     math0.source_power_sensor_indptr = {0, 0};
     math0.shunt_power_sensor_indptr = {0, 0};
     math0.load_gen_power_sensor_indptr = {0, 1, 1};
-    math0.branch_from_power_sensor_indptr = {0, 0, 2, 2, 2, 2, 2, 2};
+    math0.branch_from_power_sensor_indptr = {0, 0, 2, 2, 2, 3, 4, 5};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
