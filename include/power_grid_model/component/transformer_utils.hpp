@@ -6,9 +6,8 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_TRANSFORMER_UTILS_HPP
 #define POWER_GRID_MODEL_COMPONENT_TRANSFORMER_UTILS_HPP
 
-inline double tap_adjust_impedance(const double& tap_pos, const double& tap_min, const double& tap_max,
-                                   const double& tap_nom, const double& xk, const double& xk_min,
-                                   const double& xk_max) {
+inline double tap_adjust_impedance(double tap_pos, double tap_min, double tap_max, double tap_nom, double xk,
+                                   double xk_min, double xk_max) {
     double xk_increment_per_tap{};
     double xk_tap{};
     if (tap_pos <= std::max(tap_nom, tap_max) && tap_pos >= std::min(tap_nom, tap_max)) {
