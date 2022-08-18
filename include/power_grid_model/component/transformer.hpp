@@ -13,6 +13,7 @@
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "branch.hpp"
+#include "transformer_utils.hpp"
 
 namespace power_grid_model {
 
@@ -156,7 +157,9 @@ class Transformer : public Branch {
         }();
         double const k = (u1 / u2) / nominal_ratio_;
         // pk and uk
-        double const pk = get_pk(), uk = get_uk();
+        double const uk = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_, uk_min_, uk_max_);
+        double const pk = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_, pk_min_, pk_max_);
+
         // series
         DoubleComplex z_series, y_series;
         // sign of uk
@@ -189,54 +192,6 @@ class Transformer : public Branch {
         y_shunt = y_shunt / base_y_to;
         // return
         return std::make_tuple(y_series, y_shunt, k);
-    }
-
-    double get_uk() const {
-        double uk_increment_per_tap{};
-        double uk{};
-        if (tap_pos_ <= std::max(tap_nom_, tap_max_) && tap_pos_ >= std::min(tap_nom_, tap_max_)) {
-            if (tap_max_ == tap_nom_) {
-                uk = uk_;
-            }
-            else {
-                uk_increment_per_tap = (uk_max_ - uk_) / (tap_max_ - tap_nom_);
-                uk = uk_ + (tap_pos_ - tap_nom_) * uk_increment_per_tap;
-            }
-        }
-        else {
-            if (tap_min_ == tap_nom_) {
-                uk = uk_;
-            }
-            else {
-                uk_increment_per_tap = (uk_min_ - uk_) / (tap_min_ - tap_nom_);
-                uk = uk_ + (tap_pos_ - tap_nom_) * uk_increment_per_tap;
-            }
-        }
-        return uk;
-    }
-
-    double get_pk() const {
-        double pk_increment_per_tap{};
-        double pk{};
-        if (tap_pos_ <= std::max(tap_nom_, tap_max_) && tap_pos_ >= std::min(tap_nom_, tap_max_)) {
-            if (tap_max_ == tap_nom_) {
-                pk = pk_;
-            }
-            else {
-                pk_increment_per_tap = (pk_max_ - pk_) / (tap_max_ - tap_nom_);
-                pk = pk_ + (tap_pos_ - tap_nom_) * pk_increment_per_tap;
-            }
-        }
-        else {
-            if (tap_min_ == tap_nom_) {
-                pk = pk_;
-            }
-            else {
-                pk_increment_per_tap = (pk_min_ - pk_) / (tap_min_ - tap_nom_);
-                pk = pk_ + (tap_pos_ - tap_nom_) * pk_increment_per_tap;
-            }
-        }
-        return pk;
     }
 
     // branch param

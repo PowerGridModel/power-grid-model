@@ -37,6 +37,9 @@ class BranchSide(IntEnum):
 
     from_side = 0
     to_side = 1
+    side_1 = 2
+    side_2 = 3
+    side_3 = 4
 
 
 class CalculationType(Enum):

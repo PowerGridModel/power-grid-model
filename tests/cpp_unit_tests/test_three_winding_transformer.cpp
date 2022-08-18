@@ -89,6 +89,20 @@ TEST_CASE("Test three winding transformer") {
     input.tap_max = -10;
     input.tap_min = 8;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+    // 6 uk,pk min and max
+    input.uk_12_min = 0.08;
+    input.uk_12_max = 0.09;
+    input.uk_13_min = 0.07;
+    input.uk_13_max = 0.05;
+    input.uk_23_min = 0.02;
+    input.uk_23_max = 0.04;
+    input.pk_12_min = 180e3;
+    input.pk_12_max = 220e3;
+    input.pk_13_min = 130e3;
+    input.pk_13_max = 170e3;
+    input.pk_23_min = 80e3;
+    input.pk_23_max = 120e3;
+    vec.emplace_back(input, 138e3, 69e3, 13.8e3);
 
     for (ThreeWindingTransformer& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
@@ -225,6 +239,22 @@ TEST_CASE("Test three winding transformer") {
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
     // 5 reverse tap
     T3_input.u1 = 13.8e3 + (-1) * 2 * 1380;
+    // 6 uk, pk max and min
+    // reset changes
+    // 6 uk,pk min and max
+    T1_input.uk_min = 0.08;
+    T1_input.uk_max = 0.09;
+    T2_input.uk_min = 0.07;
+    T2_input.uk_max = 0.05;
+    T3_input.uk_min = 0.02;
+    T3_input.uk_max = 0.04;
+    T1_input.pk_min = 180e3;
+    T1_input.pk_max = 220e3;
+    T2_input.pk_min = 130e3;
+    T2_input.pk_max = 170e3;
+    T3_input.pk_min = 80e3;
+    T3_input.pk_max = 120e3;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
 
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
