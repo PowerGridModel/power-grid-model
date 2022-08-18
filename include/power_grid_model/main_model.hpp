@@ -346,6 +346,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                case MeasuredTerminalType::load:
                                case MeasuredTerminalType::generator:
                                    return components_.template get_seq<GenericLoadGen>(power_sensor.measured_object());
+                               case MeasuredTerminalType::branch3_1:
+                               case MeasuredTerminalType::branch3_2:
+                               case MeasuredTerminalType::branch3_3:
+                                   return components_.template get_seq<Branch3>(power_sensor.measured_object());
                                default:
                                    throw MissingCaseForEnumError("Power sensor idx to seq transformation",
                                                                  power_sensor.get_terminal_type());
