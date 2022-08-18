@@ -517,22 +517,22 @@ class Topology {
 
         // Couple components per topology
         for (Idx topo_idx = 0; topo_idx != n_math_topologies; ++topo_idx) {
-            auto const obj_idx = topo_obj_idx[topo_idx];
-            auto const n_obj = (math_topology_[topo_idx].*n_obj_fn)();
+            IdxVector const& obj_idx = topo_obj_idx[topo_idx];
+            Idx const n_obj = (math_topology_[topo_idx].*n_obj_fn)();
 
             // Reorder to compressed format for each math topology
-            auto map = build_sparse_mapping(obj_idx, n_obj);
+            SparseMapping map = build_sparse_mapping(obj_idx, n_obj);
 
             // Assign indptr
             math_topology_[topo_idx].*indptr = std::move(map.indptr);
 
             // Reorder components within the math model
-            auto const& reorder = map.reorder;
+            IdxVector const& reorder = map.reorder;
 
             // Store component coupling for the current topology
             for (Idx new_math_comp_i = 0; new_math_comp_i != (Idx)reorder.size(); ++new_math_comp_i) {
-                auto const old_math_comp_i = reorder[new_math_comp_i];
-                auto const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
+                Idx const old_math_comp_i = reorder[new_math_comp_i];
+                Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
                 coupling[topo_comp_i] = Idx2D{topo_idx, new_math_comp_i};
             }
         }
