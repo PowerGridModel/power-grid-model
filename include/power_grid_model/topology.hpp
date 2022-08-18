@@ -495,10 +495,40 @@ class Topology {
             return (Idx)component_obj_idx.size();
         }
         Idx2D find_math_object(Idx component_i) const {
-            return objects_to_math_coupling[component_obj_idx[component_i]];
+            return objects_coupling[component_obj_idx[component_i]];
         }
         IdxVector const& component_obj_idx;
-        std::vector<Idx2D> const& objects_to_math_coupling;
+        std::vector<Idx2D> const& objects_coupling;
+    };
+
+    // proxy class to find coupled branch in math model for sensor measured at from side, or at 1/2/3 side of branch3
+    // they are all coupled to the from-side of some branches in math model
+    // the key is to find relevant coupling, either via branch or branch3
+    struct SensorBranchObjectFinder {
+        Idx size() const {
+            return (Idx)sensor_obj_idx.size();
+        }
+        Idx2D find_math_object(Idx component_i) const {
+            Idx const obj_idx = sensor_obj_idx[component_i];
+            switch (power_sensor_terminal_type[component_i]) {
+                case MeasuredTerminalType::branch_from:
+                    return branch_coupling[obj_idx];
+                // return relevant branch mapped from branch3
+                case MeasuredTerminalType::branch3_1:
+                    return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[0]};
+                case MeasuredTerminalType::branch3_2:
+                    return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[1]};
+                case MeasuredTerminalType::branch3_3:
+                    return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[2]};
+                default:
+                    assert(false);
+                    return {};
+            }
+        }
+        IdxVector const& sensor_obj_idx;
+        std::vector<MeasuredTerminalType> const& power_sensor_terminal_type;
+        std::vector<Idx2D> const& branch_coupling;
+        std::vector<Idx2DBranch3> const& branch3_coupling;
     };
 
     // Couple one type of components (e.g. appliances or sensors)
@@ -605,10 +635,19 @@ class Topology {
             });
 
         // branch 'from' power sensors
+        // include all branch3 sensors
+        auto const predicate_from_sensor = [&](Idx i) {
+            return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
+                   // all branch3 sensors are at from side in the mathemtical model
+                   comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
+                   comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
+                   comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
+        };
+        SensorBranchObjectFinder const object_finder_from_sensor{comp_topo_.power_sensor_object_idx,
+                                                                 comp_topo_.power_sensor_terminal_type,
+                                                                 comp_coup_.branch, comp_coup_.branch3};
         couple_object_components<&MathModelTopology::branch_from_power_sensor_indptr, &MathModelTopology::n_branch>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor, [&](Idx i) {
-                return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from;
-            });
+            object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
 
         // branch 'to' power sensors
         couple_object_components<&MathModelTopology::branch_to_power_sensor_indptr, &MathModelTopology::n_branch>(
