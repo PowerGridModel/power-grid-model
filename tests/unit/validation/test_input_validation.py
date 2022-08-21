@@ -78,7 +78,7 @@ def input_data() -> Dict[str, np.ndarray]:
 
     three_winding_transformer = initialize_array("input", "three_winding_transformer", 4)
     three_winding_transformer["id"] = [1, 28, 29, 30]
-    three_winding_transformer["node_1"] = [0, 1, 9, 2]  # TODO Check same node
+    three_winding_transformer["node_1"] = [0, 1, 9, 2]
     three_winding_transformer["node_2"] = [1, 15, 1, 0]
     three_winding_transformer["node_3"] = [1, 2, 12, 1]
     three_winding_transformer["status_1"] = [1, 5, 1, 1]
@@ -194,7 +194,7 @@ def input_data() -> Dict[str, np.ndarray]:
         "line": line,
         "link": link,
         "transformer": transformer,
-        "three_winding_tranformer": three_winding_transformer,
+        "three_winding_transformer": three_winding_transformer,
         "source": source,
         "shunt": shunt,
         "sym_load": sym_load,

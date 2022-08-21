@@ -1,5 +1,7 @@
 {
   "calculation_method": "newton_raphson",
-  "rtol": 0.00001,
-  "atol": 0.00001
+  "rtol": 1e-05,
+  "atol": 1e-05,
+  "independent": true,
+  "cache_topology": false
 }

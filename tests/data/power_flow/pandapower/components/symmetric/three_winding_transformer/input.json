@@ -34,37 +34,21 @@
       "pk_12": 50000.0,
       "pk_13": 5000.0,
       "pk_23": 10000.0,
-      "i0": 0.1,
+      "i0": 0.001,
       "p0": 50000.0,
       "winding_1": 1,
       "winding_2": 2,
       "winding_3": 2,
       "clock_12": 11,
       "clock_13": 11,
-      "tap_side": 2,
-      "tap_pos": 0,
+      "tap_side": 0,
+      "tap_pos": -8,
       "tap_min": -8,
       "tap_max": 10,
       "tap_nom": 0,
-      "tap_size": 1380.0
-    }
-  ],
-  "sym_load": [
-    {
-      "id": 41,
-      "node": 2,
-      "status": 1,
-      "type": 0,
-      "p_specified": 10000000.0,
-      "q_specified": 200000.0
-    },
-    {
-      "id": 42,
-      "node": 3,
-      "status": 1,
-      "type": 0,
-      "p_specified": 100000.0,
-      "q_specified": 20000.0
+      "tap_size": 1380.0,
+      "r_grounding_1": 1.0,
+      "x_grounding_1": 6.0
     }
   ],
   "source": [

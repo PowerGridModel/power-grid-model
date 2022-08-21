@@ -419,7 +419,9 @@ def validate_branch3(data: SingleDataset, component: str) -> List[ValidationErro
     errors += all_valid_ids(data, component, "node_1", "node")
     errors += all_valid_ids(data, component, "node_2", "node")
     errors += all_valid_ids(data, component, "node_3", "node")
-    errors += all_not_two_values_equal(data, component, "to_node", "from_node")  # TODO Check cross unique
+    errors += all_not_two_values_equal(data, component, "node_1", "node_2")
+    errors += all_not_two_values_equal(data, component, "node_1", "node_3")
+    errors += all_not_two_values_equal(data, component, "node_2", "node_3")
     errors += all_boolean(data, component, "status_1")
     errors += all_boolean(data, component, "status_2")
     errors += all_boolean(data, component, "status_3")
