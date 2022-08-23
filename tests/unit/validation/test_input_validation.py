@@ -439,20 +439,34 @@ def test_validate_three_winding_transformer(input_data):
 
 def test_validate_three_winding_transformer_ukpkminmax(input_data):
     validation_errors = validate_input_data(input_data, symmetric=False)
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [29, 30], "pk_12_min/sn_1") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [1, 30], "pk_12_min/sn_2") in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [29, 30], "pk_12_min/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [1, 30], "pk_12_min/sn_2") in validation_errors
+    )
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [29], "pk_13_min/sn_1") in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [30], "pk_13_min/sn_3") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [1, 29], "pk_23_min/sn_2") in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [1, 29], "pk_23_min/sn_2") in validation_errors
+    )
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [30], "pk_23_min/sn_3") in validation_errors
     assert NotBetweenError("three_winding_transformer", "uk_12_min", [1, 28], (0, 1)) in validation_errors
     assert NotBetweenError("three_winding_transformer", "uk_13_min", [1, 28], (0, 1)) in validation_errors
     assert NotBetweenError("three_winding_transformer", "uk_23_min", [1, 28], (0, 1)) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [29, 30], "pk_12_max/sn_1") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [1, 30], "pk_12_max/sn_2") in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [29, 30], "pk_12_max/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [1, 30], "pk_12_max/sn_2") in validation_errors
+    )
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_max", [29], "pk_13_max/sn_1") in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_max", [30], "pk_13_max/sn_3") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [1, 29], "pk_23_max/sn_2") in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [1, 29], "pk_23_max/sn_2") in validation_errors
+    )
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [30], "pk_23_max/sn_3") in validation_errors
     assert NotBetweenError("three_winding_transformer", "uk_12_max", [1, 28], (0, 1)) in validation_errors
     assert NotBetweenError("three_winding_transformer", "uk_13_max", [1, 28], (0, 1)) in validation_errors
