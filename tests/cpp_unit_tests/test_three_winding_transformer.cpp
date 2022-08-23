@@ -66,7 +66,7 @@ TEST_CASE("Test three winding transformer") {
     // Check what transformers should be tested
     std::vector<ThreeWindingTransformer> vec;
     // 0 YN d1 d1
-    vec.emplace_back(input, 138e3, 69e3, 13.8e3);  
+    vec.emplace_back(input, 138e3, 69e3, 13.8e3);
     // 1 d YN1 YN1
     input.winding_1 = WindingType::delta;
     input.winding_2 = WindingType::wye_n;
@@ -264,10 +264,10 @@ TEST_CASE("Test three winding transformer") {
     T2_input.pk = -527.5e3;
     T3_input.pk = 116.1e3;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-    
+
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
-        auto conv_trafos_vec = vec[trafo].convert_to_two_winding_transformers_pub(); 
+        auto conv_trafos_vec = vec[trafo].convert_to_two_winding_transformers_pub();
         std::array<BranchCalcParam<true>, 3> calc_params, test_params = vec[trafo].calc_param<true>();
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<true>();

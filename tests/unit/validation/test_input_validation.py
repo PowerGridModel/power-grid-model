@@ -431,6 +431,14 @@ def test_validate_three_winding_transformer(input_data):
         in validation_errors
     )
     assert NotGreaterOrEqualError("three_winding_transformer", "tap_size", [1, 28], 0) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "winding_1", [1, 28], WindingType) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "winding_2", [1, 28], WindingType) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "winding_3", [1, 28], WindingType) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "tap_side", [1, 28], BranchSide) in validation_errors
+
+
+def test_validate_three_winding_transformer_ukpkminmax(input_data):
+    validation_errors = validate_input_data(input_data, symmetric=False)
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [29], "pk_12_min/sn_1") in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [30], "pk_12_min/sn_2") in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [29], "pk_13_min/sn_1") in validation_errors
@@ -455,10 +463,6 @@ def test_validate_three_winding_transformer(input_data):
     assert NotGreaterOrEqualError("three_winding_transformer", "pk_12_max", [1], 0) in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "pk_13_max", [1], 0) in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "pk_23_max", [1], 0) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "winding_1", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "winding_2", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "winding_3", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "tap_side", [1, 28], BranchSide) in validation_errors
 
 
 def test_validate_input_data_asym_calculation(input_data):
