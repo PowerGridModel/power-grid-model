@@ -66,30 +66,36 @@ TEST_CASE("Test three winding transformer") {
     // Check what transformers should be tested
     std::vector<ThreeWindingTransformer> vec;
     // 0 YN d1 d1
-    vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 1 YN yn12 d1
+    vec.emplace_back(input, 138e3, 69e3, 13.8e3);  
+    // 1 d YN1 YN1
+    input.winding_1 = WindingType::delta;
     input.winding_2 = WindingType::wye_n;
+    input.winding_3 = WindingType::wye_n;
+    vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+    // 2 YN yn12 d1
+    input.winding_1 = WindingType::wye_n;
+    input.winding_3 = WindingType::delta;
     input.clock_12 = 12;
     input.r_grounding_2 = 2.0;
     input.x_grounding_2 = 6.0;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 2 Yn y12 d1
+    // 3 Yn y12 d1
     input.winding_2 = WindingType::wye;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 3 tap max limit and side 2
+    // 4 tap max limit and side 2
     input.tap_side = Branch3Side::side_2;
     input.tap_pos = 12;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 4 tap min limit and side 3
+    // 5 tap min limit and side 3
     input.tap_side = Branch3Side::side_3;
     input.tap_pos = -14;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 5 reverse tap
+    // 6 reverse tap
     input.tap_pos = 2;
     input.tap_max = -10;
     input.tap_min = 8;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-    // 6 uk,pk min and max
+    // 7 uk,pk min and max
     input.uk_12_min = 0.08;
     input.uk_12_max = 0.09;
     input.uk_13_min = 0.07;
@@ -217,47 +223,51 @@ TEST_CASE("Test three winding transformer") {
     std::vector<std::array<Transformer, 3>> trafos_vec;
     // 0 YN d1 d1
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-    // 1 YN yn12 d1
+    // 1 D YN1 YN1
+    T2_input.winding_to = WindingType::delta;
+    T3_input.winding_to = WindingType::delta;
     T2_input.winding_from = WindingType::wye_n;
+    T3_input.winding_from = WindingType::wye_n;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
+    // 2 YN yn12 d1
+    T2_input.winding_from = WindingType::wye_n;
+    T3_input.winding_from = WindingType::delta;
+    T2_input.winding_to = WindingType::wye_n;
+    T3_input.winding_to = WindingType::wye_n;
     T2_input.clock = 12;
     T2_input.r_grounding_from = 2.0;
     T2_input.x_grounding_from = 6.0;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-    // 2 Yn y12 d1
+    // 3 Yn y12 d1
     T2_input.winding_from = WindingType::wye;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-    // 3 tap max limit and side 2
+    // 4 tap max limit and side 2
     T1_input.u1 = 138e3;
     T1_input.u2 = 138e3;
     T2_input.u1 = 69e3 + 1 * 10 * 1380;
     T2_input.u2 = 138e3;
     T3_input.u2 = 138e3;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-    // 4 tap min limit and side 3
+    // 5 tap min limit and side 3
     T2_input.u1 = 69e3;
     T3_input.u1 = 13.8e3 + 1 * (-8) * 1380;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-    // 5 reverse tap
+    // 6 reverse tap
     T3_input.u1 = 13.8e3 + (-1) * 2 * 1380;
-    // 6 uk, pk max and min
-    // reset changes
-    // 6 uk,pk min and max
-    T1_input.uk_min = 0.08;
-    T1_input.uk_max = 0.09;
-    T2_input.uk_min = 0.07;
-    T2_input.uk_max = 0.05;
-    T3_input.uk_min = 0.02;
-    T3_input.uk_max = 0.04;
-    T1_input.pk_min = 180e3;
-    T1_input.pk_max = 220e3;
-    T2_input.pk_min = 130e3;
-    T2_input.pk_max = 170e3;
-    T3_input.pk_min = 80e3;
-    T3_input.pk_max = 120e3;
     trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
-
+    // 7 uk,pk min and max
+    // calculated manually
+    T1_input.uk = 0.1575;
+    T2_input.uk = -0.04375;
+    T3_input.uk = 0.03625;
+    T1_input.pk = 1040.4e3;
+    T2_input.pk = -527.5e3;
+    T3_input.pk = 116.1e3;
+    trafos_vec.emplace_back(make_trafos(T1_input, T2_input, T3_input));
+    
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
+        auto conv_trafos_vec = vec[trafo].convert_to_two_winding_transformers_pub(); 
         std::array<BranchCalcParam<true>, 3> calc_params, test_params = vec[trafo].calc_param<true>();
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<true>();

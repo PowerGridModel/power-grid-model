@@ -391,7 +391,6 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
 
 
-@pytest.mark.xfail
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
     assert NotBooleanError("three_winding_transformer", "status_1", [28]) in validation_errors
