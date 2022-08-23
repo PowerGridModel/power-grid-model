@@ -247,7 +247,7 @@ class ThreeWindingTransformer : public Branch3 {
       the to status is always true.
     - The voltage at the dummy node is the same as on node 1
     - i0 and p0 are only applicable to T1
-    - The WindingType at the side of the dummy_node is alway wye_n
+    - T1 will always be YNyn0 transformer
     - The voltage levels will be calculated in advance, so tap_pos/min/max/nom/size can all be set to zero
     - uk and pk are calculated in advance, so uk_min/max and pk_min/max can be set to nan
     */
@@ -279,7 +279,7 @@ class ThreeWindingTransformer : public Branch3 {
             pk_T1,                          // pk
             i0_,                            // i0
             p0_,                            // p0
-            winding_1_,                     // winding_from
+            WindingType::wye_n,             // winding_from
             WindingType::wye_n,             // winding_to
             0,                              // clock
             BranchSide::from,               // tap_side
@@ -307,7 +307,7 @@ class ThreeWindingTransformer : public Branch3 {
             0.0,                                // i0
             0.0,                                // p0
             winding_2_,                         // winding_from
-            WindingType::wye_n,                 // winding_to
+            winding_1_,                         // winding_to
             static_cast<IntS>(12 - clock_12_),  // clock, reversed
             BranchSide::from,                   // tap_side
             0,                                  // tap_pos
@@ -334,7 +334,7 @@ class ThreeWindingTransformer : public Branch3 {
             0.0,                                // i0
             0.0,                                // p0
             winding_3_,                         // winding_from
-            WindingType::wye_n,                 // winding_to
+            winding_1_,                         // winding_to
             static_cast<IntS>(12 - clock_13_),  // clock, reversed
             BranchSide::from,                   // tap_side
             0,                                  // tap_pos
