@@ -57,16 +57,16 @@
       "node": 2,
       "status": 0,
       "type": 0,
-      "p_specified": 10000000.0,
-      "q_specified": 200000.0
+      "p_specified": 0.0,
+      "q_specified": 0.0
     },
     {
       "id": 42,
       "node": 3,
       "status": 0,
       "type": 0,
-      "p_specified": 100000.0,
-      "q_specified": 20000.0
+      "p_specified": 0.0,
+      "q_specified": 0.0
     }
   ],
   "source": [
