@@ -428,6 +428,7 @@ def validate_branch3(data: SingleDataset, component: str) -> List[ValidationErro
     return errors
 
 
+# pylint: disable=R0915
 def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationError]:
     errors = validate_branch3(data, "three_winding_transformer")
     errors += all_greater_than_zero(data, "three_winding_transformer", "u1")
