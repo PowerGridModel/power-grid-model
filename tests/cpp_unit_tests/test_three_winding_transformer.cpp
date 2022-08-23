@@ -267,7 +267,6 @@ TEST_CASE("Test three winding transformer") {
 
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
-        auto conv_trafos_vec = vec[trafo].convert_to_two_winding_transformers_pub();
         std::array<BranchCalcParam<true>, 3> calc_params, test_params = vec[trafo].calc_param<true>();
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<true>();
