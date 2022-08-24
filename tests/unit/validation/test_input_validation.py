@@ -7,7 +7,7 @@ from typing import Dict
 import numpy as np
 import pytest
 
-from power_grid_model import BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
+from power_grid_model import BranchSide, Branch3Side, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     InvalidEnumValueError,
@@ -434,7 +434,7 @@ def test_validate_three_winding_transformer(input_data):
     assert InvalidEnumValueError("three_winding_transformer", "winding_1", [1, 28], WindingType) in validation_errors
     assert InvalidEnumValueError("three_winding_transformer", "winding_2", [1, 28], WindingType) in validation_errors
     assert InvalidEnumValueError("three_winding_transformer", "winding_3", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "tap_side", [1, 28], BranchSide) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "tap_side", [1, 28], Branch3Side) in validation_errors
 
 
 def test_validate_three_winding_transformer_ukpkminmax(input_data):

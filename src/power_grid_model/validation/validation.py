@@ -15,7 +15,14 @@ import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.enum import BranchSide, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
+from power_grid_model.enum import (
+    BranchSide,
+    CalculationType,
+    LoadGenType,
+    MeasuredTerminalType,
+    WindingType,
+    Branch3Side,
+)
 from power_grid_model.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
@@ -459,7 +466,7 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_between_or_at(data, "three_winding_transformer", "clock_13", 0, 12)
     errors += all_clocks_valid(data, "three_winding_transformer", "clock_12", "winding_1", "winding_2")
     errors += all_clocks_valid(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
-    errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", BranchSide)
+    errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
     errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max")
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
