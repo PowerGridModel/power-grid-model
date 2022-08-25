@@ -8,27 +8,24 @@
 
 inline double tap_adjust_impedance(double tap_pos, double tap_min, double tap_max, double tap_nom, double xk,
                                    double xk_min, double xk_max) {
-    double xk_increment_per_tap{};
-    double xk_tap{};
     if (tap_pos <= std::max(tap_nom, tap_max) && tap_pos >= std::min(tap_nom, tap_max)) {
         if (tap_max == tap_nom) {
-            xk_tap = xk;
+            return xk;
         }
         else {
-            xk_increment_per_tap = (xk_max - xk) / (tap_max - tap_nom);
-            xk_tap = xk + (tap_pos - tap_nom) * xk_increment_per_tap;
+            double const xk_increment_per_tap = (xk_max - xk) / (tap_max - tap_nom);
+            return xk + (tap_pos - tap_nom) * xk_increment_per_tap;
         }
     }
     else {
         if (tap_min == tap_nom) {
-            xk_tap = xk;
+            return xk;
         }
         else {
-            xk_increment_per_tap = (xk_min - xk) / (tap_min - tap_nom);
-            xk_tap = xk + (tap_pos - tap_nom) * xk_increment_per_tap;
+            double const xk_increment_per_tap = (xk_min - xk) / (tap_min - tap_nom);
+            return xk + (tap_pos - tap_nom) * xk_increment_per_tap;
         }
     }
-    return xk_tap;
 }
 
 // add tap

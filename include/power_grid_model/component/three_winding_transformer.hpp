@@ -179,47 +179,53 @@ class ThreeWindingTransformer : public Branch3 {
 
     std::tuple<double, double, double> calculate_uk() const {
         // adjust uk for tap from min to max range
-        double uk_12_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_12_, uk_12_min_, uk_12_max_);
-        double uk_13_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_13_, uk_13_min_, uk_13_max_);
-        double uk_23_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_23_, uk_23_min_, uk_23_max_);
+        double const uk_12_tap =
+            tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_12_, uk_12_min_, uk_12_max_);
+        double const uk_13_tap =
+            tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_13_, uk_13_min_, uk_13_max_);
+        double const uk_23_tap =
+            tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, uk_23_, uk_23_min_, uk_23_max_);
 
         // convert all short circuit voltages relative to side 1
-        double uk_12 = uk_12_tap * sn_1_ / std::min(sn_1_, sn_2_);
-        double uk_13 = uk_13_tap * sn_1_ / std::min(sn_1_, sn_3_);
-        double uk_23 = uk_23_tap * sn_1_ / std::min(sn_2_, sn_3_);
+        double const uk_12 = uk_12_tap * sn_1_ / std::min(sn_1_, sn_2_);
+        double const uk_13 = uk_13_tap * sn_1_ / std::min(sn_1_, sn_3_);
+        double const uk_23 = uk_23_tap * sn_1_ / std::min(sn_2_, sn_3_);
 
         // delta-wye conversion (12, 13, 23 -> 1, 2, 3)
-        double uk_T1_ = 0.5 * (uk_12 + uk_13 - uk_23);
-        double uk_T2_ = 0.5 * (uk_12 + uk_23 - uk_13);
-        double uk_T3_ = 0.5 * (uk_13 + uk_23 - uk_12);
+        double const uk_T1_prime = 0.5 * (uk_12 + uk_13 - uk_23);
+        double const uk_T2_prime = 0.5 * (uk_12 + uk_23 - uk_13);
+        double const uk_T3_prime = 0.5 * (uk_13 + uk_23 - uk_12);
 
         // transform short circuit voltages back to their own voltage level
-        double uk_T1 = uk_T1_;
-        double uk_T2 = uk_T2_ * (sn_2_ / sn_1_);
-        double uk_T3 = uk_T3_ * (sn_3_ / sn_1_);
+        double const uk_T1 = uk_T1_prime;
+        double const uk_T2 = uk_T2_prime * (sn_2_ / sn_1_);
+        double const uk_T3 = uk_T3_prime * (sn_3_ / sn_1_);
         return std::make_tuple(uk_T1, uk_T2, uk_T3);
     }
 
     std::tuple<double, double, double> calculate_pk() const {
         // adjust pk for tap from min to max range
-        double pk_12_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_12_, pk_12_min_, pk_12_max_);
-        double pk_13_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_13_, pk_13_min_, pk_13_max_);
-        double pk_23_tap = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_23_, pk_23_min_, pk_23_max_);
+        double const pk_12_tap =
+            tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_12_, pk_12_min_, pk_12_max_);
+        double const pk_13_tap =
+            tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_13_, pk_13_min_, pk_13_max_);
+        double const pk_23_tap =
+            tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_23_, pk_23_min_, pk_23_max_);
 
         // convert all short circuit losses relative to side 1
-        double pk_12 = pk_12_tap * (sn_1_ / std::min(sn_1_, sn_2_)) * (sn_1_ / std::min(sn_1_, sn_2_));
-        double pk_13 = pk_13_tap * (sn_1_ / std::min(sn_1_, sn_3_)) * (sn_1_ / std::min(sn_1_, sn_3_));
-        double pk_23 = pk_23_tap * (sn_1_ / std::min(sn_2_, sn_3_)) * (sn_1_ / std::min(sn_2_, sn_3_));
+        double const pk_12 = pk_12_tap * (sn_1_ / std::min(sn_1_, sn_2_)) * (sn_1_ / std::min(sn_1_, sn_2_));
+        double const pk_13 = pk_13_tap * (sn_1_ / std::min(sn_1_, sn_3_)) * (sn_1_ / std::min(sn_1_, sn_3_));
+        double const pk_23 = pk_23_tap * (sn_1_ / std::min(sn_2_, sn_3_)) * (sn_1_ / std::min(sn_2_, sn_3_));
 
         // delta-wye conversion (12, 13, 23 -> 1, 2, 3)
-        double pk_T1_ = 0.5 * (pk_12 + pk_13 - pk_23);
-        double pk_T2_ = 0.5 * (pk_12 + pk_23 - pk_13);
-        double pk_T3_ = 0.5 * (pk_13 + pk_23 - pk_12);
+        double const pk_T1_prime = 0.5 * (pk_12 + pk_13 - pk_23);
+        double const pk_T2_prime = 0.5 * (pk_12 + pk_23 - pk_13);
+        double const pk_T3_prime = 0.5 * (pk_13 + pk_23 - pk_12);
 
         // transform short circuit losses back to their own power level
-        double pk_T1 = pk_T1_;
-        double pk_T2 = pk_T2_ * (sn_2_ / sn_1_) * (sn_2_ / sn_1_);
-        double pk_T3 = pk_T3_ * (sn_3_ / sn_1_) * (sn_3_ / sn_1_);
+        double const pk_T1 = pk_T1_prime;
+        double const pk_T2 = pk_T2_prime * (sn_2_ / sn_1_) * (sn_2_ / sn_1_);
+        double const pk_T3 = pk_T3_prime * (sn_3_ / sn_1_) * (sn_3_ / sn_1_);
         return std::make_tuple(pk_T1, pk_T2, pk_T3);
     }
 
@@ -270,7 +276,7 @@ class ThreeWindingTransformer : public Branch3 {
         auto const [uk_T1, uk_T2, uk_T3] = calculate_uk();
         auto const [pk_T1, pk_T2, pk_T3] = calculate_pk();
 
-        TransformerInput transformer_input_T1{
+        TransformerInput const transformer_input_T1{
             {{2}, 0, 1, status_1(), true},  // {{id}, from_node, to_node, from_status, to_status}
             u1,                             // u1
             u1,                             // u2
@@ -297,7 +303,7 @@ class ThreeWindingTransformer : public Branch3 {
             0,                              // r_grounding_to
             0                               // x_grounding_to
         };
-        TransformerInput transformer_input_T2{
+        TransformerInput const transformer_input_T2{
             {{2}, 0, 1, status_2(), true},      // {{id}, from_node, to_node, from_status, to_status}
             u2,                                 // u1
             u1,                                 // u2
@@ -324,7 +330,7 @@ class ThreeWindingTransformer : public Branch3 {
             0,                                  // r_grounding_to
             0                                   // x_grounding_to
         };
-        TransformerInput transformer_input_T3{
+        TransformerInput const transformer_input_T3{
             {{2}, 0, 1, status_3(), true},      // {{id}, from_node, to_node, from_status, to_status}
             u3,                                 // u1
             u1,                                 // u2
@@ -352,16 +358,16 @@ class ThreeWindingTransformer : public Branch3 {
             0                                   // x_grounding_to
         };
 
-        Transformer T1{transformer_input_T1, u1_rated_, u1_rated_};
-        Transformer T2{transformer_input_T2, u2_rated_, u1_rated_};
-        Transformer T3{transformer_input_T3, u3_rated_, u1_rated_};
+        Transformer const T1{transformer_input_T1, u1_rated_, u1_rated_};
+        Transformer const T2{transformer_input_T2, u2_rated_, u1_rated_};
+        Transformer const T3{transformer_input_T3, u3_rated_, u1_rated_};
 
-        return std::array<Transformer, 3>{T1, T2, T3};
+        return {T1, T2, T3};
     }
 
     // calculate branch parameters
     std::array<BranchCalcParam<true>, 3> sym_calc_param() const final {
-        std::array<Transformer, 3> transformer_array = convert_to_two_winding_transformers();
+        std::array<Transformer, 3> const transformer_array = convert_to_two_winding_transformers();
         std::array<BranchCalcParam<true>, 3> transformer_params{};
         for (size_t i = 0; i < transformer_array.size(); i++) {
             transformer_params[i] = transformer_array[i].calc_param<true>();
@@ -369,7 +375,7 @@ class ThreeWindingTransformer : public Branch3 {
         return transformer_params;
     }
     std::array<BranchCalcParam<false>, 3> asym_calc_param() const final {
-        std::array<Transformer, 3> transformer_array = convert_to_two_winding_transformers();
+        std::array<Transformer, 3> const transformer_array = convert_to_two_winding_transformers();
         std::array<BranchCalcParam<false>, 3> transformer_params{};
         for (size_t i = 0; i < transformer_array.size(); i++) {
             transformer_params[i] = transformer_array[i].calc_param<false>();
