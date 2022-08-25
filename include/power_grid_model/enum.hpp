@@ -20,6 +20,8 @@ enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigza
 
 enum class BranchSide : IntS { from = 0, to = 1 };
 
+enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
+
 enum class CalculationMethod : IntS {
     linear = 0,
     newton_raphson = 1,
@@ -34,7 +36,10 @@ enum class MeasuredTerminalType : IntS {
     source = 2,
     shunt = 3,
     load = 4,
-    generator = 5
+    generator = 5,
+    branch3_1 = 6,
+    branch3_2 = 7,
+    branch3_3 = 8
 };
 
 enum class ComponentType : IntS {
@@ -46,7 +51,8 @@ enum class ComponentType : IntS {
     generic_voltage_sensor = 5,
     generic_load_gen = 6,
     shunt = 7,
-    source = 8
+    source = 8,
+    branch3 = 9
 };
 
 // DO NOT change the order of enumerations

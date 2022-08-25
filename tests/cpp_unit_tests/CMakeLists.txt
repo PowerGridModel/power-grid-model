@@ -30,6 +30,7 @@ set(PROJECT_SOURCES
  	test_voltage_sensor.cpp
  	test_power_sensor.cpp
 	test_validation.cpp
+    test_three_winding_transformer.cpp
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})

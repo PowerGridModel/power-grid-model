@@ -15,7 +15,14 @@ import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.enum import BranchSide, CalculationType, LoadGenType, MeasuredTerminalType, WindingType
+from power_grid_model.enum import (
+    Branch3Side,
+    BranchSide,
+    CalculationType,
+    LoadGenType,
+    MeasuredTerminalType,
+    WindingType,
+)
 from power_grid_model.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
@@ -247,6 +254,34 @@ def validate_required_values(
         "tap_max",
         "tap_size",
     ]
+    # Branch3
+    required["branch3"] = required["base"] + ["node_1", "node_2", "node_3", "status_1", "status_2", "status_3"]
+    required["three_winding_transformer"] = required["branch3"] + [
+        "u1",
+        "u2",
+        "u3",
+        "sn_1",
+        "sn_2",
+        "sn_3",
+        "uk_12",
+        "uk_13",
+        "uk_23",
+        "pk_12",
+        "pk_13",
+        "pk_23",
+        "i0",
+        "p0",
+        "winding_1",
+        "winding_2",
+        "winding_3",
+        "clock_12",
+        "clock_13",
+        "tap_side",
+        "tap_pos",
+        "tap_min",
+        "tap_max",
+        "tap_size",
+    ]
     # Appliances
     required["appliance"] = required["base"] + ["node", "status"]
     required["source"] = required["appliance"].copy()
@@ -299,6 +334,8 @@ def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: di
         errors += validate_branch(data, "link")
     if "transformer" in data:
         errors += validate_transformer(data)
+    if "three_winding_transformer" in data:
+        errors += validate_three_winding_transformer(data)
     if "source" in data:
         errors += validate_source(data)
     if "sym_load" in data:
@@ -381,6 +418,88 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "uk_max")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_min")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_max")
+    return errors
+
+
+def validate_branch3(data: SingleDataset, component: str) -> List[ValidationError]:
+    errors = validate_base(data, component)
+    errors += all_valid_ids(data, component, "node_1", "node")
+    errors += all_valid_ids(data, component, "node_2", "node")
+    errors += all_valid_ids(data, component, "node_3", "node")
+    errors += all_not_two_values_equal(data, component, "node_1", "node_2")
+    errors += all_not_two_values_equal(data, component, "node_1", "node_3")
+    errors += all_not_two_values_equal(data, component, "node_2", "node_3")
+    errors += all_boolean(data, component, "status_1")
+    errors += all_boolean(data, component, "status_2")
+    errors += all_boolean(data, component, "status_3")
+    return errors
+
+
+# pylint: disable=R0915
+def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationError]:
+    errors = validate_branch3(data, "three_winding_transformer")
+    errors += all_greater_than_zero(data, "three_winding_transformer", "u1")
+    errors += all_greater_than_zero(data, "three_winding_transformer", "u2")
+    errors += all_greater_than_zero(data, "three_winding_transformer", "u3")
+    errors += all_greater_than_zero(data, "three_winding_transformer", "sn_1")
+    errors += all_greater_than_zero(data, "three_winding_transformer", "sn_2")
+    errors += all_greater_than_zero(data, "three_winding_transformer", "sn_3")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12", "pk_12/sn_1")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12", "pk_12/sn_2")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13", "pk_13/sn_1")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13", "pk_13/sn_3")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23", "pk_23/sn_2")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23", "pk_23/sn_3")
+    errors += all_between(data, "three_winding_transformer", "uk_12", 0, 1)
+    errors += all_between(data, "three_winding_transformer", "uk_13", 0, 1)
+    errors += all_between(data, "three_winding_transformer", "uk_23", 0, 1)
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "i0", "p0/sn_1")
+    errors += all_less_than(data, "three_winding_transformer", "i0", 1)
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "p0")
+    errors += all_valid_enum_values(data, "three_winding_transformer", "winding_1", WindingType)
+    errors += all_valid_enum_values(data, "three_winding_transformer", "winding_2", WindingType)
+    errors += all_valid_enum_values(data, "three_winding_transformer", "winding_3", WindingType)
+    errors += all_between_or_at(data, "three_winding_transformer", "clock_12", 0, 12)
+    errors += all_between_or_at(data, "three_winding_transformer", "clock_13", 0, 12)
+    errors += all_clocks_valid(data, "three_winding_transformer", "clock_12", "winding_1", "winding_2")
+    errors += all_clocks_valid(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
+    errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
+    errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
+    errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_1")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_2")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_1")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_3")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_2")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_3")
+    errors += all_between(data, "three_winding_transformer", "uk_12_min", 0, 1)
+    errors += all_between(data, "three_winding_transformer", "uk_13_min", 0, 1)
+    errors += all_between(data, "three_winding_transformer", "uk_23_min", 0, 1)
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_1")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_2")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_1")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_3")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_2")
+    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_3")
+    errors += all_between(data, "three_winding_transformer", "uk_12_max", 0, 1)
+    errors += all_between(data, "three_winding_transformer", "uk_13_max", 0, 1)
+    errors += all_between(data, "three_winding_transformer", "uk_23_max", 0, 1)
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_12_min")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_13_min")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_23_min")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_12_max")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_13_max")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_23_max")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12_min")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13_min")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23_min")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12_max")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13_max")
+    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23_max")
     return errors
 
 

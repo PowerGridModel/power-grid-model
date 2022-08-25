@@ -1,0 +1,115 @@
+{
+  "node": [
+    {
+      "id": 1,
+      "u_rated": 138000.0
+    },
+    {
+      "id": 2,
+      "u_rated": 69000.0
+    },
+    {
+      "id": 3,
+      "u_rated": 13800.0
+    }
+  ],
+  "three_winding_transformer": [
+    {
+      "id": 4,
+      "node_1": 1,
+      "node_2": 2,
+      "node_3": 3,
+      "status_1": 1,
+      "status_2": 1,
+      "status_3": 1,
+      "u1": 138000.0,
+      "u2": 69000.0,
+      "u3": 13800.0,
+      "sn_1": 60000000.0,
+      "sn_2": 50000000.0,
+      "sn_3": 10000000.0,
+      "uk_12": 0.09,
+      "uk_13": 0.03,
+      "uk_23": 0.06,
+      "pk_12": 50000.0,
+      "pk_13": 5000.0,
+      "pk_23": 10000.0,
+      "i0": 0.1,
+      "p0": 50000.0,
+      "winding_1": 1,
+      "winding_2": 2,
+      "winding_3": 2,
+      "clock_12": 11,
+      "clock_13": 11,
+      "tap_side": 2,
+      "tap_pos": 0,
+      "tap_min": -8,
+      "tap_max": 10,
+      "tap_nom": 0,
+      "tap_size": 1380.0
+    }
+  ],
+  "sym_load": [
+    {
+      "id": 41,
+      "node": 2,
+      "status": 1,
+      "type": 0,
+      "p_specified": 10000000.0,
+      "q_specified": 200000.0
+    },
+    {
+      "id": 42,
+      "node": 3,
+      "status": 1,
+      "type": 0,
+      "p_specified": 100000.0,
+      "q_specified": 20000.0
+    }
+  ],
+  "source": [
+    {
+      "id": 7,
+      "node": 1,
+      "status": 1,
+      "u_ref": 1.0,
+      "sk": 1000000000000.0,
+      "rx_ratio": 0.1,
+      "z01_ratio": 1.0
+    }
+  ],
+  "sym_voltage_sensor": [
+    {
+      "id": 71,
+      "measured_object": 1,
+      "u_measured": 137998.98120492624,
+      "u_sigma": 5e3
+    }
+  ],
+  "sym_power_sensor": [
+    {
+      "id": 61,
+      "measured_object": 4,
+      "measured_terminal_type": 6,
+      "p_measured": 10151892.276210727,
+      "q_measured": 6404105.027856597,
+      "power_sigma": 1e5
+    },
+    {
+      "id": 62,
+      "measured_object": 4,
+      "measured_terminal_type": 7,
+      "p_measured": -10000000.000000067,
+      "q_measured": -200000.0000000952,
+      "power_sigma": 1e5
+    },
+    {
+      "id": 63,
+      "measured_object": 4,
+      "measured_terminal_type": 8,
+      "p_measured": -99999.99999998213,
+      "q_measured": -20000.00000002474,
+      "power_sigma": 1e5
+    }
+  ]
+}

@@ -18,13 +18,15 @@
 #include "component/sensor.hpp"
 #include "component/shunt.hpp"
 #include "component/source.hpp"
+#include "component/three_winding_transformer.hpp"
 #include "component/transformer.hpp"
 #include "component/voltage_sensor.hpp"
 
 namespace power_grid_model {
 
-using AllComponents = ComponentList<Node, Line, Link, Transformer, Shunt, Source, SymGenerator, AsymGenerator, SymLoad,
-                                    AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor>;
+using AllComponents =
+    ComponentList<Node, Line, Link, Transformer, ThreeWindingTransformer, Shunt, Source, SymGenerator, AsymGenerator,
+                  SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor>;
 
 }  // namespace power_grid_model
 
