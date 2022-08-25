@@ -7,7 +7,7 @@ from typing import Dict
 import numpy as np
 import pytest
 
-from power_grid_model import BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
+from power_grid_model import Branch3Side, BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     InvalidEnumValueError,
@@ -75,6 +75,52 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["uk_max"] = [0.0000000005, 0.0, 0.8]
     transformer["pk_min"] = [300.0, 0.0, -10.0]
     transformer["pk_max"] = [400.0, -0.1, -10.0]
+
+    three_winding_transformer = initialize_array("input", "three_winding_transformer", 4)
+    three_winding_transformer["id"] = [1, 28, 29, 30]
+    three_winding_transformer["node_1"] = [0, 1, 9, 2]
+    three_winding_transformer["node_2"] = [1, 15, 1, 0]
+    three_winding_transformer["node_3"] = [1, 2, 12, 1]
+    three_winding_transformer["status_1"] = [1, 5, 1, 1]
+    three_winding_transformer["status_2"] = [2, 1, 1, 1]
+    three_winding_transformer["status_3"] = [1, 0, -1, 0]
+    three_winding_transformer["u1"] = [-100, 0, 200, 100]
+    three_winding_transformer["u2"] = [0, -200, 100, 200]
+    three_winding_transformer["u3"] = [-100, 0, 400, 300]
+    three_winding_transformer["sn_1"] = [0, -1200, 100, 300]
+    three_winding_transformer["sn_2"] = [-1000, 0, 200, 200]
+    three_winding_transformer["sn_3"] = [0, -2300, 300, 100]
+    three_winding_transformer["uk_12"] = [-1, 1.1, 0.05, 0.1]
+    three_winding_transformer["uk_13"] = [-2, 1.2, 0.3, 0.2]
+    three_winding_transformer["uk_23"] = [-1.5, 1, 0.15, 0.2]
+    three_winding_transformer["pk_12"] = [-450, 100, 10, 40]
+    three_winding_transformer["pk_13"] = [-40, 50, 40, 50]
+    three_winding_transformer["pk_23"] = [-120, 1, 40, 30]
+    three_winding_transformer["i0"] = [-0.5, 1.8, 0.3, 0.6]
+    three_winding_transformer["p0"] = [-100, 410, 60, 40]
+    three_winding_transformer["winding_1"] = [15, -1, 0, 2]
+    three_winding_transformer["winding_2"] = [19, -2, 1, 3]
+    three_winding_transformer["winding_3"] = [-2, 13, 2, 2]
+    three_winding_transformer["clock_12"] = [-12, 24, 4, 3]
+    three_winding_transformer["clock_13"] = [-30, 40, 3, 4]
+    three_winding_transformer["tap_side"] = [-1, 9, 1, 0]
+    three_winding_transformer["tap_pos"] = [50, -24, 5, 3]
+    three_winding_transformer["tap_min"] = [-10, -10, -10, -10]
+    three_winding_transformer["tap_max"] = [10, 10, 10, 10]
+    three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
+    three_winding_transformer["tap_nom"] = [-12, 41, 3, 0]
+    three_winding_transformer["uk_12_min"] = [-1, 1.1, 0.05, 0.1]
+    three_winding_transformer["uk_13_min"] = [-2, 1.2, 0.3, 0.2]
+    three_winding_transformer["uk_23_min"] = [-1.5, 1, 0.15, 0.2]
+    three_winding_transformer["pk_12_min"] = [-450, 100, 10, 40]
+    three_winding_transformer["pk_13_min"] = [-40, 50, 40, 50]
+    three_winding_transformer["pk_23_min"] = [-120, 1, 40, 30]
+    three_winding_transformer["uk_12_max"] = [-1, 1.1, 0.05, 0.1]
+    three_winding_transformer["uk_13_max"] = [-2, 1.2, 0.3, 0.2]
+    three_winding_transformer["uk_23_max"] = [-1.5, 1, 0.15, 0.2]
+    three_winding_transformer["pk_12_max"] = [-450, 100, 10, 40]
+    three_winding_transformer["pk_13_max"] = [-40, 50, 40, 50]
+    three_winding_transformer["pk_23_max"] = [-120, 1, 40, 30]
 
     source = initialize_array("input", "source", 3)
     source["id"] = [16, 17, 1]
@@ -148,6 +194,7 @@ def input_data() -> Dict[str, np.ndarray]:
         "line": line,
         "link": link,
         "transformer": transformer,
+        "three_winding_transformer": three_winding_transformer,
         "source": source,
         "shunt": shunt,
         "sym_load": sym_load,
@@ -180,6 +227,7 @@ def test_validate_input_data_sym_calculation(input_data):
                 ("sym_power_sensor", "id"),
                 ("sym_voltage_sensor", "id"),
                 ("transformer", "id"),
+                ("three_winding_transformer", "id"),
             ],
             [
                 ("asym_gen", 1),
@@ -206,6 +254,7 @@ def test_validate_input_data_sym_calculation(input_data):
                 ("sym_voltage_sensor", 9),
                 ("sym_voltage_sensor", 10),
                 ("transformer", 1),
+                ("three_winding_transformer", 1),
             ],
         )
         in validation_errors
@@ -340,6 +389,94 @@ def test_validate_input_data_sym_calculation(input_data):
     )
 
     assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
+
+
+def test_validate_three_winding_transformer(input_data):
+    validation_errors = validate_input_data(input_data, symmetric=True)
+    assert NotBooleanError("three_winding_transformer", "status_1", [28]) in validation_errors
+    assert NotBooleanError("three_winding_transformer", "status_2", [1]) in validation_errors
+    assert NotBooleanError("three_winding_transformer", "status_3", [29]) in validation_errors
+    assert InvalidIdError("three_winding_transformer", "node_1", [29], "node") in validation_errors
+    assert InvalidIdError("three_winding_transformer", "node_2", [28], "node") in validation_errors
+    assert InvalidIdError("three_winding_transformer", "node_3", [29], "node") in validation_errors
+    assert NotGreaterThanError("three_winding_transformer", "u1", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError("three_winding_transformer", "u2", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError("three_winding_transformer", "u3", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError("three_winding_transformer", "sn_1", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError("three_winding_transformer", "sn_2", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError("three_winding_transformer", "sn_3", [1, 28], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12", [29, 30], "pk_12/sn_1") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12", [1, 30], "pk_12/sn_2") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13", [29], "pk_13/sn_1") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13", [30], "pk_13/sn_3") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23", [1, 29], "pk_23/sn_2") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23", [30], "pk_23/sn_3") in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_12", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_13", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_23", [1, 28], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_12", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_13", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_23", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "i0", [29], "p0/sn_1") in validation_errors
+    assert NotLessThanError("three_winding_transformer", "i0", [28], 1) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "p0", [1], 0) in validation_errors
+    assert NotBetweenOrAtError("three_winding_transformer", "clock_12", [1, 28], (0, 12)) in validation_errors
+    assert NotBetweenOrAtError("three_winding_transformer", "clock_13", [1, 28], (0, 12)) in validation_errors
+    assert (
+        NotBetweenOrAtError("three_winding_transformer", "tap_pos", [1, 28], ("tap_min", "tap_max"))
+        in validation_errors
+    )
+    assert (
+        NotBetweenOrAtError("three_winding_transformer", "tap_nom", [1, 28], ("tap_min", "tap_max"))
+        in validation_errors
+    )
+    assert NotGreaterOrEqualError("three_winding_transformer", "tap_size", [1], 0) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "winding_1", [1, 28], WindingType) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "winding_2", [1, 28], WindingType) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "winding_3", [1, 28], WindingType) in validation_errors
+    assert InvalidEnumValueError("three_winding_transformer", "tap_side", [1, 28], Branch3Side) in validation_errors
+
+
+def test_validate_three_winding_transformer_ukpkminmax(input_data):
+    validation_errors = validate_input_data(input_data, symmetric=False)
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [29, 30], "pk_12_min/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [1, 30], "pk_12_min/sn_2") in validation_errors
+    )
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [29], "pk_13_min/sn_1") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [30], "pk_13_min/sn_3") in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [1, 29], "pk_23_min/sn_2") in validation_errors
+    )
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [30], "pk_23_min/sn_3") in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_12_min", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_13_min", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_23_min", [1, 28], (0, 1)) in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [29, 30], "pk_12_max/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [1, 30], "pk_12_max/sn_2") in validation_errors
+    )
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_max", [29], "pk_13_max/sn_1") in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_max", [30], "pk_13_max/sn_3") in validation_errors
+    assert (
+        NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [1, 29], "pk_23_max/sn_2") in validation_errors
+    )
+    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [30], "pk_23_max/sn_3") in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_12_max", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_13_max", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError("three_winding_transformer", "uk_23_max", [1, 28], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_12_min", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_13_min", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_23_min", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_12_max", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_13_max", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError("three_winding_transformer", "pk_23_max", [1], 0) in validation_errors
 
 
 def test_validate_input_data_asym_calculation(input_data):

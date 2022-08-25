@@ -1,0 +1,112 @@
+[
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": -8
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": -6
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": -4
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": -2
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": 0
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": 2
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": 4
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": 6
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": 8
+      }
+    ]
+  },
+  {
+    "three_winding_transformer": [
+      {
+        "id": 4,
+        "status_1": 1,
+        "status_2": 1,
+        "status_3": 1,
+        "tap_pos": 10
+      }
+    ]
+  }
+]

@@ -39,6 +39,14 @@ class BranchSide(IntEnum):
     to_side = 1
 
 
+class Branch3Side(IntEnum):
+    """Branch3 Sides"""
+
+    side_1 = 0
+    side_2 = 1
+    side_3 = 2
+
+
 class CalculationType(Enum):
     """Calculation Types"""
 
@@ -65,3 +73,6 @@ class MeasuredTerminalType(IntEnum):
     shunt = 3
     load = 4
     generator = 5
+    branch3_1 = 6
+    branch3_2 = 7
+    branch3_3 = 8
