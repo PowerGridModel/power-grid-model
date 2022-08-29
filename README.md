@@ -164,9 +164,24 @@ Node Result
 1   2          1  0.994801  10445.415523 -0.003096
 ```
 
+# Folder Structure
+
+The repository folder structure is as follows. The `examples`, `docs` and `scripts` are self-explanatory.
+
+- The C++ calculation core is inside [include/power-grid-model](include/power-grid-model).
+- The python interface code is in [src/power_grid_model](src/power_grid_model)
+- The code for validation of input data is in [validation](src/power_grid_model/validation) folder.
+- The [tests](tests) folder is divided in the following way:
+  - `cpp_unit_tests` contains the tests for the C++ calculation core.
+  - `benchmark_cpp` contains a benchmark test case generator in C++.
+  - `unit` folder contains tests for the python code.
+  - `data` contains validation test cases designed for every component and algorithm. Some sample network types are also included. 
+  The validation is either against popular power system analysis software or hand calculation.
+
 # Examples
 
-Please refer to [Examples](examples) for more detailed examples for power flow and state estimation.
+Please refer to [Examples](examples) for more detailed examples for power flow and state estimation. 
+Notebooks for validating the input data and exporting input/output data are also included.
 
 # License
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
