@@ -15,7 +15,7 @@ There are just a few small guidelines you need to follow before making a change.
 Contribution does not necessarily mean committing code to the repository. 
 We recognize different levels of contributions as shown below in increasing order of dedication:
 
-1. Test and use the libray. Give feedback on the user experience or suggest new features.
+1. Test and use the library. Give feedback on the user experience or suggest new features.
 2. Validate the model against other existing libraries. Provide validation test cases.
 3. Report bugs.
 4. Improve the Python interface or helper functions.
@@ -90,7 +90,7 @@ git commit ... --no-verify
 
 All the files in the repository need to be [REUSE compliant](https://reuse.software/). 
 We use the pipeline to automatically check this.
-If there are files which are not complying, the pipeline will fail the pull request will be blocked.
+If there are files which are not complying, the pipeline will fail and the pull request will be blocked.
 
 
 ## Git branching
@@ -126,7 +126,7 @@ There are other great tools out there to manage DCO signoffs for developers to m
 * Git makes it easy to add this line to your commit messages. Make sure the `user.name` and `user.email` are set in your git configs. Use `-s` or `--signoff` to add the Signed-off-by line to the end of the commit message.
 * [Github UI automatic signoff capabilities](https://github.blog/changelog/2022-06-08-admins-can-require-sign-off-on-web-based-commits/) for adding the signoff automatically to commits made with the GitHub browser UI. This one can only be activated by the github org or repo admin. 
 * [GitHub UI automatic signoff capabilities via custom plugin]( https://github.com/scottrigby/dco-gh-ui ) for adding the signoff automatically to commits made with the GitHub browser UI
-* Additionally, it is possible to use shell scripting to automatically apply the sign-off. For an example for bash to be put into a .bashrc file, see [here](https://wiki.lfenergy.org/display/HOME/Contribution+and+Compliance+Guidelines+for+LF+Energy+Foundation+hosted+projects). 
+* Additionally, it is possible to use shell scripting to automatically apply the sign-off. For an example for bash to be put into a .bashrc file, see [here](https://wiki.lfenergy.org/display/HOME/Contribution+and+Compliance+Guidelines). 
 * Alternatively, you can add `prepare-commit-msg hook` in .git/hooks directory. For an example, see [here](https://github.com/Samsung/ONE-vscode/wiki/ONE-vscode-Developer's-Certificate-of-Origin).
 
 ## Code reviews
@@ -143,7 +143,7 @@ Contributions should be submitted as Github pull requests. See [Creating a pull 
 The process for a code change and pull request you should follow:
 
 1. Create a topic branch in your local repository, following the naming format
-"feature-###" or "fix-###". For more information see the Git branching guideline.
+"feature/###" or "fix/###". For more information see the Git branching guideline.
 1. Make changes, compile, and test thoroughly. Ensure any install or build dependencies are removed before the end of the layer when doing a build. Code style should match existing style and conventions, and changes should be focused on the topic the pull request will be addressed. For more information see the style guide.
 1. Push commits to your fork.
 1. Create a Github pull request from your topic branch.
