@@ -15,7 +15,7 @@ There are just a few small guidelines you need to follow before making a change.
 Contribution does not necessarily mean committing code to the repository. 
 We recognize different levels of contributions as shown below in increasing order of dedication:
 
-1. Test and use the libray. Give feedback on the user experience or suggest new features.
+1. Test and use the library. Give feedback on the user experience or suggest new features.
 2. Validate the model against other existing libraries. Provide validation test cases.
 3. Report bugs.
 4. Improve the Python interface or helper functions.
