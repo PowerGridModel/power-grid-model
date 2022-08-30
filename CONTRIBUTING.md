@@ -90,7 +90,7 @@ git commit ... --no-verify
 
 All the files in the repository need to be [REUSE compliant](https://reuse.software/). 
 We use the pipeline to automatically check this.
-If there are files which are not complying, the pipeline will fail the pull request will be blocked.
+If there are files which are not complying, the pipeline will fail and the pull request will be blocked.
 
 
 ## Git branching
