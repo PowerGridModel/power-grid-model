@@ -19,7 +19,6 @@ repos:
     rev: v0.971
     hooks:
       - id: mypy
-        files: ^(src|tests|scripts)/.+\.py$
   - repo: local
     hooks:
       - id: pylint
