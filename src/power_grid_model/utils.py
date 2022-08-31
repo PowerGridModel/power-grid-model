@@ -8,7 +8,7 @@ This file contains all the helper functions for testing purpose
 
 import json
 from pathlib import Path
-from typing import IO, Any, List, Optional, Union, cast
+from typing import IO, Any, List, Optional, cast
 
 import numpy as np
 
@@ -17,11 +17,8 @@ from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
     BatchList,
-    BatchPythonDataset,
     ComponentList,
     Dataset,
-    ExtraInfo,
-    Nominal,
     PythonDataset,
     SingleDataset,
     SinglePythonDataset,
@@ -101,12 +98,13 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
     return batch_data
 
 
-def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
+def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: bool = False) -> Dataset:
     """
     Convert native python data to internal numpy
     Args:
         data: data in dict or list
         data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra information in the data
 
     Returns:
         A single or batch dataset for power-grid-model
@@ -118,7 +116,8 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
     # data for all batches in converted into a proper and compact numpy structure.
     if isinstance(data, list):
         list_data = [
-            convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type) for json_dict in data
+            convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type, ignore_extra=ignore_extra)
+            for json_dict in data
         ]
         return convert_list_to_batch_data(list_data)
 
@@ -126,15 +125,18 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
     if not isinstance(data, dict):
         raise TypeError("Data should be either a list or a dictionary!")
 
-    return convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type)
+    return convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type, ignore_extra=ignore_extra)
 
 
-def convert_python_single_dataset_to_single_dataset(data: SinglePythonDataset, data_type: str) -> SingleDataset:
+def convert_python_single_dataset_to_single_dataset(
+    data: SinglePythonDataset, data_type: str, ignore_extra: bool = False
+) -> SingleDataset:
     """
     Convert native python data to internal numpy
     Args:
         data: data in dict
         data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra information in the data
 
     Returns:
         A single dataset for power-grid-model
@@ -143,18 +145,23 @@ def convert_python_single_dataset_to_single_dataset(data: SinglePythonDataset, d
 
     dataset: SingleDataset = {}
     for component, objects in data.items():
-        dataset[component] = convert_component_list_to_numpy(objects=objects, component=component, data_type=data_type)
+        dataset[component] = convert_component_list_to_numpy(
+            objects=objects, component=component, data_type=data_type, ignore_extra=ignore_extra
+        )
 
     return dataset
 
 
-def convert_component_list_to_numpy(objects: ComponentList, component: str, data_type: str) -> np.ndarray:
+def convert_component_list_to_numpy(
+    objects: ComponentList, component: str, data_type: str, ignore_extra: bool = False
+) -> np.ndarray:
     """
     Convert native python data to internal numpy
     Args:
         objects: data in dict
         component: the name of the component
         data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra information in the data
 
     Returns:
         A single numpy array
@@ -168,19 +175,19 @@ def convert_component_list_to_numpy(objects: ComponentList, component: str, data
         # As each object is a separate dictionary, and the attributes may differ per object, we need to check
         # all attributes. Non-existing attributes
         for attribute, value in obj.items():
-            if attribute == "extra":
-                # The "extra" attribute is a special one. It can store any type of information associated with
-                # an object, but it will not be used in the calculations. Therefore it is not included in the
-                # numpy array, so we can skip this attribute
-                continue
 
+            # If an attribute doesn't exist, the user should explicitly state that she/he is ok with extra
+            # information in the data. This is to protect the user from overlooking errors.
             if attribute not in array.dtype.names:
-                # If an attribute doesn't exist, the user made a mistake. Let's be merciless in that case,
-                # for their own good.
-                raise ValueError(f"Invalid attribute '{attribute}' for {component} {data_type} data.")
+                if ignore_extra:
+                    continue
+                raise ValueError(
+                    f"Invalid attribute '{attribute}' for {component} {data_type} data. "
+                    "(Use ignore_extra=True to ignore the extra data and suppress this exception)"
+                )
 
-            # Now just assign the value and raise an error if the value cannot be stored in the specific
-            # numpy array data format for this attribute.
+            # Assign the value and raise an error if the value cannot be stored in the specific numpy array data format
+            # for this attribute.
             try:
                 array[i][attribute] = value
             except ValueError as ex:
@@ -419,19 +426,20 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     }
 
 
-def import_json_data(json_file: Path, data_type: str) -> Dataset:
+def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False) -> Dataset:
     """
     import json data
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra information in the json file
 
     Returns:
          A single or batch dataset for power-grid-model
     """
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
-        json_data = json.load(file_pointer)
-    return convert_python_to_numpy(json_data, data_type)
+        data = json.load(file_pointer)
+    return convert_python_to_numpy(data=data, data_type=data_type, ignore_extra=ignore_extra)
 
 
 def import_input_data(json_file: Path) -> SingleDataset:
@@ -461,13 +469,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
     return cast(BatchDataset, import_json_data(json_file=json_file, data_type="update"))
 
 
-def export_json_data(
-    json_file: Path,
-    data: Dataset,
-    indent: Optional[int] = 2,
-    compact: bool = False,
-    extra_info: Optional[Union[ExtraInfo, List[ExtraInfo]]] = None,
-):
+def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False):
     """
     export json data
     Args:
@@ -475,15 +477,11 @@ def export_json_data(
         data: a single or batch dataset for power-grid-model
         indent: indent of the file, default 2
         compact: write components on a single line
-        extra_info: extra information (in any json-serializable format), indexed on the object ids
-                    e.g. a string representing the original id, or a dictionary storing even more information.
 
     Returns:
         Save to file
     """
     json_data = convert_dataset_to_python_dataset(data)
-    if extra_info is not None:
-        inject_extra_info(data=json_data, extra_info=extra_info)
 
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
         if compact and indent:
@@ -494,70 +492,14 @@ def export_json_data(
             json.dump(json_data, file_pointer, indent=indent)
 
 
-def inject_extra_info(data: PythonDataset, extra_info: Union[ExtraInfo, List[ExtraInfo]]):
-    """
-    Injects extra info to the objects by ID
-
-    Args:
-        data: Power Grid Model Python data, as written to pgm json files.
-        extra_info: A dictionary indexed by object id. The value may be anything.
-
-    """
-    if isinstance(data, list):
-        _inject_extra_info_batch(data=data, extra_info=extra_info)
-    elif isinstance(data, dict):
-        _inject_extra_info_single(data=data, extra_info=cast(ExtraInfo, extra_info))
-    else:
-        raise TypeError("Invalid data type")
-
-
-def _inject_extra_info_single(data: SinglePythonDataset, extra_info: ExtraInfo):
-    """
-    Injects extra info to the objects by ID
-
-    Args:
-        data: Power Grid Model Python data, as written to pgm json files.
-        extra_info: A dictionary indexed by object id. The value may be anything.
-
-    """
-    if not isinstance(extra_info, dict):
-        raise TypeError("Invalid extra info data type")
-
-    for _, objects in data.items():
-        for obj in objects:
-            if obj["id"] in extra_info:
-                # IDs are always nominal values, so let's tell the type checker:
-                obj_id = cast(Nominal, obj["id"])
-                obj["extra"] = extra_info[obj_id]
-
-
-def _inject_extra_info_batch(data: BatchPythonDataset, extra_info: Union[ExtraInfo, List[ExtraInfo]]):
-    """
-    Injects extra info to the objects by ID
-
-    Args:
-        data: Power Grid Model Python data, as written to pgm json files.
-        extra_info: A dictionary indexed by object id. The value may be anything.
-
-    """
-    if isinstance(extra_info, list):
-        # If both data and extra_info are lists, expect one extra info set per batch
-        for batch, info in zip(data, extra_info):
-            _inject_extra_info_single(batch, info)
-    else:
-        # If only data is a list, copy extra_info for each batch
-        for batch in data:
-            _inject_extra_info_single(batch, extra_info)
-
-
 def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):
     """Custom compact JSON writer that is intended to put data belonging to a single object on a single line.
 
     For example:
     {
         "node": [
-            {"id": 0, "u_rated": 10500.0, "extra": {"original_id": 123}},
-            {"id": 1, "u_rated": 10500.0, "extra": {"original_id": 456}},
+            {"id": 0, "u_rated": 10500.0},
+            {"id": 1, "u_rated": 10500.0},
         ],
         "line": [
             {"id": 2, "node_from": 0, "node_to": 1, ...}

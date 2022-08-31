@@ -208,6 +208,16 @@ struct MetaData {
         throw UnknownAttributeName{attr_name};
     }
 
+    bool has_attr(std::string const& attr_name) const {
+        try {
+            find_attr(attr_name);
+        }
+        catch (const UnknownAttributeName&) {
+            return false;
+        }
+        return true;
+    }
+
     void* get_position(void* ptr, Idx position) const {
         return reinterpret_cast<char*>(ptr) + position * size;
     }

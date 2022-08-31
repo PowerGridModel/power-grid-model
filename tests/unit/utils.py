@@ -90,15 +90,17 @@ def dict_params(params: Dict[Any, str], **kwargs):
 def import_case_data(data_path: Path, sym: bool):
     output_prefix = "sym_output" if sym else "asym_output"
     return_dict = {
-        "input": import_json_data(data_path / "input.json", "input"),
+        "input": import_json_data(data_path / "input.json", "input", ignore_extra=True),
     }
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
-        return_dict["output"] = import_json_data(data_path / f"{output_prefix}.json", output_prefix)
+        return_dict["output"] = import_json_data(data_path / f"{output_prefix}.json", output_prefix, ignore_extra=True)
     # import update and output batch if relevant
     if (data_path / "update_batch.json").exists():
-        return_dict["update_batch"] = import_json_data(data_path / "update_batch.json", "update")
-        return_dict["output_batch"] = import_json_data(data_path / f"{output_prefix}_batch.json", output_prefix)
+        return_dict["update_batch"] = import_json_data(data_path / "update_batch.json", "update", ignore_extra=True)
+        return_dict["output_batch"] = import_json_data(
+            data_path / f"{output_prefix}_batch.json", output_prefix, ignore_extra=True
+        )
     return return_dict
 
 

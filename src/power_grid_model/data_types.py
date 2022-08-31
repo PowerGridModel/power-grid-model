@@ -6,7 +6,7 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file
 """
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
@@ -165,17 +165,4 @@ Examples:
                 "line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],
             }
         ]
-"""
-
-ExtraInfo = Dict[int, Any]
-"""
-Extra info is a dictionary that contains information about the objects. It is indexed on the object IDs and the
-actual information can be anything.
-
-Example:
-    {
-        1: "First Node",
-        2: "Second Node",
-        3: {"name": "Cable", "material": "Aluminum"}
-    }
 """
