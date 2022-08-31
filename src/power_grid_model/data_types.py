@@ -6,13 +6,11 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file
 """
 
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 
-# When we're dropping python 3.8, we should introduce
-#  SingleArray = np.ndarray (ndim=1)
-#  DenseBatchArray = np.ndarray (ndim=2)
+# When we're dropping python 3.8, we should introduce numpy type hinting
 
 SparseBatchArray = Dict[str, np.ndarray]
 """
@@ -88,16 +86,28 @@ Asymmetrical values are three-phase values like p or u_measured.
 Example: (10400.0, 10500.0, 10600.0)
 """
 
-AttributeValue = Union[Nominal, RealValue, AsymValue]
+ExtraInfo = Dict[int, Any]
+"""
+Extra info is a dictionary that contains information about the objects. It is indexed on the object IDs and the
+actual information can be anything.
+Example:
+    {
+        1: "First Node",
+        2: "Second Node",
+        3: {"name": "Cable", "material": "Aluminum"}
+    }
+"""
+
+AttributeValue = Union[Nominal, RealValue, AsymValue, ExtraInfo]
 """
 When representing a grid as a native python structure, each attribute (u_rated etc) is either a nominal value,
-a real value, or a tuple of three real values.
+a real value, or a tuple of three real values. However, a record can also contain "extra info", which is a dictionary.
 
 Examples:
     nominal: 123
     real:    10500.0
     asym:    (10400.0, 10500.0, 10600.0)
-
+    dict:    {"original_id": "1 234 567"}
 """
 
 Component = Dict[str, AttributeValue]
