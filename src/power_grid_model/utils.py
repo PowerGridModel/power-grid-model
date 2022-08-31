@@ -104,7 +104,7 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: b
     Args:
         data: data in dict or list
         data_type: type of data: input, update, sym_output, or asym_output
-        ignore_extra: Allow (and ignore) extra information in the data
+        ignore_extra: Allow (and ignore) extra attributes in the data
 
     Returns:
         A single or batch dataset for power-grid-model
@@ -136,7 +136,7 @@ def convert_python_single_dataset_to_single_dataset(
     Args:
         data: data in dict
         data_type: type of data: input, update, sym_output, or asym_output
-        ignore_extra: Allow (and ignore) extra information in the data
+        ignore_extra: Allow (and ignore) extra attributes in the data
 
     Returns:
         A single dataset for power-grid-model
@@ -161,7 +161,7 @@ def convert_component_list_to_numpy(
         objects: data in dict
         component: the name of the component
         data_type: type of data: input, update, sym_output, or asym_output
-        ignore_extra: Allow (and ignore) extra information in the data
+        ignore_extra: Allow (and ignore) extra attributes in the data
 
     Returns:
         A single numpy array
@@ -432,7 +432,7 @@ def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output
-        ignore_extra: Allow (and ignore) extra information in the json file
+        ignore_extra: Allow (and ignore) extra attributes in the json file
 
     Returns:
          A single or batch dataset for power-grid-model

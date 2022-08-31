@@ -137,8 +137,6 @@ def test_convert_python_to_numpy__extra_attributes():
     convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input", ignore_extra=True)
     with pytest.raises(ValueError, match="Invalid attribute 'u' for line input data."):
         convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input")
-    with pytest.raises(ValueError, match="Invalid 'id' value for line input data."):
-        convert_python_to_numpy({"line": [{"id": "my_line", "u_rated": 10.5e3}]}, "input")
 
 
 def test_convert_python_to_numpy_invalid_data_format():
