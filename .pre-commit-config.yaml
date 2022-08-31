@@ -19,7 +19,6 @@ repos:
     rev: v0.971
     hooks:
       - id: mypy
-        files: ^(src|tests|scripts)/.+\.py$
   - repo: local
     hooks:
       - id: pylint
@@ -35,3 +34,8 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v14.0.6
+    hooks:
+      - id: clang-format
+        types_or: [ c++ ]

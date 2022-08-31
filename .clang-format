@@ -16,3 +16,4 @@ BreakBeforeBraces: Custom
 BraceWrapping:
   BeforeCatch: true
   BeforeElse: true
+

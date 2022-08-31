@@ -50,11 +50,11 @@ struct Buffer {
 void parse_single_object(void* ptr, json const& j, MetaData const& meta, Idx position) {
     meta.set_nan(ptr, position);
     for (auto const& it : j.items()) {
-        // skip extra info
-        if (it.key() == "extra") {
+        // Allow and skip unknown attributes
+        if (!meta.has_attr(it.key())) {
             continue;
         }
-        DataAttribute const& attr = meta.find_attr(it.key());
+        DataAttribute attr = meta.find_attr(it.key());
         if (attr.numpy_type == "i1") {
             int8_t const value = it.value().get<int8_t>();
             meta.set_attr(ptr, &value, attr, position);

@@ -17,7 +17,6 @@ from power_grid_model.utils import (
     convert_python_to_numpy,
     export_json_data,
     get_and_verify_batch_sizes,
-    inject_extra_info,
     is_nan,
     split_numpy_array_in_batches,
     split_sparse_batches_in_batches,
@@ -134,16 +133,20 @@ def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
     assert json_return_list == json_list
 
 
-def test_convert_python_to_numpy__raises_value_error():
+def test_convert_python_to_numpy__extra_attributes():
+    convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input", ignore_extra=True)
     with pytest.raises(ValueError, match="Invalid attribute 'u' for line input data."):
         convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input")
+
+
+def test_convert_python_to_numpy_invalid_data_format():
     with pytest.raises(ValueError, match="Invalid 'id' value for line input data."):
         convert_python_to_numpy({"line": [{"id": "my_line", "u_rated": 10.5e3}]}, "input")
 
 
 def test_convert_python_to_numpy__raises_type_error():
     with pytest.raises(TypeError, match="Data should be either a list or a dictionary!"):
-        convert_python_to_numpy(123, "input")
+        convert_python_to_numpy(123, "input")  # type: ignore
 
 
 def test_convert_batch_to_list_data__zero_batches():
@@ -159,74 +162,6 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_du
     export_json_data(json_file=Path("output.json"), data=data, indent=2)
     convert_mock.assert_called_once()
     json_dump_mock.assert_called_once_with({"foo": [{"val": 123}]}, open_mock(), indent=2)
-
-
-@patch("json.dump")
-@patch("builtins.open", new_callable=mock_open)
-@patch("power_grid_model.utils.convert_dataset_to_python_dataset")
-@patch("power_grid_model.utils.inject_extra_info")
-def test_export_json_data_extra_info(
-    extra_info_mock: MagicMock, convert_mock: MagicMock, _open_mock: MagicMock, _json_dump_mock: MagicMock
-):
-    data: Dataset = {}  # type: ignore
-    convert_mock.return_value = {"foo": [{"id": 123}]}
-    export_json_data(json_file=Path(), data=data, extra_info={123: "Extra information"})
-    extra_info_mock.assert_called_once_with(data={"foo": [{"id": 123}]}, extra_info={123: "Extra information"})
-
-
-def test_inject_extra_info_single():
-    data = {"node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456}], "line": [{"id": 2, "baz": 789}]}
-    extra_info = {2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}
-    inject_extra_info(data=data, extra_info=extra_info)
-    assert data == {
-        "node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456, "extra": {"sheet": "Nodes", "Number": "00123"}}],
-        "line": [{"id": 2, "baz": 789, "extra": 42}],
-    }
-
-
-def test_inject_extra_info_batch():
-    data = [
-        {"node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222}], "line": [{"id": 2, "baz": 333}]},
-        {"node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555}], "line": [{"id": 2, "baz": 666}]},
-    ]
-    extra_info = [{2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}, {2: 43, 0: None}]
-    inject_extra_info(data=data, extra_info=extra_info)
-    assert data == [
-        {
-            "node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222, "extra": {"sheet": "Nodes", "Number": "00123"}}],
-            "line": [{"id": 2, "baz": 333, "extra": 42}],
-        },
-        {
-            "node": [{"id": 0, "foo": 444, "extra": None}, {"id": 1, "bar": 555}],
-            "line": [{"id": 2, "baz": 666, "extra": 43}],
-        },
-    ]
-
-
-def test_inject_extra_info_batch_copy_info():
-    data = [
-        {"node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222}], "line": [{"id": 2, "baz": 333}]},
-        {"node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555}], "line": [{"id": 2, "baz": 666}]},
-    ]
-    extra_info = {2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}
-    inject_extra_info(data=data, extra_info=extra_info)
-    assert data == [
-        {
-            "node": [{"id": 0, "foo": 111}, {"id": 1, "bar": 222, "extra": {"sheet": "Nodes", "Number": "00123"}}],
-            "line": [{"id": 2, "baz": 333, "extra": 42}],
-        },
-        {
-            "node": [{"id": 0, "foo": 444}, {"id": 1, "bar": 555, "extra": {"sheet": "Nodes", "Number": "00123"}}],
-            "line": [{"id": 2, "baz": 666, "extra": 42}],
-        },
-    ]
-
-
-def test_inject_extra_info_single_dataset_with_batch_info():
-    data = {"node": [{"id": 0, "foo": 123}, {"id": 1, "bar": 456}], "line": [{"id": 2, "baz": 789}]}
-    extra_info = [{2: 42, 1: {"sheet": "Nodes", "Number": "00123"}}, {2: 43, 0: None}]
-    with pytest.raises(TypeError):
-        inject_extra_info(data=data, extra_info=extra_info)
 
 
 def test_compact_json_dump():
