@@ -14,7 +14,7 @@ namespace power_grid_model {
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -23,7 +23,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test Sensor math_model_type") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -31,7 +31,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test get_null_output") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         voltage_sensor_input.id = 12;
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
@@ -44,7 +44,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - sym") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<true> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -65,7 +65,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - asym") {
-        VoltageSensorInput<false> voltage_sensor_input;
+        VoltageSensorInput<false> voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<false> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -94,7 +94,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -130,7 +130,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -166,7 +166,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<false> voltage_sensor_input;
+        VoltageSensorInput<false> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -204,7 +204,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<false> voltage_sensor_input;
+        VoltageSensorInput<false> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -241,7 +241,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<true> voltage_sensor_input;
+            VoltageSensorInput<true> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -279,7 +279,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<true> voltage_sensor_input;
+            VoltageSensorInput<true> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -317,7 +317,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<true> voltage_sensor_input;
+            VoltageSensorInput<true> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -359,7 +359,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<false> voltage_sensor_input;
+            VoltageSensorInput<false> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -401,7 +401,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<false> voltage_sensor_input;
+            VoltageSensorInput<false> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
