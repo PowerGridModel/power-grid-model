@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/component/power_sensor.hpp"
 
 namespace power_grid_model {
@@ -14,7 +14,7 @@ TEST_CASE("Test power sensor") {
     // ------------------------------------------------------
     // --------------- Symmetric power sensor ---------------
     // ------------------------------------------------------
-    SECTION("Symmetric Power Sensor - Generator") {
+    SUBCASE("Symmetric Power Sensor - Generator") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.id = 0;
         sym_power_sensor_input.measured_object = 1;
@@ -37,24 +37,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(1.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(8.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(1.0 * 1e2));
-        CHECK(sym_sensor_output.q_residual == Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.0 * 1e2));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(1.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(8.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(1.0 * 1e2 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::generator);
 
@@ -74,23 +74,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(4.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(3.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(3.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(4.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(3.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
     }
 
-    SECTION("Symmetric Power Sensor - Branch_from") {
+    SUBCASE("Symmetric Power Sensor - Branch_from") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.id = 0;
         sym_power_sensor_input.measured_object = 1;
@@ -113,24 +113,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(1.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(8.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(1.0 * 1e2));
-        CHECK(sym_sensor_output.q_residual == Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.0 * 1e2));
 
         // Check symmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(1.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(8.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(1.0 * 1e2 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::branch_from);
 
@@ -150,23 +150,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(4.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(3.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(3.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(4.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(3.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
     }
 
-    SECTION("Symmetric Power Sensor - Branch_to") {
+    SUBCASE("Symmetric Power Sensor - Branch_to") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.id = 0;
         sym_power_sensor_input.measured_object = 1;
@@ -189,24 +189,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(1.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(8.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(1.0 * 1e2));
-        CHECK(sym_sensor_output.q_residual == Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.0 * 1e2));
 
         // Check symmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(1.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(8.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(1.0 * 1e2 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::branch_to);
 
@@ -226,23 +226,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(4.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(3.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(3.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(4.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(3.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
     }
 
-    SECTION("Symmetric Power Sensor - Source") {
+    SUBCASE("Symmetric Power Sensor - Source") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.id = 0;
         sym_power_sensor_input.measured_object = 1;
@@ -265,24 +265,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(1.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(8.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(1.0 * 1e2));
-        CHECK(sym_sensor_output.q_residual == Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(1.0 * 1e2));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.0 * 1e2));
 
         // Check symmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(1.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(8.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(1.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(8.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(1.0 * 1e2 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::source);
 
@@ -302,23 +302,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(4.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(3.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(3.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(4.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(3.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
     }
 
-    SECTION("Symmetric Power Sensor - Shunt") {
+    SUBCASE("Symmetric Power Sensor - Shunt") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.id = 0;
         sym_power_sensor_input.measured_object = 1;
@@ -341,24 +341,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(-1.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-8.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-1.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-8.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(1.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(1.5 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(1.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.5 * 1e3));
 
         // Check symmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-1.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-8.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-1.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-8.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(1.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.5 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.5 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::shunt);
 
@@ -378,23 +378,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(-3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-4.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-4.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(3.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(4.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(3.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(4.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-4.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(3.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(4.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(4.7 * 1e3 / 3.0));
     }
 
-    SECTION("Symmetric Power Sensor - Load") {
+    SUBCASE("Symmetric Power Sensor - Load") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.id = 0;
         sym_power_sensor_input.measured_object = 1;
@@ -417,24 +417,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(-1.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-8.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-1.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-8.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(1.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(1.5 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(1.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.5 * 1e3));
 
         // Check symmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(1.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-1.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-8.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-1.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-8.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(1.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.5 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.5 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::load);
 
@@ -454,26 +454,26 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(-3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-4.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-4.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(3.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(4.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(3.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(4.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(4.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-4.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(3.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(4.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(4.7 * 1e3 / 3.0));
     }
 
     // -------------------------------------------------------
     // --------------- Asymmetric power sensor ---------------
     // -------------------------------------------------------
-    SECTION("Asymmetric Power Sensor - Generator") {
+    SUBCASE("Asymmetric Power Sensor - Generator") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.id = 0;
         asym_power_sensor_input.measured_object = 1;
@@ -496,24 +496,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(24.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(1.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(24.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::generator);
 
@@ -533,23 +533,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(sym_sensor_param.value) == Approx(9.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(12.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(8.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(11.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(8.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(11.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(9.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(12.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(8.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(11.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(8.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(11.3 * 1e3 / 3.0));
     }
 
-    SECTION("Asymmetric Power Sensor - Branch_from") {
+    SUBCASE("Asymmetric Power Sensor - Branch_from") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.id = 0;
         asym_power_sensor_input.measured_object = 1;
@@ -572,24 +572,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(24.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(1.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(24.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::branch_from);
 
@@ -609,23 +609,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(sym_sensor_param.value) == Approx(9.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(12.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(8.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(11.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(8.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(11.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(9.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(12.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(8.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(11.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(8.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(11.3 * 1e3 / 3.0));
     }
 
-    SECTION("Asymmetric Power Sensor - Branch_to") {
+    SUBCASE("Asymmetric Power Sensor - Branch_to") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.id = 0;
         asym_power_sensor_input.measured_object = 1;
@@ -648,24 +648,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(24.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(1.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(24.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::branch_to);
 
@@ -685,23 +685,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(sym_sensor_param.value) == Approx(9.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(12.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(8.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(11.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(8.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(11.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(9.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(12.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(8.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(11.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(8.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(11.3 * 1e3 / 3.0));
     }
 
-    SECTION("Asymmetric Power Sensor - Source") {
+    SUBCASE("Asymmetric Power Sensor - Source") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.id = 0;
         asym_power_sensor_input.measured_object = 1;
@@ -724,24 +724,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(24.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(2.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(1.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(2.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(1.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(24.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(24.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(2.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(1.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::source);
 
@@ -761,23 +761,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(sym_sensor_param.value) == Approx(9.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(12.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(8.1 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(11.3 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(8.1 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(11.3 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(9.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(12.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(9.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(12.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(8.1 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(11.3 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(8.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(11.3 * 1e3 / 3.0));
     }
 
-    SECTION("Asymmetric Power Sensor - Shunt") {
+    SUBCASE("Asymmetric Power Sensor - Shunt") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.id = 0;
         asym_power_sensor_input.measured_object = 1;
@@ -800,24 +800,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(-3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-24.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-24.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(3.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(3.1 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(3.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(3.1 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-24.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-24.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(3.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(3.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.1 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::shunt);
 
@@ -837,23 +837,23 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(sym_sensor_param.value) == Approx(-9.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-12.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-9.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-12.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(9.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(12.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(9.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(12.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-9.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-12.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-9.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-12.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(9.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(12.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(9.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(12.7 * 1e3 / 3.0));
     }
 
-    SECTION("Asymmetric Power Sensor - Load") {
+    SUBCASE("Asymmetric Power Sensor - Load") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.id = 0;
         asym_power_sensor_input.measured_object = 1;
@@ -876,24 +876,24 @@ TEST_CASE("Test power sensor") {
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(sym_sensor_param.value) == Approx(-3.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-24.0 * 1e-4));
+        CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-24.0 * 1e-4));
 
         CHECK(sym_sensor_output.id == 0);
         CHECK(sym_sensor_output.energized == 1);
-        CHECK(sym_sensor_output.p_residual == Approx(3.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(3.1 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(3.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(3.1 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(9.0 / 1e2));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-3.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-24.0 * 1e-4));
+        CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-24.0 * 1e-4));
 
         CHECK(sym_sensor_output_asym_param.id == 0);
         CHECK(sym_sensor_output_asym_param.energized == 1);
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(3.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(3.1 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.1 * 1e3 / 3.0));
 
         CHECK(terminal_type == MeasuredTerminalType::load);
 
@@ -913,20 +913,20 @@ TEST_CASE("Test power sensor") {
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
         // Check symmetric output for symmetric parameters
-        CHECK(sym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(sym_sensor_param.value) == Approx(-9.0 * 1e-3));
-        CHECK(imag(sym_sensor_param.value) == Approx(-12.0 * 1e-3));
+        CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-9.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-12.0 * 1e-3));
 
-        CHECK(sym_sensor_output.p_residual == Approx(9.9 * 1e3));
-        CHECK(sym_sensor_output.q_residual == Approx(12.7 * 1e3));
+        CHECK(sym_sensor_output.p_residual == doctest::Approx(9.9 * 1e3));
+        CHECK(sym_sensor_output.q_residual == doctest::Approx(12.7 * 1e3));
 
         // Check asymmetric output for asymmetric parameters
-        CHECK(asym_sensor_param.variance == Approx(3.6 / 1e1));
-        CHECK(real(asym_sensor_param.value[0]) == Approx(-9.0 * 1e-3));
-        CHECK(imag(asym_sensor_param.value[1]) == Approx(-12.0 * 1e-3));
+        CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-9.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-12.0 * 1e-3));
 
-        CHECK(sym_sensor_output_asym_param.p_residual[0] == Approx(9.9 * 1e3 / 3.0));
-        CHECK(sym_sensor_output_asym_param.q_residual[1] == Approx(12.7 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(9.9 * 1e3 / 3.0));
+        CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(12.7 * 1e3 / 3.0));
     }
 }
 }  // namespace power_grid_model

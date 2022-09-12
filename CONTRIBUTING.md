@@ -15,7 +15,7 @@ There are just a few small guidelines you need to follow before making a change.
 Contribution does not necessarily mean committing code to the repository. 
 We recognize different levels of contributions as shown below in increasing order of dedication:
 
-1. Test and use the libray. Give feedback on the user experience or suggest new features.
+1. Test and use the library. Give feedback on the user experience or suggest new features.
 2. Validate the model against other existing libraries. Provide validation test cases.
 3. Report bugs.
 4. Improve the Python interface or helper functions.
@@ -58,11 +58,39 @@ This project uses Google Format Style (NOTE: not Google C++ Programming Style) t
 
 Tip: Use [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to format your C++ code.
 
+## pre-commit hooks
+This project uses [pre-commit](https://pre-commit.com/) to run a list of checks (and perform some automatic
+corrections) to your code (style) before each commit. It is up to the developer to choose whether you would like to 
+use this tool or not. The goal is to make sure that each commit will pass the quality checks in the github actions
+workflow. Currently, these hooks are defined in [`.pre-commit-config.yaml`](.pre-commit-config.yaml):
+* **reuse**: check if all licence headers and files are in place
+* **isort**: group and sort import statements 
+* **black**: check and correct code style in a very strict manner
+* **mypy**: checks type hinting and data types in general (static type checker) 
+* **pylint**: check code style and comments
+* **pytest**: run all unit tests
+
+You can manually run pre-commit whenever you like:
+```bash
+pre-commit run
+```
+
+Or you can install it as a git pre-commit hook. In this case a commit will be aborted whenever one of the hooks fail.
+```bash
+pre-commit install
+```
+
+As using the pre-commit tool is not mandatory, you can always skip the tool:
+
+```bash
+git commit ... --no-verify
+```
+
 ## REUSE Compliance
 
 All the files in the repository need to be [REUSE compliant](https://reuse.software/). 
 We use the pipeline to automatically check this.
-If there are files which are not complying, the pipeline will fail the pull request will be blocked.
+If there are files which are not complying, the pipeline will fail and the pull request will be blocked.
 
 
 ## Git branching
@@ -98,7 +126,7 @@ There are other great tools out there to manage DCO signoffs for developers to m
 * Git makes it easy to add this line to your commit messages. Make sure the `user.name` and `user.email` are set in your git configs. Use `-s` or `--signoff` to add the Signed-off-by line to the end of the commit message.
 * [Github UI automatic signoff capabilities](https://github.blog/changelog/2022-06-08-admins-can-require-sign-off-on-web-based-commits/) for adding the signoff automatically to commits made with the GitHub browser UI. This one can only be activated by the github org or repo admin. 
 * [GitHub UI automatic signoff capabilities via custom plugin]( https://github.com/scottrigby/dco-gh-ui ) for adding the signoff automatically to commits made with the GitHub browser UI
-* Additionally, it is possible to use shell scripting to automatically apply the sign-off. For an example for bash to be put into a .bashrc file, see [here](https://wiki.lfenergy.org/display/HOME/Contribution+and+Compliance+Guidelines+for+LF+Energy+Foundation+hosted+projects). 
+* Additionally, it is possible to use shell scripting to automatically apply the sign-off. For an example for bash to be put into a .bashrc file, see [here](https://wiki.lfenergy.org/display/HOME/Contribution+and+Compliance+Guidelines). 
 * Alternatively, you can add `prepare-commit-msg hook` in .git/hooks directory. For an example, see [here](https://github.com/Samsung/ONE-vscode/wiki/ONE-vscode-Developer's-Certificate-of-Origin).
 
 ## Code reviews
@@ -115,7 +143,7 @@ Contributions should be submitted as Github pull requests. See [Creating a pull 
 The process for a code change and pull request you should follow:
 
 1. Create a topic branch in your local repository, following the naming format
-"feature-###" or "fix-###". For more information see the Git branching guideline.
+"feature/###" or "fix/###". For more information see the Git branching guideline.
 1. Make changes, compile, and test thoroughly. Ensure any install or build dependencies are removed before the end of the layer when doing a build. Code style should match existing style and conventions, and changes should be focused on the topic the pull request will be addressed. For more information see the style guide.
 1. Push commits to your fork.
 1. Create a Github pull request from your topic branch.

@@ -11,7 +11,6 @@ Note: these enumeration match the C++ arithmetic core, so dont change the values
 
 from enum import Enum, IntEnum
 
-
 # pylint: disable=invalid-name
 
 
@@ -40,6 +39,14 @@ class BranchSide(IntEnum):
     to_side = 1
 
 
+class Branch3Side(IntEnum):
+    """Branch3 Sides"""
+
+    side_1 = 0
+    side_2 = 1
+    side_3 = 2
+
+
 class CalculationType(Enum):
     """Calculation Types"""
 
@@ -53,6 +60,8 @@ class CalculationMethod(IntEnum):
     linear = 0
     newton_raphson = 1
     iterative_linear = 2
+    iterative_current = 3
+    linear_current = 4
 
 
 class MeasuredTerminalType(IntEnum):
@@ -64,3 +73,6 @@ class MeasuredTerminalType(IntEnum):
     shunt = 3
     load = 4
     generator = 5
+    branch3_1 = 6
+    branch3_2 = 7
+    branch3_3 = 8

@@ -4,14 +4,15 @@
 
 import numpy as np
 import pytest
+
 from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
-from power_grid_model.validation.errors import MissingValueError, MultiComponentNotUniqueError, IdNotInDatasetError
+from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
-    validate_unique_ids_across_components,
     validate_ids_exist,
     validate_required_values,
+    validate_unique_ids_across_components,
     validate_values,
 )
 
@@ -137,6 +138,7 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     line = initialize_array("input", "line", 1)
     link = initialize_array("input", "link", 1)
     transformer = initialize_array("input", "transformer", 1)
+    three_winding_transformer = initialize_array("input", "three_winding_transformer", 1)
     source = initialize_array("input", "source", 1)
     shunt = initialize_array("input", "shunt", 1)
     sym_load = initialize_array("input", "sym_load", 1)
@@ -159,6 +161,7 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
         "line": line,
         "link": link,
         "transformer": transformer,
+        "three_winding_transformer": three_winding_transformer,
         "source": source,
         "shunt": shunt,
         "sym_load": sym_load,
@@ -220,6 +223,38 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("transformer", "tap_min", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "tap_max", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "tap_size", [NaN]) in required_values_errors
+
+    assert MissingValueError("three_winding_transformer", "id", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "node_1", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "node_2", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "node_3", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "status_1", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "status_2", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "status_3", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "u1", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "u2", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "u3", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "sn_1", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "sn_2", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "sn_3", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "uk_12", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "uk_13", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "uk_23", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "pk_12", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "pk_13", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "pk_23", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "i0", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "p0", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "winding_1", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "winding_2", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "winding_3", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "clock_12", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "clock_13", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "tap_side", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "tap_pos", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "tap_min", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "tap_max", [NaN]) in required_values_errors
+    assert MissingValueError("three_winding_transformer", "tap_size", [NaN]) in required_values_errors
 
     assert MissingValueError("source", "id", [NaN]) in required_values_errors
     assert MissingValueError("source", "node", [NaN]) in required_values_errors

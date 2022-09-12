@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/component/transformer.hpp"
 
 namespace power_grid_model {
@@ -121,12 +121,12 @@ TEST_CASE("Test transformer") {
     // YNyn2
     vec_asym.push_back({{y1, y4, y4t, y1}});
 
-    SECTION("Test i base") {
-        CHECK(vec[0].base_i_from() == Approx(base_i_from));
-        CHECK(vec[0].base_i_to() == Approx(base_i_to));
+    SUBCASE("Test i base") {
+        CHECK(vec[0].base_i_from() == doctest::Approx(base_i_from));
+        CHECK(vec[0].base_i_to() == doctest::Approx(base_i_to));
     }
 
-    SECTION("invalid input") {
+    SUBCASE("invalid input") {
         input.winding_from = WindingType::delta;
         input.winding_to = WindingType::wye_n;
         input.clock = 12;
@@ -142,7 +142,7 @@ TEST_CASE("Test transformer") {
         CHECK(vec[0].tap_pos() == 9);
     }
 
-    SECTION("symmetric parameters") {
+    SUBCASE("symmetric parameters") {
         for (size_t i = 0; i < 5; i++) {
             auto changed = vec[i].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, -2});
             CHECK(!changed.topo);
@@ -154,7 +154,40 @@ TEST_CASE("Test transformer") {
         }
     }
 
-    SECTION("asymmetric paramters") {
+    SUBCASE("update - check changed") {
+        SUBCASE("update tap") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, -2});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update from_status") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, false, true}, na_IntS});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update to_status") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, true, false}, na_IntS});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update status") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, false, false}, na_IntS});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update status & tap") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, false, false}, -2});
+            CHECK(changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("update none") {
+            auto changed = vec[0].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, na_IntS});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+        }
+    }
+
+    SUBCASE("asymmetric paramters") {
         for (size_t i = 0; i < 5; i++) {
             vec[i].set_tap(-2);
             BranchCalcParam<false> const param = vec[i].calc_param<false>();
@@ -164,7 +197,7 @@ TEST_CASE("Test transformer") {
         }
     }
 
-    SECTION("Test transformer 0 YNyn12") {
+    SUBCASE("Test transformer 0 YNyn12") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
             155e3,                    // u1
@@ -244,25 +277,25 @@ TEST_CASE("Test transformer") {
         CHECK((cabs(param.value[2] - y_tf) < numerical_tolerance).all());
         CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
 
-        SECTION("Test transformer is_param_mutable") {
+        SUBCASE("Test transformer is_param_mutable") {
             CHECK(YNyn12.is_param_mutable() == true);
         }
 
-        SECTION("Test transformer phase shift") {
-            CHECK(YNyn12.phase_shift() == Approx(0.0));
+        SUBCASE("Test transformer phase shift") {
+            CHECK(YNyn12.phase_shift() == doctest::Approx(0.0));
         }
 
-        SECTION("Test transformer loading") {
-            CHECK(YNyn12.loading(60.0e6, 0.0) == Approx(2.0));
+        SUBCASE("Test transformer loading") {
+            CHECK(YNyn12.loading(60.0e6, 0.0) == doctest::Approx(2.0));
         }
 
-        SECTION("Test transformer set_limit - false") {
+        SUBCASE("Test transformer set_limit - false") {
             CHECK(YNyn12.set_tap(na_IntS) == false);
             CHECK(YNyn12.set_tap(input.tap_pos) == false);
         }
     }
 
-    SECTION("Test grounding - Dyn11") {
+    SUBCASE("Test grounding - Dyn11") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
             155e3,                    // u1
@@ -367,7 +400,7 @@ TEST_CASE("Test transformer") {
         CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
     }
 
-    SECTION("Test grounding - Yzn11") {
+    SUBCASE("Test grounding - Yzn11") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
             155e3,                    // u1
@@ -472,7 +505,7 @@ TEST_CASE("Test transformer") {
         CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
     }
 
-    SECTION("Dyn11 - tap_max and tap_min flipped") {
+    SUBCASE("Dyn11 - tap_max and tap_min flipped") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
             155e3,                    // u1
@@ -577,7 +610,7 @@ TEST_CASE("Test transformer") {
         CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
     }
 
-    SECTION("Test uk_min, uk_max, pk_min, pk_max for tap_pos < tap_nom - Dyn11") {
+    SUBCASE("Test uk_min, uk_max, pk_min, pk_max for tap_pos < tap_nom - Dyn11") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
             155e3,                    // u1
@@ -652,7 +685,7 @@ TEST_CASE("Test transformer") {
         CHECK(cabs(param.value[2] - y_tf) < numerical_tolerance);
         CHECK(cabs(param.value[3] - y_tt) < numerical_tolerance);
     }
-    SECTION("Test uk_min, uk_max, pk_min, pk_max for tap_pos > tap_nom - Dyn11") {
+    SUBCASE("Test uk_min, uk_max, pk_min, pk_max for tap_pos > tap_nom - Dyn11") {
         TransformerInput const input{
             {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
             155e3,                    // u1

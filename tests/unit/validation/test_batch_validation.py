@@ -7,8 +7,8 @@ from typing import Dict
 import numpy as np
 import pytest
 
-from power_grid_model import CalculationType, LoadGenType, initialize_array
-from power_grid_model.validation import validate_batch_data, validate_input_data
+from power_grid_model import LoadGenType, initialize_array
+from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
 

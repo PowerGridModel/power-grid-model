@@ -51,6 +51,15 @@ class InvalidBranch : public PowerGridError {
     }
 };
 
+class InvalidBranch3 : public PowerGridError {
+   public:
+    InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id) {
+        append_msg("Branch3 " + std::to_string(branch3_id) +
+                   " is connected to the same node at least twice. Node 1/2/3: " + std::to_string(node_1_id) + "/" +
+                   std::to_string(node_2_id) + "/" + std::to_string(node_3_id) + ",\n This is not allowed!\n");
+    }
+};
+
 class InvalidTransformerClock : public PowerGridError {
    public:
     InvalidTransformerClock(ID id, IntS clock) {

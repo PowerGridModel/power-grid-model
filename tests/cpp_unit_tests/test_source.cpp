@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/component/source.hpp"
 
 namespace power_grid_model {
@@ -41,7 +41,7 @@ TEST_CASE("Test source") {
 
     CHECK(source.math_model_type() == ComponentType::source);
 
-    SECTION("Test source parameters") {
+    SUBCASE("Test source parameters") {
         // uref
         ComplexValue<true> u_ref = source.calc_param<true>();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
@@ -64,35 +64,35 @@ TEST_CASE("Test source") {
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 
-    SECTION("test source sym results; u as input") {
+    SUBCASE("test source sym results; u as input") {
         ApplianceOutput<true> const sym_result = source.get_output<true>(u);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
-        CHECK(sym_result.i == Approx(i));
+        CHECK(sym_result.i == doctest::Approx(i));
     }
 
-    SECTION("test source sym results; s, i as input") {
+    SUBCASE("test source sym results; s, i as input") {
         ApplianceMathOutput<true> appliance_math_output_sym;
         appliance_math_output_sym.i = 1.0 + 2.0i;
         appliance_math_output_sym.s = 3.0 + 4.0i;
         ApplianceOutput<true> const sym_result = source.get_output<true>(appliance_math_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
-        CHECK(sym_result.p == Approx(3.0 * base_power<true>));
-        CHECK(sym_result.q == Approx(4.0 * base_power<true>));
-        CHECK(sym_result.s == Approx(cabs(3.0 + 4.0i) * base_power<true>));
-        CHECK(sym_result.i == Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(sym_result.pf == Approx(3.0 / cabs(3.0 + 4.0i)));
+        CHECK(sym_result.p == doctest::Approx(3.0 * base_power<true>));
+        CHECK(sym_result.q == doctest::Approx(4.0 * base_power<true>));
+        CHECK(sym_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<true>));
+        CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(sym_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
-    SECTION("test source asym results; u as input") {
+    SUBCASE("test source asym results; u as input") {
         ApplianceOutput<false> const asym_result = source.get_output<false>(ComplexValue<false>{u});
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
-        CHECK(asym_result.i(0) == Approx(i));
+        CHECK(asym_result.i(0) == doctest::Approx(i));
     }
 
-    SECTION("test source asym results; s, i as input") {
+    SUBCASE("test source asym results; s, i as input") {
         ApplianceMathOutput<false> appliance_math_output_asym;
         ComplexValue<false> const i_a{1.0 + 2.0i};
         ComplexValue<false> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
@@ -101,25 +101,25 @@ TEST_CASE("Test source") {
         ApplianceOutput<false> const asym_result = source.get_output<false>(appliance_math_output_asym);
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
-        CHECK(asym_result.p(0) == Approx(3.0 * base_power<false>));
-        CHECK(asym_result.q(1) == Approx(4.0 * base_power<false>));
-        CHECK(asym_result.s(2) == Approx(5.0 * base_power<false>));
-        CHECK(asym_result.i(0) == Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(asym_result.pf(1) == Approx(3.0 / cabs(3.0 + 4.0i)));
+        CHECK(asym_result.p(0) == doctest::Approx(3.0 * base_power<false>));
+        CHECK(asym_result.q(1) == doctest::Approx(4.0 * base_power<false>));
+        CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<false>));
+        CHECK(asym_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(asym_result.pf(1) == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
-    SECTION("test no source") {
+    SUBCASE("test no source") {
         ApplianceOutput<false> const asym_result = source.get_null_output<false>();
         CHECK(asym_result.id == 1);
         CHECK(!asym_result.energized);
-        CHECK(asym_result.p(0) == Approx(0.0));
-        CHECK(asym_result.q(1) == Approx(0.0));
-        CHECK(asym_result.s(2) == Approx(0.0));
-        CHECK(asym_result.i(0) == Approx(0.0));
-        CHECK(asym_result.pf(1) == Approx(0.0));
+        CHECK(asym_result.p(0) == doctest::Approx(0.0));
+        CHECK(asym_result.q(1) == doctest::Approx(0.0));
+        CHECK(asym_result.s(2) == doctest::Approx(0.0));
+        CHECK(asym_result.i(0) == doctest::Approx(0.0));
+        CHECK(asym_result.pf(1) == doctest::Approx(0.0));
     }
 
-    SECTION("test update") {
+    SUBCASE("test update") {
         auto changed = source.update(SourceUpdate{{{1}, true}, 1.05, nan});
         CHECK(!changed.topo);
         CHECK(changed.param);

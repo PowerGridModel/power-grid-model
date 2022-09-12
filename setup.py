@@ -3,25 +3,25 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import os
+import platform
 import re
 import shutil
 from itertools import chain
-
-# noinspection PyPackageRequirements
-import numpy as np
+from pathlib import Path
+from sysconfig import get_paths
+from typing import List
 
 # noinspection PyPackageRequirements
 import Cython.Compiler.Main as CythonCompiler
 
 # noinspection PyPackageRequirements
-import requests
-import platform
-from sysconfig import get_paths
-from setuptools import Extension
-from setuptools.command.build_ext import build_ext
-from setuptools import setup, find_packages
-from pathlib import Path
+import numpy as np
 
+# noinspection PyPackageRequirements
+import requests
+from pybuild_header_dependency import HeaderResolver
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 # determine platform, only windows or linux
 if platform.system() == "Windows":
@@ -80,22 +80,22 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     Returns:
 
     """
+    # fetch dependent headers
+    resolver = HeaderResolver({"eigen": None, "boost": None})
     # include-folders
     include_dirs = [
+        str(resolver.get_include()),
         np.get_include(),  # The include-folder of numpy header
         str(pkg_dir / "include"),  # The include-folder of the repo self
-        os.environ["EIGEN_INCLUDE"],  # eigen3 library
-        os.environ["BOOST_INCLUDE"],  # boost library
     ]
     # compiler and link flag
-    cflags = []
-    lflags = []
-    library_dirs = []
-    libraries = []
+    cflags: List[str] = []
+    lflags: List[str] = []
+    library_dirs: List[str] = []
+    libraries: List[str] = []
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
-        ("POWER_GRID_MODEL_USE_MKL_AT_RUNTIME", 1),  # use mkl runtime loading
     ]
     pkg_bin_dir = pkg_dir / "src" / pkg_name
 
@@ -128,7 +128,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             "-O3",
             "-fvisibility=hidden",
         ]
-        lflags += ["-lpthread", "-ldl", "-O3"]
+        lflags += ["-lpthread", "-O3"]
         # # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
@@ -177,16 +177,20 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
 
 
-def convert_long_description(raw_readme: str):
+def set_long_description(pkg_dir: Path):
+    with open(pkg_dir / "README.md", "r") as f:
+        raw_readme = f.read()
     if "GITHUB_SHA" not in os.environ:
-        return raw_readme
+        readme = raw_readme
     else:
         sha = os.environ["GITHUB_SHA"].lower()
         url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
-        return re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
+        readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
+    with open("README.md", "w") as f:
+        f.write(readme)
 
 
-def get_version(pkg_dir: Path) -> str:
+def set_version(pkg_dir: Path):
     with open(pkg_dir / "VERSION") as f:
         version = f.read().strip().strip("\n")
     major, minor = (int(x) for x in version.split("."))
@@ -218,7 +222,6 @@ def get_version(pkg_dir: Path) -> str:
             version += f"a1{build_number}{short_hash}"
     with open(pkg_dir / "PYPI_VERSION", "w") as f:
         f.write(version)
-    return version
 
 
 def get_pypi_latest():
@@ -257,49 +260,11 @@ def prepare_pkg(setup_file: Path) -> dict:
     # package description
     pkg_pip_name = "power-grid-model"
     pkg_name = pkg_pip_name.replace("-", "_")
-    with open(pkg_dir / "README.md") as f:
-        long_description = f.read()
-        long_description = convert_long_description(long_description)
-    with open(pkg_dir / "requirements.txt") as f:
-        required = f.read().splitlines()
-        required = [x for x in required if x.strip() and x.strip()[0] != "#"]
-    version = get_version(pkg_dir)
-
-    return dict(
-        name=pkg_pip_name,
-        version=version,
-        long_description=long_description,
-        install_requires=required,
-        **generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name),
-    )
+    set_version(pkg_dir)
+    set_long_description(pkg_dir)
+    return generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name)
 
 
 setup(
     **prepare_pkg(setup_file=Path(__file__).resolve()),
-    author="Alliander Dynamic Grid Calculation",
-    author_email="dynamic.grid.calculation@alliander.com",
-    url="https://github.com/alliander-opensource/power-grid-model",
-    description="Python/C++ library for distribution power system analysis",
-    long_description_content_type="text/markdown",
-    package_dir={"": "src"},
-    packages=find_packages("src"),
-    license="MPL-2.0",
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: C++",
-        "Programming Language :: Cython",
-        r"Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        r"License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: POSIX :: Linux",
-        "Operating System :: MacOS",
-        "Topic :: Scientific/Engineering :: Physics",
-    ],
-    python_requires=">=3.8",
 )

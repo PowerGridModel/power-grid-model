@@ -4,12 +4,12 @@
 
 
 # GitHub Action that uses
-#     Black to reformat the Python code in an incoming pull request.
+#     isort, black, mypy and pylint to reformat the Python code in an incoming pull request.
 #     clang-format to reformat the C++ code in an incoming pull request.
 # If all code in the pull request is compliant with Black and clang-format then this Action
 # does nothing. Otherwise, it will print the files which need to be reformatted and raise an error.
 
-name: Format Code
+name: Check Code Quality
 
 on:
   # run pipeline on push event of main or release branch
@@ -21,8 +21,8 @@ on:
   pull_request:
 
 jobs:
-  code-format-check:
-
+  check-code-quality:
+    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
 
     steps:
@@ -33,23 +33,41 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
-        
-      - name: Install Black and clang-format
+
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
+      - name: Install and run isort
+        run: |
+          pip install isort
+          isort .
+
+      - name: Install and run black
         run: |
           pip install black
+          black .
+
+      - name: Install and run mypy
+        run: |
+          pip install mypy
+          mypy .
+
+      - name: Install and run pylint
+        run: |
+          pip install pylint .
+          pylint power_grid_model
+          git restore README.md
+
+      - name: Install and run clang-format
+        run: |
           sudo apt-get update && sudo apt-get install -y clang-format
-
-      - name: Run black
-        run: black .
-
-      - name: Run clang-format
-        run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
+          find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
 
       - name: If needed raise error
         run: |
 
           if [[ `git status --porcelain --untracked-files=no` ]]; then
-            echo "Formatting not correct! See blow the files which need to be reformatted!"
+            echo "Formatting not correct! See below the files which need to be reformatted!"
             git status --porcelain --untracked-files=no
             exit 1
           fi

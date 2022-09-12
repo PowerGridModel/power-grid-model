@@ -160,6 +160,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     components_.template emplace<CompType>(id, input, u1, u2);
                 }
             }
+            else if constexpr (std::is_base_of_v<Branch3, CompType>) {
+                double const u1 = components_.template get_item<Node>(input.node_1).u_rated();
+                double const u2 = components_.template get_item<Node>(input.node_2).u_rated();
+                double const u3 = components_.template get_item<Node>(input.node_3).u_rated();
+                components_.template emplace<CompType>(id, input, u1, u2, u3);
+            }
             else if constexpr (std::is_base_of_v<Appliance, CompType>) {
                 double const u = components_.template get_item<Node>(input.node).u_rated();
                 components_.template emplace<CompType>(id, input, u);
@@ -180,6 +186,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     case MeasuredTerminalType::branch_from:
                     case MeasuredTerminalType::branch_to:
                         components_.template get_item<Branch>(measured_object);
+                        break;
+                    case MeasuredTerminalType::branch3_1:
+                    case MeasuredTerminalType::branch3_2:
+                    case MeasuredTerminalType::branch3_3:
+                        components_.template get_item<Branch3>(measured_object);
                         break;
                     case MeasuredTerminalType::shunt:
                         components_.template get_item<Shunt>(measured_object);
@@ -285,7 +296,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                            return BranchIdx{components_.template get_seq<Node>(branch.from_node()),
                                             components_.template get_seq<Node>(branch.to_node())};
                        });
-        // skip branch3
+        comp_topo.branch3_node_idx.resize(components_.template size<Branch3>());
+        std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
+                       comp_topo.branch3_node_idx.begin(), [this](Branch3 const& branch3) {
+                           return Branch3Idx{components_.template get_seq<Node>(branch3.node_1()),
+                                             components_.template get_seq<Node>(branch3.node_2()),
+                                             components_.template get_seq<Node>(branch3.node_3())};
+                       });
         comp_topo.source_node_idx.resize(components_.template size<Source>());
         std::transform(components_.template citer<Source>().begin(), components_.template citer<Source>().end(),
                        comp_topo.source_node_idx.begin(), [this](Source const& source) {
@@ -329,6 +346,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                case MeasuredTerminalType::load:
                                case MeasuredTerminalType::generator:
                                    return components_.template get_seq<GenericLoadGen>(power_sensor.measured_object());
+                               case MeasuredTerminalType::branch3_1:
+                               case MeasuredTerminalType::branch3_2:
+                               case MeasuredTerminalType::branch3_3:
+                                   return components_.template get_seq<Branch3>(power_sensor.measured_object());
                                default:
                                    throw MissingCaseForEnumError("Power sensor idx to seq transformation",
                                                                  power_sensor.get_terminal_type());
@@ -621,6 +642,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return is_nan(update.from_status) && is_nan(update.to_status);
             });
         }
+        else if constexpr (std::is_base_of_v<Branch3, Component>) {
+            // Check for all batches
+            return std::all_of(it_begin, it_end, [](Branch3Update const& update) {
+                return is_nan(update.status_1) && is_nan(update.status_2) && is_nan(update.status_3);
+            });
+        }
         else if constexpr (std::is_base_of_v<Source, Component>) {
             // Check for all batches
             return std::all_of(it_begin, it_end, [](SourceUpdate const& update) {
@@ -717,6 +744,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                       return branch.get_null_output<sym>();
                                   }
                                   return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
+                              });
+    }
+
+    // output branch3
+    template <bool sym, class Component, class ResIt>
+    std::enable_if_t<
+        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
+            std::is_base_of_v<Branch3, Component>,
+        ResIt>
+    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+        assert(construction_complete_);
+        return std::transform(components_.template citer<Component>().begin(),
+                              components_.template citer<Component>().end(),
+                              comp_coup_->branch3.cbegin() + components_.template get_start_idx<Branch3, Component>(),
+                              res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
+                                  if (math_id.group == -1) {
+                                      return branch3.get_null_output<sym>();
+                                  }
+
+                                  return branch3.get_output<sym>(math_output[math_id.group].branch[math_id.pos[0]],
+                                                                 math_output[math_id.group].branch[math_id.pos[1]],
+                                                                 math_output[math_id.group].branch[math_id.pos[2]]);
                               });
     }
 
@@ -824,7 +873,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 components_.template get_start_idx<GenericPowerSensor, Component>(),
             res_it, [this, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
                 auto const terminal_type = power_sensor.get_terminal_type();
-                const Idx2D obj_math_id = [&]() {
+                Idx2D const obj_math_id = [&]() {
                     switch (terminal_type) {
                         case MeasuredTerminalType::branch_from:
                         case MeasuredTerminalType::branch_to:
@@ -836,6 +885,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         case MeasuredTerminalType::load:
                         case MeasuredTerminalType::generator:
                             return comp_coup_->load_gen[obj_seq];
+                        // from branch3, get relevant math object branch based on the measured side
+                        case MeasuredTerminalType::branch3_1:
+                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[0]};
+                        case MeasuredTerminalType::branch3_2:
+                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[1]};
+                        case MeasuredTerminalType::branch3_3:
+                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[2]};
                         default:
                             throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
                                                           terminal_type);
@@ -848,6 +904,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
                 switch (terminal_type) {
                     case MeasuredTerminalType::branch_from:
+                    // all power sensors in branch3 are at from side in the mathematical model
+                    case MeasuredTerminalType::branch3_1:
+                    case MeasuredTerminalType::branch3_2:
+                    case MeasuredTerminalType::branch3_3:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
                     case MeasuredTerminalType::branch_to:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
@@ -948,7 +1008,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        comp_conn.branch_phase_shift.begin(), [](Branch const& branch) {
                            return branch.phase_shift();
                        });
-        // skip branch3 for now
+        std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
+                       comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
+                           return Branch3Connected{branch3.status_1(), branch3.status_2(), branch3.status_3()};
+                       });
+        std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
+                       comp_conn.branch3_phase_shift.begin(), [](Branch3 const& branch3) {
+                           return branch3.phase_shift();
+                       });
         std::transform(components_.template citer<Source>().begin(), components_.template citer<Source>().end(),
                        comp_conn.source_connected.begin(), [](Source const& source) {
                            return source.status();
@@ -980,7 +1047,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             math_param[math_idx.group].branch_param[math_idx.pos] =
                 components_.template get_item_by_seq<Branch>(i).template calc_param<sym>();
         }
-        // skip branch3
+        // loop all branch3
+        for (Idx i = 0; i != (Idx)comp_topo_->branch3_node_idx.size(); ++i) {
+            Idx2DBranch3 const math_idx = comp_coup_->branch3[i];
+            if (math_idx.group == -1) {
+                continue;
+            }
+            // assign parameters, branch3 param consists of three branch parameters
+            auto const branch3_param = components_.template get_item_by_seq<Branch3>(i).template calc_param<sym>();
+            for (size_t branch2 = 0; branch2 < 3; ++branch2) {
+                math_param[math_idx.group].branch_param[math_idx.pos[branch2]] = branch3_param[branch2];
+            }
+        }
         // loop all shunt
         for (Idx i = 0; i != (Idx)comp_topo_->shunt_node_idx.size(); ++i) {
             Idx2D const math_idx = comp_coup_->shunt[i];
@@ -1152,7 +1230,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
             comp_coup_->power_sensor, se_input, [&](Idx i) {
-                return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from;
+                return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
+                       // all branch3 sensors are at from side in the mathemtical model
+                       comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
+                       comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
+                       comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
@@ -1166,24 +1248,34 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     void prepare_solvers() {
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
+        // also get the vector of other solvers (sym -> asym, or asym -> sym)
+        std::vector<MathSolver<!sym>>& other_solvers = get_solvers<!sym>();
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
         // if solvers do not exist, build them
         if (n_math_solvers_ != (Idx)solvers.size()) {
+            // check if other (sym/asym) solver exist
+            bool const other_solver_exist = (n_math_solvers_ == (Idx)other_solvers.size());
             assert(solvers.size() == 0);
             solvers.reserve(n_math_solvers_);
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
-            // use transform to build
-            std::transform(math_topology_.cbegin(), math_topology_.cend(), math_params.begin(),
-                           std::back_inserter(solvers),
-                           [](std::shared_ptr<MathModelTopology const> const& topo_ptr, MathModelParam<sym>& param) {
-                               return MathSolver{topo_ptr,
-                                                 // move parameter into a shared ownership for the math solver
-                                                 std::make_shared<MathModelParam<sym> const>(std::move(param))};
-                           });
+            // loop to build
+            for (Idx i = 0; i != n_math_solvers_; ++i) {
+                // if other solver exists, construct from existing y bus struct
+                if (other_solver_exist) {
+                    solvers.emplace_back(math_topology_[i],
+                                         std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
+                                         other_solvers[i].shared_y_bus_struct());
+                }
+                // else construct from scratch
+                else {
+                    solvers.emplace_back(math_topology_[i],
+                                         std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
+                }
+            }
         }
         // if parameters are not up to date, update them
         else if (!is_parameter_up_to_date<sym>()) {
@@ -1199,9 +1291,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 };
 
-using MainModel = MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Appliance, GenericLoadGen, GenericLoad,
-                                                      GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
-                                AllComponents>;
+using MainModel =
+    MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad,
+                                        GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
+                  AllComponents>;
 
 }  // namespace power_grid_model
 

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "power_grid_model/math_solver/y_bus.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 
@@ -36,7 +36,7 @@ TEST_CASE("Test y bus") {
 
     MathModelTopology topo{};
     MathModelParam<true> param_sym;
-    topo.phase_shift = {0.0, 0.0, 0.0, 0.0};
+    topo.phase_shift.resize(4, 0.0);
     topo.branch_bus_idx = {
         {1, 0},  // branch 0 from node 1 to 0
         {1, 2},  // branch 1 from node 1 to 2
@@ -57,8 +57,8 @@ TEST_CASE("Test y bus") {
     // output
     IdxVector row_indptr = {0, 2, 5, 8, 10};
 
-    /* Use col_indices and row_indices together to find the location in Y bus
-     *  e.g. col_indices = {0, 1, 0}, row_indices = {0, 0, 1} results in Y bus:
+    /* Use col_indices to find the location in Y bus
+     *  e.g. col_indices = {0, 1, 0} results in Y bus:
      * [
      *	x, x
      *   x, 0
@@ -66,16 +66,16 @@ TEST_CASE("Test y bus") {
      */
     IdxVector col_indices = {// Culumn col_indices for each non-zero element in Y bus.
                              0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
-    IdxVector row_indices = {0, 0, 1, 1, 1, 2, 2, 2, 3, 3};
     Idx nnz = 10;  // Number of non-zero elements in Y bus
     IdxVector bus_entry = {0, 3, 6, 9};
-    IdxVector transpose_entry = {// Flip the id's of non-diagonal elements
-                                 0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
+    IdxVector lu_transpose_entry = {// Flip the id's of non-diagonal elements
+                                    0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
     IdxVector y_bus_entry_indptr = {0,  3,       // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
                                     5,  7,  10,  // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
                                     11, 12, 16,  // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
                                     18, 20,      // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
                                     23};
+    IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ComplexTensorVector<true> admittance_sym = {
         17.0 + 104.0i,   // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
         18.0 + 3.0i,     // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
@@ -113,31 +113,38 @@ TEST_CASE("Test y bus") {
         admittance_asym[i] = ComplexTensor<false>{admittance_sym[i]};
     }
 
-    SECTION("Test y bus construction (symmetrical)") {
+    SUBCASE("Test y bus construction (symmetrical)") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
         CHECK(col_indices == ybus.col_indices());
-        CHECK(row_indices == ybus.row_indices());
         CHECK(bus_entry == ybus.bus_entry());
-        CHECK(transpose_entry == ybus.transpose_entry());
+        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
         CHECK(ybus.admittance().size() == admittance_sym.size());
         for (size_t i = 0; i < admittance_sym.size(); i++) {
             CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
         }
+
+        // check lu
+        CHECK(*ybus.shared_indptr_lu() == row_indptr);
+        CHECK(*ybus.shared_indices_lu() == col_indices);
+        CHECK(*ybus.shared_diag_lu() == bus_entry);
+        CHECK(ybus.map_lu_y_bus() == map_lu_y_bus);
     }
 
-    SECTION("Test y bus construction (asymmetrical)") {
-        YBus<false> ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym)};
+    SUBCASE("Test y bus construction (asymmetrical)") {
+        YBus<true> ybus_sym{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        // construct from existing structure
+        YBus<false> ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym),
+                         ybus_sym.shared_y_bus_struct()};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
         CHECK(col_indices == ybus.col_indices());
-        CHECK(row_indices == ybus.row_indices());
         CHECK(bus_entry == ybus.bus_entry());
-        CHECK(transpose_entry == ybus.transpose_entry());
+        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
         CHECK(ybus.admittance().size() == admittance_asym.size());
         for (size_t i = 0; i < admittance_asym.size(); i++) {
@@ -145,7 +152,7 @@ TEST_CASE("Test y bus") {
         }
     }
 
-    SECTION("Test branch flow calculation") {
+    SUBCASE("Test branch flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
         auto branch_flow = ybus.calculate_branch_flow(u);
@@ -161,7 +168,7 @@ TEST_CASE("Test y bus") {
         CHECK(cabs(branch_flow[2].s_t - (-324.0i)) < numerical_tolerance);
     }
 
-    SECTION("Test shunt flow calculation") {
+    SUBCASE("Test shunt flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
         auto shunt_flow = ybus.calculate_shunt_flow(u);
@@ -184,10 +191,9 @@ TEST_CASE("Test one bus system") {
     // output
     IdxVector indptr = {0, 1};
     IdxVector col_indices = {0};
-    IdxVector row_indices = {0};
     Idx nnz = 1;
     IdxVector bus_entry = {0};
-    IdxVector transpose_entry = {0};
+    IdxVector lu_transpose_entry = {0};
     IdxVector y_bus_entry_indptr = {0, 0};
 
     YBus<true> ybus{std::make_shared<MathModelTopology const>(topo),
@@ -197,10 +203,57 @@ TEST_CASE("Test one bus system") {
     CHECK(ybus.nnz() == nnz);
     CHECK(indptr == ybus.row_indptr());
     CHECK(col_indices == ybus.col_indices());
-    CHECK(row_indices == ybus.row_indices());
     CHECK(bus_entry == ybus.bus_entry());
-    CHECK(transpose_entry == ybus.transpose_entry());
+    CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
     CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+}
+
+TEST_CASE("Test fill-in y bus") {
+    /*
+     * struct
+     * [1] --0--> [0] --1--> [2]
+     * extra fill-in: (1, 2) by removing node 0
+     *
+     * [
+     *   0, 1, 2
+     *   3, 4, f
+     *   5, f, 6
+     * ]
+     */
+
+    MathModelTopology topo{};
+    topo.phase_shift.resize(3, 0.0);
+    topo.branch_bus_idx = {
+        {1, 0},  // branch 0 from node 1 to 0
+        {0, 2},  // branch 1 from node 0 to 2
+    };
+    topo.shunt_bus_indptr = {0, 0, 0, 0};
+    topo.fill_in = {{1, 2}};
+
+    IdxVector row_indptr = {0, 3, 5, 7};
+    IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
+    IdxVector bus_entry = {0, 4, 6};
+    IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
+    IdxVector y_bus_entry_indptr = {0, 2,               // 0, 1 belong to element [0,0] in Ybus
+                                    3, 4, 5, 6, 7, 8};  // everything else has only one entry
+    // lu matrix
+    IdxVector row_indptr_lu = {0, 3, 6, 9};
+    IdxVector col_indices_lu = {0, 1, 2, 0, 1, 2, 0, 1, 2};
+    IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, -1, 5, -1, 6};
+    IdxVector diag_lu = {0, 4, 8};
+
+    YBusStructure ybus{topo};
+
+    CHECK(row_indptr == ybus.row_indptr);
+    CHECK(col_indices == ybus.col_indices);
+    CHECK(bus_entry == ybus.bus_entry);
+    CHECK(lu_transpose_entry == ybus.lu_transpose_entry);
+    CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr);
+    // check lu
+    CHECK(ybus.row_indptr_lu == row_indptr_lu);
+    CHECK(ybus.col_indices_lu == col_indices_lu);
+    CHECK(ybus.diag_lu == diag_lu);
+    CHECK(ybus.map_lu_y_bus == map_lu_y_bus);
 }
 
 /*

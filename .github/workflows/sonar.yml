@@ -9,28 +9,45 @@ on:
   push:
     branches:
       - main
+      - 'release/**'
+
   # run pipeline on pull request
   pull_request:
 
 
 jobs:
   sonar-cloud:
+    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     name: SonarCloud
-    runs-on: ubuntu-latest
-    container: ghcr.io/alliander-opensource/power-grid-model-build-env-sonar:latest
+    runs-on: ubuntu-22.04
     env:
       SONAR_SCANNER_VERSION: 4.4.0.2170
       SONAR_SERVER_URL: "https://sonarcloud.io"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      LLVM_COV: llvm-cov-14
+      CC: clang-14
+      CXX: clang++-14
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build lcov gcovr
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json doctest
       - name: Set up JDK 11
         uses: actions/setup-java@v3
         with:
           java-version: 11
           distribution: 'microsoft'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
       - name: Download and set up sonar-scanner
         env:
           SONAR_SCANNER_DOWNLOAD_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${{ env.SONAR_SCANNER_VERSION }}-linux.zip
@@ -49,16 +66,15 @@ jobs:
 
       - name: Python test and coverage
         run: |
-          /opt/venv/bin/pip install -e .
-          /opt/venv/bin/pip install -r dev-requirements.txt
-          /opt/venv/bin/pytest
+          pip install -e .[dev]
+          pytest
           # remove cython generated cpp file
           rm -rf src/power_grid_model/*.cpp
 
       - name: Run build-wrapper for C++
         run: |
           mkdir cpp_build
-          cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DPOWER_GRID_MODEL_SPARSE_SOLVER=EIGEN -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} 
+          cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DPOWER_GRID_MODEL_COVERAGE=1
           VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build cpp_build/
 
       - name: C++ test and coverage
@@ -71,7 +87,8 @@ jobs:
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 
       - name: Run sonar-scanner
-        if: github.event_name == 'push'  # only run sonar server in push event
+        # only run sonar server in push event or pull request event from own repo
+        if: github.event_name == 'push' || ${{ github.event.pull_request.head.repo.owner.login }} == 'alliander-opensource'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

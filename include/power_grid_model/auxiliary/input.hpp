@@ -24,6 +24,9 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(NodeInput, 1, BaseInput,
 POWER_GRID_MODEL_DATA_STRUCT_DEF(BranchInput, 1, BaseInput, 
     ID, from_node, ID, to_node, IntS, from_status, IntS, to_status);
 
+POWER_GRID_MODEL_DATA_STRUCT_DEF(Branch3Input, 1, BaseInput, 
+    ID, node_1, ID, node_2, ID, node_3, IntS, status_1, IntS, status_2, IntS, status_3);
+
 POWER_GRID_MODEL_DATA_STRUCT_DEF(ApplianceInput, 1, BaseInput, 
     ID, node, IntS, status);
 
@@ -41,6 +44,21 @@ POWER_GRID_MODEL_DATA_STRUCT_DEF(TransformerInput, 1, BranchInput,
     IntS, clock, BranchSide, tap_side, IntS, tap_pos, IntS, tap_min, IntS, tap_max, IntS, tap_nom, double, tap_size, 
     double, uk_min, double, uk_max, double, pk_min, double, pk_max, 
     double, r_grounding_from, double, x_grounding_from, double, r_grounding_to, double, x_grounding_to);
+
+// Due to the maximum entries in the POWER_GRID_MODEL_DATA_STRUCT_DEF macro, ThreeWindingTransformerInput is created in two steps
+// TODO: generate input data in a different way
+POWER_GRID_MODEL_DATA_STRUCT_DEF(ThreeWindingTransformerInputBasics, 1, Branch3Input, 
+    double, u1, double, u2, double, u3, double, sn_1, double, sn_2, double, sn_3, 
+    double, uk_12, double, uk_13, double, uk_23, double, pk_12, double, pk_13, double, pk_23, double, i0, double, p0, 
+    WindingType, winding_1, WindingType, winding_2, WindingType, winding_3,
+    IntS, clock_12, IntS, clock_13,
+    Branch3Side, tap_side, IntS, tap_pos, IntS, tap_min, IntS, tap_max, IntS, tap_nom, double, tap_size);
+
+POWER_GRID_MODEL_DATA_STRUCT_DEF(ThreeWindingTransformerInput, 1, ThreeWindingTransformerInputBasics, 
+    double, uk_12_min, double, uk_12_max, double, uk_13_min, double, uk_13_max, double, uk_23_min, double, uk_23_max, 
+    double, pk_12_min, double, pk_12_max, double, pk_13_min, double, pk_13_max, double, pk_23_min, double, pk_23_max, 
+    double, r_grounding_1, double, x_grounding_1, double, r_grounding_2, double, x_grounding_2, 
+    double, r_grounding_3, double, x_grounding_3);
 
 POWER_GRID_MODEL_DATA_STRUCT_DEF(GenericLoadGenInput, 1, ApplianceInput,
     LoadGenType, type);
@@ -96,7 +114,13 @@ using BaseUpdate = BaseInput;
 POWER_GRID_MODEL_DATA_STRUCT_DEF(BranchUpdate, 1, BaseUpdate,
     IntS, from_status, IntS, to_status);
 
+POWER_GRID_MODEL_DATA_STRUCT_DEF(Branch3Update, 1, BaseUpdate,
+    IntS, status_1, IntS, status_2, IntS, status_3);
+
 POWER_GRID_MODEL_DATA_STRUCT_DEF(TransformerUpdate, 1, BranchUpdate,
+    IntS, tap_pos);
+
+POWER_GRID_MODEL_DATA_STRUCT_DEF(ThreeWindingTransformerUpdate, 1, Branch3Update,
     IntS, tap_pos);
 
 POWER_GRID_MODEL_DATA_STRUCT_DEF(ApplianceUpdate, 1, BaseUpdate,

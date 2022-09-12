@@ -10,7 +10,7 @@
 #include <iostream>
 #include <regex>
 
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 #include "nlohmann/json.hpp"
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
@@ -50,11 +50,11 @@ struct Buffer {
 void parse_single_object(void* ptr, json const& j, MetaData const& meta, Idx position) {
     meta.set_nan(ptr, position);
     for (auto const& it : j.items()) {
-        // skip extra info
-        if (it.key() == "extra") {
+        // Allow and skip unknown attributes
+        if (!meta.has_attr(it.key())) {
             continue;
         }
-        DataAttribute const& attr = meta.find_attr(it.key());
+        DataAttribute attr = meta.find_attr(it.key());
         if (attr.numpy_type == "i1") {
             int8_t const value = it.value().get<int8_t>();
             meta.set_attr(ptr, &value, attr, position);
@@ -247,13 +247,13 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                     }
                     bool const match =
                         component_meta.compare_attr(result_ptr, reference_result_ptr, dynamic_atol, rtol, attr, obj);
-                    std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
-                                                 " #" + std::to_string(obj) + ", attribute: " + attr.name;
                     if (match) {
-                        SUCCEED("Assertion ok for " + case_str);
+                        CHECK(match);
                     }
                     else {
-                        FAIL_CHECK("Assertion failure for " + case_str);
+                        std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
+                                                     " #" + std::to_string(obj) + ", attribute: " + attr.name;
+                        CHECK_MESSAGE(match, case_str);
                     }
                 }
             }
@@ -274,6 +274,7 @@ std::filesystem::path const data_path = std::filesystem::path{__FILE__}.parent_p
 std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"newton_raphson", CalculationMethod::newton_raphson},
     {"linear", CalculationMethod::linear},
+    {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
 };
 using CalculationFunc = BatchParameter (MainModel::*)(double, Idx, CalculationMethod, Dataset const&,
@@ -306,7 +307,7 @@ struct CaseParam {
     }
 };
 
-inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type,
+inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
                       std::vector<CaseParam>& cases) {
     std::filesystem::path const param_file = case_dir / "params.json";
     json const j = read_json(param_file);
@@ -321,37 +322,34 @@ inline void add_cases(std::filesystem::path const& case_dir, std::string const& 
     // loop sym and batch
     for (bool const sym : {true, false}) {
         std::string const output_prefix = sym ? "sym_output" : "asym_output";
-        for (bool const is_batch : {true, false}) {
-            for (std::string const& calculation_method : calculation_methods) {
-                std::string const batch_suffix = is_batch ? "_batch" : "";
-                // add a case if output file exists
-                std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
-                if (std::filesystem::exists(output_file)) {
-                    CaseParam param{};
-                    param.case_dir = case_dir;
-                    param.case_name =
-                        CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
-                    param.calculation_type = calculation_type;
-                    param.calculation_method = calculation_method;
-                    param.sym = sym;
-                    param.is_batch = is_batch;
-                    j.at("rtol").get_to(param.rtol);
-                    json const j_atol = j.at("atol");
-                    if (j_atol.type() != json::value_t::object) {
-                        param.atol = {{"default", j_atol.get<double>()}};
-                    }
-                    else {
-                        j_atol.get_to(param.atol);
-                    }
-                    if (param.is_batch) {
-                        j.at("independent").get_to(param.batch_parameter.independent);
-                        j.at("cache_topology").get_to(param.batch_parameter.cache_topology);
-                    }
-                    param.case_name += sym ? "-sym" : "-asym";
-                    param.case_name += "-" + param.calculation_method;
-                    param.case_name += is_batch ? "-batch" : "";
-                    cases.push_back(param);
+        for (std::string const& calculation_method : calculation_methods) {
+            std::string const batch_suffix = is_batch ? "_batch" : "";
+            // add a case if output file exists
+            std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
+            if (std::filesystem::exists(output_file)) {
+                CaseParam param{};
+                param.case_dir = case_dir;
+                param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
+                param.calculation_type = calculation_type;
+                param.calculation_method = calculation_method;
+                param.sym = sym;
+                param.is_batch = is_batch;
+                j.at("rtol").get_to(param.rtol);
+                json const j_atol = j.at("atol");
+                if (j_atol.type() != json::value_t::object) {
+                    param.atol = {{"default", j_atol.get<double>()}};
                 }
+                else {
+                    j_atol.get_to(param.atol);
+                }
+                if (param.is_batch) {
+                    j.at("independent").get_to(param.batch_parameter.independent);
+                    j.at("cache_topology").get_to(param.batch_parameter.cache_topology);
+                }
+                param.case_name += sym ? "-sym" : "-asym";
+                param.case_name += "-" + param.calculation_method;
+                param.case_name += is_batch ? "-batch" : "";
+                cases.push_back(param);
             }
         }
     }
@@ -385,13 +383,8 @@ ValidationCase create_validation_case(CaseParam const& param) {
     return validation_case;
 }
 
-// all test cases
-std::vector<CaseParam> all_cases;
-
-TEST_CASE("Check existence of validation data path") {
-    REQUIRE(std::filesystem::exists(data_path));
-    std::cout << "Validation test dataset: " << data_path << '\n';
-
+inline std::vector<CaseParam> read_all_cases(bool is_batch) {
+    std::vector<CaseParam> all_cases;
     // detect all test cases
     for (std::string calculation_type : {"power_flow", "state_estimation"}) {
         // loop all sub-directories
@@ -401,80 +394,100 @@ TEST_CASE("Check existence of validation data path") {
                 continue;
             }
             // try to add cases
-            add_cases(case_dir, calculation_type, all_cases);
+            add_cases(case_dir, calculation_type, is_batch, all_cases);
         }
     }
     std::cout << "Total test cases: " << all_cases.size() << '\n';
+    return all_cases;
 }
 
-TEST_CASE("Validation test") {
-    if (data_path.empty()) {
-        return;
+inline std::vector<CaseParam> const& get_all_single_cases() {
+    static std::vector<CaseParam> const all_cases = read_all_cases(false);
+    return all_cases;
+}
+
+inline std::vector<CaseParam> const& get_all_batch_cases() {
+    static std::vector<CaseParam> const all_cases = read_all_cases(true);
+    return all_cases;
+}
+
+TEST_CASE("Check existence of validation data path") {
+    REQUIRE(std::filesystem::exists(data_path));
+    std::cout << "Validation test dataset: " << data_path << '\n';
+}
+
+void validate_single_case(CaseParam const& param) {
+    std::cout << "Validation test: " << param.case_name << std::endl;
+    ValidationCase const validation_case = create_validation_case(param);
+    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
+    SingleData result = create_result_dataset(validation_case.input, output_prefix);
+    // create model and run
+    MainModel model{50.0, validation_case.input.const_dataset, 0};
+    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+    (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+    assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol, param.rtol);
+}
+
+void validate_batch_case(CaseParam const& param) {
+    std::cout << "Validation test: " << param.case_name << std::endl;
+    ValidationCase const validation_case = create_validation_case(param);
+    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
+    SingleData result = create_result_dataset(validation_case.input, output_prefix);
+    // create model
+    MainModel model{50.0, validation_case.input.const_dataset, 0};
+    Idx const n_batch = (Idx)validation_case.update_batch.individual_batch.size();
+    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+
+    // run in loops
+    for (Idx batch = 0; batch != n_batch; ++batch) {
+        MainModel model_copy{model};
+        // update and run
+        model_copy.update_component(validation_case.update_batch.individual_batch[batch].const_dataset);
+        (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+        // check
+        assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
+                      output_prefix, param.atol, param.rtol);
     }
 
-    SECTION("Test single validation") {
-        for (CaseParam const& param : all_cases) {
-            if (param.is_batch) {
-                continue;
+    // run in one-go, with different threading possibility
+    SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+    for (Idx threading : {-1, 0, 1, 2}) {
+        BatchParameter batch_parameter =
+            (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
+                          validation_case.update_batch.const_dataset, threading);
+        assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
+                      param.rtol);
+        // check batch parameters
+        CHECK(batch_parameter.independent == param.batch_parameter.independent);
+        CHECK(batch_parameter.cache_topology == param.batch_parameter.cache_topology);
+    }
+}
+
+TEST_CASE("Validation test single") {
+    std::vector<CaseParam> const& all_cases = get_all_single_cases();
+    for (CaseParam const& param : all_cases) {
+        SUBCASE(param.case_name.c_str()) {
+            try {
+                validate_single_case(param);
             }
-            SECTION(param.case_name) {
-                std::cout << "Validation test: " << param.case_name << std::endl;
-                ValidationCase const validation_case = create_validation_case(param);
-                std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-                SingleData result = create_result_dataset(validation_case.input, output_prefix);
-                // create model and run
-                MainModel model{50.0, validation_case.input.const_dataset, 0};
-                CalculationFunc const func =
-                    calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
-                (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {},
-                              -1);
-                assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol,
-                              param.rtol);
+            catch (std::exception& e) {
+                auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                FAIL_CHECK(msg);
             }
         }
     }
+}
 
-    SECTION("Test batch validation") {
-        for (CaseParam const& param : all_cases) {
-            if (!param.is_batch) {
-                continue;
+TEST_CASE("Validation test batch") {
+    std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+    for (CaseParam const& param : all_cases) {
+        SUBCASE(param.case_name.c_str()) {
+            try {
+                validate_batch_case(param);
             }
-            SECTION(param.case_name) {
-                std::cout << "Validation test: " << param.case_name << std::endl;
-                ValidationCase const validation_case = create_validation_case(param);
-                std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-                SingleData result = create_result_dataset(validation_case.input, output_prefix);
-                // create model
-                MainModel model{50.0, validation_case.input.const_dataset, 0};
-                Idx const n_batch = (Idx)validation_case.update_batch.individual_batch.size();
-                CalculationFunc const func =
-                    calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
-
-                // run in loops
-                for (Idx batch = 0; batch != n_batch; ++batch) {
-                    MainModel model_copy{model};
-                    // update and run
-                    model_copy.update_component(validation_case.update_batch.individual_batch[batch].const_dataset);
-                    (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method),
-                                       result.dataset, {}, -1);
-                    // check
-                    assert_result(result.const_dataset,
-                                  validation_case.output_batch.individual_batch[batch].const_dataset, output_prefix,
-                                  param.atol, param.rtol);
-                }
-
-                // run in one-go, with different threading possibility
-                SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
-                for (Idx threading : {-1, 0, 1, 2}) {
-                    BatchParameter batch_parameter =
-                        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method),
-                                      batch_result.dataset, validation_case.update_batch.const_dataset, threading);
-                    assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix,
-                                  param.atol, param.rtol);
-                    // check batch parameters
-                    CHECK(batch_parameter.independent == param.batch_parameter.independent);
-                    CHECK(batch_parameter.cache_topology == param.batch_parameter.cache_topology);
-                }
+            catch (std::exception& e) {
+                auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                FAIL_CHECK(msg);
             }
         }
     }
