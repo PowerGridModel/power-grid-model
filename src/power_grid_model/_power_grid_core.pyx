@@ -165,6 +165,7 @@ cdef extern from "power_grid_model/main_model.hpp" namespace "power_grid_model":
             const map[string, ConstDataPointer] & update_data,
             idx_t pos
         ) except+
+        void get_indexer(const string& component_type, const id_t* id_begin, idx_t size, idx_t* indexer_begin)
 
 cdef extern from "<optional>":
     cppclass OptionalMainModel "::std::optional<::power_grid_model::MainModel>":
@@ -307,6 +308,22 @@ cdef class PowerGridModel:
         self._main_model.emplace(system_frequency, input_set, 0)
         self.independent = False
         self.cache_topology = False
+
+    def get_indexer(self, 
+                    component_type: str, 
+                    ids: np.ndarray):
+        """
+        Get array of indexers given array of ids for component type
+
+        Args:
+            component_type: type of component
+            ids: array of ids
+        
+        Returns:
+            array of inderxers, same shape as input array ids
+
+        """
+        pass
 
     def copy(self) -> PowerGridModel:
         """
