@@ -22,8 +22,10 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 
 # idx and id types
-from libc.stdint cimport int32_t as idx_t
+from libc.stdint cimport int32_t as idx_t # isort: skip
 cdef np_idx_t = np.int32
+from libc.stdint cimport int32_t as id_t # isort: skip
+cdef np_id_t = np.int32
 
 cdef VALIDATOR_MSG = "Try validate_input_data() or validate_batch_data() to validate your data."
 
