@@ -15,13 +15,17 @@ from .enum import CalculationMethod
 
 cimport numpy as cnp
 from cython.operator cimport dereference as deref
-from libc.stdint cimport int8_t, int32_t
+from libc.stdint cimport int8_t
 from libcpp cimport bool
 from libcpp.map cimport map
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
-VALIDATOR_MSG = "Try validate_input_data() or validate_batch_data() to validate your data."
+# idx and id types
+from libc.stdint cimport int32_t as idx_t
+cdef np_idx_t = np.int32
+
+cdef VALIDATOR_MSG = "Try validate_input_data() or validate_batch_data() to validate your data."
 
 cdef extern from "power_grid_model/auxiliary/meta_data_gen.hpp" namespace "power_grid_model::meta_data":
     cppclass DataAttribute:
@@ -110,10 +114,10 @@ cdef _generate_component_meta_data(MetaData & cpp_component_meta_data):
 cdef extern from "power_grid_model/auxiliary/dataset.hpp" namespace "power_grid_model":
     cppclass MutableDataPointer:
         MutableDataPointer()
-        MutableDataPointer(void * ptr, const int32_t * indptr, int32_t size)
+        MutableDataPointer(void * ptr, const idx_t * indptr, idx_t size)
     cppclass ConstDataPointer:
         ConstDataPointer()
-        ConstDataPointer(const void * ptr, const int32_t * indptr, int32_t size)
+        ConstDataPointer(const void * ptr, const idx_t * indptr, idx_t size)
 
 cdef extern from "power_grid_model/main_model.hpp" namespace "power_grid_model":
     cppclass CalculationMethodCPP "::power_grid_model::CalculationMethod":
@@ -122,42 +126,42 @@ cdef extern from "power_grid_model/main_model.hpp" namespace "power_grid_model":
         bool independent
         bool cache_topology
     cppclass MainModel:
-        map[string, int32_t] all_component_count()
+        map[string, idx_t] all_component_count()
         BatchParameter calculate_sym_power_flow "calculate_power_flow<true>"(
             double error_tolerance,
-            int32_t max_iterations,
+            idx_t max_iterations,
             CalculationMethodCPP calculation_method,
             const map[string, MutableDataPointer] & result_data,
             const map[string, ConstDataPointer] & update_data,
-            int32_t threading
+            idx_t threading
         ) except+
         BatchParameter calculate_asym_power_flow "calculate_power_flow<false>"(
             double error_tolerance,
-            int32_t max_iterations,
+            idx_t max_iterations,
             CalculationMethodCPP calculation_method,
             const map[string, MutableDataPointer] & result_data,
             const map[string, ConstDataPointer] & update_data,
-            int32_t threading
+            idx_t threading
         ) except+
         BatchParameter calculate_sym_state_estimation "calculate_state_estimation<true>"(
             double error_tolerance,
-            int32_t max_iterations,
+            idx_t max_iterations,
             CalculationMethodCPP calculation_method,
             const map[string, MutableDataPointer] & result_data,
             const map[string, ConstDataPointer] & update_data,
-            int32_t threading
+            idx_t threading
         ) except+
         BatchParameter calculate_asym_state_estimation "calculate_state_estimation<false>"(
             double error_tolerance,
-            int32_t max_iterations,
+            idx_t max_iterations,
             CalculationMethodCPP calculation_method,
             const map[string, MutableDataPointer] & result_data,
             const map[string, ConstDataPointer] & update_data,
-            int32_t threading
+            idx_t threading
         ) except+
         void update_component(
             const map[string, ConstDataPointer] & update_data,
-            int32_t pos
+            idx_t pos
         ) except+
 
 cdef extern from "<optional>":
@@ -169,7 +173,7 @@ cdef extern from "<optional>":
         MainModel & emplace(
             double system_frequency,
             const map[string, ConstDataPointer] & input_data,
-            int32_t pos) except+
+            idx_t pos) except+
 
 # internally used meta data, to prevent modification
 cdef _power_grid_meta_data = _generate_meta_data()
@@ -183,7 +187,7 @@ cdef map[string, ConstDataPointer] generate_const_ptr_map(data: Dict[str, Dict[s
         data_arr = v['data']
         indptr_arr = v['indptr']
         result[k.encode()] = ConstDataPointer(
-            cnp.PyArray_DATA(data_arr), < const int32_t*>cnp.PyArray_DATA(indptr_arr),
+            cnp.PyArray_DATA(data_arr), < const idx_t*>cnp.PyArray_DATA(indptr_arr),
             v['batch_size'])
     return result
 
@@ -195,7 +199,7 @@ cdef map[string, MutableDataPointer] generate_ptr_map(data: Dict[str, Dict[str, 
         data_arr = v['data']
         indptr_arr = v['indptr']
         result[k.encode()] = MutableDataPointer(
-            cnp.PyArray_DATA(data_arr), < const int32_t * > cnp.PyArray_DATA(indptr_arr),
+            cnp.PyArray_DATA(data_arr), < const idx_t * > cnp.PyArray_DATA(indptr_arr),
             v['batch_size'])
     return result
 
@@ -234,10 +238,10 @@ cdef _prepare_cpp_array(data_type: str,
             data = v
             ndim = v.ndim
             if ndim == 1:
-                indptr = np.array([0, v.size], dtype=np.int32)
+                indptr = np.array([0, v.size], dtype=np_idx_t)
                 batch_size = 1
             elif ndim == 2:  # (n_batch, n_component)
-                indptr = np.arange(v.shape[0] + 1, dtype=np.int32) * v.shape[1]
+                indptr = np.arange(v.shape[0] + 1, dtype=np_idx_t) * v.shape[1]
                 batch_size = v.shape[0]
             else:
                 raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
@@ -257,7 +261,7 @@ cdef _prepare_cpp_array(data_type: str,
                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
         # convert array
         data = np.ascontiguousarray(data, dtype=schema[component_name]['dtype'])
-        indptr = np.ascontiguousarray(indptr, dtype=np.int32)
+        indptr = np.ascontiguousarray(indptr, dtype=np_idx_t)
         return_dict[component_name] = {
             'data': data,
             'indptr': indptr,
@@ -333,10 +337,10 @@ cdef class PowerGridModel:
                    calculation_type,
                    bool symmetric,
                    double error_tolerance,
-                   int32_t max_iterations,
+                   idx_t max_iterations,
                    calculation_method: Union[CalculationMethod, str],
                    update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
-                   int32_t threading
+                   idx_t threading
                    ):
         """
         Core calculation routine
@@ -453,10 +457,10 @@ cdef class PowerGridModel:
     def calculate_power_flow(self, *,
                              bool symmetric=True,
                              double error_tolerance=1e-8,
-                             int32_t max_iterations=20,
+                             idx_t max_iterations=20,
                              calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
                              update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
-                             int32_t threading=-1
+                             idx_t threading=-1
                              ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -519,10 +523,10 @@ cdef class PowerGridModel:
     def calculate_state_estimation(self, *,
                                    bool symmetric=True,
                                    double error_tolerance=1e-8,
-                                   int32_t max_iterations=20,
+                                   idx_t max_iterations=20,
                                    calculation_method: Union[CalculationMethod, str] = CalculationMethod.iterative_linear,
                                    update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
-                                   int32_t threading=-1
+                                   idx_t threading=-1
                                    ) -> Dict[str, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
@@ -592,7 +596,7 @@ cdef class PowerGridModel:
                 value: integer count of elements of this type
         """
         all_component_count = {}
-        cdef map[string, int32_t] cpp_count = self._get_model().all_component_count()
+        cdef map[string, idx_t] cpp_count = self._get_model().all_component_count()
         for map_entry in cpp_count:
             all_component_count[map_entry.first.decode()] = map_entry.second
         return all_component_count
