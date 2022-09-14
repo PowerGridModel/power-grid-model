@@ -165,7 +165,11 @@ cdef extern from "power_grid_model/main_model.hpp" namespace "power_grid_model":
             const map[string, ConstDataPointer] & update_data,
             idx_t pos
         ) except+
-        void get_indexer(const string& component_type, const id_t* id_begin, idx_t size, idx_t* indexer_begin)
+        void get_indexer(
+            const string& component_type, 
+            const id_t* id_begin, 
+            idx_t size, 
+            idx_t* indexer_begin) except+
 
 cdef extern from "<optional>":
     cppclass OptionalMainModel "::std::optional<::power_grid_model::MainModel>":
@@ -323,7 +327,14 @@ cdef class PowerGridModel:
             array of inderxers, same shape as input array ids
 
         """
-        pass
+        cdef cnp.ndarray ids_c = np.ascontiguousarray(ids, dtype=np_id_t)
+        cdef cnp.ndarray indexer = np.empty_like(ids_c, dtype=np_idx_t, order='C')
+        cdef const id_t* id_begin = <const id_t*> cnp.PyArray_DATA(ids_c)
+        cdef idx_t* indexer_begin = <idx_t*> cnp.PyArray_DATA(indexer)
+        cdef idx_t size = ids.size
+        # call c function
+        self._get_model().get_indexer(component_type.encode(), id_begin, size, indexer_begin)
+        return indexer
 
     def copy(self) -> PowerGridModel:
         """
