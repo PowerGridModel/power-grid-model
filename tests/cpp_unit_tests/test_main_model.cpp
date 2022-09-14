@@ -104,6 +104,14 @@ TEST_CASE("Test main model") {
     main_model.add_component<AsymVoltageSensor>(asym_voltage_sensor_input);
     main_model.set_construction_complete();
 
+    SUBCASE("Test get indexer"){
+        IdxVector const node_id{2, 1, 3, 2};
+        IdxVector const expected_indexer{1, 0, 2, 1};
+        IdxVector indexer(4);
+        main_model.get_indexer("node", node_id.data(), 4, indexer.data());
+        CHECK(indexer == expected_indexer);
+    }
+
     SUBCASE("Test duplicated id") {
         MainModel main_model2{50.0};
         node_input[1].id = 1;
