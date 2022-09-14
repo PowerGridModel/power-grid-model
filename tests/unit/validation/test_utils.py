@@ -108,7 +108,7 @@ def test_update_input_data_asym_nans():
 
     # The current C++ implementation updates the entire 3-phase value is one of the elements is non-NaN:
     np.testing.assert_array_equal(
-        merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [np.nan, np.nan, 5.3], [6.1, 6.2, 6.3]]
+        merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [2.1, np.nan, 5.3], [6.1, 6.2, 6.3]]
     )
 
 
