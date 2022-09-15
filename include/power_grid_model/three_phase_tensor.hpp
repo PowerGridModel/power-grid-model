@@ -321,6 +321,41 @@ inline bool is_nan(IntS x) {
     return x == na_IntS;
 }
 
+/* update real values
+
+   RealValue is only updated when the update value is not nan
+
+   symmetric:  update 1.0 with nan -> 1.0
+               update 1.0 with 2.0 -> 2.0
+
+   asymmetric: update [1.0, nan, nan] with [nan, nan, 2.0] -> [1.0, nan, 2.0]
+
+   The function assumes that the current value is normalized and new value should be normalized with scalar
+*/
+template <bool sym>
+RealValue<sym> update_real_value(RealValue<sym> const& new_value, RealValue<sym>& current_value, double scalar) {
+    RealValue<sym> updated_value;
+    if constexpr (sym) {
+        if (is_nan(new_value)) {
+            return current_value;
+        }
+        else {
+            return scalar * new_value;
+        }
+    }
+    else {
+        for (size_t i = 0; i != 3; i++) {
+            if (is_nan(new_value[i])) {
+                updated_value[i] = current_value[i];
+            }
+            else {
+                updated_value[i] = scalar * new_value[i];
+            }
+        }
+        return updated_value;
+    }
+}
+
 // symmetric component matrix
 inline ComplexTensor<false> get_sym_matrix() {
     ComplexTensor<false> m;
