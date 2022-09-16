@@ -13,9 +13,7 @@ The documentation is under heavy development
 :caption: 'Contents:'
 :maxdepth: 2
 
-graph-data-model
-native-data-interface
-python-api-reference
+
 ```
 
 # Indices and tables
