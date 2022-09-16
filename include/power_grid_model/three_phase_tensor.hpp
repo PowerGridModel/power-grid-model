@@ -332,27 +332,20 @@ inline bool is_nan(IntS x) {
 
    The function assumes that the current value is normalized and new value should be normalized with scalar
 */
-template <bool sym>
-RealValue<sym> update_real_value(RealValue<sym> const& new_value, RealValue<sym>& current_value, double scalar) {
-    RealValue<sym> updated_value;
+template <bool sym, class Proxy>
+void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
     if constexpr (sym) {
-        if (is_nan(new_value)) {
-            return current_value;
-        }
-        else {
-            return scalar * new_value;
+        if (!is_nan(new_value)) {
+            current_value = scalar * new_value;
         }
     }
     else {
         for (size_t i = 0; i != 3; i++) {
-            if (is_nan(new_value[i])) {
-                updated_value[i] = current_value[i];
-            }
-            else {
-                updated_value[i] = scalar * new_value[i];
+            if (!is_nan(new_value(i))) {
+                current_value(i) = scalar * new_value(i);
             }
         }
-        return updated_value;
+        
     }
 }
 
