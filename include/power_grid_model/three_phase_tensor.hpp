@@ -345,7 +345,6 @@ void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, d
                 current_value(i) = scalar * new_value(i);
             }
         }
-        
     }
 }
 

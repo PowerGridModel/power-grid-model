@@ -79,20 +79,12 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
 
     void set_power(RealValue<sym> const& new_p_specified, RealValue<sym> const& new_q_specified) {
         double scalar = direction_ / base_power<sym>;
-        //RealValue<sym> p = real(s_specified_);
-        //RealValue<sym> q = imag(s_specified_);
-        update_real_value<sym>(new_p_specified, s_specified_, scalar);
-        update_real_value<sym>(new_q_specified, s_specified_, scalar);
+        RealValue<sym> ps = real(s_specified_);
+        RealValue<sym> qs = imag(s_specified_);
+        update_real_value<sym>(new_p_specified, ps, scalar);
+        update_real_value<sym>(new_q_specified, qs, scalar);
 
-        //if (is_nan(new_p_specified))
-        //    ps = real(s_specified_);
-        //else
-        //    ps = direction_ / base_power<sym> * new_p_specified;
-        //if (is_nan(new_q_specified))
-        //    qs = imag(s_specified_);
-        //else
-        //    qs = direction_ / base_power<sym> * new_q_specified;
-        //s_specified_ = ps + 1.0i * qs;
+        s_specified_ = ps + 1.0i * qs;
     }
 
     // update for load_gen

@@ -175,17 +175,17 @@ TEST_CASE("Three phase tensor") {
         CHECK(is_nan(imag(va)));
     }
 
- /*   SUBCASE("Test RealValue update - sym") {
+    SUBCASE("Test RealValue update - sym") {
         RealValue<true> value = 1.0;
         RealValue<true> update_1 = nan;
         RealValue<true> update_2 = 2.0;
         double scalar = 3.0;
 
-        RealValue<true> updated = update_real_value<true>(update_1, value, scalar);
-        CHECK(updated == 1.0);
+        update_real_value<true>(update_1, value, scalar);
+        CHECK(value == 1.0);
 
-        updated = update_real_value<true>(update_2, value, scalar);
-        CHECK(updated == 6.0);
+        update_real_value<true>(update_2, value, scalar);
+        CHECK(value == 6.0);
     }
 
     SUBCASE("Test RealValue update - asym") {
@@ -194,18 +194,16 @@ TEST_CASE("Three phase tensor") {
         RealValue<false> vec_update_2{nan, nan, 2.0};
         double scalar = 3.0;
 
-        RealValue<false> vec_2{1.0, nan, 6.0};
+        update_real_value<false>(vec_update_1, vec, scalar);
+        CHECK(vec(0) == 1.0);
+        CHECK(is_nan(vec(1)));
+        CHECK(is_nan(vec(2)));
 
-        RealValue<false> updated = update_real_value<false>(vec_update_1, vec, scalar);
-        CHECK(updated(0) == vec(0));
-        CHECK(is_nan(updated(1)));
-        CHECK(is_nan(updated(2)));
-
-        updated = update_real_value<false>(vec_update_2, vec, scalar);
-        CHECK(updated(0) == vec(0));
-        CHECK(is_nan(updated(1)));
-        CHECK(updated(2) == 6.0);
-    }*/
+        update_real_value<false>(vec_update_2, vec, scalar);
+        CHECK(vec(0) == 1.0);
+        CHECK(is_nan(vec(1)));
+        CHECK(vec(2) == 6.0);
+    }
 }
 
 }  // namespace power_grid_model
