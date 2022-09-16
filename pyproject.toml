@@ -50,6 +50,11 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
+doc = [
+    "sphinx",
+    "myst-parser",
+    "sphinx_rtd_theme",
+]
 
 [project.urls]
 Home-page = "https://github.com/alliander-opensource/power-grid-model"
