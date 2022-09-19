@@ -212,3 +212,4 @@ jobs:
           prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
+
