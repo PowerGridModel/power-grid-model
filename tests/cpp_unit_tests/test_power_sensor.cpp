@@ -88,6 +88,23 @@ TEST_CASE("Test power sensor") {
 
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
+
+        // Check update nan
+        sym_power_sensor_update.power_sigma = nan;
+        sym_power_sensor_update.p_measured = nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        sym_sensor_param = sym_power_sensor.calc_param<true>();
+        asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
+
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
     }
 
     SUBCASE("Symmetric Power Sensor - Branch_from") {
@@ -164,6 +181,23 @@ TEST_CASE("Test power sensor") {
 
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
+
+        // Check update nan
+        sym_power_sensor_update.power_sigma = nan;
+        sym_power_sensor_update.p_measured = nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        sym_sensor_param = sym_power_sensor.calc_param<true>();
+        asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
+
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
     }
 
     SUBCASE("Symmetric Power Sensor - Branch_to") {
@@ -240,6 +274,23 @@ TEST_CASE("Test power sensor") {
 
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
+
+        // Check update nan
+        sym_power_sensor_update.power_sigma = nan;
+        sym_power_sensor_update.p_measured = nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        sym_sensor_param = sym_power_sensor.calc_param<true>();
+        asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
+
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
     }
 
     SUBCASE("Symmetric Power Sensor - Source") {
@@ -316,6 +367,23 @@ TEST_CASE("Test power sensor") {
 
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.3 * 1e3 / 3.0));
+
+        // Check update nan
+        sym_power_sensor_update.power_sigma = nan;
+        sym_power_sensor_update.p_measured = nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        sym_sensor_param = sym_power_sensor.calc_param<true>();
+        asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
+
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
     }
 
     SUBCASE("Symmetric Power Sensor - Shunt") {
@@ -392,6 +460,23 @@ TEST_CASE("Test power sensor") {
 
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(4.7 * 1e3 / 3.0));
+
+        // Check update nan
+        sym_power_sensor_update.power_sigma = nan;
+        sym_power_sensor_update.p_measured = nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        sym_sensor_param = sym_power_sensor.calc_param<true>();
+        asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-4.0 * 1e-3));
+
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
     }
 
     SUBCASE("Symmetric Power Sensor - Load") {
@@ -468,6 +553,23 @@ TEST_CASE("Test power sensor") {
 
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(4.7 * 1e3 / 3.0));
+
+        // Check update nan
+        sym_power_sensor_update.power_sigma = nan;
+        sym_power_sensor_update.p_measured = nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        sym_sensor_param = sym_power_sensor.calc_param<true>();
+        asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+        CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(sym_sensor_param.value) == doctest::Approx(-4.0 * 1e-3));
+
+        CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+        CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
+        CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
     }
 
     // -------------------------------------------------------
