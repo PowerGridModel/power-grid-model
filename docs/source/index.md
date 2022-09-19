@@ -9,10 +9,22 @@
 The documentation is under heavy development
 ```
 
+```{include} ../../README.md
+```
+
+```{include} ../graph-data-model.md
+```
+
+```{include} ../native-data-interface.md
+```
+
+```{include} ../python-api-reference.md
+```
+
+
 ```{toctree}
 :caption: 'Contents:'
 :maxdepth: 2
-
 
 ```
 
