@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+
+SPDX-License-Identifier: MPL-2.0
+-->
+
 % power-grid-model documentation master file, created by
 % sphinx-quickstart on Fri Sep 16 12:10:59 2022.
 % You can adapt this file completely to your liking, but it should at least
