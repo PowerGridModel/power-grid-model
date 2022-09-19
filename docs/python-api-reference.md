@@ -137,6 +137,22 @@ class PowerGridModel:
         """
         pass
 
+    def get_indexer(self, 
+                    component_type: str, 
+                    ids: np.ndarray):
+        """
+        Get array of indexers given array of ids for component type
+
+        Args:
+            component_type: type of component
+            ids: array of ids
+        
+        Returns:
+            array of inderxers, same shape as input array ids
+
+        """
+        pass
+
     def copy(self) -> 'PowerGridModel':
         """
 
