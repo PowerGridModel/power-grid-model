@@ -91,7 +91,6 @@ build-verbosity = 1
 test-extras = ["dev"]
 test-command = "pytest {package}/tests"
 
-
 [tool.cibuildwheel.linux]
 build = ["cp*-manylinux_x86_64", "cp*-manylinux_aarch64"]
 archs = ["x86_64", "aarch64"]
