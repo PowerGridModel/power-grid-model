@@ -33,3 +33,7 @@ templates_path = ["_templates"]
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+
+# Internationalization
+# locale_dirs = ['locale/']   # path is example but recommended.
+# gettext_compact = False     # optional.
