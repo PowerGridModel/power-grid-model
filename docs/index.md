@@ -41,8 +41,7 @@ power_grid_model
 ```
 ## Functions used in examples
 
-```
-Extra code
+```{eval-rst}
 .. autofunction:: power_grid_model.validation.assert_valid_input_data
 .. autofunction:: power_grid_model.validation.assert_valid_batch_data
 .. autofunction:: power_grid_model.initialize_array
