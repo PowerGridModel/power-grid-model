@@ -553,4 +553,4 @@ def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int
             io_stream.write("\n")
             compact_json_dump(obj, io_stream, indent, max_level, level + 2)
         io_stream.write(",\n" if i < n_obj else "\n")
-    io_stream.write(tab + "}")
+    io_stream.write(tab + "}\n")
