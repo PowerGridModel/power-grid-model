@@ -15,5 +15,14 @@ python:
       path: .
       extra_requirements:
         - docs
-    - method: pip
-      path: .
+
+# Extra jobs: Install package, Check for broken links
+build:
+  os: "ubuntu-20.04"
+  tools:
+    python: "3.10"
+  jobs:
+    post_install:
+      - pip install -e .
+    pre_build:
+      - python -m sphinx -b linkcheck docs/ _build/linkcheck
