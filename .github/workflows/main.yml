@@ -109,41 +109,13 @@ jobs:
         include:
           - platform: linux
             os: ubuntu-latest
-            cc: gcc
-            cxx: g++
-            cibw_build: "cp*-manylinux_x86_64 cp*-manylinux_aarch64"
-            archs: "x86_64 aarch64"
           - platform: macos
             os: macos-latest
-            cc: clang
-            cxx: clang++
-            cibw_build: cp*-macosx_*
-            archs: "x86_64 arm64"
           - platform: windows
             os: windows-latest
-            cc:
-            cxx:
-            cibw_build: cp*-win_amd64
-            archs: AMD64
 
     runs-on: ${{ matrix.os }}
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
-
-    env:
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
-      CIBW_BUILD_VERBOSITY: 1
-      CIBW_BUILD_FRONTEND: "build"
-      CIBW_BUILD: ${{ matrix.cibw_build }}
-      CIBW_ARCHS: ${{ matrix.archs }}
-      CIBW_TEST_EXTRAS: "dev"
-      CIBW_TEST_COMMAND: pytest {package}/tests
-      # Skip trying to test arm64 builds on Intel Macs
-      CIBW_TEST_SKIP: "*-macosx_arm64 *-macosx_universal2:arm64"
-      CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER CC CXX
-      MACOSX_DEPLOYMENT_TARGET: 10.15
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
     steps:
       - uses: actions/checkout@v3
@@ -153,7 +125,11 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.9.0
+        uses: pypa/cibuildwheel@v2.10.1
+        # GitHub Actions specific build parameters
+        env:
+          # pass GitHub runner info into Linux container
+          CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v3
@@ -212,3 +188,4 @@ jobs:
           prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
+
