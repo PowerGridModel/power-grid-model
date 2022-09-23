@@ -109,12 +109,18 @@ def update_component_data(component: str, input_data: np.ndarray, update_data: n
             mask = ~np.isnan(update_data[field])
         else:
             mask = np.not_equal(update_data[field], nan)
+
         if mask.ndim == 2:
-            mask = np.any(mask, axis=1)
-        data = update_data[["id", field]][mask]
-        idx = np.where(input_data["id"] == np.reshape(data["id"], (-1, 1)))
-        if isinstance(idx, tuple):
-            input_data[field][idx[1]] = data[field]
+            for i in range(len(update_data[field])):
+                for phase in range(3):
+                    if mask[i][phase]:
+                        idx = np.where(input_data["id"] == update_data["id"][i])
+                        input_data[field][idx, phase] = update_data[field][i, phase]
+        else:
+            for i in range(len(update_data[field])):
+                if mask[i]:
+                    idx = np.where(input_data["id"] == update_data["id"][i])
+                    input_data[field][idx] = update_data[field][i]
 
 
 def errors_to_string(
