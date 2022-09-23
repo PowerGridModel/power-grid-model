@@ -14,4 +14,4 @@ build:
     python: "3.9"
   jobs:
     post_install:
-      - pip install -e.[doc]
+      - pip install -e .[doc]
