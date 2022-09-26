@@ -71,12 +71,8 @@ class VoltageSensor : public GenericVoltageSensor {
 
     UpdateChange update(VoltageSensorUpdate<sym> const& voltage_sensor_update) {
         double const scalar = 1 / (u_rated_ * u_scale<sym>);
-        RealValue<sym> u = u_measured_;
-        RealValue<sym> u_angle = u_angle_measured_;
-        update_real_value<sym>(voltage_sensor_update.u_measured, u, scalar);
-        update_real_value<sym>(voltage_sensor_update.u_angle_measured, u_angle, 1.0);
-        u_measured_ = u;
-        u_angle_measured_ = u_angle;
+        update_real_value<sym>(voltage_sensor_update.u_measured, u_measured_, scalar);
+        update_real_value<sym>(voltage_sensor_update.u_angle_measured, u_angle_measured_, 1.0);
 
         if (!is_nan(voltage_sensor_update.u_sigma)) {
             u_sigma_ = voltage_sensor_update.u_sigma / (u_rated_ * u_scale<sym>);

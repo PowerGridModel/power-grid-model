@@ -340,7 +340,7 @@ void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, d
         }
     }
     else {
-        for (size_t i = 0; i != 3; i++) {
+        for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
                 current_value(i) = scalar * new_value(i);
             }
