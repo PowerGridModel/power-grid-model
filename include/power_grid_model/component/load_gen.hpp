@@ -78,7 +78,7 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     }
 
     void set_power(RealValue<sym> const& new_p_specified, RealValue<sym> const& new_q_specified) {
-        double scalar = direction_ / base_power<sym>;
+        double const scalar = direction_ / base_power<sym>;
         RealValue<sym> ps = real(s_specified_);
         RealValue<sym> qs = imag(s_specified_);
         update_real_value<sym>(new_p_specified, ps, scalar);

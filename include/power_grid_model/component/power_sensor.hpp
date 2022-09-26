@@ -77,7 +77,7 @@ class PowerSensor : public GenericPowerSensor {
           {};
 
     UpdateChange update(PowerSensorUpdate<sym> const& power_sensor_update) {
-        double scalar = convert_direction() / base_power<sym>;
+        double const scalar = convert_direction() / base_power<sym>;
         RealValue<sym> ps = real(s_measured_);
         RealValue<sym> qs = imag(s_measured_);
         update_real_value<sym>(power_sensor_update.p_measured, ps, scalar);
