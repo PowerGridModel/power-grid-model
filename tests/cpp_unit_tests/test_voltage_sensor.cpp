@@ -62,6 +62,16 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<true> param = voltage_sensor.calc_param<true>();
         CHECK(param.variance == doctest::Approx(2.25));
         CHECK(param.value == expected_param_value);
+
+        // update with nan
+        vs_update.u_measured = nan;
+        vs_update.u_angle_measured = nan;
+        vs_update.u_sigma = nan;
+
+        voltage_sensor.update(vs_update);
+        param = voltage_sensor.calc_param<true>();
+        CHECK(param.variance == doctest::Approx(2.25));
+        CHECK(param.value == expected_param_value);
     }
 
     SUBCASE("Test voltage sensor update - asym") {
@@ -81,8 +91,21 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> param = voltage_sensor.calc_param<false>();
         CHECK(param.variance == doctest::Approx(6.75));
 
-        ComplexValue<false> const expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
-                                                       0.6 * sqrt(3) * exp(1i * 2.2)};
+        ComplexValue<false> expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
+                                                 0.6 * sqrt(3) * exp(1i * 2.2)};
+        CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
+        CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
+        CHECK(cabs(param.value[2]) == doctest::Approx(cabs(expected_param_value[2])));
+
+        // update with nan's
+        vs_update.u_measured = {3.0, nan, 3.2};
+        vs_update.u_angle_measured = {4.0, 4.1, nan};
+
+        update = voltage_sensor.update(vs_update);
+        param = voltage_sensor.calc_param<false>();
+        expected_param_value = {1.5 * sqrt(3) * exp(1i * 4.0), 0.55 * sqrt(3) * exp(1i * 4.1),
+                                1.6 * sqrt(3) * exp(1i * 2.2)};
+
         CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
         CHECK(cabs(param.value[2]) == doctest::Approx(cabs(expected_param_value[2])));

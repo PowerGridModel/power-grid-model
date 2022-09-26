@@ -77,10 +77,13 @@ class PowerSensor : public GenericPowerSensor {
           {};
 
     UpdateChange update(PowerSensorUpdate<sym> const& power_sensor_update) {
-        if (!is_nan(power_sensor_update.p_measured) && !is_nan(power_sensor_update.q_measured)) {
-            s_measured_ = ((power_sensor_update.p_measured + 1i * power_sensor_update.q_measured) /
-                           base_power<sym>)*convert_direction();
-        }
+        double const scalar = convert_direction() / base_power<sym>;
+        RealValue<sym> ps = real(s_measured_);
+        RealValue<sym> qs = imag(s_measured_);
+        update_real_value<sym>(power_sensor_update.p_measured, ps, scalar);
+        update_real_value<sym>(power_sensor_update.q_measured, qs, scalar);
+        s_measured_ = ps + 1.0i * qs;
+
         if (!is_nan(power_sensor_update.power_sigma)) {
             power_sigma_ = power_sensor_update.power_sigma / base_power<sym>;
         }
