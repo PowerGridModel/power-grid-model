@@ -111,16 +111,17 @@ def update_component_data(component: str, input_data: np.ndarray, update_data: n
             mask = np.not_equal(update_data[field], nan)
 
         if mask.ndim == 2:
-            for i in range(len(update_data[field])):
-                for phase in range(3):
-                    if mask[i][phase]:
-                        idx = np.where(input_data["id"] == update_data["id"][i])
-                        input_data[field][idx, phase] = update_data[field][i, phase]
+            for phase in range(mask.shape[1]):
+                # find indexers of to-be-updated object
+                sub_mask = mask[:, phase]
+                idx = get_indexer(input_data["id"], update_data["id"][sub_mask])
+                # update
+                input_data[field][idx, phase] = update_data[field][sub_mask, phase]
         else:
-            for i in range(len(update_data[field])):
-                if mask[i]:
-                    idx = np.where(input_data["id"] == update_data["id"][i])
-                    input_data[field][idx] = update_data[field][i]
+            # find indexers of to-be-updated object
+            idx = get_indexer(input_data["id"], update_data["id"][mask])
+            # update
+            input_data[field][idx] = update_data[field][mask]
 
 
 def errors_to_string(
@@ -164,3 +165,25 @@ def nan_type(component: str, field: str, data_type="input"):
     It silently returns float('nan') if data_type/component/field can't be found.
     """
     return power_grid_meta_data.get(data_type, {}).get(component, {}).get("nans", {}).get(field, float("nan"))
+
+
+def get_indexer(input_ids: np.ndarray, update_ids: np.ndarray) -> np.ndarray:
+    """
+    Given array of ids from input and update dataset.
+    Find the posision of each id in the update dataset in the context of input dataset.
+    This is needed to update values in the dataset by id lookup.
+    Internally this is done by sorting the input ids, then using binary search lookup.
+
+    Args:
+        input_ids: array of ids in the input dataset
+        update_ids: array of ids in the update dataset
+
+    Returns:
+        np.ndarray: array of positions of the ids from update dataset in the input dataset
+            the following should hold
+            input_ids[result] == update_ids
+    """
+    permutation_sort = np.argsort(input_ids)  # complexity O(N_input * logN_input)
+    return permutation_sort[
+        np.searchsorted(input_ids, update_ids, sorter=permutation_sort)
+    ]  # complexity O(N_update * logN_input)
