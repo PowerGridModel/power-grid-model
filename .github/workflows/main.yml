@@ -125,7 +125,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.10.1
+        uses: pypa/cibuildwheel@v2.10.2
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -188,4 +188,3 @@ jobs:
           prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
-
