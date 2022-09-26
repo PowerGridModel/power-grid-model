@@ -105,7 +105,14 @@ class VoltageSensor : public GenericVoltageSensor {
     }
 
     SensorCalcParam<false> asym_calc_param() const final {
-        bool const has_angle = !is_nan(u_angle_measured_);
+        bool const has_angle = [&]() {
+            if constexpr (sym) {
+                return is_nan(u_angle_measured_);
+            }
+            else {
+                return u_angle_measured_.isNaN().any();
+            }
+        }();
         double u_variance = u_sigma_ * u_sigma_;
         if (has_angle) {
             ComplexValue<false> const u{u_measured_ * exp(1i * u_angle_measured_)};
