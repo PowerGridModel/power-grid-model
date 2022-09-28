@@ -245,6 +245,40 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.q(1) == doctest::Approx(1e5));
     }
 
+    SUBCASE("Test set_power - sym") {
+        // update with nan, nothing happens
+        sym_gen_pq.set_power(RealValue<true>{nan}, RealValue<true>{nan});
+        ComplexValue<true> s_1 = sym_gen_pq.calc_param<true>();
+        CHECK(real(s_1) == 3.0);
+        CHECK(imag(s_1) == 3.0);
+
+        // update with values, s changes
+        sym_gen_pq.set_power(RealValue<true>{4.0e6}, RealValue<true>{5.0e6});
+        ComplexValue<true> s_2 = sym_gen_pq.calc_param<true>();
+        CHECK(real(s_2) == 4.0);
+        CHECK(imag(s_2) == 5.0);
+    }
+
+    SUBCASE("Test set_power - asym") {
+        // update with {nan, nan, nan}, nothing happens
+        asym_load_pq.set_power(RealValue<false>{nan}, RealValue<false>{nan});
+        ComplexValue<false> s_1 = asym_load_pq.calc_param<false>();
+        for (size_t i = 0; i != 3; i++) {
+            CHECK(real(s_1(i)) == -3.0);
+            CHECK(imag(s_1(i)) == -3.0);
+        }
+
+        // update some with nan, some with values
+        asym_load_pq.set_power(RealValue<false>{2.0e6, nan, 3.0e6}, RealValue<false>{nan, 4.0e6, nan});
+        ComplexValue<false> s_2 = asym_load_pq.calc_param<false>();
+        CHECK(real(s_2(0)) == -6.0);
+        CHECK(real(s_2(1)) == -3.0);  // not updated
+        CHECK(real(s_2(2)) == -9.0);
+        CHECK(imag(s_2(0)) == -3.0);  // not updated
+        CHECK(imag(s_2(1)) == -12.0);
+        CHECK(imag(s_2(2)) == -3.0);  // not updated
+    }
+
     SUBCASE("Test no source") {
         auto const s = sym_gen_pq.calc_param<false>(false);
         CHECK(real(s)(0) == doctest::Approx(0.0));
