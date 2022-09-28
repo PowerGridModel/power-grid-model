@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "hoverxref.extension",
 ]
 
 templates_path = ["_templates"]

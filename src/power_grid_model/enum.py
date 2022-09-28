@@ -68,11 +68,38 @@ class MeasuredTerminalType(IntEnum):
     """The type of asset measured by a (power) sensor"""
 
     branch_from = 0
+    """
+    Measuring the from-terminal between a branch and a node
+    """
     branch_to = 1
+    """
+    Measuring the to-terminal between a branch and a node
+    """
     source = 2
+    """
+    Measuring the terminal between a source and a node
+    """
     shunt = 3
+    """
+    Measuring the terminal between a shunt and a node
+    """
     load = 4
+    """
+    Measuring the terminal between a load and a node
+    """
     generator = 5
+    """
+    Measuring the terminal between a generator and a node
+    """
     branch3_1 = 6
+    """
+    Measuring the terminal-1 between a branch3 and a node
+    """
     branch3_2 = 7
+    """
+    Measuring the terminal-2 between a branch3 and a node
+    """
     branch3_3 = 8
+    """
+    Measuring the terminal-3 between a branch3 and a node
+    """

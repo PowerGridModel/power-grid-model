@@ -4,54 +4,75 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-% power-grid-model documentation master file, created by
-% sphinx-quickstart on Fri Sep 16 12:10:59 2022.
-% You can adapt this file completely to your liking, but it should at least
-% contain the root `toctree` directive.
-
-# power-grid-model
-
 ```{warning}
 The documentation is under heavy development
 ```
 
 ```{include} ../README.md
+
 ```
 
+Detailed contents of the documentation are structured as follows.
+
+% TODO Delete
+
+```
+
+.. toctree:: 
+    :caption: "Contents"
+    Introduction <self>
+    Components <Components.md>
+    Data Models <native-data-interface.md>
+```
 
 ```{toctree}
-:caption: 'Graph Data Model'
+:caption: "Introduction"
+self
+```
+
+```{toctree}
+:caption: "Components"
 :maxdepth: 2
-graph-data-model
+components
 ```
+
 ```{toctree}
-:caption: 'Native Data Interface'
+:caption: "Calculations"
+:maxdepth: 2
+calculations
+```
+
+```{toc-tree}
+:caption: "Data Validator"
+:maxdepth: 2
+data-validator
+```
+
+```{toctree}
+:caption: "Data model"
 :maxdepth: 2
 native-data-interface
 ```
-```{toctree}
-:caption: 'Python API reference (Existing)'
-:maxdepth: 2
-python-api-reference
-```
-```{toctree}
-:caption: 'Auto API from docstrings'
-:maxdepth: 2
-power_grid_model
-```
-## Functions used in examples
 
-```{eval-rst}
-.. autofunction:: power_grid_model.validation.assert_valid_input_data
-.. autofunction:: power_grid_model.validation.assert_valid_batch_data
-.. autofunction:: power_grid_model.initialize_array
-.. autofunction:: power_grid_model.PowerGridModel
-.. autofunction:: power_grid_model.PowerGridModel.update
-.. autofunction:: power_grid_model.PowerGridModel.copy
-.. autofunction:: power_grid_model.PowerGridModel.calculate_power_flow
-.. autofunction:: power_grid_model.PowerGridModel.calculate_state_estimation
+```{toctree}
+:caption: 'Build Guide'
+:hidden:
+build-guide
 ```
 
+% TODO Add notebooks
+
+```{toctree}
+:caption: "Validation test case"
+:maxdepth: 2
+data-validator
+```
+
+```{toctree}
+:caption: "API python documentation"
+:maxdepth: 2
+data-validator
+```
 
 # Indices and tables
 

@@ -55,6 +55,7 @@ doc = [
     "myst_parser",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
+    "sphinx-hoverxref",
 ]
 
 [project.urls]
