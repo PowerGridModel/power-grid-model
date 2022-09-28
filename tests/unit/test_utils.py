@@ -184,7 +184,8 @@ def test_compact_json_dump():
         == """{
   "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
   "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
-}"""
+}
+"""
     )
 
     string_stream = io.StringIO()
@@ -196,7 +197,8 @@ def test_compact_json_dump():
     [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
   "line":
     [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
-}"""
+}
+"""
     )
 
     string_stream = io.StringIO()
@@ -214,7 +216,8 @@ def test_compact_json_dump():
       {"id": 5, "x": 6},
       {"id": 7, "x": {"y": 8.1, "z": 8.2}}
     ]
-}"""
+}
+"""
     )
 
 
@@ -243,7 +246,9 @@ def test_compact_json_dump_deep():
       "x": 2,
       "y": 3
     }
-}"""
+
+}
+"""
     )
 
 
@@ -273,7 +278,8 @@ def test_compact_json_dump_batch():
         {"id": 5, "x": 6},
         {"id": 7, "x": {"y": 8.1, "z": 8.2}}
       ]
-  },
+  }
+,
   {
     "line":
       [
@@ -281,6 +287,7 @@ def test_compact_json_dump_batch():
         {"id": 11, "x": 12}
       ]
   }
+
 ]"""
     )
 
