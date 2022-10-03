@@ -52,7 +52,7 @@ dev = [
 ]
 doc = [
     "sphinx",
-    "myst_parser",
+    "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
     "sphinx-hoverxref",

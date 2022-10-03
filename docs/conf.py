@@ -29,19 +29,27 @@ author = "alliander-opensource"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "myst_parser",
     "sphinx.ext.duration",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "hoverxref.extension",
+    "myst_nb"
 ]
 
 templates_path = ["_templates"]
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+
+# label references for depth of headers: label name in anchor slug structure
+# probably does not work on notebooks.
+myst_heading_anchors = 3
+# all references are tooltips
+# hoverxref_auto_ref = False
+myst_commonmark_only = False
+
+hoverxref_auto_ref = True
