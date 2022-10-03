@@ -32,7 +32,7 @@ calculations
 :caption: "Examples"
 :maxdepth: 2
 examples/Make Test Dataset.ipynb
-examples/Power_Flow_Example.ipynb
+examples/Power Flow Example.ipynb
 examples/State Estimation Example.ipynb
 examples/Validation Examples.ipynb
 ```

@@ -502,8 +502,20 @@ from power_grid_model import initialize_array
 line_update = initialize_array('update', 'sym_load', (5, 4))
 ```
 
-Some other helper functions include `copy`, `update` and `get_indexer`
+Some other helper functions include `copy`, `update` and `get_indexer`. For creating test datasets, `import_json`
+and `export_json` are particularly useful.
 
-.. autofunction:: power_grid_model.PowerGridModel.update .. autofunction:: power_grid_model.PowerGridModel.copy ..
-autofunction:: power_grid_model.PowerGridModel.get_indexer
+```{eval-rst}
+.. autofunction:: power_grid_model.PowerGridModel.update 
+.. autofunction:: power_grid_model.PowerGridModel.copy 
+.. autofunction:: power_grid_model.PowerGridModel.get_indexer
+```
 
+## Miscellaneous utilities
+
+```{eval-rst}
+.. automodule:: power_grid_model.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
