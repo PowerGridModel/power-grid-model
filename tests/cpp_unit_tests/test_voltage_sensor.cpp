@@ -223,7 +223,8 @@ TEST_CASE("Test voltage sensor") {
 
     SUBCASE("Test sym/asym calc_param for asymmetric voltage sensor, angle = nan") {
         RealValue<false> const u_measured{10.1e3 / sqrt3, 10.2e3 / sqrt3, 10.3e3 / sqrt3};
-        RealValue<false> const u_angle_measured{nan, nan, nan};
+        // if one of the angle is nan, the whole measurment is treated as no angle value
+        RealValue<false> const u_angle_measured{1.0, 2.0, nan};
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
