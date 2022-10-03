@@ -14,65 +14,36 @@ The documentation is under heavy development
 
 Detailed contents of the documentation are structured as follows.
 
-% TODO Delete
-
-```
-
-.. toctree:: 
-    :caption: "Contents"
-    Introduction <self>
-    Components <Components.md>
-    Data Models <native-data-interface.md>
-```
-
 ```{toctree}
-:caption: "Introduction"
+:caption: "Installation and quickstart"
+:maxdepth: 2
 self
 ```
 
 ```{toctree}
-:caption: "Components"
+:caption: "Basic Usage"
 :maxdepth: 2
 components
-```
-
-```{toctree}
-:caption: "Calculations"
-:maxdepth: 2
+data-validator
 calculations
 ```
 
-```{toc-tree}
-:caption: "Data Validator"
+```{toctree}
+:caption: "Examples"
 :maxdepth: 2
-data-validator
+examples/Make Test Dataset.ipynb
+examples/Power_Flow_Example.ipynb
+examples/State Estimation Example.ipynb
+examples/Validation Examples.ipynb
 ```
 
 ```{toctree}
-:caption: "Data model"
+:caption: "Advanced documentation"
 :maxdepth: 2
-native-data-interface
-```
-
-```{toctree}
-:caption: 'Build Guide'
-:hidden:
+data-model
 build-guide
 ```
 
-% TODO Add notebooks
-
-```{toctree}
-:caption: "Validation test case"
-:maxdepth: 2
-data-validator
-```
-
-```{toctree}
-:caption: "API python documentation"
-:maxdepth: 2
-data-validator
-```
 
 # Indices and tables
 

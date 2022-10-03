@@ -38,8 +38,10 @@ base ──┬──────────────────────
                                                     └── asym_power_sensor
 ```
 
-**NOTE: the type names in the hierarchy are exactly the same as the component type names in
-the `power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
+```{note}
+The type names in the hierarchy are exactly the same as the component type names in
+the {py:class}`power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
+```
 
 This library uses a graph data model with three generic component types: `node`, `branch`, `branch3` and `appliance`. A
 node is similar to a vertex in the graph, a branch is similar to an edge in the graph and a branch3 connects three nodes
@@ -88,9 +90,29 @@ components. On the other hand, the same model can execute symmetric or asymmetri
 
 ## Enumerations
 
+Some attributes of components are enumerations.
+
 ```{eval-rst}
-.. note:: Some attributes uses :ref: `data-model#Enumerations`
+.. automodule:: power_grid_model.enum
+   :members:
+   :undoc-members:
+   :member-order: bysource
+   :show-inheritance:
 ```
+
+%TODO del extra .. automodule:: power_grid_model.enum.LoadGenType .. autoclass:: power_grid_model.enum.WindingType ..
+autoclass:: power_grid_model.enum.BranchSide .. autoclass:: power_grid_model.enum.Branch3Side .. autoclass::
+power_grid_model.enum.CalculationType .. autoclass:: power_grid_model.enum.CalculationMethod .. autoclass::
+power_grid_model.enum.MeasuredTerminalType
+
+## Reference Direction
+
+The sign of active/reactive power of the {hoverxreftooltip}`components.md#appliance` and
+{hoverxreftooltip}`components.md#sensor` depends on the reference direction.
+
+* For load reference direction, positive active power means the power flows *from the node to the appliance/sensor*.
+* For generator reference direction, positive active power means the power flows *from the appliance/sensor to the node*
+  .
 
 # Components
 
@@ -111,10 +133,10 @@ The base type for all power grid components.
 ## Node
 
 * type name: `node`
-* base:
+* base: {hoverxreftooltip}`components.md#base`
 
 ```{eval-rst}
-   Base: :hoverxref: `Base` 
+   Base :hoverxreftooltiptooltip: `Base<Base>` 
 ```
 
 `node` is a point in the grid. Physically a node can be a busbar, a joint, or other similar component.
@@ -129,6 +151,7 @@ The base type for all power grid components.
 ## Branch
 
 * type name: `branch`
+* base: {hoverxreftooltip}`components.md#base`
 
 `branch` is the abstract base type for the component which connects two *different* nodes. For each branch two switches
 are always defined at from- and to-side of the branch. In reality such switches may not exist. For example, a cable
@@ -154,8 +177,8 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 
 * type name: 'line'
 
-`line` is a branch with specified serial impedance and shunt admittance. A cable is also modeled as `line`. A `line` can
-only connect two nodes with the same rated voltage.
+`line` is a {hoverxreftooltip}`components.md#branch` with specified serial impedance and shunt admittance. A cable is
+also modeled as `line`. A `line` can only connect two nodes with the same rated voltage.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -173,16 +196,19 @@ only connect two nodes with the same rated voltage.
 
 * type name: `link`
 
-`link` usually represents a short internal cable/connection between two busbars inside a substation. It has a very high
-admittance (small impedance) which is set to a fixed per-unit value
+`link` is a {hoverxreftooltip}`components.md#branch` which usually represents a short internal cable/connection between
+two busbars inside a substation. It has a very high admittance (small impedance) which is set to a fixed per-unit value
 (equivalent to 10e6 siemens for 10kV network). There is no additional attribute for `link`.
 
 ### Transformer
 
-`transformer` connects two nodes with possibly different voltage levels.
+`transformer` is a {hoverxreftooltip}`components.md#branch` which connects two nodes with possibly different voltage
+levels.
 
-**Note: it can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
-increased.**
+```{note} 
+it can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
+increased.
+```
 
 | name | data type | unit | description                                                                                                                                                                                                                        | required | input | update | output | valid values |
 | --- | --- | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| :---: | :---: | :---: | :---: | :---: |
@@ -214,6 +240,7 @@ increased.**
 ## Branch3
 
 * type name: `branch3`
+* base: {hoverxreftooltip}`components.md#base`
 
 `branch3` is the abstract base type for the component which connects three *different* nodes. For each branch3 three
 switches are always defined at side 1, 2, or 3 of the branch. In reality such switches may not exist.
@@ -242,10 +269,13 @@ switches are always defined at side 1, 2, or 3 of the branch. In reality such sw
 
 ### Three-Winding Transformer
 
-`three_winding_transformer` connects three nodes with possibly different voltage levels.
+`three_winding_transformer` is a {hoverxreftooltip}`components.md#branch3` connects three nodes with possibly different
+voltage levels.
 
-**Note: it can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
-increased.**
+```{note}
+It can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
+increased.
+```
 
 | name        | data type | unit | description                                                                                               |             required             | input | update | output |                   valid values                   |
 |-------------| --- | --- |-----------------------------------------------------------------------------------------------------------|:--------------------------------:| :---: | :---: | :---: |:------------------------------------------------:|
@@ -296,14 +326,11 @@ increased.**
 ## Appliance
 
 * type name: `appliance`
+* base: {hoverxreftooltip}`components.md#base`
 
 `appliance` is an abstract user which is coupled to a `node`. For each `appliance` a switch is defined between
-the `appliance` and the `node`.
-
-**The sign of active/reactive power of the appliance depends on the reference direction.**
-
-* For load reference direction, positive active power means the power flows *from the node to the appliance*.
-* For generator reference direction, positive active power means the power flows *from the appliance to the node*.
+the `appliance` and the `node`. The reference direction for power flows is mentioned in
+{hoverxreftooltip}`components.md#reference-direction`.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -318,9 +345,9 @@ the `appliance` and the `node`.
 ### Source
 
 * type name: `source`
-* reference direction: generator
+* {hoverxreftooltip}`components.md#reference-direction`: generator
 
-`source` is representing the external network with a
+`source` is an {hoverxreftooltip}`components.md#appliance` representing the external network with a
 [Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem). It has an infinite voltage source
 with an internal impedance. The impedance is specified by convention as short circuit power.
 
@@ -336,8 +363,8 @@ with an internal impedance. The impedance is specified by convention as short ci
 
 * type name: `generic_load_gen`
 
-`generic_load_gen` is an abstract load/generation which contains only the type of the load/generation with response to
-voltage.
+`generic_load_gen` is an abstract load/generation {hoverxreftooltip}`components.md#appliance` which contains only the
+type of the load/generation with response to voltage.
 
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
@@ -365,10 +392,10 @@ The table below shows a list of attributes.
 ### Shunt
 
 * type name: `shunt`
-* reference direction: load
+* {hoverxreftooltip}`components.md#reference-direction`: load
 
-`shunt` is an `appliance` with a fixed admittance (impedance). It behaves similar to a load/generator with
-type `const_impedance`.
+`shunt` is an {hoverxreftooltip}`components.md#appliance` with a fixed admittance (impedance). It behaves similar to a
+load/generator with type `const_impedance`.
 
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
@@ -380,6 +407,7 @@ type `const_impedance`.
 ## Sensor
 
 * type name: `sensor`
+* base: {hoverxreftooltip}`components.md#base`
 
 `sensor` is an abstract type for all the sensor types. A sensor does not have any physical meaning. Rather, it provides
 measurement data for the state estimation algorithm. The state estimator uses the data to evaluate the state of the grid
@@ -393,8 +421,9 @@ with the highest probability.
 
 * type name: `generic_voltage_sensor`
 
-`generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor. It measures the magnitude
-and (optionally) the angle of the voltage of a `node`.
+`generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor and derived from
+{hoverxreftooltip}`components.md#sensor`. It measures the magnitude and (optionally) the angle of the voltage of
+a `node`.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -424,9 +453,10 @@ The table below shows a list of attributes.
 
 * type name: `generic_power_sensor`
 
-`power_sensor` is an abstract class for symmetric and asymmetric power sensor. It measures the active/reactive power
-flow of a terminal. The terminal is either connecting an `appliance` and a `node`, or connecting the from/to end of
-a `branch` and a `node`. In case of a terminal between an `appliance` and a `node`, the power reference direction in the
+`power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
+{hoverxreftooltip}`components.md#sensor`. It measures the active/reactive power flow of a terminal. The terminal is
+either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` and a `node`. In case of a
+terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`components.md#reference-direction` in the
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
@@ -453,4 +483,27 @@ The table below shows a list of attributes.
 | `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power | &#10024; only for state estimation | &#10004; | &#10004; | &#10060; |
 | `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | | &#10060; | &#10060; | &#10004; |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | | &#10060; | &#10060; | &#10004; |
+
+# Helper functions
+
+To improve the convenience of initializing an array with given shape and data format, one can use the helper
+function `power_grid_model.initialize_array`. Another example of how to create components is
+in [Input data](ex_input_data)
+
+ ```{eval-rst}
+.. autofunction:: power_grid_model.initialize_array
+```
+
+The code below initializes a symmetric load update array with a shape of `(5, 4)`.
+
+```python
+from power_grid_model import initialize_array
+
+line_update = initialize_array('update', 'sym_load', (5, 4))
+```
+
+Some other helper functions include `copy`, `update` and `get_indexer`
+
+.. autofunction:: power_grid_model.PowerGridModel.update .. autofunction:: power_grid_model.PowerGridModel.copy ..
+autofunction:: power_grid_model.PowerGridModel.get_indexer
 

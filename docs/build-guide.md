@@ -15,13 +15,13 @@ repository there are two builds:
     * A C++ header-only library of the calculation core
     * A C/C++ dynamic shared library (`.dll` or `.so`) with pure C ABI interface.
 
-# Build Requirements
+## Build Requirements
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies. In this
 section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 22.04)
 , Windows 10, and macOS (Big Sur).
 
-## Architecture Support
+### Architecture Support
 
 This library is written and tested on `x86_64` and `arm64` architecture. Building the library in `IA-32` might be working, but is
 not tested.
@@ -30,7 +30,7 @@ The source code is written with the mindset of ISO standard C++ only, i.e. avoid
 features as much as possible. In this way the effort to port the library to other platform/architecture might be
 minimum.
 
-## Compiler Support
+### Compiler Support
 
 You need a C++ compiler with C++17 support. Below is a list of tested compilers:
 
@@ -49,13 +49,13 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 * clang >= 12.0
 
-## Build System for CMake Project
+### Build System for CMake Project
 
 This repository uses [CMake](https://cmake.org/) and [Ninja](https://ninja-build.org/) as C++ build system.
 
-## Build Dependencies
+### Build Dependencies
 
-### C++
+#### C++
 
 The table below shows the C++ build dependencies
 
@@ -63,10 +63,10 @@ The table below shows the C++ build dependencies
 |---------------------------------------------------|--------------------------------------|---------------------------------------------|-------------|-------------------------------------------------------------------------------|
 | [boost](https://www.boost.org/)                   | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt) |
 | [eigen3](https://eigen.tuxfamily.org/)            | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/) |
-| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](hhttps://github.com/doctest/doctest/blob/master/LICENSE.txt)            |
+| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)            |
 | [nlohmann-json](https://github.com/nlohmann/json) | None                                 | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)              |
 
-### Python
+#### Python
 
 The table below shows the Python dependencies
 
@@ -79,7 +79,7 @@ The table below shows the Python dependencies
 | [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                         |
 | [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                   |
 
-# Build Python Package
+## Build Python Package
 
 Once you have prepared the build dependencies, 
 you can install the library from source in develop mode with the development dependency. 
@@ -95,7 +95,7 @@ Then you can run the tests.
 pytest
 ```
 
-# Build CMake Project
+## Build CMake Project
 
 There is a root cmake file in the root folder of the repo [`CMakeLists.txt`](../CMakeLists.txt). It specifies
 dependencies and the build options for the project. The core algorithm is implemented in the header-only
@@ -115,12 +115,12 @@ option. If no option is defined, the cmake project will build the unit tests.
 | `POWER_GRID_MODEL_BUILD_BENCHMARK` | When set to `1`, build the both sub-projects: unit test and benchmarks. Otherwise only build the unit test. |
 | `POWER_GRID_MODEL_COVERAGE`        | When set to `1`, build with test coverage. This is only applicable for Linux.                               |
 
-# Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
+## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
 
 In this section an example is given for setup in Ubuntu 22.04. You can use this example in Windows Subsystem for Linux (
 WSL), or in a physical/virtual machine.
 
-## Environment variables
+### Environment variables
 
 Append the following lines into the file `${HOME}/.bashrc`.
 
@@ -131,7 +131,7 @@ export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
 export LLVM_COV=llvm-cov-14
 ```
 
-## Ubuntu Software Packages
+### Ubuntu Software Packages
 
 Install the following packages from Ubuntu.
 
@@ -140,7 +140,7 @@ sudo apt update && sudo apt -y upgrade
 sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang make cmake gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
 ```
 
-## C++ packages
+### C++ packages
 
 The recommended way to get C++ package is via [Homebrew](https://brew.sh/). 
 Go to its website to follow the installation instruction.
@@ -151,7 +151,7 @@ Install the C++ dependencies
 brew install boost eigen nlohmann-json doctest
 ```
 
-## Build Python Library from Source
+### Build Python Library from Source
 
 It is recommended to create a virtual environment. 
 Clone repository, create and activate virtual environment. 
@@ -171,7 +171,7 @@ pip install -e .[dev]
 pytest
 ```
 
-## Build CMake Project
+### Build CMake Project
 
 There is a convenient shell script to build the cmake project:
 [`build.sh`](../build.sh). You can study the file and write your own build script. Four configurations are pre-defined
@@ -198,9 +198,9 @@ One can run the unit tests and benchmark by:
 ./cpp_build_Release/tests/benchmark_cpp/power_grid_model_benchmark_cpp
 ```
 
-# Example Setup for Windows 10
+## Example Setup for Windows 10
 
-## Environment variables
+### Environment variables
 
 Define the following environment variables in user wide.
 
@@ -209,7 +209,7 @@ Define the following environment variables in user wide.
 | PreferredToolArchitecture | x64                                                  |
 | CMAKE_PREFIX_PATH         | C:\conda_envs\cpp_pkgs\Library                       |
 
-## Software Toolchains
+### Software Toolchains
 
 You need to install the MSVC compiler. You can either install the whole Visual Studio IDE or just the build tools.
 
@@ -223,7 +223,7 @@ Other toolchains:
 * [Miniconda](https://docs.conda.io/en/latest/miniconda.html), install Python 3 64-bit under user wide.
 * [Git](https://git-scm.com/downloads)
 
-## C++ packages
+### C++ packages
 
 The recommended way to get C++ package is via `conda`. Open a miniconda console.
 
@@ -231,7 +231,7 @@ The recommended way to get C++ package is via `conda`. Open a miniconda console.
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
 ```
 
-## Build Python Library from Source
+### Build Python Library from Source
 
 It is recommended to create a `conda` environment. 
 Clone repository, create and activate `conda` environment. 
@@ -255,7 +255,7 @@ pip install -e .[dev]
 pytest
 ```
 
-## Build CMake Project
+### Build CMake Project
 
 If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
 The IDE should be able to automatically detect the Visual Studio cmake configuration file
@@ -264,11 +264,11 @@ The IDE should be able to automatically detect the Visual Studio cmake configura
 * `x64-Debug`
 * `x64-Release`
 
-# Example Setup for macOS (Big Sur)
+## Example Setup for macOS (Big Sur)
 
 In this section an example is given for setup in macOS Big Sur and Python 3.10.
 
-## Environment variables
+### Environment variables
 
 Append the following lines into the file `${HOME}/.bashrc`.
 
@@ -278,7 +278,7 @@ export CC=clang
 export CMAKE_PREFIX_PATH=/usr/local
 ```
 
-## macOS Software Packages and C++ libraries
+### macOS Software Packages and C++ libraries
 
 Install the following packages with [Homebrew](https://brew.sh/).
 
@@ -286,7 +286,7 @@ Install the following packages with [Homebrew](https://brew.sh/).
 brew install ninja cmake boost eigen nlohmann-json doctest
 ```
 
-## Build Python Library from Source
+### Build Python Library from Source
 
 It is recommended to create a virtual environment. Clone repository, create and activate virtual environment, and
 install the build dependency. go to a root folder you prefer to save the repositories.
@@ -305,7 +305,7 @@ pip install -e .[dev]
 pytest
 ```
 
-## Build CMake Project
+### Build CMake Project
 
 There is a convenient shell script to build the cmake project:
 [`build.sh`](../build.sh). You can study the file and write your own build script. Two configurations are pre-defined
@@ -329,5 +329,4 @@ One can run the unit tests and benchmark by:
 ./cpp_build_Release/tests/cpp_unit_tests/power_grid_model_unit_tests
 
 ./cpp_build_Release/tests/benchmark_cpp/power_grid_model_benchmark_cpp
-
-
+```
