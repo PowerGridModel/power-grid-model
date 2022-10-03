@@ -34,7 +34,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "hoverxref.extension",
-    "myst_nb"
+    "myst_nb",
 ]
 
 templates_path = ["_templates"]
