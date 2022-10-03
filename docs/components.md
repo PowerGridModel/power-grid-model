@@ -40,7 +40,7 @@ base ──┬──────────────────────
 
 ```{note}
 The type names in the hierarchy are exactly the same as the component type names in
-the {py:class}`power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)**
+the {py:class}`power_grid_model.power_grid_meta_data`, see [Native Data Interface](native-data-interface.md)
 ```
 
 This library uses a graph data model with three generic component types: `node`, `branch`, `branch3` and `appliance`. A
@@ -88,6 +88,15 @@ components. On the other hand, the same model can execute symmetric or asymmetri
 | output       |  If the attribute is part of an   output dataset.                                                                                                                                                                                                                  |
 | valid values |  If applicable, an indication which   values are valid for the input data                                                                                                                                                                                          |
 
+## Reference Direction
+
+The sign of active/reactive power of the {ref}`components.md#appliance` and
+{ref}`components.md#sensor` depends on the reference direction.
+
+* For load reference direction, positive active power means the power flows *from the node to the appliance/sensor*.
+* For generator reference direction, positive active power means the power flows *from the appliance/sensor to the node*
+  .
+
 ## Enumerations
 
 Some attributes of components are enumerations.
@@ -99,20 +108,12 @@ Some attributes of components are enumerations.
    :member-order: bysource
    :show-inheritance:
 ```
+Enum example {py:class}`power_grid_model.enum.LoadGenType`
 
 %TODO del extra .. automodule:: power_grid_model.enum.LoadGenType .. autoclass:: power_grid_model.enum.WindingType ..
 autoclass:: power_grid_model.enum.BranchSide .. autoclass:: power_grid_model.enum.Branch3Side .. autoclass::
 power_grid_model.enum.CalculationType .. autoclass:: power_grid_model.enum.CalculationMethod .. autoclass::
 power_grid_model.enum.MeasuredTerminalType
-
-## Reference Direction
-
-The sign of active/reactive power of the {hoverxreftooltip}`components.md#appliance` and
-{hoverxreftooltip}`components.md#sensor` depends on the reference direction.
-
-* For load reference direction, positive active power means the power flows *from the node to the appliance/sensor*.
-* For generator reference direction, positive active power means the power flows *from the appliance/sensor to the node*
-  .
 
 # Components
 
@@ -484,10 +485,20 @@ The table below shows a list of attributes.
 | `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | | &#10060; | &#10060; | &#10004; |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | | &#10060; | &#10060; | &#10004; |
 
-# Helper functions
+# Python API
+
+
+ ```{eval-rst}
+.. autoclass:: power_grid_model.PowerGridModel
+   :members:
+   :special-members: __init__
+   :show-inheritance:
+```
+
+## Helper functions
 
 To improve the convenience of initializing an array with given shape and data format, one can use the helper
-function `power_grid_model.initialize_array`. Another example of how to create components is
+function {py:class}`power_grid_model.initialize_array`. An example of how to create components is
 in [Input data](ex_input_data)
 
  ```{eval-rst}
@@ -500,22 +511,4 @@ The code below initializes a symmetric load update array with a shape of `(5, 4)
 from power_grid_model import initialize_array
 
 line_update = initialize_array('update', 'sym_load', (5, 4))
-```
-
-Some other helper functions include `copy`, `update` and `get_indexer`. For creating test datasets, `import_json`
-and `export_json` are particularly useful.
-
-```{eval-rst}
-.. autofunction:: power_grid_model.PowerGridModel.update 
-.. autofunction:: power_grid_model.PowerGridModel.copy 
-.. autofunction:: power_grid_model.PowerGridModel.get_indexer
-```
-
-## Miscellaneous utilities
-
-```{eval-rst}
-.. automodule:: power_grid_model.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
 ```

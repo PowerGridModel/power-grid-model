@@ -40,7 +40,7 @@ examples/Validation Examples.ipynb
 ```{toctree}
 :caption: "Advanced documentation"
 :maxdepth: 2
-data-model
+native-data-interface
 build-guide
 ```
 
@@ -50,3 +50,22 @@ build-guide
 - {ref}`genindex`
 - {ref}`modindex`
 - {ref}`search`
+
+
+
+
+# Sandbox
+
+```{eval-rst}
+..  uml::
+
+    == Initialization ==
+
+    Alice -> Bob: Authentication Request
+    Bob --> Alice: Authentication Response
+
+    == Repetition ==
+
+    Alice -> Bob: Another authentication Request
+    Alice <-- Bob: another authentication Response
+```

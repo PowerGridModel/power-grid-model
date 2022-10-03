@@ -50,6 +50,8 @@ html_static_path = ["_static"]
 myst_heading_anchors = 3
 # all references are tooltips
 # hoverxref_auto_ref = False
-myst_commonmark_only = False
 
-hoverxref_auto_ref = True
+# hover tooltip on python classes
+hoverxref_domains = [
+    'py',
+]

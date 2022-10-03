@@ -140,3 +140,33 @@ line_update = initialize_array('update', 'line', 5)
 line_update['id'] = [1, 2, 3, 4, 5]
 line_update['from_status'] = 1
 ```
+
+
+
+## Power Grid Model API
+
+```{eval-rst}
+.. automodule:: power_grid_model.PowerGridModel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+
+
+## Utilities
+
+```{eval-rst}
+.. automodule:: power_grid_model.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Validation
+
+```{toctree}
+:maxdepth: 4
+
+power_grid_model.validation
+```

@@ -8,11 +8,8 @@ SPDX-License-Identifier: MPL-2.0
 
 ## Power-flow calculation
 
-An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
+Power flow calculation is done using the {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
 
-```{eval-rst}
-.. autofunction:: power_grid_model.PowerGridModel.calculate_power_flow
-```
 
 ### Power-flow calculation algorithms
 
@@ -32,7 +29,7 @@ are acceptable. Both methods have equal computation time for a single powerflow 
 
 ## State estimation calculation
 
-An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
+State Estimation is done using the {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation`. An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
 
 ```{eval-rst}
 .. autofunction:: power_grid_model.PowerGridModel.calculate_state_estimation
@@ -45,20 +42,10 @@ An example of usage of the power-flow calculation function is given in [State Es
 
 # Batch Calculations
 
-We can use the same method of `calculate_power_flow` to calculate a number of scenarios in one go. To do this, you need
-to supply an `update_data` argument. This argument contains a dictionary of 2D update arrays (one array per component
-type).
-
-The model uses the current data as the base scenario. For each individual calculation, the model applies each mutation
-to the base scenario and calculates the power flow.
-
-```{note}
-After the batch calculation, the original model will be kept unchanged. Internally the program copies the original model to multiple batch models for the calculation.
-```
+[Issue 79](https://github.com/alliander-opensource/power-grid-model/issues/79)
 
 ## Add more examples of batch calculation
 
-[Issue 79](https://github.com/alliander-opensource/power-grid-model/issues/79)
 
 ## Independent Batch Dataset
 
