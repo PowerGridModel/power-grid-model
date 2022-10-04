@@ -45,6 +45,10 @@ templates_path = ["_templates"]
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
+exclude_patterns = [
+    "*/.ipynb_checkpoints/*",
+]
+
 # label references for depth of headers: label name in anchor slug structure
 # probably does not work on notebooks.
 myst_heading_anchors = 3
@@ -53,5 +57,13 @@ myst_heading_anchors = 3
 
 # hover tooltip on python classes
 hoverxref_domains = [
-    'py',
+    "py",
 ]
+hoverxref_default_type = "tooltip"
+hoverxref_role_types = {
+    "hoverxref": "tooltip",
+    "ref": "modal",  # for hoverxref_auto_ref config
+    "confval": "tooltip",  # for custom object
+    "mod": "tooltip",  # for Python Sphinx Domain
+    "class": "tooltip",  # for Python Sphinx Domain
+}

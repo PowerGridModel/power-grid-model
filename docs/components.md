@@ -108,12 +108,7 @@ Some attributes of components are enumerations.
    :member-order: bysource
    :show-inheritance:
 ```
-Enum example {py:class}`power_grid_model.enum.LoadGenType`
 
-%TODO del extra .. automodule:: power_grid_model.enum.LoadGenType .. autoclass:: power_grid_model.enum.WindingType ..
-autoclass:: power_grid_model.enum.BranchSide .. autoclass:: power_grid_model.enum.Branch3Side .. autoclass::
-power_grid_model.enum.CalculationType .. autoclass:: power_grid_model.enum.CalculationMethod .. autoclass::
-power_grid_model.enum.MeasuredTerminalType
 
 # Components
 
@@ -220,10 +215,10 @@ increased.
 | `pk` | `double` | watt (W) | short circuit (copper) loss                                                                                                                                                                                                        | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` |
 | `i0` | `double` | - | relative no-load current                                                                                                                                                                                                           | &#10004; | &#10004; | &#10060; | &#10060; | `>= p0 / sn` and `< 1` |
 | `p0` | `double` | watt (W) | no-load (iron) loss                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` |
-| `winding_from` | `WindingType` | - | from-side winding type                                                                                                                                                                                                             | &#10004; | &#10004; | &#10060; | &#10060; | |
-| `winding_to` | `WindingType` | - | to-side winding type                                                                                                                                                                                                               | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `winding_from` | {py:class}`WindingType` | - | from-side winding type                                                                                                                                                                                                             | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `winding_to` | {py:class}`WindingType` | - | to-side winding type                                                                                                                                                                                                               | &#10004; | &#10004; | &#10060; | &#10060; | |
 | `clock` | `int8_t` | - | clock number of phase shift. <br> Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. <br> Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` and `<= 12` |
-| `tap_side` | `BranchSide` | - | side of tap changer                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `tap_side` | {py:class}`BranchSide` | - | side of tap changer                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | |
 | `tap_pos`   | `int8_t` | - | current position of tap changer                                                                                                                                                                                                    | &#10004; | &#10004; | &#10004; | &#10060; |  `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min` | `int8_t` | - | position of tap changer at minimum voltage                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | |
 | `tap_max` | `int8_t` | - | position of tap changer at maximum voltage                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | |
@@ -294,12 +289,12 @@ increased.
 | `pk_23`     | `double` | watt (W) | short circuit (copper) loss across side 2-3                                                               |             &#10004;             | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
 | `i0`        | `double` | - | relative no-load current with respect to side 1                                                           |             &#10004;             | &#10004; | &#10060; | &#10060; |                         `>= p0 / sn` and `< 1`                         |
 | `p0`        | `double` | watt (W) | no-load (iron) loss                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
-| `winding_1` | `WindingType` | - | side 1 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
-| `winding_2` | `WindingType` | - | side 2 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
-| `winding_3` | `WindingType` | - | side 3 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
+| `winding_1` | {py:class}`WindingType` | - | side 1 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
+| `winding_2` | {py:class}`WindingType` | - | side 2 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
+| `winding_3` | {py:class}`WindingType` | - | side 3 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
 | `clock_12`  | `int8_t` | - | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
 | `clock_13`  | `int8_t` | - | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
-| `tap_side` | `BranchSide` | - | side of tap changer                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                        `side_1` or `side_2` or `side_3`                         |
+| `tap_side` | {py:class}`BranchSide` | - | side of tap changer                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                        `side_1` or `side_2` or `side_3`                         |
 | `tap_pos`   | `int8_t` | - | current position of tap changer                                                                           |             &#10004;             | &#10004; | &#10004; | &#10060; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min` | `int8_t` | - | position of tap changer at minimum voltage                                                                |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
 | `tap_max` | `int8_t` | - | position of tap changer at maximum voltage                                                                |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
@@ -369,7 +364,7 @@ type of the load/generation with response to voltage.
 
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
-| `type` | `LoadGenType` | - | type of load/generator with response to voltage | &#10004; | &#10004; | &#10060; | &#10060; |
+| `type` | {py:class}`LoadGenType` | - | type of load/generator with response to voltage | &#10004; | &#10004; | &#10060; | &#10060; |
 
 #### Load/Generator Concrete Types
 
@@ -463,7 +458,7 @@ measuring a `source`, a positive `p_measured` indicates that the active power fl
 
 | name | data type | unit | description | required | input | update | output |                    valid values                     |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |:---------------------------------------------------:|
-| `measured_terminal_type` | `MeasuredTerminalType` | - | indicate if it measures an `appliance` or a `branch`| &#10004; | &#10004; | &#10060; | &#10060; | the terminal type should match the `measured_object` |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType` | - | indicate if it measures an `appliance` or a `branch`| &#10004; | &#10004; | &#10060; | &#10060; | the terminal type should match the `measured_object` |
 | `power_sigma` | `double` | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation| &#10004; | &#10004; | &#10060; |                        `> 0`                        |
 
 #### Power Sensor Concrete Types
