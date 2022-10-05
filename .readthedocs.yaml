@@ -13,6 +13,7 @@ build:
   tools:
     python: "3.9"
   jobs:
-    post_checkout:
+    post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install -e .[doc]
+      - git checkout .
