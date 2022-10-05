@@ -31,10 +31,6 @@ are acceptable. Both methods have equal computation time for a single powerflow 
 
 State Estimation is done using the {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation`. An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
 
-```{eval-rst}
-.. autofunction:: power_grid_model.PowerGridModel.calculate_state_estimation
-```
-
 ### State Estimation algorithms
 
 * `CalculationMethod.iterative_linear`: It is an iterative method which converges to a true
