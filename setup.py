@@ -192,16 +192,8 @@ def substitute_github_links(pkg_dir: Path):
     with open(pkg_dir / "README.md", "r") as f:
         readme = f.read()
     url = f"https://github.com/alliander-opensource/power-grid-model/blob/{version}/"
-    print(url)
-    pattern = re.compile(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))")
-    match = pattern.match(readme)
-    if match:
-        for i, group in enumerate(match.groups()):
-            print(f"{i}: {group}")
-    else:
-        print("No Match!")
-    readme = pattern.sub(f"\\1{url}\\2", readme)
-    with open("README.md", "w") as f:
+    readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", readme)
+    with open(pkg_dir / "README.md", "w") as f:
         f.write(readme)
 
 
