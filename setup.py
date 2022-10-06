@@ -176,16 +176,19 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     # return dict of exts
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
 
+def substitute_github_links(pkg_dir: Path):
 
-def set_long_description(pkg_dir: Path):
-    with open(pkg_dir / "README.md", "r") as f:
-        raw_readme = f.read()
-    if "GITHUB_SHA" not in os.environ:
-        readme = raw_readme
+    if "GITHUB_SHA" in os.environ:
+        version = os.environ["GITHUB_SHA"].lower()
+    elif "READTHEDOCS" in os.environ:
+        version = os.environ["READTHEDOCS_VERSION_NAME"]
     else:
-        sha = os.environ["GITHUB_SHA"].lower()
-        url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
-        readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
+        return
+
+    with open(pkg_dir / "README.md", "r") as f:
+        readme = f.read()
+    url = f"https://github.com/alliander-opensource/power-grid-model/blob/{version}/"
+    readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", readme)
     with open("README.md", "w") as f:
         f.write(readme)
 
@@ -261,7 +264,7 @@ def prepare_pkg(setup_file: Path) -> dict:
     pkg_pip_name = "power-grid-model"
     pkg_name = pkg_pip_name.replace("-", "_")
     set_version(pkg_dir)
-    set_long_description(pkg_dir)
+    substitute_github_links(pkg_dir)
     return generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name)
 
 
