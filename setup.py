@@ -189,11 +189,12 @@ def substitute_github_links(pkg_dir: Path):
         print(f"We're not on github and not on readthedocs")
         return
 
-    with open(pkg_dir / "README.md", "r") as f:
+    readme_file = pkg_dir / "README.md"
+    with open(readme_file, "r") as f:
         readme = f.read()
     url = f"https://github.com/alliander-opensource/power-grid-model/blob/{version}/"
     readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", readme)
-    with open(pkg_dir / "README.md", "w") as f:
+    with open(readme_file, "w") as f:
         f.write(readme)
 
 
