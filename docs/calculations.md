@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 ## Power-flow calculation
 
-Power flow calculation is done using the {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
+Power flow calculation is done using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_power_flow`. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
 
 
 ### Power-flow calculation algorithms
@@ -29,7 +29,7 @@ are acceptable. Both methods have equal computation time for a single powerflow 
 
 ## State estimation calculation
 
-State Estimation is done using the {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation`. An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
+State Estimation is done using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>`. An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
 
 ### State Estimation algorithms
 

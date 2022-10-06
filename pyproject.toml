@@ -57,6 +57,7 @@ doc = [
     "readthedocs-sphinx-search",
     "sphinx-hoverxref",
     "pandas",
+    "numpydoc",
 ]
 
 [project.urls]

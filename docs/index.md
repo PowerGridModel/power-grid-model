@@ -24,17 +24,17 @@ self
 :caption: "Basic Usage"
 :maxdepth: 2
 components
-data-validator
 calculations
+python-api-reference
 ```
 
 ```{toctree}
 :caption: "Examples"
 :maxdepth: 2
-examples/Make Test Dataset.ipynb
 examples/Power Flow Example.ipynb
 examples/State Estimation Example.ipynb
 examples/Validation Examples.ipynb
+examples/Make Test Dataset.ipynb
 ```
 
 ```{toctree}

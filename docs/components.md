@@ -97,19 +97,6 @@ The sign of active/reactive power of the {ref}`components.md#appliance` and
 * For generator reference direction, positive active power means the power flows *from the appliance/sensor to the node*
   .
 
-## Enumerations
-
-Some attributes of components are enumerations.
-
-```{eval-rst}
-.. automodule:: power_grid_model.enum
-   :members:
-   :undoc-members:
-   :member-order: bysource
-   :show-inheritance:
-```
-
-
 # Components
 
 The attributes of components are listed in the tables in the sections below. The column names of the tables are as
@@ -215,10 +202,10 @@ increased.
 | `pk` | `double` | watt (W) | short circuit (copper) loss                                                                                                                                                                                                        | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` |
 | `i0` | `double` | - | relative no-load current                                                                                                                                                                                                           | &#10004; | &#10004; | &#10060; | &#10060; | `>= p0 / sn` and `< 1` |
 | `p0` | `double` | watt (W) | no-load (iron) loss                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` |
-| `winding_from` | {py:class}`WindingType` | - | from-side winding type                                                                                                                                                                                                             | &#10004; | &#10004; | &#10060; | &#10060; | |
-| `winding_to` | {py:class}`WindingType` | - | to-side winding type                                                                                                                                                                                                               | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `winding_from` | {py:class}`WindingType <power_grid_model.enum.WindingType>` | - | from-side winding type                                                                                                                                                                                                             | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `winding_to` | {py:class}`WindingType <power_grid_model.enum.WindingType>` | - | to-side winding type                                                                                                                                                                                                               | &#10004; | &#10004; | &#10060; | &#10060; | |
 | `clock` | `int8_t` | - | clock number of phase shift. <br> Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. <br> Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. | &#10004; | &#10004; | &#10060; | &#10060; | `>= 0` and `<= 12` |
-| `tap_side` | {py:class}`BranchSide` | - | side of tap changer                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | |
+| `tap_side` | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` | - | side of tap changer                                                                                                                                                                                                                | &#10004; | &#10004; | &#10060; | &#10060; | |
 | `tap_pos`   | `int8_t` | - | current position of tap changer                                                                                                                                                                                                    | &#10004; | &#10004; | &#10004; | &#10060; |  `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min` | `int8_t` | - | position of tap changer at minimum voltage                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | |
 | `tap_max` | `int8_t` | - | position of tap changer at maximum voltage                                                                                                                                                                                         | &#10004; | &#10004; | &#10060; | &#10060; | |
@@ -289,12 +276,12 @@ increased.
 | `pk_23`     | `double` | watt (W) | short circuit (copper) loss across side 2-3                                                               |             &#10004;             | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
 | `i0`        | `double` | - | relative no-load current with respect to side 1                                                           |             &#10004;             | &#10004; | &#10060; | &#10060; |                         `>= p0 / sn` and `< 1`                         |
 | `p0`        | `double` | watt (W) | no-load (iron) loss                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                 `>= 0`                                 |
-| `winding_1` | {py:class}`WindingType` | - | side 1 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
-| `winding_2` | {py:class}`WindingType` | - | side 2 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
-| `winding_3` | {py:class}`WindingType` | - | side 3 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
+| `winding_1` | {py:class}`WindingType <power_grid_model.enum.WindingType>` | - | side 1 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
+| `winding_2` | {py:class}`WindingType <power_grid_model.enum.WindingType>` | - | side 2 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
+| `winding_3` | {py:class}`WindingType <power_grid_model.enum.WindingType>` | - | side 3 winding type                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
 | `clock_12`  | `int8_t` | - | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
 | `clock_13`  | `int8_t` | - | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10004; | &#10060; | &#10060; |                           `>= 0` and `<= 12`                           |
-| `tap_side` | {py:class}`BranchSide` | - | side of tap changer                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                        `side_1` or `side_2` or `side_3`                         |
+| `tap_side` | {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` | - | side of tap changer                                                                                       |             &#10004;             | &#10004; | &#10060; | &#10060; |                        `side_1` or `side_2` or `side_3`                         |
 | `tap_pos`   | `int8_t` | - | current position of tap changer                                                                           |             &#10004;             | &#10004; | &#10004; | &#10060; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min` | `int8_t` | - | position of tap changer at minimum voltage                                                                |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
 | `tap_max` | `int8_t` | - | position of tap changer at maximum voltage                                                                |             &#10004;             | &#10004; | &#10060; | &#10060; |                                                                        |
@@ -364,7 +351,7 @@ type of the load/generation with response to voltage.
 
 | name | data type | unit | description | required | input | update | output |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |
-| `type` | {py:class}`LoadGenType` | - | type of load/generator with response to voltage | &#10004; | &#10004; | &#10060; | &#10060; |
+| `type` | {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>` | - | type of load/generator with response to voltage | &#10004; | &#10004; | &#10060; | &#10060; |
 
 #### Load/Generator Concrete Types
 
@@ -458,7 +445,7 @@ measuring a `source`, a positive `p_measured` indicates that the active power fl
 
 | name | data type | unit | description | required | input | update | output |                    valid values                     |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |:---------------------------------------------------:|
-| `measured_terminal_type` | {py:class}`MeasuredTerminalType` | - | indicate if it measures an `appliance` or a `branch`| &#10004; | &#10004; | &#10060; | &#10060; | the terminal type should match the `measured_object` |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | - | indicate if it measures an `appliance` or a `branch`| &#10004; | &#10004; | &#10060; | &#10060; | the terminal type should match the `measured_object` |
 | `power_sigma` | `double` | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation| &#10004; | &#10004; | &#10060; |                        `> 0`                        |
 
 #### Power Sensor Concrete Types
@@ -480,30 +467,3 @@ The table below shows a list of attributes.
 | `p_residual` | `RealValueOutput` | watt (W) | residual value between measured active power and calculated active power | | &#10060; | &#10060; | &#10004; |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power | | &#10060; | &#10060; | &#10004; |
 
-# Python API
-
-
- ```{eval-rst}
-.. autoclass:: power_grid_model.PowerGridModel
-   :members:
-   :special-members: __init__
-   :show-inheritance:
-```
-
-## Helper functions
-
-To improve the convenience of initializing an array with given shape and data format, one can use the helper
-function {py:class}`power_grid_model.initialize_array`. An example of how to create components is
-in [Input data](ex_input_data)
-
- ```{eval-rst}
-.. autofunction:: power_grid_model.initialize_array
-```
-
-The code below initializes a symmetric load update array with a shape of `(5, 4)`.
-
-```python
-from power_grid_model import initialize_array
-
-line_update = initialize_array('update', 'sym_load', (5, 4))
-```
