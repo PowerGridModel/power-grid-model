@@ -32,7 +32,7 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
+    "numpydoc",
     "hoverxref.extension",
     "myst_nb",
 ]
