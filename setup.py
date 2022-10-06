@@ -176,19 +176,31 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     # return dict of exts
     return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
 
+
 def substitute_github_links(pkg_dir: Path):
 
     if "GITHUB_SHA" in os.environ:
         version = os.environ["GITHUB_SHA"].lower()
+        print(f"We're on github: {version}")
     elif "READTHEDOCS" in os.environ:
         version = os.environ["READTHEDOCS_VERSION_NAME"]
+        print(f"We're on readthedocs: {version}")
     else:
+        print(f"We're not on github and not on readthedocs")
         return
 
     with open(pkg_dir / "README.md", "r") as f:
         readme = f.read()
     url = f"https://github.com/alliander-opensource/power-grid-model/blob/{version}/"
-    readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", readme)
+    print(url)
+    pattern = re.compile(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))")
+    match = pattern.match(readme)
+    if match:
+        for i, group in enumerate(match.groups()):
+            print(f"{i}: {group}")
+    else:
+        print("No Match!")
+    readme = pattern.sub(f"\\1{url}\\2", readme)
     with open("README.md", "w") as f:
         f.write(readme)
 
