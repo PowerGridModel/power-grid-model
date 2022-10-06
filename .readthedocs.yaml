@@ -16,4 +16,3 @@ build:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install -e .[doc]
-      - git checkout .
