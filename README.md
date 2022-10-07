@@ -54,7 +54,7 @@ source_5            sym_load_4
 ```
 
 The library uses a graph data model to represent the physical components and their attributes,
-see [Graph Data Model](docs/graph-data-model.md).
+see [Components](docs/components.md).
 
 Firstly, import the main model class
 as well as some helper functions for enumerations and meta data.
