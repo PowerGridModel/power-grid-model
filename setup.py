@@ -181,13 +181,11 @@ def substitute_github_links(pkg_dir: Path):
 
     if "GITHUB_SHA" in os.environ:
         version = os.environ["GITHUB_SHA"].lower()
-        print(f"We're on github: {version}")
     elif "READTHEDOCS" in os.environ:
         import git
+
         version = git.Repo().head.object.hexsha
-        print(f"We're on readthedocs: {version}")
     else:
-        print(f"We're not on github and not on readthedocs")
         return
 
     readme_file = pkg_dir / "README.md"
