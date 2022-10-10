@@ -63,6 +63,7 @@ doc = [
 
 [project.urls]
 Home-page = "https://github.com/alliander-opensource/power-grid-model"
+documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 
 [tool.setuptools.packages.find]
 where = ["src"]

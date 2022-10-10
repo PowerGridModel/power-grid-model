@@ -21,10 +21,17 @@ self
 ```
 
 ```{toctree}
-:caption: "Basic Usage"
+:caption: "Getting Started"
 :maxdepth: 2
+data-model
 components
 calculations
+performance-guide
+data-validator
+```
+```{toctree}
+:caption: "API Reference"
+:maxdepth: 2
 python-api-reference
 ```
 
@@ -42,4 +49,9 @@ examples/Make Test Dataset.ipynb
 :maxdepth: 2
 native-data-interface
 build-guide
+```
+```{toctree}
+:caption: "Contribution"
+:maxdepth: 2
+contribution-guide
 ```
