@@ -8,6 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Build and Test C++ and Python](https://github.com/alliander-opensource/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/main.yml)
 [![Check Code Quality](https://github.com/alliander-opensource/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/check-code-quality.yml)
 [![REUSE Compliance Check](https://github.com/alliander-opensource/power-grid-model/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/reuse-compliance.yml)
+[![docs](https://readthedocs.org/projects/power-grid-model/badge/)](https://power-grid-model.readthedocs.io/en/stable/)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
@@ -164,6 +165,10 @@ Node Result
 1   2          1  0.994801  10445.415523 -0.003096
 ```
 
+# Conversion
+
+Refer to [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io) repository for various conversions to the power-grid-model.
+
 # Folder Structure
 
 The repository folder structure is as follows. The `examples`, `docs` and `scripts` are self-explanatory.
@@ -190,7 +195,7 @@ This project is licensed under the Mozilla Public License, version 2.0 - see [LI
 This project includes third-party libraries, 
 which are licensed under their own respective Open-Source licenses.
 SPDX-License-Identifier headers are used to show which license is applicable. 
-The concerning license files can be found in the LICENSES directory.
+The concerning license files can be found in the [LICENSES](LICENSES) directory.
 
 # Contributing
 Please read [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) and [CONTRIBUTING](CONTRIBUTING.md) for details on the process 

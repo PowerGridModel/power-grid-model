@@ -12,9 +12,6 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -47,12 +44,11 @@ exclude_patterns = [
     "*/.ipynb_checkpoints/*",
 ]
 
+# -- myst parser config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
-# probably does not work on notebooks.
 myst_heading_anchors = 3
-# all references are tooltips
-# hoverxref_auto_ref = False
 
+# -- hoverxref config --------------------------------------------------------
 # hover tooltip on python classes
 hoverxref_domains = [
     "py",
