@@ -13,29 +13,33 @@ attributes.
 The components types are organized in an inheritance-like hierarchy. A sub-type has all the attributes from its parent
 type. The hierarchy of the component types is shown below.
 
-```
-base ──┬─────────────────────────────────────────────── node
-       │
-       ├── branch ──────────────────────────────────┬── line
-       │                                            ├── link
-       │                                            └── transformer
-       |
-       |── branch3 ──────────────────────────────────── three_winding_transformer
-       │
-       ├── appliance ──┬─────────────────────────────── source
-       │               │
-       │               ├─────────────────────────────── shunt
-       │               │
-       │               └── generic_load_gen ────────┬── sym_load
-       │                                            ├── sym_gen
-       │                                            ├── asym_load
-       │                                            └── asym_gen
-       │
-       └── sensor ─────┬── generic_voltage_sensor ──┬── sym_voltage_sensor
-                       │                            └── asym_voltage_sensor
-                       │
-                       └── generic_power_sensor ────┬── sym_power_sensor
-                                                    └── asym_power_sensor
+```{mermaid}
+graph LR
+    base-->node
+    base-->branch
+      branch-->line
+      branch-->link
+      branch-->transformer
+    base-->branch3
+      branch3-->three_winding_transformer
+    base-->appliance
+      appliance-->generic_load_gen
+        generic_load_gen-->sym_load
+        generic_load_gen-->sym_gen
+        generic_load_gen-->asym_load
+        generic_load_gen-->asym_gen
+      appliance-->source
+      appliance-->shunt
+    base-->sensor
+      sensor-->generic_voltage_sensor
+        generic_voltage_sensor-->sym_voltage_sensor
+        generic_voltage_sensor-->asym_voltage_sensor
+      sensor-->generic_power_sensor
+        generic_power_sensor-->sym_power_sensor
+        generic_power_sensor-->asym_power_sensor
+     
+   classDef green fill:#9f6,stroke:#333,stroke-width:2px
+   class node,line,link,transformer,three_winding_transformer,source,shunt,sym_load,sym_gen,asym_load,asym_gen,sym_voltage_sensor,asym_voltage_sensor,sym_power_sensor,asym_power_sensor green
 ```
 
 ```{note}

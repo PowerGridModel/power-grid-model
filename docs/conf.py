@@ -30,6 +30,7 @@ extensions = [
     "numpydoc",
     "hoverxref.extension",
     "myst_nb",
+    "sphinxcontrib.mermaid",
 ]
 
 templates_path = ["_templates"]
