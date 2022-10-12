@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+
+SPDX-License-Identifier: MPL-2.0
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="160mm" height="160mm" viewBox="0 0 1600 1600">
+  <defs>
+    <linearGradient id="horizontal-gradient" x1="0" y1="0" x2="100%" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="rgba(0, 0, 0, 0)" offset="0"/>
+      <stop stop-color="rgba(0, 0, 0, 1)" offset="0.18"/>
+      <stop stop-color="rgba(0, 0, 0, 1)" offset="0.82"/>
+      <stop stop-color="rgba(0, 0, 0, 0)" offset="1"/>
+    </linearGradient>
+    <linearGradient id="vertical-gradient" x1="0" y1="0" x2="0" y2="100%" gradientUnits="userSpaceOnUse">
+      <stop stop-color="rgba(0, 0, 0, 0)" offset="0"/>
+      <stop stop-color="rgba(0, 0, 0, 1)" offset="0.18"/>
+      <stop stop-color="rgba(0, 0, 0, 1)" offset="0.82"/>
+      <stop stop-color="rgba(0, 0, 0, 0)" offset="1"/>
+    </linearGradient>
+  </defs>
+  <rect x="25%" y="25%" width="50%" height="50%" stroke="none" fill="white"/>
+  <g stroke-width="3%">
+    <g stroke="url(#horizontal-gradient)">
+      <line x1="0" y1="25%" x2="100%" y2="25%"/>
+      <line x1="0" y1="75%" x2="100%" y2="75%"/>
+    </g>
+    <g stroke="url(#vertical-gradient)">
+      <line x1="25%" y1="0" x2="25%" y2="100%"/>
+      <line x1="75%" y1="0" x2="75%" y2="100%"/>
+    </g>
+    <g stroke="black" fill="white">
+      <circle cx="25%" cy="25%" r="5%"/>
+      <circle cx="75%" cy="25%" r="5%"/>
+      <circle cx="75%" cy="75%" r="5%"/>
+      <circle cx="25%" cy="75%" r="5%"/>
+    </g>
+    <g stroke="black" fill="none" stroke-linecap="round">
+      <line x1="800" y1="550" x2="800" y2="700"/>
+      <path d="M 700,627 a 200,200 0 1 0 200,0"/>
+    </g>
+  </g>
+</svg>
