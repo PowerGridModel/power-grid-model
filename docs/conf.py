@@ -61,6 +61,7 @@ hoverxref_role_types = {
     "confval": "tooltip",  # for custom object
     "mod": "tooltip",  # for Python Sphinx Domain
     "class": "tooltip",  # for Python Sphinx Domain
+    "obj": "tooltip",
 }
 
 # -- sphinx.autodoc config ---------------------------------------------------

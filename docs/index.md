@@ -25,8 +25,6 @@ Currently, it supports the following calculations:
 * Symmetric and asymmetric power flow calculation with Newton-Raphson method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
 
-# Installation
-
 ## Install from PyPI
 
 You can directly install the package from PyPI.

@@ -18,7 +18,7 @@ These should be selected when accurate solution is required within specified `er
 * `CalculationMethod.newton_raphson`: Traditional Newton-Raphson method.
 * `CalculationMethod.iterative_current`: Newton-Raphson would be more robust in achieving convergence and require less
   iterations. However, Iterative current can be faster most times because it
-  uses [Matrix Prefactorization](calculations.md#Matrix-Prefactorization).
+  uses [Matrix Prefactorization](performance-guide.md#matrix-prefactorization).
 
 Linear approximation methods are many times faster than the iterative methods. Can be used where approximate solutions
 are acceptable. Both methods have equal computation time for a single powerflow calculation.

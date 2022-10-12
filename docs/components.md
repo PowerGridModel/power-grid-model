@@ -220,7 +220,7 @@ increased.
 
 `appliance` is an abstract user which is coupled to a `node`. For each `appliance` a switch is defined between
 the `appliance` and the `node`. The reference direction for power flows is mentioned in
-{hoverxreftooltip}`components.md#reference-direction`.
+{hoverxreftooltip}`data-model.md#reference-direction`.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -235,7 +235,7 @@ the `appliance` and the `node`. The reference direction for power flows is menti
 ### Source
 
 * type name: `source`
-* {hoverxreftooltip}`components.md#reference-direction`: generator
+* {hoverxreftooltip}`data-model.md#reference-direction`: generator
 
 `source` is an {hoverxreftooltip}`components.md#appliance` representing the external network with a
 [Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem). It has an infinite voltage source
@@ -282,7 +282,7 @@ The table below shows a list of attributes.
 ### Shunt
 
 * type name: `shunt`
-* {hoverxreftooltip}`components.md#reference-direction`: load
+* {hoverxreftooltip}`data-model.md#reference-direction`: load
 
 `shunt` is an {hoverxreftooltip}`components.md#appliance` with a fixed admittance (impedance). It behaves similar to a
 load/generator with type `const_impedance`.
@@ -346,7 +346,7 @@ The table below shows a list of attributes.
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 {hoverxreftooltip}`components.md#sensor`. It measures the active/reactive power flow of a terminal. The terminal is
 either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` and a `node`. In case of a
-terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`components.md#reference-direction` in the
+terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`data-model.md#reference-direction` in the
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 

@@ -113,7 +113,7 @@ All the enumeration types are defined as 8-bit signed integer as underlying type
 `int8_t` in C++ and `'i1'` in Python.
 The enumerations are defined in the Python module `power_grid_model.enum`
 In C++ the enumeration is defined with the same integer values.
-Please refer the [Components](python-api-reference.md#enumerations) for list of enumerations.
+Please refer the [Enum](python-api-reference.md#enum) for list of enumerations.
 
 
 ## Meta-data Helper Module
