@@ -105,7 +105,7 @@ TEST_CASE("Test main model") {
     main_model.set_construction_complete();
 
     SUBCASE("Test get indexer") {
-        IdxVector const node_id{2, 1, 3, 2};
+        std::vector<ID> const node_id{2, 1, 3, 2};
         IdxVector const expected_indexer{1, 0, 2, 1};
         IdxVector indexer(4);
         main_model.get_indexer("node", node_id.data(), 4, indexer.data());
