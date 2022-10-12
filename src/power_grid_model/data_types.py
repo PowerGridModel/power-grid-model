@@ -65,7 +65,7 @@ is actually a batch. The batch list is intended as an intermediate data type, du
 Example: [{"node": <1d-array>, "line": <1d-array>}, {"node": <1d-array>, "line": <1d-array>}]
 """
 
-Nominal = int
+NominalValue = int
 """
 Nominal values can be IDs, booleans, enums, tap pos
 
@@ -86,7 +86,7 @@ Asymmetrical values are three-phase values like p or u_measured.
 Example: (10400.0, 10500.0, 10600.0)
 """
 
-AttributeValue = Union[RealValue, Nominal, AsymValue]
+AttributeValue = Union[RealValue, NominalValue, AsymValue]
 """
 When representing a grid as a native python structure, each attribute (u_rated etc) is either a nominal value,
 a real value, or a tuple of three real values.
