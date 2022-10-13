@@ -33,7 +33,7 @@ struct PowerGridBenchmark {
         Idx const n_feeders = n_nodes / nodes_per_feeder;
 
         // source node
-        Idx const id_source_node = 0;
+        ID const id_source_node = 0;
         NodeInput const source_node{{id_source_node}, 150.0e3};
         NodeInput const cycle_node_1{{id_source_node + 1}, 150.0e3}, cycle_node_2{{id_source_node + 2}, 150.0e3};
         LinkInput const link_1{{{3}, 0, 1, true, true}};
@@ -88,10 +88,10 @@ struct PowerGridBenchmark {
         link_input = {link_1, link_2, link_3};
 
         // vector of node ids at far end
-        IdxVector rind_nodes;
+        std::vector<ID> ring_nodes;
 
         // current id
-        Idx id_gen = 10;
+        ID id_gen = 10;
         for (Idx i = 0; i < n_feeders; i++) {
             NodeInput feeder_node = node;
             feeder_node.id = id_gen++;
@@ -101,10 +101,10 @@ struct PowerGridBenchmark {
             transformer_s.to_node = feeder_node.id;
             node_input.push_back(feeder_node);
             transformer_input.push_back(transformer_s);
-            Idx prev_node_id = feeder_node.id;
+            ID prev_node_id = feeder_node.id;
             for (Idx j = 0; j < nodes_per_feeder; j++) {
                 // node
-                Idx const current_node_id = id_gen++;
+                ID const current_node_id = id_gen++;
                 NodeInput node_s = node;
                 node_s.id = current_node_id;
                 // line
@@ -151,15 +151,15 @@ struct PowerGridBenchmark {
                 prev_node_id = current_node_id;
                 // push to rind node
                 if (j == ring_node_pos) {
-                    rind_nodes.push_back(node_input.back().id);
+                    ring_nodes.push_back(node_input.back().id);
                 }
             }
         }
         // add loop if needed, and there are more than one feeder, and there are ring nodes
-        if (n_feeders > 1 && meshed && !rind_nodes.empty()) {
-            rind_nodes.push_back(rind_nodes.front());
+        if (n_feeders > 1 && meshed && !ring_nodes.empty()) {
+            ring_nodes.push_back(ring_nodes.front());
             // loop all far end nodes
-            for (auto it = rind_nodes.cbegin(); it != rind_nodes.cend() - 1; ++it) {
+            for (auto it = ring_nodes.cbegin(); it != ring_nodes.cend() - 1; ++it) {
                 // line
                 LineInput line_s = line;
                 line_s.id = id_gen++;
