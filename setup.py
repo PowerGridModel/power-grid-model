@@ -127,10 +127,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             "-std=c++17",
             "-O3",
             "-fvisibility=hidden",
-            # for linux/macos add visibility to the init function
-            R'-DPyMODINIT_FUNC=extern "C" __attribute__((visibility ("default"))) PyObject*',
         ]
         lflags += ["-lpthread", "-O3"]
+        # for linux/macos add visibility to the init function
+        define_macros.append(("PyMODINIT_FUNC", 'extern "C" __attribute__((visibility ("default"))) PyObject*'))
         # # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
