@@ -9,48 +9,42 @@ SPDX-License-Identifier: MPL-2.0
 
  ```{eval-rst}
 .. autoclass:: power_grid_model.PowerGridModel
-   :members:
-   :special-members: __init__
    :show-inheritance:
-```
-
- ```{eval-rst}
 .. autofunction:: power_grid_model.initialize_array
 ```
 
-## Enum
+## enum
 
 ```{eval-rst}
 .. automodule:: power_grid_model.enum
-   :members:
    :undoc-members:
-   :member-order: bysource
    :show-inheritance:
 ```
+
+## validation
+
+```{note}
+{py:function}`validate_input_data()` assumes that you won't be using update data in your calculation.
+{py:class}`validate_batch_data()` validates input_data in combination with batch/update data.
+```
 ```{eval-rst}
-.. automodule:: power_grid_model.validation.
-   :members:
+.. autofunction:: power_grid_model.validation.validate_input_data
+.. autofunction:: power_grid_model.validation.validate_batch_data
+.. autofunction:: power_grid_model.validation.assert_valid_input_data
+.. autofunction:: power_grid_model.validation.assert_valid_batch_data  
+.. autofunction:: power_grid_model.validation.errors_to_string
 ```
 
-## Validation
+### errors
 
 ```{eval-rst}
 .. autoclass:: power_grid_model.validation.errors.ValidationError
-   :members:
-.. autofunction:: power_grid_model.validation.validate_input_data
 ```
-```{note}
-`validate_input_data()` assumes that you won't be using update data in your calculation.
-`validate_batch_data()` validates input_data in combination with batch/update data.
-```
-```{eval-rst}
-.. autofunction:: power_grid_model.validation.validate_batch_data
-```
-```{eval-rst}
-.. autofunction:: power_grid_model.validation.assert_valid_input_data
-.. autofunction:: power_grid_model.validation.assert_valid_batch_data  
-```
-```{eval-rst}
-.. autofunction:: power_grid_model.validation.errors_to_string
 
+## utils
+
+```{eval-rst}
+.. autofunction:: power_grid_model.utils.import_json_data
+.. autofunction:: power_grid_model.utils.export_json_data
 ```
+

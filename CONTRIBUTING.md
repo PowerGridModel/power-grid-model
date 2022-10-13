@@ -23,6 +23,21 @@ We recognize different levels of contributions as shown below in increasing orde
     1. Develop new mathematical algorithms
     1. Improve or add new features into the C++ codebase
 
+## Folder Structure
+
+The repository folder structure is as follows. The `examples`, `docs` and `scripts` folders are self-explanatory.
+
+- The C++ calculation core is inside [include/power-grid-model](include/power-grid-model).
+- The python interface code is in [src/power_grid_model](src/power_grid_model)
+- The code for validation of input data is in [validation](src/power_grid_model/validation) folder.
+- The [tests](tests) folder is divided in the following way:
+  - `cpp_unit_tests` contains the tests for the C++ calculation core.
+  - `benchmark_cpp` contains a benchmark test case generator in C++.
+  - `unit` folder contains tests for the python code.
+  - `data` contains validation test cases designed for every component and algorithm. Some sample network types are also included. 
+  The validation is either against popular power system analysis software or hand calculation.
+
+
 ## Filing bugs and change requests
 
 You can file bugs against and change request for the project via GitHub issues. Consult [GitHub Help](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/creating-an-issue) for more

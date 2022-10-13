@@ -17,7 +17,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
 
-
+<img src="docs\images\pgm-logo-color.svg" alt="Power Grid Model logo" width="100"/>
 
 # Power Grid Model
 
@@ -27,6 +27,9 @@ Currently, it supports the following calculations:
 
 * Symmetric and asymmetric power flow calculation with Newton-Raphson method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
+
+See the [power-grid-model documentation](https://power-grid-model.readthedocs.io/en/stable/) for more information.
+For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io) repository.
 
 # Installation
 
@@ -41,24 +44,6 @@ pip install power-grid-model
 ## Build and install from Source
 
 To install the library from source, refer to the [Build Guide](docs/build-guide.md).
-
-# Conversion
-
-Refer to [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io) repository for various conversions to the power-grid-model.
-
-# Folder Structure
-
-The repository folder structure is as follows. The `examples`, `docs` and `scripts` are self-explanatory.
-
-- The C++ calculation core is inside [include/power-grid-model](include/power-grid-model).
-- The python interface code is in [src/power_grid_model](src/power_grid_model)
-- The code for validation of input data is in [validation](src/power_grid_model/validation) folder.
-- The [tests](tests) folder is divided in the following way:
-  - `cpp_unit_tests` contains the tests for the C++ calculation core.
-  - `benchmark_cpp` contains a benchmark test case generator in C++.
-  - `unit` folder contains tests for the python code.
-  - `data` contains validation test cases designed for every component and algorithm. Some sample network types are also included. 
-  The validation is either against popular power system analysis software or hand calculation.
 
 # Examples
 

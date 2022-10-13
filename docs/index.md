@@ -49,7 +49,7 @@ getting-started
 ```
 
 ```{toctree}
-:caption: "Getting Started"
+:caption: "User Manual"
 :maxdepth: 2
 data-model
 components
