@@ -21,9 +21,6 @@ readme = "README.md"
 license = { text = "MPL-2.0" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: C++",
     "Programming Language :: Cython",
