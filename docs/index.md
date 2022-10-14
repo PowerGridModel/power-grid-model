@@ -42,25 +42,24 @@ To install the library from source, refer to the [Build Guide](build-guide.md).
 Detailed contents of the documentation are structured as follows.
 
 ```{toctree}
-:caption: "Installation and quickstart"
 :maxdepth: 2
 self
-getting-started
+quickstart
 ```
 
 ```{toctree}
 :caption: "User Manual"
 :maxdepth: 2
-data-model
-components
-calculations
-performance-guide
-data-validator
+user_manual/data-model
+user_manual/components
+user_manual/calculations
+user_manual/performance-guide
+user_manual/data-validator
 ```
 ```{toctree}
 :caption: "API Reference"
 :maxdepth: 2
-python-api-reference
+api_reference/python-api-reference
 ```
 
 ```{toctree}
@@ -75,8 +74,8 @@ examples/Make Test Dataset.ipynb
 ```{toctree}
 :caption: "Advanced documentation"
 :maxdepth: 2
-native-data-interface
-build-guide
+advanced_documentation/native-data-interface
+advanced_documentation/build-guide
 ```
 ```{toctree}
 :caption: "Contribution"
