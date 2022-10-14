@@ -129,6 +129,8 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             "-fvisibility=hidden",
         ]
         lflags += ["-lpthread", "-O3"]
+        # for linux/macos add visibility to the init function
+        define_macros.append(("PyMODINIT_FUNC", 'extern "C" __attribute__((visibility ("default"))) PyObject*'))
         # # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
@@ -145,17 +147,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     cython_src_cpp = [x.with_suffix(".cpp") for x in cython_src]
     print("Generated cpp files")
     print(cython_src_cpp)
-    # for linux add visibility to the init function
-    if not if_win:
-        for cpp_src in cython_src_cpp:
-            with open(cpp_src) as f:
-                cpp_code = f.read()
-            cpp_code_modified = cpp_code.replace(
-                "#define __Pyx_PyMODINIT_FUNC PyMODINIT_FUNC",
-                '#define __Pyx_PyMODINIT_FUNC extern "C" __attribute__((visibility ("default"))) PyObject* ',
-            )
-            with open(cpp_src, "w") as f:
-                f.write(cpp_code_modified)
 
     # list of extensions of generated cpp files from cython
     exts = [

@@ -33,7 +33,7 @@ namespace power_grid_model {
 // id type
 using ID = int32_t;
 // idx type
-using Idx = int32_t;
+using Idx = int64_t;
 using IdxVector = std::vector<Idx>;
 
 using IntS = int8_t;
