@@ -97,13 +97,13 @@ pytest
 
 ## Build CMake Project
 
-There is a root cmake file in the root folder of the repo [`CMakeLists.txt`](../CMakeLists.txt). It specifies
+There is a root cmake file in the root folder of the repo [`CMakeLists.txt`](../../CMakeLists.txt). It specifies
 dependencies and the build options for the project. The core algorithm is implemented in the header-only
 library `power_grid_model`. There are two sub-projects defined in the root cmake file:
 
-* [`tests/cpp_unit_tests/CMakeLists.txt`](../tests/cpp_unit_tests/CMakeLists.txt): the unit test project using `doctest`
+* [`tests/cpp_unit_tests/CMakeLists.txt`](../../tests/cpp_unit_tests/CMakeLists.txt): the unit test project using `doctest`
   framework.
-* [`tests/benchmark_cpp/CMakeLists.txt`](../tests/benchmark_cpp/CMakeLists.txt): the C++ benchmark project for
+* [`tests/benchmark_cpp/CMakeLists.txt`](../../tests/benchmark_cpp/CMakeLists.txt): the C++ benchmark project for
   performance measure.
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. When you
@@ -259,7 +259,7 @@ pytest
 
 If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
 The IDE should be able to automatically detect the Visual Studio cmake configuration file
-[`CMakeSettings.json`](../CMakeSettings.json). Two configurations are pre-defined. It includes debug or release build.
+[`CMakeSettings.json`](../../CMakeSettings.json). Two configurations are pre-defined. It includes debug or release build.
 
 * `x64-Debug`
 * `x64-Release`
@@ -308,7 +308,7 @@ pytest
 ### Build CMake Project
 
 There is a convenient shell script to build the cmake project:
-[`build.sh`](../build.sh). You can study the file and write your own build script. Two configurations are pre-defined
+[`build.sh`](../../build.sh). You can study the file and write your own build script. Two configurations are pre-defined
 with one input argument, which will be passed into `cmake`. It includes debug or release build.
 
 * Option 1

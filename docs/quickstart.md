@@ -16,7 +16,7 @@ source_5            sym_load_4
 ```
 
 The library uses a graph data model to represent the physical components and their attributes,
-see [Graph Data Model](data-model.md).
+see [Graph Data Model](user_manual/data-model).
 
 Firstly, import the main model class
 as well as some helper functions for enumerations and meta data.
@@ -32,10 +32,10 @@ from power_grid_model import initialize_array
 The library uses dictionary of
 [numpy structured arrays](https://numpy.org/doc/stable/user/basics.rec.html)
 as the main (input and output) data exchange format between Python and C++ core.
-The documentation [Native Data Interface](native-data-interface.md)
+The documentation [Native Data Interface](advanced_documentation/native-data-interface)
 explains the detailed design of this interface.
 
-The helper function {py:function}`power_grid_model.initialize_array` can be used to
+The helper function {py:class}`power_grid_model.initialize_array` can be used to
 easily generate an array of the correct format.
 
 ```python
@@ -91,7 +91,7 @@ in [Input data](ex_input_data).
 
 ```{note}
 The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component. 
-(Eg. See that type name of {hoverxref}`components.md#node` is `node`)
+(Eg. See that type name of {hoverxref}`user_manual/components:node` is `node`)
 ```
 
 ## Instantiate Model
@@ -106,7 +106,7 @@ model = PowerGridModel(input_data, system_frequency=50.0)
 
 To perform calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` 
 or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions. 
-Refer [Calculations](calculations.md) for more details on the many optional arguments.
+Refer [Calculations](user_manual/calculations) for more details on the many optional arguments.
 
 ```python
 result = model.calculate_power_flow()
@@ -137,7 +137,7 @@ Node Result
 
 ## Validation
 
-To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`. Refer [Data Validator](data-validator.md) for more details
+To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`. Refer [Data Validator](user_manual/data-validator) for more details
 
 ## Batch Data
 

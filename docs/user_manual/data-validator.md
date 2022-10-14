@@ -20,8 +20,8 @@ InputData = Dict[str, np.ndarray]
 UpdateData = Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
 ```
 
-```{see-also}
-Check {ref}`Validation-Examples.ipynb` for an example of function applications.
+```{seealso}
+Check [](examples/Validation%20Examples.ipynb) for an example of function applications.
 ```
 
 

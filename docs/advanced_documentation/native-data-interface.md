@@ -64,7 +64,7 @@ node['u_rated'] = [150e3, 10e3]
 
 We further save this array into a dictionary.
 With other types of components, the dictionary is a valid input dataset for the constructor of `PowerGridModel`,
-see [Python API Reference](python-api-reference.md).
+see [Python API Reference](../api_reference/python-api-reference.md).
 
 ```python
 input_data = {'node': node}
@@ -113,7 +113,7 @@ All the enumeration types are defined as 8-bit signed integer as underlying type
 `int8_t` in C++ and `'i1'` in Python.
 The enumerations are defined in the Python module `power_grid_model.enum`
 In C++ the enumeration is defined with the same integer values.
-Please refer the [Enum](python-api-reference.md#enum) for list of enumerations.
+Please refer the [Enum](../api_reference/python-api-reference.md#enum) for list of enumerations.
 
 
 ## Meta-data Helper Module
@@ -125,7 +125,7 @@ The module `power_grid_model.power_grid_meta_data`
 retrieves the exact memory layout of all the input/update/output dataset from C++
 and predefines all the corresponding `numpy.dtype`.
 The detailed explanation of all attributes of each component is given in
-[Components](components.md).
+[Graph Data model](../user_manual/data-model.md#attributes-of-components).
 
 
 One can import the `power_grid_meta_data` to get all the predefined `numpy.dtype` and create relevant arrays.
@@ -141,7 +141,7 @@ Furthermore, there is an even more convenient function `initialize_array`
 to directly create a `numpy` array with specified data type,
 and initialize all the values to null value as above.
 So you only have to assign meaningful values into the array.
-See [Python API Reference](python-api-reference.md) for detailed documentation.
+See [Python API Reference](../api_reference/python-api-reference.md) for detailed documentation.
 
 In the code below, a line update dataset is created. It sets the `from_status` of all the lines to `1`,
 but leave the `to_status` unchanged (it will have the null value `-128`).

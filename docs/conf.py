@@ -42,6 +42,7 @@ myst_heading_anchors = 3
 
 # -- hoverxref config --------------------------------------------------------
 # hover tooltip on python classes
+# hoverx links are in sphinx style: {ref} `docs_path\file:Exact Section Name`
 hoverxref_domains = [
     "py",
 ]
@@ -64,3 +65,10 @@ autodoc_default_options = {
     "undoc-members": False,
     "exclude-members": "__weakref__",
 }
+
+# -- sphinx.autosectionlabel config -------------------------------------------
+autosectionlabel_prefix_document = True
+
+# -- myst_parser or myst_nb -------------------------------------------------
+# markdown links [](relative_path\file.ext#section-in-slug)
+myst_heading_anchors = 3

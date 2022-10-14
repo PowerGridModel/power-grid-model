@@ -23,11 +23,7 @@ The base type for all power grid components.
 ## Node
 
 * type name: `node`
-* base: {hoverxreftooltip}`components.md#base`
-
-```{eval-rst}
-   Base :hoverxreftooltiptooltip: `Base<Base>` 
-```
+* base: {hoverxreftooltip}`user_manual/components:base`
 
 `node` is a point in the grid. Physically a node can be a busbar, a joint, or other similar component.
 
@@ -41,7 +37,7 @@ The base type for all power grid components.
 ## Branch
 
 * type name: `branch`
-* base: {hoverxreftooltip}`components.md#base`
+* base: {hoverxreftooltip}`user_manual/components:base`
 
 `branch` is the abstract base type for the component which connects two *different* nodes. For each branch two switches
 are always defined at from- and to-side of the branch. In reality such switches may not exist. For example, a cable
@@ -67,7 +63,7 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 
 * type name: 'line'
 
-`line` is a {hoverxreftooltip}`components.md#branch` with specified serial impedance and shunt admittance. A cable is
+`line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance. A cable is
 also modeled as `line`. A `line` can only connect two nodes with the same rated voltage.
 
 | name | data type | unit | description | required | input | update | output | valid values |
@@ -86,13 +82,13 @@ also modeled as `line`. A `line` can only connect two nodes with the same rated 
 
 * type name: `link`
 
-`link` is a {hoverxreftooltip}`components.md#branch` which usually represents a short internal cable/connection between
+`link` is a {hoverxreftooltip}`user_manual/components:branch` which usually represents a short internal cable/connection between
 two busbars inside a substation. It has a very high admittance (small impedance) which is set to a fixed per-unit value
 (equivalent to 10e6 siemens for 10kV network). There is no additional attribute for `link`.
 
 ### Transformer
 
-`transformer` is a {hoverxreftooltip}`components.md#branch` which connects two nodes with possibly different voltage
+`transformer` is a {hoverxreftooltip}`user_manual/components:branch` which connects two nodes with possibly different voltage
 levels.
 
 ```{note} 
@@ -130,7 +126,7 @@ increased.
 ## Branch3
 
 * type name: `branch3`
-* base: {hoverxreftooltip}`components.md#base`
+* base: {hoverxreftooltip}`user_manual/components:base`
 
 `branch3` is the abstract base type for the component which connects three *different* nodes. For each branch3 three
 switches are always defined at side 1, 2, or 3 of the branch. In reality such switches may not exist.
@@ -159,7 +155,7 @@ switches are always defined at side 1, 2, or 3 of the branch. In reality such sw
 
 ### Three-Winding Transformer
 
-`three_winding_transformer` is a {hoverxreftooltip}`components.md#branch3` connects three nodes with possibly different
+`three_winding_transformer` is a {hoverxreftooltip}`user_manual/components:branch3` connects three nodes with possibly different
 voltage levels.
 
 ```{note}
@@ -216,11 +212,11 @@ increased.
 ## Appliance
 
 * type name: `appliance`
-* base: {hoverxreftooltip}`components.md#base`
+* base: {hoverxreftooltip}`user_manual/components:base`
 
 `appliance` is an abstract user which is coupled to a `node`. For each `appliance` a switch is defined between
 the `appliance` and the `node`. The reference direction for power flows is mentioned in
-{hoverxreftooltip}`data-model.md#reference-direction`.
+{hoverxreftooltip}`user_manual/data-model:Reference Direction`.
 
 | name | data type | unit | description | required | input | update | output | valid values |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -235,9 +231,9 @@ the `appliance` and the `node`. The reference direction for power flows is menti
 ### Source
 
 * type name: `source`
-* {hoverxreftooltip}`data-model.md#reference-direction`: generator
+* {hoverxreftooltip}`user_manual/data-model:Reference Direction`: generator
 
-`source` is an {hoverxreftooltip}`components.md#appliance` representing the external network with a
+`source` is an {hoverxreftooltip}`user_manual/components:appliance` representing the external network with a
 [Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem). It has an infinite voltage source
 with an internal impedance. The impedance is specified by convention as short circuit power.
 
@@ -253,7 +249,7 @@ with an internal impedance. The impedance is specified by convention as short ci
 
 * type name: `generic_load_gen`
 
-`generic_load_gen` is an abstract load/generation {hoverxreftooltip}`components.md#appliance` which contains only the
+`generic_load_gen` is an abstract load/generation {hoverxreftooltip}`user_manual/components:appliance` which contains only the
 type of the load/generation with response to voltage.
 
 | name | data type | unit | description | required | input | update | output |
@@ -282,9 +278,9 @@ The table below shows a list of attributes.
 ### Shunt
 
 * type name: `shunt`
-* {hoverxreftooltip}`data-model.md#reference-direction`: load
+* {hoverxreftooltip}`user_manual/data-model:Reference Direction`: load
 
-`shunt` is an {hoverxreftooltip}`components.md#appliance` with a fixed admittance (impedance). It behaves similar to a
+`shunt` is an {hoverxreftooltip}`user_manual/components:appliance` with a fixed admittance (impedance). It behaves similar to a
 load/generator with type `const_impedance`.
 
 | name | data type | unit | description | required | input | update | output |
@@ -297,7 +293,7 @@ load/generator with type `const_impedance`.
 ## Sensor
 
 * type name: `sensor`
-* base: {hoverxreftooltip}`components.md#base`
+* base: {hoverxreftooltip}`user_manual/components:base`
 
 `sensor` is an abstract type for all the sensor types. A sensor does not have any physical meaning. Rather, it provides
 measurement data for the state estimation algorithm. The state estimator uses the data to evaluate the state of the grid
@@ -312,7 +308,7 @@ with the highest probability.
 * type name: `generic_voltage_sensor`
 
 `generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor and derived from
-{hoverxreftooltip}`components.md#sensor`. It measures the magnitude and (optionally) the angle of the voltage of
+{hoverxreftooltip}`user_manual/components:sensor`. It measures the magnitude and (optionally) the angle of the voltage of
 a `node`.
 
 | name | data type | unit | description | required | input | update | output | valid values |
@@ -344,9 +340,9 @@ The table below shows a list of attributes.
 * type name: `generic_power_sensor`
 
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
-{hoverxreftooltip}`components.md#sensor`. It measures the active/reactive power flow of a terminal. The terminal is
+{hoverxreftooltip}`user_manual/components:sensor`. It measures the active/reactive power flow of a terminal. The terminal is
 either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` and a `node`. In case of a
-terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`data-model.md#reference-direction` in the
+terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_manual/data-model:Reference Direction` in the
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
