@@ -93,7 +93,7 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
             # Convert the index pointers to a numpy array and combine the list of object numpy arrays into a singe
             # numpy array. All objects of all batches are now stores in one large array, the index pointers define
             # which elemets of the array (rows) belong to which batch.
-            batch_data[component] = {"indptr": np.array(indptr, dtype=np.int32), "data": np.concatenate(data, axis=0)}
+            batch_data[component] = {"indptr": np.array(indptr, dtype=np.int64), "data": np.concatenate(data, axis=0)}
 
     return batch_data
 

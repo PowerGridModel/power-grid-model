@@ -8,20 +8,20 @@
 namespace power_grid_model {
 
 struct C {
-    C(int a1) : a{a1} {
+    C(Idx a1) : a{a1} {
     }
 
-    int a;
+    Idx a;
 };
 
 struct C1 : C {
-    C1(int a1, double b1) : C{a1}, b{b1} {
+    C1(Idx a1, double b1) : C{a1}, b{b1} {
     }
     double b;
 };
 
 struct C2 : C {
-    C2(int a1, uint16_t b1) : C{a1}, b{b1} {
+    C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {
     }
     uint16_t b;
 };

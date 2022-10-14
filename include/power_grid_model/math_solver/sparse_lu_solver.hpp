@@ -51,7 +51,7 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_scalar_lu_t<Tens
     using Matrix = Tensor;
     using LUFactor = void;
     struct BlockPerm {};
-    using BlockPermArray = int;
+    using BlockPermArray = Idx;
 };
 
 template <class Tensor, class RHSVector, class XVector>
