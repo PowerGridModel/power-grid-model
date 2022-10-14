@@ -23,10 +23,6 @@ SPDX-License-Identifier: MPL-2.0
 
 ## validation
 
-```{note}
-{py:function}`validate_input_data()` assumes that you won't be using update data in your calculation.
-{py:class}`validate_batch_data()` validates input_data in combination with batch/update data.
-```
 ```{eval-rst}
 .. autofunction:: power_grid_model.validation.validate_input_data
 .. autofunction:: power_grid_model.validation.validate_batch_data
