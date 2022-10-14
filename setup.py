@@ -181,20 +181,24 @@ def substitute_github_links(pkg_dir: Path):
 
     if "GITHUB_SHA" in os.environ:
         version = os.environ["GITHUB_SHA"].lower()
+        files_name = ["README.md"]
     elif "READTHEDOCS" in os.environ:
         import git
 
         version = git.Repo().head.object.hexsha
+        files_name = ["README.md", "SUPPORT.md", "PROJECT_GOVERNANCE.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md"]
     else:
         return
 
-    readme_file = pkg_dir / "README.md"
-    with open(readme_file, "r") as f:
-        readme = f.read()
     url = f"https://github.com/alliander-opensource/power-grid-model/blob/{version}/"
-    readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", readme)
-    with open(readme_file, "w") as f:
-        f.write(readme)
+    for file_name in files_name:
+        file_path = pkg_dir / file_name
+        with open(file_path, "r") as f:
+            file = f.read()
+            file = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)(?!docs)[^\(\)\[\]]+\))", f"\\1{url}\\2", file)
+            file = re.sub(r"(\[[^\(\)\[\]]+\]\()(?=docs\/)([^\(\)\[\]]+\))", f"12", file)
+        with open(file_path, "w") as f:
+            f.write(file)
 
 
 def set_version(pkg_dir: Path):
