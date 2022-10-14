@@ -21,9 +21,6 @@ readme = "README.md"
 license = { text = "MPL-2.0" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: C++",
     "Programming Language :: Cython",
@@ -101,7 +98,7 @@ manylinux-aarch64-image = "manylinux2014"
 [tool.cibuildwheel.macos]
 build = ["cp*-macosx_*"]
 archs = ["x86_64", "arm64"]
-environment = { CC="clang", CXX="clang++", MACOSX_DEPLOYMENT_TARGET="10.15" }
+environment = { CC="clang", CXX="clang++" }
 # Skip trying to test arm64 builds on Intel Macs
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 
