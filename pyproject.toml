@@ -10,6 +10,7 @@ requires = [
     "oldest-supported-numpy",
     "requests",
     "pybuild-header-dependency",
+    "gitpython",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -47,9 +48,20 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
+doc = [
+    "sphinx",
+    "myst_nb",
+    "sphinx_rtd_theme",
+    "readthedocs-sphinx-search",
+    "sphinx-hoverxref",
+    "sphinxcontrib-mermaid",
+    "numpydoc",
+    "pandas",
+]
 
 [project.urls]
 Home-page = "https://github.com/alliander-opensource/power-grid-model"
+Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 
 [tool.setuptools.packages.find]
 where = ["src"]

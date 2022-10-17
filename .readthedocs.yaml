@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+version: 2
+
+# Build from the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
+
+build:
+  os: "ubuntu-20.04"
+  tools:
+    python: "3.9"
+  jobs:
+    post_install:
+      # Build package with doc requirements from pyproject.optional-dependencies
+      - pip install --verbose --editable .[doc]

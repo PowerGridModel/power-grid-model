@@ -15,7 +15,7 @@ Each entry in the dictionary represents one type of components:
 the key is the component type, the value is a `numpy` structured array.
 Each element in the array represents one single physical component.
 
-# Structured Array
+## Structured Array
 
 To use the component type `node` as an example, the input data of a `node` is defined in C++ as follows
 (not exactly the definition in real code, only a demonstration example).
@@ -64,7 +64,7 @@ node['u_rated'] = [150e3, 10e3]
 
 We further save this array into a dictionary.
 With other types of components, the dictionary is a valid input dataset for the constructor of `PowerGridModel`,
-see [Python API Reference](python-api-reference.md).
+see [Python API Reference](../api_reference/python-api-reference.md).
 
 ```python
 input_data = {'node': node}
@@ -75,7 +75,7 @@ This is also true for result dataset.
 The memory block of result dataset is allocated using `numpy`.
 The pointers are passed into C++ code so that the C++ program can write results into those memory blocks.
 
-# Basic Data Types
+## Basic Data Types
 
 The basic data types used in the interface between C++ and Python are shown in the table below.
 
@@ -107,16 +107,16 @@ line_update['from_status'] = [0]
 line_update['to_status'] = [-128]
 ```
 
-## Enumerations
+### Enumerations
 
 All the enumeration types are defined as 8-bit signed integer as underlying type:
 `int8_t` in C++ and `'i1'` in Python.
 The enumerations are defined in the Python module `power_grid_model.enum`
 In C++ the enumeration is defined with the same integer values.
-Please refer the [Graph Data Model](graph-data-model.md#enumerations) for list of enumerations.
+Please refer the [Enum](../api_reference/python-api-reference.md#enum) for list of enumerations.
 
 
-# Meta-data Helper Module
+## Meta-data Helper Module
 
 Carefully mapping between the C++ `struct` and `numpy.dtype`
 is needed to have exactly the same memory layout.
@@ -125,7 +125,7 @@ The module `power_grid_model.power_grid_meta_data`
 retrieves the exact memory layout of all the input/update/output dataset from C++
 and predefines all the corresponding `numpy.dtype`.
 The detailed explanation of all attributes of each component is given in
-[Graph Data Model](graph-data-model.md).
+[Graph Data model](../user_manual/data-model.md#attributes-of-components).
 
 
 One can import the `power_grid_meta_data` to get all the predefined `numpy.dtype` and create relevant arrays.
@@ -141,7 +141,7 @@ Furthermore, there is an even more convenient function `initialize_array`
 to directly create a `numpy` array with specified data type,
 and initialize all the values to null value as above.
 So you only have to assign meaningful values into the array.
-See [Python API Reference](python-api-reference.md) for detailed documentation.
+See [Python API Reference](../api_reference/python-api-reference.md) for detailed documentation.
 
 In the code below, a line update dataset is created. It sets the `from_status` of all the lines to `1`,
 but leave the `to_status` unchanged (it will have the null value `-128`).
