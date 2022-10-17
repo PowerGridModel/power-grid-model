@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
     "numpydoc",
     "hoverxref.extension",
     "myst_nb",

@@ -142,7 +142,7 @@ To validate the `input_data` and `update_data` for valid values, use {py:class}`
 ## Batch Data
 
 Optionally, we can add batch scenarios using `update_data` argument. 
-The code below initializes a symmetric load update array with a shape of `(5, 4)` ie. (number of batches $\times$ number of components).
+The code below initializes a symmetric load update array with a shape of `(5, 4)`. This is in the form of $$\text{number of batches} \times \text{number of components}$$)
 The `update_data` is an optional argument to the {py:class}`power_grid_model.PowerGridModel` object or the calculation functions.
 
 ```python

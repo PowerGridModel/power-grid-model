@@ -25,7 +25,7 @@ SPDX-License-Identifier: MPL-2.0
 The core of the library is written in C++.
 Currently, it supports the following calculations:
 
-* Symmetric and asymmetric power flow calculation with Newton-Raphson method and linear method
+* Symmetric and asymmetric power flow calculation with Newton-Raphson method, iterative current method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
 
 See the [power-grid-model documentation](https://power-grid-model.readthedocs.io/en/stable/) for more information.

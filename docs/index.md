@@ -10,8 +10,6 @@ The documentation is under heavy development
 
 # Power Grid Model
 
-% TODO Add short introduction instead of including the README (Right now copied from readme)
-
 ```{image} images/pgm-logo-color.svg
 :alt: pgm_logo
 :width: 150px
@@ -22,8 +20,10 @@ The documentation is under heavy development
 The core of the library is written in C++.
 Currently, it supports the following calculations:
 
-* Symmetric and asymmetric power flow calculation with Newton-Raphson method and linear method
+* Symmetric and asymmetric power flow calculation with Newton-Raphson method, iterative current method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
+
+For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io) repository.
 
 ## Install from PyPI
 
