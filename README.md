@@ -43,7 +43,7 @@ pip install power-grid-model
 
 ## Build and install from Source
 
-To install the library from source, refer to the [Build Guide](docs/build-guide.md).
+To install the library from source, refer to the [Build Guide](docs/advanced_documentation/build-guide.md).
 
 # Examples
 
