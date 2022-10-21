@@ -506,3 +506,7 @@ cpp_coverage.xml
 
 # generated version file
 PYPI_VERSION
+
+# docs builds
+docs/make.bat
+docs/Makefile
