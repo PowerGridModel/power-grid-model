@@ -60,7 +60,7 @@ SPDX-License-Identifier headers are used to show which license is applicable.
 The concerning license files can be found in the [LICENSES](LICENSES) directory.
 
 # Contributing
-Please read [CODE_OF_CONDUCT](docs/contribution/CODE_OF_CONDUCT.md) and [CONTRIBUTING](docs/contribution/CONTRIBUTING.md) for details on the process 
+Please read [CODE_OF_CONDUCT](docs/contribution/CODE_OF_CONDUCT.md), [CONTRIBUTING](docs/contribution/CONTRIBUTING.md), [PROJECT GOVERNANCE](docs/contribution/PROJECT_GOVERNANCE.md) and [RELEASE](docs/contribution/RELEASE.md) for details on the process 
 for submitting pull requests to us.
 
 # Contact
