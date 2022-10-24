@@ -19,7 +19,7 @@ import os
 if "READTHEDOCS" in os.environ:
     import git
 
-    commit_version = git.Repo().head.object.hexsha
+    commit_version = git.Repo(search_parent_directories=True).head.object.hexsha
     non_doc_link_head = "https://github.com/alliander-opensource/power-grid-model/blob/" + commit_version
 else:
     non_doc_link_head = ""
