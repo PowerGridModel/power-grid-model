@@ -57,6 +57,7 @@ doc = [
     "sphinxcontrib-mermaid",
     "numpydoc",
     "pandas",
+    "gitpython",
 ]
 
 [project.urls]
