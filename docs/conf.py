@@ -15,14 +15,18 @@ author = "alliander-opensource"
 
 import os
 
-# Get commit shallow hash
+# Fix linking in github and rtd
+link_head_gh = "https://github.com/alliander-opensource/power-grid-model/"
 if "READTHEDOCS" in os.environ:
     import git
 
     commit_version = git.Repo(search_parent_directories=True).head.object.hexsha
-    non_doc_link_head = "https://github.com/alliander-opensource/power-grid-model/blob/" + commit_version + "/"
+    link_head_gh_blob = link_head_gh + "blob/" + commit_version
+    link_head_gh_tree = link_head_gh + "tree/" + commit_version
 else:
-    non_doc_link_head = ""
+    link_head_gh_blob = ""
+    link_head_gh_tree = ""
+
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -61,7 +65,10 @@ myst_enable_extensions = [
     "substitution",
 ]
 # Global substitutions
-myst_substitutions = {"gh_link_head": non_doc_link_head}
+myst_substitutions = {
+    "gh_link_head_blob": link_head_gh_blob,
+    "gh_link_head_tree": link_head_gh_tree,
+}
 
 
 # -- hoverxref config --------------------------------------------------------

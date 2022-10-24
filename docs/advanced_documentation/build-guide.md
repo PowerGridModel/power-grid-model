@@ -174,7 +174,7 @@ pytest
 ### Build CMake Project
 
 There is a convenient shell script to build the cmake project:
-[`build.sh`]({{ gh_link_head}}build.sh). You can study the file and write your own build script. Four configurations are pre-defined
+{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}. You can study the file and write your own build script. Four configurations are pre-defined
 for two input arguments, which will be passed into `cmake`. It includes debug or release build, as well as the option to
 build test coverage or not.
 

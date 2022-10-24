@@ -27,9 +27,9 @@ We recognize different levels of contributions as shown below in increasing orde
 
 The repository folder structure is as follows. The `examples`, `docs` and `scripts` folders are self-explanatory.
 
-- The C++ calculation core is inside [include/power-grid-model]({{ gh_link_head}}include/power-grid-model).
-- The python interface code is in [src/power_grid_model]({{ gh_link_head}}src/power_grid_model)
-- The code for validation of input data is in [validation]({{ gh_link_head}}src/power_grid_model/validation) folder.
+- The C++ calculation core is inside {{ "[include/power-grid-model]({}/include/power-grid-model)".format(gh_link_head_tree) }}.
+- The python interface code is in {{ "[src/power_grid_model]({}/src/power_grid_model)".format(gh_link_head_tree) }}
+- The code for validation of input data is in {{ "[validation]({}/src/power_grid_model/validation)".format(gh_link_head_tree) }} folder.
 - The [tests]({{ gh_link_head}}tests) folder is divided in the following way:
   - `cpp_unit_tests` contains the tests for the C++ calculation core.
   - `benchmark_cpp` contains a benchmark test case generator in C++.
@@ -77,7 +77,7 @@ Tip: Use [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to format 
 This project uses [pre-commit](https://pre-commit.com/) to run a list of checks (and perform some automatic
 corrections) to your code (style) before each commit. It is up to the developer to choose whether you would like to 
 use this tool or not. The goal is to make sure that each commit will pass the quality checks in the github actions
-workflow. Currently, these hooks are defined in [`.pre-commit-config.yaml`](../../.pre-commit-config.yaml):
+workflow. Currently, these hooks are defined in {{ "[`.pre-commit-config.yaml`]({}.pre-commit-config.yaml)".format(gh_link_head_blob) }}:
 * **reuse**: check if all licence headers and files are in place
 * **isort**: group and sort import statements 
 * **black**: check and correct code style in a very strict manner
