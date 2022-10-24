@@ -11,6 +11,19 @@ project = "power-grid-model"
 copyright = "2022, alliander-opensource"
 author = "alliander-opensource"
 
+# -- Setup
+
+import os
+
+# Get commit shallow hash
+if "READTHEDOCS" in os.environ:
+    import git
+
+    commit_version = git.Repo().head.object.hexsha
+    non_doc_link_head = "https://github.com/alliander-opensource/power-grid-model/blob/" + commit_version
+else:
+    non_doc_link_head = ""
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -37,9 +50,19 @@ exclude_patterns = [
     "*/.ipynb_checkpoints/*",
 ]
 
-# -- myst parser config ------------------------------------------------------
+# -- myst parser and myst_nb config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
 myst_heading_anchors = 3
+# execute jupter notebooks output before building webpage
+jupyter_execute_notebooks = "off"
+# Extentions in myst
+myst_enable_extensions = [
+    "dollarmath",
+    "substitution",
+]
+# Global substitutions
+myst_substitutions = {"gh_link_head": non_doc_link_head}
+
 
 # -- hoverxref config --------------------------------------------------------
 # hover tooltip on python classes
@@ -69,7 +92,3 @@ autodoc_default_options = {
 
 # -- sphinx.autosectionlabel config -------------------------------------------
 autosectionlabel_prefix_document = True
-
-# -- myst_parser or myst_nb -------------------------------------------------
-# markdown links [](relative_path\file.ext#section-in-slug)
-myst_heading_anchors = 3

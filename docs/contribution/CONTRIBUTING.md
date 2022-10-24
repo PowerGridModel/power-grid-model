@@ -27,10 +27,10 @@ We recognize different levels of contributions as shown below in increasing orde
 
 The repository folder structure is as follows. The `examples`, `docs` and `scripts` folders are self-explanatory.
 
-- The C++ calculation core is inside [include/power-grid-model](include/power-grid-model).
-- The python interface code is in [src/power_grid_model](../../src/power_grid_model)
-- The code for validation of input data is in [validation](../../src/power_grid_model/validation) folder.
-- The [tests](../../tests) folder is divided in the following way:
+- The C++ calculation core is inside [include/power-grid-model]({{ gh_link_head}}include/power-grid-model).
+- The python interface code is in [src/power_grid_model]({{ gh_link_head}}src/power_grid_model)
+- The code for validation of input data is in [validation]({{ gh_link_head}}src/power_grid_model/validation) folder.
+- The [tests]({{ gh_link_head}}tests) folder is divided in the following way:
   - `cpp_unit_tests` contains the tests for the C++ calculation core.
   - `benchmark_cpp` contains a benchmark test case generator in C++.
   - `unit` folder contains tests for the python code.
