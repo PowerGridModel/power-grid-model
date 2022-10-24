@@ -77,7 +77,7 @@ Tip: Use [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to format 
 This project uses [pre-commit](https://pre-commit.com/) to run a list of checks (and perform some automatic
 corrections) to your code (style) before each commit. It is up to the developer to choose whether you would like to 
 use this tool or not. The goal is to make sure that each commit will pass the quality checks in the github actions
-workflow. Currently, these hooks are defined in {{ "[`.pre-commit-config.yaml`]({}.pre-commit-config.yaml)".format(gh_link_head_blob) }}:
+workflow. Currently, these hooks are defined in {{ "[`.pre-commit-config.yaml`]({}/.pre-commit-config.yaml)".format(gh_link_head_blob) }}:
 * **reuse**: check if all licence headers and files are in place
 * **isort**: group and sort import statements 
 * **black**: check and correct code style in a very strict manner
