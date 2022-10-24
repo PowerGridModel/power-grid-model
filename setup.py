@@ -169,22 +169,15 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
 
 
 def substitute_github_links(pkg_dir: Path):
-
-    if "GITHUB_SHA" in os.environ:
-        version = os.environ["GITHUB_SHA"].lower()
-    elif "READTHEDOCS" in os.environ:
-        import git
-
-        version = git.Repo().head.object.hexsha
+    with open(pkg_dir / "README.md", "r") as f:
+        raw_readme = f.read()
+    if "GITHUB_SHA" not in os.environ:
+        readme = raw_readme
     else:
-        return
-
-    readme_file = pkg_dir / "README.md"
-    with open(readme_file, "r") as f:
-        readme = f.read()
-    url = f"https://github.com/alliander-opensource/power-grid-model/blob/{version}/"
-    readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", readme)
-    with open(readme_file, "w") as f:
+        sha = os.environ["GITHUB_SHA"].lower()
+        url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
+        readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
+    with open("README.md", "w") as f:
         f.write(readme)
 
 
