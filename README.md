@@ -60,8 +60,8 @@ SPDX-License-Identifier headers are used to show which license is applicable.
 The concerning license files can be found in the [LICENSES](LICENSES) directory.
 
 # Contributing
-Please read [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) and [CONTRIBUTING](CONTRIBUTING.md) for details on the process 
+Please read [CODE_OF_CONDUCT](docs/CODE_OF_CONDUCT.md), [CONTRIBUTING](docs/CONTRIBUTING.md), [PROJECT GOVERNANCE](docs/PROJECT_GOVERNANCE.md) and [RELEASE](docs/release_and_support/RELEASE.md) for details on the process 
 for submitting pull requests to us.
 
 # Contact
-Please read [SUPPORT](SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.
+Please read [SUPPORT](docs/release_and_support/SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.

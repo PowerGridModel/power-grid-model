@@ -7,7 +7,7 @@ SPDX-License-Identifier: MPL-2.0
 
 In this quick start a simple 10kV network as below is calculated.
 A line connects two nodes. One node has a source. One node has a symmetric load.
-The code in the quick start is in [quick_example.py](scripts/quick_example.py).
+The code in the quick start is in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
 
 ```
 node_1 ---line_3--- node_2

@@ -29,12 +29,12 @@ The various issue templates will guide you on making an effective report.
 
 In many cases the problem is in the input data. 
 We have an extensive input data validity check to help you with this.
-Please refer to this [notebook](docs/examples/Validation%20Examples.ipynb).
+Please refer to this [notebook](../examples/Validation%20Examples.ipynb).
 
 ### Dump input/output data
 
 To effectively report an issue we need a data dump of input and output.
-Please refer to this [notebook](docs/examples/Make%20Test%20Dataset.ipynb) on how to do it.
+Please refer to this [notebook](../examples/Make%20Test%20Dataset.ipynb) on how to do it.
 
 ## How to report a security vulnerability
 
@@ -43,4 +43,4 @@ email <dynamic.grid.calculation@alliander.com> to responsibly disclose it.
 
 ## Contributing a fix
 
-Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) to make a project contribution.
+Please refer to [CONTRIBUTING.md](../CONTRIBUTING.md) to make a project contribution.

@@ -11,6 +11,23 @@ project = "power-grid-model"
 copyright = "2022, alliander-opensource"
 author = "alliander-opensource"
 
+# -- Setup
+
+import os
+
+# Fix linking in github and rtd
+link_head_gh = "https://github.com/alliander-opensource/power-grid-model/"
+if "READTHEDOCS" in os.environ:
+    import git
+
+    commit_version = git.Repo(search_parent_directories=True).head.object.hexsha
+    link_head_gh_blob = link_head_gh + "blob/" + commit_version
+    link_head_gh_tree = link_head_gh + "tree/" + commit_version
+else:
+    link_head_gh_blob = ""
+    link_head_gh_tree = ""
+
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -37,9 +54,22 @@ exclude_patterns = [
     "*/.ipynb_checkpoints/*",
 ]
 
-# -- myst parser config ------------------------------------------------------
+# -- myst parser and myst_nb config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
 myst_heading_anchors = 3
+# execute jupter notebooks output before building webpage
+jupyter_execute_notebooks = "off"
+# Extentions in myst
+myst_enable_extensions = [
+    "dollarmath",
+    "substitution",
+]
+# Global substitutions
+myst_substitutions = {
+    "gh_link_head_blob": link_head_gh_blob,
+    "gh_link_head_tree": link_head_gh_tree,
+}
+
 
 # -- hoverxref config --------------------------------------------------------
 # hover tooltip on python classes
@@ -69,7 +99,3 @@ autodoc_default_options = {
 
 # -- sphinx.autosectionlabel config -------------------------------------------
 autosectionlabel_prefix_document = True
-
-# -- myst_parser or myst_nb -------------------------------------------------
-# markdown links [](relative_path\file.ext#section-in-slug)
-myst_heading_anchors = 3
