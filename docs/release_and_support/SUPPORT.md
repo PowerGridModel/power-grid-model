@@ -43,4 +43,4 @@ email <dynamic.grid.calculation@alliander.com> to responsibly disclose it.
 
 ## Contributing a fix
 
-Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) to make a project contribution.
+Please refer to [CONTRIBUTING.md](../CONTRIBUTING.md) to make a project contribution.

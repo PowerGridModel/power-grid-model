@@ -80,9 +80,13 @@ advanced_documentation/build-guide
 ```{toctree}
 :caption: "Contribution"
 :maxdepth: 2
-contribution/CODE_OF_CONDUCT.md
-contribution/CONTRIBUTING.md
-contribution/PROJECT_GOVERNANCE.md
-contribution/RELEASE.md
-contribution/SUPPORT.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+PROJECT_GOVERNANCE.md
+```
+```{toctree}
+:caption: "Release and Support"
+:maxdepth: 2
+release_and_support/RELEASE.md
+release_and_support/SUPPORT.md
 ```
