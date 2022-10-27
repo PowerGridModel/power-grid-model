@@ -1,7 +1,6 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
-
-SPDX-License-Identifier: MPL-2.0
+SPDX-FileCopyrightText: 2014 Coraline Ada Ehmke
+SPDX-License-Identifier: CC-BY-4.0
 -->
 
 # Code of Conduct
