@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 ## Power-flow calculation
 
-Power flow calculation is done using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_power_flow`. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
+Power flow calculation is done using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
 
 
 ### Power-flow calculation algorithms
@@ -25,7 +25,7 @@ are acceptable. Both methods have equal computation time for a single powerflow 
 
 * `CalculationMethod.linear`: It will be more accurate when most of the load/generation types are of constant impedance.
 * `CalculationMethod.linear_current`: It will be more accurate when most of the load/generation types are constant power
-  or constant current. Batch calculations here will be faster because matrix prefacorization is possible.
+  or constant current. Batch calculations here will be faster because matrix prefactorization is possible.
 
 ## State estimation calculation
 
