@@ -613,7 +613,7 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
     return errors
 
 
-def all_clocks_valid(
+def all_valid_clocks(
     data: SingleDataset, component: str, clock_field: str, winding_from_field: str, winding_to_field: str
 ) -> List[TransformerClockError]:
     """
