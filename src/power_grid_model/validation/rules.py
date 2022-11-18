@@ -35,7 +35,7 @@ Output data:
 
 """
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Type, TypeVar, Union, Callable
+from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, Union
 
 import numpy as np
 
