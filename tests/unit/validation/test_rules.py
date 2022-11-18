@@ -39,6 +39,7 @@ from power_grid_model.validation.rules import (
     all_not_two_values_equal,
     all_not_two_values_zero,
     all_unique,
+    all_valid_clocks,
     all_valid_enum_values,
     all_valid_ids,
     none_match_comparison,
@@ -352,15 +353,21 @@ def test_all_finite():
 
     dfoo = [("id", "i4"), ("foo", "f8")]
     dbar = [("id", "i4"), ("bar", "f8")]
-    valid = {
+    invalid = {
         "foo_test": np.array([(1, 0.1), (2, np.inf), (3, -0.3)], dtype=dfoo),
         "bar_test": np.array([(4, 0.4), (5, 0.5), (6, -np.inf)], dtype=dbar),
     }
-    errors = all_finite(valid)
+    errors = all_finite(invalid)
     assert len(errors) == 2
     assert InfinityError("foo_test", "foo", [2]) in errors
     assert InfinityError("bar_test", "bar", [6]) in errors
 
 
+@pytest.mark.skip("No unit tests available for none_missing")
 def test_none_missing():
-    none_missing
+    raise NotImplementedError(f"Unit test for {none_missing}")
+
+
+@pytest.mark.skip("No unit tests available for all_valid_clocks")
+def test_all_valid_clocks():
+    raise NotImplementedError(f"Unit test for {all_valid_clocks}")
