@@ -21,8 +21,6 @@ Two types of power flow algorithms are implemented in power-grid-model; iterativ
 Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, in tradeoff to accuracy. 
 They can be used where approximate solutions are acceptable. The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-TODO: fill in the table below. Maybe add some other column if that would make the decision to choose an algorithm easier.
-
 | Algorithm                                  | Speed    | Accuracy | Algorithm call                        |
 |--------------------------------------------|----------|----------|---------------------------------------|
 | [Newton-Raphson](####Newton-Raphson)       |          | &#10004; | `CalculationMethod.newton_raphson`    |
