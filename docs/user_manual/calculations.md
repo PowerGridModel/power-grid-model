@@ -16,6 +16,20 @@ TODO:
 - What is the difference between power flow and state estimation
 - When should you use which? Maybe small example (physical, not code)
 
+#### Power flow
+Power flow is a "what-if" based grid calculation that will calculate the node voltages and the power flow through the branches, based on assumed load/generation profiles.
+Some typical use-cases are network planning and contingency analysis.
+
+Input:
+- Network data: topology + component attributes
+- Assumed load/generation profile
+
+Output:
+- Node voltage magnitude and angle
+- Power flow through branches
+
+#### State estimation
+
 ### Power flow algorithms
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
 Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, in tradeoff to accuracy. 
