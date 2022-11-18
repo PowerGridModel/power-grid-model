@@ -35,7 +35,7 @@ Output data:
 
 """
 from enum import Enum
-from typing import Any, Dict, List, Protocol, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Tuple, Type, TypeVar, Union, Callable
 
 import numpy as np
 
@@ -66,15 +66,6 @@ from power_grid_model.validation.utils import eval_expression, nan_type
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
-
-
-class ComparisonFn(Protocol):  # pylint: disable=too-few-public-methods
-    """
-    A protocol defining a function on one or more numpy arrays, resulting in a single numpy array.
-    """
-
-    def __call__(self, val: np.ndarray, *ref: np.ndarray) -> np.ndarray:
-        ...
 
 
 def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> List[NotGreaterThanError]:
@@ -291,7 +282,7 @@ def none_match_comparison(
     data: SingleDataset,
     component: str,
     field: str,
-    compare_fn: ComparisonFn,
+    compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
 ) -> List[CompError]:
