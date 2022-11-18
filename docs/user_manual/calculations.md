@@ -23,14 +23,15 @@ They can be used where approximate solutions are acceptable. The table below can
 
 TODO: fill in the table below. Maybe add some other column if that would make the decision to choose an algorithm easier.
 
-| Algorithm                                  | Speed    | Accuracy | Radial grid | Meshed grid | Algorithm call                        |
-|--------------------------------------------|----------|----------|-------------|-------------|---------------------------------------|
-| [Newton-Raphson](####Newton-Raphson)       |          | &#10004; |             |             | `CalculationMethod.newton_raphson`    |
-| [Iterative current](####Iterative current) |          | &#10004; |             |             | `CalculationMethod.iterative_current` | 
-| [Linear](####Linear)                       | &#10004; |          |             |             | `CalculationMethod.linear`            | 
-| [Linear current](####Linear current)       | &#10004; |          |             |             | `CalculationMethod.linear_current`    |
+| Algorithm                                  | Speed    | Accuracy | Algorithm call                        |
+|--------------------------------------------|----------|----------|---------------------------------------|
+| [Newton-Raphson](####Newton-Raphson)       |          | &#10004; | `CalculationMethod.newton_raphson`    |
+| [Iterative current](####Iterative current) |          | &#10004; | `CalculationMethod.iterative_current` | 
+| [Linear](####Linear)                       | &#10004; |          | `CalculationMethod.linear`            | 
+| [Linear current](####Linear current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
 TODO: for each of the algorithms give a brief explanation of the algorithm and in what cases this algorithm would be the prefered method. The old explanations are given, but they should be extended/improved.
+Also include the mathematics/algorithms.
 
 #### Newton-Raphson
 Traditional Newton-Raphson method.
@@ -65,6 +66,7 @@ TODO, add explanation on batch calculations:
 - when to use batch calculations
 - what are the batch options
 - how to use it
+- explain independent batches and caching topology
 - something else?
 
 
