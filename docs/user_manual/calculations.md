@@ -15,6 +15,7 @@ With power-grid-model it is possible to perform two different types of calculati
 TODO: 
 - What is the difference between power flow and state estimation
 - When should you use which? Maybe small example (physical, not code)
+- Link to pf / se workshop?
 
 #### Power flow
 Power flow is a "what-if" based grid calculation that will calculate the node voltages and the power flow through the branches, based on assumed load/generation profiles.
@@ -29,6 +30,48 @@ Output:
 - Power flow through branches
 
 #### State estimation
+State estimation is a statistical calculation method that determines the most probable state of the grid, based on
+network data and measurements. Measurements meaning power flow or voltage values with some kind of uncertainty, which were 
+either measured, estimated or forecasted.
+
+Input:
+- Network data: topology + component attributes
+- Power flow / voltage measurements with uncertainty
+
+Output:
+- Node voltage magnitude and angle
+- Power flow through branches
+- Deviation between measurement values and estimated state
+
+In order to perform a state estimation the system should be observable. Simply said, observability means that the number of measurements
+should be larger than or equal to the number of unknowns. For each node there are two unknowns, `u` and `u_angle`, so the following
+equations should be met:
+
+$$
+   \begin{eqnarray}
+      n_{measurements}    & >= & n_{unknowns}
+   \end{eqnarray}
+$$
+
+Where
+
+$$
+   \begin{eqnarray}
+      n_{unknowns}    & = & 2 & \cdot & n_{unknowns}
+   \end{eqnarray}
+$$
+
+And
+
+$$
+   \begin{eqnarray}
+      n_{\text{measurements}} = n_{\text{nodes_with_voltage_sensor_without_angle}} + 2 n_{\text{nodes_with_voltage_sensor_with_angle}} + 2 n_{\text{branches_with_power_sensor}} + 2 n_{\text{nodes_without_any_appliances_connected}} + 2 n_{\text{nodes_with_all_connected_appliances_measured_by_power_sensor}}
+   \end{eqnarray}
+$$
+
+
+
+
 
 ### Power flow algorithms
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
