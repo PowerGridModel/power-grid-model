@@ -65,7 +65,7 @@ And
 
 $$
    \begin{eqnarray}
-      n_{\text{measurements}} = n_{\text{nodes\_with\_voltage\_sensor\_without\_angle}} + 2 n_{\text{nodes\_with\_voltage\_sensor\_with\_angle}} + 2 n_{\text{branches\_with\_power\_sensor}} + 2 n_{\text{nodes\_without\_any\_appliances\_connected}} + 2 n_{\text{nodes\_with\_all\_connected\_appliances\_measured\_by\_power\_sensor}}
+      n_{\texttt{measurements}} = n_{\texttt{nodes\_with\_voltage\_sensor\_without\_angle}} + 2 n_{\texttt{nodes\_with\_voltage\_sensor\_with\_angle}} + 2 n_{\texttt{branches\_with\_power\_sensor}} + 2 n_{\texttt{nodes\_without\_any\_appliances\_connected}} + 2 n_{\texttt{nodes\_with\_all\_connected\_appliances\_measured\_by\_power\_sensor}}
    \end{eqnarray}
 $$
 
