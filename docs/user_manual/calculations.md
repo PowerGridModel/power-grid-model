@@ -43,7 +43,8 @@ Output:
 - Power flow through branches
 - Deviation between measurement values and estimated state
 
-In order to perform a state estimation the system should be observable. Simply said, observability means that the number of measurements
+In order to perform a state estimation the system should be observable. If the system is not observable the calculation will 
+raise a singular matrix error. Simply said, observability means that the number of measurements
 should be larger than or equal to the number of unknowns. For each node there are two unknowns, `u` and `u_angle`, so the following
 equations should be met:
 
@@ -69,7 +70,9 @@ The number of measurements can be found by the sum of the following:
 - two times the number of branches with a power sensor
 
 Note: enough measurements doesn't necessarily mean that the system is observable. The location of the measurements is also
-of importance.  
+of importance. Also, there should be at least one voltage measurement. The [iterative linear](####iterativelinear) 
+state estimation algorithm assumes voltage angles to be zero when not given. This might result in the calculation succeeding, but giving 
+a faulty outcome instead of raising a singular matrix error. 
 
 
 
@@ -112,7 +115,8 @@ At the moment one state estimation algorithm is implemented: [iterative linear](
 
 #### Iterative linear
 
-TODO: extend the explanation of the algorithm.
+TODO: extend the explanation of the algorithm. Mention that the algorithm will assume angles to be zero if not given. This might result in not having a 
+crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
 
 Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method which converges to a true
   solution. [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization) is possible.
