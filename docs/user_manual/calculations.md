@@ -57,17 +57,19 @@ Where
 
 $$
    \begin{eqnarray}
-      n_{unknowns}    & = & 2 & \cdot & n_{unknowns}
+      n_{unknowns}    & = & 2 & \cdot & n_{nodes}
    \end{eqnarray}
 $$
 
-And
+The number of measurements can be found by the sum of the following:
+- number of nodes with a voltage sensor with magnitude only
+- two times the number of nodes with a voltage sensor with magnitude and angle
+- two times the number of nodes without appliances connected
+- two times the number of nodes where all connected appliances are measured by a power sensor
+- two times the number of branches with a power sensor
 
-$$
-   \begin{eqnarray}
-      n_{\texttt{measurements}} = n_{\texttt{nodes\_with\_voltage\_sensor\_without\_angle}} + 2 n_{\texttt{nodes\_with\_voltage\_sensor\_with\_angle}} + 2 n_{\texttt{branches\_with\_power\_sensor}} + 2 n_{\texttt{nodes\_without\_any\_appliances\_connected}} + 2 n_{\texttt{nodes\_with\_all\_connected\_appliances\_measured\_by\_power\_sensor}}
-   \end{eqnarray}
-$$
+Note: enough measurements doesn't necessarily mean that the system is observable. The location of the measurements is also
+of importance.  
 
 
 
