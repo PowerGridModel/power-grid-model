@@ -8,8 +8,8 @@ SPDX-License-Identifier: MPL-2.0
 
 ## Calculation types
 With power-grid-model it is possible to perform two different types of calculation:
-- [Power flow](###power-flow-algorithms): a "what-if" scenario calculation. This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
-- [State estimation](###state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
+- [Power flow](#power-flow-algorithms): a "what-if" scenario calculation. This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](ex_power_flow)
+- [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](ex_state_est)
 
 ### Calculation types explained
 TODO: 
@@ -70,7 +70,7 @@ The number of measurements can be found by the sum of the following:
 - two times the number of branches with a power sensor
 
 Note: enough measurements doesn't necessarily mean that the system is observable. The location of the measurements is also
-of importance. Also, there should be at least one voltage measurement. The [iterative linear](####iterative-linear) 
+of importance. Also, there should be at least one voltage measurement. The [iterative linear](#iterative-linear) 
 state estimation algorithm assumes voltage angles to be zero when not given. This might result in the calculation succeeding, but giving 
 a faulty outcome instead of raising a singular matrix error. 
 
@@ -83,12 +83,12 @@ Two types of power flow algorithms are implemented in power-grid-model; iterativ
 Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, in tradeoff to accuracy. 
 They can be used where approximate solutions are acceptable. The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-| Algorithm                                  | Speed    | Accuracy | Algorithm call                        |
-|--------------------------------------------|----------|----------|---------------------------------------|
-| [Newton-Raphson](####newton-raphson)       |          | &#10004; | `CalculationMethod.newton_raphson`    |
-| [Iterative current](####iterative-current) |          | &#10004; | `CalculationMethod.iterative_current` | 
-| [Linear](####linear)                       | &#10004; |          | `CalculationMethod.linear`            | 
-| [Linear current](####linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
+| Algorithm                               | Speed    | Accuracy | Algorithm call                        |
+|-----------------------------------------|----------|----------|---------------------------------------|
+| [Newton-Raphson](#newton-raphson)       |          | &#10004; | `CalculationMethod.newton_raphson`    |
+| [Iterative current](#iterative-current) |          | &#10004; | `CalculationMethod.iterative_current` | 
+| [Linear](#linear)                       | &#10004; |          | `CalculationMethod.linear`            | 
+| [Linear current](#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
 TODO: for each of the algorithms give a brief explanation of the algorithm and in what cases this algorithm would be the prefered method. The old explanations are given, but they should be extended/improved.
 Also include the mathematics/algorithms.
@@ -111,7 +111,7 @@ Power flow calculation is done using the {py:class}`calculate_power_flow <power_
 
 
 ### State estimation algorithms
-At the moment one state estimation algorithm is implemented: [iterative linear](####-terative-linear).
+At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
 
 #### Iterative linear
 
