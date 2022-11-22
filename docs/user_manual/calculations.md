@@ -12,10 +12,6 @@ With power-grid-model it is possible to perform two different types of calculati
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
 
 ### Calculation types explained
-TODO: 
-- What is the difference between power flow and state estimation
-- When should you use which? Maybe small example (physical, not code)
-- Link to pf / se workshop?
 
 #### Power flow
 Power flow is a "what-if" based grid calculation that will calculate the node voltages and the power flow through the branches, based on assumed load/generation profiles.
