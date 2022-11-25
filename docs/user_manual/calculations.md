@@ -94,6 +94,19 @@ $$
                \vdots \\
                Q_N
                \end{bmatrix}
+      \quad\text{and}\quad
+      f(x)  =  \begin{bmatrix}
+               P(x) \\
+               Q(x)
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               P_{2}(x) \\
+               \vdots \\
+               P_{N}(x) \\
+               Q_{2}(x) \\
+               \vdots \\
+               Q_{N}(x)
+               \end{bmatrix}
    \end{eqnarray}
 $$
 
