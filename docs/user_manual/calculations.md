@@ -57,7 +57,7 @@ and then obtaining the real and reactive power flow through the branches. The fo
 
 #### Newton-Raphson
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
-terms, to solve the nonlinear set of equations:
+terms, to solve the nonlinear set of equations iteratively:
 
 $$
    \begin{eqnarray}
@@ -109,6 +109,29 @@ $$
                \end{bmatrix}
    \end{eqnarray}
 $$
+
+As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
+In each iteration $i$ the following equation is solved:
+
+$$
+   \begin{eqnarray}
+      J(i) \Delta x(i)    & =  \Delta y(i)
+   \end{eqnarray}
+$$
+
+Where
+
+$$
+   \begin{eqnarray}
+      \Delta x(i)    & =  x(i+1) - x(i)
+      \quad\text{and}\quad
+      \Delta y(i)    & =  y - f(x(i))
+   \end{eqnarray}
+$$
+
+$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix of partial derivatives:
+
+TODO: write jacobian
 
 #### Iterative Current
 Newton-Raphson would be more robust in achieving convergence and require fewer iterations. However, Iterative current can be faster most times because it uses .
