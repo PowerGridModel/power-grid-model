@@ -81,6 +81,19 @@ $$
                \vdots \\
                V_N
                \end{bmatrix}
+      \quad\text{and}\quad
+      y     =  \begin{bmatrix}
+               P \\
+               Q
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               P_2 \\
+               \vdots \\
+               P_N \\
+               Q_2 \\
+               \vdots \\
+               Q_N
+               \end{bmatrix}
    \end{eqnarray}
 $$
 
