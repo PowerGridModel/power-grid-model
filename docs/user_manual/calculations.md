@@ -56,7 +56,25 @@ and then obtaining the real and reactive power flow through the branches. The fo
 - Voltage controlled bus: a bus with known $P$ and $V$.
 
 #### Newton-Raphson
-This is the traditional method for power flow calculations. 
+This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
+terms, to solve the nonlinear set of equations:
+
+$$
+   \begin{eqnarray}
+      f_{x}    & =  y
+   \end{eqnarray}
+$$
+
+Where:
+
+$$
+   \begin{eqnarray}
+      x     =  \begin{bmatrix}
+               \delta \\
+               V
+               \end{bmatrix}
+   \end{eqnarray}
+$$
 
 #### Iterative Current
 Newton-Raphson would be more robust in achieving convergence and require fewer iterations. However, Iterative current can be faster most times because it uses .
