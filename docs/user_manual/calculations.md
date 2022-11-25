@@ -61,7 +61,7 @@ terms, to solve the nonlinear set of equations:
 
 $$
    \begin{eqnarray}
-      f_{x}    & =  y
+      f(x)    & =  y
    \end{eqnarray}
 $$
 
@@ -72,6 +72,14 @@ $$
       x     =  \begin{bmatrix}
                \delta \\
                V
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               \delta_2 \\
+               \vdots \\
+               \delta_N
+               V_2
+               \vdots \\
+               V_N
                \end{bmatrix}
    \end{eqnarray}
 $$
