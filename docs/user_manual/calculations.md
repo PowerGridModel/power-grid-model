@@ -31,8 +31,28 @@ They can be used where approximate solutions are acceptable. The table below can
 TODO: for each of the algorithms give a brief explanation of the algorithm and in what cases this algorithm would be the prefered method. The old explanations are given, but they should be extended/improved.
 Also include the mathematics/algorithms.
 
+The nodal equations of a power system network can be written as:
+
+$$
+   \begin{eqnarray}
+      I    & = Y_{bus}V
+   \end{eqnarray}
+$$
+
+Where $I$ is the $N$ vector of source currents injected into each bus and $V$ is the $N$ vector of bus voltages. The complex power
+delivered to bus $k$ is:
+
+$$
+   \begin{eqnarray}
+      S_{k}    & =  P_k + jQ_k & = V_{k} I_{k}^{*}
+   \end{eqnarray}
+$$
+
+Power flow equations are based on solving the nodal equations above to obtain the voltage and voltage angle at each node
+and the real and reactive power flow through the branches. 
+
 #### Newton-Raphson
-Traditional Newton-Raphson method.
+This is the traditional method for power flow calculations. 
 
 #### Iterative Current
 Newton-Raphson would be more robust in achieving convergence and require fewer iterations. However, Iterative current can be faster most times because it uses .
