@@ -49,7 +49,11 @@ $$
 $$
 
 Power flow equations are based on solving the nodal equations above to obtain the voltage and voltage angle at each node
-and the real and reactive power flow through the branches. 
+and then obtaining the real and reactive power flow through the branches. The following bus types can be present in the system:
+
+- Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
+- Load bus: a bus with known $P$ and $Q$.
+- Voltage controlled bus: a bus with known $P$ and $V$.
 
 #### Newton-Raphson
 This is the traditional method for power flow calculations. 
