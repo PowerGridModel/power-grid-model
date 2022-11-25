@@ -76,8 +76,8 @@ $$
                \begin{bmatrix}
                \delta_2 \\
                \vdots \\
-               \delta_N
-               V_2
+               \delta_N \\
+               V_2 \\
                \vdots \\
                V_N
                \end{bmatrix}
