@@ -35,13 +35,35 @@ Also include the mathematics/algorithms.
 Traditional Newton-Raphson method.
 
 #### Iterative Current
-Newton-Raphson would be more robust in achieving convergence and require fewer iterations. However, Iterative current can be faster most times because it uses .
+
+This algorithm is a jacobi like method for powerflow analysis.
+It has linear convergence as opposed to quadratic convergence in newton-raphson method. This means that the number of iterations will be greater. Newton-Raphson would also be more robust in achieving convergence in case of greater meshed configurations. However, Iterative current algorithm will be faster most of the time.
+
+The algorithm is as follows:
+1. Build Y bus matrix 
+2. Initialization $U_N^0$ 
+3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
+$$  I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
+$$
+4. Solve linear equation: $YU_N^i = I_N^i$ 
+5. Check convergence: If maximum voltage deviation from previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
+
+Compared to newton-raphson, it only needs to calculate injected currents before solving linear equations. This is more straightforward than calculating the jacobian.
+
+Factorizing the matrix of linear equation is the most computationally heavy task. The Y bus matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations. The Y bus matrix is also unchanged in certain batch calculations like timeseries calculations. Thus the same factorization is used for all batches as well.
+
 
 #### Linear
 It will be more accurate when most of the load/generation types are of constant impedance.
 
 #### Linear current
-It will be more accurate when most of the load/generation types are constant power or constant current. Batch calculations here will be faster because matrix prefactorization is possible.
+
+**This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current).** It will be a better approximation when most of the load/generation types resemble constant current. Similar to [Iterative Current](calculations.md#iterative-current), batch calculations like timeseries, here will also be faster. The reason is the same that the Y bus matrix does not change across batches and the same factorization would be used.
+
+
+In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](calculations.md#linear) in such case. This is because we approximate the load as current instead of impedance.
+There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations. They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level. 
+When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage. When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
 
 ## Power-flow calculation
 
