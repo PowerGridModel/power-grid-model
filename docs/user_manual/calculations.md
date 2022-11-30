@@ -61,11 +61,24 @@ Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method 
 
 ## Batch Calculations
 
+Usually, a single powerflow calculation would not be enough to get insights in the grid. 
+Any form of multiple number of calculations can be carried out in power-grid-model using batch calculations. 
+Batches are not restricted to any particular types of calculations like timeseries or contingency analysis.
+They can be of both of them combined, hosting capacity calculations, monte-carlo simulations or any other form of multiple calculations.
+The framework of creating the batches remains the same.
+The attributes of each component which can be updated over batches are mentioned in [Components](components.md).
+An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb#batch-calculation.md)
+
+
+
+
+
 TODO, add explanation on batch calculations:
 - when to use batch calculations
 - what are the batch options
 - how to use it
 - something else?
+- independent batches
 
 
 ```{warning}
