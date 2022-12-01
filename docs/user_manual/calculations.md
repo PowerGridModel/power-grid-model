@@ -61,26 +61,46 @@ Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method 
 
 ## Batch Calculations
 
-Usually, a single powerflow calculation would not be enough to get insights in the grid. 
+Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
 Any form of multiple number of calculations can be carried out in power-grid-model using batch calculations. 
-Batches are not restricted to any particular types of calculations like timeseries or contingency analysis.
-They can be of both of them combined, hosting capacity calculations, monte-carlo simulations or any other form of multiple calculations.
+Batches are not restricted to any particular types of calculations like timeseries or contingency analysis or their combination.
+They can be used for determining hosting/loading capacity, determining optimal tap positions, estimating system losses, monte-carlo simulations or any other form of multiple calculations required in a power-flow study.
 The framework of creating the batches remains the same.
 The attributes of each component which can be updated over batches are mentioned in [Components](components.md).
-An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb#batch-calculation.md)
+An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
+The same method `calculate_power_flow` to calculate a number of scenarios in one go. 
+To do this, you need to supply a `update_data` argument. 
+This argument contains a dictionary of 2D update arrays (one array per component type).
 
+The performance for different batches vary. power-grid-model automatically makes efficient calculations wherever possible in case of [independent batches](calculations.md#independent-batch-dataset) and [caching topology](calculations.md#caching-topology).
 
+### Independent Batch dataset
 
+There are two ways to specify batches.
 
-TODO, add explanation on batch calculations:
-- when to use batch calculations
-- what are the batch options
-- how to use it
-- something else?
-- independent batches
+- Only specify the objects and attributes that are changed in this batch.
+Here original model is copied everytime for each batch.
+- We specify all objects and attributes including the unchanged ones in one or more scenarios. i.e. The attributes to be updated have data for all batches.
+This is an **independent** batch dataset (In a sense that each batch is independent of the original model input).
+We do not need to keep a copy of the original model in such case.
+The original model data is copied only once while we mutate over that data for all the batches. 
+This brings performance benefits.
 
+### Caching topology
 
-```{warning}
-[Issue 79](https://github.com/alliander-opensource/power-grid-model/issues/79)
-```
+To perform the calculations, a graph topology of the grid is to be constructed from the input data first. 
+
+- If your batch scenarios are changing the switching status of branches and sources the base model is then kept as empty model without any internal cached graph/matrices. 
+Thus, the topology is constructed afresh for each batch from the input data.
+N-1 check is a typical use case.
+
+- If all your batch scenarios do not change the switching status of branches and sources the model will re-use the pre-built internal graph/matrices for each calculation.
+Time-series load profile calculation is a typical use case. This can bring performance benefits.
+
+### Parallel Computing
+
+The batch calculation supports shared memory multi-threading parallel computing. 
+The common internal states and variables are shared as much as possible to save memory usage and avoid copy.
+
+You can set `threading` parameter in `calculate_power_flow()` or `calculate_state_estimation()` to enable/disable parallel computing.
