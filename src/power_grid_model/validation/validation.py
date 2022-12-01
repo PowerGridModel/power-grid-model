@@ -34,7 +34,6 @@ from power_grid_model.validation.rules import (
     all_between,
     all_between_or_at,
     all_boolean,
-    all_clocks_valid,
     all_cross_unique,
     all_finite,
     all_greater_or_equal,
@@ -45,6 +44,7 @@ from power_grid_model.validation.rules import (
     all_not_two_values_equal,
     all_not_two_values_zero,
     all_unique,
+    all_valid_clocks,
     all_valid_enum_values,
     all_valid_ids,
     none_missing,
@@ -405,7 +405,7 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors += all_valid_enum_values(data, "transformer", "winding_from", WindingType)
     errors += all_valid_enum_values(data, "transformer", "winding_to", WindingType)
     errors += all_between_or_at(data, "transformer", "clock", 0, 12)
-    errors += all_clocks_valid(data, "transformer", "clock", "winding_from", "winding_to")
+    errors += all_valid_clocks(data, "transformer", "clock", "winding_from", "winding_to")
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
@@ -464,8 +464,8 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_valid_enum_values(data, "three_winding_transformer", "winding_3", WindingType)
     errors += all_between_or_at(data, "three_winding_transformer", "clock_12", 0, 12)
     errors += all_between_or_at(data, "three_winding_transformer", "clock_13", 0, 12)
-    errors += all_clocks_valid(data, "three_winding_transformer", "clock_12", "winding_1", "winding_2")
-    errors += all_clocks_valid(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
+    errors += all_valid_clocks(data, "three_winding_transformer", "clock_12", "winding_1", "winding_2")
+    errors += all_valid_clocks(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
     errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
     errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max")

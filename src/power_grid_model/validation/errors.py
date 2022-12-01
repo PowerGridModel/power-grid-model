@@ -432,7 +432,7 @@ class TransformerClockError(MultiFieldValidationError):
     """
 
     _message = (
-        "Even number is not possible if one side is wye winding and the other side is not wye winding.\n"
-        "Odd number is not possible, if both sides are wye winding or both sides are not wye winding.\n"
-        ", for {n} {objects}."
+        "Invalid clock number for {n} {objects}. "
+        "If one side has wye winding and the other side has not, the clock number should be odd. "
+        "If either both or none of the sides have wye winding, the clock number should be even."
     )
