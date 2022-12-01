@@ -77,7 +77,9 @@ a faulty outcome instead of raising a singular matrix error.
 ### Power flow algorithms
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
 Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, in tradeoff to accuracy. 
-They can be used where approximate solutions are acceptable. The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
+They can be used where approximate solutions are acceptable. 
+Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
+The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
 | Algorithm                               | Speed    | Accuracy | Algorithm call                        |
 |-----------------------------------------|----------|----------|---------------------------------------|
@@ -112,7 +114,16 @@ Factorizing the matrix of linear equation is the most computationally heavy task
 
 
 #### Linear
-It will be more accurate when most of the load/generation types are of constant impedance.
+
+This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual `LoadGenType`.
+By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
+It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
+
+The algorithm is as follows:
+1. Assume injected currents by loads $I_N=0$ since we model loads/generation as impedance. 
+Admittance of each load/generation is calculated from rated power as $y=-\overline{S}$ 
+2. Build Y bus matrix. Add the admittances of loads/generation to the diagonal elements.
+3. Solve linear equation: $YU_N^i = I_N^i$ for $U_N$
 
 #### Linear current
 
