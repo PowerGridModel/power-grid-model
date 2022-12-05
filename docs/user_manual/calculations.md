@@ -129,9 +129,15 @@ $$
    \end{eqnarray}
 $$
 
-$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix of partial derivatives:
+$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
+derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial V}$, $\dfrac{\partial Q}{\partial \delta}$
+and $\dfrac{\partial Q}{\partial V}$.
 
-TODO: write jacobian
+For each iteration the following steps are executed:
+- Compute $\Delta y(i)$
+- Compute the Jacobian $J(i)$
+- Using Gaussian elimination and back substitution solve $J(i) \Delta x(i)    & =  \Delta y(i)$ for $\Delta x(i)$
+- Compute $x(i+1)$ from $\Delta x(i)    & =  x(i+1) - x(i)$
 
 #### Iterative Current
 Newton-Raphson would be more robust in achieving convergence and require fewer iterations. However, Iterative current can be faster most times because it uses .
