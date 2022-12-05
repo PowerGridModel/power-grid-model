@@ -136,8 +136,8 @@ and $\dfrac{\partial Q}{\partial V}$.
 For each iteration the following steps are executed:
 - Compute $\Delta y(i)$
 - Compute the Jacobian $J(i)$
-- Using Gaussian elimination and back substitution solve $J(i) \Delta x(i)    & =  \Delta y(i)$ for $\Delta x(i)$
-- Compute $x(i+1)$ from $\Delta x(i)    & =  x(i+1) - x(i)$
+- Using Gaussian elimination and back substitution solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
+- Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
 
 #### Iterative Current
 Newton-Raphson would be more robust in achieving convergence and require fewer iterations. However, Iterative current can be faster most times because it uses .
