@@ -30,6 +30,7 @@ if(WIN32)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
   add_compile_options(-Wno-deprecated-copy)  # bug in boost
+  add_compile_options(-Wno-deprecated-declarations)  # bug in boost
   if(UNIX AND NOT APPLE)
 	# test coverage for debug build in linux, if specified
 	if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND (DEFINED POWER_GRID_MODEL_COVERAGE) AND (POWER_GRID_MODEL_COVERAGE EQUAL 1))
