@@ -145,7 +145,7 @@ The framework of creating the batches remains the same.
 The attributes of each component which can be updated over batches are mentioned in [Components](components.md).
 An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
-The same method `calculate_power_flow` to calculate a number of scenarios in one go. 
+The same method as for single calculations, `calculate_power_flow`, can be used to calculate a number of scenarios in one go.
 To do this, you need to supply a `update_data` argument. 
 This argument contains a dictionary of 2D update arrays (one array per component type).
 
@@ -168,7 +168,7 @@ This brings performance benefits.
 To perform the calculations, a graph topology of the grid is to be constructed from the input data first. 
 
 - If your batch scenarios are changing the switching status of branches and sources the base model is then kept as empty model without any internal cached graph/matrices. 
-Thus, the topology is constructed afresh for each batch from the input data.
+Thus, the topology is constructed for each batch from the input data.
 N-1 check is a typical use case.
 
 - If all your batch scenarios do not change the switching status of branches and sources the model will re-use the pre-built internal graph/matrices for each calculation.
@@ -180,3 +180,7 @@ The batch calculation supports shared memory multi-threading parallel computing.
 The common internal states and variables are shared as much as possible to save memory usage and avoid copy.
 
 You can set `threading` parameter in `calculate_power_flow()` or `calculate_state_estimation()` to enable/disable parallel computing.
+
+- `threading=-1`, use sequential computing (default)
+- `threading=0`, use number of threads available from the machine hardware (recommended)
+- `threading>0`, set the number of threads you want to use
