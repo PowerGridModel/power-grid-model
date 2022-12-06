@@ -157,11 +157,36 @@ There are two ways to specify batches.
 
 - Only specify the objects and attributes that are changed in this batch.
 Here original model is copied everytime for each batch.
+
+Example:
+```
+line_update = initialize_array('update', 'line', (3, 1)) 
+# for each mutation, only one object is specified
+line_update['id'] = [[3], [5], [8]]
+# specify only the changed status (switch off) of one line
+line_update['from_status'] = [[0], [0], [0]]
+line_update['to_status'] = [[0], [0], [0]]
+
+non_independent_update_data = {'line': line_update}
+```
+
 - We specify all objects and attributes including the unchanged ones in one or more scenarios. i.e. The attributes to be updated have data for all batches.
 This is an **independent** batch dataset (In a sense that each batch is independent of the original model input).
 We do not need to keep a copy of the original model in such case.
 The original model data is copied only once while we mutate over that data for all the batches. 
 This brings performance benefits.
+
+Example:
+```
+line_update = initialize_array('update', 'line', (3, 3))  # 3 scenarios, 3 objects (lines)
+# below the same broadcasting trick
+line_update['id'] = [[3, 5, 8]]
+# fully specify the status of all lines, even it is the same as the base scenario
+line_update['from_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+line_update['to_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+
+independent_update_data = {'line': line_update}
+```
 
 ### Caching topology
 
@@ -173,6 +198,11 @@ N-1 check is a typical use case.
 
 - If all your batch scenarios do not change the switching status of branches and sources the model will re-use the pre-built internal graph/matrices for each calculation.
 Time-series load profile calculation is a typical use case. This can bring performance benefits.
+
+The topology is not cached when any of the switching statuses (`from_status`, `to_status` or `status`) of the following components are updated:
+1. Branches: Lines, Links, Transformers
+2. Branch3: Three winding transformer
+3. Appliances: Sources
 
 ### Parallel Computing
 
