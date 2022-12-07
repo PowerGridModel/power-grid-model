@@ -89,8 +89,113 @@ They can be used where approximate solutions are acceptable. The table below can
 TODO: for each of the algorithms give a brief explanation of the algorithm and in what cases this algorithm would be the prefered method. The old explanations are given, but they should be extended/improved.
 Also include the mathematics/algorithms.
 
+The nodal equations of a power system network can be written as:
+
+$$
+   \begin{eqnarray}
+      I    & = Y_{bus}V
+   \end{eqnarray}
+$$
+
+Where $I$ is the $N$ vector of source currents injected into each bus and $V$ is the $N$ vector of bus voltages. The complex power
+delivered to bus $k$ is:
+
+$$
+   \begin{eqnarray}
+      S_{k}    & =  P_k + jQ_k & = V_{k} I_{k}^{*}
+   \end{eqnarray}
+$$
+
+Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at each node
+and then obtaining the real and reactive power flow through the branches. The following bus types can be present in the system:
+
+- Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
+- Load bus: a bus with known $P$ and $Q$.
+- Voltage controlled bus: a bus with known $P$ and $V$. NOTE: this bus is not supported by power-grid-model yet.
+
 #### Newton-Raphson
-Traditional Newton-Raphson method.
+This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
+terms, to solve the nonlinear set of equations iteratively:
+
+$$
+   \begin{eqnarray}
+      f(x)    & =  y
+   \end{eqnarray}
+$$
+
+Where:
+
+$$
+   \begin{eqnarray}
+      x     =  \begin{bmatrix}
+               \delta \\
+               V
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               \delta_2 \\
+               \vdots \\
+               \delta_N \\
+               V_2 \\
+               \vdots \\
+               V_N
+               \end{bmatrix}
+      \quad\text{and}\quad
+      y     =  \begin{bmatrix}
+               P \\
+               Q
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               P_2 \\
+               \vdots \\
+               P_N \\
+               Q_2 \\
+               \vdots \\
+               Q_N
+               \end{bmatrix}
+      \quad\text{and}\quad
+      f(x)  =  \begin{bmatrix}
+               P(x) \\
+               Q(x)
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               P_{2}(x) \\
+               \vdots \\
+               P_{N}(x) \\
+               Q_{2}(x) \\
+               \vdots \\
+               Q_{N}(x)
+               \end{bmatrix}
+   \end{eqnarray}
+$$
+
+As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
+In each iteration $i$ the following equation is solved:
+
+$$
+   \begin{eqnarray}
+      J(i) \Delta x(i)    & =  \Delta y(i)
+   \end{eqnarray}
+$$
+
+Where
+
+$$
+   \begin{eqnarray}
+      \Delta x(i)    & =  x(i+1) - x(i)
+      \quad\text{and}\quad
+      \Delta y(i)    & =  y - f(x(i))
+   \end{eqnarray}
+$$
+
+$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
+derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial V}$, $\dfrac{\partial Q}{\partial \delta}$
+and $\dfrac{\partial Q}{\partial V}$.
+
+For each iteration the following steps are executed:
+- Compute $\Delta y(i)$
+- Compute the Jacobian $J(i)$
+- Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
+- Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
 
 #### Iterative Current
 
