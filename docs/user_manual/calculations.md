@@ -91,8 +91,113 @@ The table below can be used to pick the right algorithm. Below the table a more 
 TODO: for each of the algorithms give a brief explanation of the algorithm and in what cases this algorithm would be the prefered method. The old explanations are given, but they should be extended/improved.
 Also include the mathematics/algorithms.
 
+The nodal equations of a power system network can be written as:
+
+$$
+   \begin{eqnarray}
+      I    & = Y_{bus}V
+   \end{eqnarray}
+$$
+
+Where $I$ is the $N$ vector of source currents injected into each bus and $V$ is the $N$ vector of bus voltages. The complex power
+delivered to bus $k$ is:
+
+$$
+   \begin{eqnarray}
+      S_{k}    & =  P_k + jQ_k & = V_{k} I_{k}^{*}
+   \end{eqnarray}
+$$
+
+Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at each node
+and then obtaining the real and reactive power flow through the branches. The following bus types can be present in the system:
+
+- Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
+- Load bus: a bus with known $P$ and $Q$.
+- Voltage controlled bus: a bus with known $P$ and $V$. NOTE: this bus is not supported by power-grid-model yet.
+
 #### Newton-Raphson
-Traditional Newton-Raphson method.
+This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
+terms, to solve the nonlinear set of equations iteratively:
+
+$$
+   \begin{eqnarray}
+      f(x)    & =  y
+   \end{eqnarray}
+$$
+
+Where:
+
+$$
+   \begin{eqnarray}
+      x     =  \begin{bmatrix}
+               \delta \\
+               V
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               \delta_2 \\
+               \vdots \\
+               \delta_N \\
+               V_2 \\
+               \vdots \\
+               V_N
+               \end{bmatrix}
+      \quad\text{and}\quad
+      y     =  \begin{bmatrix}
+               P \\
+               Q
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               P_2 \\
+               \vdots \\
+               P_N \\
+               Q_2 \\
+               \vdots \\
+               Q_N
+               \end{bmatrix}
+      \quad\text{and}\quad
+      f(x)  =  \begin{bmatrix}
+               P(x) \\
+               Q(x)
+               \end{bmatrix} = 
+               \begin{bmatrix}
+               P_{2}(x) \\
+               \vdots \\
+               P_{N}(x) \\
+               Q_{2}(x) \\
+               \vdots \\
+               Q_{N}(x)
+               \end{bmatrix}
+   \end{eqnarray}
+$$
+
+As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
+In each iteration $i$ the following equation is solved:
+
+$$
+   \begin{eqnarray}
+      J(i) \Delta x(i)    & =  \Delta y(i)
+   \end{eqnarray}
+$$
+
+Where
+
+$$
+   \begin{eqnarray}
+      \Delta x(i)    & =  x(i+1) - x(i)
+      \quad\text{and}\quad
+      \Delta y(i)    & =  y - f(x(i))
+   \end{eqnarray}
+$$
+
+$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
+derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial V}$, $\dfrac{\partial Q}{\partial \delta}$
+and $\dfrac{\partial Q}{\partial V}$.
+
+For each iteration the following steps are executed:
+- Compute $\Delta y(i)$
+- Compute the Jacobian $J(i)$
+- Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
+- Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
 
 #### Iterative Current
 
@@ -149,14 +254,80 @@ Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method 
 
 ## Batch Calculations
 
-TODO, add explanation on batch calculations:
-- when to use batch calculations
-- what are the batch options
-- how to use it
-- explain independent batches and caching topology
-- something else?
+Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
+Any form of multiple number of calculations can be carried out in power-grid-model using batch calculations. 
+Batches are not restricted to any particular types of calculations like timeseries or contingency analysis or their combination.
+They can be used for determining hosting/loading capacity, determining optimal tap positions, estimating system losses, monte-carlo simulations or any other form of multiple calculations required in a power-flow study.
+The framework of creating the batches remains the same.
+The attributes of each component which can be updated over batches are mentioned in [Components](components.md).
+An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
+The same method as for single calculations, `calculate_power_flow`, can be used to calculate a number of scenarios in one go.
+To do this, you need to supply a `update_data` argument. 
+This argument contains a dictionary of 2D update arrays (one array per component type).
 
-```{warning}
-[Issue 79](https://github.com/alliander-opensource/power-grid-model/issues/79)
+The performance for different batches vary. power-grid-model automatically makes efficient calculations wherever possible in case of [independent batches](calculations.md#independent-batch-dataset) and [caching topology](calculations.md#caching-topology).
+
+### Independent Batch dataset
+
+There are two ways to specify batches.
+
+- Only specify the objects and attributes that are changed in this batch.
+Here original model is copied everytime for each batch.
+
+Example:
 ```
+line_update = initialize_array('update', 'line', (3, 1)) 
+# for each mutation, only one object is specified
+line_update['id'] = [[3], [5], [8]]
+# specify only the changed status (switch off) of one line
+line_update['from_status'] = [[0], [0], [0]]
+line_update['to_status'] = [[0], [0], [0]]
+
+non_independent_update_data = {'line': line_update}
+```
+
+- We specify all objects and attributes including the unchanged ones in one or more scenarios. i.e. The attributes to be updated have data for all batches.
+This is an **independent** batch dataset (In a sense that each batch is independent of the original model input).
+We do not need to keep a copy of the original model in such case.
+The original model data is copied only once while we mutate over that data for all the batches. 
+This brings performance benefits.
+
+Example:
+```
+line_update = initialize_array('update', 'line', (3, 3))  # 3 scenarios, 3 objects (lines)
+# below the same broadcasting trick
+line_update['id'] = [[3, 5, 8]]
+# fully specify the status of all lines, even it is the same as the base scenario
+line_update['from_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+line_update['to_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+
+independent_update_data = {'line': line_update}
+```
+
+### Caching topology
+
+To perform the calculations, a graph topology of the grid is to be constructed from the input data first. 
+
+- If your batch scenarios are changing the switching status of branches and sources the base model is then kept as empty model without any internal cached graph/matrices. 
+Thus, the topology is constructed for each batch from the input data.
+N-1 check is a typical use case.
+
+- If all your batch scenarios do not change the switching status of branches and sources the model will re-use the pre-built internal graph/matrices for each calculation.
+Time-series load profile calculation is a typical use case. This can bring performance benefits.
+
+The topology is not cached when any of the switching statuses (`from_status`, `to_status` or `status`) of the following components are updated:
+1. Branches: Lines, Links, Transformers
+2. Branch3: Three winding transformer
+3. Appliances: Sources
+
+### Parallel Computing
+
+The batch calculation supports shared memory multi-threading parallel computing. 
+The common internal states and variables are shared as much as possible to save memory usage and avoid copy.
+
+You can set `threading` parameter in `calculate_power_flow()` or `calculate_state_estimation()` to enable/disable parallel computing.
+
+- `threading=-1`, use sequential computing (default)
+- `threading=0`, use number of threads available from the machine hardware (recommended)
+- `threading>0`, set the number of threads you want to use
