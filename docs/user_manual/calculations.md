@@ -118,7 +118,7 @@ Factorizing the matrix of linear equation is the most computationally heavy task
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual `LoadGenType`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
 It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
-When all the load/generation types are of constant impedance, power-grid-model uses Linear method regardless of the input provided by the user.
+When all the load/generation types are of constant impedance, power-grid-model uses Linear method regardless of the input provided by the user. This is because this method will then be accurate and fastest. 
 
 The algorithm is as follows:
 1. Assume injected currents by loads $I_N=0$ since we model loads/generation as impedance. 
