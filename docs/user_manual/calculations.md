@@ -106,12 +106,12 @@ $$
    \end{eqnarray}
 $$
 
-Power flow equations are based on solving the nodal equations above to obtain the voltage and voltage angle at each node
+Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at each node
 and then obtaining the real and reactive power flow through the branches. The following bus types can be present in the system:
 
 - Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
 - Load bus: a bus with known $P$ and $Q$.
-- Voltage controlled bus: a bus with known $P$ and $V$.
+- Voltage controlled bus: a bus with known $P$ and $V$. NOTE: this bus is not supported by power-grid-model yet.
 
 #### Newton-Raphson
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
@@ -194,7 +194,7 @@ and $\dfrac{\partial Q}{\partial V}$.
 For each iteration the following steps are executed:
 - Compute $\Delta y(i)$
 - Compute the Jacobian $J(i)$
-- Using Gaussian elimination and back substitution solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
+- Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
 - Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
 
 #### Iterative Current
