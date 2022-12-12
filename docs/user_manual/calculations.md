@@ -292,15 +292,19 @@ $$
                0 & \sigma_2^2 & \cdots & 0 \\
                \vdots & \vdots & \ddots &vdots \\
                0 & 0 & \cdots & \sigma_{N_{m}}^2
-               \end{bmatrix} ^-1 = 
+               \end{bmatrix} ^{-1} = 
                \begin{bmatrix}
                w_1 & 0 & \cdots & 0 \\
                0 & w_2 & \cdots & 0 \\
-               \vdots & \vdots & \ddots &vdots \\
+               \vdots & \vdots & \ddots & \vdots \\
                0 & 0 & \cdots & w_{N_{m}}
                \end{bmatrix}
    \end{eqnarray}
 $$
+
+Where $x_i$ is the real value of the i-th measured quantity in complex form, $z_i$ is the i-th measured value in complex form,
+$\sigma_i$ is the normalized standard deviation of the measurement error of the i-th measurement, $\Sigma$ is the normalized covariance matrix
+and $W$ is the weighting factor matrix.
 
 At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
 
