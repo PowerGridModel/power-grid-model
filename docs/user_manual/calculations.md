@@ -242,6 +242,66 @@ When we approximate the load as impedance at 1 p.u., the voltage error has quadr
 
 
 ### State estimation algorithms
+Weighted least squares (WLS) state estimation can be performed with poower-grid-model.
+Given a grid with $N_b$ busesm the state variable column vector is defined as below.
+
+
+$$
+   \begin{eqnarray}
+            U     =     \begin{bmatrix}
+                            U_1 \\
+                            U_2 \\ 
+                            \vdots \\
+                            U_{N_{b}}
+                        \end{bmatrix} 
+   \end{eqnarray}
+$$
+
+Where $U_i$ is the complex voltage phasor of the i-th bus. 
+
+The goal os WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
+by solving:
+
+$$
+   \begin{eqnarray}
+            min r(U) = \dfrac{1}{2} (f(U) - z)^H W (f(U) - z)
+   \end{eqnarray}
+$$
+
+Where:
+
+$$
+   \begin{eqnarray}
+      x     =  \begin{bmatrix}
+               x_1 \\
+               x_2 \\
+               \vdots \\
+               x_{N_{m}}
+               \end{bmatrix} = 
+               f(U)
+      \quad\text{and}\quad
+      z     =  \begin{bmatrix}
+               z_1 \\
+               z_2 \\
+               \vdots \\
+               z_{N_{m}}
+               \end{bmatrix} 
+      \quad\text{and}\quad
+      W  = \Sigma^{-1} =  \begin{bmatrix}
+               \sigma_1^2 & 0 & \cdots & 0 \\
+               0 & \sigma_2^2 & \cdots & 0 \\
+               \vdots & \vdots & \ddots &vdots \\
+               0 & 0 & \cdots & \sigma_{N_{m}}^2
+               \end{bmatrix} ^-1 = 
+               \begin{bmatrix}
+               w_1 & 0 & \cdots & 0 \\
+               0 & w_2 & \cdots & 0 \\
+               \vdots & \vdots & \ddots &vdots \\
+               0 & 0 & \cdots & w_{N_{m}}
+               \end{bmatrix}
+   \end{eqnarray}
+$$
+
 At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
 
 #### Iterative linear
