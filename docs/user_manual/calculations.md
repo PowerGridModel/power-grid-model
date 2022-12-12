@@ -308,6 +308,29 @@ and $W$ is the weighting factor matrix.
 
 At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
 
+There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
+voltage snesors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
+
+$$
+   \begin{eqnarray}
+            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}} 
+   \end{eqnarray}
+$$
+
+Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of individual measurements.
+
+Multiple appliance measurements (power measurements) on one bus are aggregated as the total injection at the bus:
+
+$$
+   \begin{eqnarray}
+            S = \sum_{k=1}^{N_{appliance}} S_k 
+            \quad\text{and}\quad
+            \sigma^2 = \sum_{k=1}^{N_{appliance}} \sigma_k^2
+   \end{eqnarray}
+$$
+
+Where $S_k$ and $\sigma_k$ are the measured value and the standard deviation of the individual appliances.
+
 #### Iterative linear
 
 TODO: extend the explanation of the algorithm. Mention that the algorithm will assume angles to be zero if not given. This might result in not having a 
