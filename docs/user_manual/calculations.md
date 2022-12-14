@@ -368,7 +368,18 @@ $$
    \end{eqnarray}
 $$
 
+The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of 
+bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS 
+algorithm. In each iteration, the resulted voltage phase angle will be applied as the phase shift of the measured voltage phasor 
+for the next iteration:
 
+- Initialization: let $\underline{U}^{(k)}$ be the column vector of the estimated voltage phasor in the k-th iteration. Let Bus $s$
+be the slack bus, which is connected to the external network (source). $\underline{U}^{(0)}$ is initialized as follows:
+  - For bus $i$, if there is no voltage measurement, assign $\underline{U}^{(0)} = e^{j \theta_i}$, where $\theta_i$ is the intrinsic
+  transformer phase shift between Bus $i$ and Bus $s$.
+  - For bus $i$, if there is a voltage measurement, assign $\underline{U}^{(0)} = U_{meas,i}e^{j \theta_i}$, where $U_{meas,i}$ is 
+  the measured voltage magnitude.
+- Iteration proces:
 
 
 Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method which converges to a true
