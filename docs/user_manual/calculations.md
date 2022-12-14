@@ -394,7 +394,7 @@ method, where the Jacobian matrix needs to be constructed and factorized each ti
 NOTE: Since the algorithm will assume angles to be zero if not given, this might result in not having a 
 crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
 
-Algorithm call: `CalculationMethod.iterative_linear`. 
+Algorithm call: `CalculationMethod.iterative_linear`
 
 ## Batch Calculations
 
