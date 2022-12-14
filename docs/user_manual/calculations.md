@@ -242,8 +242,8 @@ When we approximate the load as impedance at 1 p.u., the voltage error has quadr
 
 
 ### State estimation algorithms
-Weighted least squares (WLS) state estimation can be performed with poower-grid-model.
-Given a grid with $N_b$ busesm the state variable column vector is defined as below.
+Weighted least squares (WLS) state estimation can be performed with power-grid-model.
+Given a grid with $N_b$ buses the state variable column vector is defined as below.
 
 
 $$
@@ -259,7 +259,7 @@ $$
 
 Where $U_i$ is the complex voltage phasor of the i-th bus. 
 
-The goal os WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
+The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
 by solving:
 
 $$
@@ -335,6 +335,24 @@ Where $S_k$ and $\sigma_k$ are the measured value and the standard deviation of 
 
 TODO: extend the explanation of the algorithm. Mention that the algorithm will assume angles to be zero if not given. This might result in not having a 
 crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
+
+Linear WLS requires all measurements to be linear. This is only possible is all measurements are phasor unit measurements, 
+which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
+
+- Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small, 
+it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
+magnitude measured at that bus is translated into voltage phasor:
+
+$$
+   \begin{eqnarray}
+            \underline{U}_i = U_i \cdot e^{j \Theta_i}
+   \end{eqnarray}
+$$
+
+- Test layout
+
+
+
 
 Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method which converges to a true
   solution. [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization) is possible.
