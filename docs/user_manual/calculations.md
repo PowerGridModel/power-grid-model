@@ -333,9 +333,6 @@ Where $S_k$ and $\sigma_k$ are the measured value and the standard deviation of 
 
 #### Iterative linear
 
-TODO: extend the explanation of the algorithm. Mention that the algorithm will assume angles to be zero if not given. This might result in not having a 
-crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
-
 Linear WLS requires all measurements to be linear. This is only possible is all measurements are phasor unit measurements, 
 which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
 
@@ -379,11 +376,25 @@ be the slack bus, which is connected to the external network (source). $\underli
   transformer phase shift between Bus $i$ and Bus $s$.
   - For bus $i$, if there is a voltage measurement, assign $\underline{U}^{(0)} = U_{meas,i}e^{j \theta_i}$, where $U_{meas,i}$ is 
   the measured voltage magnitude.
-- Iteration proces:
+- In iteration $k$, follow the steps below:
+  - Linearize the voltage measurements by using the phase angle of the calculated voltages of iteration $k-1$.
+  - Linearize the complex power flow measurements by using either the linearized voltage measurement if the bus is measured, or
+  the voltage phasor result from iteration $k-1$.
+  - Compute the temporary new voltage phasor $\underline{\tilde{U}}^{(k)}$ using the pre-factorized matrix.
+  [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
+  - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
+  - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
+  stop the iteration. Otherwise, continue until the maximum number of iterations is reached. 
+  
+In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
+the system error of the phase shift converges to zero. Because the matrix is pre-built and
+pre-factorized, the computation cost of each iteration is much smaller than Newton-Raphson
+method, where the Jacobian matrix needs to be constructed and factorized each time.
 
+NOTE: Since the algorithm will assume angles to be zero if not given, this might result in not having a 
+crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
 
-Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method which converges to a true
-  solution. [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization) is possible.
+Algorithm call: `CalculationMethod.iterative_linear`. 
 
 ## Batch Calculations
 
