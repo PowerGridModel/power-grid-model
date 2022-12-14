@@ -339,9 +339,9 @@ crash due to an unobservable system, but succeeding with the calculations and gi
 Linear WLS requires all measurements to be linear. This is only possible is all measurements are phasor unit measurements, 
 which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
 
-- Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small, 
+- Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small, 
 it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
-magnitude measured at that bus is translated into voltage phasor:
+magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
 $$
    \begin{eqnarray}
@@ -349,9 +349,24 @@ $$
    \end{eqnarray}
 $$
 
-Where $\theta_i$ is the intrinsic transformer phase shift.
+- Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
+also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage 
+phasor, the current phasor is calculated as follows:
 
-- Test layout
+$$
+   \begin{eqnarray}
+            \underline{I} = (\underline{S}/\underline{U})^*
+   \end{eqnarray}
+$$
+
+- Bus power injection: Linear WLS requires a complex current phasor. Similar as above, if the bus voltage is not measured,
+the nominal voltage with zero angle will be used as an estimation. The current phasor is calculated as follows:
+
+$$
+   \begin{eqnarray}
+            \underline{I} = (\underline{S}/\underline{U})^*
+   \end{eqnarray}
+$$
 
 
 
