@@ -349,6 +349,8 @@ $$
    \end{eqnarray}
 $$
 
+Where $\theta_i$ is the intrinsic transformer phase shift.
+
 - Test layout
 
 
