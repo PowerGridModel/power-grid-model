@@ -345,7 +345,7 @@ magnitude measured at that bus is translated into voltage phasor:
 
 $$
    \begin{eqnarray}
-            \underline{U}_i = U_i \cdot e^{j \Theta_i}
+            \underline{U}_i = U_i \cdot e^{j \theta_i}
    \end{eqnarray}
 $$
 
