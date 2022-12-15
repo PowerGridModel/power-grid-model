@@ -1,8 +1,5 @@
 {
     "cmake.buildDirectory": "${workspaceFolder}/cpp_build_${buildType}",
-    "cmake.configureSettings": {
-        "POWER_GRID_MODEL_BUILD_BENCHMARK": 1
-    },
     "C_Cpp.autoAddFileAssociations": false,
     "cmake.configureOnOpen": true,
     "testMate.cpp.test.executables": "cpp_build_${command:cmake.buildType}/tests/cpp_unit_tests/power_grid_model_unit_tests",
