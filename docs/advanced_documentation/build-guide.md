@@ -114,6 +114,10 @@ option.
 |------------------------------------|-------------------------------------------------------------------------------------------------------------|
 | `POWER_GRID_MODEL_COVERAGE`        | When set to `1`, build with test coverage. This is only applicable for Linux.                               |
 
+## Visual Studio Code Support
+
+You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
+
 ## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
 
 In this section an example is given for setup in Ubuntu 22.04. You can use this example in Windows Subsystem for Linux (
