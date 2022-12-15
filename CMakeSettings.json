@@ -7,7 +7,6 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\cpp_build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
@@ -17,7 +16,6 @@
       "configurationType": "RelWithDebInfo",
       "buildRoot": "${projectDir}\\cpp_build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
-      "cmakeCommandArgs": "-DPOWER_GRID_MODEL_BUILD_BENCHMARK=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x64_x64" ]

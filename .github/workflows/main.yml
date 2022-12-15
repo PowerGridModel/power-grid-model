@@ -76,8 +76,7 @@ jobs:
           cmake .. `
             -G "Ninja" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} `
-            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
-            -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
+            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library
           # build
           cmake --build . --verbose -j 1
           # test

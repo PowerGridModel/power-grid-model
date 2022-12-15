@@ -32,7 +32,6 @@ cd ${BUILD_DIR}
 cmake .. -GNinja \
     -DCMAKE_BUILD_TYPE=$1 \
     ${PATH_FOR_CMAKE} \
-    -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1 \
     ${BUILD_COVERAGE}
 # build
 VERBOSE=1 cmake --build .
