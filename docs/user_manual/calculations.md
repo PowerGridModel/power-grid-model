@@ -248,23 +248,23 @@ Given a grid with $N_b$ buses the state variable column vector is defined as bel
 
 $$
    \begin{eqnarray}
-            U     =     \begin{bmatrix}
-                            U_1 \\
-                            U_2 \\ 
+            \underline{U}     =     \begin{bmatrix}
+                            \underline{U}_1 \\
+                            \underline{U}_2 \\ 
                             \vdots \\
-                            U_{N_{b}}
+                            \underline{U}_{N_{b}}
                         \end{bmatrix} 
    \end{eqnarray}
 $$
 
-Where $U_i$ is the complex voltage phasor of the i-th bus. 
+Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus. 
 
 The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
 by solving:
 
 $$
    \begin{eqnarray}
-            min r(U) = \dfrac{1}{2} (f(U) - z)^H W (f(U) - z)
+            min r(\underline{U}) = \dfrac{1}{2} (f(\underline{U}) - \underline{z})^H W (f(\underline{U}) - \underline{z})
    \end{eqnarray}
 $$
 
@@ -272,25 +272,25 @@ Where:
 
 $$
    \begin{eqnarray}
-      x     =  \begin{bmatrix}
-               x_1 \\
-               x_2 \\
+      \underline{x}     =  \begin{bmatrix}
+               \underline{x}_1 \\
+               \underline{x}_2 \\
                \vdots \\
-               x_{N_{m}}
+               \underline{x}_{N_{m}}
                \end{bmatrix} = 
-               f(U)
+               f(\underline{U})
       \quad\text{and}\quad
-      z     =  \begin{bmatrix}
-               z_1 \\
-               z_2 \\
+      \underline{z}     =  \begin{bmatrix}
+               \underline{z}_1 \\
+               \underline{z}_2 \\
                \vdots \\
-               z_{N_{m}}
+               \underline{z}_{N_{m}}
                \end{bmatrix} 
       \quad\text{and}\quad
       W  = \Sigma^{-1} =  \begin{bmatrix}
                \sigma_1^2 & 0 & \cdots & 0 \\
                0 & \sigma_2^2 & \cdots & 0 \\
-               \vdots & \vdots & \ddots &vdots \\
+               \vdots & \vdots & \ddots & \vdots \\
                0 & 0 & \cdots & \sigma_{N_{m}}^2
                \end{bmatrix} ^{-1} = 
                \begin{bmatrix}
@@ -302,7 +302,7 @@ $$
    \end{eqnarray}
 $$
 
-Where $x_i$ is the real value of the i-th measured quantity in complex form, $z_i$ is the i-th measured value in complex form,
+Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th measured value in complex form,
 $\sigma_i$ is the normalized standard deviation of the measurement error of the i-th measurement, $\Sigma$ is the normalized covariance matrix
 and $W$ is the weighting factor matrix.
 
@@ -323,7 +323,7 @@ Multiple appliance measurements (power measurements) on one bus are aggregated a
 
 $$
    \begin{eqnarray}
-            S = \sum_{k=1}^{N_{appliance}} S_k 
+            \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k 
             \quad\text{and}\quad
             \sigma^2 = \sum_{k=1}^{N_{appliance}} \sigma_k^2
    \end{eqnarray}
