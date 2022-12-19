@@ -242,15 +242,159 @@ When we approximate the load as impedance at 1 p.u., the voltage error has quadr
 
 
 ### State estimation algorithms
+Weighted least squares (WLS) state estimation can be performed with power-grid-model.
+Given a grid with $N_b$ buses the state variable column vector is defined as below.
+
+
+$$
+   \begin{eqnarray}
+            \underline{U}     =     \begin{bmatrix}
+                            \underline{U}_1 \\
+                            \underline{U}_2 \\ 
+                            \vdots \\
+                            \underline{U}_{N_{b}}
+                        \end{bmatrix} 
+   \end{eqnarray}
+$$
+
+Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus. 
+
+The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
+by solving:
+
+$$
+   \begin{eqnarray}
+            min r(\underline{U}) = \dfrac{1}{2} (f(\underline{U}) - \underline{z})^H W (f(\underline{U}) - \underline{z})
+   \end{eqnarray}
+$$
+
+Where:
+
+$$
+   \begin{eqnarray}
+      \underline{x}     =  \begin{bmatrix}
+               \underline{x}_1 \\
+               \underline{x}_2 \\
+               \vdots \\
+               \underline{x}_{N_{m}}
+               \end{bmatrix} = 
+               f(\underline{U})
+      \quad\text{and}\quad
+      \underline{z}     =  \begin{bmatrix}
+               \underline{z}_1 \\
+               \underline{z}_2 \\
+               \vdots \\
+               \underline{z}_{N_{m}}
+               \end{bmatrix} 
+      \quad\text{and}\quad
+      W  = \Sigma^{-1} =  \begin{bmatrix}
+               \sigma_1^2 & 0 & \cdots & 0 \\
+               0 & \sigma_2^2 & \cdots & 0 \\
+               \vdots & \vdots & \ddots & \vdots \\
+               0 & 0 & \cdots & \sigma_{N_{m}}^2
+               \end{bmatrix} ^{-1} = 
+               \begin{bmatrix}
+               w_1 & 0 & \cdots & 0 \\
+               0 & w_2 & \cdots & 0 \\
+               \vdots & \vdots & \ddots & \vdots \\
+               0 & 0 & \cdots & w_{N_{m}}
+               \end{bmatrix}
+   \end{eqnarray}
+$$
+
+Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th measured value in complex form,
+$\sigma_i$ is the normalized standard deviation of the measurement error of the i-th measurement, $\Sigma$ is the normalized covariance matrix
+and $W$ is the weighting factor matrix.
+
 At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
+
+There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
+voltage snesors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
+
+$$
+   \begin{eqnarray}
+            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}} 
+   \end{eqnarray}
+$$
+
+Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of individual measurements.
+
+Multiple appliance measurements (power measurements) on one bus are aggregated as the total injection at the bus:
+
+$$
+   \begin{eqnarray}
+            \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k 
+            \quad\text{and}\quad
+            \sigma^2 = \sum_{k=1}^{N_{appliance}} \sigma_k^2
+   \end{eqnarray}
+$$
+
+Where $S_k$ and $\sigma_k$ are the measured value and the standard deviation of the individual appliances.
 
 #### Iterative linear
 
-TODO: extend the explanation of the algorithm. Mention that the algorithm will assume angles to be zero if not given. This might result in not having a 
+Linear WLS requires all measurements to be linear. This is only possible is all measurements are phasor unit measurements, 
+which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
+
+- Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small, 
+it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
+magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
+
+$$
+   \begin{eqnarray}
+            \underline{U}_i = U_i \cdot e^{j \theta_i}
+   \end{eqnarray}
+$$
+
+- Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
+also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage 
+phasor, the current phasor is calculated as follows:
+
+$$
+   \begin{eqnarray}
+            \underline{I} = (\underline{S}/\underline{U})^*
+   \end{eqnarray}
+$$
+
+- Bus power injection: Linear WLS requires a complex current phasor. Similar as above, if the bus voltage is not measured,
+the nominal voltage with zero angle will be used as an estimation. The current phasor is calculated as follows:
+
+$$
+   \begin{eqnarray}
+            \underline{I} = (\underline{S}/\underline{U})^*
+   \end{eqnarray}
+$$
+
+The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of 
+bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS 
+algorithm. In each iteration, the resulted voltage phase angle will be applied as the phase shift of the measured voltage phasor 
+for the next iteration:
+
+- Initialization: let $\underline{U}^{(k)}$ be the column vector of the estimated voltage phasor in the k-th iteration. Let Bus $s$
+be the slack bus, which is connected to the external network (source). $\underline{U}^{(0)}$ is initialized as follows:
+  - For bus $i$, if there is no voltage measurement, assign $\underline{U}^{(0)} = e^{j \theta_i}$, where $\theta_i$ is the intrinsic
+  transformer phase shift between Bus $i$ and Bus $s$.
+  - For bus $i$, if there is a voltage measurement, assign $\underline{U}^{(0)} = U_{meas,i}e^{j \theta_i}$, where $U_{meas,i}$ is 
+  the measured voltage magnitude.
+- In iteration $k$, follow the steps below:
+  - Linearize the voltage measurements by using the phase angle of the calculated voltages of iteration $k-1$.
+  - Linearize the complex power flow measurements by using either the linearized voltage measurement if the bus is measured, or
+  the voltage phasor result from iteration $k-1$.
+  - Compute the temporary new voltage phasor $\underline{\tilde{U}}^{(k)}$ using the pre-factorized matrix.
+  [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
+  - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
+  - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
+  stop the iteration. Otherwise, continue until the maximum number of iterations is reached. 
+  
+In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
+the system error of the phase shift converges to zero. Because the matrix is pre-built and
+pre-factorized, the computation cost of each iteration is much smaller than Newton-Raphson
+method, where the Jacobian matrix needs to be constructed and factorized each time.
+
+NOTE: Since the algorithm will assume angles to be zero if not given, this might result in not having a 
 crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
 
-Algorithm call: `CalculationMethod.iterative_linear`. It is an iterative method which converges to a true
-  solution. [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization) is possible.
+Algorithm call: `CalculationMethod.iterative_linear`
 
 ## Batch Calculations
 
