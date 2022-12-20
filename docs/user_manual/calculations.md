@@ -88,9 +88,6 @@ The table below can be used to pick the right algorithm. Below the table a more 
 | [Linear](#linear)                       | &#10004; |          | `CalculationMethod.linear`            | 
 | [Linear current](#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
-TODO: for each of the algorithms give a brief explanation of the algorithm and in what cases this algorithm would be the prefered method. The old explanations are given, but they should be extended/improved.
-Also include the mathematics/algorithms.
-
 The nodal equations of a power system network can be written as:
 
 $$
