@@ -81,12 +81,12 @@ They can be used where approximate solutions are acceptable.
 Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
 The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-| Algorithm                               | Speed    | Accuracy | Algorithm call                        |
-|-----------------------------------------|----------|----------|---------------------------------------|
-| [Newton-Raphson](#newton-raphson)       |          | &#10004; | `CalculationMethod.newton_raphson`    |
-| [Iterative current](#iterative-current) |          | &#10004; | `CalculationMethod.iterative_current` | 
-| [Linear](#linear)                       | &#10004; |          | `CalculationMethod.linear`            | 
-| [Linear current](#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
+| Algorithm                                        | Speed    | Accuracy | Algorithm call                        |
+|--------------------------------------------------|----------|----------|---------------------------------------|
+| [Newton-Raphson](calculations.md#newton-raphson) |          | &#10004; | `CalculationMethod.newton_raphson`    |
+| [Iterative current](calculations.md#iterative-current)          |          | &#10004; | `CalculationMethod.iterative_current` | 
+| [Linear](calculations.md#linear)                                | &#10004; |          | `CalculationMethod.linear`            | 
+| [Linear current](calculations.md#linear-current)                | &#10004; |          | `CalculationMethod.linear_current`    |
 
 Note: When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
 This is because this method will then be accurate and fastest.
