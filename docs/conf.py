@@ -56,7 +56,7 @@ exclude_patterns = [
 
 # -- myst parser and myst_nb config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
-myst_heading_anchors = 3
+myst_heading_anchors = 4
 # execute jupter notebooks output before building webpage
 jupyter_execute_notebooks = "off"
 # Extentions in myst
