@@ -239,7 +239,10 @@ Admittance of each load/generation is calculated from rated power as $y=-\overli
 
 #### Linear current
 
-**This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current).** It will be a better approximation when most of the load/generation types resemble constant current. Similar to [Iterative Current](calculations.md#iterative-current), batch calculations like timeseries, here will also be faster. The reason is the same that the Y bus matrix does not change across batches and the same factorization would be used.
+**This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current).** 
+This approximation method will give better results when most of the load/generation types resemble constant current. 
+Similar to [Iterative Current](calculations.md#iterative-current), batch calculations like timeseries will also be faster. 
+The reason is the same: the $Y_{bus}$ matrix does not change across batches and the same factorization would be used.
 
 
 In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](calculations.md#linear) in such case. This is because we approximate the load as current instead of impedance.
