@@ -110,7 +110,7 @@ and then obtaining the real and reactive power flow through the branches. The fo
 
 - Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
 - Load bus: a bus with known $P$ and $Q$.
-- Voltage controlled bus: a bus with known $P$ and $V$. NOTE: this bus is not supported by power-grid-model yet.
+- Voltage controlled bus: a bus with known $P$ and $V$. Note: this bus is not supported by power-grid-model yet.
 
 #### Newton-Raphson
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
