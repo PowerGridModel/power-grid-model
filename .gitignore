@@ -486,7 +486,6 @@ dmypy.json
 .pyre/
 
 # build
-.vscode/
 src/power_grid_model/**/*.cpp
 cpp_build*/
 
@@ -510,3 +509,10 @@ PYPI_VERSION
 # docs builds
 docs/make.bat
 docs/Makefile
+
+# VSCode configurations
+# it is ignored by default so the user does not accidentally change the configuration
+# if you want to changes the JSON file in .vscode folder
+# please type
+#    git add .vscode/ --force
+.vscode/

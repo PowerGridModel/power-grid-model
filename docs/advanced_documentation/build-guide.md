@@ -108,12 +108,15 @@ library `power_grid_model`. There are two sub-projects defined in the root cmake
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. When you
 use `cmake build` for the root cmake file, the following additional options are available besides the standard cmake
-option. If no option is defined, the cmake project will build the unit tests.
+option.
 
 | Option                             | Description                                                                                                 |
 |------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `POWER_GRID_MODEL_BUILD_BENCHMARK` | When set to `1`, build the both sub-projects: unit test and benchmarks. Otherwise only build the unit test. |
 | `POWER_GRID_MODEL_COVERAGE`        | When set to `1`, build with test coverage. This is only applicable for Linux.                               |
+
+## Visual Studio Code Support
+
+You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
 
 ## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
 

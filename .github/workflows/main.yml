@@ -76,8 +76,7 @@ jobs:
           cmake .. `
             -G "Ninja" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} `
-            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
-            -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
+            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library
           # build
           cmake --build . --verbose -j 1
           # test
@@ -128,7 +127,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.2
+        uses: pypa/cibuildwheel@v2.11.3
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container

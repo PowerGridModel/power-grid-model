@@ -53,8 +53,4 @@ endif()
 add_subdirectory(tests/cpp_unit_tests)
 
 # get benchmark
-if(DEFINED POWER_GRID_MODEL_BUILD_BENCHMARK AND POWER_GRID_MODEL_BUILD_BENCHMARK EQUAL 1)
-	add_subdirectory(tests/benchmark_cpp)
-endif()
-
-
+add_subdirectory(tests/benchmark_cpp)
