@@ -199,20 +199,26 @@ For each iteration the following steps are executed:
 #### Iterative Current
 
 This algorithm is a jacobi like method for powerflow analysis.
-It has linear convergence as opposed to quadratic convergence in newton-raphson method. This means that the number of iterations will be greater. Newton-Raphson would also be more robust in achieving convergence in case of greater meshed configurations. However, Iterative current algorithm will be faster most of the time.
+It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson would also be more robust in achieving convergence in case of greater meshed configurations. However, Iterative current algorithm will be faster most of the time.
 
 The algorithm is as follows:
-1. Build Y bus matrix 
-2. Initialization $U_N^0$ 
+1. Build $Y_{bus}$ matrix 
+2. Initialization of $U_N^0$ 
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
-$$  I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
+$$  
+   \begin{eqnarray}
+      I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
+   \end{eqnarray}
 $$
 4. Solve linear equation: $YU_N^i = I_N^i$ 
-5. Check convergence: If maximum voltage deviation from previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
+5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
 
-Compared to newton-raphson, it only needs to calculate injected currents before solving linear equations. This is more straightforward than calculating the jacobian.
+The iterative current algorithm only needs to calculate injected currents before solving linear equations. 
+This is more straightforward than calculating the Jacobian, which was done in the Newton-Raphson algorithm.
 
-Factorizing the matrix of linear equation is the most computationally heavy task. The Y bus matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations. The Y bus matrix is also unchanged in certain batch calculations like timeseries calculations. Thus the same factorization is used for all batches as well.
+Factorizing the matrix of linear equation is the most computationally heavy task. 
+The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations. 
+The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like timeseries calculations.
 
 
 #### Linear
