@@ -69,11 +69,11 @@ class MeasuredTerminalType(IntEnum):
 
     branch_from = 0
     """
-    Measuring the from-terminal between a branch and a node
+    Measuring the from-terminal between a branch (except link) and a node
     """
     branch_to = 1
     """
-    Measuring the to-terminal between a branch and a node
+    Measuring the to-terminal between a branch (except link) and a node
     """
     source = 2
     """

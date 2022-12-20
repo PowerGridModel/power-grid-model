@@ -84,7 +84,7 @@ also modeled as `line`. A `line` can only connect two nodes with the same rated 
 
 `link` is a {hoverxreftooltip}`user_manual/components:branch` which usually represents a short internal cable/connection between
 two busbars inside a substation. It has a very high admittance (small impedance) which is set to a fixed per-unit value
-(equivalent to 10e6 siemens for 10kV network). Therefore, it is chosen by design that no sensors can be connected to a `link`.
+(equivalent to 10e6 siemens for 10kV network). Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
 ### Transformer
@@ -347,7 +347,7 @@ terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
-Note: due to the high admittance of a `link` it is chosen that a power sensor cannot be connected to a `link`, even though a link is a `branch`
+Note: due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
 
 | name | data type | unit | description | required | input | update | output |                    valid values                     |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |:---------------------------------------------------:|
