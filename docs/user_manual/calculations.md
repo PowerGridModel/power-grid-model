@@ -88,6 +88,9 @@ The table below can be used to pick the right algorithm. Below the table a more 
 | [Linear](#linear)                       | &#10004; |          | `CalculationMethod.linear`            | 
 | [Linear current](#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
+Note: When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
+This is because this method will then be accurate and fastest.
+
 The nodal equations of a power system network can be written as:
 
 $$
