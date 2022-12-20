@@ -95,16 +95,16 @@ The nodal equations of a power system network can be written as:
 
 $$
    \begin{eqnarray}
-      I    & = Y_{bus}V
+      I_N    & = Y_{bus}U_N
    \end{eqnarray}
 $$
 
-Where $I$ is the $N$ vector of source currents injected into each bus and $V$ is the $N$ vector of bus voltages. The complex power
+Where $I_N$ is the $N$ vector of source currents injected into each bus and $U_N$ is the $N$ vector of bus voltages. The complex power
 delivered to bus $k$ is:
 
 $$
    \begin{eqnarray}
-      S_{k}    & =  P_k + jQ_k & = V_{k} I_{k}^{*}
+      S_{k}    & =  P_k + jQ_k & = U_{k} I_{k}^{*}
    \end{eqnarray}
 $$
 
@@ -113,7 +113,7 @@ and then obtaining the real and reactive power flow through the branches. The fo
 
 - Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
 - Load bus: a bus with known $P$ and $Q$.
-- Voltage controlled bus: a bus with known $P$ and $V$. Note: this bus is not supported by power-grid-model yet.
+- Voltage controlled bus: a bus with known $P$ and $U$. Note: this bus is not supported by power-grid-model yet.
 
 #### Newton-Raphson
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
@@ -131,15 +131,15 @@ $$
    \begin{eqnarray}
       x     =  \begin{bmatrix}
                \delta \\
-               V
+               U
                \end{bmatrix} = 
                \begin{bmatrix}
                \delta_2 \\
                \vdots \\
                \delta_N \\
-               V_2 \\
+               U_2 \\
                \vdots \\
-               V_N
+               U_N
                \end{bmatrix}
       \quad\text{and}\quad
       y     =  \begin{bmatrix}
@@ -190,8 +190,8 @@ $$
 $$
 
 $J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
-derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial V}$, $\dfrac{\partial Q}{\partial \delta}$
-and $\dfrac{\partial Q}{\partial V}$.
+derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial U}$, $\dfrac{\partial Q}{\partial \delta}$
+and $\dfrac{\partial Q}{\partial U}$.
 
 For each iteration the following steps are executed:
 - Compute $\Delta y(i)$
