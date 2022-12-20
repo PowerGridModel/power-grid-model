@@ -206,7 +206,7 @@ It has linear convergence as opposed to quadratic convergence in the Newton-Raph
 
 The algorithm is as follows:
 1. Build $Y_{bus}$ matrix 
-2. Initialization of $U_N^0$ 
+2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
 $$  
    \begin{eqnarray}
@@ -234,8 +234,8 @@ When all the load/generation types are of constant impedance, power-grid-model u
 The algorithm is as follows:
 1. Assume injected currents by loads $I_N=0$ since we model loads/generation as impedance. 
 Admittance of each load/generation is calculated from rated power as $y=-\overline{S}$ 
-2. Build Y bus matrix. Add the admittances of loads/generation to the diagonal elements.
-3. Solve linear equation: $YU_N^i = I_N^i$ for $U_N$
+2. Build $Y{bus}$. Add the admittances of loads/generation to the diagonal elements.
+3. Solve linear equation: $YU_N = I_N$ for $U_N$
 
 #### Linear current
 
