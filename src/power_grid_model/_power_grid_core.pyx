@@ -537,7 +537,7 @@ cdef class PowerGridModel:
                 = 0 parallel, use number of hardware threads
                 > 0 specify number of parallel threads
             output_component_types: list of component types you want to be present in the output dict.
-                By default is all component types will be in the output
+                By default all component types will be in the output
 
         Returns:
             dictionary of results of all components
@@ -606,7 +606,7 @@ cdef class PowerGridModel:
                 = 0 parallel, use number of hardware threads
                 > 0 specify number of parallel threads
             output_component_types: list of component types you want to be present in the output dict.
-                By default is all component types will be in the output
+                By default all component types will be in the output
 
         Returns:
             dictionary of results of all components
