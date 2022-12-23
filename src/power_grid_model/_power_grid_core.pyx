@@ -7,7 +7,7 @@
 # distutils: language = c++
 
 import ctypes
-from typing import Any, Dict, Optional, Union, Set
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -371,7 +371,7 @@ cdef class PowerGridModel:
                    calculation_method: Union[CalculationMethod, str],
                    update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
                    idx_t threading,
-                   output_component_types: Optional[Set[str]]
+                   output_component_types: Optional[List[str]]
                    ):
         """
         Core calculation routine
@@ -498,7 +498,7 @@ cdef class PowerGridModel:
                              calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
                              update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
                              idx_t threading=-1,
-                             output_component_types: Optional[Set[str]] = None
+                             output_component_types: Optional[List[str]] = None
                              ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -536,7 +536,8 @@ cdef class PowerGridModel:
                 < 0 sequential
                 = 0 parallel, use number of hardware threads
                 > 0 specify number of parallel threads
-            output_component_types: 
+            output_component_types: list of component types you want to be present in the output dict.
+                By default is all component types will be in the output
 
         Returns:
             dictionary of results of all components
@@ -567,7 +568,7 @@ cdef class PowerGridModel:
                                    calculation_method: Union[CalculationMethod, str] = CalculationMethod.iterative_linear,
                                    update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
                                    idx_t threading=-1,
-                                   output_component_types: Optional[Set[str]] = None
+                                   output_component_types: Optional[List[str]] = None
                                    ) -> Dict[str, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
@@ -604,7 +605,8 @@ cdef class PowerGridModel:
                 < 0 sequential
                 = 0 parallel, use number of hardware threads
                 > 0 specify number of parallel threads
-            output_component_types: 
+            output_component_types: list of component types you want to be present in the output dict.
+                By default is all component types will be in the output
 
         Returns:
             dictionary of results of all components
