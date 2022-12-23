@@ -266,6 +266,7 @@ def test_all_valid_enum_values():
         alpha = 2
         bravo = 5
 
+    # TODO replace this hack with some patch to power_grid_meta_data or nan_type
     from power_grid_model import power_grid_meta_data
 
     power_grid_meta_data["input"]["test"] = {"nans": {"value": -128}}
@@ -278,7 +279,7 @@ def test_all_valid_enum_values():
     errors = all_valid_enum_values(invalid, "test", "value", MyEnum)
     assert len(errors) == 1
     assert InvalidEnumValueError("test", "value", [2], MyEnum) in errors
-
+    # TODO replace this hack with some patch to power_grid_meta_data or nan_type
     del power_grid_meta_data["input"]["test"]
 
     # try with a real enum LoadGenType
