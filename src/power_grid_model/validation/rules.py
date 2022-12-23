@@ -400,7 +400,7 @@ def all_valid_enum_values(
         was not a valid value in the supplied enum type.
     """
     valid = [nan_type(component, field)] + list(enum)
-    invalid = np.isin(data[component][field], valid, invert=True)
+    invalid = np.isin(data[component][field], np.array(valid, dtype=np.int8), invert=True)
     if invalid.any():
         ids = data[component]["id"][invalid].flatten().tolist()
         return [InvalidEnumValueError(component, field, ids, enum)]
