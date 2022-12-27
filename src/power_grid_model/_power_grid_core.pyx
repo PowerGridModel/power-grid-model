@@ -499,16 +499,22 @@ cdef class PowerGridModel:
         Args:
             symmetric:
                 True: three-phase symmetric calculation, even for asymmetric loads/generations
+
                 False: three-phase asymmetric calculation
+
             error_tolerance:
                 error tolerance for voltage in p.u., only applicable when iterative=True
             max_iterations:
                 maximum number of iterations, only applicable when iterative=True
             calculation_method: an enumeration or string
+
                 newton_raphson: use Newton-Raphson iterative method (default)
+
                 linear: use linear method
+
             update_data:
                 None: calculate power flow once with the current model attributes
+
                 A dictionary for batch calculation with batch update
                     key: component type name to be updated in batch
                     value:
