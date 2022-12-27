@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Release strategy
 
-This project uses a rolling release strategy on `main` branch.
+This project uses a rolling release strategy on the `main` branch.
 A new push(merge) to the `main` branch will trigger GitHub Actions to automatically 
 build and upload a new version to PyPI with a unique version number.
 
