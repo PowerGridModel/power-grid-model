@@ -517,7 +517,8 @@ cdef class PowerGridModel:
 
                 A dictionary for batch calculation with batch update
 
-                    key: component type name to be updated in batch
+                    key:
+                        component type name to be updated in batch
 
                     value:
                         A 2D numpy structured array for homogeneous update batch
@@ -530,9 +531,10 @@ cdef class PowerGridModel:
 
                         A dictionary containing two keys, for inhomogeneous update batch
 
-                            indptr: a 1D integer numpy array with length n_batch + 1
+                            indptr:
+                                A 1D integer numpy array with length n_batch + 1
                                 given batch number k, the update array for this batch is
-                                data[indptr[k]:indptr[k + 1]]
+                                data[indptr[k]:indptr[k + 1]].
                                 This is the concept of compressed sparse structure
                                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
 
@@ -547,15 +549,22 @@ cdef class PowerGridModel:
                 > 0 specify number of parallel threads
 
         Returns:
-            dictionary of results of all components
+            Dictionary of results of all components:
+
                 key: component type name to be updated in batch
+
                 value:
+
                     for single calculation: 1D numpy structured array for the results of this component type
+
                     for batch calculation: 2D numpy structured array for the results of this component type
+
                         Dimension 0: each batch
+
                         Dimension 1: the result of each element for this component type
+
             Error handling:
-                in case an error in the core occurs, an exception will be thrown
+                In case an error in the core occurs, an exception will be thrown
         """
         return self.calculate(
             'power_flow',

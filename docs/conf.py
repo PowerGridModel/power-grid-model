@@ -107,7 +107,7 @@ autodoc_default_options = {
 autosectionlabel_prefix_document = True
 
 
-# Napoleon settings
+# Napoleon and autodoc settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
@@ -122,3 +122,4 @@ napoleon_use_rtype = True
 napoleon_preprocess_types = False
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
+autodoc_typehints = "description"
