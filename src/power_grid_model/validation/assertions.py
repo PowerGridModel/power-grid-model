@@ -70,10 +70,12 @@ def assert_valid_batch_data(
         2. Are all input data ID's unique? (checking object identifiers across all components)
 
     For each batch the update data is validated:
+
         3. Is the update data structure correct? (checking data types and numpy array shapes)
         4. Are all update ID's valid? (checking object identifiers across update and input data)
 
     Then (for each batch independently) the input dataset is updated with the batch's update data and validated:
+
         5. Are all required values provided? (checking NaNs)
         6. Are the supplied values valid? (checking limits and other logic as described in "Graph Data Model")
 
