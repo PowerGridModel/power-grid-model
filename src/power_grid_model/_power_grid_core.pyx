@@ -351,6 +351,7 @@ cdef class PowerGridModel:
     def update(self, *, update_data: Dict[str, np.ndarray]):
         """
         Update the model with changes.
+
         Args:
             update_data: update data dictionary
                 key: component type name
@@ -591,43 +592,69 @@ cdef class PowerGridModel:
         Args:
             symmetric:
                 True: three-phase symmetric calculation, even for asymmetric loads/generations
+
                 False: three-phase asymmetric calculation
+
             error_tolerance:
                 error tolerance for voltage in p.u., only applicable when iterative=True
             max_iterations:
                 maximum number of iterations, only applicable when iterative=True
-            calculation_method: an enumeration
+            calculation_method:
+                An enumeration
+
                 iterative_linear: use iterative linear method
-            update_data:
-                None: calculate state estimation once with the current model attributes
+
+                        update_data:
+                None: calculate power flow once with the current model attributes
+
                 A dictionary for batch calculation with batch update
-                    key: component type name to be updated in batch
+
+                    key:
+                        component type name to be updated in batch
+
                     value:
-                        a 2D numpy structured array for homogeneous update batch
+                        A 2D numpy structured array for homogeneous update batch
+
                             Dimension 0: each batch
+
                             Dimension 1: each updated element per batch for this component type
+
                         **or**
-                        a dictionary containing two keys, for inhomogeneous update batch
-                            indptr: a 1D integer numpy array with length n_batch + 1
+
+                        A dictionary containing two keys, for inhomogeneous update batch
+
+                            indptr:
+                                A 1D integer numpy array with length n_batch + 1
                                 given batch number k, the update array for this batch is
-                                data[indptr[k]:indptr[k + 1]]
+                                data[indptr[k]:indptr[k + 1]].
                                 This is the concept of compressed sparse structure
                                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
+
                             data: 1D numpy structured array in flat
+
             threading:
-                only applicable for batch calculation
+                Only applicable for batch calculation
+
                 < 0 sequential
+
                 = 0 parallel, use number of hardware threads
+
                 > 0 specify number of parallel threads
 
         Returns:
-            dictionary of results of all components
+            Dictionary of results of all components
+
                 key: component type name to be updated in batch
+
                 value:
                     for single calculation: 1D numpy structured array for the results of this component type
+
                     for batch calculation: 2D numpy structured array for the results of this component type
+
                         Dimension 0: each batch
+
                         Dimension 1: the result of each element for this component type
+
             Error handling:
                 in case an error in the core occurs, an exception will be thrown
         """
@@ -646,6 +673,7 @@ cdef class PowerGridModel:
         """
         Get count of number of elements per component type.
         If the count for a component type is zero, it will not be in the returned dictionary.
+
         Returns:
             a dictionary with
                 key: component type name

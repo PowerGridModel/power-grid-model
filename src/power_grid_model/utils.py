@@ -429,6 +429,7 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
 def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False) -> Dataset:
     """
     import json data
+
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output
