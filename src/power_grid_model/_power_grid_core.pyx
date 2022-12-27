@@ -301,9 +301,12 @@ cdef class PowerGridModel:
         Initialize the model from an input data set.
 
         Args:
-            input_data: input data dictionary
+            input_data: Input data dictionary
+
                 key: component type name
+
                 value: 1D numpy structured array for this component input
+
             system_frequency: frequency of the power system, default 50 Hz
         """
         cdef map[string, ConstDataPointer] input_set
@@ -604,7 +607,7 @@ cdef class PowerGridModel:
 
                 iterative_linear: use iterative linear method
 
-                        update_data:
+            update_data:
                 None: calculate power flow once with the current model attributes
 
                 A dictionary for batch calculation with batch update
@@ -613,7 +616,7 @@ cdef class PowerGridModel:
                         component type name to be updated in batch
 
                     value:
-                        A 2D numpy structured array for homogeneous update batch
+                        A 2D numpy structured array for homogeneous update batch:
 
                             Dimension 0: each batch
 
@@ -621,7 +624,7 @@ cdef class PowerGridModel:
 
                         **or**
 
-                        A dictionary containing two keys, for inhomogeneous update batch
+                        A dictionary containing two keys, for inhomogeneous update batch:
 
                             indptr:
                                 A 1D integer numpy array with length n_batch + 1
@@ -630,7 +633,8 @@ cdef class PowerGridModel:
                                 This is the concept of compressed sparse structure
                                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
 
-                            data: 1D numpy structured array in flat
+                            data:
+                                1D numpy structured array in flat
 
             threading:
                 Only applicable for batch calculation
