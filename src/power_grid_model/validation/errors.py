@@ -18,9 +18,13 @@ class ValidationError(ABC):
     error. Error classes can extend the public members. For example:
 
         NotBetweenError(ValidationError):
+
             component = 'vehicle'
+
             field = 'direction'
+
             id = [3, 14, 15, 92, 65, 35]
+
             ref_value = (-3.1416, 3.1416)
 
     For convenience, a human readable representation of the error is supplied using the str() function.
