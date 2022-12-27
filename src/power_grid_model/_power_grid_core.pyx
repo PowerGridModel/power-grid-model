@@ -506,7 +506,7 @@ cdef class PowerGridModel:
                 error tolerance for voltage in p.u., only applicable when iterative=True
             max_iterations:
                 maximum number of iterations, only applicable when iterative=True
-            calculation_method: an enumeration or string
+            calculation_method: An enumeration or string
 
                 newton_raphson: use Newton-Raphson iterative method (default)
 
@@ -516,23 +516,34 @@ cdef class PowerGridModel:
                 None: calculate power flow once with the current model attributes
 
                 A dictionary for batch calculation with batch update
+
                     key: component type name to be updated in batch
+
                     value:
-                        a 2D numpy structured array for homogeneous update batch
+                        A 2D numpy structured array for homogeneous update batch
+
                             Dimension 0: each batch
+
                             Dimension 1: each updated element per batch for this component type
+
                         **or**
-                        a dictionary containing two keys, for inhomogeneous update batch
+
+                        A dictionary containing two keys, for inhomogeneous update batch
+
                             indptr: a 1D integer numpy array with length n_batch + 1
                                 given batch number k, the update array for this batch is
                                 data[indptr[k]:indptr[k + 1]]
                                 This is the concept of compressed sparse structure
                                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
+
                             data: 1D numpy structured array in flat
             threading:
-                only applicable for batch calculation
+                Only applicable for batch calculation
+
                 < 0 sequential
+
                 = 0 parallel, use number of hardware threads
+
                 > 0 specify number of parallel threads
 
         Returns:
