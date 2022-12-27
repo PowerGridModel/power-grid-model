@@ -19,7 +19,7 @@ The Technical Steering Committee (TSC) is responsible for:
 1. Architectural and (development) infrastructure choices
 1. Raise subjects/issues that are important for the direction/development of this project
 
-The community council consists of the following members:
+The Technical Steering committee consists of the following members:
 1. Tony Xiang
 1. Werner van Westering
 1. Jonas van den Bogaard
