@@ -460,6 +460,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
 def import_update_data(json_file: Path) -> BatchDataset:
     """
     import update json data
+
     Args:
         json_file: path to the json file
 
@@ -472,6 +473,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
 def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False):
     """
     export json data
+
     Args:
         json_file: path to json file
         data: a single or batch dataset for power-grid-model
