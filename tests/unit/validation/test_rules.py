@@ -266,6 +266,11 @@ def test_all_valid_enum_values():
         alpha = 2
         bravo = 5
 
+    # TODO replace this hack with some patch to power_grid_meta_data or nan_type
+    from power_grid_model import power_grid_meta_data
+
+    power_grid_meta_data["input"]["test"] = {"nans": {"value": -128}}
+
     valid = {"test": np.array([(1, 2), (2, 5)], dtype=[("id", "i4"), ("value", "i4")])}
     errors = all_valid_enum_values(valid, "test", "value", MyEnum)
     assert not errors
@@ -274,6 +279,18 @@ def test_all_valid_enum_values():
     errors = all_valid_enum_values(invalid, "test", "value", MyEnum)
     assert len(errors) == 1
     assert InvalidEnumValueError("test", "value", [2], MyEnum) in errors
+    # TODO replace this hack with some patch to power_grid_meta_data or nan_type
+    del power_grid_meta_data["input"]["test"]
+
+    # try with a real enum LoadGenType
+    # this is a bug in numpy
+    from power_grid_model import LoadGenType, initialize_array
+
+    valid = {"sym_load": initialize_array("input", "sym_load", 20)}
+    valid["sym_load"]["id"] = np.arange(20)
+    valid["sym_load"]["type"] = 0
+    errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
+    assert not errors
 
 
 def test_all_valid_ids():
