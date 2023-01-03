@@ -29,6 +29,24 @@ The circuit diagram for test cases of the 2 grids is as follows:
 ![basic node](../images/validation/basic_node.PNG)
 ![basic node](../images/validation/node.PNG)
 
+
+```{eval-rst}
+.. tikz:: Node case
+    :align: left
+    \ (3,0) node[gridnode, anchor=south]{} to (3,-1);
+    \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
+    \draw [black, ultra thick] (2.5,-3) -- (3.5,-3);
+```
+
+```{eval-rst}
+.. tikz:: Node case
+    :align: left
+    \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
+    \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
+    \draw [black, ultra thick] (2.5,-3) -- (3.5,-3);
+```
+
+
 ### Line
 
 A line can be 4 states, closed on both ends, open on both ends and open on any one end.
