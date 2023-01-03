@@ -40,7 +40,7 @@ extensions = [
     "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",
-    "sphinxcontrib-tikz",
+    "sphinxcontrib.tikz",
 ]
 
 templates_path = ["_templates"]
