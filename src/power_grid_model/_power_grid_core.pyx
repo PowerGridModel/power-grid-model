@@ -439,6 +439,10 @@ cdef class PowerGridModel:
         # limit all component count to user specified component types in output
         if output_component_types is None:
             output_component_types = set(all_component_count.keys())
+        # raise error is some specified components are unknown
+        unknown_components = [x for x in output_component_types if x not in _power_grid_meta_data[output_type]]
+        if unknown_components:
+            raise KeyError(f"You have specified some unknown component types: {unknown_components}")
         all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
 
         for name, count in all_component_count.items():
