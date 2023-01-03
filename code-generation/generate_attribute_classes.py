@@ -4,6 +4,7 @@
 
 from meta_data import AttributeClass, Attribute, HPPHeader
 from pathlib import Path
+from io import TextIOWrapper
 
 ATTRIBUTE_CLASS_PATH = Path(__file__).parent / "attribute_classes"
 
@@ -19,7 +20,6 @@ class HeaderGenerator:
         self.header_file = header_path / f"{header_name}.hpp"
 
         # flatten attribute list
-        attribute_class: AttributeClass
         for attribute_class in self.header_meta_data.classes:
             new_attribute_list = []
             for attribute in attribute_class.attributes:
@@ -51,13 +51,26 @@ class HeaderGenerator:
 #include \"../enum.hpp\"
 #include \"../power_grid_model.hpp\"
 #include \"../three_phase_tensor.hpp\"
+#include \"meta_data.hpp\"
 
 namespace power_grid_model {{ \n\n""")
-            
+            # generate classes
+            for attribute_class in self.header_meta_data.classes:
+                self.generate_class(attribute_class=attribute_class, f=f)
+            # ending
             f.write("\n}  // namespace power_grid_model")
             f.write("#endif\n")
             f.write("// clang-format off\n")
 
+    def generate_class(self, attribute_class: AttributeClass, f: TextIOWrapper):
+        if attribute_class.is_template:
+            f.write("template <bool sym>\n")
+        if attribute_class.base is not None:
+            f.write(f"struct {attribute_class.name} : {attribute_class.base} {{\n")
+        else:
+            f.write(f"struct {attribute_class.name} {{\n")
+        
+        f.write("\};\n")
 
 def code_gen(header_path: Path):
     HeaderGenerator(header_name="input", header_path=header_path).generate_code()
