@@ -1,0 +1,60 @@
+{
+    "name": "input",
+    "include_guard": "INPUT",
+    "classes": [
+        {
+            "name": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "id",
+                    "description": "ID of the object"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "node",
+                    "description": "Node ID this appliance is connected"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "If the appliance is connected"
+                }
+            ]
+        },
+        {
+            "name": "GenericLoadGenInput",
+            "base": "ApplianceInput",
+            "attributes": [
+                {
+                    "data_type": "LoadGenType",
+                    "names": "type",
+                    "description": "Type of the load_gen"
+                }
+            ]
+        },
+        {
+            "name": "LoadGenInput",
+            "base": "GenericLoadGenInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": "p_specified",
+                    "description": "Specified active power"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": "q_specified",
+                    "description": "Specified reactive power"
+                }
+            ]
+        }
+    ]
+}

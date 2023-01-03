@@ -22,10 +22,10 @@ class AttributeClass(DataClassJsonMixin):
     attributes: List[Attribute]
     base: Optional[str] = None
     is_template: bool = False
-    template_alias: Optional[Dict[bool, str]] = None
 
 
 @dataclass
 class HPPHeader(DataClassJsonMixin):
     name: str
+    include_guard: str
     classes: List[AttributeClass]
