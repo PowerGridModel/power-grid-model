@@ -70,7 +70,11 @@ namespace power_grid_model {{ \n\n""")
         else:
             f.write(f"struct {attribute_class.name} {{\n")
         
-        f.write("\};\n")
+        f.write("};\n")
+        if attribute_class.is_template:
+            f.write(f"using Sym{attribute_class.name} = {attribute_class.name}<true>;\n")
+            f.write(f"using Asym{attribute_class.name} = {attribute_class.name}<false>;\n")
+        f.write("\n")
 
 def code_gen(header_path: Path):
     HeaderGenerator(header_name="input", header_path=header_path).generate_code()
