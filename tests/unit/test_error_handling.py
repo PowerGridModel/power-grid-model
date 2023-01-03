@@ -23,6 +23,5 @@ def test_empty_model():
 
 def test_unknown_component_types():
     model = PowerGridModel(input_data={})
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError, match=r"artificial_type") as e:
         model.calculate_power_flow(output_component_types={"artificial_type"})
-        assert "artificial_type" in str(e)
