@@ -53,6 +53,19 @@ A line can be 4 states, closed on both ends, open on both ends and open on any o
 The circuit diagram for the test case is as follows:
 ![line](../images/validation/line.PNG)
 
+```{eval-rst}
+.. tikz:: Line case
+    :align: left
+        \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
+        \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
+        \draw (1,-1) [ncs] to (1,-2) -- (1,-4) [ncs] to (1,-5);
+        \draw (2,-1) [ncs] to (2,-2) -- (2,-4) [nos] to (2,-5);
+        \draw (4,-1) [nos] to (4,-2) -- (4,-4) [ncs] to (4,-5);
+        \draw (5,-1) [nos] to (5,-2) -- (5,-4) [nos] to (5,-5);
+        \draw [black, ultra thick] (0.5,-5) -- (5.5,-5);
+        \draw (3,-5) [very thick, ->] to (3,-6);
+```
+
 ### Transformer
 
 A transformer can be 4 states, closed on both ends, open on both ends and open on any one end.
@@ -65,6 +78,19 @@ Hence open cases are not evaluated.
 because only 'T' transformer model is available in pandapower while power-grid-model uses 'pi' model.
 ```
 ![transformer](../images/validation/transformer.PNG)
+
+```{eval-rst}
+.. tikz:: Transformer case
+    :align: left
+    \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
+    \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
+    \draw (1,-1) [ncs] to (1,-2) [oosourcetrans] to (1,-4) [ncs] to (1,-5);
+    \draw (2,-1) [ncs] to (2,-2) [oosourcetrans] to (2,-4) [nos] to (2,-5);
+    \draw (4,-1) [nos] to (4,-2) [oosourcetrans] to (4,-4) [ncs] to (4,-5);
+    \draw (5,-1) [nos] to (5,-2) [oosourcetrans] to (5,-4) [nos] to (5,-5);
+    \draw [black, ultra thick] (0.5,-5) -- (5.5,-5);
+    \draw (3,-5) [very thick, ->] to (3,-6);
+```
 
 ### Shunt
 

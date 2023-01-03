@@ -57,6 +57,7 @@ doc = [
     "numpydoc",
     "pandas",
     "gitpython",
+    "sphinxcontrib-tikz",
 ]
 
 [project.urls]
