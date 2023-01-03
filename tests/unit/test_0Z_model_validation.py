@@ -49,11 +49,15 @@ def test_single_validation(
     if EXPORT_OUTPUT:
         save_json_data(f"{case_id}.json", result)
 
-    # test calculate with only node result
+    # test calculate with only node and source result
     result = calculation_function_map[calculation_type](
-        model, symmetric=sym, calculation_method=calculation_method, output_component_types=["node"]
+        model, symmetric=sym, calculation_method=calculation_method, output_component_types=["node", "source"]
     )
-    assert list(result.keys()) == ["node"]
+    assert set(result.keys()) == {"node", "source"}
+    result = calculation_function_map[calculation_type](
+        model, symmetric=sym, calculation_method=calculation_method, output_component_types={"node", "source"}
+    )
+    assert set(result.keys()) == {"node", "source"}
 
 
 @pytest.mark.parametrize(
