@@ -102,7 +102,7 @@ autodoc_default_options = {
 autosectionlabel_prefix_document = True
 
 # -- sphinxcontrib.tikz config -----------------------------------------------
-tikz_proc_suite = "Ghostscript"
+# tikz_proc_suite = "Ghostscript"
 tikz_latex_preamble = '''
 \\usepackage{circuitikz}
 '''
