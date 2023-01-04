@@ -21,7 +21,7 @@ def render_template(template_path: Path, data_path: Path, output_path: Path):
         json_data = data_file.read()
     header: HPPHeader = HPPHeader.schema().loads(json_data)
 
-    output = template.render(classes=header.classes)
+    output = template.render(classes=header.classes, include_guard=header.include_guard)
 
     with output_path.open(mode="w", encoding="utf-8") as output_file:
         output_file.write(output)
