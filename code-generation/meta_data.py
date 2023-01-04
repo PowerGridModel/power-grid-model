@@ -5,8 +5,9 @@
 # define dataclass for meta data
 
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Union
+
 from dataclasses_json import DataClassJsonMixin
-from typing import Optional, Dict, List, Union
 
 
 @dataclass

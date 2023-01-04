@@ -2,9 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from meta_data import AttributeClass, Attribute, HPPHeader
-from pathlib import Path
 from io import TextIOWrapper
+from pathlib import Path
+from typing import List
+
+from meta_data import Attribute, AttributeClass, HPPHeader
 
 ATTRIBUTE_CLASS_PATH = Path(__file__).parent / "attribute_classes"
 
@@ -36,7 +38,8 @@ class HeaderGenerator:
         print(f"Generate header file: {self.header_file}")
         with open(self.header_file, "w") as f:
             # begin
-            f.write(f"""
+            f.write(
+                f"""
 // SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 //
 // SPDX-License-Identifier: MPL-2.0
@@ -53,28 +56,75 @@ class HeaderGenerator:
 #include \"../three_phase_tensor.hpp\"
 #include \"meta_data.hpp\"
 
-namespace power_grid_model {{ \n\n""")
+namespace power_grid_model {{ \n\n"""
+            )
             # generate classes
             for attribute_class in self.header_meta_data.classes:
                 self.generate_class(attribute_class=attribute_class, f=f)
+            # generate get_meta functors
+            f.write("\n\n// template specialization functors to get meta data\n")
+            f.write("namespace meta_data {\n\n")
+            for attribute_class in self.header_meta_data.classes:
+                self.generate_get_meta(attribute_class=attribute_class, f=f)
+            f.write("} // namespace meta_data\n\n")
             # ending
             f.write("\n}  // namespace power_grid_model")
             f.write("#endif\n")
             f.write("// clang-format off\n")
 
     def generate_class(self, attribute_class: AttributeClass, f: TextIOWrapper):
+        # begin class
         if attribute_class.is_template:
             f.write("template <bool sym>\n")
         if attribute_class.base is not None:
             f.write(f"struct {attribute_class.name} : {attribute_class.base} {{\n")
         else:
             f.write(f"struct {attribute_class.name} {{\n")
-        
+        # attributes
+        self.generate_attributes(attributes=attribute_class.attributes, f=f)
+        # get meta function
+        # self.generate_get_meta(attribute_class=attribute_class, f=f)
+        # end class and alias
         f.write("};\n")
         if attribute_class.is_template:
             f.write(f"using Sym{attribute_class.name} = {attribute_class.name}<true>;\n")
             f.write(f"using Asym{attribute_class.name} = {attribute_class.name}<false>;\n")
         f.write("\n")
+
+    def generate_attributes(self, attributes: List[Attribute], f: TextIOWrapper):
+        for attribute in attributes:
+            f.write(f"    {attribute.data_type} {attribute.names};")
+            if attribute.description is not None:
+                f.write(f" // {attribute.description}")
+            f.write("\n")
+
+    def generate_get_meta(self, attribute_class: AttributeClass, f: TextIOWrapper):
+        # begin
+        if attribute_class.is_template:
+            # partial specialization for symmetric template
+            f.write("template<bool sym>\n")
+            f.write(f"struct get_meta<{attribute_class.name}<sym>> {{\n")
+        else:
+            # full specialization
+            f.write("template<>\n")
+            f.write(f"struct get_meta<{attribute_class.name}> {{\n")
+        # write function
+        f.write("    MetaData operator() () {\n")
+        f.write("        MetaData meta{};\n")
+        f.write(f'        meta.name = "{attribute_class.name}";\n')
+        f.write(f"        meta.size = sizeof({attribute_class.name});\n")
+        f.write(f"        meta.alignment = alignof({attribute_class.name});\n")
+        if attribute_class.base is not None:
+            f.write(f"        meta.attributes = get_meta<{attribute_class.base}>{{}}().attributes;\n")
+        # all attributes
+        for attribute in attribute_class.attributes:
+            f.write(
+                f'        meta.attributes.push_back(get_data_attribute<&{attribute_class.name}::{attribute.names}>("{attribute.names}"));\n'
+            )
+        f.write("    }\n")
+        # closing
+        f.write("};\n\n")
+
 
 def code_gen(header_path: Path):
     HeaderGenerator(header_name="input", header_path=header_path).generate_code()

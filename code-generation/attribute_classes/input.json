@@ -19,7 +19,7 @@
                 {
                     "data_type": "ID",
                     "names": "node",
-                    "description": "Node ID this appliance is connected"
+                    "description": "Node ID to which this appliance is connected"
                 },
                 {
                     "data_type": "IntS",

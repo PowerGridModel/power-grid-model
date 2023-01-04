@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from generate_attribute_classes import code_gen
 from pathlib import Path
 
+from generate_attribute_classes import code_gen
 
 if __name__ == "__main__":
     code_gen(Path(__file__).parent)
