@@ -47,7 +47,7 @@ To install the library from source, refer to the [Build Guide](docs/advanced_doc
 
 # Examples
 
-Please refer to [Examples](docs/examples) for more detailed examples for power flow and state estimation. 
+Please refer to [Examples](https://github.com/alliander-opensource/power-grid-model-workshop/tree/main/examples) for more detailed examples for power flow and state estimation. 
 Notebooks for validating the input data and exporting input/output data are also included.
 
 # License
