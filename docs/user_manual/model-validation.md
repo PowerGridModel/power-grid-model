@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopycenterText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -26,14 +26,27 @@ All the test cases can be found in [\tests\data\power_flow\pandapower](..\..\tes
 A node can have 2 states: energized and non-energized which is presented in the first grid.
 The second grid example uses a line to validate node operation for voltages other than 0 or 1 p.u.
 The circuit diagram for test cases of the 2 grids is as follows:
-![basic node](../images/validation/basic_node.svg)
-![node](../images/validation/node.svg)
+
+```{image} ../images/validation/basic_node.svg
+:alt: basic node
+:width: 250px
+:align: left
+```
+```{image} ../images/validation/node.svg
+:alt: node
+:width: 250px
+:align: right
+```
 
 ### Line
 
 A line can be 4 states, closed on both ends, open on both ends and open on any one end.
 The circuit diagram for the test case is as follows:
-![line](../images/validation/line.svg)
+```{image} ../images/validation/line.svg
+:alt: line
+:width: 250px
+:align: left
+```
 
 ### Transformer
 
@@ -46,28 +59,47 @@ Hence open cases are not evaluated.
 - Relaxed tolerance parameters are used in asymmetric calculation 
 because only 'T' transformer model is available in pandapower while power-grid-model uses 'pi' model.
 ```
-![transformer](../images/validation/transformer.svg)
+```{image} ../images/validation/transformer.svg
+:alt: transformer
+:width: 250px
+:align: center
+```
 
 ### Shunt
 
 A shunt can be in 2 states: open or closed.
-![shunt](../images/validation/shunt.svg)
+```{image} ../images/validation/shunt.svg
+:alt: shunt
+:width: 250px
+:align: center
+```
 
 ### Source
 
 While source is present in all cases, this case tests two sources being used together.
-![source](../images/validation/source.svg)
+```{image} ../images/validation/source.svg
+:alt: Source
+:width: 250px
+:align: center
+```
 
 ### Symmetrical Load
 
 A symmetrical load can be in open or closed state. It can be of 3 types: constant power, constant impedance and constant current.
-![sym_load](../images/validation/sym_load.svg)
-
+```{image} ../images/validation/sym_load.svg
+:alt: sym_load
+:width: 250px
+:align: center
+```
 
 ### Symmetrical generator
 
 A symmetrical generator can be in open or closed state. It can be of 3 types: constant power, constant impedance and constant current.
-![sym_gen](../images/validation/sym_gen.svg)
+```{image} ../images/validation/sym_gen.svg
+:alt: sym_gen
+:width: 250px
+:align: center
+```
 
 ```{note}
 Only constant power implementation is possible in pandapower for asymmetrical calculations. 
@@ -77,12 +109,20 @@ All the Z, I and P loads are already validated for symmetrical calculation.
 ### Asymmetrical load
 
 An asymmetrical load can be in open or closed state. 
-![asym_load](../images/validation/asym_load.svg)
+```{image} ../images/validation/asym_load.svg
+:alt: asym_load
+:width: 250px
+:align: center
+```
 
 ### Component Test Case: Asymmetrical generator
 
 An asymmetrical generator can be in open or closed state.
-![asym_gen](../images/validation/asym_gen.svg)
+```{image} ../images/validation/asym_gen.svg
+:alt: asym_gen
+:width: 250px
+:align: center
+```
 
 ## Test case creation
 
