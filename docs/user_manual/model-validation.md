@@ -32,12 +32,12 @@ The circuit diagram for test cases of the 2 grids is as follows:
 
 ```{image} ../images/validation/basic_node.svg
 :alt: basic node
-:width: 150px
+:width: 100px
 :align: center
 ```
 ```{image} ../images/validation/node.svg
 :alt: node
-:width: 150px
+:width: 100px
 :align: center
 ```
 
