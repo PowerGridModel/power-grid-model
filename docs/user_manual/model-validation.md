@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Model validation
 
-power-grid-model is validated using multiple cases present in {{ \"[tests/data]({}/tests/data)\".format(gh_link_head_tree) }} folder.
+power-grid-model is validated using multiple cases present in {{ "[tests/data]({}/tests/data)".format(gh_link_head_tree) }} folder.
 There are 2 simple grid test case examples of power-grid-model validated vision and gaia. 
 A thorough validation is done using minimal test cases of each component and 2 test networks described in the following sections.
 
@@ -22,7 +22,7 @@ Hence, the result of source component here should be ignored.
 The output result attributes of power-grid-model are validated at a tolerance value of $\pm10^{-5}$ of respective unit.
 Both the iterative algorithms: Newton Raphson and Iterative current are validated.
 
-All the test cases can be found in {{ \"[\tests\data\power_flow\pandapower]({}\tests\data\power_flow\pandapower)\".format(gh_link_head_tree) }}. 
+All the test cases can be found in {{ "[\tests\data\power_flow\pandapower]({}\tests\data\power_flow\pandapower)".format(gh_link_head_tree) }}. 
 
 ### Node 
 
