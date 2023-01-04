@@ -40,7 +40,6 @@ extensions = [
     "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",
-    "sphinxcontrib.tikz",
 ]
 
 templates_path = ["_templates"]
@@ -100,10 +99,3 @@ autodoc_default_options = {
 
 # -- sphinx.autosectionlabel config -------------------------------------------
 autosectionlabel_prefix_document = True
-
-# -- sphinxcontrib.tikz config -----------------------------------------------
-# tikz_proc_suite = "Ghostscript"
-tikz_latex_preamble = '''
-\\usepackage{circuitikz}
-'''
-tikz_tikzlibraries = "circuitikz"
