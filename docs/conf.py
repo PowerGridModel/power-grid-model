@@ -106,3 +106,4 @@ autosectionlabel_prefix_document = True
 tikz_latex_preamble = '''
 \\usepackage{circuitikz}
 '''
+tikz_tikzlibraries = "circuitikz"
