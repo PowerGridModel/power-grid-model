@@ -17,9 +17,12 @@ Their results are validated against the [pandapower](http://www.pandapower.org/)
 The cases of a differences in modelling between both the libraries are handled by theoretical workarounds.
 For example in power-grid-model, source impedance is included for all component sequences. 
 In pandapower, source impedance is present only in positive sequence network whereas it considered in all sequence components in power-grid-model.
-Source impedance is then set to a low value to match this modelling difference. 
-Hence, the result of source component here should be ignored
-All the test cases can be found in [\tests\data\power_flow\pandapower](..\..\tests\data\power_flow\pandapower)
+Source impedance is then set to a low value to match this modelling difference.
+Hence, the result of source component here should be ignored.
+The output result attributes of power-grid-model are validated at a tolerance value of $\pm10^{-5}$ of respective unit.
+Both the iterative algorithms: Newton Raphson and Iterative current are validated.
+
+All the test cases can be found in [\tests\data\power_flow\pandapower](..\..\tests\data\power_flow\pandapower). 
 
 ### Node 
 
