@@ -22,7 +22,7 @@ Hence, the result of source component here should be ignored.
 The output result attributes of power-grid-model are validated at a tolerance value of $\pm10^{-5}$ of respective unit.
 Both the iterative algorithms: Newton Raphson and Iterative current are validated.
 
-All the test cases can be found in {{ "[\tests\data\power_flow\pandapower]({}\tests\data\power_flow\pandapower)".format(gh_link_head_tree) }}. 
+All the test cases can be found in {{ "[/tests/data/power_flow/pandapower]({}/tests/data/power_flow/pandapower)".format(gh_link_head_tree) }}. 
 
 ### Node 
 
