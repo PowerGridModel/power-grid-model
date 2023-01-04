@@ -117,9 +117,13 @@ namespace power_grid_model {{ \n\n"""
         if attribute_class.base is not None:
             f.write(f"        meta.attributes = get_meta<{attribute_class.base}>{{}}().attributes;\n")
         # all attributes
+        if attribute_class.is_template:
+            type_name = f"{attribute_class.name}<sym>"
+        else:
+            type_name = attribute_class.name
         for attribute in attribute_class.attributes:
             f.write(
-                f'        meta.attributes.push_back(get_data_attribute<&{attribute_class.name}::{attribute.names}>("{attribute.names}"));\n'
+                f'        meta.attributes.push_back(get_data_attribute<&{type_name}::{attribute.names}>("{attribute.names}"));\n'
             )
         f.write("    }\n")
         # closing

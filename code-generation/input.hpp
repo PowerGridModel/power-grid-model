@@ -87,8 +87,8 @@ struct get_meta<LoadGenInput<sym>> {
         meta.size = sizeof(LoadGenInput);
         meta.alignment = alignof(LoadGenInput);
         meta.attributes = get_meta<GenericLoadGenInput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&LoadGenInput::p_specified>("p_specified"));
-        meta.attributes.push_back(get_data_attribute<&LoadGenInput::q_specified>("q_specified"));
+        meta.attributes.push_back(get_data_attribute<&LoadGenInput<sym>::p_specified>("p_specified"));
+        meta.attributes.push_back(get_data_attribute<&LoadGenInput<sym>::q_specified>("q_specified"));
     }
 };
 
