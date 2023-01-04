@@ -4,7 +4,7 @@
 
 from pathlib import Path
 
-from generate_attribute_classes import code_gen
+from render_templates import code_gen
 
 if __name__ == "__main__":
-    code_gen(Path(__file__).parent)
+    code_gen(Path(__file__).parent / "output")
