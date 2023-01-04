@@ -29,12 +29,12 @@ The circuit diagram for test cases of the 2 grids is as follows:
 
 ```{image} ../images/validation/basic_node.svg
 :alt: basic node
-:width: 250px
+:width: 150px
 :align: center
 ```
 ```{image} ../images/validation/node.svg
 :alt: node
-:width: 250px
+:width: 150px
 :align: center
 ```
 
@@ -45,7 +45,7 @@ The circuit diagram for the test case is as follows:
 ```{image} ../images/validation/line.svg
 :alt: line
 :width: 250px
-:align: left
+:align: center
 ```
 
 ### Transformer
