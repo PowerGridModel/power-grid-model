@@ -28,12 +28,14 @@ The second grid example uses a line to validate node operation for voltages othe
 The circuit diagram for test cases of the 2 grids is as follows:
 
 ```{eval-rst}
-.. tikz:: Node case
+.. tikz::
     :libs:  circuitikz
     :align: left
+    \begin{circuitikz}
     \ (3,0) node[gridnode, anchor=south]{} to (3,-1);
     \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
     \draw [black, ultra thick] (2.5,-3) -- (3.5,-3);
+    \end{circuitikz}
 ```
 
 ```{eval-rst}
@@ -55,15 +57,16 @@ The circuit diagram for the test case is as follows:
 
 ```{eval-rst}
 .. tikz:: Line case
+    :libs: circuitikz
     :align: left
-        \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
-        \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
-        \draw (1,-1) [ncs] to (1,-2) -- (1,-4) [ncs] to (1,-5);
-        \draw (2,-1) [ncs] to (2,-2) -- (2,-4) [nos] to (2,-5);
-        \draw (4,-1) [nos] to (4,-2) -- (4,-4) [ncs] to (4,-5);
-        \draw (5,-1) [nos] to (5,-2) -- (5,-4) [nos] to (5,-5);
-        \draw [black, ultra thick] (0.5,-5) -- (5.5,-5);
-        \draw (3,-5) [very thick, ->] to (3,-6);
+    \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
+    \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
+    \draw (1,-1) [ncs] to (1,-2) -- (1,-4) [ncs] to (1,-5);
+    \draw (2,-1) [ncs] to (2,-2) -- (2,-4) [nos] to (2,-5);
+    \draw (4,-1) [nos] to (4,-2) -- (4,-4) [ncs] to (4,-5);
+    \draw (5,-1) [nos] to (5,-2) -- (5,-4) [nos] to (5,-5);
+    \draw [black, ultra thick] (0.5,-5) -- (5.5,-5);
+    \draw (3,-5) [very thick, ->] to (3,-6);
 ```
 
 ### Transformer
