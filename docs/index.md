@@ -55,6 +55,7 @@ user_manual/components
 user_manual/calculations
 user_manual/performance-guide
 user_manual/data-validator
+user_manual/model-validation
 ```
 ```{toctree}
 :caption: "API Reference"
