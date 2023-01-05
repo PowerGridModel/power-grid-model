@@ -163,7 +163,7 @@ class Transformer : public Branch {
         // series
         DoubleComplex z_series, y_series;
         // sign of uk
-        // uk can be negative for aritificual transformer from 3-winding
+        // uk can be negative for artificial transformer from 3-winding
         // in this case, the imaginary part of z_series should be negative
         double const uk_sign = (uk >= 0) ? 1.0 : -1.0;
         // Z = abs(uk)*U2^2/S
