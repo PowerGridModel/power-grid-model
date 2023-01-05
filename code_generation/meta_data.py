@@ -23,6 +23,7 @@ class AttributeClass(DataClassJsonMixin):
     attributes: List[Attribute]
     base: Optional[str] = None
     is_template: bool = False
+    full_name: Optional[str] = None
 
 
 @dataclass

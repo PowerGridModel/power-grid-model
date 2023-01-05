@@ -22,7 +22,12 @@ def render_template(template_path: Path, data_path: Path, output_path: Path):
         json_data = data_file.read()
     dataset_meta_data: DatasetMetaData = DatasetMetaData.schema().loads(json_data)
     # flatten attribute list
+    # assign full name
     for attribute_class in dataset_meta_data.classes:
+        if attribute_class.is_template:
+            attribute_class.full_name = f"{attribute_class.name}<sym>"
+        else:
+            attribute_class.full_name = attribute_class.name
         new_attribute_list = []
         for attribute in attribute_class.attributes:
             if isinstance(attribute.names, str):

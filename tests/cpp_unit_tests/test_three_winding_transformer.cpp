@@ -11,7 +11,7 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test three winding transformer") {
-    ThreeWindingTransformerInputBasics input_basics{
+    ThreeWindingTransformerInput input{
         {{1}, 2, 3, 4, true, true, true},  // Create branch3 {{id}, node_1, node_2, node_3, status_1, status_2,
                                            // status_3}
         138e3,                             // u1
@@ -38,29 +38,25 @@ TEST_CASE("Test three winding transformer") {
         -8,                                // tap_min
         10,                                // tap_max
         0,                                 // tap_nom
-        1380                               // tap size
-    };
-
-    ThreeWindingTransformerInput input{
-        input_basics,
-        nan,  // uk_12_min
-        nan,  // uk_12_max
-        nan,  // uk_13_min
-        nan,  // uk_13_max
-        nan,  // uk_23_min
-        nan,  // uk_23_max
-        nan,  // pk_12_min
-        nan,  // pk_12_max
-        nan,  // pk_13_min
-        nan,  // pk_13_max
-        nan,  // pk_23_min
-        nan,  // pk_23_max
-        1.0,  // r1_grounding
-        4.0,  // x1_grounding
-        nan,  // r2_grounding
-        nan,  // x2_grounding
-        nan,  // r3_grounding
-        nan   // x3_grounding
+        1380,                              // tap size
+        nan,                               // uk_12_min
+        nan,                               // uk_12_max
+        nan,                               // uk_13_min
+        nan,                               // uk_13_max
+        nan,                               // uk_23_min
+        nan,                               // uk_23_max
+        nan,                               // pk_12_min
+        nan,                               // pk_12_max
+        nan,                               // pk_13_min
+        nan,                               // pk_13_max
+        nan,                               // pk_23_min
+        nan,                               // pk_23_max
+        1.0,                               // r1_grounding
+        4.0,                               // x1_grounding
+        nan,                               // r2_grounding
+        nan,                               // x2_grounding
+        nan,                               // r3_grounding
+        nan                                // x3_grounding
     };
 
     // Check what transformers should be tested

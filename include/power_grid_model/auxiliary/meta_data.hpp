@@ -12,36 +12,6 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "boost/preprocessor/arithmetic/mod.hpp"
-#include "boost/preprocessor/comparison/not_equal.hpp"
-#include "boost/preprocessor/control/expr_iif.hpp"
-#include "boost/preprocessor/punctuation/comma_if.hpp"
-#include "boost/preprocessor/seq/for_each_i.hpp"
-#include "boost/preprocessor/variadic/to_seq.hpp"
-
-// define data types in meta data namespace
-
-// use preprocessor to generate a vector of attribute meta data
-
-#define POWER_GRID_MODEL_ATTRIBUTE_DEF(r, t, i, attr) attr BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), ;)
-#define POWER_GRID_MODEL_ATTRIBUTE_META_GEN(type, field) \
-    ::power_grid_model::meta_data::get_data_attribute<&type::field>(#field)
-#define POWER_GRID_MODEL_ATTRIBUTE_META(r, t, i, attr) \
-    BOOST_PP_EXPR_IIF(BOOST_PP_MOD(i, 2), meta.attributes.push_back(POWER_GRID_MODEL_ATTRIBUTE_META_GEN(t, attr));)
-
-#define POWER_GRID_MODEL_DATA_STRUCT_DEF(type, has_base, base_type, ...)                                          \
-    struct type BOOST_PP_EXPR_IIF(has_base, : base_type) {                                                        \
-        BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_DEF, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))      \
-        static meta_data::MetaData get_meta() {                                                                   \
-            meta_data::MetaData meta{};                                                                           \
-            meta.name = #type;                                                                                    \
-            meta.size = sizeof(type);                                                                             \
-            meta.alignment = alignof(type);                                                                       \
-            BOOST_PP_EXPR_IIF(has_base, meta.attributes = base_type::get_meta().attributes;)                      \
-            BOOST_PP_SEQ_FOR_EACH_I(POWER_GRID_MODEL_ATTRIBUTE_META, type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-            return meta;                                                                                          \
-        }                                                                                                         \
-    }
 
 namespace power_grid_model {
 
@@ -258,6 +228,10 @@ struct MetaData {
 
 using PowerGridMetaData = std::map<std::string, MetaData>;
 using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
+
+// empty template class for meta data generation functor
+template <class T>
+struct get_meta;
 
 }  // namespace meta_data
 
