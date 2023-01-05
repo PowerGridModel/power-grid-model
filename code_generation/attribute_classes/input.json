@@ -46,13 +46,8 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "p_specified",
-                    "description": "Specified active power"
-                },
-                {
-                    "data_type": "RealValue<sym>",
-                    "names": "q_specified",
-                    "description": "Specified reactive power"
+                    "names": ["p_specified", "q_specified"],
+                    "description": "Specified active/reactive power"
                 }
             ]
         }

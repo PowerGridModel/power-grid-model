@@ -2,10 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from copy import deepcopy
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
-from meta_data import HPPHeader
+from meta_data import DatasetMetaData
 
 DATA_DIR = Path(__file__).parent / "attribute_classes"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -19,9 +20,22 @@ def render_template(template_path: Path, data_path: Path, output_path: Path):
 
     with open(data_path) as data_file:
         json_data = data_file.read()
-    header: HPPHeader = HPPHeader.schema().loads(json_data)
+    dataset_meta_data: DatasetMetaData = DatasetMetaData.schema().loads(json_data)
+    # flatten attribute list
+    for attribute_class in dataset_meta_data.classes:
+        new_attribute_list = []
+        for attribute in attribute_class.attributes:
+            if isinstance(attribute.names, str):
+                new_attribute_list.append(attribute)
+            else:
+                # flatten list
+                for name in attribute.names:
+                    new_attribute = deepcopy(attribute)
+                    new_attribute.names = name
+                    new_attribute_list.append(new_attribute)
+        attribute_class.attributes = new_attribute_list
 
-    output = template.render(classes=header.classes, include_guard=header.include_guard)
+    output = template.render(classes=dataset_meta_data.classes, include_guard=dataset_meta_data.include_guard)
 
     with output_path.open(mode="w", encoding="utf-8") as output_file:
         output_file.write(output)

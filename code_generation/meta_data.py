@@ -5,7 +5,7 @@
 # define dataclass for meta data
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -26,7 +26,7 @@ class AttributeClass(DataClassJsonMixin):
 
 
 @dataclass
-class HPPHeader(DataClassJsonMixin):
+class DatasetMetaData(DataClassJsonMixin):
     name: str
     include_guard: str
     classes: List[AttributeClass]
