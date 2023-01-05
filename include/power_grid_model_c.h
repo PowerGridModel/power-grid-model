@@ -65,10 +65,14 @@ typedef struct POWER_GRID_MODEL_Handle POWER_GRID_MODEL_Handle;
 typedef int64_t Idx;
 #endif
 
+// create and release handle
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Handle* POWER_GRID_MODEL_create_handle();
+POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_handle(POWER_GRID_MODEL_Handle* handle);
+
 
 // get error code and error messsage
-POWER_GRID_MODEL_API Idx err_code(POWER_GRID_MODEL_Handle const* handle);
-POWER_GRID_MODEL_API char const* err_msg(POWER_GRID_MODEL_Handle const* handle);
+POWER_GRID_MODEL_API Idx POWER_GRID_MODEL_err_code(POWER_GRID_MODEL_Handle const* handle);
+POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_err_msg(POWER_GRID_MODEL_Handle const* handle);
 
 #ifdef __cplusplus
 }
