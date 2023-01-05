@@ -154,8 +154,13 @@
                     "description": "clock number"
                 },
                 {
+                    "data_type": "BranchSide",
+                    "names": "tap_side",
+                    "description": "side of tap changer"
+                },
+                {
                     "data_type": "IntS",
-                    "names": ["tap_side", "tap_pos", "tap_min", "tap_max", "tap_nom"],
+                    "names": ["tap_pos", "tap_min", "tap_max", "tap_nom"],
                     "description": "tap changer parameters"
                 },
                 {
@@ -171,6 +176,66 @@
                 {
                     "data_type": "double",
                     "names": ["r_grounding_from", "x_grounding_from", "r_grounding_to", "x_grounding_to"],
+                    "description": "grounding information"
+                }
+            ]
+        },
+        {
+            "name": "ThreeWindingTransformerInput",
+            "base": "Branch3Input",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u1",
+                        "u2",
+                        "u3"
+                    ],
+                    "description": "rated voltage at three sides"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["sn_1", "sn_2", "sn_3"],
+                    "description": "rated power at each side"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk_12", "uk_13", "uk_23", "pk_12", "pk_13", "pk_23", "i0", "p0"],
+                    "description": "short circuit and open testing parameters"
+                },
+                {
+                    "data_type": "WindingType",
+                    "names": ["winding_1", "winding_2", "winding_3"],
+                    "description": "winding type at each side"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["clock_12", "clock_13"],
+                    "description": "clock numbers"
+                },
+                {
+                    "data_type": "Branch3Side",
+                    "names": "tap_side",
+                    "description": "side of tap changer"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["tap_pos", "tap_min", "tap_max", "tap_nom"],
+                    "description": "tap changer parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": "tap_size",
+                    "description": "size of each tap"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk_12_min", "uk_12_max", "uk_13_min", "uk_13_max", "uk_23_min", "uk_23_max", "pk_12_min", "pk_12_max", "pk_13_min", "pk_13_max", "pk_23_min", "pk_23_max"],
+                    "description": "tap dependent short circuit parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["r_grounding_1", "x_grounding_1", "r_grounding_2", "x_grounding_2", "r_grounding_3", "x_grounding_3"],
                     "description": "grounding information"
                 }
             ]
