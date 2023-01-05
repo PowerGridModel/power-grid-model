@@ -52,14 +52,14 @@ extern "C" {
 #ifdef POWER_GRID_MODEL_BUILD_IN_PROGRESS
 // if build in progress, include the main model as alias
 using POWER_GRID_MODEL_PowerGridModel = power_grid_model::MainModel;
-// thread handle
+// context handle
 struct POWER_GRID_MODEL_Handle;
 // include index type
 using Idx = power_grid_model::Idx;
 #else
 // else define opaque pointer
 typedef struct POWER_GRID_MODEL_PowerGridModel POWER_GRID_MODEL_PowerGridModel;
-// thread handle
+// context handle
 typedef struct POWER_GRID_MODEL_Handle POWER_GRID_MODEL_Handle;
 // index type
 typedef int64_t Idx;
