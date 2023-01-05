@@ -2,21 +2,29 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 from copy import deepcopy
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 from meta_data import DatasetMetaData
 
-DATA_DIR = Path(__file__).parent / "attribute_classes"
+DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
+OUTPUT_PATH = Path(__file__).parents[1]
+
+JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
 
 def render_template(template_path: Path, data_path: Path, output_path: Path):
     print(f"Generating file: {output_path}")
 
-    environment = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
-    template = environment.get_template(str(template_path.relative_to(TEMPLATE_DIR)))
+    # jinja expects a string, representing a relative path with forward slashes
+    template_path_str = str(template_path.relative_to(TEMPLATE_DIR)).replace("\\", "/")
+    template = JINJA_ENV.get_template(template_path_str)
 
     with open(data_path) as data_file:
         json_data = data_file.read()
@@ -47,8 +55,15 @@ def render_template(template_path: Path, data_path: Path, output_path: Path):
 
 
 def code_gen(path: Path):
-    for data_path in DATA_DIR.glob("*.json"):
-        for template_path in TEMPLATE_DIR.glob("*.jinja"):
-            output_path = path / template_path.stem / data_path.with_suffix(template_path.suffixes[0]).name
+    for template_path in TEMPLATE_DIR.rglob("*.jinja"):
+        template_name = template_path.with_suffix("").stem
+        output_suffix = template_path.with_suffix("").suffix
+        output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
+        for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
+            output_path = path / output_dir / data_path.with_suffix(output_suffix).name
             output_path.parent.mkdir(parents=True, exist_ok=True)
             render_template(template_path=template_path, data_path=data_path, output_path=output_path)
+
+
+if __name__ == "__main__":
+    code_gen(OUTPUT_PATH)
