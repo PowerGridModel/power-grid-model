@@ -4,7 +4,7 @@
 
 #include "power_grid_model_c.h"
 
-// thread handle
+// context handle
 struct POWER_GRID_MODEL_Handle {
     Idx err_code;
     std::string err_msg;
