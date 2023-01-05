@@ -14,7 +14,7 @@ struct POWER_GRID_MODEL_Handle {
 POWER_GRID_MODEL_Handle* POWER_GRID_MODEL_create_handle() {
     return new POWER_GRID_MODEL_Handle{};
 }
-POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_handle(POWER_GRID_MODEL_Handle* handle) {
+void POWER_GRID_MODEL_destroy_handle(POWER_GRID_MODEL_Handle* handle) {
     delete handle;
 }
 
@@ -25,3 +25,5 @@ Idx POWER_GRID_MODEL_err_code(POWER_GRID_MODEL_Handle const* handle) {
 char const* POWER_GRID_MODEL_err_msg(POWER_GRID_MODEL_Handle const* handle) {
     return handle->err_msg.c_str();
 }
+
+// construct and destroy model
