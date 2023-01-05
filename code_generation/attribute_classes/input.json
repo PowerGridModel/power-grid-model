@@ -107,7 +107,7 @@
                         "c0",
                         "tan0"
                     ],
-                    "description": "negative sequence parameters"
+                    "description": "zero sequence parameters"
                 },
                 {
                     "data_type": "double",
@@ -263,6 +263,51 @@
                         "q_specified"
                     ],
                     "description": "Specified active/reactive power"
+                }
+            ]
+        },
+        {
+            "name": "ShuntInput",
+            "base": "ApplianceInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g1",
+                        "b1"
+                    ],
+                    "description": "positive sequence admittance"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g0",
+                        "b0"
+                    ],
+                    "description": "zero sequence admittance"
+                }
+            ]
+        },
+        {
+            "name": "SourceInput",
+            "base": "ApplianceInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u_ref",
+                        "u_ref_angle"
+                    ],
+                    "description": "reference voltage"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "sk",
+                        "rx_ratio",
+                        "z01_ratio"
+                    ],
+                    "description": "short circuitl capacity"
                 }
             ]
         }
