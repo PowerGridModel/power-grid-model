@@ -70,6 +70,17 @@
             ]
         },
         {
+            "name": "SensorInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "measured_object",
+                    "description": "ID of the measured object"
+                }
+            ]
+        },
+        {
             "name": "ApplianceInput",
             "base": "BaseInput",
             "attributes": [
@@ -308,6 +319,63 @@
                         "z01_ratio"
                     ],
                     "description": "short circuitl capacity"
+                }
+            ]
+        },
+        {
+            "name": "GenericVoltageSensorInput",
+            "base": "SensorInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_sigma",
+                    "description": "sigma of error margin of voltage measurement"
+                }
+            ]
+        },
+        {
+            "name": "VoltageSensorInput",
+            "base": "GenericVoltageSensorInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "u_measured",
+                        "u_angle_measured"
+                    ],
+                    "description": "measured voltage magnitude and angle"
+                }
+            ]
+        },
+        {
+            "name": "GenericPowerSensorInput",
+            "base": "SensorInput",
+            "attributes": [
+                {
+                    "data_type": "MeasuredTerminalType",
+                    "names": "measured_terminal_type",
+                    "description": "type of measured terminal"
+                },
+                {
+                    "data_type": "double",
+                    "names": "power_sigma",
+                    "description": "sigma of error margin of power measurement"
+                }
+            ]
+        },
+        {
+            "name": "PowerSensorInput",
+            "base": "GenericPowerSensorInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_measured",
+                        "q_measured"
+                    ],
+                    "description": "measured active/reactive power"
                 }
             ]
         }
