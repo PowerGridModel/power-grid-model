@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+project (power_grid_model_c)
+
+add_library(power_grid_model_c power_grid_model_c.cpp)
+
+target_link_libraries(power_grid_model_c
+	PRIVATE power_grid_model
+)

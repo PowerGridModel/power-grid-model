@@ -54,3 +54,6 @@ add_subdirectory(tests/cpp_unit_tests)
 
 # get benchmark
 add_subdirectory(tests/benchmark_cpp)
+
+# add C library
+add_subdirectory(power_grid_model_c)
