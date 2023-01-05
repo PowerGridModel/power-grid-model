@@ -1,0 +1,147 @@
+{
+    "name": "update",
+    "include_guard": "UPDATE",
+    "classes": [
+        {
+            "name": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "id",
+                    "description": "ID of the object"
+                }
+            ]
+        },
+        {
+            "name": "BranchUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": [
+                        "from_status",
+                        "to_status"
+                    ],
+                    "description": "If the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3Update",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": [
+                        "status_1",
+                        "status_2",
+                        "status_3"
+                    ],
+                    "description": "If the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "If the appliance is connected"
+                }
+            ]
+        },
+        {
+            "name": "TransformerUpdate",
+            "base": "BranchUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "tap_pos",
+                    "description": "tap changer parameters"
+                }
+            ]
+        },
+        {
+            "name": "ThreeWindingTransformerUpdate",
+            "base": "Branch3Update",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "tap_pos",
+                    "description": "tap changer parameters"
+                }
+            ]
+        },
+        {
+            "name": "LoadGenUpdate",
+            "base": "ApplianceUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_specified",
+                        "q_specified"
+                    ],
+                    "description": "Specified active/reactive power"
+                }
+            ]
+        },
+        {
+            "name": "SourceUpdate",
+            "base": "ApplianceUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u_ref",
+                        "u_ref_angle"
+                    ],
+                    "description": "reference voltage"
+                }
+            ]
+        },
+        {
+            "name": "VoltageSensorUpdate",
+            "base": "BaseUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_sigma",
+                    "description": "sigma of error margin of voltage measurement"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "u_measured",
+                        "u_angle_measured"
+                    ],
+                    "description": "measured voltage magnitude and angle"
+                }
+            ]
+        },
+        {
+            "name": "PowerSensorUpdate",
+            "base": "BaseUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "power_sigma",
+                    "description": "sigma of error margin of power measurement"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_measured",
+                        "q_measured"
+                    ],
+                    "description": "measured active/reactive power"
+                }
+            ]
+        }
+    ]
+}
