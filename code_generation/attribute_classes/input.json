@@ -13,6 +13,49 @@
             ]
         },
         {
+            "name": "NodeInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_rated",
+                    "description": "Rated line-line voltage"
+                }
+            ]
+        },
+        {
+            "name": "BranchInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": ["from_node", "to_node"],
+                    "description": "Node IDs to which this branch is connected at both sides"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["from_status", "to_status"],
+                    "description": "If the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3Input",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": ["node_1", "node_2", "node_3"],
+                    "description": "Node IDs to which this branch3 is connected at three sides"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["status_1", "status_2", "status_3"],
+                    "description": "If the branch is connected at each side"
+                }
+            ]
+        },
+        {
             "name": "ApplianceInput",
             "base": "BaseInput",
             "attributes": [
