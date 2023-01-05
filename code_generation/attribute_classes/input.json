@@ -29,12 +29,18 @@
             "attributes": [
                 {
                     "data_type": "ID",
-                    "names": ["from_node", "to_node"],
+                    "names": [
+                        "from_node",
+                        "to_node"
+                    ],
                     "description": "Node IDs to which this branch is connected at both sides"
                 },
                 {
                     "data_type": "IntS",
-                    "names": ["from_status", "to_status"],
+                    "names": [
+                        "from_status",
+                        "to_status"
+                    ],
                     "description": "If the branch is connected at each side"
                 }
             ]
@@ -45,12 +51,20 @@
             "attributes": [
                 {
                     "data_type": "ID",
-                    "names": ["node_1", "node_2", "node_3"],
+                    "names": [
+                        "node_1",
+                        "node_2",
+                        "node_3"
+                    ],
                     "description": "Node IDs to which this branch3 is connected at three sides"
                 },
                 {
                     "data_type": "IntS",
-                    "names": ["status_1", "status_2", "status_3"],
+                    "names": [
+                        "status_1",
+                        "status_2",
+                        "status_3"
+                    ],
                     "description": "If the branch is connected at each side"
                 }
             ]
@@ -77,18 +91,87 @@
             "attributes": [
                 {
                     "data_type": "double",
-                    "names": ["r1", "x1", "c1", "tan1"],
+                    "names": [
+                        "r1",
+                        "x1",
+                        "c1",
+                        "tan1"
+                    ],
                     "description": "positive sequence parameters"
                 },
                 {
                     "data_type": "double",
-                    "names": ["r0", "x0", "c0", "tan0"],
+                    "names": [
+                        "r0",
+                        "x0",
+                        "c0",
+                        "tan0"
+                    ],
                     "description": "negative sequence parameters"
                 },
                 {
                     "data_type": "double",
                     "names": "i_n",
                     "description": "rated current"
+                }
+            ]
+        },
+        {
+            "name": "LinkInput",
+            "base": "BranchInput",
+            "attributes": []
+        },
+        {
+            "name": "TransformerInput",
+            "base": "BranchInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u1",
+                        "u2"
+                    ],
+                    "description": "rated voltage at both side"
+                },
+                {
+                    "data_type": "double",
+                    "names": "sn",
+                    "description": "rated power"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk", "pk", "i0", "p0"],
+                    "description": "short circuit and open testing parameters"
+                },
+                {
+                    "data_type": "WindingType",
+                    "names": ["winding_from", "winding_to"],
+                    "description": "winding type at each side"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "clock",
+                    "description": "clock number"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["tap_side", "tap_pos", "tap_min", "tap_max", "tap_nom"],
+                    "description": "tap changer parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": "tap_size",
+                    "description": "size of each tap"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk_min", "uk_max", "pk_min", "pk_max"],
+                    "description": "tap dependent short circuit parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["r_grounding_from", "x_grounding_from", "r_grounding_to", "x_grounding_to"],
+                    "description": "grounding information"
                 }
             ]
         },
@@ -110,7 +193,10 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_specified", "q_specified"],
+                    "names": [
+                        "p_specified",
+                        "q_specified"
+                    ],
                     "description": "Specified active/reactive power"
                 }
             ]
