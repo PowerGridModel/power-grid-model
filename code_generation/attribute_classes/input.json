@@ -72,6 +72,27 @@
             ]
         },
         {
+            "name": "LineInput",
+            "base": "BranchInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": ["r1", "x1", "c1", "tan1"],
+                    "description": "positive sequence parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["r0", "x0", "c0", "tan0"],
+                    "description": "negative sequence parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": "i_n",
+                    "description": "rated current"
+                }
+            ]
+        },
+        {
             "name": "GenericLoadGenInput",
             "base": "ApplianceInput",
             "attributes": [
