@@ -30,6 +30,7 @@ struct POWER_GRID_MODEL_Handle {
 
 
 // include the public header
+#define POWER_GRID_MODEL_DLL_EXPORTS
 #include "power_grid_model_c.h"
 
 
