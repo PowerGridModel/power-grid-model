@@ -55,6 +55,22 @@ POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_handle(POWER_GRID_MODEL_Handl
 POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_err_code(POWER_GRID_MODEL_Handle const* handle);
 POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_err_msg(POWER_GRID_MODEL_Handle const* handle);
 
+// retrieve meta data
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_dataset_types(POWER_GRID_MODEL_Handle const* handle,
+                                                                              char const** dataset_types);
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_data_classes(POWER_GRID_MODEL_Handle const* handle,
+                                                                             char const* dataset_type,
+                                                                             char const** data_classes);
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_class_attributes(POWER_GRID_MODEL_Handle const* handle,
+                                                                                 char const* dataset_type,
+                                                                                 char const* data_class,
+                                                                                 char const** class_attributes);
+POWER_GRID_MODEL_API void POWER_GRID_MODEL_meta_attribute(POWER_GRID_MODEL_Handle const* handle,
+                                                          char const* dataset_type, char const* data_class,
+                                                          char const* attribute, char const** attribute_name,
+                                                          char const** attribute_type, size_t* offset);
+
+
 #ifdef __cplusplus
 }
 #endif
