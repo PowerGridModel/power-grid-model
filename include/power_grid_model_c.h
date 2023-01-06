@@ -91,11 +91,11 @@ POWER_GRID_MODEL_API POWER_GRID_MODEL_PowerGridModel* POWER_GRID_MODEL_create_mo
                                                                                     double system_frequency,
                                                                                     POWER_GRID_MODEL_Idx n_input_types,
                                                                                     char const** type_names,
-                                                                                    POWER_GRID_MODEL_Idx const** type_sizes,
+                                                                                    POWER_GRID_MODEL_Idx const* type_sizes,
                                                                                     void const** input_data);
 
 // destory model
-POWER_GRID_MODEL_API void POWER_GRID_MODEL_create_model(POWER_GRID_MODEL_PowerGridModel* model);
+POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_model(POWER_GRID_MODEL_PowerGridModel* model);
 
 #ifdef __cplusplus
 }

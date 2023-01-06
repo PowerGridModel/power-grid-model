@@ -153,19 +153,25 @@ POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_buffer(void* ptr) {
 POWER_GRID_MODEL_PowerGridModel* POWER_GRID_MODEL_create_model(POWER_GRID_MODEL_Handle* handle, double system_frequency,
                                                                POWER_GRID_MODEL_Idx n_input_types,
                                                                char const** type_names,
-                                                               POWER_GRID_MODEL_Idx const** type_sizes,
+                                                               POWER_GRID_MODEL_Idx const* type_sizes,
                                                                void const** input_data) {
     POWER_GRID_MODEL_clear_error(handle);
     ConstDataset dataset{};
-    for (Idx i = 0; i != n_input_types; ++i){
+    for (Idx i = 0; i != n_input_types; ++i) {
         dataset[type_names[i]] = ConstDataPointer(input_data[i], type_sizes[i]);
     }
-    return nullptr;
-    
+    try {
+        return new MainModel{system_frequency, dataset, 0};
+    }
+    catch (std::exception& e) {
+        handle->err_code = 1;
+        handle->err_msg = e.what();
+        return nullptr;
+    }
 }
 
 // destory model
-void POWER_GRID_MODEL_create_model(POWER_GRID_MODEL_PowerGridModel* model) {
+void POWER_GRID_MODEL_destroy_model(POWER_GRID_MODEL_PowerGridModel* model) {
     delete model;
 }
 
