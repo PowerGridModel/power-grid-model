@@ -4,6 +4,8 @@
 
 #include "power_grid_model_c.hpp"
 
+#include <cstdlib>
+
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 
 using namespace power_grid_model;
@@ -37,7 +39,7 @@ auto call_with_bound(POWER_GRID_MODEL_Handle* handle, Functor func) -> std::resu
     catch (std::out_of_range& e) {
         handle->err_code = 1;
         handle->err_msg = std::string(e.what()) + "\n You supplied wrong name and/or index!\n";
-        return 0;
+        return std::result_of_t<Functor()>{};
     }
 }
 
@@ -56,6 +58,10 @@ POWER_GRID_MODEL_Idx POWER_GRID_MODEL_err_code(POWER_GRID_MODEL_Handle const* ha
 char const* POWER_GRID_MODEL_err_msg(POWER_GRID_MODEL_Handle const* handle) {
     return handle->err_msg.c_str();
 }
+void POWER_GRID_MODEL_clear_error(POWER_GRID_MODEL_Handle* handle) {
+    *handle = POWER_GRID_MODEL_Handle{};
+}
+
 
 // retrieve meta data
 // dataset
@@ -119,6 +125,29 @@ size_t POWER_GRID_MODEL_meta_attribute_offset(POWER_GRID_MODEL_Handle* handle, c
 }
 int POWER_GRID_MODEL_is_little_endian() {
     return meta_data::is_little_endian();
+}
+
+// buffer control
+POWER_GRID_MODEL_API void* POWER_GRID_MODEL_create_buffer(POWER_GRID_MODEL_Handle* handle, char const* dataset,
+                                                          char const* class_name, POWER_GRID_MODEL_Idx size) {
+    auto const& data_class = call_with_bound(handle, [&]() {
+        return meta_data::meta_data().at(dataset).at(class_name);
+    });
+    if (data_class.name == "") {
+        return nullptr;
+    }
+#ifdef _WIN32
+    return _aligned_malloc(data_class.size * size, data_class.alignment)
+#else
+    return std::aligned_alloc(data_class.alignment, data_class.size * size);
+#endif
+}
+POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_buffer(void* ptr) {
+#ifdef _WIN32
+    _aligned_free(ptr)
+#else
+    std::free(ptr);
+#endif
 }
 
 // construct and destroy model
