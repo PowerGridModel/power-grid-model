@@ -54,7 +54,7 @@ void parse_single_object(void* ptr, json const& j, MetaData const& meta, Idx pos
         if (!meta.has_attr(it.key())) {
             continue;
         }
-        DataAttribute attr = meta.find_attr(it.key());
+        DataAttribute attr = meta.get_attr(it.key());
         if (attr.numpy_type == "i1") {
             int8_t const value = it.value().get<int8_t>();
             meta.set_attr(ptr, &value, attr, position);

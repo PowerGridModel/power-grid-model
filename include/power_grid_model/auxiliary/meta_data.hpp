@@ -169,23 +169,25 @@ struct MetaData {
     size_t alignment;
     std::vector<DataAttribute> attributes;
 
-    DataAttribute const& find_attr(std::string const& attr_name) const {
-        for (DataAttribute const& attr : attributes) {
-            if (attr.name == attr_name) {
-                return attr;
-            }
+    DataAttribute const& get_attr(std::string const& attr_name) const {
+        Idx const found = find_attr(attr_name);
+        if (found >= 0) {
+            return attributes[found];
         }
         throw UnknownAttributeName{attr_name};
     }
 
+    Idx find_attr(std::string const& attr_name) const {
+        for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
+            if (attributes[i].name == attr_name) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     bool has_attr(std::string const& attr_name) const {
-        try {
-            find_attr(attr_name);
-        }
-        catch (const UnknownAttributeName&) {
-            return false;
-        }
-        return true;
+        return find_attr(attr_name) >= 0;
     }
 
     void* get_position(void* ptr, Idx position) const {
