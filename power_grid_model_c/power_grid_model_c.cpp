@@ -2,13 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_c.h"
+#include "power_grid_model_c.hpp"
 
-// context handle
-struct POWER_GRID_MODEL_Handle {
-    Idx err_code;
-    std::string err_msg;
-};
+
 
 // create and destory handle
 POWER_GRID_MODEL_Handle* POWER_GRID_MODEL_create_handle() {
@@ -19,7 +15,7 @@ void POWER_GRID_MODEL_destroy_handle(POWER_GRID_MODEL_Handle* handle) {
 }
 
 // error handling
-Idx POWER_GRID_MODEL_err_code(POWER_GRID_MODEL_Handle const* handle) {
+POWER_GRID_MODEL_Idx POWER_GRID_MODEL_err_code(POWER_GRID_MODEL_Handle const* handle) {
     return handle->err_code;
 }
 char const* POWER_GRID_MODEL_err_msg(POWER_GRID_MODEL_Handle const* handle) {

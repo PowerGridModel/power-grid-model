@@ -12,8 +12,5 @@
         "--no-cov"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "cmake.configureSettings":{
-        "BUILD_SHARED_LIBS": "ON"
-    }
+    "python.testing.pytestEnabled": true
 }
