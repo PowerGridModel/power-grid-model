@@ -151,6 +151,8 @@ size_t POWER_GRID_MODEL_meta_attribute_offset(POWER_GRID_MODEL_Handle* handle, c
         return 0;
     }
 }
-int POWER_GRID_MODEL_is_little_endian();
+int POWER_GRID_MODEL_is_little_endian() {
+    return meta_data::is_little_endian();
+}
 
 // construct and destroy model
