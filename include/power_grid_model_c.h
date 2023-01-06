@@ -56,16 +56,28 @@ POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_err_code(POWER_GRID_M
 POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_err_msg(POWER_GRID_MODEL_Handle const* handle);
 
 // retrieve meta data
-POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_datasets(POWER_GRID_MODEL_Handle const* handle);
-POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_dataset_name(POWER_GRID_MODEL_Handle const* handle, POWER_GRID_MODEL_Idx idx);
-POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_classes(POWER_GRID_MODEL_Handle const* handle, char const* dataset);
-POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_class_name(POWER_GRID_MODEL_Handle const* handle, char const* dataset, POWER_GRID_MODEL_Idx idx);
-POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_class_size(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name);
-POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_class_alignment(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name);
-POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_attributes(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name);
-POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_attribute_name(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name, POWER_GRID_MODEL_Idx idx);
-POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_attribute_ctype(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name, char const* attribute);
-POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_attribute_offset(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name, char const* attribute);
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_datasets(POWER_GRID_MODEL_Handle* handle);
+POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_dataset_name(POWER_GRID_MODEL_Handle* handle,
+                                                                    POWER_GRID_MODEL_Idx idx);
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_classes(POWER_GRID_MODEL_Handle* handle,
+                                                                          char const* dataset);
+POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_class_name(POWER_GRID_MODEL_Handle* handle, char const* dataset,
+                                                                  POWER_GRID_MODEL_Idx idx);
+POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_class_size(POWER_GRID_MODEL_Handle* handle, char const* dataset,
+                                                             char const* class_name);
+POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_class_alignment(POWER_GRID_MODEL_Handle* handle, char const* dataset,
+                                                                  char const* class_name);
+POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_attributes(POWER_GRID_MODEL_Handle* handle,
+                                                                             char const* dataset,
+                                                                             char const* class_name);
+POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_attribute_name(POWER_GRID_MODEL_Handle* handle,
+                                                                      char const* dataset, char const* class_name,
+                                                                      POWER_GRID_MODEL_Idx idx);
+POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_attribute_ctype(POWER_GRID_MODEL_Handle* handle,
+                                                                       char const* dataset, char const* class_name,
+                                                                       char const* attribute);
+POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_attribute_offset(POWER_GRID_MODEL_Handle* handle, char const* dataset,
+                                                                   char const* class_name, char const* attribute);
 POWER_GRID_MODEL_API int POWER_GRID_MODEL_is_little_endian();
 
 #ifdef __cplusplus
