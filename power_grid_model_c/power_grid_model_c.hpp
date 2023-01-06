@@ -16,22 +16,20 @@
 extern "C" {
 
 // include the main model as alias
-using POWER_GRID_MODEL_PowerGridModel = power_grid_model::MainModel;
+using PGM_PowerGridModel = power_grid_model::MainModel;
 // include index type
-using POWER_GRID_MODEL_Idx = power_grid_model::Idx;
+using PGM_Idx = power_grid_model::Idx;
 
 // context handle
-struct POWER_GRID_MODEL_Handle {
-    POWER_GRID_MODEL_Idx err_code;
+struct PGM_Handle {
+    PGM_Idx err_code;
     std::string err_msg;
 };
 
-} // C linkage
-
+}  // C linkage
 
 // include the public header
-#define POWER_GRID_MODEL_DLL_EXPORTS
+#define PGM_DLL_EXPORTS
 #include "power_grid_model_c.h"
 
-
-#endif // POWER_GRID_MODEL_C_HPP
+#endif  // POWER_GRID_MODEL_C_HPP
