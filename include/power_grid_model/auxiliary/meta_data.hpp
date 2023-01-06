@@ -43,6 +43,7 @@ struct data_type;
 template <>
 struct data_type<double, false> {
     static constexpr const char* numpy_type = "f8";
+    static constexpr const char* ctype = "double";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -63,6 +64,7 @@ struct data_type<double, false> {
 template <>
 struct data_type<int32_t, false> {
     static constexpr const char* numpy_type = "i4";
+    static constexpr const char* ctype = "int32_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -80,6 +82,7 @@ struct data_type<int32_t, false> {
 template <>
 struct data_type<int8_t, false> {
     static constexpr const char* numpy_type = "i1";
+    static constexpr const char* ctype = "int8_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -97,6 +100,7 @@ struct data_type<int8_t, false> {
 template <>
 struct data_type<RealValue<false>, false> {
     static constexpr const char* numpy_type = "f8";
+    static constexpr const char* ctype = "double[3]";
     static constexpr size_t ndim = 1;
     static constexpr size_t const* dims = three_phase_dimension.data();
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -120,6 +124,7 @@ struct data_type<T, true> : data_type<std::underlying_type_t<T>> {};
 struct DataAttribute {
     std::string name;
     std::string numpy_type;
+    std::string ctype;
     std::vector<size_t> dims;
     size_t offset;
     SetNaNFunc set_nan;
@@ -151,6 +156,7 @@ inline DataAttribute get_data_attribute(std::string const& name) {
     DataAttribute attr{};
     attr.name = name;
     attr.numpy_type = single_data_type::numpy_type;
+    attr.ctype = single_data_type::ctype;
     attr.offset = get_offset<member_ptr>();
     if constexpr (single_data_type::ndim > 0) {
         attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);

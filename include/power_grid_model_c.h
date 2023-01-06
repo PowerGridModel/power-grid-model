@@ -66,6 +66,7 @@ POWER_GRID_MODEL_API POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_attributes(POW
 POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_attribute_name(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name, POWER_GRID_MODEL_Idx idx);
 POWER_GRID_MODEL_API char const* POWER_GRID_MODEL_meta_attribute_ctype(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name, char const* attribute);
 POWER_GRID_MODEL_API size_t POWER_GRID_MODEL_meta_attribute_offset(POWER_GRID_MODEL_Handle const* handle, char const* dataset, char const* class_name, char const* attribute);
+POWER_GRID_MODEL_API int POWER_GRID_MODEL_is_little_endian();
 
 #ifdef __cplusplus
 }
