@@ -62,7 +62,6 @@ void POWER_GRID_MODEL_clear_error(POWER_GRID_MODEL_Handle* handle) {
     *handle = POWER_GRID_MODEL_Handle{};
 }
 
-
 // retrieve meta data
 // dataset
 POWER_GRID_MODEL_Idx POWER_GRID_MODEL_meta_n_datasets(POWER_GRID_MODEL_Handle*) {
@@ -148,6 +147,26 @@ POWER_GRID_MODEL_API void POWER_GRID_MODEL_destroy_buffer(void* ptr) {
 #else
     std::free(ptr);
 #endif
+}
+
+// create model
+POWER_GRID_MODEL_PowerGridModel* POWER_GRID_MODEL_create_model(POWER_GRID_MODEL_Handle* handle, double system_frequency,
+                                                               POWER_GRID_MODEL_Idx n_input_types,
+                                                               char const** type_names,
+                                                               POWER_GRID_MODEL_Idx const** type_sizes,
+                                                               void const** input_data) {
+    POWER_GRID_MODEL_clear_error(handle);
+    ConstDataset dataset{};
+    for (Idx i = 0; i != n_input_types; ++i){
+        dataset[type_names[i]] = ConstDataPointer(input_data[i], type_sizes[i]);
+    }
+    return nullptr;
+    
+}
+
+// destory model
+void POWER_GRID_MODEL_create_model(POWER_GRID_MODEL_PowerGridModel* model) {
+    delete model;
 }
 
 // construct and destroy model
