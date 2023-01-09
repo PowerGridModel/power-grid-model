@@ -31,12 +31,14 @@ set(PROJECT_SOURCES
  	test_power_sensor.cpp
 	test_validation.cpp
     test_three_winding_transformer.cpp
+	test_c_api_meta_data.cpp
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
 
 target_link_libraries(power_grid_model_unit_tests
 	PRIVATE power_grid_model
+	PRIVATE power_grid_model_c
 	PRIVATE doctest::doctest
 	PRIVATE nlohmann_json nlohmann_json::nlohmann_json
 )

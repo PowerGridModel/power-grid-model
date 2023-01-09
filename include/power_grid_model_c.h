@@ -31,6 +31,7 @@
 #define PGM_LOCAL PGM_HELPER_DLL_LOCAL
 
 // integers
+#include <stddef.h>
 #include <stdint.h>
 
 // C linkage

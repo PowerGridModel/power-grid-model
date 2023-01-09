@@ -49,11 +49,13 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wno-maybe-uninitialized)  # bug in boost
 endif()
 
+# add C library
+add_subdirectory(power_grid_model_c)
+
 # get tests
 add_subdirectory(tests/cpp_unit_tests)
 
 # get benchmark
 add_subdirectory(tests/benchmark_cpp)
 
-# add C library
-add_subdirectory(power_grid_model_c)
+
