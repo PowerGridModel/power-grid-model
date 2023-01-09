@@ -59,7 +59,7 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
     }
 }
 
-// create and destory handle
+// create and destroy handle
 PGM_Handle* PGM_create_handle() {
     return new PGM_Handle{};
 }
@@ -204,7 +204,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     }
 }
 
-// destory model
+// destroy model
 void PGM_destroy_model(PGM_Handle*, PGM_PowerGridModel* model) {
     delete model;
 }
