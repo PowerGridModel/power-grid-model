@@ -233,11 +233,12 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     // set n_output_batch to one for single calculation
     Idx const n_output_batch = std::max((Idx)1, n_batch);
     for (Idx i = 0; i != n_output_types; ++i) {
-        output_dataset[output_type_names[i]] =
-            MutableDataPointer{output_data[i], n_output_batch, n_component.at(output_type_names[i])};
+        auto const found = n_component.find(output_type_names[i]);
+        if (found != n_component.cend()) {
+            output_dataset[output_type_names[i]] = MutableDataPointer{output_data[i], n_output_batch, found->second};
+        }
     }
     // prepare update dataset
-    
 }
 
 // destroy model
