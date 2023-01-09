@@ -47,7 +47,19 @@ typedef int64_t PGM_Idx;
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 // context handle
 typedef struct PGM_Handle PGM_Handle;
+// options
+typedef struct PGM_Options PGM_Options;
 #endif
+
+// enums
+enum PGM_CalculationType { PGM_power_flow = 0, PGM_state_estimation = 1 };
+enum PGM_CalculationMethod {
+    PGM_linear = 0,
+    PGM_newton_raphson = 1,
+    PGM_PGM_iterative_linear = 2,
+    PGM_iterative_current = 3,
+    PGM_linear_current = 4
+};
 
 // create and release handle
 PGM_API PGM_Handle* PGM_create_handle();
@@ -77,6 +89,16 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 // buffer control
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size);
 PGM_API void PGM_destroy_buffer(PGM_Handle* handle, void* ptr);
+
+// options
+PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
+PGM_API void PGM_destroy_options(PGM_Handle* handle, PGM_Options* opt);
+PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type);
+PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method);
+PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym);
+PGM_API void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_tol);
+PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_iter);
+PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
 
 // create model
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_input_types,

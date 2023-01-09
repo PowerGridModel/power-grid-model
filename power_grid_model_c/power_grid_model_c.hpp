@@ -17,12 +17,9 @@ extern "C" {
 
 // the main model as alias
 using PGM_PowerGridModel = power_grid_model::MainModel;
-
-// context handle
-struct PGM_Handle {
-    power_grid_model::Idx err_code;
-    std::string err_msg;
-};
+// forward declare
+struct PGM_Handle;
+struct PGM_Options;
 
 }  // C linkage
 
