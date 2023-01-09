@@ -32,14 +32,14 @@ std::map<std::string, std::vector<std::string>> list_of_classes() {
     return res;
 }
 template <class Functor>
-auto call_with_bound(PGM_Handle* handle, Functor func) -> std::result_of_t<Functor()> {
+auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
     try {
         return func();
     }
     catch (std::out_of_range& e) {
         handle->err_code = 1;
         handle->err_msg = std::string(e.what()) + "\n You supplied wrong name and/or index!\n";
-        return std::result_of_t<Functor()>{};
+        return std::invoke_result_t<Functor>{};
     }
 }
 
