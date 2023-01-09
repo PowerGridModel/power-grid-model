@@ -131,14 +131,14 @@ void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* cla
         return nullptr;
     }
 #ifdef _WIN32
-    return _aligned_malloc(data_class.size * size, data_class.alignment)
+    return _aligned_malloc(data_class.size * size, data_class.alignment);
 #else
     return std::aligned_alloc(data_class.alignment, data_class.size * size);
 #endif
 }
 void PGM_destroy_buffer(PGM_Handle*, void* ptr) {
 #ifdef _WIN32
-    _aligned_free(ptr)
+    _aligned_free(ptr);
 #else
     std::free(ptr);
 #endif
