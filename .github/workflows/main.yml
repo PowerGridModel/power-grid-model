@@ -80,6 +80,7 @@ jobs:
           # build
           cmake --build . --verbose -j 1
           # test
+          $env:Path += ";${pwd}\power_grid_model_c"
           .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
 
   build-cpp-test-macos:
