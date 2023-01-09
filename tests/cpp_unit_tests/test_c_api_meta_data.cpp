@@ -32,7 +32,7 @@ TEST_CASE("C API Meta Data") {
         }
     }
 
-    SUBCASE("Data class") {
+    SUBCASE("Data classes") {
         for (auto const& [dataset_name, data_classes] : meta) {
             CHECK(PGM_meta_n_classes(hl, dataset_name.c_str()) == (Idx)data_classes.size());
             for (Idx i = 0; i != (Idx)data_classes.size(); ++i) {
@@ -44,6 +44,38 @@ TEST_CASE("C API Meta Data") {
                 CHECK(PGM_meta_class_alignment(hl, dataset_name.c_str(), class_name.c_str()) == class_meta.alignment);
             }
         }
+    }
+
+    SUBCASE("Attributes") {
+        for (auto const& [dataset_name, data_classes] : meta) {
+            for (auto const& [class_name, class_meta] : data_classes) {
+                auto const& attributes = class_meta.attributes;
+                CHECK(PGM_meta_n_attributes(hl, dataset_name.c_str(), class_name.c_str()) == (Idx)attributes.size());
+
+                for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
+                    auto const& attr = attributes[i];
+                    CHECK(PGM_meta_attribute_name(hl, dataset_name.c_str(), class_name.c_str(), i) == attr.name);
+                    CHECK(PGM_meta_attribute_ctype(hl, dataset_name.c_str(), class_name.c_str(), attr.name.c_str()) ==
+                          attributes[i].ctype);
+                    CHECK(PGM_meta_attribute_offset(hl, dataset_name.c_str(), class_name.c_str(), attr.name.c_str()) ==
+                          attributes[i].offset);
+                }
+            }
+        }
+    }
+
+    SUBCASE("Endian") {
+        CHECK((bool)PGM_is_little_endian(hl) == is_little_endian());
+    }
+
+    SUBCASE("Check error handling for unknown name") {
+        CHECK(PGM_meta_attribute_name(hl, "No_dataset", "no_name", 0) == nullptr);
+        CHECK(PGM_err_code(hl) == 1);
+        std::string const err_msg{PGM_err_msg(hl)};
+        CHECK(err_msg.find("You supplied wrong name and/or index!") != std::string::npos);
+        // clear error
+        PGM_clear_error(hl);
+        CHECK(PGM_err_code(hl) == 0);
     }
 }
 
