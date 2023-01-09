@@ -105,6 +105,10 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
                                              char const** type_names, PGM_Idx const* type_sizes,
                                              void const** input_data);
 
+// update model
+PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_update_types,
+                              char const** type_names, PGM_Idx const* type_sizes, void const** update_data);
+
 // destroy model
 PGM_API void PGM_destroy_model(PGM_Handle* handle, PGM_PowerGridModel* model);
 

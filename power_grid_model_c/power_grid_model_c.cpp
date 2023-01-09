@@ -204,6 +204,23 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     }
 }
 
+// update model
+void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_update_types, char const** type_names,
+                      PGM_Idx const* type_sizes, void const** update_data) {
+    PGM_clear_error(handle);
+    ConstDataset dataset{};
+    for (Idx i = 0; i != n_update_types; ++i) {
+        dataset[type_names[i]] = ConstDataPointer(update_data[i], type_sizes[i]);
+    }
+    try {
+        model->update_component(dataset);
+    }
+    catch (std::exception& e) {
+        handle->err_code = 1;
+        handle->err_msg = e.what();
+    }
+}
+
 // destroy model
 void PGM_destroy_model(PGM_Handle*, PGM_PowerGridModel* model) {
     delete model;
