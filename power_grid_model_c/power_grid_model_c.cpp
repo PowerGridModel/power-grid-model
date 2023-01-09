@@ -118,12 +118,12 @@ size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char c
         return meta_data::meta_data().at(dataset).at(class_name).get_attr(attribute).offset;
     });
 }
-int PGM_is_little_endian() {
+int PGM_is_little_endian(PGM_Handle*) {
     return meta_data::is_little_endian();
 }
 
 // buffer control
-PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size) {
+void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [&]() {
         return meta_data::meta_data().at(dataset).at(class_name);
     });
@@ -136,7 +136,7 @@ PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char co
     return std::aligned_alloc(data_class.alignment, data_class.size * size);
 #endif
 }
-PGM_API void PGM_destroy_buffer(void* ptr) {
+void PGM_destroy_buffer(PGM_Handle*, void* ptr) {
 #ifdef _WIN32
     _aligned_free(ptr)
 #else
@@ -163,7 +163,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 }
 
 // destory model
-void PGM_destroy_model(PGM_PowerGridModel* model) {
+void PGM_destroy_model(PGM_Handle*, PGM_PowerGridModel* model) {
     delete model;
 }
 

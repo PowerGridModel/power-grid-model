@@ -38,13 +38,14 @@
 extern "C" {
 #endif
 
+// index type
+typedef int64_t PGM_Idx;
+
 #ifndef PGM_DLL_EXPORTS
 // else define opaque pointer
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 // context handle
 typedef struct PGM_Handle PGM_Handle;
-// index type
-typedef int64_t Idx;
 #endif
 
 // create and release handle
@@ -70,11 +71,11 @@ PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dat
                                              char const* attribute);
 PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* class_name,
                                          char const* attribute);
-PGM_API int PGM_is_little_endian();
+PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 
 // buffer control
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size);
-PGM_API void PGM_destroy_buffer(void* ptr);
+PGM_API void PGM_destroy_buffer(PGM_Handle* handle, void* ptr);
 
 // create model
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_input_types,
@@ -82,7 +83,7 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
                                              void const** input_data);
 
 // destory model
-PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);
+PGM_API void PGM_destroy_model(PGM_Handle* handle, PGM_PowerGridModel* model);
 
 #ifdef __cplusplus
 }

@@ -15,14 +15,12 @@
 // C linkage
 extern "C" {
 
-// include the main model as alias
+// the main model as alias
 using PGM_PowerGridModel = power_grid_model::MainModel;
-// include index type
-using PGM_Idx = power_grid_model::Idx;
 
 // context handle
 struct PGM_Handle {
-    PGM_Idx err_code;
+    power_grid_model::Idx err_code;
     std::string err_msg;
 };
 
@@ -31,5 +29,8 @@ struct PGM_Handle {
 // include the public header
 #define PGM_DLL_EXPORTS
 #include "power_grid_model_c.h"
+
+// assert index type
+static_assert(std::is_same_v<PGM_Idx, power_grid_model::Idx>);
 
 #endif  // POWER_GRID_MODEL_C_HPP
