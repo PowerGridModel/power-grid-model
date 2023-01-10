@@ -573,14 +573,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // handle exception message
         std::string combined_error_message;
+        IdxVector failed_batches;
+        std::vector<std::string> err_msgs;
         for (Idx batch = 0; batch != n_batch; ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
                 combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
+                failed_batches.push_back(batch);
+                err_msgs.push_back(exceptions[batch]);
             }
         }
         if (!combined_error_message.empty()) {
-            throw BatchCalculationError(combined_error_message);
+            throw BatchCalculationError(combined_error_message, failed_batches, err_msgs);
         }
 
         return BatchParameter{independent, cache_topology};
