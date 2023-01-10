@@ -24,7 +24,7 @@ struct PGM_Handle {
 struct PGM_Options {
     Idx calculation_type{PGM_power_flow};
     Idx calculation_method{PGM_newton_raphson};
-    Idx symmetric{0};
+    Idx symmetric{1};
     double err_tol{1e-8};
     Idx max_iter{20};
     Idx threading{-1};

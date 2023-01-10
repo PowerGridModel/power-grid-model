@@ -9,6 +9,15 @@
 #include "power_grid_model/auxiliary/update.hpp"
 #include "power_grid_model_c.h"
 
+/*
+Testing network
+
+source_1(100.0 V) --internal_impedance(j10.0 ohm, sk=1000.0 VA, rx_ratio=0.0)--
+-- node_0 --load_2(const_i, -j5.0A, 0.0 W, 500.0 var)
+
+u0 = 100.0 V - (j10.0 ohm * -j5.0 A) = 50.0 V
+*/
+
 namespace power_grid_model {
 
 TEST_CASE("C API Model") {
@@ -21,8 +30,8 @@ TEST_CASE("C API Model") {
 
     // input data
     NodeInput node_input{{0}, 100.0};
-    SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, nan, 0.0, 1.0};
-    SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 0.0};
+    SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, 1000.0, 0.0, 1.0};
+    SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 500.0};
     std::array input_type_names{"node", "source", "sym_load"};
     std::array<Idx, 3> input_type_sizes{1, 1, 1};
     // create one buffer
@@ -43,6 +52,12 @@ TEST_CASE("C API Model") {
     SUBCASE("Simple power flow") {
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        CHECK(PGM_err_code(hl) == 0);
+        CHECK(sym_node_output.id == 0);
+        CHECK(sym_node_output.energized == 1);
+        CHECK(sym_node_output.u == doctest::Approx(50.0));
+        CHECK(sym_node_output.u_pu == doctest::Approx(0.5));
+        CHECK(sym_node_output.u_angle == doctest::Approx(0.0));
     }
 }
 
