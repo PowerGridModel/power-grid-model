@@ -13,8 +13,11 @@ using power_grid_model::meta_data::meta_data;
 
 // context handle
 struct PGM_Handle {
-    power_grid_model::Idx err_code;
+    Idx err_code;
     std::string err_msg;
+    IdxVector failed_batches;
+    std::vector<std::string> batch_errs;
+    mutable std::vector<char const*> batch_errs_c_str;
 };
 
 // options
@@ -73,6 +76,20 @@ PGM_Idx PGM_err_code(PGM_Handle const* handle) {
 }
 char const* PGM_err_msg(PGM_Handle const* handle) {
     return handle->err_msg.c_str();
+}
+PGM_Idx PGM_n_failed_batches(PGM_Handle const* handle) {
+    return (Idx)handle->failed_batches.size();
+}
+PGM_Idx const* PGM_failed_batches(PGM_Handle const* handle) {
+    return handle->failed_batches.data();
+}
+char const** PGM_batch_errs(PGM_Handle const* handle) {
+    handle->batch_errs_c_str.clear();
+    std::transform(handle->batch_errs.begin(), handle->batch_errs.end(), std::back_inserter(handle->batch_errs_c_str),
+                   [](auto const& x) {
+                       return x.c_str();
+                   });
+    return handle->batch_errs_c_str.data();
 }
 void PGM_clear_error(PGM_Handle* handle) {
     *handle = PGM_Handle{};
@@ -280,6 +297,12 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             default:
                 throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
         }
+    }
+    catch (BatchCalculationError& e) {
+        handle->err_code = 1;
+        handle->err_msg = e.what();
+        handle->failed_batches = e.failed_batches();
+        handle->batch_errs = e.err_msgs();
     }
     catch (std::exception& e) {
         handle->err_code = 1;
