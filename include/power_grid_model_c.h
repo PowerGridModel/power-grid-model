@@ -88,11 +88,11 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 
 // buffer control
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size);
-PGM_API void PGM_destroy_buffer(PGM_Handle* handle, void* ptr);
+PGM_API void PGM_destroy_buffer(void* ptr);
 
 // options
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
-PGM_API void PGM_destroy_options(PGM_Handle* handle, PGM_Options* opt);
+PGM_API void PGM_destroy_options(PGM_Options* opt);
 PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type);
 PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method);
 PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym);
@@ -116,7 +116,7 @@ PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Op
                            PGM_Idx const** indptrs_per_type, void const** update_data);
 
 // destroy model
-PGM_API void PGM_destroy_model(PGM_Handle* handle, PGM_PowerGridModel* model);
+PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);
 
 #ifdef __cplusplus
 }

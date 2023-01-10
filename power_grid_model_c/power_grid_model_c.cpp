@@ -152,7 +152,7 @@ void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* cla
     return std::aligned_alloc(data_class.alignment, data_class.size * size);
 #endif
 }
-void PGM_destroy_buffer(PGM_Handle*, void* ptr) {
+void PGM_destroy_buffer(void* ptr) {
 #ifdef _WIN32
     _aligned_free(ptr);
 #else
@@ -164,7 +164,7 @@ void PGM_destroy_buffer(PGM_Handle*, void* ptr) {
 PGM_Options* PGM_create_options(PGM_Handle*) {
     return new PGM_Options{};
 }
-void PGM_destroy_options(PGM_Handle*, PGM_Options* opt) {
+void PGM_destroy_options(PGM_Options* opt) {
     delete opt;
 }
 void PGM_set_calculation_type(PGM_Handle*, PGM_Options* opt, PGM_Idx type) {
@@ -239,10 +239,14 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         }
     }
     // prepare update dataset
+    ConstDataset update_dataset{};
+    for (Idx i = 0; i != n_update_types; ++i) {
+        
+    }
 }
 
 // destroy model
-void PGM_destroy_model(PGM_Handle*, PGM_PowerGridModel* model) {
+void PGM_destroy_model(PGM_PowerGridModel* model) {
     delete model;
 }
 
