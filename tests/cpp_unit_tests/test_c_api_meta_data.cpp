@@ -4,17 +4,10 @@
 
 #include <memory>
 
+#include "c_api_cpp_handle.hpp"
 #include "doctest/doctest.h"
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model_c.h"
-
-struct HandleDestructor {
-    void operator()(PGM_Handle* handle) {
-        PGM_destroy_handle(handle);
-    }
-};
-
-using HandlePtr = std::unique_ptr<PGM_Handle, HandleDestructor>;
 
 namespace power_grid_model::meta_data {
 
