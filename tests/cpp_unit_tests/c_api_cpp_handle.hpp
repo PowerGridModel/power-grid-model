@@ -27,7 +27,6 @@ using OptionPtr = std::unique_ptr<PGM_Options, DeleterFunctor<PGM_destroy_option
 using ModelPtr = std::unique_ptr<PGM_PowerGridModel, DeleterFunctor<PGM_destroy_model>>;
 using BufferPtr = std::unique_ptr<void, DeleterFunctor<PGM_destroy_buffer>>;
 
-
 }  // namespace power_grid_model
 
 #endif  // POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP

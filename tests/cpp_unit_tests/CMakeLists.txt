@@ -32,6 +32,7 @@ set(PROJECT_SOURCES
 	test_validation.cpp
     test_three_winding_transformer.cpp
 	test_c_api_meta_data.cpp
+	test_c_api_model.cpp
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
