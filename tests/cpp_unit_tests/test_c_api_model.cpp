@@ -49,6 +49,16 @@ TEST_CASE("C API Model") {
     std::array output_type_names{"node"};
     std::array<void*, 1> sym_output_data{&sym_node_output};
 
+    // update data
+    SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};
+    SymLoadGenUpdate load_update{{{2}, na_IntS}, nan, 100.0};
+    std::array update_type_names{"source", "sym_load"};
+    std::array<Idx, 2> update_type_sizes{1, 1};
+    std::array<void const*, 2> update_data{&source_update, &load_update};
+    // std::array<Idx, 2> sizes_per_batch{1, -1};
+    // std::array<Idx, 2> load_update_indptr{0, 1};
+    // std::array<Idx const*, 2> indptrs_per_type{nullptr, load_update_indptr.data()};
+
     // create model
     ModelPtr unique_model{
         PGM_create_model(hl, 50.0, 3, input_type_names.data(), input_type_sizes.data(), input_data.data())};
@@ -62,6 +72,19 @@ TEST_CASE("C API Model") {
         CHECK(sym_node_output.energized == 1);
         CHECK(sym_node_output.u == doctest::Approx(50.0));
         CHECK(sym_node_output.u_pu == doctest::Approx(0.5));
+        CHECK(sym_node_output.u_angle == doctest::Approx(0.0));
+    }
+
+    SUBCASE("Simple update") {
+        PGM_update_model(hl, model, 2, update_type_names.data(), update_type_sizes.data(), update_data.data());
+        CHECK(PGM_err_code(hl) == 0);
+        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        CHECK(PGM_err_code(hl) == 0);
+        CHECK(sym_node_output.id == 0);
+        CHECK(sym_node_output.energized == 1);
+        CHECK(sym_node_output.u == doctest::Approx(40.0));
+        CHECK(sym_node_output.u_pu == doctest::Approx(0.4));
         CHECK(sym_node_output.u_angle == doctest::Approx(0.0));
     }
 }
