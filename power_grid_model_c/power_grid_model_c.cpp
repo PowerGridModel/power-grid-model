@@ -299,7 +299,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         }
     }
     catch (BatchCalculationError& e) {
-        handle->err_code = 1;
+        handle->err_code = 2;
         handle->err_msg = e.what();
         handle->failed_batches = e.failed_batches();
         handle->batch_errs = e.err_msgs();

@@ -55,9 +55,9 @@ TEST_CASE("C API Model") {
     std::array update_type_names{"source", "sym_load"};
     std::array<Idx, 2> update_type_sizes{1, 1};
     std::array<void const*, 2> update_data{&source_update, &load_update};
-    // std::array<Idx, 2> sizes_per_batch{1, -1};
-    // std::array<Idx, 2> load_update_indptr{0, 1};
-    // std::array<Idx const*, 2> indptrs_per_type{nullptr, load_update_indptr.data()};
+    std::array<Idx, 2> sizes_per_batch{1, -1};
+    std::array<Idx, 2> load_update_indptr{0, 1};
+    std::array<Idx const*, 2> indptrs_per_type{nullptr, load_update_indptr.data()};
 
     // create model
     ModelPtr unique_model{
@@ -80,6 +80,18 @@ TEST_CASE("C API Model") {
         CHECK(PGM_err_code(hl) == 0);
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        CHECK(PGM_err_code(hl) == 0);
+        CHECK(sym_node_output.id == 0);
+        CHECK(sym_node_output.energized == 1);
+        CHECK(sym_node_output.u == doctest::Approx(40.0));
+        CHECK(sym_node_output.u_pu == doctest::Approx(0.4));
+        CHECK(sym_node_output.u_angle == doctest::Approx(0.0));
+    }
+
+    SUBCASE("Batch power flow") {
+        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+                      1, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
+                      update_data.data());  // batch parameters
         CHECK(PGM_err_code(hl) == 0);
         CHECK(sym_node_output.id == 0);
         CHECK(sym_node_output.energized == 1);
