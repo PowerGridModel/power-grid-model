@@ -99,6 +99,60 @@ TEST_CASE("C API Model") {
         CHECK(sym_node_output.u_pu == doctest::Approx(0.4));
         CHECK(sym_node_output.u_angle == doctest::Approx(0.0));
     }
+
+    SUBCASE("Construction error") {
+        source_input.id = 0;
+        ModelPtr wrong_model{
+            PGM_create_model(hl, 50.0, 3, input_type_names.data(), input_type_sizes.data(), input_data.data())};
+        CHECK(wrong_model.get() == nullptr);
+        CHECK(PGM_err_code(hl) == 1);
+        std::string err_msg{PGM_err_msg(hl)};
+        CHECK(err_msg.find("Conflicting id detected:") != std::string::npos);
+    }
+
+    SUBCASE("Update error") {
+        source_update.id = 5;
+        PGM_update_model(hl, model, 2, update_type_names.data(), update_type_sizes.data(), update_data.data());
+        CHECK(PGM_err_code(hl) == 1);
+        std::string err_msg{PGM_err_msg(hl)};
+        CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
+    }
+
+    SUBCASE("Single calculation error") {
+        // not converging
+        PGM_set_max_iter(hl, opt, 1);
+        PGM_set_err_tol(hl, opt, 1e-100);
+        PGM_set_symmetric(hl, opt, 0);
+        PGM_set_threading(hl, opt, 1);
+        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        CHECK(PGM_err_code(hl) == 1);
+        std::string err_msg{PGM_err_msg(hl)};
+        CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
+        // wrong method
+        PGM_set_calculation_type(hl, opt, PGM_state_estimation);
+        PGM_set_calculation_method(hl, opt, PGM_iterative_current);
+        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        CHECK(PGM_err_code(hl) == 1);
+        err_msg = PGM_err_msg(hl);
+        CHECK(err_msg.find("The calculation method is invalid for this calculation!") != std::string::npos);
+    }
+
+    SUBCASE("Batch calculation error") {
+        // not converging
+        PGM_set_max_iter(hl, opt, 3);
+        PGM_set_calculation_method(hl, opt, PGM_iterative_current);
+        load_update.p_specified = 500.0;        
+        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+                      1, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
+                      update_data.data());  // batch parameters
+        CHECK(PGM_err_code(hl) == 2);
+        CHECK(PGM_n_failed_batches(hl) == 1);
+        CHECK(PGM_failed_batches(hl)[0] == 1);
+        std::string err_msg{PGM_batch_errs(hl)[0]};
+        CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
+    }
 }
 
 }  // namespace power_grid_model
