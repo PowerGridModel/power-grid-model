@@ -12,10 +12,15 @@
 /*
 Testing network
 
-source_1(100.0 V) --internal_impedance(j10.0 ohm, sk=1000.0 VA, rx_ratio=0.0)--
--- node_0 --load_2(const_i, -j5.0A, 0.0 W, 500.0 var)
+source_1(1.0 p.u., 100.0 V) --internal_impedance(j10.0 ohm, sk=1000.0 VA, rx_ratio=0.0)--
+-- node_0 (100.0 V) --load_2(const_i, -j5.0A, 0.0 W, 500.0 var)
 
 u0 = 100.0 V - (j10.0 ohm * -j5.0 A) = 50.0 V
+
+update:
+    u_ref = 0.5 p.u. (50.0 V)
+    q_specified = 100 var (-j1.0A)
+u0 = 50.0 V - (j10.0 ohm * -j1.0 A) = 40.0 V
 */
 
 namespace power_grid_model {
