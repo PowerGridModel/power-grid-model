@@ -241,7 +241,53 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     // prepare update dataset
     ConstDataset update_dataset{};
     for (Idx i = 0; i != n_update_types; ++i) {
-        
+        if (sizes_per_batch[i] < 0) {
+            // use indptr as sparse batch
+            update_dataset[update_type_names[i]] = ConstDataPointer(update_data[i], indptrs_per_type[i], n_batch);
+        }
+        else {
+            // use dense batch
+            update_dataset[update_type_names[i]] = ConstDataPointer(update_data[i], n_batch, sizes_per_batch[i]);
+        }
+    }
+    // call calculation
+    try {
+        switch (opt->calculation_type) {
+            case PGM_power_flow:
+                if (opt->symmetric) {
+                    model->calculate_power_flow<true>(opt->err_tol, opt->max_iter,
+                                                      (CalculationMethod)opt->calculation_method, output_dataset,
+                                                      update_dataset, opt->threading);
+                }
+                else {
+                    model->calculate_power_flow<false>(opt->err_tol, opt->max_iter,
+                                                       (CalculationMethod)opt->calculation_method, output_dataset,
+                                                       update_dataset, opt->threading);
+                }
+                break;
+            case PGM_state_estimation:
+                if (opt->symmetric) {
+                    model->calculate_state_estimation<true>(opt->err_tol, opt->max_iter,
+                                                            (CalculationMethod)opt->calculation_method, output_dataset,
+                                                            update_dataset, opt->threading);
+                }
+                else {
+                    model->calculate_state_estimation<false>(opt->err_tol, opt->max_iter,
+                                                             (CalculationMethod)opt->calculation_method, output_dataset,
+                                                             update_dataset, opt->threading);
+                }
+                break;
+            default:
+                throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
+        }
+    }
+    catch (std::exception& e) {
+        handle->err_code = 1;
+        handle->err_msg = e.what();
+    }
+    catch (...) {
+        handle->err_code = 1;
+        handle->err_msg = "Unknown error!\n";
     }
 }
 
