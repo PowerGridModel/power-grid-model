@@ -25,6 +25,8 @@ struct DeleterFunctor {
 using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<PGM_destroy_handle>>;
 using OptionPtr = std::unique_ptr<PGM_Options, DeleterFunctor<PGM_destroy_options>>;
 using ModelPtr = std::unique_ptr<PGM_PowerGridModel, DeleterFunctor<PGM_destroy_model>>;
+using BufferPtr = std::unique_ptr<void, DeleterFunctor<PGM_destroy_buffer>>;
+
 
 }  // namespace power_grid_model
 
