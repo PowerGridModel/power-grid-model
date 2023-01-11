@@ -127,6 +127,21 @@ An asymmetrical generator can be in open or closed state.
 :align: center
 ```
 
+## Vision validation
+
+There are 2 test grid cases included for validation against vision. The `vision-example` is a simple case with only node, source, cable and load.
+The vision files were exported to excel which was then converted to power-grid-model input using [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io).
+The `vision-network` case has a minimal distribution grid and all remaining components for which conversion to vision is supported.
+The cases are built taking into consideration the modelling differences between vision and power-grid-model mentioned in the power-grid-model-io documentation(https://power-grid-model-io.readthedocs.io/).
+The node voltages and branch power flows are validated for symmetrical calculation.
+For asymmetrical output only the result attributes being validated are the ones which can be exported to excel. (ie. node voltages and branch currents)
+The absolute tolerances here are set to the least count of the vision result export: till ie. till V and kW level.
+
+## Other library validation
+
+There is one example of a simple Gaia network with nodes, lines, source and loads being validated.
+A similar example is also recreated for validation with the R state estimation package.
+
 ## Test case creation
 
 Contribution to power-grid-model is also possible by creating own test cases in similar format. 
