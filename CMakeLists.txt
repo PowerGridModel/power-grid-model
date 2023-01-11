@@ -31,13 +31,21 @@ else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
   add_compile_options(-Wno-deprecated-copy)  # bug in boost
   add_compile_options(-Wno-deprecated-declarations)  # bug in boost
-  if(UNIX AND NOT APPLE)
-	# test coverage for debug build in linux, if specified
-	if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND (DEFINED POWER_GRID_MODEL_COVERAGE) AND (POWER_GRID_MODEL_COVERAGE EQUAL 1))
+  # test coverage for debug build in linux, if specified
+  if(UNIX AND 
+     NOT APPLE AND 
+    (CMAKE_BUILD_TYPE STREQUAL "Debug") AND 
+    (DEFINED POWER_GRID_MODEL_COVERAGE) AND 
+    (POWER_GRID_MODEL_COVERAGE EQUAL 1))
 	  add_compile_options(-fprofile-arcs -ftest-coverage)
 	  add_link_options(-fprofile-arcs)
-	endif()
-  else()
+  endif()
+  # add address sanitizer for Linux/Mac build if specified
+  if( 
+    (DEFINED POWER_GRID_MODEL_SANITIZER) AND 
+    (POWER_GRID_MODEL_SANITIZER EQUAL 1))
+    add_compile_options(-fsanitize=address)
+    add_link_options(-fsanitize=address)
   endif()
   # thread
   find_package(Threads REQUIRED)

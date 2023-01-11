@@ -44,13 +44,3 @@ target_link_libraries(power_grid_model_unit_tests
 	PRIVATE nlohmann_json nlohmann_json::nlohmann_json
 )
 target_compile_definitions(power_grid_model_unit_tests PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data")
-
-
-# add address sanitizer for Linux/Mac build
-if(UNIX)
-	target_compile_options(power_grid_model_unit_tests PRIVATE -fsanitize=address)
-	target_link_options(power_grid_model_unit_tests PRIVATE -fsanitize=address)
-endif()
-
-# set_target_properties(power_grid_model_unit_tests PROPERTIES SKIP_BUILD_RPATH TRUE)
-# set_target_properties(power_grid_model_unit_tests PROPERTIES LINK_WHAT_YOU_USE TRUE)

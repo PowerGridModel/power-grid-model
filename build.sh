@@ -22,6 +22,12 @@ else
   BUILD_COVERAGE=
 fi
 
+if [[ $3 == "Sanitizer" ]]; then
+  BUILD_SANITIZER=-DPOWER_GRID_MODEL_SANITIZER=1
+else
+  BUILD_SANITIZER=
+fi
+
 BUILD_DIR=cpp_build_script_$1
 echo "Build dir: ${BUILD_DIR}"
 
@@ -32,7 +38,8 @@ cd ${BUILD_DIR}
 cmake .. -GNinja \
     -DCMAKE_BUILD_TYPE=$1 \
     ${PATH_FOR_CMAKE} \
-    ${BUILD_COVERAGE}
+    ${BUILD_COVERAGE} \
+    ${BUILD_SANITIZER}
 # build
 VERBOSE=1 cmake --build .
 # test
