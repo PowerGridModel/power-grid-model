@@ -116,6 +116,16 @@ TEST_CASE("C API Model") {
         CHECK(node_result_1.u == doctest::Approx(70.0));
         CHECK(node_result_1.u_pu == doctest::Approx(0.7));
         CHECK(node_result_1.u_angle == doctest::Approx(0.0));
+        // check via get attribute for u_pu and u
+        std::array<double, 2> u_pu{};
+        PGM_buffer_get_attribute(hl, "sym_output", "node", "u_pu", sym_node_outputs.data(), u_pu.data(), 2, -1);
+        CHECK(u_pu[0] == doctest::Approx(0.4));
+        CHECK(u_pu[1] == doctest::Approx(0.7));
+        std::array<double, 4> u{};
+        PGM_buffer_get_attribute(hl, "sym_output", "node", "u", sym_node_outputs.data(), u.data(), 2,
+                                 2 * sizeof(double));  // stride of two double
+        CHECK(u[0] == doctest::Approx(40.0));
+        CHECK(u[2] == doctest::Approx(70.0));
     }
 
     SUBCASE("Construction error") {
