@@ -63,12 +63,12 @@ TEST_CASE("C API Meta Data") {
 
     SUBCASE("Check error handling for unknown name") {
         CHECK(PGM_meta_attribute_name(hl, "No_dataset", "no_name", 0) == nullptr);
-        CHECK(PGM_err_code(hl) == 1);
+        CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string const err_msg{PGM_err_msg(hl)};
         CHECK(err_msg.find("You supplied wrong name and/or index!") != std::string::npos);
         // clear error
         PGM_clear_error(hl);
-        CHECK(PGM_err_code(hl) == 0);
+        CHECK(PGM_err_code(hl) == PGM_no_error);
     }
 }
 

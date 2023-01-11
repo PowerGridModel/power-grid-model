@@ -60,6 +60,7 @@ enum PGM_CalculationMethod {
     PGM_iterative_current = 3,
     PGM_linear_current = 4
 };
+enum PGM_ErrorCode { PGM_no_error = 0, PGM_regular_error = 1, PGM_batch_error = 2 };
 
 // create and release handle
 PGM_API PGM_Handle* PGM_create_handle();

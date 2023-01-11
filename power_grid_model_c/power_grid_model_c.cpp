@@ -56,7 +56,7 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
         return func();
     }
     catch (std::out_of_range& e) {
-        handle->err_code = 1;
+        handle->err_code = PGM_regular_error;
         handle->err_msg = std::string(e.what()) + "\n You supplied wrong name and/or index!\n";
         return std::invoke_result_t<Functor>{};
     }
@@ -215,7 +215,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
         return new MainModel{system_frequency, dataset, 0};
     }
     catch (std::exception& e) {
-        handle->err_code = 1;
+        handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
         return nullptr;
     }
@@ -233,7 +233,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_u
         model->update_component(dataset);
     }
     catch (std::exception& e) {
-        handle->err_code = 1;
+        handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
     }
 }
@@ -299,17 +299,17 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         }
     }
     catch (BatchCalculationError& e) {
-        handle->err_code = 2;
+        handle->err_code = PGM_batch_error;
         handle->err_msg = e.what();
         handle->failed_batches = e.failed_batches();
         handle->batch_errs = e.err_msgs();
     }
     catch (std::exception& e) {
-        handle->err_code = 1;
+        handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
     }
     catch (...) {
-        handle->err_code = 1;
+        handle->err_code = PGM_regular_error;
         handle->err_msg = "Unknown error!\n";
     }
 }

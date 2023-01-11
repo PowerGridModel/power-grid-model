@@ -73,7 +73,7 @@ TEST_CASE("C API Model") {
     SUBCASE("Simple power flow") {
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
-        CHECK(PGM_err_code(hl) == 0);
+        CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
         CHECK(node_result_0.u == doctest::Approx(50.0));
@@ -83,10 +83,10 @@ TEST_CASE("C API Model") {
 
     SUBCASE("Simple update") {
         PGM_update_model(hl, model, 2, update_type_names.data(), update_type_sizes.data(), update_data.data());
-        CHECK(PGM_err_code(hl) == 0);
+        CHECK(PGM_err_code(hl) == PGM_no_error);
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
-        CHECK(PGM_err_code(hl) == 0);
+        CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
         CHECK(node_result_0.u == doctest::Approx(40.0));
@@ -98,7 +98,7 @@ TEST_CASE("C API Model") {
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       2, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
                       update_data.data());  // batch parameters
-        CHECK(PGM_err_code(hl) == 0);
+        CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
         CHECK(node_result_0.u == doctest::Approx(40.0));
@@ -116,7 +116,7 @@ TEST_CASE("C API Model") {
         ModelPtr wrong_model{
             PGM_create_model(hl, 50.0, 3, input_type_names.data(), input_type_sizes.data(), input_data.data())};
         CHECK(wrong_model.get() == nullptr);
-        CHECK(PGM_err_code(hl) == 1);
+        CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_err_msg(hl)};
         CHECK(err_msg.find("Conflicting id detected:") != std::string::npos);
     }
@@ -124,7 +124,7 @@ TEST_CASE("C API Model") {
     SUBCASE("Update error") {
         source_update.id = 5;
         PGM_update_model(hl, model, 2, update_type_names.data(), update_type_sizes.data(), update_data.data());
-        CHECK(PGM_err_code(hl) == 1);
+        CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_err_msg(hl)};
         CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
     }
@@ -137,7 +137,7 @@ TEST_CASE("C API Model") {
         PGM_set_threading(hl, opt, 1);
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
-        CHECK(PGM_err_code(hl) == 1);
+        CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_err_msg(hl)};
         CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
         // wrong method
@@ -145,7 +145,7 @@ TEST_CASE("C API Model") {
         PGM_set_calculation_method(hl, opt, PGM_iterative_current);
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
-        CHECK(PGM_err_code(hl) == 1);
+        CHECK(PGM_err_code(hl) == PGM_regular_error);
         err_msg = PGM_err_msg(hl);
         CHECK(err_msg.find("The calculation method is invalid for this calculation!") != std::string::npos);
     }
@@ -157,7 +157,7 @@ TEST_CASE("C API Model") {
                       2, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
                       update_data.data());  // batch parameters
         // failed in batch 1
-        CHECK(PGM_err_code(hl) == 2);
+        CHECK(PGM_err_code(hl) == PGM_batch_error);
         CHECK(PGM_n_failed_batches(hl) == 1);
         CHECK(PGM_failed_batches(hl)[0] == 1);
         std::string err_msg{PGM_batch_errs(hl)[0]};
