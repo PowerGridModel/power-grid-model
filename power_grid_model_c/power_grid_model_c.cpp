@@ -187,8 +187,10 @@ void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* cla
         data_class.set_nan(ptr, i);
     }
 }
-void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
-                              void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+// template for get and set attribute
+template <bool is_get, class BufferPtr, class ValuePtr>
+void buffer_get_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
+                              BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size, PGM_Idx stride) {
     auto const& data_class = call_with_bound(handle, [&]() {
         return meta_data::meta_data().at(dataset).at(class_name);
     });
@@ -199,13 +201,27 @@ void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char cons
         return;
     }
     // if stride is negative, use the size of the attributes as stride
-    if (src_stride < 0) {
-        src_stride = attr.size;
+    if (stride < 0) {
+        stride = attr.size;
     }
     for (Idx i = 0; i != size; ++i) {
-        void const* const value_ptr = reinterpret_cast<char const*>(src_ptr) + src_stride * i;
-        data_class.set_attr(buffer_ptr, value_ptr, attr, i);
+        ValuePtr const shifted_value_ptr =
+            reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
+        if constexpr (is_get) {
+            data_class.get_attr(buffer_ptr, shifted_value_ptr, attr, i);
+        }
+        else {
+            data_class.set_attr(buffer_ptr, shifted_value_ptr, attr, i);
+        }
     }
+}
+void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
+                              void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+    buffer_get_set_attribute<false>(handle, dataset, class_name, attribute, buffer_ptr, src_ptr, size, src_stride);
+}
+void PGM_buffer_get_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
+                              void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
+    buffer_get_set_attribute<true>(handle, dataset, class_name, attribute, buffer_ptr, dest_ptr, size, dest_stride);
 }
 
 // options

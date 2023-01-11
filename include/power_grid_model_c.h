@@ -99,7 +99,9 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char co
 PGM_API void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name,
                                       char const* attribute, void* buffer_ptr, void const* src_ptr, PGM_Idx size,
                                       PGM_Idx src_stride);
-
+PGM_API void PGM_buffer_get_attribute(PGM_Handle* handle, char const* dataset, char const* class_name,
+                                      char const* attribute, void const* buffer_ptr, void* dest_ptr, PGM_Idx size,
+                                      PGM_Idx dest_stride);
 // options
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
 PGM_API void PGM_destroy_options(PGM_Options* opt);
