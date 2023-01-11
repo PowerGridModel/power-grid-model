@@ -94,6 +94,11 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 // buffer control
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size);
 PGM_API void PGM_destroy_buffer(void* ptr);
+PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* class_name, void* ptr,
+                                PGM_Idx size);
+PGM_API void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name,
+                                      char const* attribute, void* buffer_ptr, void const* src_ptr, PGM_Idx size,
+                                      PGM_Idx src_stride);
 
 // options
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);

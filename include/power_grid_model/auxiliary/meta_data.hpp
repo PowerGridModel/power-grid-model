@@ -127,6 +127,7 @@ struct DataAttribute {
     std::string ctype;
     std::vector<size_t> dims;
     size_t offset;
+    size_t size;
     SetNaNFunc set_nan;
     CheckNaNFunc check_nan;
     SetValueFunc set_value;
@@ -158,6 +159,7 @@ inline DataAttribute get_data_attribute(std::string const& name) {
     attr.numpy_type = single_data_type::numpy_type;
     attr.ctype = single_data_type::ctype;
     attr.offset = get_offset<member_ptr>();
+    attr.size = sizeof(value_type);
     if constexpr (single_data_type::ndim > 0) {
         attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
     }
@@ -222,6 +224,12 @@ struct MetaData {
         ptr = get_position(ptr, position);
         void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
         attr.set_value(offset_ptr, value_ptr);
+    }
+    // get value of one attribute
+    void get_attr(void const* ptr, void* value_ptr, DataAttribute const& attr, Idx position = 0) const {
+        ptr = get_position(ptr, position);
+        void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
+        attr.set_value(value_ptr, offset_ptr);
     }
     // compare value of one attribute
     bool compare_attr(void const* ptr_x, void const* ptr_y, double atol, double rtol, DataAttribute const& attr,

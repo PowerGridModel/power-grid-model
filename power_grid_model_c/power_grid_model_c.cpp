@@ -176,6 +176,37 @@ void PGM_destroy_buffer(void* ptr) {
     std::free(ptr);
 #endif
 }
+void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* class_name, void* ptr, PGM_Idx size) {
+    auto const& data_class = call_with_bound(handle, [&]() {
+        return meta_data::meta_data().at(dataset).at(class_name);
+    });
+    if (data_class.name == "") {
+        return;
+    }
+    for (Idx i = 0; i != size; ++i) {
+        data_class.set_nan(ptr, i);
+    }
+}
+void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
+                              void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+    auto const& data_class = call_with_bound(handle, [&]() {
+        return meta_data::meta_data().at(dataset).at(class_name);
+    });
+    auto const& attr = call_with_bound(handle, [&]() {
+        return data_class.get_attr(attribute);
+    });
+    if (attr.name == "") {
+        return;
+    }
+    // if stride is negative, use the size of the attributes as stride
+    if (src_stride < 0) {
+        src_stride = attr.size;
+    }
+    for (Idx i = 0; i != size; ++i) {
+        void const* const value_ptr = reinterpret_cast<char const*>(src_ptr) + src_stride * i;
+        data_class.set_attr(buffer_ptr, value_ptr, attr, i);
+    }
+}
 
 // options
 PGM_Options* PGM_create_options(PGM_Handle*) {
@@ -318,5 +349,3 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 void PGM_destroy_model(PGM_PowerGridModel* model) {
     delete model;
 }
-
-// construct and destroy model
