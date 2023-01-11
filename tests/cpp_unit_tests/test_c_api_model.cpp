@@ -43,10 +43,17 @@ TEST_CASE("C API Model") {
     SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 500.0};
     std::array input_type_names{"node", "source", "sym_load"};
     std::array<Idx, 3> input_type_sizes{1, 1, 1};
-    // create one buffer
-    BufferPtr const unique_node_buffer{PGM_create_buffer(hl, "input", "node", 1)};
-    std::memcpy(unique_node_buffer.get(), &node_input, sizeof(NodeInput));
-    std::array<void const*, 3> input_data{unique_node_buffer.get(), &source_input, &load_input};
+    // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
+    BufferPtr const unique_source_buffer{PGM_create_buffer(hl, "input", "source", 1)};
+    void* source_buffer = unique_source_buffer.get();
+    PGM_buffer_set_nan(hl, "input", "source", source_buffer, 1);
+    PGM_buffer_set_attribute(hl, "input", "source", "id", source_buffer, &source_input.id, 1, -1);
+    PGM_buffer_set_attribute(hl, "input", "source", "node", source_buffer, &source_input.node, 1, sizeof(ID));
+    PGM_buffer_set_attribute(hl, "input", "source", "status", source_buffer, &source_input.status, 1, -1);
+    PGM_buffer_set_attribute(hl, "input", "source", "u_ref", source_buffer, &source_input.u_ref, 1, -1);
+    PGM_buffer_set_attribute(hl, "input", "source", "sk", source_buffer, &source_input.sk, 1, -1);
+    PGM_buffer_set_attribute(hl, "input", "source", "rx_ratio", source_buffer, &source_input.rx_ratio, 1, -1);
+    std::array<void const*, 3> input_data{&node_input, source_buffer, &load_input};
 
     // output data
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
@@ -112,7 +119,7 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Construction error") {
-        source_input.id = 0;
+        load_input.id = 0;
         ModelPtr wrong_model{
             PGM_create_model(hl, 50.0, 3, input_type_names.data(), input_type_sizes.data(), input_data.data())};
         CHECK(wrong_model.get() == nullptr);
