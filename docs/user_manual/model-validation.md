@@ -118,7 +118,7 @@ An asymmetrical load can be in open or closed state.
 :align: center
 ```
 
-### Component Test Case: Asymmetrical generator
+### Asymmetrical generator
 
 An asymmetrical generator can be in open or closed state.
 ```{image} ../images/validation/asym_gen.svg
@@ -126,6 +126,46 @@ An asymmetrical generator can be in open or closed state.
 :width: 250px
 :align: center
 ```
+
+### Distribution network case
+
+This is a minimal case representing a simple distribution grid. 
+The grid has 2 identical parallel transformers. 
+They power a series of overhead lines and cables which supply different loads.
+
+The case is validated for ring and radial configuration by open/close position of 
+one end of Line 13 in asymmetrical batch calculation.
+
+The circuit diagram is as follows:
+```
+                                                        asym_load(22)       sym_load(19)
+                                                        |                   |
+            |------trafo(17)------|-----cable(9)-----|(3)----cable(11)---|(5)----OHL(13)---(On/off)-|
+source(16)--|(1)                  |(2)                                                              |(7)---OHL(15)-|(8)
+            |------trafo(18)------|----cable(10)-----|(4)----cable(12)---|(6)----OHL(14)------------|              |
+                                                        |                   |                               Load(21)
+                                                        asym_load(23)       sym_load(20)
+```
+
+## Transmission network case
+
+This is a minimal case representing a simple transmission grid. 
+
+The circuit diagram is as follows (The node 6 is same in both lines):
+```
+    Gen(_21)---|_1--transformer(_30)--|_3--line(_12)-----|              |---line(_14)----------|
+                                                         |--line(_13)---|                      |
+                       Gen(_22)---|_2--transformer(_31)--|_4            |_5-------line(_15)----|_6
+                                                                        |         shunt(_29)---|
+                                                           shunt(_28)---|-load(_24)
+                                                         
+
+    |----line(_16)-------|               |---line(_19)---|_9---transformer(_32)---|_11---source(_20)
+    |                    |---line(_18)---|
+    |_6-----line(_17)----|_7             |_8--transformer(_33)---|_10---gen(_23)
+    |---load(_25)
+```
+
 
 ## Vision validation
 
