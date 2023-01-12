@@ -61,6 +61,7 @@ user_manual/model-validation
 :caption: "API Reference"
 :maxdepth: 2
 api_reference/python-api-reference
+api_reference/power-grid-model-c-api-reference
 ```
 
 ```{toctree}
