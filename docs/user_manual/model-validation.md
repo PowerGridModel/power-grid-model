@@ -170,10 +170,11 @@ The circuit diagram is as follows (The node 6 is same in both lines):
 ## Vision validation
 
 There are 2 test grid cases included for validation against vision: A minimal example and a network containing all components supported by power-grid-model-io
+Their vision files are included as well.
 
 ### Simple example
 
-The `vision-example` is a simple case with only node, source, cable and load.
+The `vision-example` is a minimal case with only node, source, cable and load.
 
 ### Netowork case
 
