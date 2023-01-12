@@ -16,6 +16,9 @@ build:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
+      # build doxygen for C++ header
+      - cd docs/doxygen && doxygen && cd ../..
+      # download examples
       - wget -P docs/examples https://github.com/alliander-opensource/power-grid-model-workshop/raw/main/examples/Make%20Test%20Dataset.ipynb
       - wget -P docs/examples https://github.com/alliander-opensource/power-grid-model-workshop/raw/main/examples/Power%20Flow%20Example.ipynb
       - wget -P docs/examples https://github.com/alliander-opensource/power-grid-model-workshop/raw/main/examples/State%20Estimation%20Example.ipynb

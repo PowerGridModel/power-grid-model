@@ -2,6 +2,12 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+/** 
+ * @mainpage Power Grid Model C API Documentation
+ * This gives an overview of C API. 
+ * All the exported functions are declared in power_grid_model_c.h
+ */
+
 #pragma once
 #ifndef POWER_GRID_MODEL_C_H
 #define POWER_GRID_MODEL_C_H
@@ -51,19 +57,52 @@ typedef struct PGM_Handle PGM_Handle;
 typedef struct PGM_Options PGM_Options;
 #endif
 
-// enums
-enum PGM_CalculationType { PGM_power_flow = 0, PGM_state_estimation = 1 };
-enum PGM_CalculationMethod {
-    PGM_linear = 0,
-    PGM_newton_raphson = 1,
-    PGM_PGM_iterative_linear = 2,
-    PGM_iterative_current = 3,
-    PGM_linear_current = 4
-};
-enum PGM_ErrorCode { PGM_no_error = 0, PGM_regular_error = 1, PGM_batch_error = 2 };
 
-// create and release handle
+
+// enums
+/**
+ * @brief Enumeration for calculation type
+ * 
+ */
+enum PGM_CalculationType { 
+    PGM_power_flow = 0,  /**< power flow calculation */
+    PGM_state_estimation = 1 /**< state estimation calculation */
+    };
+/**
+ * @brief Enumeration for calculation method
+ * 
+ */
+enum PGM_CalculationMethod {
+    PGM_linear = 0,  /**< linear constant impedance method for power flow */
+    PGM_newton_raphson = 1, /**< Newton-Raphson method for power flow */
+    PGM_iterative_linear = 2, /**< iterative linear method for state estimation */
+    PGM_iterative_current = 3, /**< linear current method for power flow */
+    PGM_linear_current = 4  /**< iterative constant impedance method for power flow */
+};
+/**
+ * @brief Enumeration of error codes
+ * 
+ */
+enum PGM_ErrorCode { 
+    PGM_no_error = 0, /**< no error occurred */
+    PGM_regular_error = 1, /**< some error occurred which is not in the batch calculation */
+    PGM_batch_error = 2 /**< some error occurred which is in the batch calculation */
+    };
+
+/**
+ * @brief Create a new handle
+ * 
+ * A handle object is needed to store error information. If you run it in multi-threading, each thread should have unique handle.
+ * The handle should be destroyed by PGM_destroy_handle()
+ * 
+ * @return Pointer to the created handle 
+ */
 PGM_API PGM_Handle* PGM_create_handle();
+/**
+ * @brief Destroy the handle
+ * 
+ * @param handle Pointer to the handle created by PGM_create_handle()
+ */
 PGM_API void PGM_destroy_handle(PGM_Handle* handle);
 
 // get error code and error messsage
