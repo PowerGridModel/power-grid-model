@@ -5,6 +5,4 @@
 power_grid_model_c
 =====
 
-.. doxygenfunction:: PGM_create_handle()
-
-.. doxygenfunction:: PGM_destroy_handle()
+.. doxygenfile:: power_grid_model_c.h
