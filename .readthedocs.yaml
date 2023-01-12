@@ -14,7 +14,6 @@ build:
     python: "3.11"
   jobs:
     post_install:
-      - sudo apt-get install -y graphviz 
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
       # build doxygen for C++ header

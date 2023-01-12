@@ -36,7 +36,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
-    'breathe',
+    "breathe",
     "numpydoc",
     "hoverxref.extension",
     "myst_nb",
@@ -102,5 +102,5 @@ autodoc_default_options = {
 autosectionlabel_prefix_document = True
 
 # config doxygen for C API
-breathe_projects = { "power_grid_model_c": "./doxygen/build/xml/" }
+breathe_projects = {"power_grid_model_c": "./doxygen/build/xml/"}
 breathe_default_project = "power_grid_model_c"
