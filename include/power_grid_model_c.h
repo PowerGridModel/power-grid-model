@@ -13,6 +13,7 @@
 #define POWER_GRID_MODEL_C_H
 
 // Generic helper definitions for shared library support
+// API_MACRO_BLOCK
 #if defined _WIN32
 #define PGM_HELPER_DLL_IMPORT __declspec(dllimport)
 #define PGM_HELPER_DLL_EXPORT __declspec(dllexport)
@@ -35,6 +36,7 @@
 #define PGM_API PGM_HELPER_DLL_IMPORT
 #endif  // PGM_DLL_EXPORTS
 #define PGM_LOCAL PGM_HELPER_DLL_LOCAL
+// API_MACRO_BLOCK
 
 // integers
 #include <stddef.h>
