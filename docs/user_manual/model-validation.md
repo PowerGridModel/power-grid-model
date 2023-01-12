@@ -169,9 +169,22 @@ The circuit diagram is as follows (The node 6 is same in both lines):
 
 ## Vision validation
 
-There are 2 test grid cases included for validation against vision. The `vision-example` is a simple case with only node, source, cable and load.
+There are 2 test grid cases included for validation against vision: A minimal example and a network containing all components supported by power-grid-model-io
+
+### Simple example
+
+The `vision-example` is a simple case with only node, source, cable and load.
+
+### Netowork case
+
 The vision files were exported to excel which was then converted to power-grid-model input using [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io).
-The `vision-network` case has a minimal distribution grid and all remaining components for which conversion to vision is supported.
+The `vision-network` case has the following characteristics:
+- It contains 26 nodes (plus 20 from transformer load secondary node). 
+- The voltage level of grid input is at 110kV from which it is stepped down to 10.5kV level. 
+- On the 10.5kV level, one minimal distribution grid containing transformer loads, wind and PV generation and one additional reactance coil. 
+- All the remaining supported components for which conversion to power-grid-model is supported are also connected to this level.
+They include: line, reactance, special transformer, load, synchronous generator, shunt and zig-zag transformer.
+
 The cases are built taking into consideration the modelling differences between vision and power-grid-model mentioned in the power-grid-model-io documentation(https://power-grid-model-io.readthedocs.io/).
 The node voltages and branch power flows are validated for symmetrical calculation.
 For asymmetrical output only the result attributes being validated are the ones which can be exported to excel. (ie. node voltages and branch currents)
