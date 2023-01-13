@@ -6,8 +6,6 @@
 requires = [
     "setuptools",
     "wheel",
-    "cython",
-    "oldest-supported-numpy",
     "requests",
     "pybuild-header-dependency",
 ]
