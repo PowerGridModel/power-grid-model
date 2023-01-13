@@ -32,8 +32,8 @@
     ],
   "link":
     [
-      {"id": 74, "energized": 1, "loading": 0.0, "p_from": 1964402.2812635864, "q_from": 91041.11345068633, "i_from": 105.13108331382739, "s_from": 1966510.8204563542, "p_to": -1964402.262985441, "q_to": -91041.1317288321, "i_to": 105.13108331382739, "s_to": 1966510.8030440076, "id_reference": {"table": "Links", "key": {"Number": 4}}, "Name": "55.1"},
-      {"id": 75, "energized": 1, "loading": 0.0, "p_from": -13682368.114045937, "q_from": 300358.9760859562, "i_from": 725.88748187629, "s_from": 13685664.496938992, "p_to": 13682368.985427707, "q_to": -300359.84746772825, "i_to": 725.88748187629, "s_to": 13685665.387235101, "id_reference": {"table": "Links", "key": {"Number": 1}}, "Name": "Dwarskoppelveld :)"}
+      {"id": 74,   "p_from" : 1964000, "q_from" : 91000, "i_from" : 105, "s_from" : 1967000, "p_to" : -1964000, "q_to" : -91000, "i_to" : 105, "s_to" : 1967000, "loading" : 0},
+      {"id": 75,   "p_from" : -13682000, "q_from" : 300000, "i_from" : 726, "s_from" : 13686000, "p_to" : 13683000, "q_to" : -300000, "i_to" : 726, "s_to" : 13686000, "loading" : 0}
     ],
   "node":
     [
@@ -85,43 +85,37 @@
       {"id": 45,  "u" : 422 },
       {"id": 46,  "u" : 419 }
     ],
-  "shunt":
-    [
-      {"id": 125, "energized": 1, "p": -0.0, "q": -0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "Zigzag transformers", "key": {"Node.Number": 1, "Subnumber": 1}}, "Name": "zz1"},
-      {"id": 126, "energized": 1, "p": -0.0, "q": -2149430.0049055987, "i": 114.00574185339991, "s": 2149430.0049055987, "pf": -0.0, "id_reference": {"table": "Capacitors", "key": {"Node.Number": 1, "Subnumber": 2}}, "Name": "shunt1"},
-      {"id": 127, "energized": 1, "p": -0.0, "q": 322745.7880070823, "i": 17.10964475874927, "s": 322745.7880070823, "pf": -0.0, "id_reference": {"table": "Reactors", "key": {"Node.Number": 21, "Subnumber": 2}}, "Name": "rcoil1"}
-    ],
   "sym_gen":
     [
-      {"id": 100, "energized": 1, "p": 500000.0, "q": 164342.05258943158, "i": 27.915783203529116, "s": 526315.7894736842, "pf": 0.9500000000000001, "id_reference": {"table": "Synchronous generators", "key": {"Node.Number": 1, "Subnumber": 3}}, "Name": "syngen1"},
-      {"id": 101, "energized": 1, "p": 1000000.0, "q": 0.0, "i": 1369.2063577641447, "s": 1000000.0, "pf": 1.0, "id_reference": {"table": "Synchronous generators", "key": {"Node.Number": 38, "Subnumber": 2}}},
-      {"id": 102, "energized": 1, "p": 500000.0, "q": 0.0, "i": 689.204723431611, "s": 500000.0, "pf": 1.0, "id_reference": {"table": "Synchronous generators", "key": {"Node.Number": 47, "Subnumber": 2}}},
-      {"id": 103, "energized": 1, "p": 799999.9999999999, "q": 0.0, "i": 42.40262988542587, "s": 799999.9999999999, "pf": 1.0, "id_reference": {"table": "Wind turbines", "key": {"Node.Number": 19, "Subnumber": 2}}, "Name": "wind1"},
-      {"id": 128, "energized": 1, "p": 500000.0, "q": 0.0, "i": 26.609179339895014, "s": 500000.0, "pf": 1.0, "id_reference": {"table": "Pvs", "key": {"Node.Number": 13, "Subnumber": 2}}, "Name": "pv1"}
+      {"id": 100,   "p" : 500000, "q" : 164000, "i" : 28, "s" : 526000, "pf" : 0.95 },
+      {"id": 101,   "p" : 1000000, "q" : 0, "i" : 1369, "s" : 1000000, "pf" : 1 },
+      {"id": 102,   "p" : 500000, "q" : 0, "i" : 689, "s" : 500000, "pf" : 1 },
+      {"id": 103,   "p" : 800000, "q" : 0, "i" : 42, "s" : 800000, "pf" : 1 },
+      {"id": 128,   "p" : 500000, "q" : 0, "i" : 27, "s" : 500000, "pf" : 1 }
     ],
   "sym_load":
     [
-      {"id": 104, "energized": 1, "p": 1500000.0, "q": 1000000.0, "i": 96.6064947566992, "s": 1802775.6377319945, "pf": 0.8320502943378437, "id_reference": {"table": "Loads", "key": {"Node.Number": 26, "Subnumber": 1}}, "Name": "Load1"},
-      {"id": 105, "energized": 1, "p": 799999.9999999999, "q": 0.0, "i": 1104.5559934300936, "s": 799999.9999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 27, "Subnumber": 1}}},
-      {"id": 106, "energized": 1, "p": 799999.9999999999, "q": 0.0, "i": 1097.6922571802231, "s": 799999.9999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 28, "Subnumber": 1}}},
-      {"id": 107, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 137.15170219247747, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 29, "Subnumber": 1}}},
-      {"id": 108, "energized": 1, "p": 950000.0, "q": 0.0, "i": 1309.659245955839, "s": 950000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 31, "Subnumber": 1}}},
-      {"id": 109, "energized": 1, "p": 950000.0, "q": 0.0, "i": 1311.1404418354687, "s": 950000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 32, "Subnumber": 1}}},
-      {"id": 110, "energized": 1, "p": 950000.0, "q": 0.0, "i": 1312.257788412109, "s": 950000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 33, "Subnumber": 1}}},
-      {"id": 111, "energized": 1, "p": 1500000.0, "q": 0.0, "i": 2062.2014765518966, "s": 1500000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 34, "Subnumber": 1}}},
-      {"id": 112, "energized": 1, "p": 950000.0, "q": 0.0, "i": 1307.9275942826662, "s": 950000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 35, "Subnumber": 1}}},
-      {"id": 113, "energized": 1, "p": 950000.0, "q": 0.0, "i": 1308.3226754190675, "s": 950000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 36, "Subnumber": 1}}},
-      {"id": 114, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 137.41385463308725, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 37, "Subnumber": 1}}},
-      {"id": 115, "energized": 1, "p": 2449999.9999999995, "q": 0.0, "i": 3354.5555765221543, "s": 2449999.9999999995, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 38, "Subnumber": 1}}},
-      {"id": 116, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 137.33763938737206, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 39, "Subnumber": 1}}},
-      {"id": 117, "energized": 1, "p": 950000.0, "q": 0.0, "i": 1308.2920636995632, "s": 950000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 40, "Subnumber": 1}}},
-      {"id": 118, "energized": 1, "p": 799999.9999999999, "q": 0.0, "i": 1099.991775529907, "s": 799999.9999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 41, "Subnumber": 1}}},
-      {"id": 119, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 136.78398445080617, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 42, "Subnumber": 1}}},
-      {"id": 120, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 136.77517292279805, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 43, "Subnumber": 1}}},
-      {"id": 121, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 136.70042795228082, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 44, "Subnumber": 1}}},
-      {"id": 122, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 136.71474198370868, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 45, "Subnumber": 1}}},
-      {"id": 123, "energized": 1, "p": 99999.99999999999, "q": 0.0, "i": 136.72524663643205, "s": 99999.99999999999, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 46, "Subnumber": 1}}},
-      {"id": 124, "energized": 1, "p": 2449999.9999999995, "q": 0.0, "i": 3377.1031448148938, "s": 2449999.9999999995, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 47, "Subnumber": 1}}}
+      {"id": 104,   "p" : 1500000, "q" : 1000000, "i" : 97, "s" : 1803000, "pf" : 0.832 },
+      {"id": 105,   "p" : 800000, "q" : 0, "i" : 1105, "s" : 800000, "pf" : 1 },
+      {"id": 106,   "p" : 800000, "q" : 0, "i" : 1098, "s" : 800000, "pf" : 1 },
+      {"id": 107,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 108,   "p" : 950000, "q" : 0, "i" : 1310, "s" : 950000, "pf" : 1 },
+      {"id": 109,   "p" : 950000, "q" : 0, "i" : 1311, "s" : 950000, "pf" : 1 },
+      {"id": 110,   "p" : 950000, "q" : 0, "i" : 1312, "s" : 950000, "pf" : 1 },
+      {"id": 111,   "p" : 1500000, "q" : 0, "i" : 2062, "s" : 1500000, "pf" : 1 },
+      {"id": 112,   "p" : 950000, "q" : 0, "i" : 1308, "s" : 950000, "pf" : 1 },
+      {"id": 113,   "p" : 950000, "q" : 0, "i" : 1308, "s" : 950000, "pf" : 1 },
+      {"id": 114,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 115,   "p" : 2450000, "q" : 0, "i" : 3355, "s" : 2450000, "pf" : 1 },
+      {"id": 116,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 117,   "p" : 950000, "q" : 0, "i" : 1308, "s" : 950000, "pf" : 1 },
+      {"id": 118,   "p" : 800000, "q" : 0, "i" : 1100, "s" : 800000, "pf" : 1 },
+      {"id": 119,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 120,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 121,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 122,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 123,   "p" : 100000, "q" : 0, "i" : 137, "s" : 100000, "pf" : 1 },
+      {"id": 124,   "p" : 2450000, "q" : 0, "i" : 3377, "s" : 2450000, "pf" : 1 }
     ],
   "transformer":
     [
