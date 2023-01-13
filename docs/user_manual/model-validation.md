@@ -127,7 +127,7 @@ An asymmetrical generator can be in open or closed state.
 :align: center
 ```
 
-### Distribution network case
+## Distribution network case
 
 This is a minimal case representing a simple distribution grid. 
 The grid has 2 identical parallel transformers. 
@@ -186,7 +186,7 @@ The `vision-network` case has the following characteristics:
 - All the remaining supported components for which conversion to power-grid-model is supported are also connected to this level.
 They include: line, reactance, special transformer, load, synchronous generator, shunt and zig-zag transformer.
 
-The cases are built taking into consideration the modelling differences between vision and power-grid-model mentioned in the power-grid-model-io documentation(https://power-grid-model-io.readthedocs.io/).
+The cases are built taking into consideration the modelling differences between vision and power-grid-model mentioned in the [power-grid-model-io documentation](https://power-grid-model-io.readthedocs.io/).
 The node voltages and branch power flows are validated for symmetrical calculation.
 For asymmetrical output only the result attributes being validated are the ones which can be exported to excel. (ie. node voltages and branch currents)
 The absolute tolerances here are set to the least count of the vision result export: till ie. till V and kW level.
