@@ -91,10 +91,6 @@
       {"id": 126, "energized": 1, "p": -0.0, "q": -2149430.0049055987, "i": 114.00574185339991, "s": 2149430.0049055987, "pf": -0.0, "id_reference": {"table": "Capacitors", "key": {"Node.Number": 1, "Subnumber": 2}}, "Name": "shunt1"},
       {"id": 127, "energized": 1, "p": -0.0, "q": 322745.7880070823, "i": 17.10964475874927, "s": 322745.7880070823, "pf": -0.0, "id_reference": {"table": "Reactors", "key": {"Node.Number": 21, "Subnumber": 2}}, "Name": "rcoil1"}
     ],
-  "source":
-    [
-      {"id": 99, "energized": 1, "p": 13680900.771123748, "q": 751854.5516330532, "i": 71.91446004859642, "s": 13701544.846335605, "pf": 0.998493303095134, "id_reference": {"table": "Sources", "key": {"Node.Number": 24, "Subnumber": 1}}, "Name": "source1"}
-    ],
   "sym_gen":
     [
       {"id": 100, "energized": 1, "p": 500000.0, "q": 164342.05258943158, "i": 27.915783203529116, "s": 526315.7894736842, "pf": 0.9500000000000001, "id_reference": {"table": "Synchronous generators", "key": {"Node.Number": 1, "Subnumber": 3}}, "Name": "syngen1"},

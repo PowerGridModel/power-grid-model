@@ -112,7 +112,7 @@
     ],
   "source":
     [
-      {"id": 99, "node": 23, "status": 1, "u_ref": 1.0, "sk": 1e+21, "rx_ratio": 0.1, "z01_ratio": 3.0, "id_reference": {"table": "Sources", "key": {"Node.Number": 24, "Subnumber": 1}}, "Name": "source1"}
+      {"id": 99, "node": 23, "status": 1, "u_ref": 1.0, "sk": 1e+15, "rx_ratio": 0.1, "z01_ratio": 3.0, "id_reference": {"table": "Sources", "key": {"Node.Number": 24, "Subnumber": 1}}, "Name": "source1"}
     ],
   "sym_gen":
     [
