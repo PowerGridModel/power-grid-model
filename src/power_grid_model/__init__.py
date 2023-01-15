@@ -16,9 +16,9 @@ from power_grid_model.enum import (
     WindingType,
 )
 
+from power_grid_model.power_grid_meta import power_grid_meta_data
+
 
 # dummy PowerGridModel
-
-
 class PowerGridModel:
     pass
