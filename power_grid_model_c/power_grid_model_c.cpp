@@ -285,6 +285,18 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_u
     }
 }
 
+// copy model
+PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
+    try {
+        return new MainModel{*model};
+    }
+    catch (std::exception& e) {
+        handle->err_code = PGM_regular_error;
+        handle->err_msg = e.what();
+        return nullptr;
+    }
+}
+
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt, PGM_Idx n_output_types,
                    char const** output_type_names, void** output_data, PGM_Idx n_batch, PGM_Idx n_update_types,

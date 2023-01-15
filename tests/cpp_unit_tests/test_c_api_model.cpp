@@ -101,6 +101,20 @@ TEST_CASE("C API Model") {
         CHECK(node_result_0.u_angle == doctest::Approx(0.0));
     }
 
+    SUBCASE("Copy model") {
+        ModelPtr model_copy{PGM_copy_model(hl, model)};
+        CHECK(PGM_err_code(hl) == PGM_no_error);
+        PGM_calculate(hl, model_copy.get(), opt, 1, output_type_names.data(),
+                      sym_output_data.data(),                     // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);  // batch parameters
+        CHECK(PGM_err_code(hl) == PGM_no_error);
+        CHECK(node_result_0.id == 0);
+        CHECK(node_result_0.energized == 1);
+        CHECK(node_result_0.u == doctest::Approx(40.0));
+        CHECK(node_result_0.u_pu == doctest::Approx(0.4));
+        CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+    }
+
     SUBCASE("Batch power flow") {
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       2, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
