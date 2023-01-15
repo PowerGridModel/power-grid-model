@@ -110,8 +110,8 @@ TEST_CASE("C API Model") {
         CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
-        CHECK(node_result_0.u == doctest::Approx(40.0));
-        CHECK(node_result_0.u_pu == doctest::Approx(0.4));
+        CHECK(node_result_0.u == doctest::Approx(50.0));
+        CHECK(node_result_0.u_pu == doctest::Approx(0.5));
         CHECK(node_result_0.u_angle == doctest::Approx(0.0));
     }
 
