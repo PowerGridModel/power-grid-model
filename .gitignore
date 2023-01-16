@@ -363,6 +363,7 @@ healthchecksdb
 
 # C extensions
 *.so
+*.dll
 
 # Distribution / packaging
 .Python
