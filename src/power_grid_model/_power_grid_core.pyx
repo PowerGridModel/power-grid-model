@@ -65,26 +65,26 @@ cpdef _generate_meta_data():
     py_meta_data['update'] = _generate_cluster_meta_data(update_meta_data)
     return py_meta_data
 
-cdef _generate_cluster_meta_data(map[string, MetaData] & cpp_meta_data):
-    py_meta_data = {}
-    for map_entry in cpp_meta_data:
-        name = map_entry.first.decode()
-        numpy_dtype_dict = _generate_component_meta_data(map_entry.second)
-        dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != 'nans'})
-        if dtype.alignment != map_entry.second.alignment:
-            raise TypeError(f'Aligment mismatch for component type: "{name}" !')
-        single_meta_data = {
-            'dtype': dtype,
-            'dtype_dict': numpy_dtype_dict,
-            'nans': {x: y for x, y in zip(numpy_dtype_dict['names'], numpy_dtype_dict['nans'])}
-        }
-        # get single nan scalar
-        nan_scalar = np.zeros(1, dtype=single_meta_data['dtype'])
-        for k, v in single_meta_data['nans'].items():
-            nan_scalar[k] = v
-        single_meta_data['nan_scalar'] = nan_scalar
-        py_meta_data[name] = single_meta_data
-    return py_meta_data
+# cdef _generate_cluster_meta_data(map[string, MetaData] & cpp_meta_data):
+#     py_meta_data = {}
+#     for map_entry in cpp_meta_data:
+#         name = map_entry.first.decode()
+#         numpy_dtype_dict = _generate_component_meta_data(map_entry.second)
+#         dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != 'nans'})
+#         if dtype.alignment != map_entry.second.alignment:
+#             raise TypeError(f'Aligment mismatch for component type: "{name}" !')
+#         single_meta_data = {
+#             'dtype': dtype,
+#             'dtype_dict': numpy_dtype_dict,
+#             'nans': {x: y for x, y in zip(numpy_dtype_dict['names'], numpy_dtype_dict['nans'])}
+#         }
+#         # get single nan scalar
+#         nan_scalar = np.zeros(1, dtype=single_meta_data['dtype'])
+#         for k, v in single_meta_data['nans'].items():
+#             nan_scalar[k] = v
+#         single_meta_data['nan_scalar'] = nan_scalar
+#         py_meta_data[name] = single_meta_data
+#     return py_meta_data
 
 cdef _generate_component_meta_data(MetaData & cpp_component_meta_data):
     numpy_dtype_dict = {

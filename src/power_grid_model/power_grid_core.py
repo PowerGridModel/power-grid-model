@@ -53,8 +53,8 @@ def _load_core() -> CDLL:
     cdll.PGM_meta_class_size.restype = c_size_t
     cdll.PGM_meta_class_alignment.argtypes = [HandlePtr, c_char_p, c_char_p]
     cdll.PGM_meta_class_alignment.restype = c_size_t
-    cdll.PGM_meta_class_alignment.argtypes = [HandlePtr, c_char_p, c_char_p]
-    cdll.PGM_meta_class_alignment.restype = Idx_c
+    cdll.PGM_meta_n_attributes.argtypes = [HandlePtr, c_char_p, c_char_p]
+    cdll.PGM_meta_n_attributes.restype = Idx_c
     cdll.PGM_meta_attribute_name.argtypes = [HandlePtr, c_char_p, c_char_p, Idx_c]
     cdll.PGM_meta_attribute_name.restype = c_char_p
     cdll.PGM_meta_attribute_ctype.argtypes = [HandlePtr, c_char_p, c_char_p, c_char_p]
