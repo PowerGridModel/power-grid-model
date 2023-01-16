@@ -21,6 +21,7 @@ def test_empty_model():
     with pytest.raises(TypeError):
         copy(model)
 
+
 @pytest.mark.skip
 def test_unknown_component_types():
     model = PowerGridModel(input_data={})

@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
-from ctypes import CDLL, c_void_p, c_size_t, c_char_p, POINTER
+import platform
+from ctypes import CDLL, POINTER, c_char_p, c_size_t, c_void_p
 from functools import partial
+from pathlib import Path
+from typing import Callable, List, Optional
 
 from power_grid_model.index_integer import Idx_c
-from pathlib import Path
-from typing import Optional, List, Callable
-import platform
 
 # integer index
 IdxPtr = POINTER(Idx_c)
@@ -83,7 +83,7 @@ class PowerGridCore:
         for key in keys:
             func = getattr(self._cdll, key)
             if len(func.argtypes) > 0 and func.argtypes[0]:
-                setattr(self, key[len("PGM_"):], partial(func, self._handle))
+                setattr(self, key[len("PGM_") :], partial(func, self._handle))
 
     def __del__(self):
         self._cdll.PGM_destroy_handle(self._handle)

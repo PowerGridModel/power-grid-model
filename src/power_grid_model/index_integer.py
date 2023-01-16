@@ -5,6 +5,7 @@
 
 # define internal index integer
 from ctypes import c_int64
+
 import numpy as np
 
 Idx_c = c_int64
