@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+from typing import Union
 
 from power_grid_model.power_grid_core import power_grid_core as pgc
 import numpy as np
@@ -113,4 +113,37 @@ def _generate_meta_attributes(dataset: str, class_name: str) -> dict:
     return numpy_dtype_dict
 
 
+# store meta data
 power_grid_meta_data = _generate_meta_data()
+
+
+def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False):
+    """
+    Initializes an array for use in Power Grid Model calculations
+
+    Args:
+        data_type: input, update, sym_output, or asym_output
+        component_type: one component type, e.g. node
+        shape: shape of initialization
+            integer, it is a 1-dimensional array
+            tuple, it is an N-dimensional (tuple.shape) array
+        empty: if leave the memory block un-initialized
+
+    Returns:
+        np structured array with all entries as null value
+    """
+    if not isinstance(shape, tuple):
+        shape = (shape, )
+    if empty:
+        return np.empty(
+            shape=shape,
+            dtype=power_grid_meta_data[data_type][component_type]['dtype'],
+            order='C'
+        )
+    else:
+        return np.full(
+            shape=shape,
+            fill_value=power_grid_meta_data[data_type][component_type]['nan_scalar'],
+            dtype=power_grid_meta_data[data_type][component_type]['dtype'],
+            order='C'
+        )

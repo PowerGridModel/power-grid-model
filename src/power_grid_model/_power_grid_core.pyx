@@ -654,36 +654,36 @@ cdef class PowerGridModel:
         return self.copy()
 
 
-def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty=False):
-    """
-    Initializes an array for use in Power Grid Model calculations
-
-    Args:
-        data_type: input, update, sym_output, or asym_output
-        component_type: one component type, e.g. node
-        shape: shape of initialization
-            integer, it is a 1-dimensional array
-            tuple, it is an N-dimensional (tuple.shape) array
-        empty: if leave the memory block un-initialized
-
-    Returns:
-        np structured array with all entries as null value
-    """
-    if not isinstance(shape, tuple):
-        shape = (shape, )
-    if empty:
-        return np.empty(
-            shape=shape,
-            dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
-            order='C'
-        )
-    else:
-        return np.full(
-            shape=shape,
-            fill_value=_power_grid_meta_data[data_type][component_type]['nan_scalar'],
-            dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
-            order='C'
-        )
+# def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty=False):
+#     """
+#     Initializes an array for use in Power Grid Model calculations
+#
+#     Args:
+#         data_type: input, update, sym_output, or asym_output
+#         component_type: one component type, e.g. node
+#         shape: shape of initialization
+#             integer, it is a 1-dimensional array
+#             tuple, it is an N-dimensional (tuple.shape) array
+#         empty: if leave the memory block un-initialized
+#
+#     Returns:
+#         np structured array with all entries as null value
+#     """
+#     if not isinstance(shape, tuple):
+#         shape = (shape, )
+#     if empty:
+#         return np.empty(
+#             shape=shape,
+#             dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
+#             order='C'
+#         )
+#     else:
+#         return np.full(
+#             shape=shape,
+#             fill_value=_power_grid_meta_data[data_type][component_type]['nan_scalar'],
+#             dtype=_power_grid_meta_data[data_type][component_type]['dtype'],
+#             order='C'
+#         )
 
 
 # external used meta data

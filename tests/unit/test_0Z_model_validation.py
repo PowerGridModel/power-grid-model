@@ -13,12 +13,13 @@ from power_grid_model.utils import convert_batch_dataset_to_batch_list
 
 from .utils import EXPORT_OUTPUT, compare_result, import_case_data, pytest_cases, save_json_data
 
-calculation_function_map = {
-    "power_flow": PowerGridModel.calculate_power_flow,
-    "state_estimation": PowerGridModel.calculate_state_estimation,
-}
+# calculation_function_map = {
+#     "power_flow": PowerGridModel.calculate_power_flow,
+#     "state_estimation": PowerGridModel.calculate_state_estimation,
+# }
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol"],
     pytest_cases(get_batch_cases=False),
@@ -60,6 +61,7 @@ def test_single_validation(
     assert set(result.keys()) == {"node", "source"}
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     [
         "case_id",

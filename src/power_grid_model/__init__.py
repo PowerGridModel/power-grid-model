@@ -16,7 +16,7 @@ from power_grid_model.enum import (
     WindingType,
 )
 
-from power_grid_model.power_grid_meta import power_grid_meta_data
+from power_grid_model.power_grid_meta import power_grid_meta_data, initialize_array
 
 
 # dummy PowerGridModel
