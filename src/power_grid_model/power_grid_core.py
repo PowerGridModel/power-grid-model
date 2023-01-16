@@ -12,6 +12,9 @@ from power_grid_model.index_integer import Idx_c
 
 # integer index
 IdxPtr = POINTER(Idx_c)
+IdeDoublePtr = POINTER(IdxPtr)
+# double pointer to char
+CharDoublePtr = POINTER(c_char_p)
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
@@ -83,6 +86,10 @@ class PowerGridCore:
     # error handling
     err_code: Callable[[], int]
     err_msg: Callable[[], str]
+    n_failed_batches: Callable[[], int]
+    failed_batches: Callable[[], IdxPtr]
+    batch_errs: Callable[[], CharDoublePtr]
+    clear_error: Callable[[], None]
     # meta data
     meta_n_datasets: Callable[[], int]
     meta_dataset_name: Callable[[int], str]
