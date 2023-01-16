@@ -33,7 +33,7 @@ struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
     }
 
     template <class CompType>
-    static void retrieve_single_type(MetaDataGeneratorImpl& inst) {
+    static void retrieve_single_type(MetaDataGeneratorImpl<ComponentList<ComponentType...>>& inst) {
         inst.meta_data["input"][CompType::name] = get_meta<typename CompType::InputType>{}();
         inst.meta_data["update"][CompType::name] = get_meta<typename CompType::UpdateType>{}();
         inst.meta_data["sym_output"][CompType::name] = get_meta<typename CompType::template OutputType<true>>{}();
