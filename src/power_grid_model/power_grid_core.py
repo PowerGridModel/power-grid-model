@@ -4,7 +4,7 @@
 
 
 import platform
-from ctypes import CDLL, POINTER, c_char_p, c_size_t, c_void_p
+from ctypes import CDLL, POINTER, c_char_p, c_size_t, c_void_p, c_double
 from pathlib import Path
 from typing import Callable, List
 
@@ -12,19 +12,26 @@ from power_grid_model.index_integer import Idx_c
 
 # integer index
 IdxPtr = POINTER(Idx_c)
-IdeDoublePtr = POINTER(IdxPtr)
+IdxDoublePtr = POINTER(IdxPtr)
 # double pointer to char
 CharDoublePtr = POINTER(c_char_p)
+# double pointer to void
+VoidDoublePtr = POINTER(c_void_p)
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {
-    str: c_char_p,
-    int: Idx_c,
-}
+_ARGS_TYPE_MAPPING = {str: c_char_p, int: Idx_c, float: c_double}
 
 
 class HandlePtr(c_void_p):
+    pass
+
+
+class OptionsPtr(c_void_p):
+    pass
+
+
+class ModelPtr(c_void_p):
     pass
 
 
@@ -102,6 +109,38 @@ class PowerGridCore:
     meta_attribute_ctype: Callable[[str, str, str], str]
     meta_attribute_offset: Callable[[str, str, str], int]
     is_little_endian: Callable[[], int]
+    # options
+    create_options: Callable[[], OptionsPtr]
+    destroy_options: Callable[[OptionsPtr], None]
+    set_calculation_type: Callable[[OptionsPtr, int], None]
+    set_calculation_method: Callable[[OptionsPtr, int], None]
+    set_symmetric: Callable[[OptionsPtr, int], None]
+    set_err_tol: Callable[[OptionsPtr, float], None]
+    set_max_iter: Callable[[OptionsPtr, int], None]
+    set_threading: Callable[[OptionsPtr, int], None]
+    # model
+    create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]
+    update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]
+    copy_model: Callable[[ModelPtr], ModelPtr]
+    calculate: Callable[
+        [
+            # model
+            ModelPtr,
+            OptionsPtr,
+            # output
+            int,
+            CharDoublePtr,
+            VoidDoublePtr,
+            # update
+            int,
+            int,
+            CharDoublePtr,
+            IdxPtr,
+            IdxDoublePtr,
+            VoidDoublePtr,
+        ],
+        None,
+    ]
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
