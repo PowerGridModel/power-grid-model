@@ -53,7 +53,7 @@ class WrapperFunc:
             name:
             c_argtypes:
         """
-        self._cdll = cdll
+        self._cfunc = getattr(cdll, f"PGM_{name}")
         self._handle = handle
         self._name = name
         self._c_argtypes = c_argtypes
@@ -70,7 +70,7 @@ class WrapperFunc:
             else:
                 c_inputs.append(arg)
         # call
-        res = getattr(self._cdll, f"PGM_{self._name}")(*c_inputs)
+        res = self._cfunc(*c_inputs)
         # convert to string for c_char_p
         if self._c_restype == c_char_p:
             res = res.decode()
