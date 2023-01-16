@@ -48,7 +48,7 @@ def _generate_meta_dataset(dataset: str) -> dict:
     py_meta_dataset = {}
     n_classes = pgc.meta_n_classes(dataset.encode())
     for i in range(n_classes):
-        class_name = pgc.meta_class_name(dataset, i).decode()
+        class_name = pgc.meta_class_name(dataset.encode(), i).decode()
         py_meta_dataset[class_name] = _generate_meta_class(dataset, class_name)
     return py_meta_dataset
 
