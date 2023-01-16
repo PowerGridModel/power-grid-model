@@ -8,7 +8,7 @@ import numpy as np
 from power_grid_model.power_grid_core import power_grid_core as pgc
 
 _ctype_numpy_map = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
-_endianness = "<" if pgc.is_little_endian() else ">"
+_endianness = "<" if pgc.is_little_endian() == 1 else ">"
 _nan_value_map = {
     f"{_endianness}f8": np.nan,
     f"{_endianness}(3,)f8": np.nan,
@@ -26,7 +26,7 @@ def _generate_meta_data() -> dict:
     py_meta_data = {}
     n_dataset = pgc.meta_n_datasets()
     for i in range(n_dataset):
-        dataset = pgc.meta_dataset_name(i).decode()
+        dataset = pgc.meta_dataset_name(i)
         py_meta_data[dataset] = _generate_meta_dataset(dataset)
     return py_meta_data
 
@@ -41,9 +41,9 @@ def _generate_meta_dataset(dataset: str) -> dict:
 
     """
     py_meta_dataset = {}
-    n_classes = pgc.meta_n_classes(dataset.encode())
+    n_classes = pgc.meta_n_classes(dataset)
     for i in range(n_classes):
-        class_name = pgc.meta_class_name(dataset.encode(), i).decode()
+        class_name = pgc.meta_class_name(dataset, i)
         py_meta_dataset[class_name] = _generate_meta_class(dataset, class_name)
     return py_meta_dataset
 
@@ -61,7 +61,7 @@ def _generate_meta_class(dataset: str, class_name: str) -> dict:
 
     numpy_dtype_dict = _generate_meta_attributes(dataset, class_name)
     dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != "nans"})
-    if dtype.alignment != pgc.meta_class_alignment(dataset.encode(), class_name.encode()):
+    if dtype.alignment != pgc.meta_class_alignment(dataset, class_name):
         raise TypeError(f'Aligment mismatch for component type: "{class_name}" !')
     py_meta_class = {
         "dtype": dtype,
@@ -90,15 +90,15 @@ def _generate_meta_attributes(dataset: str, class_name: str) -> dict:
         "names": [],
         "formats": [],
         "offsets": [],
-        "itemsize": pgc.meta_class_size(dataset.encode(), class_name.encode()),
+        "itemsize": pgc.meta_class_size(dataset, class_name),
         "aligned": True,
         "nans": [],
     }
-    n_attrs = pgc.meta_n_attributes(dataset.encode(), class_name.encode())
+    n_attrs = pgc.meta_n_attributes(dataset, class_name)
     for i in range(n_attrs):
-        field_name: str = pgc.meta_attribute_name(dataset.encode(), class_name.encode(), i).decode()
-        field_ctype: str = pgc.meta_attribute_ctype(dataset.encode(), class_name.encode(), field_name.encode()).decode()
-        field_offset: int = pgc.meta_attribute_offset(dataset.encode(), class_name.encode(), field_name.encode())
+        field_name: str = pgc.meta_attribute_name(dataset, class_name, i)
+        field_ctype: str = pgc.meta_attribute_ctype(dataset, class_name, field_name)
+        field_offset: int = pgc.meta_attribute_offset(dataset, class_name, field_name)
         field_np_type = f"{_endianness}{_ctype_numpy_map[field_ctype]}"
         field_nan = _nan_value_map[field_np_type]
         numpy_dtype_dict["names"].append(field_name)
