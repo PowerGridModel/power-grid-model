@@ -179,6 +179,13 @@ class PowerGridCore:
     def __del__(self):
         self._cdll.PGM_destroy_handle(self._handle)
 
+    # not copyable
+    def __copy__(self):
+        raise NotImplementedError("Class not copyable")
+
+    def __deepcopy__(self, memodict):
+        raise NotImplementedError("class not copyable")
+
 
 # make one instance
 power_grid_core = PowerGridCore()

@@ -9,6 +9,7 @@ Error classes
 
 from power_grid_model.power_grid_core import power_grid_core as pgc
 from typing import List, Optional
+import numpy as np
 
 
 class PowerGridError(Exception):
@@ -16,7 +17,7 @@ class PowerGridError(Exception):
 
 
 class PowerGridBatchError(Exception):
-    failed_scenarios: List[int]
+    failed_scenarios: np.ndarray
     error_messages: List[str]
 
 
@@ -42,7 +43,7 @@ def find_error() -> Optional[Exception]:
         n_fails = pgc.n_failed_batches()
         failed_idxptr = pgc.failed_batches()
         failed_msgptr = pgc.batch_errs()
-        error.failed_scenarios = [failed_idxptr[i] for i in range(n_fails)]
+        error.failed_scenarios = np.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]
         return error
     else:
