@@ -4,7 +4,7 @@
 
 
 import platform
-from ctypes import CDLL, POINTER, c_char_p, c_size_t, c_void_p, c_double
+from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from pathlib import Path
 from typing import Callable, List
 

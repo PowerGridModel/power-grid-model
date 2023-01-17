@@ -7,9 +7,13 @@
 Error classes
 """
 
-from power_grid_model.power_grid_core import power_grid_core as pgc
 from typing import List, Optional
+
 import numpy as np
+
+from power_grid_model.power_grid_core import power_grid_core as pgc
+
+VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 
 
 class PowerGridError(Exception):
@@ -32,13 +36,10 @@ def find_error() -> Optional[Exception]:
         return None
     elif error_code == 1:
         error_message = pgc.err_msg()
-        error_message += "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
+        error_message += VALIDATOR_MSG
         return PowerGridError(error_message)
     elif error_code == 2:
-        error_message = (
-            "There are errors in the batch calculation.\nTry validate_input_data() or "
-            "validate_batch_data() to validate your data.\n"
-        )
+        error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
         error = PowerGridBatchError(error_message)
         n_fails = pgc.n_failed_batches()
         failed_idxptr = pgc.failed_batches()

@@ -1,10 +1,14 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import Union
+from ctypes import c_void_p
+from typing import Dict, Union
 
 import numpy as np
 
+from power_grid_model.errors import VALIDATOR_MSG
+from power_grid_model.index_integer import Idx_np
+from power_grid_model.power_grid_core import IdxPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
 
 _ctype_numpy_map = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
@@ -138,3 +142,70 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
             dtype=power_grid_meta_data[data_type][component_type]["dtype"],
             order="C",
         )
+
+
+def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]):
+    """
+    prepare array for cpp pointers
+    Args:
+        data_type: input, update, or symmetric/asymmetric output
+        array_dict:
+            key: component type
+            value:
+                data array: can be 1D or 2D (in batches)
+                or
+                dict with
+                    key:
+                        data -> data array in flat for batches
+                        indptr -> index pointer for variable length input
+    Returns:
+        dict of
+            key: component type
+            value: dict of following entries:
+                data: pointer object containing the data
+                indptr: pointer object containing the index pointer, can be none if the batch is homogeneous
+                items_per_batch: number of items per batch, can be none if the batch is inhomogeneous
+                batch_size: size of batches (can be one)
+    """
+    schema = power_grid_meta_data[data_type]
+    return_dict = {}
+    for component_name, v in array_dict.items():
+        if component_name not in schema:
+            continue
+        # homogeneous
+        if isinstance(v, np.ndarray):
+            data = v
+            ndim = v.ndim
+            indptr = None
+            if ndim == 1:
+                batch_size = 1
+                items_per_batch = v.shape[0]
+            elif ndim == 2:  # (n_batch, n_component)
+                batch_size = v.shape[0]
+                items_per_batch = v.shape[1]
+            else:
+                raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
+        # with indptr
+        else:
+            data = v["data"]
+            indptr = v["indptr"]
+            batch_size = indptr.size - 1
+            items_per_batch = None
+            if data.ndim != 1:
+                raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
+            if indptr.ndim != 1:
+                raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
+            if indptr[0] != 0 or indptr[-1] != data.size:
+                raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
+            if np.any(np.diff(indptr) < 0):
+                raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
+        # convert array
+        data = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
+        indptr = np.ascontiguousarray(indptr, dtype=Idx_np).ctypes.data_as(IdxPtr)
+        return_dict[component_name] = {
+            "data": data,
+            "indptr": indptr,
+            "items_per_batch": items_per_batch,
+            "batch_size": batch_size,
+        }
+    return return_dict

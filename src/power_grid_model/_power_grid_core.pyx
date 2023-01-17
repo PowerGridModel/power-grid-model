@@ -210,71 +210,71 @@ cdef map[string, MutableDataPointer] generate_ptr_map(data: Dict[str, Dict[str, 
             v['batch_size'])
     return result
 
-cdef _prepare_cpp_array(data_type: str,
-                        array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]):
-    """
-    prepare array for cpp pointers
-    Args:
-        data_type: input, update, or symmetric/asymmetric output
-        array_dict:
-            key: component type
-            value:
-                data array: can be 1D or 2D (in batches)
-                or
-                dict with
-                    key:
-                        data -> data array in flat for batches
-                        indptr -> index pointer for variable length input
-    Returns:
-        dict of
-            key: component type
-            value: dict of following entries:
-                data: pointer object containing the data
-                indptr: pointer object containing the index pointer
-                data_ptr: int representation of data pointer
-                indptr_ptr: int representation of indptr pointer
-                batch_size: size of batches (can be one)
-    """
-    schema = _power_grid_meta_data[data_type]
-    return_dict = {}
-    for component_name, v in array_dict.items():
-        if component_name not in schema:
-            continue
-        # no indptr, create one
-        if isinstance(v, np.ndarray):
-            data = v
-            ndim = v.ndim
-            if ndim == 1:
-                indptr = np.array([0, v.size], dtype=np_idx_t)
-                batch_size = 1
-            elif ndim == 2:  # (n_batch, n_component)
-                indptr = np.arange(v.shape[0] + 1, dtype=np_idx_t) * v.shape[1]
-                batch_size = v.shape[0]
-            else:
-                raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
-        # with indptr
-        else:
-            data = v['data']
-            indptr = v['indptr']
-            batch_size = indptr.size - 1
-            if data.ndim != 1:
-                raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
-            if indptr.ndim != 1:
-                raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
-            if indptr[0] != 0 or indptr[-1] != data.size:
-                raise ValueError(
-                    f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
-            if np.any(np.diff(indptr) < 0):
-                raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-        # convert array
-        data = np.ascontiguousarray(data, dtype=schema[component_name]['dtype'])
-        indptr = np.ascontiguousarray(indptr, dtype=np_idx_t)
-        return_dict[component_name] = {
-            'data': data,
-            'indptr': indptr,
-            'batch_size': batch_size
-        }
-    return return_dict
+# cdef _prepare_cpp_array(data_type: str,
+#                         array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]):
+#     """
+#     prepare array for cpp pointers
+#     Args:
+#         data_type: input, update, or symmetric/asymmetric output
+#         array_dict:
+#             key: component type
+#             value:
+#                 data array: can be 1D or 2D (in batches)
+#                 or
+#                 dict with
+#                     key:
+#                         data -> data array in flat for batches
+#                         indptr -> index pointer for variable length input
+#     Returns:
+#         dict of
+#             key: component type
+#             value: dict of following entries:
+#                 data: pointer object containing the data
+#                 indptr: pointer object containing the index pointer
+#                 data_ptr: int representation of data pointer
+#                 indptr_ptr: int representation of indptr pointer
+#                 batch_size: size of batches (can be one)
+#     """
+#     schema = _power_grid_meta_data[data_type]
+#     return_dict = {}
+#     for component_name, v in array_dict.items():
+#         if component_name not in schema:
+#             continue
+#         # no indptr, create one
+#         if isinstance(v, np.ndarray):
+#             data = v
+#             ndim = v.ndim
+#             if ndim == 1:
+#                 indptr = np.array([0, v.size], dtype=np_idx_t)
+#                 batch_size = 1
+#             elif ndim == 2:  # (n_batch, n_component)
+#                 indptr = np.arange(v.shape[0] + 1, dtype=np_idx_t) * v.shape[1]
+#                 batch_size = v.shape[0]
+#             else:
+#                 raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
+#         # with indptr
+#         else:
+#             data = v['data']
+#             indptr = v['indptr']
+#             batch_size = indptr.size - 1
+#             if data.ndim != 1:
+#                 raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
+#             if indptr.ndim != 1:
+#                 raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
+#             if indptr[0] != 0 or indptr[-1] != data.size:
+#                 raise ValueError(
+#                     f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
+#             if np.any(np.diff(indptr) < 0):
+#                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
+#         # convert array
+#         data = np.ascontiguousarray(data, dtype=schema[component_name]['dtype'])
+#         indptr = np.ascontiguousarray(indptr, dtype=np_idx_t)
+#         return_dict[component_name] = {
+#             'data': data,
+#             'indptr': indptr,
+#             'batch_size': batch_size
+#         }
+#     return return_dict
 
 cdef class PowerGridModel:
     cdef OptionalMainModel _main_model

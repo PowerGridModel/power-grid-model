@@ -8,8 +8,8 @@ Option class
 """
 from typing import Any
 
-from power_grid_model.power_grid_core import power_grid_core as pgc
 from power_grid_model.power_grid_core import OptionsPtr
+from power_grid_model.power_grid_core import power_grid_core as pgc
 
 
 class OptionSetter:
@@ -18,7 +18,7 @@ class OptionSetter:
     def __init__(self, setter):
         self._setter = setter
 
-    def __set__(self, instance: 'Options', value: Any):
+    def __set__(self, instance: "Options", value: Any):
         self._setter(instance.opt, value)
 
     def __get__(self, instance, owner):
