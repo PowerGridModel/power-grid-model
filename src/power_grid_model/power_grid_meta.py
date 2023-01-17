@@ -1,13 +1,14 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-from ctypes import c_void_p
-from typing import Dict, Union
+from ctypes import Array, c_char_p, c_void_p
+from dataclasses import dataclass
+from typing import Dict, Optional, Union
 
 import numpy as np
 
 from power_grid_model.errors import VALIDATOR_MSG
-from power_grid_model.index_integer import Idx_np
+from power_grid_model.index_integer import Idx_c, Idx_np
 from power_grid_model.power_grid_core import IdxPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
 
@@ -144,7 +145,27 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
         )
 
 
-def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]):
+# prepared data for c api
+@dataclass
+class CBuffer:
+    data: c_void_p
+    indptr: Optional[IdxPtr]
+    items_per_batch: int
+    batch_size: int
+
+
+@dataclass
+class CDataset:
+    dataset: Dict[str, CBuffer]
+    batch_size: int
+    n_types: int
+    type_names: Array
+    items_per_type_per_batch: Array
+    indptrs_per_type: Array
+    data_ptrs_per_type: Array
+
+
+def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]) -> CDataset:
     """
     prepare array for cpp pointers
     Args:
@@ -159,16 +180,22 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
                         data -> data array in flat for batches
                         indptr -> index pointer for variable length input
     Returns:
-        dict of
-            key: component type
-            value: dict of following entries:
-                data: pointer object containing the data
-                indptr: pointer object containing the index pointer, can be none if the batch is homogeneous
-                items_per_batch: number of items per batch, can be none if the batch is inhomogeneous
-                batch_size: size of batches (can be one)
+        instance of CDataset ready to be fed into C API
     """
+    # return empty dataset
+    if not array_dict:
+        return CDataset(
+            dataset={},
+            batch_size=0,
+            n_types=0,
+            type_names=(c_char_p * 0)(),
+            items_per_type_per_batch=(Idx_c * 0)(),
+            indptrs_per_type=(IdxPtr * 0)(),
+            data_ptrs_per_type=(c_void_p * 0)(),
+        )
+    # process
     schema = power_grid_meta_data[data_type]
-    return_dict = {}
+    dataset_dict = {}
     for component_name, v in array_dict.items():
         if component_name not in schema:
             continue
@@ -176,7 +203,7 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         if isinstance(v, np.ndarray):
             data = v
             ndim = v.ndim
-            indptr = None
+            indptr = IdxPtr()
             if ndim == 1:
                 batch_size = 1
                 items_per_batch = v.shape[0]
@@ -190,7 +217,7 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
             data = v["data"]
             indptr = v["indptr"]
             batch_size = indptr.size - 1
-            items_per_batch = None
+            items_per_batch = -1
             if data.ndim != 1:
                 raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
             if indptr.ndim != 1:
@@ -199,13 +226,24 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
                 raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
             if np.any(np.diff(indptr) < 0):
                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-        # convert array
+            indptr = np.ascontiguousarray(indptr, dtype=Idx_np).ctypes.data_as(IdxPtr)
+        # convert data array
         data = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
-        indptr = np.ascontiguousarray(indptr, dtype=Idx_np).ctypes.data_as(IdxPtr)
-        return_dict[component_name] = {
-            "data": data,
-            "indptr": indptr,
-            "items_per_batch": items_per_batch,
-            "batch_size": batch_size,
-        }
-    return return_dict
+        dataset_dict[component_name] = CBuffer(
+            data=data, indptr=indptr, items_per_batch=items_per_batch, batch_size=batch_size
+        )
+        # total set
+    batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
+    if np.unique(batch_sizes).size > 1:
+        raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
+    batch_size = batch_sizes[0]
+    n_types = len(dataset_dict)
+    return CDataset(
+        dataset=dataset_dict,
+        batch_size=batch_size,
+        n_types=n_types,
+        type_names=(c_char_p * n_types)(x.encode() for x in dataset_dict.keys()),
+        items_per_type_per_batch=(Idx_c * n_types)(x.items_per_batch for x in dataset_dict.values()),
+        indptrs_per_type=(IdxPtr * n_types)(x.indptr for x in dataset_dict.values()),
+        data_ptrs_per_type=(c_void_p * n_types)(x.data for x in dataset_dict.values()),
+    )
