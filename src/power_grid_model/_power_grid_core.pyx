@@ -281,37 +281,37 @@ cdef class PowerGridModel:
     cdef readonly bool independent  # all update datasets consists of exactly the same components
     cdef readonly bool cache_topology  # there are no changes in topology (branch, source) in the update datasets
 
-    cdef MainModel * _get_model(self) except *:
-        """
-        get pointer to main model
-        if model does not exist, raise exception
-        This prevents undefined behaviour if the model is empty
-
-        Returns:
-            pointer to main model
-        """
-        if not self._main_model.has_value():
-            raise TypeError("You have an empty instance of PowerGridModel!")
-        return & (self._main_model.value())
-
-    def __init__(self,
-                 input_data: Dict[str, np.ndarray],
-                 double system_frequency=50.0):
-        """
-        Initialize the model from an input data set.
-
-        Args:
-            input_data: input data dictionary
-                key: component type name
-                value: 1D numpy structured array for this component input
-            system_frequency: frequency of the power system, default 50 Hz
-        """
-        cdef map[string, ConstDataPointer] input_set
-        prepared_input = _prepare_cpp_array(data_type='input', array_dict=input_data)
-        input_set = generate_const_ptr_map(prepared_input)
-        self._main_model.emplace(system_frequency, input_set, 0)
-        self.independent = False
-        self.cache_topology = False
+    # cdef MainModel * _get_model(self) except *:
+    #     """
+    #     get pointer to main model
+    #     if model does not exist, raise exception
+    #     This prevents undefined behaviour if the model is empty
+    #
+    #     Returns:
+    #         pointer to main model
+    #     """
+    #     if not self._main_model.has_value():
+    #         raise TypeError("You have an empty instance of PowerGridModel!")
+    #     return & (self._main_model.value())
+    #
+    # def __init__(self,
+    #              input_data: Dict[str, np.ndarray],
+    #              double system_frequency=50.0):
+    #     """
+    #     Initialize the model from an input data set.
+    #
+    #     Args:
+    #         input_data: input data dictionary
+    #             key: component type name
+    #             value: 1D numpy structured array for this component input
+    #         system_frequency: frequency of the power system, default 50 Hz
+    #     """
+    #     cdef map[string, ConstDataPointer] input_set
+    #     prepared_input = _prepare_cpp_array(data_type='input', array_dict=input_data)
+    #     input_set = generate_const_ptr_map(prepared_input)
+    #     self._main_model.emplace(system_frequency, input_set, 0)
+    #     self.independent = False
+    #     self.cache_topology = False
 
     def get_indexer(self, 
                     component_type: str, 
@@ -336,32 +336,32 @@ cdef class PowerGridModel:
         self._get_model().get_indexer(component_type.encode(), id_begin, size, indexer_begin)
         return indexer
 
-    def copy(self) -> PowerGridModel:
-        """
-
-        Copy the current model
-
-        Returns:
-            a copy of PowerGridModel
-        """
-        cdef PowerGridModel new_model = PowerGridModel.__new__(PowerGridModel)
-        new_model._main_model.emplace(deref(self._get_model()))
-        return new_model
-
-    def update(self, *, update_data: Dict[str, np.ndarray]):
-        """
-        Update the model with changes.
-        Args:
-            update_data: update data dictionary
-                key: component type name
-                value: 1D numpy structured array for this component update
-        Returns:
-            None
-        """
-        cdef map[string, ConstDataPointer] update_set
-        prepared_update = _prepare_cpp_array(data_type='update', array_dict=update_data)
-        update_set = generate_const_ptr_map(prepared_update)
-        self._get_model().update_component(update_set, 0)
+    # def copy(self) -> PowerGridModel:
+    #     """
+    #
+    #     Copy the current model
+    #
+    #     Returns:
+    #         a copy of PowerGridModel
+    #     """
+    #     cdef PowerGridModel new_model = PowerGridModel.__new__(PowerGridModel)
+    #     new_model._main_model.emplace(deref(self._get_model()))
+    #     return new_model
+    #
+    # def update(self, *, update_data: Dict[str, np.ndarray]):
+    #     """
+    #     Update the model with changes.
+    #     Args:
+    #         update_data: update data dictionary
+    #             key: component type name
+    #             value: 1D numpy structured array for this component update
+    #     Returns:
+    #         None
+    #     """
+    #     cdef map[string, ConstDataPointer] update_set
+    #     prepared_update = _prepare_cpp_array(data_type='update', array_dict=update_data)
+    #     update_set = generate_const_ptr_map(prepared_update)
+    #     self._get_model().update_component(update_set, 0)
 
     cdef calculate(self,
                    calculation_type,
@@ -634,24 +634,24 @@ cdef class PowerGridModel:
             output_component_types=output_component_types
         )
 
-    @property
-    def all_component_count(self) -> Dict[str, int]:
-        """
-        Get count of number of elements per component type.
-        If the count for a component type is zero, it will not be in the returned dictionary.
-        Returns:
-            a dictionary with
-                key: component type name
-                value: integer count of elements of this type
-        """
-        all_component_count = {}
-        cdef map[string, idx_t] cpp_count = self._get_model().all_component_count()
-        for map_entry in cpp_count:
-            all_component_count[map_entry.first.decode()] = map_entry.second
-        return all_component_count
-
-    def __copy__(self):
-        return self.copy()
+    # @property
+    # def all_component_count(self) -> Dict[str, int]:
+    #     """
+    #     Get count of number of elements per component type.
+    #     If the count for a component type is zero, it will not be in the returned dictionary.
+    #     Returns:
+    #         a dictionary with
+    #             key: component type name
+    #             value: integer count of elements of this type
+    #     """
+    #     all_component_count = {}
+    #     cdef map[string, idx_t] cpp_count = self._get_model().all_component_count()
+    #     for map_entry in cpp_count:
+    #         all_component_count[map_entry.first.decode()] = map_entry.second
+    #     return all_component_count
+    #
+    # def __copy__(self):
+    #     return self.copy()
 
 
 # def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty=False):

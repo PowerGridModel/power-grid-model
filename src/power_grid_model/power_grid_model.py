@@ -6,7 +6,7 @@
 """
 Main power grid model class
 """
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 
@@ -19,12 +19,25 @@ from power_grid_model.power_grid_core import power_grid_core as pgc
 
 class PowerGridModel:
     _model_ptr: ModelPtr
+    _all_component_count: Optional[Dict[str, int]]
 
     @property
     def _model(self):
         if not self._model_ptr:
             raise TypeError("You have an empty instance of PowerGridModel!")
         return self._model_ptr
+
+    @property
+    def all_component_count(self) -> Dict[str, int]:
+        """
+        Get count of number of elements per component type.
+        If the count for a component type is zero, it will not be in the returned dictionary.
+        Returns:
+            a dictionary with
+                key: component type name
+                value: integer count of elements of this type
+        """
+        return self._all_component_count
 
     def copy(self) -> "PowerGridModel":
         """
@@ -44,6 +57,7 @@ class PowerGridModel:
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
         instance._model_ptr = ModelPtr()
+        instance._all_component_count = None
         return instance
 
     def __init__(self, input_data: Dict[str, np.ndarray], system_frequency: float = 50.0):
@@ -65,6 +79,7 @@ class PowerGridModel:
             prepared_input.data_ptrs_per_type,
         )
         assert_error()
+        self._all_component_count = {k: v.size for k, v in input_data.items()}
 
     def update(self, *, update_data: Dict[str, np.ndarray]):
         """
