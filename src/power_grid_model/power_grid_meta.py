@@ -182,17 +182,6 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
     Returns:
         instance of CDataset ready to be fed into C API
     """
-    # return empty dataset
-    if not array_dict:
-        return CDataset(
-            dataset={},
-            batch_size=0,
-            n_types=0,
-            type_names=(c_char_p * 0)(),
-            items_per_type_per_batch=(Idx_c * 0)(),
-            indptrs_per_type=(IdxPtr * 0)(),
-            data_ptrs_per_type=(c_void_p * 0)(),
-        )
     # process
     schema = power_grid_meta_data[data_type]
     dataset_dict = {}
@@ -232,12 +221,15 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         dataset_dict[component_name] = CBuffer(
             data=data, indptr=indptr, items_per_batch=items_per_batch, batch_size=batch_size
         )
-        # total set
-    batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
-    if np.unique(batch_sizes).size > 1:
-        raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
-    batch_size = batch_sizes[0]
+    # total set
     n_types = len(dataset_dict)
+    if n_types == 0:
+        batch_size = 0
+    else:
+        batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
+        if np.unique(batch_sizes).size > 1:
+            raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
+        batch_size = batch_sizes[0]
     return CDataset(
         dataset=dataset_dict,
         batch_size=batch_size,
