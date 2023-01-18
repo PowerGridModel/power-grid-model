@@ -26,6 +26,21 @@ class PowerGridModel:
             raise TypeError("You have an empty instance of PowerGridModel!")
         return self._model_ptr
 
+    def copy(self) -> "PowerGridModel":
+        """
+
+        Copy the current model
+
+        Returns:
+            a copy of PowerGridModel
+        """
+        new_model = PowerGridModel.__new__(PowerGridModel)
+        new_model._model_ptr = pgc.copy_model(self._model)
+        return new_model
+
+    def __copy__(self):
+        return self.copy()
+
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
         instance._model_ptr = ModelPtr()
