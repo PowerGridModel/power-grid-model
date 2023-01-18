@@ -297,6 +297,18 @@ PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const*
     }
 }
 
+// get indexer
+void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component_type, PGM_Idx size,
+                     PGM_ID const* ids, PGM_Idx* indexer) {
+    try {
+        model->get_indexer(component_type, ids, size, indexer);
+    }
+    catch (std::exception& e) {
+        handle->err_code = PGM_regular_error;
+        handle->err_msg = e.what();
+    }
+}
+
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt, PGM_Idx n_output_types,
                    char const** output_type_names, void** output_data, PGM_Idx n_batch, PGM_Idx n_update_types,

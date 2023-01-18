@@ -49,6 +49,7 @@ extern "C" {
 
 // index type
 typedef int64_t PGM_Idx;
+typedef int32_t PGM_ID;
 
 #ifndef PGM_DLL_EXPORTS
 // else define opaque pointer
@@ -161,6 +162,10 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
 
 // copy model
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
+
+// get indexer
+PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component_type,
+                             PGM_Idx size, PGM_ID const* ids, PGM_Idx* indexer);
 
 // run calculation
 PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
