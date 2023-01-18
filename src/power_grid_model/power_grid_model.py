@@ -9,12 +9,12 @@ Main power grid model class
 from typing import Dict, Optional
 
 import numpy as np
-
-from power_grid_model.power_grid_meta import initialize_array, prepare_cpp_array, CDataset
-from index_integer import Idx_np
 from errors import assert_error
+from index_integer import Idx_np
+
 from power_grid_model.power_grid_core import ModelPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
+from power_grid_model.power_grid_meta import CDataset, initialize_array, prepare_cpp_array
 
 
 class PowerGridModel:

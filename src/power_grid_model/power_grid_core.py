@@ -8,7 +8,7 @@ from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from pathlib import Path
 from typing import Callable, List
 
-from power_grid_model.index_integer import Idx_c
+from power_grid_model.index_integer import ID_c, Idx_c
 
 # integer index
 IdxPtr = POINTER(Idx_c)
@@ -122,6 +122,7 @@ class PowerGridCore:
     create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]
     update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]
     copy_model: Callable[[ModelPtr], ModelPtr]
+    get_indexer: Callable[[ModelPtr, c_char_p, int, ID_c, IdxPtr], None]
     calculate: Callable[
         [
             # model
