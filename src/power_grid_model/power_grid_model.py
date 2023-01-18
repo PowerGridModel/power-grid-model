@@ -49,6 +49,8 @@ class PowerGridModel:
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
         new_model._model_ptr = pgc.copy_model(self._model)
+        assert_error()
+        new_model._all_component_count = self._all_component_count
         return new_model
 
     def __copy__(self):
