@@ -29,5 +29,6 @@ struct PGM_Options;
 
 // assert index type
 static_assert(std::is_same_v<PGM_Idx, power_grid_model::Idx>);
+static_assert(std::is_same_v<PGM_ID, power_grid_model::ID>);
 
 #endif  // POWER_GRID_MODEL_C_HPP

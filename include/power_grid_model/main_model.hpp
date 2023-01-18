@@ -380,7 +380,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
-    void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) {
+    void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         // static function array
         static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
             [](MainModelImpl const& model, ID const* id_begin, Idx size, Idx* indexer_begin) {
