@@ -37,8 +37,6 @@ class Options:
 
     @property
     def opt(self) -> OptionsPtr:
-        if not self._opt:
-            raise ValueError("Null option pointer!")
         return self._opt
 
     def __new__(cls, *args, **kwargs):
