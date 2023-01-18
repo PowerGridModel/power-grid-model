@@ -115,6 +115,18 @@ TEST_CASE("C API Model") {
         CHECK(node_result_0.u_angle == doctest::Approx(0.0));
     }
 
+    SUBCASE("Get indexer") {
+        std::array<ID, 2> ids{2, 2};
+        std::array<Idx, 2> indexer{3, 3};
+        PGM_get_indexer(hl, model, "sym_load", 2, ids.data(), indexer.data());
+        CHECK(PGM_err_code(hl) == PGM_no_error);
+        CHECK(indexer[0] == 0);
+        CHECK(indexer[1] == 0);
+        ids[1] = 6;
+        PGM_get_indexer(hl, model, "sym_load", 2, ids.data(), indexer.data());
+        CHECK(PGM_err_code(hl) == PGM_regular_error);
+    }
+
     SUBCASE("Batch power flow") {
         PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
                       2, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
