@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
 import pytest
@@ -357,6 +357,23 @@ def test_validate_values():
     assert both_errors == node_errors + line_errors
 
 
+@pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
+@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_ids")
+def test_validate_generic_power_sensor__all_terminal_types(
+    all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_power_sensor(data={}, component="")
+
+    # Assert
+    all_valid_ids.assert_any_call(
+        ANY, ANY, field=ANY, ref_components=ANY, measured_terminal_type=measured_terminal_type
+    )
+
+
 @pytest.mark.parametrize(
     ("ref_component", "measured_terminal_type"),
     [
@@ -379,7 +396,7 @@ def test_validate_values():
 @patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
 @patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
 @patch("power_grid_model.validation.validation.all_valid_ids")
-def test_validate_generic_power_sensor(
+def test_validate_generic_power_sensor__terminal_types(
     all_valid_ids: MagicMock, ref_component: str, measured_terminal_type: MeasuredTerminalType
 ):
     # Act
