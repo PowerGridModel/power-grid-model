@@ -2,14 +2,17 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 
-from power_grid_model import initialize_array, power_grid_meta_data
+from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
 from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
+    validate_generic_power_sensor,
     validate_ids_exist,
     validate_required_values,
     validate_unique_ids_across_components,
@@ -352,3 +355,45 @@ def test_validate_values():
 
     # The errors should add up (in this simple case)
     assert both_errors == node_errors + line_errors
+
+
+@pytest.mark.parametrize(
+    ("ref_component", "measured_terminal_type"),
+    [
+        ("line", MeasuredTerminalType.branch_from),
+        ("transformer", MeasuredTerminalType.branch_from),
+        ("line", MeasuredTerminalType.branch_to),
+        ("transformer", MeasuredTerminalType.branch_to),
+        ("source", MeasuredTerminalType.source),
+        ("shunt", MeasuredTerminalType.shunt),
+        ("sym_load", MeasuredTerminalType.load),
+        ("asym_load", MeasuredTerminalType.load),
+        ("sym_gen", MeasuredTerminalType.generator),
+        ("asym_gen", MeasuredTerminalType.generator),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_1),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_2),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_3),
+    ],
+)
+@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_ids")
+def test_validate_generic_power_sensor(
+    all_valid_ids: MagicMock, ref_component: str, measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_power_sensor(data={}, component="")
+
+    # Assert
+    for call in all_valid_ids.call_args_list:
+        if call.kwargs.get("measured_terminal_type") == measured_terminal_type:
+            if isinstance(call.kwargs["ref_components"], str) and ref_component == call.kwargs["ref_components"]:
+                return
+            if isinstance(call.kwargs["ref_components"], list) and ref_component in call.kwargs["ref_components"]:
+                return
+
+    raise AssertionError(
+        "all_valid_ids() was never called with "
+        f"ref_component={ref_component} and measured_terminal_type={measured_terminal_type.name}"
+    )
