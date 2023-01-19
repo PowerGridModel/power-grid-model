@@ -343,7 +343,17 @@ def test_validate_input_data_sym_calculation(input_data):
             "sym_power_sensor",
             "measured_object",
             [7, 9, 10],
-            ["line", "transformer", "source", "shunt", "sym_load", "asym_load", "sym_gen", "asym_gen"],
+            [
+                "line",
+                "transformer",
+                "three_winding_transformer",
+                "source",
+                "shunt",
+                "sym_load",
+                "asym_load",
+                "sym_gen",
+                "asym_gen",
+            ],
         )
         in validation_errors
     )
@@ -368,7 +378,17 @@ def test_validate_input_data_sym_calculation(input_data):
             "asym_power_sensor",
             "measured_object",
             [7, 9, 10],
-            ["line", "transformer", "source", "shunt", "sym_load", "asym_load", "sym_gen", "asym_gen"],
+            [
+                "line",
+                "transformer",
+                "three_winding_transformer",
+                "source",
+                "shunt",
+                "sym_load",
+                "asym_load",
+                "sym_gen",
+                "asym_gen",
+            ],
         )
         in validation_errors
     )
