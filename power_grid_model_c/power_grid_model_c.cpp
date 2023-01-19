@@ -156,9 +156,9 @@ int PGM_is_little_endian(PGM_Handle*) {
 }
 
 // buffer control
-void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size) {
+void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name);
+        return meta_data::meta_data().at(dataset).at(component);
     });
     if (data_class.name == "") {
         return nullptr;
@@ -176,9 +176,9 @@ void PGM_destroy_buffer(void* ptr) {
     std::free(ptr);
 #endif
 }
-void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* class_name, void* ptr, PGM_Idx size) {
+void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, void* ptr, PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name);
+        return meta_data::meta_data().at(dataset).at(component);
     });
     if (data_class.name == "") {
         return;
@@ -189,10 +189,10 @@ void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* cla
 }
 // template for get and set attribute
 template <bool is_get, class BufferPtr, class ValuePtr>
-void buffer_get_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
-                              BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size, PGM_Idx stride) {
+void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
+                          BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size, PGM_Idx stride) {
     auto const& data_class = call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name);
+        return meta_data::meta_data().at(dataset).at(component);
     });
     auto const& attr = call_with_bound(handle, [&]() {
         return data_class.get_attr(attribute);
@@ -215,13 +215,13 @@ void buffer_get_set_attribute(PGM_Handle* handle, char const* dataset, char cons
         }
     }
 }
-void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
-                              void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
-    buffer_get_set_attribute<false>(handle, dataset, class_name, attribute, buffer_ptr, src_ptr, size, src_stride);
+void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
+                          void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+    buffer_get_set_value<false>(handle, dataset, component, attribute, buffer_ptr, src_ptr, size, src_stride);
 }
-void PGM_buffer_get_attribute(PGM_Handle* handle, char const* dataset, char const* class_name, char const* attribute,
-                              void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
-    buffer_get_set_attribute<true>(handle, dataset, class_name, attribute, buffer_ptr, dest_ptr, size, dest_stride);
+void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
+                          void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
+    buffer_get_set_value<true>(handle, dataset, component, attribute, buffer_ptr, dest_ptr, size, dest_stride);
 }
 
 // options

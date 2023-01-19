@@ -47,12 +47,12 @@ TEST_CASE("C API Model") {
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, "input", "source", 1)};
     void* source_buffer = unique_source_buffer.get();
     PGM_buffer_set_nan(hl, "input", "source", source_buffer, 1);
-    PGM_buffer_set_attribute(hl, "input", "source", "id", source_buffer, &source_input.id, 1, -1);
-    PGM_buffer_set_attribute(hl, "input", "source", "node", source_buffer, &source_input.node, 1, sizeof(ID));
-    PGM_buffer_set_attribute(hl, "input", "source", "status", source_buffer, &source_input.status, 1, -1);
-    PGM_buffer_set_attribute(hl, "input", "source", "u_ref", source_buffer, &source_input.u_ref, 1, -1);
-    PGM_buffer_set_attribute(hl, "input", "source", "sk", source_buffer, &source_input.sk, 1, -1);
-    PGM_buffer_set_attribute(hl, "input", "source", "rx_ratio", source_buffer, &source_input.rx_ratio, 1, -1);
+    PGM_buffer_set_value(hl, "input", "source", "id", source_buffer, &source_input.id, 1, -1);
+    PGM_buffer_set_value(hl, "input", "source", "node", source_buffer, &source_input.node, 1, sizeof(ID));
+    PGM_buffer_set_value(hl, "input", "source", "status", source_buffer, &source_input.status, 1, -1);
+    PGM_buffer_set_value(hl, "input", "source", "u_ref", source_buffer, &source_input.u_ref, 1, -1);
+    PGM_buffer_set_value(hl, "input", "source", "sk", source_buffer, &source_input.sk, 1, -1);
+    PGM_buffer_set_value(hl, "input", "source", "rx_ratio", source_buffer, &source_input.rx_ratio, 1, -1);
     std::array<void const*, 3> input_data{&node_input, source_buffer, &load_input};
 
     // output data
@@ -144,12 +144,12 @@ TEST_CASE("C API Model") {
         CHECK(node_result_1.u_angle == doctest::Approx(0.0));
         // check via get attribute for u_pu and u
         std::array<double, 2> u_pu{};
-        PGM_buffer_get_attribute(hl, "sym_output", "node", "u_pu", sym_node_outputs.data(), u_pu.data(), 2, -1);
+        PGM_buffer_get_value(hl, "sym_output", "node", "u_pu", sym_node_outputs.data(), u_pu.data(), 2, -1);
         CHECK(u_pu[0] == doctest::Approx(0.4));
         CHECK(u_pu[1] == doctest::Approx(0.7));
         std::array<double, 4> u{};
-        PGM_buffer_get_attribute(hl, "sym_output", "node", "u", sym_node_outputs.data(), u.data(), 2,
-                                 2 * sizeof(double));  // stride of two double
+        PGM_buffer_get_value(hl, "sym_output", "node", "u", sym_node_outputs.data(), u.data(), 2,
+                             2 * sizeof(double));  // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
     }
