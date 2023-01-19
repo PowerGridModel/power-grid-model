@@ -109,8 +109,8 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle);
 // get error code and error messsage
 PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
 PGM_API char const* PGM_err_msg(PGM_Handle const* handle);
-PGM_API PGM_Idx PGM_n_failed_batches(PGM_Handle const* handle);
-PGM_API PGM_Idx const* PGM_failed_batches(PGM_Handle const* handle);
+PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
+PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
 PGM_API char const** PGM_batch_errs(PGM_Handle const* handle);
 PGM_API void PGM_clear_error(PGM_Handle* handle);
 

@@ -15,7 +15,7 @@ using power_grid_model::meta_data::meta_data;
 struct PGM_Handle {
     Idx err_code;
     std::string err_msg;
-    IdxVector failed_batches;
+    IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
 };
@@ -77,11 +77,11 @@ PGM_Idx PGM_err_code(PGM_Handle const* handle) {
 char const* PGM_err_msg(PGM_Handle const* handle) {
     return handle->err_msg.c_str();
 }
-PGM_Idx PGM_n_failed_batches(PGM_Handle const* handle) {
-    return (Idx)handle->failed_batches.size();
+PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) {
+    return (Idx)handle->failed_scenarios.size();
 }
-PGM_Idx const* PGM_failed_batches(PGM_Handle const* handle) {
-    return handle->failed_batches.data();
+PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) {
+    return handle->failed_scenarios.data();
 }
 char const** PGM_batch_errs(PGM_Handle const* handle) {
     handle->batch_errs_c_str.clear();
@@ -372,7 +372,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     catch (BatchCalculationError& e) {
         handle->err_code = PGM_batch_error;
         handle->err_msg = e.what();
-        handle->failed_batches = e.failed_batches();
+        handle->failed_scenarios = e.failed_scenarios();
         handle->batch_errs = e.err_msgs();
     }
     catch (std::exception& e) {

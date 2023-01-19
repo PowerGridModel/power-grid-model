@@ -201,8 +201,8 @@ TEST_CASE("C API Model") {
                       update_data.data());  // batch parameters
         // failed in batch 1
         CHECK(PGM_err_code(hl) == PGM_batch_error);
-        CHECK(PGM_n_failed_batches(hl) == 1);
-        CHECK(PGM_failed_batches(hl)[0] == 1);
+        CHECK(PGM_n_failed_scenarios(hl) == 1);
+        CHECK(PGM_failed_scenarios(hl)[0] == 1);
         std::string err_msg{PGM_batch_errs(hl)[0]};
         CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
         // valid results for batch 0

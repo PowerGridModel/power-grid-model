@@ -129,13 +129,13 @@ class CalculationError : public PowerGridError {
 
 class BatchCalculationError : public CalculationError {
    public:
-    BatchCalculationError(std::string const &msg, IdxVector const &failed_batches,
+    BatchCalculationError(std::string const &msg, IdxVector const &failed_scenarios,
                           std::vector<std::string> const &err_msgs)
-        : CalculationError(msg), failed_batches_{failed_batches}, err_msgs_(err_msgs) {
+        : CalculationError(msg), failed_scenarios_{failed_scenarios}, err_msgs_(err_msgs) {
     }
 
-    IdxVector const &failed_batches() const {
-        return failed_batches_;
+    IdxVector const &failed_scenarios() const {
+        return failed_scenarios_;
     }
 
     std::vector<std::string> const &err_msgs() const {
@@ -143,7 +143,7 @@ class BatchCalculationError : public CalculationError {
     }
 
    private:
-    IdxVector failed_batches_;
+    IdxVector failed_scenarios_;
     std::vector<std::string> err_msgs_;
 };
 
