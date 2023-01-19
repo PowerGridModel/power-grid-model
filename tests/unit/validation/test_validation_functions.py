@@ -407,13 +407,13 @@ def test_validate_generic_power_sensor__terminal_types(
         print(
             ref_component,
             measured_terminal_type,
-            call.kwargs["ref_components"],
-            call.kwargs.get("measured_terminal_type"),
+            call.kwargs,
         )
-        if call.kwargs.get("measured_terminal_type") == measured_terminal_type:
-            if isinstance(call.kwargs["ref_components"], str) and ref_component == call.kwargs["ref_components"]:
+        kwargs = dict(call.kwargs)
+        if kwargs.get("measured_terminal_type") == measured_terminal_type:
+            if isinstance(call.kwargs["ref_components"], str) and ref_component == kwargs["ref_components"]:
                 return
-            if isinstance(call.kwargs["ref_components"], list) and ref_component in call.kwargs["ref_components"]:
+            if isinstance(call.kwargs["ref_components"], list) and ref_component in kwargs["ref_components"]:
                 return
 
     raise AssertionError(
