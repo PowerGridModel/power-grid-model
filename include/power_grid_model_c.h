@@ -117,16 +117,16 @@ PGM_API void PGM_clear_error(PGM_Handle* handle);
 // retrieve meta data
 PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
 PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
-PGM_API PGM_Idx PGM_meta_n_classes(PGM_Handle* handle, char const* dataset);
-PGM_API char const* PGM_meta_class_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
-PGM_API size_t PGM_meta_class_size(PGM_Handle* handle, char const* dataset, char const* class_name);
-PGM_API size_t PGM_meta_class_alignment(PGM_Handle* handle, char const* dataset, char const* class_name);
-PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* class_name);
-PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* class_name,
+PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset);
+PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
+PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
                                             PGM_Idx idx);
-PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* class_name,
+PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
                                              char const* attribute);
-PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* class_name,
+PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
                                          char const* attribute);
 PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 

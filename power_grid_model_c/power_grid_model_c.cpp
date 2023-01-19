@@ -107,48 +107,48 @@ char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx) {
     });
 }
 // class
-PGM_Idx PGM_meta_n_classes(PGM_Handle* handle, char const* dataset) {
+PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset) {
     return call_with_bound(handle, [&]() {
         return (Idx)meta_data::meta_data().at(dataset).size();
     });
 }
-char const* PGM_meta_class_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx) {
+char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx) {
     static auto const class_list = list_of_classes();
     return call_with_bound(handle, [&]() {
         return class_list.at(dataset).at(idx).c_str();
     });
 }
-size_t PGM_meta_class_size(PGM_Handle* handle, char const* dataset, char const* class_name) {
+size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component) {
     return call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name).size;
+        return meta_data::meta_data().at(dataset).at(component).size;
     });
 }
-size_t PGM_meta_class_alignment(PGM_Handle* handle, char const* dataset, char const* class_name) {
+size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component) {
     return call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name).alignment;
+        return meta_data::meta_data().at(dataset).at(component).alignment;
     });
 }
 // attributes
-PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* class_name) {
+PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component) {
     return call_with_bound(handle, [&]() {
-        return (Idx)meta_data::meta_data().at(dataset).at(class_name).attributes.size();
+        return (Idx)meta_data::meta_data().at(dataset).at(component).attributes.size();
     });
 }
-char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx idx) {
+char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx idx) {
     return call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name).attributes.at(idx).name.c_str();
+        return meta_data::meta_data().at(dataset).at(component).attributes.at(idx).name.c_str();
     });
 }
-char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* class_name,
+char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
                                      char const* attribute) {
     return call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name).get_attr(attribute).ctype.c_str();
+        return meta_data::meta_data().at(dataset).at(component).get_attr(attribute).ctype.c_str();
     });
 }
-size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* class_name,
+size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
                                  char const* attribute) {
     return call_with_bound(handle, [&]() {
-        return meta_data::meta_data().at(dataset).at(class_name).get_attr(attribute).offset;
+        return meta_data::meta_data().at(dataset).at(component).get_attr(attribute).offset;
     });
 }
 int PGM_is_little_endian(PGM_Handle*) {
