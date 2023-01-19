@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from typing import List, Union
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
@@ -377,16 +378,12 @@ def test_validate_generic_power_sensor__all_terminal_types(
 @pytest.mark.parametrize(
     ("ref_component", "measured_terminal_type"),
     [
-        ("line", MeasuredTerminalType.branch_from),
-        ("transformer", MeasuredTerminalType.branch_from),
-        ("line", MeasuredTerminalType.branch_to),
-        ("transformer", MeasuredTerminalType.branch_to),
+        (["line", "transformer"], MeasuredTerminalType.branch_from),
+        (["line", "transformer"], MeasuredTerminalType.branch_to),
         ("source", MeasuredTerminalType.source),
         ("shunt", MeasuredTerminalType.shunt),
-        ("sym_load", MeasuredTerminalType.load),
-        ("asym_load", MeasuredTerminalType.load),
-        ("sym_gen", MeasuredTerminalType.generator),
-        ("asym_gen", MeasuredTerminalType.generator),
+        (["sym_load", "asym_load"], MeasuredTerminalType.load),
+        (["sym_gen", "asym_gen"], MeasuredTerminalType.generator),
         ("three_winding_transformer", MeasuredTerminalType.branch3_1),
         ("three_winding_transformer", MeasuredTerminalType.branch3_2),
         ("three_winding_transformer", MeasuredTerminalType.branch3_3),
@@ -397,21 +394,12 @@ def test_validate_generic_power_sensor__all_terminal_types(
 @patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
 @patch("power_grid_model.validation.validation.all_valid_ids")
 def test_validate_generic_power_sensor__terminal_types(
-    all_valid_ids: MagicMock, ref_component: str, measured_terminal_type: MeasuredTerminalType
+    all_valid_ids: MagicMock, ref_component: Union[str, List[str]], measured_terminal_type: MeasuredTerminalType
 ):
     # Act
     validate_generic_power_sensor(data={}, component="")
 
     # Assert
-    for call in all_valid_ids.call_args_list:
-        kwargs = dict(call.kwargs)
-        if kwargs.get("measured_terminal_type") == measured_terminal_type:
-            if isinstance(kwargs["ref_components"], str) and ref_component == kwargs["ref_components"]:
-                return
-            if isinstance(kwargs["ref_components"], list) and ref_component in kwargs["ref_components"]:
-                return
-
-    raise AssertionError(
-        "all_valid_ids() was never called with "
-        f"ref_component={ref_component} and measured_terminal_type={measured_terminal_type.name}"
+    all_valid_ids.assert_any_call(
+        ANY, ANY, field=ANY, ref_components=ref_component, measured_terminal_type=measured_terminal_type
     )
