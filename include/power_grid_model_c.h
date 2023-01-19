@@ -150,26 +150,27 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
 PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
 
 // create model
-PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_input_types,
-                                             char const** type_names, PGM_Idx const* type_sizes,
+PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
+                                             char const** components, PGM_Idx const* component_sizes,
                                              void const** input_data);
 
 // update model
-PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_update_types,
-                              char const** type_names, PGM_Idx const* type_sizes, void const** update_data);
+PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components,
+                              char const** components, PGM_Idx const* component_sizes, void const** update_data);
 
 // copy model
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
 
 // get indexer
-PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component_type,
-                             PGM_Idx size, PGM_ID const* ids, PGM_Idx* indexer);
+PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
+                             PGM_ID const* ids, PGM_Idx* indexer);
 
 // run calculation
 PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                           PGM_Idx n_output_types, char const** output_type_names, void** output_data, PGM_Idx n_batch,
-                           PGM_Idx n_update_types, char const** update_type_names, PGM_Idx const* sizes_per_batch,
-                           PGM_Idx const** indptrs_per_type, void const** update_data);
+                           PGM_Idx n_output_components, char const** output_components, void** output_data,
+                           PGM_Idx n_scenarios, PGM_Idx n_update_components, char const** update_components,
+                           PGM_Idx const* n_component_elements_per_scenario, PGM_Idx const** indptrs_per_component,
+                           void const** update_data);
 
 // destroy model
 PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);

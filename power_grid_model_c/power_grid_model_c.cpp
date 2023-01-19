@@ -251,12 +251,12 @@ void PGM_set_threading(PGM_Handle*, PGM_Options* opt, PGM_Idx threading) {
 }
 
 // create model
-PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_input_types,
-                                     char const** type_names, PGM_Idx const* type_sizes, void const** input_data) {
+PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
+                                     char const** components, PGM_Idx const* component_sizes, void const** input_data) {
     PGM_clear_error(handle);
     ConstDataset dataset{};
-    for (Idx i = 0; i != n_input_types; ++i) {
-        dataset[type_names[i]] = ConstDataPointer{input_data[i], type_sizes[i]};
+    for (Idx i = 0; i != n_components; ++i) {
+        dataset[components[i]] = ConstDataPointer{input_data[i], component_sizes[i]};
     }
     try {
         return new MainModel{system_frequency, dataset, 0};
@@ -269,12 +269,12 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 }
 
 // update model
-void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_update_types, char const** type_names,
-                      PGM_Idx const* type_sizes, void const** update_data) {
+void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components, char const** components,
+                      PGM_Idx const* component_sizes, void const** update_data) {
     PGM_clear_error(handle);
     ConstDataset dataset{};
-    for (Idx i = 0; i != n_update_types; ++i) {
-        dataset[type_names[i]] = ConstDataPointer{update_data[i], type_sizes[i]};
+    for (Idx i = 0; i != n_components; ++i) {
+        dataset[components[i]] = ConstDataPointer{update_data[i], component_sizes[i]};
     }
     try {
         model->update_component(dataset);
@@ -298,10 +298,10 @@ PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const*
 }
 
 // get indexer
-void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component_type, PGM_Idx size,
+void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
                      PGM_ID const* ids, PGM_Idx* indexer) {
     try {
-        model->get_indexer(component_type, ids, size, indexer);
+        model->get_indexer(component, ids, size, indexer);
     }
     catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
@@ -310,32 +310,35 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 }
 
 // run calculation
-void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt, PGM_Idx n_output_types,
-                   char const** output_type_names, void** output_data, PGM_Idx n_batch, PGM_Idx n_update_types,
-                   char const** update_type_names, PGM_Idx const* sizes_per_batch, PGM_Idx const** indptrs_per_type,
-                   void const** update_data) {
+void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt, PGM_Idx n_output_components,
+                   char const** output_components, void** output_data, PGM_Idx n_scenarios, PGM_Idx n_update_components,
+                   char const** update_components, PGM_Idx const* n_component_elements_per_scenario,
+                   PGM_Idx const** indptrs_per_component, void const** update_data) {
     PGM_clear_error(handle);
     std::map<std::string, Idx> const n_component = model->all_component_count();
     // prepare output dataset
     Dataset output_dataset{};
     // set n_output_batch to one for single calculation
-    Idx const n_output_batch = std::max((Idx)1, n_batch);
-    for (Idx i = 0; i != n_output_types; ++i) {
-        auto const found = n_component.find(output_type_names[i]);
+    Idx const n_output_scenarios = std::max((Idx)1, n_scenarios);
+    for (Idx i = 0; i != n_output_components; ++i) {
+        auto const found = n_component.find(output_components[i]);
         if (found != n_component.cend()) {
-            output_dataset[output_type_names[i]] = MutableDataPointer{output_data[i], n_output_batch, found->second};
+            output_dataset[output_components[i]] =
+                MutableDataPointer{output_data[i], n_output_scenarios, found->second};
         }
     }
     // prepare update dataset
     ConstDataset update_dataset{};
-    for (Idx i = 0; i != n_update_types; ++i) {
-        if (sizes_per_batch[i] < 0) {
+    for (Idx i = 0; i != n_update_components; ++i) {
+        if (n_component_elements_per_scenario[i] < 0) {
             // use indptr as sparse batch
-            update_dataset[update_type_names[i]] = ConstDataPointer(update_data[i], indptrs_per_type[i], n_batch);
+            update_dataset[update_components[i]] =
+                ConstDataPointer(update_data[i], indptrs_per_component[i], n_scenarios);
         }
         else {
             // use dense batch
-            update_dataset[update_type_names[i]] = ConstDataPointer(update_data[i], n_batch, sizes_per_batch[i]);
+            update_dataset[update_components[i]] =
+                ConstDataPointer(update_data[i], n_scenarios, n_component_elements_per_scenario[i]);
         }
     }
     // call calculation
