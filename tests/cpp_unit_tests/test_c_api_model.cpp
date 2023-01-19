@@ -41,8 +41,8 @@ TEST_CASE("C API Model") {
     NodeInput node_input{{0}, 100.0};
     SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, 1000.0, 0.0, 1.0};
     SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 500.0};
-    std::array input_type_names{"node", "source", "sym_load"};
-    std::array<Idx, 3> input_type_sizes{1, 1, 1};
+    std::array input_components{"node", "source", "sym_load"};
+    std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, "input", "source", 1)};
     void* source_buffer = unique_source_buffer.get();
@@ -59,26 +59,26 @@ TEST_CASE("C API Model") {
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
     NodeOutput<true>& node_result_0 = sym_node_outputs[0];
     NodeOutput<true>& node_result_1 = sym_node_outputs[1];
-    std::array output_type_names{"node"};
+    std::array output_components{"node"};
     std::array<void*, 1> sym_output_data{sym_node_outputs.data()};
 
     // update data
     SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};
     std::array<SymLoadGenUpdate, 2> load_updates{{{{{2}, na_IntS}, nan, 100.0}, {{{2}, na_IntS}, nan, 300.0}}};
-    std::array update_type_names{"source", "sym_load"};
-    std::array<Idx, 2> update_type_sizes{1, 1};
+    std::array update_components{"source", "sym_load"};
+    std::array<Idx, 2> update_component_sizes{1, 1};
     std::array<void const*, 2> update_data{&source_update, load_updates.data()};
-    std::array<Idx, 2> sizes_per_batch{-1, 1};
+    std::array<Idx, 2> n_component_elements_per_scenario{-1, 1};
     std::array<Idx, 3> source_update_indptr{0, 1, 1};
-    std::array<Idx const*, 2> indptrs_per_type{source_update_indptr.data(), nullptr};
+    std::array<Idx const*, 2> indptrs_per_component{source_update_indptr.data(), nullptr};
 
     // create model
     ModelPtr unique_model{
-        PGM_create_model(hl, 50.0, 3, input_type_names.data(), input_type_sizes.data(), input_data.data())};
+        PGM_create_model(hl, 50.0, 3, input_components.data(), input_component_sizes.data(), input_data.data())};
     PGM_PowerGridModel* model = unique_model.get();
 
     SUBCASE("Simple power flow") {
-        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
         CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
@@ -89,9 +89,9 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Simple update") {
-        PGM_update_model(hl, model, 2, update_type_names.data(), update_type_sizes.data(), update_data.data());
+        PGM_update_model(hl, model, 2, update_components.data(), update_component_sizes.data(), update_data.data());
         CHECK(PGM_err_code(hl) == PGM_no_error);
-        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
         CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
@@ -104,7 +104,7 @@ TEST_CASE("C API Model") {
     SUBCASE("Copy model") {
         ModelPtr model_copy{PGM_copy_model(hl, model)};
         CHECK(PGM_err_code(hl) == PGM_no_error);
-        PGM_calculate(hl, model_copy.get(), opt, 1, output_type_names.data(),
+        PGM_calculate(hl, model_copy.get(), opt, 1, output_components.data(),
                       sym_output_data.data(),                     // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);  // batch parameters
         CHECK(PGM_err_code(hl) == PGM_no_error);
@@ -128,8 +128,9 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Batch power flow") {
-        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
-                      2, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
+                      2, 2, update_components.data(), n_component_elements_per_scenario.data(),
+                      indptrs_per_component.data(),
                       update_data.data());  // batch parameters
         CHECK(PGM_err_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
@@ -157,7 +158,7 @@ TEST_CASE("C API Model") {
     SUBCASE("Construction error") {
         load_input.id = 0;
         ModelPtr wrong_model{
-            PGM_create_model(hl, 50.0, 3, input_type_names.data(), input_type_sizes.data(), input_data.data())};
+            PGM_create_model(hl, 50.0, 3, input_components.data(), input_component_sizes.data(), input_data.data())};
         CHECK(wrong_model.get() == nullptr);
         CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_err_msg(hl)};
@@ -166,7 +167,7 @@ TEST_CASE("C API Model") {
 
     SUBCASE("Update error") {
         source_update.id = 5;
-        PGM_update_model(hl, model, 2, update_type_names.data(), update_type_sizes.data(), update_data.data());
+        PGM_update_model(hl, model, 2, update_components.data(), update_component_sizes.data(), update_data.data());
         CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_err_msg(hl)};
         CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
@@ -178,7 +179,7 @@ TEST_CASE("C API Model") {
         PGM_set_err_tol(hl, opt, 1e-100);
         PGM_set_symmetric(hl, opt, 0);
         PGM_set_threading(hl, opt, 1);
-        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
         CHECK(PGM_err_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_err_msg(hl)};
@@ -186,7 +187,7 @@ TEST_CASE("C API Model") {
         // wrong method
         PGM_set_calculation_type(hl, opt, PGM_state_estimation);
         PGM_set_calculation_method(hl, opt, PGM_iterative_current);
-        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
         CHECK(PGM_err_code(hl) == PGM_regular_error);
         err_msg = PGM_err_msg(hl);
@@ -196,8 +197,9 @@ TEST_CASE("C API Model") {
     SUBCASE("Batch calculation error") {
         // wrong id
         load_updates[1].id = 5;
-        PGM_calculate(hl, model, opt, 1, output_type_names.data(), sym_output_data.data(),  // basic parameters
-                      2, 2, update_type_names.data(), sizes_per_batch.data(), indptrs_per_type.data(),
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
+                      2, 2, update_components.data(), n_component_elements_per_scenario.data(),
+                      indptrs_per_component.data(),
                       update_data.data());  // batch parameters
         // failed in batch 1
         CHECK(PGM_err_code(hl) == PGM_batch_error);
