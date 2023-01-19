@@ -576,27 +576,6 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         data,
         component,
         field="measured_object",
-        ref_components="three_winding_transformer",
-        measured_terminal_type=MeasuredTerminalType.branch3_1,
-    )
-    errors += all_valid_ids(
-        data,
-        component,
-        field="measured_object",
-        ref_components="three_winding_transformer",
-        measured_terminal_type=MeasuredTerminalType.branch3_2,
-    )
-    errors += all_valid_ids(
-        data,
-        component,
-        field="measured_object",
-        ref_components="three_winding_transformer",
-        measured_terminal_type=MeasuredTerminalType.branch3_3,
-    )
-    errors += all_valid_ids(
-        data,
-        component,
-        field="measured_object",
         ref_components="source",
         measured_terminal_type=MeasuredTerminalType.source,
     )
@@ -620,6 +599,27 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         field="measured_object",
         ref_components=["sym_gen", "asym_gen"],
         measured_terminal_type=MeasuredTerminalType.generator,
+    )
+    errors += all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components="three_winding_transformer",
+        measured_terminal_type=MeasuredTerminalType.branch3_1,
+    )
+    errors += all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components="three_winding_transformer",
+        measured_terminal_type=MeasuredTerminalType.branch3_2,
+    )
+    errors += all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components="three_winding_transformer",
+        measured_terminal_type=MeasuredTerminalType.branch3_3,
     )
 
     return errors
