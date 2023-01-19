@@ -22,7 +22,7 @@ namespace power_grid_model {
 //          the set data is in the range [ indptr[i], indptr[i + 1] )
 // the dataset can also be a batch of sets with the same length per batch
 //     the indptr is a nullptr, for i-th sets,
-//          the set data is in the range [ i * length_per_batch, (i + 1) * length_per_batch )
+//          the set data is in the range [ i * elements_per_scenario, (i + 1) * elements_per_scenario )
 
 template <bool is_const>
 class DataPointer {
@@ -30,27 +30,27 @@ class DataPointer {
     using ptr_t = std::conditional_t<is_const, T const*, T*>;
 
    public:
-    DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, length_per_batch_{} {
+    DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, elements_per_scenario_{} {
     }
 
     // single batch dataset
     DataPointer(ptr_t<void> ptr, Idx single_length)
-        : ptr_{ptr}, indptr_{nullptr}, batch_size_{1}, length_per_batch_{single_length} {
+        : ptr_{ptr}, indptr_{nullptr}, batch_size_{1}, elements_per_scenario_{single_length} {
     }
 
     // fix batch length
-    DataPointer(ptr_t<void> ptr, Idx batch_size, Idx length_per_batch)
-        : ptr_{ptr}, indptr_{nullptr}, batch_size_{batch_size}, length_per_batch_{length_per_batch} {
+    DataPointer(ptr_t<void> ptr, Idx batch_size, Idx elements_per_scenario)
+        : ptr_{ptr}, indptr_{nullptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {
     }
 
     // variable batches
     DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size)
-        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, length_per_batch_{-1} {
+        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{-1} {
     }
 
     // copy to const constructor
-    DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size, Idx length_per_batch)
-        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, length_per_batch_{length_per_batch} {
+    DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size, Idx elements_per_scenario)
+        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {
     }
 
     template <class T>
@@ -67,10 +67,10 @@ class DataPointer {
         }
         else {
             if (pos < 0) {
-                return std::make_pair(ptr, ptr + length_per_batch_ * batch_size_);
+                return std::make_pair(ptr, ptr + elements_per_scenario_ * batch_size_);
             }
             else {
-                return std::make_pair(ptr + length_per_batch_ * pos, ptr + length_per_batch_ * (pos + 1));
+                return std::make_pair(ptr + elements_per_scenario_ * pos, ptr + elements_per_scenario_ * (pos + 1));
             }
         }
     }
@@ -79,14 +79,14 @@ class DataPointer {
         return (Idx)batch_size_;
     }
 
-    Idx length_per_batch(Idx pos) const {
+    Idx elements_per_scenario(Idx pos) const {
         assert(pos >= 0);
         assert(pos < batch_size_);
         if (indptr_) {
             return indptr_[pos + 1] - indptr_[pos];
         }
         else {
-            return (Idx)length_per_batch_;
+            return (Idx)elements_per_scenario_;
         }
     }
 
@@ -101,21 +101,21 @@ class DataPointer {
             return (indptr_[batch_size_] == 0);
         }
         else {
-            return batch_size_ == 0 || length_per_batch_ == 0;
+            return batch_size_ == 0 || elements_per_scenario_ == 0;
         }
     }
 
     // conversion to const iterator
     template <class UX = DataPointer<true>>
     operator std::enable_if_t<!is_const, UX>() const {
-        return DataPointer<true>{ptr_, indptr_, batch_size_, length_per_batch_};
+        return DataPointer<true>{ptr_, indptr_, batch_size_, elements_per_scenario_};
     }
 
    private:
     ptr_t<void> ptr_;
     Idx const* indptr_;
-    Idx batch_size_;        // number of batches
-    Idx length_per_batch_;  // number of data points per batch, -1 for variable batches
+    Idx batch_size_;             // number of batches
+    Idx elements_per_scenario_;  // number of data points per batch, -1 for variable batches
 };
 
 using MutableDataPointer = DataPointer<false>;

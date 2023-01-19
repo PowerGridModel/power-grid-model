@@ -618,9 +618,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const length_per_batch = component_update.length_per_batch(0);
+        Idx const elements_per_scenario = component_update.elements_per_scenario(0);
         for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
-            if (length_per_batch != component_update.length_per_batch(batch)) {
+            if (elements_per_scenario != component_update.elements_per_scenario(batch)) {
                 return false;
             }
         }
