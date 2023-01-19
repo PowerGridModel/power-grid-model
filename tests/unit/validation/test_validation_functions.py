@@ -404,6 +404,12 @@ def test_validate_generic_power_sensor__terminal_types(
 
     # Assert
     for call in all_valid_ids.call_args_list:
+        print(
+            ref_component,
+            measured_terminal_type,
+            call.kwargs["ref_components"],
+            call.kwargs.get("measured_terminal_type"),
+        )
         if call.kwargs.get("measured_terminal_type") == measured_terminal_type:
             if isinstance(call.kwargs["ref_components"], str) and ref_component == call.kwargs["ref_components"]:
                 return
