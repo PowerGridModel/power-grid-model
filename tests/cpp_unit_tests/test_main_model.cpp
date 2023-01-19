@@ -25,7 +25,8 @@ TEST_CASE("Test main model") {
         {{{{14}, 6}, MeasuredTerminalType::source, 0.02}, 1.4e6, 1.4e3},
         {{{{15}, 9}, MeasuredTerminalType::shunt, 0.02}, 1.5e6, 1.5e3},
         {{{{16}, 7}, MeasuredTerminalType::load, 0.02}, 1.6e6, 1.6e3},
-        {{{{17}, 8}, MeasuredTerminalType::load, 0.02}, 1.7e6, 1.7e3}};
+        {{{{17}, 8}, MeasuredTerminalType::load, 0.02}, 1.7e6, 1.7e3},
+        {{{{28}, 3}, MeasuredTerminalType::node_injection, 0.02}, 1.8e6, 1.8e3}};
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<AsymPowerSensorInput> asym_power_sensor_input{
@@ -34,7 +35,8 @@ TEST_CASE("Test main model") {
         {{{{21}, 6}, MeasuredTerminalType::source, 0.02}, {2.41e6, 2.42e6, 2.43e6}, {2.41e3, 2.42e3, 2.43e3}},
         {{{{22}, 9}, MeasuredTerminalType::shunt, 0.02}, {2.51e6, 2.52e6, 2.53e6}, {2.51e3, 2.52e3, 2.53e3}},
         {{{{23}, 7}, MeasuredTerminalType::load, 0.02}, {2.61e6, 2.62e6, 2.63e6}, {2.61e3, 2.62e3, 2.63e3}},
-        {{{{24}, 8}, MeasuredTerminalType::load, 0.02}, {2.71e6, 2.72e6, 2.73e6}, {2.71e3, 2.72e3, 2.73e3}}};
+        {{{{24}, 8}, MeasuredTerminalType::load, 0.02}, {2.71e6, 2.72e6, 2.73e6}, {2.71e3, 2.72e3, 2.73e3}},
+        {{{{29}, 3}, MeasuredTerminalType::node_injection, 0.02}, {2.81e6, 2.82e6, 2.83e6}, {2.81e3, 2.82e3, 2.83e3}}};
 
     // {{{id}, measured_object}, u_sigma, u_measured, u_angle_measured}
     std::vector<SymVoltageSensorInput> sym_voltage_sensor_input{{{{{25}, 1}, 105.0}, 10.1e3, 0.1},
@@ -423,6 +425,8 @@ TEST_CASE("Test main model") {
             CHECK(sym_power_sensor[4].q_residual == doctest::Approx(1.6e3 - sym_load_sym[0].q));
             CHECK(sym_power_sensor[5].p_residual == doctest::Approx(1.7e6 - sym_load_asym[0].p));
             CHECK(sym_power_sensor[5].q_residual == doctest::Approx(1.7e3 - sym_load_asym[0].q));
+            CHECK(sym_power_sensor[6].p_residual == doctest::Approx(1.8e6));  // TODO
+            CHECK(sym_power_sensor[6].q_residual == doctest::Approx(1.8e3));  // TODO
         }
 
         SUBCASE("AsymVoltageSensor, sym output") {
@@ -454,6 +458,8 @@ TEST_CASE("Test main model") {
             CHECK(asym_power_sensor_sym_output[4].q_residual == doctest::Approx(3 * 2.62e3 - sym_load_sym[0].q));
             CHECK(asym_power_sensor_sym_output[5].p_residual == doctest::Approx(3 * 2.72e6 - sym_load_asym[0].p));
             CHECK(asym_power_sensor_sym_output[5].q_residual == doctest::Approx(3 * 2.72e3 - sym_load_asym[0].q));
+            CHECK(asym_power_sensor_sym_output[6].p_residual == doctest::Approx(3 * 2.82e6));  // TODO
+            CHECK(asym_power_sensor_sym_output[6].q_residual == doctest::Approx(3 * 2.82e3));  // TODO
         }
     }
 
@@ -535,6 +541,8 @@ TEST_CASE("Test main model") {
             CHECK(asym_power_sensor[4].q_residual[2] == doctest::Approx(2.63e3 - asym_load_sym[0].q[2]));
             CHECK(asym_power_sensor[5].p_residual[0] == doctest::Approx(2.71e6 - asym_load_asym[0].p[0]));
             CHECK(asym_power_sensor[5].q_residual[1] == doctest::Approx(2.72e3 - asym_load_asym[0].q[1]));
+            CHECK(asym_power_sensor[6].p_residual[0] == doctest::Approx(2.81e6));  // TODO
+            CHECK(asym_power_sensor[6].q_residual[1] == doctest::Approx(2.82e3));  // TODO
         }
 
         SUBCASE("SymPowerSensor, asym output") {
@@ -558,6 +566,8 @@ TEST_CASE("Test main model") {
             CHECK(sym_power_sensor_asym_output[4].q_residual[2] == doctest::Approx(1.6e3 / 3 - asym_load_sym[0].q[2]));
             CHECK(sym_power_sensor_asym_output[5].p_residual[0] == doctest::Approx(1.7e6 / 3 - asym_load_asym[0].p[0]));
             CHECK(sym_power_sensor_asym_output[5].q_residual[1] == doctest::Approx(1.7e3 / 3 - asym_load_asym[0].q[1]));
+            CHECK(sym_power_sensor_asym_output[6].p_residual[0] == doctest::Approx(1.8e6 / 3));  // TODO
+            CHECK(sym_power_sensor_asym_output[6].q_residual[1] == doctest::Approx(1.8e3 / 3));  // TODO
         }
     }
 

@@ -110,9 +110,10 @@ class IterativePFSolver {
         output.branch = y_bus.calculate_branch_flow(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
 
-        // prepare source and load gen
+        // prepare source, load gen and node_injection
         output.source.resize(source_bus_indptr_->back());
         output.load_gen.resize(load_gen_bus_indptr_->back());
+        output.node_injection.resize(n_bus_);
         // loop all bus
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // source
@@ -146,6 +147,11 @@ class IterativePFSolver {
                 }
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
             }
+
+            // node injection
+            // TODO: How to calculate the node injection? Same as const_pq loads and generators?
+            output.node_injection[bus].s = ComplexValue<sym>();
+            output.node_injection[bus].i = ComplexValue<sym>();
         }
     }
 

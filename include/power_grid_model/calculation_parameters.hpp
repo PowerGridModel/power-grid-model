@@ -61,7 +61,7 @@ struct BranchMathOutput {
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>
-struct ApplianceMathOutput {
+struct ApplianceMathOutput {  // TODO: Should we rename this, e.g. InjectionMathOutput?
     ComplexValue<sym> s;
     ComplexValue<sym> i;
 };
@@ -102,6 +102,7 @@ struct MathModelTopology {
     IdxVector shunt_power_sensor_indptr;        // indptr of the shunt
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
+    IdxVector node_power_sensor_indptr;         // indptr of the node
 
     Idx n_bus() const {
         return (Idx)phase_shift.size();
@@ -146,6 +147,10 @@ struct MathModelTopology {
     Idx n_branch_to_power_sensor() const {
         return branch_to_power_sensor_indptr.back();
     }
+
+    Idx n_node_power_sensor() const {
+        return node_power_sensor_indptr.back();
+    }
 };
 
 template <bool sym>
@@ -176,6 +181,7 @@ struct StateEstimationInput {
     std::vector<SensorCalcParam<sym>> measured_shunt_power;
     std::vector<SensorCalcParam<sym>> measured_branch_from_power;
     std::vector<SensorCalcParam<sym>> measured_branch_to_power;
+    std::vector<SensorCalcParam<sym>> measured_node_injection_power;
 };
 
 template <bool sym>
@@ -185,6 +191,7 @@ struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;
     std::vector<ApplianceMathOutput<sym>> load_gen;
+    std::vector<ApplianceMathOutput<sym>> node_injection;
 };
 
 // component indices at physical model side
