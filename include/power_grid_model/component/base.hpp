@@ -17,7 +17,7 @@ namespace power_grid_model {
 class Base {
    public:
     using InputType = BaseInput;
-    using UpdateType = BaseInput;
+    using UpdateType = BaseUpdate;
     template <bool sym>
     using OutputType = BaseOutput;
     static constexpr char const* name = "base";
