@@ -218,7 +218,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
         // loop all component type name
         for (auto const& [type_name, reference_dataset] : reference_result) {
             MetaData const& component_meta = meta.at(type_name);
-            Idx const length = reference_dataset.length_per_batch(batch);
+            Idx const length = reference_dataset.elements_per_scenario(batch);
             // offset batch
             void const* const result_ptr =
                 reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * batch * component_meta.size;

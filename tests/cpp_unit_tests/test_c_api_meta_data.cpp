@@ -25,33 +25,34 @@ TEST_CASE("C API Meta Data") {
         }
     }
 
-    SUBCASE("Data classes") {
-        for (auto const& [dataset_name, data_classes] : meta) {
-            CHECK(PGM_meta_n_classes(hl, dataset_name.c_str()) == (Idx)data_classes.size());
-            for (Idx i = 0; i != (Idx)data_classes.size(); ++i) {
-                auto const found = data_classes.find(PGM_meta_class_name(hl, dataset_name.c_str(), i));
-                CHECK(found != data_classes.end());
-                auto const& class_name = found->first;
-                auto const& class_meta = found->second;
-                CHECK(PGM_meta_class_size(hl, dataset_name.c_str(), class_name.c_str()) == class_meta.size);
-                CHECK(PGM_meta_class_alignment(hl, dataset_name.c_str(), class_name.c_str()) == class_meta.alignment);
+    SUBCASE("Component meta data") {
+        for (auto const& [dataset_name, dataset] : meta) {
+            CHECK(PGM_meta_n_components(hl, dataset_name.c_str()) == (Idx)dataset.size());
+            for (Idx i = 0; i != (Idx)dataset.size(); ++i) {
+                auto const found = dataset.find(PGM_meta_component_name(hl, dataset_name.c_str(), i));
+                CHECK(found != dataset.end());
+                auto const& component_name = found->first;
+                auto const& component_meta = found->second;
+                CHECK(PGM_meta_component_size(hl, dataset_name.c_str(), component_name.c_str()) == component_meta.size);
+                CHECK(PGM_meta_component_alignment(hl, dataset_name.c_str(), component_name.c_str()) ==
+                      component_meta.alignment);
             }
         }
     }
 
     SUBCASE("Attributes") {
-        for (auto const& [dataset_name, data_classes] : meta) {
-            for (auto const& [class_name, class_meta] : data_classes) {
-                auto const& attributes = class_meta.attributes;
-                CHECK(PGM_meta_n_attributes(hl, dataset_name.c_str(), class_name.c_str()) == (Idx)attributes.size());
-
+        for (auto const& [dataset_name, dataset] : meta) {
+            for (auto const& [component_name, component_meta] : dataset) {
+                auto const& attributes = component_meta.attributes;
+                CHECK(PGM_meta_n_attributes(hl, dataset_name.c_str(), component_name.c_str()) ==
+                      (Idx)attributes.size());
                 for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
                     auto const& attr = attributes[i];
-                    CHECK(PGM_meta_attribute_name(hl, dataset_name.c_str(), class_name.c_str(), i) == attr.name);
-                    CHECK(PGM_meta_attribute_ctype(hl, dataset_name.c_str(), class_name.c_str(), attr.name.c_str()) ==
-                          attributes[i].ctype);
-                    CHECK(PGM_meta_attribute_offset(hl, dataset_name.c_str(), class_name.c_str(), attr.name.c_str()) ==
-                          attributes[i].offset);
+                    CHECK(PGM_meta_attribute_name(hl, dataset_name.c_str(), component_name.c_str(), i) == attr.name);
+                    CHECK(PGM_meta_attribute_ctype(hl, dataset_name.c_str(), component_name.c_str(),
+                                                   attr.name.c_str()) == attributes[i].ctype);
+                    CHECK(PGM_meta_attribute_offset(hl, dataset_name.c_str(), component_name.c_str(),
+                                                    attr.name.c_str()) == attributes[i].offset);
                 }
             }
         }

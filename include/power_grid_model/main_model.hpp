@@ -573,18 +573,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // handle exception message
         std::string combined_error_message;
-        IdxVector failed_batches;
+        IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
         for (Idx batch = 0; batch != n_batch; ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
                 combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
-                failed_batches.push_back(batch);
+                failed_scenarios.push_back(batch);
                 err_msgs.push_back(exceptions[batch]);
             }
         }
         if (!combined_error_message.empty()) {
-            throw BatchCalculationError(combined_error_message, failed_batches, err_msgs);
+            throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
         }
 
         return BatchParameter{independent, cache_topology};
@@ -618,9 +618,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const length_per_batch = component_update.length_per_batch(0);
+        Idx const elements_per_scenario = component_update.elements_per_scenario(0);
         for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
-            if (length_per_batch != component_update.length_per_batch(batch)) {
+            if (elements_per_scenario != component_update.elements_per_scenario(batch)) {
                 return false;
             }
         }

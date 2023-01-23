@@ -109,38 +109,36 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle);
 // get error code and error messsage
 PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
 PGM_API char const* PGM_err_msg(PGM_Handle const* handle);
-PGM_API PGM_Idx PGM_n_failed_batches(PGM_Handle const* handle);
-PGM_API PGM_Idx const* PGM_failed_batches(PGM_Handle const* handle);
+PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
+PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
 PGM_API char const** PGM_batch_errs(PGM_Handle const* handle);
 PGM_API void PGM_clear_error(PGM_Handle* handle);
 
 // retrieve meta data
 PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
 PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
-PGM_API PGM_Idx PGM_meta_n_classes(PGM_Handle* handle, char const* dataset);
-PGM_API char const* PGM_meta_class_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
-PGM_API size_t PGM_meta_class_size(PGM_Handle* handle, char const* dataset, char const* class_name);
-PGM_API size_t PGM_meta_class_alignment(PGM_Handle* handle, char const* dataset, char const* class_name);
-PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* class_name);
-PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* class_name,
+PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset);
+PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
+PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
                                             PGM_Idx idx);
-PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* class_name,
+PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
                                              char const* attribute);
-PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* class_name,
+PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
                                          char const* attribute);
 PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 
 // buffer control
-PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* class_name, PGM_Idx size);
+PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size);
 PGM_API void PGM_destroy_buffer(void* ptr);
-PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* class_name, void* ptr,
+PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, void* ptr,
                                 PGM_Idx size);
-PGM_API void PGM_buffer_set_attribute(PGM_Handle* handle, char const* dataset, char const* class_name,
-                                      char const* attribute, void* buffer_ptr, void const* src_ptr, PGM_Idx size,
-                                      PGM_Idx src_stride);
-PGM_API void PGM_buffer_get_attribute(PGM_Handle* handle, char const* dataset, char const* class_name,
-                                      char const* attribute, void const* buffer_ptr, void* dest_ptr, PGM_Idx size,
-                                      PGM_Idx dest_stride);
+PGM_API void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
+                                  void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride);
+PGM_API void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
+                                  void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride);
 // options
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
 PGM_API void PGM_destroy_options(PGM_Options* opt);
@@ -152,26 +150,27 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
 PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
 
 // create model
-PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_input_types,
-                                             char const** type_names, PGM_Idx const* type_sizes,
+PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
+                                             char const** components, PGM_Idx const* component_sizes,
                                              void const** input_data);
 
 // update model
-PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_update_types,
-                              char const** type_names, PGM_Idx const* type_sizes, void const** update_data);
+PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components,
+                              char const** components, PGM_Idx const* component_sizes, void const** update_data);
 
 // copy model
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
 
 // get indexer
-PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component_type,
-                             PGM_Idx size, PGM_ID const* ids, PGM_Idx* indexer);
+PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
+                             PGM_ID const* ids, PGM_Idx* indexer);
 
 // run calculation
 PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                           PGM_Idx n_output_types, char const** output_type_names, void** output_data, PGM_Idx n_batch,
-                           PGM_Idx n_update_types, char const** update_type_names, PGM_Idx const* sizes_per_batch,
-                           PGM_Idx const** indptrs_per_type, void const** update_data);
+                           PGM_Idx n_output_components, char const** output_components, void** output_data,
+                           PGM_Idx n_scenarios, PGM_Idx n_update_components, char const** update_components,
+                           PGM_Idx const* n_component_elements_per_scenario, PGM_Idx const** indptrs_per_component,
+                           void const** update_data);
 
 // destroy model
 PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);
