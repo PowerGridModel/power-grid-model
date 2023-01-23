@@ -153,6 +153,9 @@ TEST_CASE("C API Model") {
                              2 * sizeof(double));  // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
+        // check batch parameter, not independent, cache topology
+        CHECK(PGM_is_batch_independent(hl) == 0);
+        CHECK(PGM_is_batch_cache_topology(hl) == 1);
     }
 
     SUBCASE("Construction error") {
