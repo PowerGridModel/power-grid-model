@@ -41,8 +41,8 @@ def find_error() -> Optional[Exception]:
     elif error_code == 2:
         error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
         error = PowerGridBatchError(error_message)
-        n_fails = pgc.n_failed_batches()
-        failed_idxptr = pgc.failed_batches()
+        n_fails = pgc.n_failed_scenarios()
+        failed_idxptr = pgc.failed_scenarios()
         failed_msgptr = pgc.batch_errs()
         error.failed_scenarios = np.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]

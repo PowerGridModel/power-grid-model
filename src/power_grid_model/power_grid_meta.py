@@ -46,47 +46,47 @@ def _generate_meta_dataset(dataset: str) -> dict:
 
     """
     py_meta_dataset = {}
-    n_classes = pgc.meta_n_classes(dataset)
-    for i in range(n_classes):
-        class_name = pgc.meta_class_name(dataset, i)
-        py_meta_dataset[class_name] = _generate_meta_class(dataset, class_name)
+    n_components = pgc.meta_n_components(dataset)
+    for i in range(n_components):
+        component_name = pgc.meta_component_name(dataset, i)
+        py_meta_dataset[component_name] = _generate_meta_component(dataset, component_name)
     return py_meta_dataset
 
 
-def _generate_meta_class(dataset: str, class_name: str) -> dict:
+def _generate_meta_component(dataset: str, component_name: str) -> dict:
     """
 
     Args:
         dataset:
-        class_name:
+        component_name:
 
     Returns:
 
     """
 
-    numpy_dtype_dict = _generate_meta_attributes(dataset, class_name)
+    numpy_dtype_dict = _generate_meta_attributes(dataset, component_name)
     dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != "nans"})
-    if dtype.alignment != pgc.meta_class_alignment(dataset, class_name):
-        raise TypeError(f'Aligment mismatch for component type: "{class_name}" !')
-    py_meta_class = {
+    if dtype.alignment != pgc.meta_component_alignment(dataset, component_name):
+        raise TypeError(f'Aligment mismatch for component type: "{component_name}" !')
+    py_meta_component = {
         "dtype": dtype,
         "dtype_dict": numpy_dtype_dict,
         "nans": {x: y for x, y in zip(numpy_dtype_dict["names"], numpy_dtype_dict["nans"])},
     }
     # get single nan scalar
-    nan_scalar = np.zeros(1, dtype=py_meta_class["dtype"])
-    for k, v in py_meta_class["nans"].items():
+    nan_scalar = np.zeros(1, dtype=py_meta_component["dtype"])
+    for k, v in py_meta_component["nans"].items():
         nan_scalar[k] = v
-    py_meta_class["nan_scalar"] = nan_scalar
-    return py_meta_class
+    py_meta_component["nan_scalar"] = nan_scalar
+    return py_meta_component
 
 
-def _generate_meta_attributes(dataset: str, class_name: str) -> dict:
+def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
     """
 
     Args:
         dataset:
-        class_name:
+        component_name:
 
     Returns:
 
@@ -95,21 +95,21 @@ def _generate_meta_attributes(dataset: str, class_name: str) -> dict:
         "names": [],
         "formats": [],
         "offsets": [],
-        "itemsize": pgc.meta_class_size(dataset, class_name),
+        "itemsize": pgc.meta_component_size(dataset, component_name),
         "aligned": True,
         "nans": [],
     }
-    n_attrs = pgc.meta_n_attributes(dataset, class_name)
+    n_attrs = pgc.meta_n_attributes(dataset, component_name)
     for i in range(n_attrs):
-        field_name: str = pgc.meta_attribute_name(dataset, class_name, i)
-        field_ctype: str = pgc.meta_attribute_ctype(dataset, class_name, field_name)
-        field_offset: int = pgc.meta_attribute_offset(dataset, class_name, field_name)
-        field_np_type = f"{_endianness}{_ctype_numpy_map[field_ctype]}"
-        field_nan = _nan_value_map[field_np_type]
-        numpy_dtype_dict["names"].append(field_name)
-        numpy_dtype_dict["formats"].append(field_np_type)
-        numpy_dtype_dict["offsets"].append(field_offset)
-        numpy_dtype_dict["nans"].append(field_nan)
+        attr_name: str = pgc.meta_attribute_name(dataset, component_name, i)
+        attr_ctype: str = pgc.meta_attribute_ctype(dataset, component_name, attr_name)
+        attr_offset: int = pgc.meta_attribute_offset(dataset, component_name, attr_name)
+        attr_np_type = f"{_endianness}{_ctype_numpy_map[attr_ctype]}"
+        attr_nan = _nan_value_map[attr_np_type]
+        numpy_dtype_dict["names"].append(attr_name)
+        numpy_dtype_dict["formats"].append(attr_np_type)
+        numpy_dtype_dict["offsets"].append(attr_offset)
+        numpy_dtype_dict["nans"].append(attr_nan)
     return numpy_dtype_dict
 
 
@@ -150,7 +150,7 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
 class CBuffer:
     data: c_void_p
     indptr: Optional[IdxPtr]
-    items_per_batch: int
+    n_elements_per_scenario: int
     batch_size: int
 
 
@@ -158,11 +158,11 @@ class CBuffer:
 class CDataset:
     dataset: Dict[str, CBuffer]
     batch_size: int
-    n_types: int
-    type_names: Array
-    items_per_type_per_batch: Array
-    indptrs_per_type: Array
-    data_ptrs_per_type: Array
+    n_components: int
+    components: Array
+    n_component_elements_per_scenario: Array
+    indptrs_per_component: Array
+    data_ptrs_per_component: Array
 
 
 def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]) -> CDataset:
@@ -195,10 +195,10 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
             indptr = IdxPtr()
             if ndim == 1:
                 batch_size = 1
-                items_per_batch = v.shape[0]
+                n_elements_per_scenario = v.shape[0]
             elif ndim == 2:  # (n_batch, n_component)
                 batch_size = v.shape[0]
-                items_per_batch = v.shape[1]
+                n_elements_per_scenario = v.shape[1]
             else:
                 raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
         # with indptr
@@ -206,7 +206,7 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
             data = v["data"]
             indptr = v["indptr"]
             batch_size = indptr.size - 1
-            items_per_batch = -1
+            n_elements_per_scenario = -1
             if data.ndim != 1:
                 raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
             if indptr.ndim != 1:
@@ -219,11 +219,11 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         # convert data array
         data = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
         dataset_dict[component_name] = CBuffer(
-            data=data, indptr=indptr, items_per_batch=items_per_batch, batch_size=batch_size
+            data=data, indptr=indptr, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
         )
     # total set
-    n_types = len(dataset_dict)
-    if n_types == 0:
+    n_components = len(dataset_dict)
+    if n_components == 0:
         batch_size = 0
     else:
         batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
@@ -233,9 +233,11 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
     return CDataset(
         dataset=dataset_dict,
         batch_size=batch_size,
-        n_types=n_types,
-        type_names=(c_char_p * n_types)(x.encode() for x in dataset_dict.keys()),
-        items_per_type_per_batch=(Idx_c * n_types)(x.items_per_batch for x in dataset_dict.values()),
-        indptrs_per_type=(IdxPtr * n_types)(x.indptr for x in dataset_dict.values()),
-        data_ptrs_per_type=(c_void_p * n_types)(x.data for x in dataset_dict.values()),
+        n_components=n_components,
+        components=(c_char_p * n_components)(x.encode() for x in dataset_dict.keys()),
+        n_component_elements_per_scenario=(Idx_c * n_components)(
+            x.n_elements_per_scenario for x in dataset_dict.values()
+        ),
+        indptrs_per_component=(IdxPtr * n_components)(x.indptr for x in dataset_dict.values()),
+        data_ptrs_per_component=(c_void_p * n_components)(x.data for x in dataset_dict.values()),
     )
