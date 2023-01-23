@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 import numpy as np
 from errors import assert_error
-from index_integer import Idx_np, ID_np
+from index_integer import Idx_np, ID_np, Idx_c, ID_c
 
 from power_grid_model.power_grid_core import ModelPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
@@ -101,6 +101,28 @@ class PowerGridModel:
             prepared_update.n_component_elements_per_scenario,
             prepared_update.data_ptrs_per_component,
         )
+
+    def get_indexer(self,
+                    component_type: str,
+                    ids: np.ndarray):
+        """
+        Get array of indexers given array of ids for component type
+
+        Args:
+            component_type: type of component
+            ids: array of ids
+
+        Returns:
+            array of inderxers, same shape as input array ids
+
+        """
+        ids_c = np.ascontiguousarray(ids, dtype=ID_np).ctypes.data_as(ID_c)
+        indexer = np.empty_like(ids_c, dtype=Idx_np, order='C')
+        indexer_c = indexer.ctypes.data_as(Idx_c)
+        size = ids.size
+        # call c function
+        pgc.get_indexer(self._model, component_type, size, ids_c, indexer_c)
+        return indexer
 
     def __del__(self):
         pgc.destroy_model(self._model_ptr)
