@@ -149,8 +149,8 @@ class PowerGridCore:
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
-        instance._handle = HandlePtr()
         instance._cdll = _load_core()
+        instance._handle = instance._cdll.PGM_create_handle()
         return instance
 
     def __init__(self):
