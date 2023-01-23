@@ -20,6 +20,16 @@ from power_grid_model.power_grid_meta import CDataset, initialize_array, prepare
 class PowerGridModel:
     _model_ptr: ModelPtr
     _all_component_count: Optional[Dict[str, int]]
+    _independent: bool  # all update datasets consists of exactly the same components
+    _cache_topology: bool # there are no changes in topology (branch, source) in the update dataset
+
+    @property
+    def independent(self) -> bool:
+        return self._independent
+
+    @property
+    def cache_topology(self) -> bool:
+        return self._cache_topology
 
     @property
     def _model(self):
