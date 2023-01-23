@@ -97,6 +97,9 @@ class PowerGridCore:
     failed_scenarios: Callable[[], IdxPtr]
     batch_errs: Callable[[], CharDoublePtr]
     clear_error: Callable[[], None]
+    # batch
+    is_batch_independent: Callable[[], int]
+    is_batch_cache_topology: Callable[[], int]
     # meta data
     meta_n_datasets: Callable[[], int]
     meta_dataset_name: Callable[[int], str]

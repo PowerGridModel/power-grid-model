@@ -363,137 +363,137 @@ cdef class PowerGridModel:
     #     update_set = generate_const_ptr_map(prepared_update)
     #     self._get_model().update_component(update_set, 0)
 
-    cdef calculate(self,
-                   calculation_type,
-                   bool symmetric,
-                   double error_tolerance,
-                   idx_t max_iterations,
-                   calculation_method: Union[CalculationMethod, str],
-                   update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
-                   idx_t threading,
-                   output_component_types: Optional[Union[Set[str], List[str]]]
-                   ):
-        """
-        Core calculation routine
-
-        Args:
-            calculation_type:
-            symmetric:
-            error_tolerance:
-            max_iterations:
-            calculation_method:
-            update_data:
-            threading:
-            output_component_types:
-
-        Returns:
-
-        """
-        cdef map[string, MutableDataPointer] result_set
-        cdef map[string, ConstDataPointer] update_set
-        cdef int8_t calculation_method_int
-        cdef CalculationMethodCPP calculation_method_cpp
-        cdef BatchParameter batch_parameter
-
-        if isinstance(calculation_method, str):
-            calculation_method = getattr(CalculationMethod, calculation_method)
-        calculation_method_int = calculation_method.value
-        calculation_method_cpp = <CalculationMethodCPP> calculation_method_int
-
-        if symmetric:
-            output_type = 'sym_output'
-        else:
-            output_type = 'asym_output'
-
-        # update data exist for batch calculation
-        if update_data is not None:
-            batch_calculation = True
-        # no update dataset, create one batch with empty set
-        else:
-            batch_calculation = False
-            update_data = {}
-
-        # update set and n batch
-        prepared_update = _prepare_cpp_array(data_type='update', array_dict=update_data)
-        update_set = generate_const_ptr_map(prepared_update)
-        if prepared_update:
-            n_batch_vec = [x['batch_size'] for x in prepared_update.values()]
-            if np.unique(n_batch_vec).size != 1:
-                raise ValueError(
-                    f"number of batches in the update set is not consistent across all components! {VALIDATOR_MSG}")
-            n_batch = n_batch_vec[0]
-        else:
-            # empty dict, one time calculation
-            n_batch = 1
-
-        # create result dict
-        result_dict = {}
-        all_component_count = self.all_component_count
-
-        # for power flow, there is no need for sensor output
-        if calculation_type == 'power_flow':
-            all_component_count = {
-                k: v for k, v in all_component_count.items() if 'sensor' not in k
-            }
-        
-        # limit all component count to user specified component types in output
-        if output_component_types is None:
-            output_component_types = set(all_component_count.keys())
-        # raise error is some specified components are unknown
-        unknown_components = [x for x in output_component_types if x not in _power_grid_meta_data[output_type]]
-        if unknown_components:
-            raise KeyError(f"You have specified some unknown component types: {unknown_components}")
-        all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
-
-        for name, count in all_component_count.items():
-            # intialize array
-            arr = initialize_array(output_type, name, (n_batch, count), empty=True)
-            result_dict[name] = arr
-
-        prepared_result = _prepare_cpp_array(data_type=output_type, array_dict=result_dict)
-        result_set = generate_ptr_map(prepared_result)
-
-        # run power flow or state estimation
-        if calculation_type == 'power_flow':
-            try:
-                if symmetric:
-                    batch_parameter = self._get_model().calculate_sym_power_flow(
-                        error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
-                        threading
-                    )
-                else:
-                    batch_parameter = self._get_model().calculate_asym_power_flow(
-                        error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
-                        threading
-                    )
-            except RuntimeError as ex:
-                raise RuntimeError(str(ex) + "\n" + VALIDATOR_MSG) from ex
-
-        elif calculation_type == 'state_estimation':
-            try:
-                if symmetric:
-                    batch_parameter = self._get_model().calculate_sym_state_estimation(
-                        error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
-                        threading
-                    )
-                else:
-                    batch_parameter = self._get_model().calculate_asym_state_estimation(
-                        error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
-                        threading
-                    )
-            except RuntimeError as ex:
-                raise RuntimeError(str(ex) + "\n" + VALIDATOR_MSG) from ex
-        else:
-            raise TypeError(f"Unknown calculation type {calculation_type}. Choose 'power_flow' or 'state_estimation'")
-
-        # flatten array for normal calculation
-        if not batch_calculation:
-            result_dict = {k: v.ravel() for k, v in result_dict.items()}
-        # batch parameters
-        self.independent = batch_parameter.independent
-        self.cache_topology = batch_parameter.cache_topology
-
-        return result_dict
+    # cdef calculate(self,
+    #                calculation_type,
+    #                bool symmetric,
+    #                double error_tolerance,
+    #                idx_t max_iterations,
+    #                calculation_method: Union[CalculationMethod, str],
+    #                update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
+    #                idx_t threading,
+    #                output_component_types: Optional[Union[Set[str], List[str]]]
+    #                ):
+    #     """
+    #     Core calculation routine
+    #
+    #     Args:
+    #         calculation_type:
+    #         symmetric:
+    #         error_tolerance:
+    #         max_iterations:
+    #         calculation_method:
+    #         update_data:
+    #         threading:
+    #         output_component_types:
+    #
+    #     Returns:
+    #
+    #     """
+    #     cdef map[string, MutableDataPointer] result_set
+    #     cdef map[string, ConstDataPointer] update_set
+    #     cdef int8_t calculation_method_int
+    #     cdef CalculationMethodCPP calculation_method_cpp
+    #     cdef BatchParameter batch_parameter
+    #
+    #     if isinstance(calculation_method, str):
+    #         calculation_method = getattr(CalculationMethod, calculation_method)
+    #     calculation_method_int = calculation_method.value
+    #     calculation_method_cpp = <CalculationMethodCPP> calculation_method_int
+    #
+    #     if symmetric:
+    #         output_type = 'sym_output'
+    #     else:
+    #         output_type = 'asym_output'
+    #
+    #     # update data exist for batch calculation
+    #     if update_data is not None:
+    #         batch_calculation = True
+    #     # no update dataset, create one batch with empty set
+    #     else:
+    #         batch_calculation = False
+    #         update_data = {}
+    #
+    #     # update set and n batch
+    #     prepared_update = _prepare_cpp_array(data_type='update', array_dict=update_data)
+    #     update_set = generate_const_ptr_map(prepared_update)
+    #     if prepared_update:
+    #         n_batch_vec = [x['batch_size'] for x in prepared_update.values()]
+    #         if np.unique(n_batch_vec).size != 1:
+    #             raise ValueError(
+    #                 f"number of batches in the update set is not consistent across all components! {VALIDATOR_MSG}")
+    #         n_batch = n_batch_vec[0]
+    #     else:
+    #         # empty dict, one time calculation
+    #         n_batch = 1
+    #
+    #     # create result dict
+    #     result_dict = {}
+    #     all_component_count = self.all_component_count
+    #
+    #     # for power flow, there is no need for sensor output
+    #     if calculation_type == 'power_flow':
+    #         all_component_count = {
+    #             k: v for k, v in all_component_count.items() if 'sensor' not in k
+    #         }
+    #
+    #     # limit all component count to user specified component types in output
+    #     if output_component_types is None:
+    #         output_component_types = set(all_component_count.keys())
+    #     # raise error is some specified components are unknown
+    #     unknown_components = [x for x in output_component_types if x not in _power_grid_meta_data[output_type]]
+    #     if unknown_components:
+    #         raise KeyError(f"You have specified some unknown component types: {unknown_components}")
+    #     all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
+    #
+    #     for name, count in all_component_count.items():
+    #         # intialize array
+    #         arr = initialize_array(output_type, name, (n_batch, count), empty=True)
+    #         result_dict[name] = arr
+    #
+    #     prepared_result = _prepare_cpp_array(data_type=output_type, array_dict=result_dict)
+    #     result_set = generate_ptr_map(prepared_result)
+    #
+    #     # run power flow or state estimation
+    #     if calculation_type == 'power_flow':
+    #         try:
+    #             if symmetric:
+    #                 batch_parameter = self._get_model().calculate_sym_power_flow(
+    #                     error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
+    #                     threading
+    #                 )
+    #             else:
+    #                 batch_parameter = self._get_model().calculate_asym_power_flow(
+    #                     error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
+    #                     threading
+    #                 )
+    #         except RuntimeError as ex:
+    #             raise RuntimeError(str(ex) + "\n" + VALIDATOR_MSG) from ex
+    #
+    #     elif calculation_type == 'state_estimation':
+    #         try:
+    #             if symmetric:
+    #                 batch_parameter = self._get_model().calculate_sym_state_estimation(
+    #                     error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
+    #                     threading
+    #                 )
+    #             else:
+    #                 batch_parameter = self._get_model().calculate_asym_state_estimation(
+    #                     error_tolerance, max_iterations, calculation_method_cpp, result_set, update_set,
+    #                     threading
+    #                 )
+    #         except RuntimeError as ex:
+    #             raise RuntimeError(str(ex) + "\n" + VALIDATOR_MSG) from ex
+    #     else:
+    #         raise TypeError(f"Unknown calculation type {calculation_type}. Choose 'power_flow' or 'state_estimation'")
+    #
+    #     # flatten array for normal calculation
+    #     if not batch_calculation:
+    #         result_dict = {k: v.ravel() for k, v in result_dict.items()}
+    #     # batch parameters
+    #     self.independent = batch_parameter.independent
+    #     self.cache_topology = batch_parameter.cache_topology
+    #
+    #     return result_dict
 
     def calculate_power_flow(self, *,
                              bool symmetric=True,

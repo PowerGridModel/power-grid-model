@@ -234,10 +234,10 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         dataset=dataset_dict,
         batch_size=batch_size,
         n_components=n_components,
-        components=(c_char_p * n_components)(x.encode() for x in dataset_dict.keys()),
+        components=(c_char_p * n_components)(*(x.encode() for x in dataset_dict.keys())),
         n_component_elements_per_scenario=(Idx_c * n_components)(
-            x.n_elements_per_scenario for x in dataset_dict.values()
+            *(x.n_elements_per_scenario for x in dataset_dict.values())
         ),
-        indptrs_per_component=(IdxPtr * n_components)(x.indptr for x in dataset_dict.values()),
-        data_ptrs_per_component=(c_void_p * n_components)(x.data for x in dataset_dict.values()),
+        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),
+        data_ptrs_per_component=(c_void_p * n_components)(*(x.data for x in dataset_dict.values())),
     )

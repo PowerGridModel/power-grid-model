@@ -16,16 +16,16 @@ from power_grid_model.power_grid_core import power_grid_core as pgc
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 
 
-class PowerGridError(Exception):
+class PowerGridError(ValueError):
     pass
 
 
-class PowerGridBatchError(Exception):
+class PowerGridBatchError(ValueError):
     failed_scenarios: np.ndarray
     error_messages: List[str]
 
 
-def find_error() -> Optional[Exception]:
+def find_error() -> Optional[ValueError]:
     """
 
     Returns:
@@ -48,7 +48,7 @@ def find_error() -> Optional[Exception]:
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]
         return error
     else:
-        return Exception("Unknown error!")
+        return ValueError("Unknown error!")
 
 
 def assert_error():
