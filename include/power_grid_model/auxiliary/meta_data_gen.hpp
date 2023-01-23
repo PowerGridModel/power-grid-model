@@ -25,7 +25,7 @@ template <class CT>
 void add_meta_data(AllPowerGridMetaData& meta) {
     // TODO, remove this separate definition for UpdateType after migrating to gcc-11
     // this is due to a wired bug in gcc-10
-    using UpdateType = typename CT::UpdateType;  
+    using UpdateType = typename CT::UpdateType;
     meta["input"][CT::name] = get_meta<typename CT::InputType>{}();
     meta["update"][CT::name] = get_meta<UpdateType>{}();
     meta["sym_output"][CT::name] = get_meta<typename CT::template OutputType<true>>{}();
