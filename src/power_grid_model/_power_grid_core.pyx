@@ -313,28 +313,28 @@ cdef class PowerGridModel:
     #     self.independent = False
     #     self.cache_topology = False
 
-    def get_indexer(self, 
-                    component_type: str, 
-                    ids: np.ndarray):
-        """
-        Get array of indexers given array of ids for component type
-
-        Args:
-            component_type: type of component
-            ids: array of ids
-        
-        Returns:
-            array of inderxers, same shape as input array ids
-
-        """
-        cdef cnp.ndarray ids_c = np.ascontiguousarray(ids, dtype=np_id_t)
-        cdef cnp.ndarray indexer = np.empty_like(ids_c, dtype=np_idx_t, order='C')
-        cdef const id_t* id_begin = <const id_t*> cnp.PyArray_DATA(ids_c)
-        cdef idx_t* indexer_begin = <idx_t*> cnp.PyArray_DATA(indexer)
-        cdef idx_t size = ids.size
-        # call c function
-        self._get_model().get_indexer(component_type.encode(), id_begin, size, indexer_begin)
-        return indexer
+    # def get_indexer(self,
+    #                 component_type: str,
+    #                 ids: np.ndarray):
+    #     """
+    #     Get array of indexers given array of ids for component type
+    #
+    #     Args:
+    #         component_type: type of component
+    #         ids: array of ids
+    #
+    #     Returns:
+    #         array of inderxers, same shape as input array ids
+    #
+    #     """
+    #     cdef cnp.ndarray ids_c = np.ascontiguousarray(ids, dtype=np_id_t)
+    #     cdef cnp.ndarray indexer = np.empty_like(ids_c, dtype=np_idx_t, order='C')
+    #     cdef const id_t* id_begin = <const id_t*> cnp.PyArray_DATA(ids_c)
+    #     cdef idx_t* indexer_begin = <idx_t*> cnp.PyArray_DATA(indexer)
+    #     cdef idx_t size = ids.size
+    #     # call c function
+    #     self._get_model().get_indexer(component_type.encode(), id_begin, size, indexer_begin)
+    #     return indexer
 
     # def copy(self) -> PowerGridModel:
     #     """
