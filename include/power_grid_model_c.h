@@ -113,6 +113,8 @@ PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
 PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
 PGM_API char const** PGM_batch_errs(PGM_Handle const* handle);
 PGM_API void PGM_clear_error(PGM_Handle* handle);
+PGM_API PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle);
+PGM_API PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle);
 
 // retrieve meta data
 PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);

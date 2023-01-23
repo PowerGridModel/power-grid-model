@@ -18,6 +18,7 @@ struct PGM_Handle {
     IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
+    BatchParameter batch_parameter;
 };
 
 // options
@@ -93,6 +94,12 @@ char const** PGM_batch_errs(PGM_Handle const* handle) {
 }
 void PGM_clear_error(PGM_Handle* handle) {
     *handle = PGM_Handle{};
+}
+PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle) {
+    return handle->batch_parameter.independent;
+}
+PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle) {
+    return handle->batch_parameter.cache_topology;
 }
 
 // retrieve meta data
@@ -346,26 +353,26 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         switch (opt->calculation_type) {
             case PGM_power_flow:
                 if (opt->symmetric) {
-                    model->calculate_power_flow<true>(opt->err_tol, opt->max_iter,
-                                                      (CalculationMethod)opt->calculation_method, output_dataset,
-                                                      update_dataset, opt->threading);
+                    handle->batch_parameter = model->calculate_power_flow<true>(
+                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
+                        update_dataset, opt->threading);
                 }
                 else {
-                    model->calculate_power_flow<false>(opt->err_tol, opt->max_iter,
-                                                       (CalculationMethod)opt->calculation_method, output_dataset,
-                                                       update_dataset, opt->threading);
+                    handle->batch_parameter = model->calculate_power_flow<false>(
+                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
+                        update_dataset, opt->threading);
                 }
                 break;
             case PGM_state_estimation:
                 if (opt->symmetric) {
-                    model->calculate_state_estimation<true>(opt->err_tol, opt->max_iter,
-                                                            (CalculationMethod)opt->calculation_method, output_dataset,
-                                                            update_dataset, opt->threading);
+                    handle->batch_parameter = model->calculate_state_estimation<true>(
+                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
+                        update_dataset, opt->threading);
                 }
                 else {
-                    model->calculate_state_estimation<false>(opt->err_tol, opt->max_iter,
-                                                             (CalculationMethod)opt->calculation_method, output_dataset,
-                                                             update_dataset, opt->threading);
+                    handle->batch_parameter = model->calculate_state_estimation<false>(
+                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
+                        update_dataset, opt->threading);
                 }
                 break;
             default:
