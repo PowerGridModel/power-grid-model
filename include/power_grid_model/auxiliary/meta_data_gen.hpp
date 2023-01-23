@@ -20,34 +20,37 @@ namespace power_grid_model {
 
 namespace meta_data {
 
+// template function to add meta data
+template <class CT>
+void add_meta_data(AllPowerGridMetaData& meta) {
+    meta["input"][CT::name] = get_meta<typename CT::InputType>{}();
+    meta["update"][CT::name] = get_meta<typename CT::UpdateType>{}();
+    meta["sym_output"][CT::name] = get_meta<typename CT::template OutputType<true>>{}();
+    meta["asym_output"][CT::name] = get_meta<typename CT::template OutputType<false>>{}();
+}
+
 template <class T>
 struct MetaDataGeneratorImpl;
 
 template <class... ComponentType>
 struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
-    MetaDataGeneratorImpl() {
-        static constexpr std::array func_arr{&retrieve_single_type<ComponentType>...};
+    using FuncPtr = std::add_pointer_t<void(AllPowerGridMetaData& meta)>;
+    static constexpr std::array<FuncPtr, sizeof...(ComponentType)> func_arr{&add_meta_data<ComponentType>...};
+
+    static AllPowerGridMetaData create_meta() {
+        AllPowerGridMetaData meta{};
         for (auto const func : func_arr) {
-            func(*this);
+            func(meta);
         }
+        return meta;
     }
-
-    template <class Component>
-    static void retrieve_single_type(MetaDataGeneratorImpl<ComponentList<ComponentType...>>& inst) {
-        inst.meta_data["input"][Component::name] = get_meta<typename Component::InputType>{}();
-        inst.meta_data["update"][Component::name] = get_meta<typename Component::UpdateType>{}();
-        inst.meta_data["sym_output"][Component::name] = get_meta<typename Component::template OutputType<true>>{}();
-        inst.meta_data["asym_output"][Component::name] = get_meta<typename Component::template OutputType<false>>{}();
-    }
-
-    AllPowerGridMetaData meta_data;
 };
 
 using MetaDataGenerator = MetaDataGeneratorImpl<AllComponents>;
 
 inline AllPowerGridMetaData const& meta_data() {
-    static MetaDataGenerator const meta{};
-    return meta.meta_data;
+    static AllPowerGridMetaData const meta_data = MetaDataGenerator::create_meta();
+    return meta_data;
 }
 
 }  // namespace meta_data
