@@ -93,17 +93,17 @@ class PowerGridCore:
     # error handling
     err_code: Callable[[], int]
     err_msg: Callable[[], str]
-    n_failed_batches: Callable[[], int]
-    failed_batches: Callable[[], IdxPtr]
+    n_failed_scenarios: Callable[[], int]
+    failed_scenarios: Callable[[], IdxPtr]
     batch_errs: Callable[[], CharDoublePtr]
     clear_error: Callable[[], None]
     # meta data
     meta_n_datasets: Callable[[], int]
     meta_dataset_name: Callable[[int], str]
-    meta_n_classes: Callable[[str], int]
-    meta_class_name: Callable[[str, int], str]
-    meta_class_size: Callable[[str, str], int]
-    meta_class_alignment: Callable[[str, str], int]
+    meta_n_components: Callable[[str], int]
+    meta_component_name: Callable[[str, int], str]
+    meta_component_size: Callable[[str, str], int]
+    meta_component_alignment: Callable[[str, str], int]
     meta_n_attributes: Callable[[str, str], int]
     meta_attribute_name: Callable[[str, str, int], str]
     meta_attribute_ctype: Callable[[str, str, str], str]
@@ -142,6 +142,7 @@ class PowerGridCore:
         ],
         None,
     ]
+    destroy_model: Callable[[ModelPtr], None]
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)

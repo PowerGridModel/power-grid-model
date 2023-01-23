@@ -101,3 +101,6 @@ class PowerGridModel:
             prepared_update.items_per_type_per_batch,
             prepared_update.data_ptrs_per_type,
         )
+
+    def __del__(self):
+        pgc.destroy_model(self._model_ptr)
