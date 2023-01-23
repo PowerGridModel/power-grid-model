@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 import numpy as np
 from errors import assert_error
-from index_integer import Idx_np
+from index_integer import Idx_np, ID_np
 
 from power_grid_model.power_grid_core import ModelPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
@@ -75,10 +75,10 @@ class PowerGridModel:
         prepared_input: CDataset = prepare_cpp_array("input", input_data)
         self._model_ptr = pgc.create_model(
             system_frequency,
-            prepared_input.n_types,
-            prepared_input.type_names,
-            prepared_input.items_per_type_per_batch,
-            prepared_input.data_ptrs_per_type,
+            prepared_input.n_components,
+            prepared_input.components,
+            prepared_input.n_component_elements_per_scenario,
+            prepared_input.data_ptrs_per_component,
         )
         assert_error()
         self._all_component_count = {k: v.size for k, v in input_data.items()}
@@ -96,10 +96,10 @@ class PowerGridModel:
         prepared_update: CDataset = prepare_cpp_array("update", update_data)
         pgc.update_model(
             self._model,
-            prepared_update.n_types,
-            prepared_update.type_names,
-            prepared_update.items_per_type_per_batch,
-            prepared_update.data_ptrs_per_type,
+            prepared_update.n_components,
+            prepared_update.components,
+            prepared_update.n_component_elements_per_scenario,
+            prepared_update.data_ptrs_per_component,
         )
 
     def __del__(self):
