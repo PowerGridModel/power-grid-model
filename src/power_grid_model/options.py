@@ -6,14 +6,14 @@
 """
 Option class
 """
-from typing import Any
+from typing import Any, Callable
 
 from power_grid_model.power_grid_core import OptionsPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
 
 
 class OptionSetter:
-    _setter: callable
+    _setter: Callable
 
     def __init__(self, setter):
         self._setter = setter
