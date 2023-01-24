@@ -12,7 +12,7 @@ import numpy as np
 
 from power_grid_model.enum import CalculationMethod, CalculationType
 from power_grid_model.errors import PowerGridBatchError, PowerGridError, assert_error, find_error
-from power_grid_model.index_integer import ID_c, ID_np, Idx_c, Idx_np
+from power_grid_model.index_integer import ID_np, Idx_np
 from power_grid_model.options import Options
 from power_grid_model.power_grid_core import IDPtr, IdxPtr, ModelPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
@@ -24,6 +24,11 @@ class PowerGridModel:
     _all_component_count: Optional[Dict[str, int]]
     _independent: bool  # all update datasets consists of exactly the same components
     _cache_topology: bool  # there are no changes in topology (branch, source) in the update dataset
+    _batch_error: Optional[PowerGridBatchError]
+
+    @property
+    def batch_error(self) -> Optional[PowerGridBatchError]:
+        return self._batch_error
 
     @property
     def independent(self) -> bool:
@@ -72,6 +77,9 @@ class PowerGridModel:
         instance = super().__new__(cls)
         instance._model_ptr = ModelPtr()
         instance._all_component_count = None
+        instance._independent = False
+        instance._cache_topology = False
+        instance._batch_error = None
         return instance
 
     def __init__(self, input_data: Dict[str, np.ndarray], system_frequency: float = 50.0):
@@ -144,6 +152,7 @@ class PowerGridModel:
         update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
         threading: int,
         output_component_types: Optional[Union[Set[str], List[str]]],
+        continue_on_batch_error: bool,
     ):
         """
         Core calculation routine
@@ -157,6 +166,7 @@ class PowerGridModel:
             update_data:
             threading:
             output_component_types:
+            continue_on_batch_error:
 
         Returns:
 
@@ -167,6 +177,7 @@ class PowerGridModel:
             output_type = "sym_output"
         else:
             output_type = "asym_output"
+        self._batch_error = None
 
         # prepare update dataset
         # update data exist for batch calculation
@@ -226,7 +237,20 @@ class PowerGridModel:
             prepared_update.indptrs_per_component,
             prepared_update.data_ptrs_per_component,
         )
-        assert_error()
+
+        # error handeling
+        if not continue_on_batch_error:
+            assert_error()
+        else:
+            # continue on batch error
+            error: Optional[Union[PowerGridBatchError, PowerGridError]] = find_error()
+            if error is not None:
+                if isinstance(error, PowerGridError):
+                    # raise normal error
+                    raise PowerGridError
+                else:
+                    # continue on batch error
+                    self._batch_error = error
 
         # flatten array for normal calculation
         if not batch_calculation:
@@ -247,6 +271,7 @@ class PowerGridModel:
         update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -286,6 +311,7 @@ class PowerGridModel:
                 > 0 specify number of parallel threads
             output_component_types: list or set of component types you want to be present in the output dict.
                 By default all component types will be in the output
+            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fails
 
         Returns:
             dictionary of results of all components
@@ -307,6 +333,7 @@ class PowerGridModel:
             update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
+            continue_on_batch_error=continue_on_batch_error,
         )
 
     def calculate_state_estimation(
@@ -319,6 +346,7 @@ class PowerGridModel:
         update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
@@ -357,6 +385,8 @@ class PowerGridModel:
                 > 0 specify number of parallel threads
             output_component_types: list or set of component types you want to be present in the output dict.
                 By default all component types will be in the output
+            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fails
+
 
         Returns:
             dictionary of results of all components
@@ -378,6 +408,7 @@ class PowerGridModel:
             update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
+            continue_on_batch_error=continue_on_batch_error,
         )
 
     def __del__(self):
