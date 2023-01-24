@@ -78,7 +78,7 @@ TEST_CASE("Test main model") {
     std::vector<BranchOutput<false>> asym_link(1);
     std::vector<ApplianceOutput<false>> asym_load_sym(1);
     std::vector<ApplianceOutput<false>> asym_load_asym(1);
-    std::vector<ApplianceOutput<false>> asym_source(3);
+    std::vector<ApplianceOutput<false>> asym_source(2);
     std::vector<ApplianceOutput<false>> asym_shunt(1);
     std::vector<VoltageSensorOutput<false>> asym_voltage_sensor(1);
     std::vector<VoltageSensorOutput<false>> sym_voltage_sensor_asym_output(2);
@@ -139,7 +139,7 @@ TEST_CASE("Test main model") {
         link_input[0].from_node = 2;
         main_model2.add_component<Link>(link_input);  // 5
 
-        main_model2.add_component<Source>(source_input);       // 6 10 30
+        main_model2.add_component<Source>(source_input);       // 6 10
         main_model2.add_component<SymLoad>(sym_load_input);    // 7
         main_model2.add_component<AsymLoad>(asym_load_input);  // 8
         main_model2.add_component<Shunt>(shunt_input);         // 9

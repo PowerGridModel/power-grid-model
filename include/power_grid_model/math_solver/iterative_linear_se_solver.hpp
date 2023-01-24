@@ -592,6 +592,7 @@ class IterativeLinearSESolver {
         Timer main_timer, sub_timer;
         MathOutput<sym> output;
         output.u.resize(n_bus_);
+        output.node_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
         main_timer = Timer(calculation_info, 2220, "Math solver");
@@ -636,6 +637,9 @@ class IterativeLinearSESolver {
 
         const auto key = Timer::make_key(2228, "Max number of iterations");
         calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
+
+        // TODO: Calculate node_injection
+        // output.node_injection;
 
         return output;
     }

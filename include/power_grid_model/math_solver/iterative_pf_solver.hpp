@@ -114,6 +114,7 @@ class IterativePFSolver {
         output.source.resize(source_bus_indptr_->back());
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.node_injection.resize(n_bus_);
+
         // loop all bus
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // source
@@ -122,6 +123,7 @@ class IterativePFSolver {
                 ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
                 output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
                 output.source[source].s = output.u[bus] * conj(output.source[source].i);
+                output.node_injection[bus] += output.source[source].s;
             }
 
             // load_gen
@@ -146,6 +148,7 @@ class IterativePFSolver {
                         throw MissingCaseForEnumError("Power injection", type);
                 }
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
+                output.node_injection[bus] += output.load_gen[load_gen].s;
             }
 
             // node injection
