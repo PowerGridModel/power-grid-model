@@ -638,9 +638,6 @@ class IterativeLinearSESolver {
         const auto key = Timer::make_key(2228, "Max number of iterations");
         calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
 
-        // TODO: Calculate node_injection
-        // output.node_injection;
-
         return output;
     }
 
@@ -849,8 +846,9 @@ class IterativeLinearSESolver {
         // call y bus
         output.branch = y_bus.calculate_branch_flow(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
-        ComplexValueVector<sym> const s_injection = y_bus.calculate_injection(output.u);
-        std::tie(output.load_gen, output.source) = measured_value.calculate_load_gen_source(output.u, s_injection);
+        output.node_injection = y_bus.calculate_injection(output.u);
+        std::tie(output.load_gen, output.source) =
+            measured_value.calculate_load_gen_source(output.u, output.node_injection);
     }
 };
 
