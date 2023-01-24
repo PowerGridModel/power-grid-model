@@ -463,7 +463,7 @@ TEST_CASE("Test main model") {
             CHECK(asym_power_sensor_sym_output[6].p_residual ==
                   doctest::Approx(3 * 5.02e6 - sym_source[1].p - sym_load_sym[0].p - sym_load_asym[0].p));
             CHECK(asym_power_sensor_sym_output[6].q_residual ==
-                  doctest::Approx(3 * 5.02e3 - sym_source[1].p - sym_load_sym[0].p - sym_load_asym[0].p));
+                  doctest::Approx(3 * 5.02e3 - sym_source[1].q - sym_load_sym[0].q - sym_load_asym[0].q));
         }
     }
 
