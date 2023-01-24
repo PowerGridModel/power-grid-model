@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 
@@ -91,14 +91,10 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
     Returns:
 
     """
-    numpy_dtype_dict = {
-        "names": [],
-        "formats": [],
-        "offsets": [],
-        "itemsize": pgc.meta_component_size(dataset, component_name),
-        "aligned": True,
-        "nans": [],
-    }
+    names = []
+    formats = []
+    offsets = []
+    nans = []
     n_attrs = pgc.meta_n_attributes(dataset, component_name)
     for i in range(n_attrs):
         attr_name: str = pgc.meta_attribute_name(dataset, component_name, i)
@@ -106,11 +102,18 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
         attr_offset: int = pgc.meta_attribute_offset(dataset, component_name, attr_name)
         attr_np_type = f"{_endianness}{_ctype_numpy_map[attr_ctype]}"
         attr_nan = _nan_value_map[attr_np_type]
-        numpy_dtype_dict["names"].append(attr_name)
-        numpy_dtype_dict["formats"].append(attr_np_type)
-        numpy_dtype_dict["offsets"].append(attr_offset)
-        numpy_dtype_dict["nans"].append(attr_nan)
-    return numpy_dtype_dict
+        names.append(attr_name)
+        formats.append(attr_np_type)
+        offsets.append(attr_offset)
+        nans.append(attr_nan)
+    return {
+        "names": names,
+        "formats": formats,
+        "offsets": offsets,
+        "itemsize": pgc.meta_component_size(dataset, component_name),
+        "aligned": True,
+        "nans": nans,
+    }
 
 
 # store meta data
@@ -165,7 +168,9 @@ class CDataset:
     data_ptrs_per_component: Array
 
 
-def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]) -> CDataset:
+def prepare_cpp_array(
+    data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
+) -> CDataset:
     """
     prepare array for cpp pointers
     Args:
@@ -192,7 +197,7 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         if isinstance(v, np.ndarray):
             data = v
             ndim = v.ndim
-            indptr = IdxPtr()
+            indptr_c = IdxPtr()
             if ndim == 1:
                 batch_size = 1
                 n_elements_per_scenario = v.shape[0]
@@ -204,7 +209,7 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         # with indptr
         else:
             data = v["data"]
-            indptr = v["indptr"]
+            indptr: np.ndarray = v["indptr"]
             batch_size = indptr.size - 1
             n_elements_per_scenario = -1
             if data.ndim != 1:
@@ -215,11 +220,11 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
                 raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
             if np.any(np.diff(indptr) < 0):
                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-            indptr = np.ascontiguousarray(indptr, dtype=Idx_np).ctypes.data_as(IdxPtr)
+            indptr_c = np.ascontiguousarray(indptr, dtype=Idx_np).ctypes.data_as(IdxPtr)
         # convert data array
-        data = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
+        data_c = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
         dataset_dict[component_name] = CBuffer(
-            data=data, indptr=indptr, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
+            data=data_c, indptr=indptr_c, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
         )
     # total set
     n_components = len(dataset_dict)
@@ -238,6 +243,6 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
         n_component_elements_per_scenario=(Idx_c * n_components)(
             *(x.n_elements_per_scenario for x in dataset_dict.values())
         ),
-        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),
+        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore
         data_ptrs_per_component=(c_void_p * n_components)(*(x.data for x in dataset_dict.values())),
     )

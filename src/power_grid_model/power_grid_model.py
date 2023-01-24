@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Set, Union
 import numpy as np
 
 from power_grid_model.enum import CalculationMethod, CalculationType
-from power_grid_model.errors import PowerGridBatchError, PowerGridError, assert_error, find_error
+from power_grid_model.errors import PowerGridBatchError, assert_error, find_error
 from power_grid_model.index_integer import ID_np, Idx_np
 from power_grid_model.options import Options
 from power_grid_model.power_grid_core import IDPtr, IdxPtr, ModelPtr
@@ -54,6 +54,8 @@ class PowerGridModel:
                 key: component type name
                 value: integer count of elements of this type
         """
+        if self._all_component_count is None:
+            raise TypeError("You have an empty instance of PowerGridModel!")
         return self._all_component_count
 
     def copy(self) -> "PowerGridModel":
@@ -243,21 +245,21 @@ class PowerGridModel:
             assert_error()
         else:
             # continue on batch error
-            error: Optional[Union[PowerGridBatchError, PowerGridError]] = find_error()
+            error: Optional[ValueError] = find_error()
             if error is not None:
-                if isinstance(error, PowerGridError):
-                    # raise normal error
-                    raise PowerGridError
-                else:
+                if isinstance(error, PowerGridBatchError):
                     # continue on batch error
                     self._batch_error = error
+                else:
+                    # raise normal error
+                    raise error
 
         # flatten array for normal calculation
         if not batch_calculation:
             result_dict = {k: v.ravel() for k, v in result_dict.items()}
         # batch parameters
-        self._independent = pgc.is_batch_independent()
-        self._cache_topology = pgc.is_batch_cache_topology()
+        self._independent = bool(pgc.is_batch_independent())
+        self._cache_topology = bool(pgc.is_batch_cache_topology())
 
         return result_dict
 
