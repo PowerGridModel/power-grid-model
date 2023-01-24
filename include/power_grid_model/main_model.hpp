@@ -749,7 +749,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                   if (math_id.group == -1) {
                                       return node.get_null_output<sym>();
                                   }
-                                  return node.get_output<sym>(math_output[math_id.group].u[math_id.pos]);
+                                  return node.get_output<sym>(math_output[math_id.group].u[math_id.pos],
+                                                              math_output[math_id.group].node_injection[math_id.pos]);
                               });
     }
 
@@ -947,7 +948,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
                     case MeasuredTerminalType::node_injection:
                         return power_sensor.get_output<sym>(
-                            math_output[obj_math_id.group].node_injection[obj_math_id.pos].s);
+                            math_output[obj_math_id.group].node_injection[obj_math_id.pos]);
                     default:
                         throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
                                                       terminal_type);

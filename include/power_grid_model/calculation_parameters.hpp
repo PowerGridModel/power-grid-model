@@ -50,6 +50,7 @@ struct BranchCalcParam {
         return value[3];
     }
 };
+
 template <bool sym>
 struct BranchMathOutput {
     ComplexValue<sym> s_f;
@@ -61,7 +62,7 @@ struct BranchMathOutput {
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>
-struct ApplianceMathOutput {  // TODO: Should we rename this, e.g. InjectionMathOutput?
+struct ApplianceMathOutput {
     ComplexValue<sym> s;
     ComplexValue<sym> i;
 };
@@ -186,12 +187,12 @@ struct StateEstimationInput {
 
 template <bool sym>
 struct MathOutput {
-    ComplexValueVector<sym> u;
+    std::vector<ComplexValue<sym>> u;
+    std::vector<ComplexValue<sym>> node_injection;
     std::vector<BranchMathOutput<sym>> branch;
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;
     std::vector<ApplianceMathOutput<sym>> load_gen;
-    std::vector<ApplianceMathOutput<sym>> node_injection;
 };
 
 // component indices at physical model side

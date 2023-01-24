@@ -149,9 +149,8 @@ class IterativePFSolver {
             }
 
             // node injection
-            // TODO: How to calculate the node injection? Same as const_pq loads and generators?
-            output.node_injection[bus].s = ComplexValue<sym>();
-            output.node_injection[bus].i = ComplexValue<sym>();
+            // TODO: How to calculate the node injection?
+            output.node_injection[bus] = ComplexValue<sym>();
         }
     }
 

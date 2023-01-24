@@ -36,12 +36,14 @@ class Node final : public Base {
 
     // energized
     template <bool sym>
-    NodeOutput<sym> get_output(ComplexValue<sym> const& u_pu) const {
+    NodeOutput<sym> get_output(ComplexValue<sym> const& u_pu, ComplexValue<sym> const& node_injection) const {
         NodeOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         output.u_pu = cabs(u_pu);
         output.u = u_scale<sym> * u_rated_ * output.u_pu;
         output.u_angle = arg(u_pu);
+        output.p = real(node_injection);
+        output.q = imag(node_injection);
         return output;
     }
     template <bool sym>

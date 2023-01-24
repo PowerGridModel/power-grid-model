@@ -26,6 +26,8 @@ struct NodeOutput : BaseOutput {
     RealValue<sym> u_pu;  // voltage magnitude and angle
     RealValue<sym> u;  // voltage magnitude and angle
     RealValue<sym> u_angle;  // voltage magnitude and angle
+    RealValue<sym> p;  // node injection (active power)
+    RealValue<sym> q;  // node injection (reactive power)
 };
 using SymNodeOutput = NodeOutput<true>;
 using AsymNodeOutput = NodeOutput<false>;
