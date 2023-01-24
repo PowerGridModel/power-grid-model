@@ -126,7 +126,7 @@ class PowerGridCore:
     create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]
     update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]
     copy_model: Callable[[ModelPtr], ModelPtr]
-    get_indexer: Callable[[ModelPtr, c_char_p, int, IDPtr, IdxPtr], None]
+    get_indexer: Callable[[ModelPtr, str, int, IDPtr, IdxPtr], None]
     calculate: Callable[
         [
             # model

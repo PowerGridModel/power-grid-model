@@ -172,7 +172,7 @@ class PowerGridModel:
 
         """
         if isinstance(calculation_method, str):
-            calculation_method = getattr(CalculationMethod, calculation_method)
+            calculation_method = CalculationMethod[calculation_method]
         if symmetric:
             output_type = "sym_output"
         else:
