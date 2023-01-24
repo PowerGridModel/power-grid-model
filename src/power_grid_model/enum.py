@@ -47,11 +47,11 @@ class Branch3Side(IntEnum):
     side_3 = 2
 
 
-class CalculationType(Enum):
+class CalculationType(IntEnum):
     """Calculation Types"""
 
-    power_flow = "power_flow"
-    state_estimation = "state_estimation"
+    power_flow = 0
+    state_estimation = 1
 
 
 class CalculationMethod(IntEnum):

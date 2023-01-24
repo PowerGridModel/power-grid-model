@@ -164,6 +164,9 @@ class PowerGridCore:
             c_restype = _ARGS_TYPE_MAPPING.get(py_restype, py_restype)
             if c_restype == Idx_c and name in _FUNC_SIZE_T_RES:
                 c_restype = c_size_t
+            # bug in Python 3.10 https://bugs.python.org/issue43208
+            if id(c_restype) == id(type(None)):
+                c_restype = None
             # set argument in dll
             # mostly with handle pointer, except destroy function
             is_destroy_func = "destroy" in name
