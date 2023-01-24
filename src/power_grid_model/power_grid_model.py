@@ -14,7 +14,7 @@ from power_grid_model.enum import CalculationMethod, CalculationType
 from power_grid_model.errors import PowerGridBatchError, PowerGridError, assert_error, find_error
 from power_grid_model.index_integer import ID_c, ID_np, Idx_c, Idx_np
 from power_grid_model.options import Options
-from power_grid_model.power_grid_core import ModelPtr
+from power_grid_model.power_grid_core import IDPtr, IdxPtr, ModelPtr
 from power_grid_model.power_grid_core import power_grid_core as pgc
 from power_grid_model.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 
@@ -126,9 +126,9 @@ class PowerGridModel:
             array of inderxers, same shape as input array ids
 
         """
-        ids_c = np.ascontiguousarray(ids, dtype=ID_np).ctypes.data_as(ID_c)
-        indexer = np.empty_like(ids_c, dtype=Idx_np, order="C")
-        indexer_c = indexer.ctypes.data_as(Idx_c)
+        ids_c = np.ascontiguousarray(ids, dtype=ID_np).ctypes.data_as(IDPtr)
+        indexer = np.empty_like(ids, dtype=Idx_np, order="C")
+        indexer_c = indexer.ctypes.data_as(IdxPtr)
         size = ids.size
         # call c function
         pgc.get_indexer(self._model, component_type, size, ids_c, indexer_c)

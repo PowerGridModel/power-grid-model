@@ -224,7 +224,7 @@ def prepare_cpp_array(data_type: str, array_dict: Dict[str, Union[np.ndarray, Di
     # total set
     n_components = len(dataset_dict)
     if n_components == 0:
-        batch_size = 0
+        batch_size = 1
     else:
         batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
         if np.unique(batch_sizes).size > 1:

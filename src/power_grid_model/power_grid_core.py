@@ -13,6 +13,7 @@ from power_grid_model.index_integer import ID_c, Idx_c
 # integer index
 IdxPtr = POINTER(Idx_c)
 IdxDoublePtr = POINTER(IdxPtr)
+IDPtr = POINTER(ID_c)
 # double pointer to char
 CharDoublePtr = POINTER(c_char_p)
 # double pointer to void
@@ -125,7 +126,7 @@ class PowerGridCore:
     create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]
     update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]
     copy_model: Callable[[ModelPtr], ModelPtr]
-    get_indexer: Callable[[ModelPtr, c_char_p, int, ID_c, IdxPtr], None]
+    get_indexer: Callable[[ModelPtr, c_char_p, int, IDPtr, IdxPtr], None]
     calculate: Callable[
         [
             # model
