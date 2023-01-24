@@ -95,8 +95,8 @@ class PowerGridCore:
     err_code: Callable[[], int]
     err_msg: Callable[[], str]
     n_failed_scenarios: Callable[[], int]
-    failed_scenarios: Callable[[], IdxPtr]
-    batch_errs: Callable[[], CharDoublePtr]
+    failed_scenarios: Callable[[], IdxPtr]  # type: ignore
+    batch_errs: Callable[[], CharDoublePtr]  # type: ignore
     clear_error: Callable[[], None]
     # batch
     is_batch_independent: Callable[[], int]
@@ -123,26 +123,26 @@ class PowerGridCore:
     set_max_iter: Callable[[OptionsPtr, int], None]
     set_threading: Callable[[OptionsPtr, int], None]
     # model
-    create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]
-    update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]
+    create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]  # type: ignore
+    update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]  # type: ignore
     copy_model: Callable[[ModelPtr], ModelPtr]
-    get_indexer: Callable[[ModelPtr, str, int, IDPtr, IdxPtr], None]
-    calculate: Callable[
+    get_indexer: Callable[[ModelPtr, str, int, IDPtr, IdxPtr], None]  # type: ignore
+    calculate: Callable[  # type: ignore
         [
             # model
             ModelPtr,
             OptionsPtr,
             # output
             int,
-            CharDoublePtr,
-            VoidDoublePtr,
+            CharDoublePtr,  # type: ignore
+            VoidDoublePtr,  # type: ignore
             # update
             int,
             int,
-            CharDoublePtr,
+            CharDoublePtr,  # type: ignore
             IdxPtr,
-            IdxDoublePtr,
-            VoidDoublePtr,
+            IdxDoublePtr,  # type: ignore
+            VoidDoublePtr,  # type: ignore
         ],
         None,
     ]

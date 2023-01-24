@@ -65,7 +65,7 @@ def _generate_meta_component(dataset: str, component_name: str) -> dict:
     """
 
     numpy_dtype_dict = _generate_meta_attributes(dataset, component_name)
-    dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != "nans"})
+    dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != "nans"})  # type: ignore
     if dtype.alignment != pgc.meta_component_alignment(dataset, component_name):
         raise TypeError(f'Aligment mismatch for component type: "{component_name}" !')
     py_meta_component = {
@@ -149,7 +149,7 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
 @dataclass
 class CBuffer:
     data: c_void_p
-    indptr: Optional[IdxPtr]
+    indptr: Optional[IdxPtr]  # type: ignore
     n_elements_per_scenario: int
     batch_size: int
 

@@ -44,8 +44,8 @@ def find_error() -> Optional[ValueError]:
         n_fails = pgc.n_failed_scenarios()
         failed_idxptr = pgc.failed_scenarios()
         failed_msgptr = pgc.batch_errs()
-        error.failed_scenarios = np.asarray(failed_idxptr, shape=(n_fails,)).copy()
-        error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]
+        error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
+        error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
         return error
     else:
         return ValueError("Unknown error!")
