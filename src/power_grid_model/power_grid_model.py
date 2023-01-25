@@ -94,6 +94,9 @@ class PowerGridModel:
                 value: 1D numpy structured array for this component input
             system_frequency: frequency of the power system, default 50 Hz
         """
+        # destroy old instance
+        pgc.destroy_model(self._model_ptr)
+        # create new
         prepared_input: CDataset = prepare_cpp_array("input", input_data)
         self._model_ptr = pgc.create_model(
             system_frequency,
@@ -103,7 +106,7 @@ class PowerGridModel:
             prepared_input.data_ptrs_per_component,
         )
         assert_error()
-        self._all_component_count = {k: v.size for k, v in input_data.items()}
+        self._all_component_count = {k: v.n_elements_per_scenario for k, v in prepared_input.dataset.items()}
 
     def update(self, *, update_data: Dict[str, np.ndarray]):
         """
