@@ -151,7 +151,7 @@ PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
  * @brief Get the list of failed scenarios, only applicable when you just execute a batch calculation
  *
  * @param handle Pointer to the handle you just used for a batch calculation
- * @return  A pointer to a PGM_Idx array with length returned by PGM_n_failed_scenarios()
+ * @return  A pointer to a PGM_Idx array with length returned by PGM_n_failed_scenarios().
  * The pointer is not valid if you execute another operation.
  * You need to copy the array in your own data.
  */
@@ -161,7 +161,7 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
  * @brief Get the list of batch errors, only applicable when you just execute a batch calculation
  *
  * @param handle Pointer to the handle you just used for a batch calculation
- * @return  A pointer to a const char* array with length returned by PGM_n_failed_scenarios()
+ * @return  A pointer to a const char* array with length returned by PGM_n_failed_scenarios().
  * Each entry is a zero terminated string.
  * The pointer is not valid if you execute another operation.
  * You need to copy the array (and the string) in your own data.
@@ -235,7 +235,7 @@ PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* data
  * @param handle
  * @param dataset dataset name
  * @param component component name
- * @return  Size of the component. Or zero if your input is invalid
+ * @return  Size of the component. Or zero if your input is invalid.
  */
 PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component);
 
@@ -245,17 +245,70 @@ PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, 
  * @param handle
  * @param dataset dataset name
  * @param component component name
- * @return  Alignment of the component. Or zero if your input is invalid
+ * @return  Alignment of the component. Or zero if your input is invalid.
  */
 PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component);
 
+/**
+ * @brief Get number of attributes of the component
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @return  Number of attributes. Or zero if your input is invalid.
+ */
 PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component);
+
+/**
+ * @brief Get idx-th of attribute name
+ * 
+ * @param handle 
+ * @param dataset dataset name
+ * @param component component name 
+ * @param idx sequence number of attribute, should be between [0, PGM_meta_n_attributes())
+ * @return  Name of the attribute in const char*. The pointer is permanantly valid.
+ * Or nullptr if your input is invalid.
+ */
 PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
                                             PGM_Idx idx);
+
+/**
+ * @brief Get the type of an attribute
+ * 
+ * @param handle 
+ * @param dataset dataset name
+ * @param component component name 
+ * @param attribute attribute name
+ * @return  Type of the attribute in const char*. The string is a valid C type name. The pointer is permanantly valid.
+ * Or nullptr if your input is invalid.
+ * 
+ * Valid types are:
+ *   - int32_t
+ *   - int8_t
+ *   - double
+ *   - double[3]
+ */
 PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
                                              char const* attribute);
+
+/**
+ * @brief Get the ofsset of an attribute in a component
+ * 
+ * @param handle 
+ * @param dataset dataset name
+ * @param component component name 
+ * @param attribute attribute name
+ * @return  Offset of this attribute. Or zero if your input is invalid.
+ */
 PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
                                          char const* attribute);
+
+/**
+ * @brief Get if the system is little endian
+ * 
+ * @param handle 
+ * @return  One if the system is litten endian. Zero if the system is big endian.
+ */
 PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 
 // buffer control
