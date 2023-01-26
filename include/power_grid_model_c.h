@@ -52,11 +52,24 @@ typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
 #ifndef PGM_DLL_EXPORTS
-// else define opaque pointer
+/**
+ * @brief Opaque struct for the PowerGridModel class
+ * 
+ */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
-// context handle
+/**
+ * @brief Opaque struct for the handle class
+ * 
+ * The handle class is used to store error and information
+ * 
+ */
 typedef struct PGM_Handle PGM_Handle;
-// options
+/**
+ * @brief Opaque struct for the option class
+ * 
+ * The option class is used to set calculation options like calculation method.
+ * 
+ */
 typedef struct PGM_Options PGM_Options;
 #endif
 
@@ -93,12 +106,14 @@ enum PGM_ErrorCode {
 /**
  * @brief Create a new handle
  *
- * A handle object is needed to store error information. If you run it in multi-threading, each thread should have
- * unique handle. The handle should be destroyed by PGM_destroy_handle()
+ * A handle object is needed to store error information. 
+ * If you run it in multi-threading at user side, each thread should have unique handle. 
+ * The handle should be destroyed by PGM_destroy_handle()
  *
  * @return Pointer to the created handle
  */
 PGM_API PGM_Handle* PGM_create_handle();
+
 /**
  * @brief Destroy the handle
  *
@@ -106,14 +121,74 @@ PGM_API PGM_Handle* PGM_create_handle();
  */
 PGM_API void PGM_destroy_handle(PGM_Handle* handle);
 
-// get error code and error messsage
+/**
+ * @brief Get error code of last operation
+ * 
+ * @param handle Pointer to the handle you just used for an operation
+ * @return  The error code , see PGM_ErrorCode
+ */
 PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
+
+/**
+ * @brief Get error message of last operation
+ * 
+ * @param handle Pointer to the handle you just used for an operation
+ * @return  A const char* poiner to a zero terminated string.  
+ * The pointer is not valid if you execute another operation.
+ * You need to copy the string in your own data.
+ */
 PGM_API char const* PGM_err_msg(PGM_Handle const* handle);
+
+/**
+ * @brief Get the number of failed scenarios, only applicable when you just execute a batch calculation
+ * 
+ * @param handle Pointer to the handle you just used for a batch calculation
+ * @return  The number of failed scenarios
+ */
 PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
+
+/**
+ * @brief Get the list of failed scenarios, only applicable when you just execute a batch calculation
+ * 
+ * @param handle Pointer to the handle you just used for a batch calculation
+ * @return  A pointer to a PGM_Idx array with length returned by PGM_n_failed_scenarios()
+ * The pointer is not valid if you execute another operation.
+ * You need to copy the array in your own data.
+ */
 PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
+
+/**
+ * @brief Get the list of batch errors, only applicable when you just execute a batch calculation
+ * 
+ * @param handle Pointer to the handle you just used for a batch calculation
+ * @return  A pointer to a const char* array with length returned by PGM_n_failed_scenarios()
+ * Each entry is a zero terminated string. 
+ * The pointer is not valid if you execute another operation.
+ * You need to copy the array (and the string) in your own data.
+ */
 PGM_API char const** PGM_batch_errs(PGM_Handle const* handle);
+
+/**
+ * @brief Clear and reset the handle
+ * 
+ * @param handle Pointer to the handle 
+ */
 PGM_API void PGM_clear_error(PGM_Handle* handle);
+
+/**
+ * @brief Get if the batch is independent, only applicable when you just execute a batch calculation
+ * 
+ * @param handle Pointer to the handle you just used for a batch calculation
+ * @return  One if the batch is independent, otherwise zero
+ */
 PGM_API PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle);
+
+/**
+ * @brief Get if the batch has cached topology, only applicable when you just execute a batch calculation
+ * 
+ * @param handle Pointer to the handle you just used for a batch calculation
+ * @return  One if the batch has cached topology, otherwise zero
+ */
 PGM_API PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle);
 
 // retrieve meta data
