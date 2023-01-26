@@ -30,6 +30,14 @@
                         "u_angle"
                     ],
                     "description": "voltage magnitude and angle"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p",
+                        "q"
+                    ],
+                    "description": "node injection"
                 }
             ]
         },
