@@ -133,7 +133,7 @@ PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
  * @brief Get error message of last operation
  *
  * @param handle Pointer to the handle you just used for an operation
- * @return  A const char* poiner to a zero terminated string.
+ * @return  A char const* poiner to a zero terminated string.
  * The pointer is not valid if you execute another operation.
  * You need to copy the string in your own data.
  */
@@ -161,7 +161,7 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
  * @brief Get the list of batch errors, only applicable when you just execute a batch calculation
  *
  * @param handle Pointer to the handle you just used for a batch calculation
- * @return  A pointer to a const char* array with length returned by PGM_n_failed_scenarios().
+ * @return  A pointer to a char const* array with length returned by PGM_n_failed_scenarios().
  * Each entry is a zero terminated string.
  * The pointer is not valid if you execute another operation.
  * You need to copy the array (and the string) in your own data.
@@ -204,7 +204,7 @@ PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
  *
  * @param handle
  * @param idx the sequence number, should be between [0, PGM_meta_n_datasets())
- * @return  The name of idx-th dataset in a const char*. The pointer is permanantly valid.
+ * @return  The name of idx-th dataset in a char const*. The pointer is permanantly valid.
  * Or a nullptr if your input is out of bound.
  */
 PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
@@ -224,7 +224,7 @@ PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset);
  * @param handle
  * @param dataset name of dataset
  * @param idx sequence number of component, should be between [0, PGM_meta_n_components())
- * @return  The name of idx-th component in a const char*. The pointer is permanantly valid.
+ * @return  The name of idx-th component in a char const*. The pointer is permanantly valid.
  * Or a nullptr if your input is out of bound.
  */
 PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
@@ -261,12 +261,12 @@ PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, c
 
 /**
  * @brief Get idx-th of attribute name
- * 
- * @param handle 
+ *
+ * @param handle
  * @param dataset dataset name
- * @param component component name 
+ * @param component component name
  * @param idx sequence number of attribute, should be between [0, PGM_meta_n_attributes())
- * @return  Name of the attribute in const char*. The pointer is permanantly valid.
+ * @return  Name of the attribute in char const*. The pointer is permanantly valid.
  * Or nullptr if your input is invalid.
  */
 PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
@@ -274,14 +274,14 @@ PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* data
 
 /**
  * @brief Get the type of an attribute
- * 
- * @param handle 
+ *
+ * @param handle
  * @param dataset dataset name
- * @param component component name 
+ * @param component component name
  * @param attribute attribute name
- * @return  Type of the attribute in const char*. The string is a valid C type name. The pointer is permanantly valid.
+ * @return  Type of the attribute in char const*. The string is a valid C type name. The pointer is permanantly valid.
  * Or nullptr if your input is invalid.
- * 
+ *
  * Valid types are:
  *   - int32_t
  *   - int8_t
@@ -293,10 +293,10 @@ PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dat
 
 /**
  * @brief Get the ofsset of an attribute in a component
- * 
- * @param handle 
+ *
+ * @param handle
  * @param dataset dataset name
- * @param component component name 
+ * @param component component name
  * @param attribute attribute name
  * @return  Offset of this attribute. Or zero if your input is invalid.
  */
@@ -305,22 +305,95 @@ PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset
 
 /**
  * @brief Get if the system is little endian
- * 
- * @param handle 
+ *
+ * @param handle
  * @return  One if the system is litten endian. Zero if the system is big endian.
  */
 PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 
-// buffer control
+/**
+ * @brief Create a buffer with certain size and component type
+ *
+ * You can use this function to allocate a buffer.
+ * You can also use your own allocation function to do that
+ * with size and alignment got from PGM_meta_component_size() and PGM_meta_component_alignment().
+ * The buffer created by this function should be freed by PGM_destroy_buffer().
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @param size size of the buffer in terms of number of elements
+ * @return  Pointer to the buffer. Or nullptr if your input is invalid.
+ */
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size);
+
+/**
+ * @brief Destroy the buffer you created using PGM_create_buffer().
+ *
+ * NOTE: do not call this function on the buffer you created by your own function.
+ *
+ * @param ptr Pointer to the buffer created using PGM_create_buffer()
+ */
 PGM_API void PGM_destroy_buffer(void* ptr);
+
+/**
+ * @brief Set all the attributes of a buffer to NaN
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @param ptr pointer to buffer, created either by PGM_create_buffer() or your own function.
+ * @param size size of the buffer in terms of number of elements
+ */
 PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, void* ptr,
                                 PGM_Idx size);
+
+/**
+ * @brief Set value of a certain attribute from an array to the component buffer
+ *
+ * You can use this function to set value.
+ * You can also set value by proper pointer arithmetric and casting,
+ * using the offset information returned by PGM_meta_attribute_offset().
+ * If your input is invalid, the handle will contain the error message.
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @param attribute attribute name
+ * @param buffer_ptr pointer to the buffer
+ * @param src_ptr pointer to the source array you want to retrieve the value from
+ * @param size size of the buffer in terms of number of elements
+ * @param src_stride  stride of the source array in bytes.
+ * You can set it to -1, the default stride of the size of the attribute type (like sizeof(double)).
+ * If you set it to a positive number, the i-th set-value will retrieve the source data at
+ * (void const*)((char const*)src_ptr + i * src_stride)
+ */
 PGM_API void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
                                   void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride);
+
+/**
+ * @brief Get value of a certain attribute from the component buffer to an array
+ *
+ * You can use this function to get value.
+ * You can also get value by proper pointer arithmetric and casting,
+ * using the offset information returned by PGM_meta_attribute_offset().
+ * If your input is invalid, the handle will contain the error message.
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @param attribute attribute name
+ * @param buffer_ptr pointer to the buffer
+ * @param dest_ptr pointer to the destination array you want to save the value to
+ * @param size size of the buffer in terms of number of elements
+ * @param dest_stride stride of the destination array in bytes.
+ * You can set it to -1, the default stride of the size of the attribute type (like sizeof(double)).
+ * If you set it to a positive number, the i-th get-value will retrieve the source data at
+ * (void*)((char*)dest_ptr + i * dest_stride)
+ */
 PGM_API void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
                                   void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride);
-// options
+
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
 PGM_API void PGM_destroy_options(PGM_Options* opt);
 PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type);
