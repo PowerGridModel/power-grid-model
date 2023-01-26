@@ -54,21 +54,21 @@ typedef int32_t PGM_ID;
 #ifndef PGM_DLL_EXPORTS
 /**
  * @brief Opaque struct for the PowerGridModel class
- * 
+ *
  */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 /**
  * @brief Opaque struct for the handle class
- * 
+ *
  * The handle class is used to store error and information
- * 
+ *
  */
 typedef struct PGM_Handle PGM_Handle;
 /**
  * @brief Opaque struct for the option class
- * 
+ *
  * The option class is used to set calculation options like calculation method.
- * 
+ *
  */
 typedef struct PGM_Options PGM_Options;
 #endif
@@ -106,8 +106,8 @@ enum PGM_ErrorCode {
 /**
  * @brief Create a new handle
  *
- * A handle object is needed to store error information. 
- * If you run it in multi-threading at user side, each thread should have unique handle. 
+ * A handle object is needed to store error information.
+ * If you run it in multi-threading at user side, each thread should have unique handle.
  * The handle should be destroyed by PGM_destroy_handle()
  *
  * @return Pointer to the created handle
@@ -123,7 +123,7 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle);
 
 /**
  * @brief Get error code of last operation
- * 
+ *
  * @param handle Pointer to the handle you just used for an operation
  * @return  The error code, see #PGM_ErrorCode
  */
@@ -131,9 +131,9 @@ PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
 
 /**
  * @brief Get error message of last operation
- * 
+ *
  * @param handle Pointer to the handle you just used for an operation
- * @return  A const char* poiner to a zero terminated string.  
+ * @return  A const char* poiner to a zero terminated string.
  * The pointer is not valid if you execute another operation.
  * You need to copy the string in your own data.
  */
@@ -141,7 +141,7 @@ PGM_API char const* PGM_err_msg(PGM_Handle const* handle);
 
 /**
  * @brief Get the number of failed scenarios, only applicable when you just execute a batch calculation
- * 
+ *
  * @param handle Pointer to the handle you just used for a batch calculation
  * @return  The number of failed scenarios
  */
@@ -149,7 +149,7 @@ PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
 
 /**
  * @brief Get the list of failed scenarios, only applicable when you just execute a batch calculation
- * 
+ *
  * @param handle Pointer to the handle you just used for a batch calculation
  * @return  A pointer to a PGM_Idx array with length returned by PGM_n_failed_scenarios()
  * The pointer is not valid if you execute another operation.
@@ -159,10 +159,10 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
 
 /**
  * @brief Get the list of batch errors, only applicable when you just execute a batch calculation
- * 
+ *
  * @param handle Pointer to the handle you just used for a batch calculation
  * @return  A pointer to a const char* array with length returned by PGM_n_failed_scenarios()
- * Each entry is a zero terminated string. 
+ * Each entry is a zero terminated string.
  * The pointer is not valid if you execute another operation.
  * You need to copy the array (and the string) in your own data.
  */
@@ -170,14 +170,14 @@ PGM_API char const** PGM_batch_errs(PGM_Handle const* handle);
 
 /**
  * @brief Clear and reset the handle
- * 
- * @param handle Pointer to the handle 
+ *
+ * @param handle Pointer to the handle
  */
 PGM_API void PGM_clear_error(PGM_Handle* handle);
 
 /**
  * @brief Get if the batch is independent, only applicable when you just execute a batch calculation
- * 
+ *
  * @param handle Pointer to the handle you just used for a batch calculation
  * @return  One if the batch is independent, otherwise zero
  */
@@ -185,19 +185,70 @@ PGM_API PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle);
 
 /**
  * @brief Get if the batch has cached topology, only applicable when you just execute a batch calculation
- * 
+ *
  * @param handle Pointer to the handle you just used for a batch calculation
  * @return  One if the batch has cached topology, otherwise zero
  */
 PGM_API PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle);
 
-// retrieve meta data
+/**
+ * @brief Get number of datasets
+ *
+ * @param handle
+ * @return  The number of datasets
+ */
 PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
+
+/**
+ * @brief Get name of idx-th dataset
+ *
+ * @param handle
+ * @param idx the sequence number, should be between [0, PGM_meta_n_datasets())
+ * @return  The name of idx-th dataset in a const char*. The pointer is permanantly valid.
+ * Or a nullptr if your input is out of bound.
+ */
 PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
+
+/**
+ * @brief Get the number of components for a dataset
+ *
+ * @param handle
+ * @param dataset name of dataset
+ * @return  Number of components, or zero if your input is invalid
+ */
 PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset);
+
+/**
+ * @brief Get name of idx-th component
+ *
+ * @param handle
+ * @param dataset name of dataset
+ * @param idx sequence number of component, should be between [0, PGM_meta_n_components())
+ * @return  The name of idx-th component in a const char*. The pointer is permanantly valid.
+ * Or a nullptr if your input is out of bound.
+ */
 PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
+
+/**
+ * @brief Get size of the component
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @return  Size of the component. Or zero if your input is invalid
+ */
 PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component);
+
+/**
+ * @brief Get alignment of the component
+ *
+ * @param handle
+ * @param dataset dataset name
+ * @param component component name
+ * @return  Alignment of the component. Or zero if your input is invalid
+ */
 PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component);
+
 PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component);
 PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
                                             PGM_Idx idx);
