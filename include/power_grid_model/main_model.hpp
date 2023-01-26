@@ -205,7 +205,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     case MeasuredTerminalType::generator:
                         components_.template get_item<GenericGenerator>(measured_object);
                         break;
-                    case MeasuredTerminalType::node_injection:
+                    case MeasuredTerminalType::node:
                         components_.template get_item<Node>(measured_object);
                         break;
                     default:
@@ -354,7 +354,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                case MeasuredTerminalType::branch3_2:
                                case MeasuredTerminalType::branch3_3:
                                    return components_.template get_seq<Branch3>(power_sensor.measured_object());
-                               case MeasuredTerminalType::node_injection:
+                               case MeasuredTerminalType::node:
                                    return components_.template get_seq<Node>(power_sensor.measured_object());
                                default:
                                    throw MissingCaseForEnumError("Power sensor idx to seq transformation",
@@ -918,7 +918,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[1]};
                         case MeasuredTerminalType::branch3_3:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[2]};
-                        case MeasuredTerminalType::node_injection:
+                        case MeasuredTerminalType::node:
                             return comp_coup_->node[obj_seq];
                         default:
                             throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
@@ -946,7 +946,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     case MeasuredTerminalType::load:
                     case MeasuredTerminalType::generator:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
-                    case MeasuredTerminalType::node_injection:
+                    case MeasuredTerminalType::node:
                         return power_sensor.get_output<sym>(
                             math_output[obj_math_id.group].node_injection[obj_math_id.pos]);
                     default:
@@ -1276,7 +1276,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_node_injection_power, GenericPowerSensor>(
             comp_coup_->power_sensor, se_input, [&](Idx i) {
-                return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::node_injection;
+                return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::node;
             });
 
         return se_input;

@@ -61,26 +61,80 @@ TEST_CASE("Test Main Model") {
                 }
             }
         }
-    }
 
-    SUBCASE("Forbid Link Power Measurements") {
-        main_model.add_component<Node>({{{1}, 10e3}, {{2}, 10e3}});
-        main_model.add_component<Link>({{{{3}, 1, 2, true, true}}});
-        CHECK_THROWS_AS(
-            main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, 0, 0}}),
-            InvalidMeasuredObject);
-        CHECK_THROWS_WITH(
-            main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, 0, 0}}),
-            "PowerSensor is not supported for Link");
-        CHECK_THROWS_AS(
-            main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_to, 0}, 0, 0}}),
-            InvalidMeasuredObject);
-        CHECK_THROWS_AS(main_model.add_component<AsymPowerSensor>(
-                            {{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, {0, 0, 0}, {0, 0, 0}}}),
-                        InvalidMeasuredObject);
-        CHECK_THROWS_AS(main_model.add_component<AsymPowerSensor>(
-                            {{{{{4}, 3}, MeasuredTerminalType::branch_to, 0}, {0, 0, 0}, {0, 0, 0}}}),
-                        InvalidMeasuredObject);
+        SUBCASE("Node Injection") {
+            main_model.add_component<Node>({{{1}, 10e3}, {{2}, 10e3}});
+            main_model.add_component<Link>({{{{3}, 1, 2, true, true}}});
+            main_model.add_component<Source>({{{{4}, 1, true}, 1.0, nan, nan, nan, nan}});
+            main_model.add_component<AsymGenerator>(
+                {{{{{5}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
+            main_model.add_component<AsymLoad>(
+                {{{{{6}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
+            main_model.add_component<SymVoltageSensor>({{{{{11}, 1}, 1e2}, 10.5e3, 0.0}});
+            SUBCASE("Symmetric Power Sensor") {
+                main_model.add_component<SymPowerSensor>(
+                    {{{{{15}, 5}, MeasuredTerminalType::generator, 1e2}, 800.0, 80.0},
+                     {{{{16}, 6}, MeasuredTerminalType::load, 1e2}, 1600.0, 160.0}});
+                SUBCASE("Symmetric Calculation - without injection sensor") {
+                    main_model.set_construction_complete();
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                    std::vector<NodeOutput<true>> node_output(2);
+                    main_model.output_result<true, Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].p == doctest::Approx(800.0));
+                    CHECK(node_output[0].q == doctest::Approx(80.0));
+                    CHECK(node_output[1].p == doctest::Approx(-800.0));
+                    CHECK(node_output[1].q == doctest::Approx(-80.0));
+                }
+                SUBCASE("Symmetric Calculation - with injection sensor") {
+                    main_model.add_component<SymPowerSensor>(
+                        {{{{{12}, 2}, MeasuredTerminalType::node, 1e2}, -1200.0, -120.0}});
+                    main_model.set_construction_complete();
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                    std::vector<NodeOutput<true>> node_output(2);
+                    main_model.output_result<true, Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].p == doctest::Approx(1000.0));
+                    CHECK(node_output[0].q == doctest::Approx(100.0));
+                    CHECK(node_output[1].p == doctest::Approx(-1000.0));
+                    CHECK(node_output[1].q == doctest::Approx(-100.0));
+                }
+                SUBCASE("Asymmetric Calculation - without injection sensor") {
+                }
+                SUBCASE("Asymmetric Calculation - with injection sensor") {
+                }
+            }
+            SUBCASE("Symmetric Power Sensor") {
+                SUBCASE("Symmetric Calculation - without injection sensor") {
+                }
+                SUBCASE("Symmetric Calculation - with injection sensor") {
+                }
+                SUBCASE("Asymmetric Calculation - without injection sensor") {
+                }
+                SUBCASE("Asymmetric Calculation - with injection sensor") {
+                }
+            }
+        }
+
+        SUBCASE("Forbid Link Power Measurements") {
+            main_model.add_component<Node>({{{1}, 10e3}, {{2}, 10e3}});
+            main_model.add_component<Link>({{{{3}, 1, 2, true, true}}});
+            CHECK_THROWS_AS(
+                main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, 0, 0}}),
+                InvalidMeasuredObject);
+            CHECK_THROWS_WITH(
+                main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, 0, 0}}),
+                "PowerSensor is not supported for Link");
+            CHECK_THROWS_AS(
+                main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_to, 0}, 0, 0}}),
+                InvalidMeasuredObject);
+            CHECK_THROWS_AS(main_model.add_component<AsymPowerSensor>(
+                                {{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, {0, 0, 0}, {0, 0, 0}}}),
+                            InvalidMeasuredObject);
+            CHECK_THROWS_AS(main_model.add_component<AsymPowerSensor>(
+                                {{{{{4}, 3}, MeasuredTerminalType::branch_to, 0}, {0, 0, 0}, {0, 0, 0}}}),
+                            InvalidMeasuredObject);
+        }
     }
 }
 

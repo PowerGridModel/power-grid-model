@@ -103,7 +103,7 @@ class MeasuredTerminalType(IntEnum):
     """
     Measuring the terminal-3 between a branch3 and a node
     """
-    node_injection = 9
+    node = 9
     """
     Measuring the total power injection into a node
     """

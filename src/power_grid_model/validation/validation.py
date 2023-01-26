@@ -626,7 +626,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         component,
         field="measured_object",
         ref_components="node",
-        measured_terminal_type=MeasuredTerminalType.node_injection,
+        measured_terminal_type=MeasuredTerminalType.node,
     )
 
     return errors

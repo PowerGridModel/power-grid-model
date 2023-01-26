@@ -40,7 +40,7 @@ enum class MeasuredTerminalType : IntS {
     branch3_1 = 6,
     branch3_2 = 7,
     branch3_3 = 8,
-    node_injection = 9
+    node = 9
 };
 
 enum class ComponentType : IntS {

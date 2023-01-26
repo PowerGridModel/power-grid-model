@@ -387,7 +387,7 @@ def test_validate_generic_power_sensor__all_terminal_types(
         ("three_winding_transformer", MeasuredTerminalType.branch3_1),
         ("three_winding_transformer", MeasuredTerminalType.branch3_2),
         ("three_winding_transformer", MeasuredTerminalType.branch3_3),
-        ("node", MeasuredTerminalType.node_injection),
+        ("node", MeasuredTerminalType.node),
     ],
 )
 @patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
