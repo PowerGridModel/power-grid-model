@@ -477,7 +477,26 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
  */
 PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
 
-// create model
+/**
+ * @brief Create a new instance of Power Grid Model
+ * 
+ * This is the main function to create a new model.
+ * You need to prepare the buffer data for input.
+ * The returned model need to be freed by PGM_destroy_model()
+ * 
+ * @param handle 
+ * @param system_frequency frequency of the system, usually 50 or 60 Hz
+ * @param n_components number of component types in the input data
+ * @param components Pointer to a const char* array consisting the name of each component.
+ * For i-th component, components[i] should be a const char* string of the component name
+ * @param component_sizes Pointer to an integer array specifying the size of each component.
+ * For i-th component, component_sizes[i] specifies how many elements there are for this component.
+ * @param input_data Pointer to a void const* array consisting the data buffers.
+ * For i-th component, input_data[i] is a void const* pointer to the data buffer for this component.
+ * @return  A opaque pointer to the created model. 
+ * If there are errors during the creation, a nullptr is returned.
+ * Use PGM_err_code() and PGM_err_msg() to check the error.
+ */
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
                                              char const** components, PGM_Idx const* component_sizes,
                                              void const** input_data);
