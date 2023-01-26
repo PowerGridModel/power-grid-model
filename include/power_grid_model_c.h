@@ -125,7 +125,7 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle);
  * @brief Get error code of last operation
  * 
  * @param handle Pointer to the handle you just used for an operation
- * @return  The error code , see PGM_ErrorCode
+ * @return  The error code, see #PGM_ErrorCode
  */
 PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
 
