@@ -426,9 +426,9 @@ TEST_CASE("Test main model") {
             CHECK(sym_power_sensor[5].p_residual == doctest::Approx(1.7e6 - sym_load_asym[0].p));
             CHECK(sym_power_sensor[5].q_residual == doctest::Approx(1.7e3 - sym_load_asym[0].q));
             CHECK(sym_power_sensor[6].p_residual ==
-                  doctest::Approx(3.0e6 - sym_source[1].p - sym_load_sym[0].p - sym_load_asym[0].p));
+                  doctest::Approx(3.0e6 - (sym_source[1].p - sym_load_sym[0].p - sym_load_asym[0].p)));
             CHECK(sym_power_sensor[6].q_residual ==
-                  doctest::Approx(3.0e3 - sym_source[1].q - sym_load_sym[0].q - sym_load_asym[0].q));
+                  doctest::Approx(3.0e3 - (sym_source[1].q - sym_load_sym[0].q - sym_load_asym[0].q)));
         }
 
         SUBCASE("AsymVoltageSensor, sym output") {
@@ -461,9 +461,9 @@ TEST_CASE("Test main model") {
             CHECK(asym_power_sensor_sym_output[5].p_residual == doctest::Approx(3 * 2.72e6 - sym_load_asym[0].p));
             CHECK(asym_power_sensor_sym_output[5].q_residual == doctest::Approx(3 * 2.72e3 - sym_load_asym[0].q));
             CHECK(asym_power_sensor_sym_output[6].p_residual ==
-                  doctest::Approx(3 * 5.02e6 - sym_source[1].p - sym_load_sym[0].p - sym_load_asym[0].p));
+                  doctest::Approx(3 * 5.02e6 - (sym_source[1].p - sym_load_sym[0].p - sym_load_asym[0].p)));
             CHECK(asym_power_sensor_sym_output[6].q_residual ==
-                  doctest::Approx(3 * 5.02e3 - sym_source[1].q - sym_load_sym[0].q - sym_load_asym[0].q));
+                  doctest::Approx(3 * 5.02e3 - (sym_source[1].q - sym_load_sym[0].q - sym_load_asym[0].q)));
         }
     }
 
@@ -546,9 +546,9 @@ TEST_CASE("Test main model") {
             CHECK(asym_power_sensor[5].p_residual[0] == doctest::Approx(2.71e6 - asym_load_asym[0].p[0]));
             CHECK(asym_power_sensor[5].q_residual[1] == doctest::Approx(2.72e3 - asym_load_asym[0].q[1]));
             CHECK(asym_power_sensor[6].p_residual[0] ==
-                  doctest::Approx(5.01e6 - asym_source[1].p[0] - asym_load_sym[0].p[0] - asym_load_asym[0].p[0]));
+                  doctest::Approx(5.01e6 - (asym_source[1].p[0] - asym_load_sym[0].p[0] - asym_load_asym[0].p[0])));
             CHECK(asym_power_sensor[6].q_residual[1] ==
-                  doctest::Approx(5.02e3 - asym_source[1].q[1] - asym_load_sym[0].q[1] - asym_load_asym[0].q[1]));
+                  doctest::Approx(5.02e3 - (asym_source[1].q[1] - asym_load_sym[0].q[1] - asym_load_asym[0].q[1])));
         }
 
         SUBCASE("SymPowerSensor, asym output") {
@@ -573,9 +573,9 @@ TEST_CASE("Test main model") {
             CHECK(sym_power_sensor_asym_output[5].p_residual[0] == doctest::Approx(1.7e6 / 3 - asym_load_asym[0].p[0]));
             CHECK(sym_power_sensor_asym_output[5].q_residual[1] == doctest::Approx(1.7e3 / 3 - asym_load_asym[0].q[1]));
             CHECK(sym_power_sensor_asym_output[6].p_residual[0] ==
-                  doctest::Approx(3.0e6 / 3 - asym_source[1].p[0] - asym_load_sym[0].p[0] - asym_load_asym[0].p[0]));
+                  doctest::Approx(3.0e6 / 3 - (asym_source[1].p[0] - asym_load_sym[0].p[0] - asym_load_asym[0].p[0])));
             CHECK(sym_power_sensor_asym_output[6].q_residual[1] ==
-                  doctest::Approx(3.0e3 / 3 - asym_source[1].q[1] - asym_load_sym[0].q[1] - asym_load_asym[0].q[1]));
+                  doctest::Approx(3.0e3 / 3 - (asym_source[1].q[1] - asym_load_sym[0].q[1] - asym_load_asym[0].q[1])));
         }
     }
 
