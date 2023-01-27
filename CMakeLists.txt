@@ -66,4 +66,5 @@ add_subdirectory(tests/cpp_unit_tests)
 # get benchmark
 add_subdirectory(tests/benchmark_cpp)
 
-
+# get c api example
+add_subdirectory(power_grid_model_c_example)

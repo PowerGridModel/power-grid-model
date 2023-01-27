@@ -6,6 +6,8 @@ project (power_grid_model_c)
 
 add_library(power_grid_model_c SHARED power_grid_model_c.cpp)
 
+target_include_directories(power_grid_model_c PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
 target_link_libraries(power_grid_model_c
 	PRIVATE power_grid_model
 )
