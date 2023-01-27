@@ -34,12 +34,24 @@ int main(int argc, char** argv) {
     // use PGM function to create node and sym_load buffer
     void* node_input = PGM_create_buffer(handle, "input", "node", 1);
     void* sym_load_input = PGM_create_buffer(handle, "input", "sym_load", 2);
-    // use own data to create
+    // allocate source buffer in the caller
+    size_t source_size = PGM_meta_component_size(handle, "input", "source");
+    size_t source_alignment = PGM_meta_component_alignment(handle, "input", "source");
+#ifdef _WIN32
+    void* source_input = _aligned_malloc(source_size * 1, source_alignment);
+#else
+    void* source_input = aligned_alloc(source_alignment, source_size * 1);
+#endif    
 
     // release all the resources
     PGM_destroy_handle(handle);
     PGM_destroy_buffer(node_input);
     PGM_destroy_buffer(sym_load_input);
+#ifdef _WIN32
+    _aligned_free(source_input);
+#else
+    free(source_input);
+#endif    
 
     return 0;
 }
