@@ -208,7 +208,7 @@ PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
  * @param handle
  * @param idx the sequence number, should be between [0, PGM_meta_n_datasets())
  * @return  The name of idx-th dataset in a char const*. The pointer is permanantly valid.
- * Or a nullptr if your input is out of bound.
+ * Or a NULL if your input is out of bound.
  */
 PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
 
@@ -234,7 +234,7 @@ PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset);
  * @param dataset name of dataset
  * @param idx sequence number of component, should be between [0, PGM_meta_n_components())
  * @return  The name of idx-th component in a char const*. The pointer is permanantly valid.
- * Or a nullptr if your input is out of bound.
+ * Or a NULL if your input is out of bound.
  */
 PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
 
@@ -276,7 +276,7 @@ PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, c
  * @param component component name
  * @param idx sequence number of attribute, should be between [0, PGM_meta_n_attributes())
  * @return  Name of the attribute in char const*. The pointer is permanantly valid.
- * Or nullptr if your input is invalid.
+ * Or NULL if your input is invalid.
  */
 PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
                                             PGM_Idx idx);
@@ -289,7 +289,7 @@ PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* data
  * @param component component name
  * @param attribute attribute name
  * @return  Type of the attribute in char const*. The string is a valid C type name. The pointer is permanantly valid.
- * Or nullptr if your input is invalid.
+ * Or NULL if your input is invalid.
  *
  * Valid types are:
  *   - int32_t
@@ -332,7 +332,7 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
  * @param dataset dataset name
  * @param component component name
  * @param size size of the buffer in terms of number of elements
- * @return  Pointer to the buffer. Or nullptr if your input is invalid.
+ * @return  Pointer to the buffer. Or NULL if your input is invalid.
  */
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size);
 
@@ -503,7 +503,7 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  * @param input_data Pointer to a void const* array consisting the input data buffers.
  * For i-th component, input_data[i] is a void const* pointer to the data buffer for this component.
  * @return  A opaque pointer to the created model.
- * If there are errors during the creation, a nullptr is returned.
+ * If there are errors during the creation, a NULL is returned.
  * Use PGM_err_code() and PGM_err_msg() to check the error.
  */
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
@@ -538,7 +538,7 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
  * @param handle
  * @param model Pointer to an existing model
  * @return  A opaque pointer to the new copy.
- * If there are errors during the creation, a nullptr is returned.
+ * If there are errors during the creation, a NULL is returned.
  * Use PGM_err_code() and PGM_err_msg() to check the error.
  */
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
@@ -613,20 +613,20 @@ PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model
  * For j-th scenario, the number of updated elements for i-th components is specified by
  * indptrs_per_component[i][j + 1] - indptrs_per_component[i][j].
  * <br>
- * If n_component_elements_per_scenario[i] > 0, indptrs_per_component[i] should be a nullptr.
+ * If n_component_elements_per_scenario[i] > 0, indptrs_per_component[i] should be a NULL.
  * If all entries in n_component_elements_per_scenario are larger than zero,
- * indptrs_per_component can be a nullptr as a whole.
+ * indptrs_per_component can be a NULL as a whole.
  * @param update_data Pointer to a void const* array consisting the update data buffers for batch calculation.
  * For i-th component, update_data[i] is a void const* pointer to the update data buffer for this component.
  * <br><br>
- * If n_component_elements_per_scenario[i] > 0, the begin and end (excluding) pointer iterator 
+ * If n_component_elements_per_scenario[i] > 0, the begin and end (excluding) pointer iterator
  * for j-th scenario is
  * <br>
  * begin = (UpdateType const*)update_data[i] + j * n_component_elements_per_scenario[i]
  * <br>
  * end = (UpdateType const*)update_data[i] + (j + 1) * n_component_elements_per_scenario[i]
  * <br><br>
- * If n_component_elements_per_scenario[i] == -1, the begin and end (excluding) pointer iterator 
+ * If n_component_elements_per_scenario[i] == -1, the begin and end (excluding) pointer iterator
  * for j-th scenario is
  * <br>
  * begin = (UpdateType const*)update_data[i] + indptrs_per_component[i][j]
