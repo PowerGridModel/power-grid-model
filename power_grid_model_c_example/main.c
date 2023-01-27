@@ -14,10 +14,10 @@ source_0 --node_1---- sym_load_2
                    |---- sym_load_3
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "power_grid_model_c.h"
 
@@ -29,8 +29,17 @@ int main(int argc, char** argv) {
     // create handle
     PGM_Handle* handle = PGM_create_handle();
 
+    // create input buffer
+    // we create input buffer data using two ways of creating buffer
+    // use PGM function to create node and sym_load buffer
+    void* node_input = PGM_create_buffer(handle, "input", "node", 1);
+    void* sym_load_input = PGM_create_buffer(handle, "input", "sym_load", 2);
+    // use own data to create
+
     // release all the resources
     PGM_destroy_handle(handle);
+    PGM_destroy_buffer(node_input);
+    PGM_destroy_buffer(sym_load_input);
 
     return 0;
 }
