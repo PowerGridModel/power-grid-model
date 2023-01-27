@@ -131,6 +131,9 @@ PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
 
 /**
  * @brief Get error message of last operation
+ * 
+ * If the error code is PGM_batch_error.
+ * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), and PGM_batch_errs() to retrieve the detail.
  *
  * @param handle Pointer to the handle you just used for an operation
  * @return  A char const* poiner to a zero terminated string.
@@ -211,7 +214,7 @@ PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
 
 /**
  * @brief Get the number of components for a dataset
- * 
+ *
  * You will get one of the following depending on the idx
  *   - input
  *   - update
@@ -473,8 +476,8 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
 
 /**
  * @brief Specify the multi-threading strategy. Only applicable for batch calculation.
- * 
- * @param handle 
+ *
+ * @param handle
  * @param opt pointer to option instance
  * @param threading Threading option. See below
  *   - -1: No multi-threading, calculate sequentially
@@ -485,12 +488,12 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
 
 /**
  * @brief Create a new instance of Power Grid Model
- * 
+ *
  * This is the main function to create a new model.
  * You need to prepare the buffer data for input.
  * The returned model need to be freed by PGM_destroy_model()
- * 
- * @param handle 
+ *
+ * @param handle
  * @param system_frequency frequency of the system, usually 50 or 60 Hz
  * @param n_components number of component types in the input data
  * @param components Pointer to a const char* array consisting the name of each component.
@@ -499,7 +502,7 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  * For i-th component, component_sizes[i] specifies how many elements there are for this component.
  * @param input_data Pointer to a void const* array consisting the input data buffers.
  * For i-th component, input_data[i] is a void const* pointer to the data buffer for this component.
- * @return  A opaque pointer to the created model. 
+ * @return  A opaque pointer to the created model.
  * If there are errors during the creation, a nullptr is returned.
  * Use PGM_err_code() and PGM_err_msg() to check the error.
  */
@@ -509,13 +512,13 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
 
 /**
  * @brief Update the model by changing mutable attributes of some elements
- * 
- * All the elements you supply in the update dataset should have valid ids 
+ *
+ * All the elements you supply in the update dataset should have valid ids
  * which exist in the original model.
- * 
+ *
  * Use PGM_err_code() and PGM_err_msg() to check if there are errors in the update.
- * 
- * @param handle 
+ *
+ * @param handle
  * @param model Pointer to the existing model
  * @param n_components number of component types you want to update
  * @param components Pointer to a const char* array consisting the name of each component.
@@ -531,10 +534,10 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
 
 /**
  * @brief Make a copy of an existing model
- * 
- * @param handle 
+ *
+ * @param handle
  * @param model Pointer to an existing model
- * @return  A opaque pointer to the new copy. 
+ * @return  A opaque pointer to the new copy.
  * If there are errors during the creation, a nullptr is returned.
  * Use PGM_err_code() and PGM_err_msg() to check the error.
  */
@@ -553,7 +556,7 @@ PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Op
 
 /**
  * @brief Destroy the model returned by PGM_create_model() or PGM_copy_model()
- * 
+ *
  * @param model pointer to the model
  */
 PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);
