@@ -543,7 +543,24 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
  */
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
 
-// get indexer
+/**
+ * @brief Get the sequence numbers based on list of ids in a given component.
+ * 
+ * For example, if there are 5 nodes in the model with id [10, 2, 5, 15, 30].
+ * We have a node ID list of [2, 5, 15, 5, 10, 10, 30].
+ * We would like to know the sequence number of each element in the model.
+ * Calling this function should result in a sequence array of [1, 2, 3, 2, 0, 0, 4].
+ * 
+ * If you supply a non-existing ID in the ID array, an error will be raised.
+ * 
+ * @param handle 
+ * @param model Pointer to model
+ * @param component A const char* string as component name
+ * @param size Size of the ID array
+ * @param ids Pointer to #PGM_ID array buffer, this should be at least length of size.
+ * @param indexer Pointer to a #PGM_Idx array buffer. The results will be written to this array.
+ * The array should be pre-allocated with at least length of size.
+ */
 PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
                              PGM_ID const* ids, PGM_Idx* indexer);
 
