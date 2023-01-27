@@ -4,6 +4,16 @@
 
 // example file for power grid model C API
 
+/*
+This example will calculate the following network,
+consisting 1 source, 1 node, 2 sym_load
+
+
+source_0 --node_1---- sym_load_2
+                   |
+                   |---- sym_load_3
+*/
+
 #include <stdio.h>
 
 #include "power_grid_model_c.h"
