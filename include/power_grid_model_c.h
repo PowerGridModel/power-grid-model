@@ -98,7 +98,7 @@ enum PGM_ErrorCode {
  *
  * @return Pointer to the created handle
  */
-PGM_API PGM_Handle* PGM_create_handle();
+PGM_API PGM_Handle* PGM_create_handle(void);
 /**
  * @brief Destroy the handle
  *
