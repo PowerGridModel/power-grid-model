@@ -565,7 +565,22 @@ PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridMode
 PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
                              PGM_ID const* ids, PGM_Idx* indexer);
 
-// run calculation
+/**
+ * @brief 
+ * 
+ * @param handle 
+ * @param model 
+ * @param opt 
+ * @param n_output_components 
+ * @param output_components 
+ * @param output_data 
+ * @param n_scenarios 
+ * @param n_update_components 
+ * @param update_components 
+ * @param n_component_elements_per_scenario 
+ * @param indptrs_per_component 
+ * @param update_data 
+ */
 PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                            PGM_Idx n_output_components, char const** output_components, void** output_data,
                            PGM_Idx n_scenarios, PGM_Idx n_update_components, char const** update_components,
