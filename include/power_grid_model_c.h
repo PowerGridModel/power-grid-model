@@ -131,7 +131,7 @@ PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
 
 /**
  * @brief Get error message of last operation
- * 
+ *
  * If the error code is PGM_batch_error.
  * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), and PGM_batch_errs() to retrieve the detail.
  *
@@ -545,15 +545,15 @@ PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridMode
 
 /**
  * @brief Get the sequence numbers based on list of ids in a given component.
- * 
+ *
  * For example, if there are 5 nodes in the model with id [10, 2, 5, 15, 30].
  * We have a node ID list of [2, 5, 15, 5, 10, 10, 30].
  * We would like to know the sequence number of each element in the model.
  * Calling this function should result in a sequence array of [1, 2, 3, 2, 0, 0, 4].
- * 
+ *
  * If you supply a non-existing ID in the ID array, an error will be raised.
- * 
- * @param handle 
+ *
+ * @param handle
  * @param model Pointer to model
  * @param component A const char* string as component name
  * @param size Size of the ID array
