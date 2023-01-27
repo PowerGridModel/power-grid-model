@@ -552,6 +552,7 @@ PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridMode
  * Calling this function should result in a sequence array of [1, 2, 3, 2, 0, 0, 4].
  *
  * If you supply a non-existing ID in the ID array, an error will be raised.
+ * Use PGM_err_code() and PGM_err_msg() to check the error.
  *
  * @param handle
  * @param model Pointer to model
