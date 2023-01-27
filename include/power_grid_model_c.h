@@ -211,6 +211,12 @@ PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
 
 /**
  * @brief Get the number of components for a dataset
+ * 
+ * You will get one of the following depending on the idx
+ *   - input
+ *   - update
+ *   - sym_output
+ *   - asym_output
  *
  * @param handle
  * @param dataset name of dataset
@@ -491,7 +497,7 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  * For i-th component, components[i] should be a const char* string of the component name
  * @param component_sizes Pointer to an integer array specifying the size of each component.
  * For i-th component, component_sizes[i] specifies how many elements there are for this component.
- * @param input_data Pointer to a void const* array consisting the data buffers.
+ * @param input_data Pointer to a void const* array consisting the input data buffers.
  * For i-th component, input_data[i] is a void const* pointer to the data buffer for this component.
  * @return  A opaque pointer to the created model. 
  * If there are errors during the creation, a nullptr is returned.
@@ -501,11 +507,37 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
                                              char const** components, PGM_Idx const* component_sizes,
                                              void const** input_data);
 
-// update model
+/**
+ * @brief Update the model by changing mutable attributes of some elements
+ * 
+ * All the elements you supply in the update dataset should have valid ids 
+ * which exist in the original model.
+ * 
+ * Use PGM_err_code() and PGM_err_msg() to check if there are errors in the update.
+ * 
+ * @param handle 
+ * @param model Pointer to the existing model
+ * @param n_components number of component types you want to update
+ * @param components Pointer to a const char* array consisting the name of each component.
+ * For i-th component, components[i] should be a const char* string of the component name
+ * @param component_sizes Pointer to an integer array specifying the size of each component.
+ * For i-th component, component_sizes[i] specifies how many elements you want to update for this component.
+ * NOTE: You do not need to update all the elemenmts for this component.
+ * @param update_data Pointer to a void const* array consisting the update data buffers.
+ * For i-th component, update_data[i] is a void const* pointer to the update data buffer for this component.
+ */
 PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components,
                               char const** components, PGM_Idx const* component_sizes, void const** update_data);
 
-// copy model
+/**
+ * @brief Make a copy of an existing model
+ * 
+ * @param handle 
+ * @param model Pointer to an existing model
+ * @return  A opaque pointer to the new copy. 
+ * If there are errors during the creation, a nullptr is returned.
+ * Use PGM_err_code() and PGM_err_msg() to check the error.
+ */
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
 
 // get indexer
@@ -519,7 +551,11 @@ PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Op
                            PGM_Idx const* n_component_elements_per_scenario, PGM_Idx const** indptrs_per_component,
                            void const** update_data);
 
-// destroy model
+/**
+ * @brief Destroy the model returned by PGM_create_model() or PGM_copy_model()
+ * 
+ * @param model pointer to the model
+ */
 PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);
 
 #ifdef __cplusplus
