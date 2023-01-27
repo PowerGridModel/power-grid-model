@@ -15,6 +15,9 @@ source_0 --node_1---- sym_load_2
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "power_grid_model_c.h"
 
