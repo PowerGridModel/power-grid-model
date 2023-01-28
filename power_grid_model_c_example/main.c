@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     // create handle
     PGM_Handle* handle = PGM_create_handle();
 
-    // create input buffer
+    /**** create input buffer ****/
     // we create input buffer data using two ways of creating buffer
     // use PGM function to create node and sym_load buffer
     void* node_input = PGM_create_buffer(handle, "input", "node", 1);
@@ -41,7 +41,41 @@ int main(int argc, char** argv) {
     void* source_input = _aligned_malloc(source_size * 1, source_alignment);
 #else
     void* source_input = aligned_alloc(source_alignment, source_size * 1);
-#endif    
+#endif
+
+    /***** Assign attribute to the input buffer *****/
+    // We use two ways to assign, via pointer cast and via helper function
+    // For all attributes of all components, see
+    // https://power-grid-model.readthedocs.io/en/stable/user_manual/components.html
+
+    // node attribute, we use pointer cast
+    size_t node_id_offset = PGM_meta_attribute_offset(handle, "input", "node", "id");
+    size_t node_u_rated_offset = PGM_meta_attribute_offset(handle, "input", "node", "u_rated");
+    // pointer cast of offset
+    *(PGM_ID*)((char*)node_input + node_id_offset) = 1;
+    *(double*)((char*)node_input + node_u_rated_offset) = 10e3;  // 10 kV node
+
+    // source attribute, we use helper function
+    // set to NaN for all values
+    PGM_buffer_set_nan(handle, "input", "source", source_input, 1);
+    PGM_ID source_id = 0;
+    PGM_ID node = 1;
+    int8_t status = 1;
+    double u_ref = 1.0;
+    double sk = 1e6;  // 1 MVA short circuit capacity
+    PGM_buffer_set_value(handle, "input", "source", "id", source_input, &source_id, 1, -1);
+    PGM_buffer_set_value(handle, "input", "source", "node", source_input, &node, 1, -1);
+    PGM_buffer_set_value(handle, "input", "source", "status", source_input, &status, 1, -1);
+    PGM_buffer_set_value(handle, "input", "source", "u_ref", source_input, &u_ref, 1, -1);
+    PGM_buffer_set_value(handle, "input", "source", "sk", source_input, &sk, 1, -1);
+
+    // sym_load attribute, we use helper function
+    PGM_ID sym_load_id[] = {2, 3};
+    int8_t load_type = 0;  // const power
+    PGM_buffer_set_value(handle, "input", "source", "id", sym_load_input, sym_load_id, 2, -1);
+    // 
+    PGM_buffer_set_value(handle, "input", "source", "id", sym_load_input, sym_load_id, 2, -1);
+
 
     // release all the resources
     PGM_destroy_handle(handle);
@@ -51,7 +85,7 @@ int main(int argc, char** argv) {
     _aligned_free(source_input);
 #else
     free(source_input);
-#endif    
+#endif
 
     return 0;
 }
