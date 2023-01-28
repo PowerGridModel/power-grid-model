@@ -14,6 +14,7 @@ source_0 --node_1---- sym_load_2
                    |---- sym_load_3
 */
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -82,15 +83,24 @@ int main(int argc, char** argv) {
     PGM_buffer_set_value(handle, "input", "sym_load", "p_specified", sym_load_input, pq_specified, 2, 16);
     PGM_buffer_set_value(handle, "input", "sym_load", "q_specified", sym_load_input, pq_specified + 1, 2, 16);
 
-    // release all the resources
-    PGM_destroy_handle(handle);
-    PGM_destroy_buffer(node_input);
-    PGM_destroy_buffer(sym_load_input);
+    /**** initialize model ****/
+    // component names and sizes
+    char const* components[] = {"source", "sym_load", "node"};
+    PGM_Idx component_sizes[] = {1, 2, 1};
+    void const* input_data[] = {source_input, sym_load_input, node_input};
+    // create model
+    PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, 3, components, component_sizes, input_data);
+    assert(PGM_err_code(handle) == PGM_no_error);
+
+    /**** release all the resources ****/
+    PGM_destroy_model(model);
 #ifdef _WIN32
     _aligned_free(source_input);
 #else
     free(source_input);
 #endif
-
+    PGM_destroy_buffer(sym_load_input);
+    PGM_destroy_buffer(node_input);
+    PGM_destroy_handle(handle);
     return 0;
 }
