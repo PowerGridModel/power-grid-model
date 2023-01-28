@@ -25,7 +25,7 @@ source_0 --node_1---- sym_load_2
 int main(int argc, char** argv) {
     (void)(argc);
     (void)(argv);
-    printf("%s", "This is an example to call the C-API of Power Grid Model.\n");
+    printf("%s", "\nThis is an example to call the C-API of Power Grid Model.\n");
 
     // create handle
     PGM_Handle* handle = PGM_create_handle();
@@ -72,8 +72,8 @@ int main(int argc, char** argv) {
 
     // sym_load attribute, we use helper function
     PGM_ID sym_load_id[] = {2, 3};
-    int8_t load_type = 0;                                // const power
-    double pq_specified[] = {100e3, 20e3, 200e3, 40e3};  // p2, q2, p3, p3
+    int8_t load_type = 0;                               // const power
+    double pq_specified[] = {50e3, 10e3, 100e3, 20e3};  // p2, q2, p3, p3
     PGM_buffer_set_value(handle, "input", "sym_load", "id", sym_load_input, sym_load_id, 2, -1);
     // node, status, type are the same for two sym_load, there for the scr_stride is zero
     PGM_buffer_set_value(handle, "input", "sym_load", "node", sym_load_input, &node, 2, 0);
@@ -85,14 +85,42 @@ int main(int argc, char** argv) {
 
     /**** initialize model ****/
     // component names and sizes
-    char const* components[] = {"source", "sym_load", "node"};
+    char const* components[] = {"source", "sym_load", "node"};  // we use this array for mutiple places
     PGM_Idx component_sizes[] = {1, 2, 1};
     void const* input_data[] = {source_input, sym_load_input, node_input};
     // create model
     PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, 3, components, component_sizes, input_data);
     assert(PGM_err_code(handle) == PGM_no_error);
 
+    /**** create output buffer ****/
+    // we only create output buffer for node
+    // we create of buffer size of 3
+    // for one-time calculation, we only need one
+    // for batch calculation, we need buffer size of 3 because we are going to run 3 scenarios
+    void* node_output = PGM_create_buffer(handle, "sym_output", "node", 3);
+    void** output_data = &node_output;
+    // value arrays to retrieve, for three scenarios
+    double u_pu[3];
+    double u_angle[3];
+
+    /**** one time calculation ****/
+    // create options with default value
+    PGM_Options* opt = PGM_create_options(handle);
+    PGM_calculate(
+        // one time calculation parameter
+        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
+        // batch parameter
+        0, 0, NULL, NULL, NULL, NULL);
+    assert(PGM_err_code(handle) == PGM_no_error);
+    // get value and print
+    PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 1, -1);
+    PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 1, -1);
+    printf("\nOne-time Calculation\n");
+    printf("Node result u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
+
     /**** release all the resources ****/
+    PGM_destroy_options(opt);
+    PGM_destroy_buffer(node_output);
     PGM_destroy_model(model);
 #ifdef _WIN32
     _aligned_free(source_input);
