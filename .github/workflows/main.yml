@@ -45,7 +45,7 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json doctest
       - name: Run build script
-        run: ./build.sh -b ${{ matrix.build-option }} -s
+        run: ./build.sh -b ${{ matrix.build-option }} -s -e
 
   build-cpp-test-windows:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
@@ -103,7 +103,7 @@ jobs:
 
       - name: Build and test
         run: |
-          ./build.sh -b ${{ matrix.build-option }} -s 
+          ./build.sh -b ${{ matrix.build-option }} -s -e
 
   build-and-test-python:
     strategy:

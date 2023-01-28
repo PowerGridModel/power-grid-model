@@ -48,6 +48,9 @@ int main(int argc, char** argv) {
     // We use two ways to assign, via pointer cast and via helper function
     // For all attributes of all components, see
     // https://power-grid-model.readthedocs.io/en/stable/user_manual/components.html
+    // Pointer cast is generally more efficient and flexible because you are not calling into the shared
+    //     object everytime. But it requires the user to retrieve the offset information first.
+    // Using the buffer helper function is more convenient but with some overhead.
 
     // node attribute, we use pointer cast
     size_t node_id_offset = PGM_meta_attribute_offset(handle, "input", "node", "id");
