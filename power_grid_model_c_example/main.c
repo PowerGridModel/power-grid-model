@@ -24,7 +24,7 @@ source_0 --node_1---- sym_load_2
 int main(int argc, char** argv) {
     (void)(argc);
     (void)(argv);
-    printf("%s", "This is an example to call the C-API of Power grid Model.\n");
+    printf("%s", "This is an example to call the C-API of Power Grid Model.\n");
 
     // create handle
     PGM_Handle* handle = PGM_create_handle();
