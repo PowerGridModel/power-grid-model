@@ -12,6 +12,17 @@ consisting 1 source, 1 node, 2 sym_load
 source_0 --node_1---- sym_load_2
                    |
                    |---- sym_load_3
+
+We do one-time calculation on the following value
+node: 10kV
+source: 1.0 p.u. u_ref, 1 MVA sk
+sym_load_2: 50 kW, 10 kvar
+sym_load_3: 100 kW, 20 kvar
+
+We do batch calculation with 3 scenarios, with the following mutation
+#0: source: u_ref = 0.95, sym_load_2: 100 kW, sym_load_3: 200 kW
+#1: source: u_ref = 1.05, sym_load_2: 0 kW
+#3: source: u_ref = 1.10, sym_load_3: -200 kW
 */
 
 #include <assert.h>
@@ -131,9 +142,11 @@ int main(int argc, char** argv) {
         0, 0, NULL, NULL, NULL, NULL);
     // print error code and message
     printf("\nOne-time Calculation Error\n");
-    printf("Error code: %ld, error message: %s\n", PGM_err_code(handle), PGM_err_msg(handle));
+    printf("Error code: %d, error message: %s\n", (int)PGM_err_code(handle), PGM_err_msg(handle));
     // set back to normal iteration
     PGM_set_max_iter(handle, opt, 20);
+
+    /**** ****/
 
     /**** release all the resources ****/
     PGM_destroy_options(opt);
