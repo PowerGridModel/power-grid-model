@@ -118,6 +118,20 @@ int main(int argc, char** argv) {
     printf("\nOne-time Calculation\n");
     printf("Node result u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
 
+    /**** one time calculation error ****/
+    // we set max iteration to very low so that it will diverge.
+    PGM_set_max_iter(handle, opt, 1);
+    PGM_calculate(
+        // one time calculation parameter
+        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
+        // batch parameter
+        0, 0, NULL, NULL, NULL, NULL);
+    // print error code and message
+    printf("\nOne-time Calculation Error\n");
+    printf("Error code: %ld, error message: %s\n", PGM_err_code(handle), PGM_err_msg(handle));
+    // set back to normal iteration
+    PGM_set_max_iter(handle, opt, 20);
+
     /**** release all the resources ****/
     PGM_destroy_options(opt);
     PGM_destroy_buffer(node_output);
