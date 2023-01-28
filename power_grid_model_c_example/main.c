@@ -59,8 +59,8 @@ int main(int argc, char** argv) {
     // set to NaN for all values
     PGM_buffer_set_nan(handle, "input", "source", source_input, 1);
     PGM_ID source_id = 0;
-    PGM_ID node = 1;
-    int8_t status = 1;
+    PGM_ID node = 1;    // also used for load
+    int8_t status = 1;  // also used for load
     double u_ref = 1.0;
     double sk = 1e6;  // 1 MVA short circuit capacity
     PGM_buffer_set_value(handle, "input", "source", "id", source_input, &source_id, 1, -1);
@@ -71,11 +71,16 @@ int main(int argc, char** argv) {
 
     // sym_load attribute, we use helper function
     PGM_ID sym_load_id[] = {2, 3};
-    int8_t load_type = 0;  // const power
-    PGM_buffer_set_value(handle, "input", "source", "id", sym_load_input, sym_load_id, 2, -1);
-    // 
-    PGM_buffer_set_value(handle, "input", "source", "id", sym_load_input, sym_load_id, 2, -1);
-
+    int8_t load_type = 0;                                // const power
+    double pq_specified[] = {100e3, 20e3, 200e3, 40e3};  // p2, q2, p3, p3
+    PGM_buffer_set_value(handle, "input", "sym_load", "id", sym_load_input, sym_load_id, 2, -1);
+    // node, status, type are the same for two sym_load, there for the scr_stride is zero
+    PGM_buffer_set_value(handle, "input", "sym_load", "node", sym_load_input, &node, 2, 0);
+    PGM_buffer_set_value(handle, "input", "sym_load", "status", sym_load_input, &status, 2, 0);
+    PGM_buffer_set_value(handle, "input", "sym_load", "type", sym_load_input, &load_type, 2, 0);
+    // the stride of p and q input is 2 double value, i.e. 16 bytes
+    PGM_buffer_set_value(handle, "input", "sym_load", "p_specified", sym_load_input, pq_specified, 2, 16);
+    PGM_buffer_set_value(handle, "input", "sym_load", "q_specified", sym_load_input, pq_specified + 1, 2, 16);
 
     // release all the resources
     PGM_destroy_handle(handle);

@@ -33,7 +33,7 @@ if(WIN32)
   add_compile_options(/utf-8 /WX /bigobj /FC)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
-  add_compile_options(-Wno-deprecated-copy)  # bug in boost
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-copy>)  # bug in boost
   add_compile_options(-Wno-deprecated-declarations)  # bug in boost
   # test coverage for debug build in linux, if specified
   if(UNIX AND 
