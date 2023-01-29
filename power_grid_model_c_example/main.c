@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     int8_t load_type = 0;                               // const power
     double pq_specified[] = {50e3, 10e3, 100e3, 20e3};  // p2, q2, p3, p3
     PGM_buffer_set_value(handle, "input", "sym_load", "id", sym_load_input, sym_load_id, 2, -1);
-    // node, status, type are the same for two sym_load, there for the scr_stride is zero
+    // node, status, type are the same for two sym_load, therefore the scr_stride is zero
     PGM_buffer_set_value(handle, "input", "sym_load", "node", sym_load_input, &node, 2, 0);
     PGM_buffer_set_value(handle, "input", "sym_load", "status", sym_load_input, &status, 2, 0);
     PGM_buffer_set_value(handle, "input", "sym_load", "type", sym_load_input, &load_type, 2, 0);
@@ -146,9 +146,27 @@ int main(int argc, char** argv) {
     // set back to normal iteration
     PGM_set_max_iter(handle, opt, 20);
 
-    /**** ****/
+    /**** prepare batch update dataset ****/
+
+    // 1 source update per scenario
+    void* source_update = PGM_create_buffer(handle, "update", "source", 3);
+    PGM_buffer_set_nan(handle, "update", "source", source_update, 3);
+    double u_ref_update[] = {0.95, 1.05, 1.1};
+    // set all source id to the same id, stride is zero
+    PGM_buffer_set_value(handle, "update", "source", "id", source_update, &source_id, 3, 0);
+    PGM_buffer_set_value(handle, "update", "source", "u_ref", source_update, u_ref_update, 3, -1);
+
+    // 2 load update in scenario 0, 1 load update in scenario 1, 1 load update in scenario 2
+    void* load_update = PGM_create_buffer(handle, "update", "sym_load", 4);
+    PGM_buffer_set_nan(handle, "update", "sym_load", load_update, 4);
+    PGM_ID load_update_id[] = {2, 3, 2, 3};  // 2, 3 for #0, 2 for #1, 3 for #2
+    double p_update[] = {100e3, 200e3, 0.0, -200e3};
+    PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
+    PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
 
     /**** release all the resources ****/
+    PGM_destroy_buffer(load_update);
+    PGM_destroy_buffer(source_update);
     PGM_destroy_options(opt);
     PGM_destroy_buffer(node_output);
     PGM_destroy_model(model);
