@@ -176,6 +176,15 @@ int main(int argc, char** argv) {
         handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
         // batch parameter
         3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
+    assert(PGM_err_code(handle) == PGM_no_error);
+    // get node result and print
+    PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 3, -1);
+    PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 3, -1);
+    printf("\nBatch Calculation\n");
+    int i;
+    for (i = 0; i != 3; ++i) {
+        printf("Scenario %d, u_pu: %f, u_angle: %f\n", i, u_pu[i], u_angle[i]);
+    }
 
     /**** release all the resources ****/
     PGM_destroy_buffer(load_update);
