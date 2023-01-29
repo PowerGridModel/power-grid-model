@@ -163,6 +163,19 @@ int main(int argc, char** argv) {
     double p_update[] = {100e3, 200e3, 0.0, -200e3};
     PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
     PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
+    PGM_Idx indptr_load[] = {0, 2, 3, 4};  // 2 updates for #0, 1 update for #1, 2 update for #2
+
+    // update meta data
+    PGM_Idx n_component_elements_per_scenario[] = {1, -1};         // 1 per scenario for source, variable for load
+    PGM_Idx const* indptrs_per_component[] = {NULL, indptr_load};  // variable for load
+    void const* update_data[] = {source_update, load_update};
+
+    /**** Batch calculation ****/
+    PGM_calculate(
+        // one time calculation parameter
+        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
+        // batch parameter
+        3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
 
     /**** release all the resources ****/
     PGM_destroy_buffer(load_update);
