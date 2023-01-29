@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
     printf("\nOne-time Calculation\n");
     printf("Node result u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
 
-    /**** one time calculation error ****/
+    /**** One time calculation error ****/
     // we set max iteration to very low so that it will diverge.
     PGM_set_max_iter(handle, opt, 1);
     PGM_calculate(
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         0, 0, NULL, NULL, NULL, NULL);
     // print error code and message
     printf("\nOne-time Calculation Error\n");
-    printf("Error code: %d, error message: %s\n", (int)PGM_err_code(handle), PGM_err_msg(handle));
+    printf("Error code: %d, error message: %s", (int)PGM_err_code(handle), PGM_err_msg(handle));
     // set back to normal iteration
     PGM_set_max_iter(handle, opt, 20);
 
@@ -186,7 +186,39 @@ int main(int argc, char** argv) {
         printf("Scenario %d, u_pu: %f, u_angle: %f\n", i, u_pu[i], u_angle[i]);
     }
 
+    /**** Batch calculation error ****/
+    // we set some errors in batch data
+    // scenario 0 is normal
+    // scenario 1 has a very high load so the calculation will diverge
+    // scenario 2 has a unknown id
+    p_update[2] = 100e12;     // very high load for scenario 1
+    load_update_id[3] = 100;  // unknown id for scenario 2
+    PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
+    PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
+    // calculate
+    PGM_calculate(
+        // one time calculation parameter
+        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
+        // batch parameter
+        3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
+    // print error
+    printf("\nBatch Calculation Error\n");
+    printf("Error code: %d\n", (int)PGM_err_code(handle));
+    // print error in detail
+    PGM_Idx n_failed_scenarios = PGM_n_failed_scenarios(handle);
+    PGM_Idx const* failed_scenarios = PGM_failed_scenarios(handle);
+    char const** batch_errs = PGM_batch_errs(handle);
+    for (i = 0; i != n_failed_scenarios; ++i) {
+        printf("Failed scenario %d, error message: %s", (int)failed_scenarios[i], batch_errs[i]);
+    }
+    // print normal results
+    printf("Normal result:\n");
+    printf("Scenario %d, u_pu: %f, u_angle: %f\n", i, u_pu[0], u_angle[0]);
+
     /**** release all the resources ****/
+    // Here we need to release all the resources allocated
+    // If you are using C++, you can wrap the resource returned by PGM
+    //     in a smart pointer with the destroy function as custom deleter
     PGM_destroy_buffer(load_update);
     PGM_destroy_buffer(source_update);
     PGM_destroy_options(opt);
