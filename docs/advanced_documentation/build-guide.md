@@ -204,9 +204,9 @@ As an example, go to the root folder of repo. Use the following command to build
 One can run the unit tests and C API example by:
 
 ```shell
-./cpp_build_Release/bin/power_grid_model_unit_tests
+./cpp_build_script_Release/bin/power_grid_model_unit_tests
 
-./cpp_build_Release/bin/power_grid_model_c_example
+./cpp_build_script_Release/bin/power_grid_model_c_example
 ```
 
 ## Example Setup for Windows 10
@@ -331,7 +331,7 @@ As an example, go to the root folder of repo. Use the following command to build
 One can run the unit tests and C API example by:
 
 ```shell
-./cpp_build_Release/bin/power_grid_model_unit_tests
+./cpp_build_script_Release/bin/power_grid_model_unit_tests
 
-./cpp_build_Release/bin/power_grid_model_c_example
+./cpp_build_script_Release/bin/power_grid_model_c_example
 ```
