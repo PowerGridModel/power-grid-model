@@ -27,10 +27,19 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
-        cpp-compiler: [g++-11, clang++-14]
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CXX: ${{ matrix.cpp-compiler }}
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
 
     steps:
       - uses: actions/checkout@v3
