@@ -56,7 +56,7 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
     try {
         return func();
     }
-    catch (std::exception& e) {
+    catch (std::out_of_range& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = std::string(e.what()) + "\n You supplied wrong name and/or index!\n";
         return std::invoke_result_t<Functor>{};
