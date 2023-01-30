@@ -198,7 +198,7 @@ There is a convenient shell script to build the cmake project: {{ "[`build.sh`](
 As an example, go to the root folder of repo. Use the following command to build the project in release mode:
 
 ```shell
-./build.sh Release
+./build.sh -b Release
 ```
 
 One can run the unit tests and C API example by:
@@ -325,7 +325,7 @@ There is a convenient shell script to build the cmake project: {{ "[`build.sh`](
 As an example, go to the root folder of repo. Use the following command to build the project in release mode:
 
 ```shell
-./build.sh Release
+./build.sh -b Release
 ```
 
 One can run the unit tests and C API example by:
