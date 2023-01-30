@@ -10,10 +10,12 @@ This document explains how you can build this library from source, including som
 repository there are two builds:
 
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
-* A [CMake](https://cmake.org/) C++ project to build native C++ unit tests and/or performance benchmark.
-* In the future, the following two libraries might be provided:
-    * A C++ header-only library of the calculation core
-    * A C/C++ dynamic shared library (`.dll` or `.so`) with pure C ABI interface.
+* A [CMake](https://cmake.org/) project consisting the C++ header-only calculation core, 
+and the following build targets:
+    * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
+    * Native C++ unit tests
+    * A performance benchmark program
+    * An example C program to call the dynamic library
 
 ## Build Requirements
 
@@ -36,8 +38,8 @@ You need a C++ compiler with C++17 support. Below is a list of tested compilers:
 
 **Linux**
 
-* gcc >= 9.3
-* clang >= 9.0
+* gcc >= 10.0
+* clang >= 13.0
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
@@ -47,7 +49,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 **macOS**
 
-* clang >= 12.0
+* clang >= 13.0
 
 ### Build System for CMake Project
 
@@ -97,14 +99,15 @@ pytest
 
 ## Build CMake Project
 
-There is a root cmake file in the root folder of the repo [`CMakeLists.txt`](../../CMakeLists.txt). It specifies
+There is a root cmake file in the root folder of the repo `CMakeLists.txt`. It specifies
 dependencies and the build options for the project. The core algorithm is implemented in the header-only
-library `power_grid_model`. There are two sub-projects defined in the root cmake file:
+library `power_grid_model`. There are four sub-projects defined in the root cmake file:
 
-* [`tests/cpp_unit_tests/CMakeLists.txt`](../../tests/cpp_unit_tests/CMakeLists.txt): the unit test project using `doctest`
-  framework.
-* [`tests/benchmark_cpp/CMakeLists.txt`](../../tests/benchmark_cpp/CMakeLists.txt): the C++ benchmark project for
-  performance measure.
+* `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
+* `tests/cpp_unit_tests`: the unit test project using `doctest` framework.
+* `tests/benchmark_cpp`: the C++ benchmark project for performance measure.
+* `power_grid_model_c_example`: an example C program to call the dynamic library
+
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. When you
 use `cmake build` for the root cmake file, the following additional options are available besides the standard cmake
@@ -113,10 +116,24 @@ option.
 | Option                             | Description                                                                                                 |
 |------------------------------------|-------------------------------------------------------------------------------------------------------------|
 | `POWER_GRID_MODEL_COVERAGE`        | When set to `1`, build with test coverage. This is only applicable for Linux.                               |
+| `POWER_GRID_MODEL_SANITIZER`       | When set to `1`, build with address sanitizer. This is only applicable for Linux.                           |
 
 ## Visual Studio Code Support
 
 You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
+
+## Build Script for Linux/macOS
+
+There is a convenient shell script to build the cmake project in Linux or macOS:
+{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}. You can study the file and write your own build script.
+The following options are supported in the build script.
+
+```shell
+Usage: build.sh -b <Debug|Release> [-c] [-s]
+  -c option enables coverage
+  -s option enables sanitizer
+  -e option to run C API example
+```
 
 ## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
 
@@ -176,16 +193,7 @@ pytest
 
 ### Build CMake Project
 
-There is a convenient shell script to build the cmake project:
-{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}. You can study the file and write your own build script. Four configurations are pre-defined
-for two input arguments, which will be passed into `cmake`. It includes debug or release build, as well as the option to
-build test coverage or not.
-
-* Option 1
-    * Debug
-    * Release
-* Option 2 (optional)
-    * Coverage (if specified, the test coverage will be run and a web report will be generated in `cpp_cov_html` folder.)
+There is a convenient shell script to build the cmake project: {{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
 
 As an example, go to the root folder of repo. Use the following command to build the project in release mode:
 
@@ -193,12 +201,12 @@ As an example, go to the root folder of repo. Use the following command to build
 ./build.sh Release
 ```
 
-One can run the unit tests and benchmark by:
+One can run the unit tests and C API example by:
 
 ```shell
-./cpp_build_Release/tests/cpp_unit_tests/power_grid_model_unit_tests
+./cpp_build_Release/bin/power_grid_model_unit_tests
 
-./cpp_build_Release/tests/benchmark_cpp/power_grid_model_benchmark_cpp
+./cpp_build_Release/bin/power_grid_model_c_example
 ```
 
 ## Example Setup for Windows 10
@@ -262,7 +270,7 @@ pytest
 
 If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
 The IDE should be able to automatically detect the Visual Studio cmake configuration file
-[`CMakeSettings.json`](../../CMakeSettings.json). Two configurations are pre-defined. It includes debug or release build.
+`CMakeSettings.json`. Two configurations are pre-defined. It includes debug or release build.
 
 * `x64-Debug`
 * `x64-Release`
@@ -310,13 +318,7 @@ pytest
 
 ### Build CMake Project
 
-There is a convenient shell script to build the cmake project:
-[`build.sh`](../../build.sh). You can study the file and write your own build script. Two configurations are pre-defined
-with one input argument, which will be passed into `cmake`. It includes debug or release build.
-
-* Option 1
-    * Debug
-    * Release
+There is a convenient shell script to build the cmake project: {{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
 
 **Note: the test coverage option is not supported in macOS.**
 
@@ -326,10 +328,10 @@ As an example, go to the root folder of repo. Use the following command to build
 ./build.sh Release
 ```
 
-One can run the unit tests and benchmark by:
+One can run the unit tests and C API example by:
 
 ```shell
-./cpp_build_Release/tests/cpp_unit_tests/power_grid_model_unit_tests
+./cpp_build_Release/bin/power_grid_model_unit_tests
 
-./cpp_build_Release/tests/benchmark_cpp/power_grid_model_benchmark_cpp
+./cpp_build_Release/bin/power_grid_model_c_example
 ```
