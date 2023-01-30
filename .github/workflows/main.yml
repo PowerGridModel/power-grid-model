@@ -89,9 +89,8 @@ jobs:
           # build
           cmake --build . --verbose -j 1
           # test
-          $env:Path += ";${pwd}\power_grid_model_c"
-          .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
-          .\power_grid_model_c_example\power_grid_model_c_example.exe
+          .\bin\power_grid_model_unit_tests.exe
+          .\bin\power_grid_model_c_example.exe
 
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))

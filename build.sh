@@ -49,10 +49,10 @@ cmake .. -GNinja \
 # build
 VERBOSE=1 cmake --build .
 # test
-./tests/cpp_unit_tests/power_grid_model_unit_tests
+./bin/power_grid_model_unit_tests
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
-  ./power_grid_model_c_example/power_grid_model_c_example
+  ./bin/power_grid_model_c_example
 fi
 
 
