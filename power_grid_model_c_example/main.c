@@ -22,7 +22,7 @@ sym_load_3: 100 kW, 20 kvar
 We do batch calculation with 3 scenarios, with the following mutation
 #0: source: u_ref = 0.95, sym_load_2: 100 kW, sym_load_3: 200 kW
 #1: source: u_ref = 1.05, sym_load_2: 0 kW
-#3: source: u_ref = 1.10, sym_load_3: -200 kW
+#2: source: u_ref = 1.10, sym_load_3: -200 kW
 */
 
 #include <assert.h>
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
     printf("Node result u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
 
     /**** One time calculation error ****/
-    // we set max iteration to very low so that it will diverge.
+    // we set max iteration to very low so that it will not converge.
     PGM_set_max_iter(handle, opt, 1);
     PGM_calculate(
         // one time calculation parameter
@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
     }
     // print normal results
     printf("Normal result:\n");
-    printf("Scenario %d, u_pu: %f, u_angle: %f\n", i, u_pu[0], u_angle[0]);
+    printf("Scenario 0, u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
 
     /**** release all the resources ****/
     // Here we need to release all the resources allocated
