@@ -303,10 +303,17 @@ TEST_CASE("Test main model") {
 
         SUBCASE("Node, sym output") {
             main_model.output_result<true, Node>(res, sym_node.begin());
+            main_model.output_result<true, Appliance>(res, sym_appliance.begin());
 
             CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
             CHECK(sym_node[1].u_pu == doctest::Approx(u1));
             CHECK(sym_node[2].u_pu == doctest::Approx(u1));
+            CHECK(sym_node[0].p == doctest::Approx(sym_appliance[0].p));
+            CHECK(sym_node[1].p == doctest::Approx(0.0));
+            CHECK(sym_node[2].p == doctest::Approx(sym_appliance[1].p - sym_appliance[2].p - sym_appliance[3].p));
+            CHECK(sym_node[0].q == doctest::Approx(sym_appliance[0].q));
+            CHECK(sym_node[1].q == doctest::Approx(0.0));
+            CHECK(sym_node[2].q == doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q));
 
             /*
             TODO
@@ -480,6 +487,24 @@ TEST_CASE("Test main model") {
         - test asym load
         - test shunt
         */
+
+        SUBCASE("Node, asym output") {
+            main_model.output_result<false, Node>(res, asym_node.begin());
+            main_model.output_result<false, Appliance>(res, asym_appliance.begin());
+
+            CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
+            CHECK(asym_node[1].u_pu(1) == doctest::Approx(u1));
+            CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+
+            CHECK(asym_node[0].p(0) == doctest::Approx(asym_appliance[0].p(0)));
+            CHECK(asym_node[1].p(1) == doctest::Approx(0.0));
+            CHECK(asym_node[2].p(2) ==
+                  doctest::Approx(asym_appliance[1].p(2) - asym_appliance[2].p(2) - asym_appliance[3].p(2)));
+            CHECK(asym_node[0].q(2) == doctest::Approx(asym_appliance[0].q(2)));
+            CHECK(asym_node[1].q(1) == doctest::Approx(0.0));
+            CHECK(asym_node[2].q(0) ==
+                  doctest::Approx(asym_appliance[1].q(0) - asym_appliance[2].q(0) - asym_appliance[3].q(0)));
+        }
 
         SUBCASE("AsymVoltageSensor, asym output") {
             main_model.output_result<false, Node>(res, asym_node.begin());
@@ -811,11 +836,6 @@ TEST_CASE("Test main model") {
         CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
         CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
-    }
-
-    SUBCASE("Test calculate state estimation") {
-        auto const math_output =
-            main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
     }
 }
 

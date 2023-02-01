@@ -150,10 +150,6 @@ class IterativePFSolver {
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
                 output.node_injection[bus] += output.load_gen[load_gen].s;
             }
-
-            // node injection
-            // TODO: How to calculate the node injection?
-            output.node_injection[bus] = ComplexValue<sym>();
         }
     }
 
