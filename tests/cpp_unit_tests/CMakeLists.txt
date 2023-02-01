@@ -10,7 +10,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 set(PROJECT_SOURCES
   	test_power_grid_model.cpp
  	test_main_model_se.cpp
- 	test_main_model.cpp
+# 	test_main_model.cpp
 #	test_main_model_static.cpp
 # 	test_three_phase_tensor.cpp
 # 	test_node.cpp

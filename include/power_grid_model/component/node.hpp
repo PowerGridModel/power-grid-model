@@ -42,8 +42,8 @@ class Node final : public Base {
         output.u_pu = cabs(u_pu);
         output.u = u_scale<sym> * u_rated_ * output.u_pu;
         output.u_angle = arg(u_pu);
-        output.p = real(node_injection);
-        output.q = imag(node_injection);
+        output.p = base_power<sym> * real(node_injection);
+        output.q = base_power<sym> * imag(node_injection);
         return output;
     }
     template <bool sym>
