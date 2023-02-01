@@ -182,13 +182,13 @@ struct StateEstimationInput {
     std::vector<SensorCalcParam<sym>> measured_shunt_power;
     std::vector<SensorCalcParam<sym>> measured_branch_from_power;
     std::vector<SensorCalcParam<sym>> measured_branch_to_power;
-    std::vector<SensorCalcParam<sym>> measured_node_injection_power;
+    std::vector<SensorCalcParam<sym>> measured_bus_injection_power;
 };
 
 template <bool sym>
 struct MathOutput {
     std::vector<ComplexValue<sym>> u;
-    std::vector<ComplexValue<sym>> node_injection;
+    std::vector<ComplexValue<sym>> bus_injection;
     std::vector<BranchMathOutput<sym>> branch;
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;

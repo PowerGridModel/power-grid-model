@@ -313,6 +313,7 @@ class MeasuredValues {
         */
         MathModelTopology const& topo = math_topology();
         RealValue<sym> angle_cum{};  // cumulative angle
+        IntSVector node_status(topo.n_bus(), 1);
         for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
             // voltage
             {
@@ -350,10 +351,15 @@ class MeasuredValues {
             // source
             process_bus_objects(bus, topo.source_bus_indptr, topo.source_power_sensor_indptr, input.source_status,
                                 input.measured_source_power, extra_value_, idx_source_power_);
+
+            // node injection
+            process_one_object(bus, topo.node_power_sensor_indptr, node_status, input.measured_bus_injection_power,
+                               main_value_, idx_bus_injection_power_);
+
             // combine load_gen/source to injection measurement
             {
-                // injection measurement is only available if all the connected load_gen/source are measured.
-                // zero injection (all disconnected) is also considered as measured
+                // if all the connected load_gen/source are measured, their sum can be considered as an injection
+                // measurement. zero injection (no connected appliances) is also considered as measured
                 Idx n_unmeasured = 0;
                 SensorCalcParam<sym> injection_measurement{};
 
@@ -383,12 +389,21 @@ class MeasuredValues {
                 }
 
                 if (n_unmeasured == 0) {
-                    idx_bus_injection_power_[bus] = (Idx)main_value_.size();
-                    main_value_.push_back(injection_measurement);
+                    if (idx_bus_injection_power_[bus] < 0) {  // i.e. no node injection measurement was assigned
+                        idx_bus_injection_power_[bus] = (Idx)main_value_.size();
+                        main_value_.push_back(injection_measurement);
+                    }
+                    else {
+                        auto& node_injection_measurement = main_value_[idx_bus_injection_power_[bus]];
+                        node_injection_measurement =
+                            combine_measurements({node_injection_measurement, injection_measurement}, 0, 2);
+                    }
                 }
                 else {
-                    idx_bus_injection_power_[bus] =
-                        -n_unmeasured;  // not measured, bus-appliance exactly- or under-determined
+                    if (idx_bus_injection_power_[bus] < 0) {  // i.e. no node injection measurement was assigned
+                        // not measured, bus-appliance exactly- or under-determined
+                        idx_bus_injection_power_[bus] = -n_unmeasured;
+                    }
                     // push to partial injection
                     idx_partial_injection_[bus] = (Idx)partial_injection_.size();
                     partial_injection_.push_back(injection_measurement);
@@ -592,7 +607,7 @@ class IterativeLinearSESolver {
         Timer main_timer, sub_timer;
         MathOutput<sym> output;
         output.u.resize(n_bus_);
-        output.node_injection.resize(n_bus_);
+        output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
         main_timer = Timer(calculation_info, 2220, "Math solver");
@@ -846,9 +861,9 @@ class IterativeLinearSESolver {
         // call y bus
         output.branch = y_bus.calculate_branch_flow(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
-        output.node_injection = y_bus.calculate_injection(output.u);
+        output.bus_injection = y_bus.calculate_injection(output.u);
         std::tie(output.load_gen, output.source) =
-            measured_value.calculate_load_gen_source(output.u, output.node_injection);
+            measured_value.calculate_load_gen_source(output.u, output.bus_injection);
     }
 };
 

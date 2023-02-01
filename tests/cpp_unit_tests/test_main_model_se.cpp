@@ -107,7 +107,7 @@ TEST_CASE("Test Main Model") {
                 }
                 SUBCASE("Symmetric Calculation - with injection sensor") {
                     main_model.add_component<SymPowerSensor>(
-                        {{{{{12}, 2}, MeasuredTerminalType::node, 1e2}, -1200.0, -120.0}});
+                        {{{{{12}, 2}, MeasuredTerminalType::node, 2e2}, -1200.0, -120.0}});
                     main_model.set_construction_complete();
 
                     std::vector<MathOutput<true>> const math_output =
