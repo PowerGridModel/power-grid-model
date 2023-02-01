@@ -8,8 +8,6 @@
 #define s3 (1.7320508075688773433)  // sqrt(3)
 #define ph (2.0943951023931952219)  // 2/3 * pi
 
-using namespace doctest;
-
 namespace power_grid_model {
 
 TEST_CASE("Test Main Model") {
@@ -26,16 +24,16 @@ TEST_CASE("Test Main Model") {
                         main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
                     std::vector<NodeOutput<true>> node_output(1);
                     main_model.output_result<true, Node>(math_output, node_output.begin());
-                    CHECK(node_output[0].u == Approx(12.345e3));
+                    CHECK(node_output[0].u == doctest::Approx(12.345e3));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     std::vector<MathOutput<false>> const math_output =
                         main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
                     std::vector<NodeOutput<false>> node_output(1);
                     main_model.output_result<false, Node>(math_output, node_output.begin());
-                    CHECK(node_output[0].u.x() == Approx(12.345e3 / s3));
-                    CHECK(node_output[0].u.y() == Approx(12.345e3 / s3));
-                    CHECK(node_output[0].u.z() == Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
                 }
             }
             SUBCASE("Asymmetric Voltage Sensor") {
@@ -50,16 +48,16 @@ TEST_CASE("Test Main Model") {
                     double const u = (std::cos(0.1) + std::cos(0.2) + std::cos(0.3)) * 12.345e3;
                     double const v = (std::sin(0.1) + std::sin(0.2) + std::sin(0.3)) * 12.345e3;
                     double const expected_u = std::sqrt(u * u + v * v) / 3.0;
-                    CHECK(node_output[0].u == Approx(expected_u));
+                    CHECK(node_output[0].u == doctest::Approx(expected_u));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     std::vector<MathOutput<false>> const math_output =
                         main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
                     std::vector<NodeOutput<false>> node_output(1);
                     main_model.output_result<false, Node>(math_output, node_output.begin());
-                    CHECK(node_output[0].u.x() == Approx(12.345e3 / s3));
-                    CHECK(node_output[0].u.y() == Approx(12.345e3 / s3));
-                    CHECK(node_output[0].u.z() == Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
                 }
             }
         }
@@ -91,21 +89,21 @@ TEST_CASE("Test Main Model") {
                     main_model.output_result<true, Node>(math_output, node_output.begin());
                     main_model.output_result<true, SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(gen_output[0].p == Approx(900.0).scale(1e3));
-                    CHECK(gen_output[0].q == Approx(90.0).scale(1e3));
+                    CHECK(gen_output[0].p == doctest::Approx(900.0).scale(1e3));
+                    CHECK(gen_output[0].q == doctest::Approx(90.0).scale(1e3));
 
-                    CHECK(load_output[0].p == Approx(1800.0).scale(1e3));
-                    CHECK(load_output[0].q == Approx(180.0).scale(1e3));
+                    CHECK(load_output[0].p == doctest::Approx(1800.0).scale(1e3));
+                    CHECK(load_output[0].q == doctest::Approx(180.0).scale(1e3));
 
-                    CHECK(node_output[0].p == Approx(900.0).scale(1e3));
-                    CHECK(node_output[0].q == Approx(90.0).scale(1e3));
-                    CHECK(node_output[1].p == Approx(-900.0).scale(1e3));
-                    CHECK(node_output[1].q == Approx(-90.0).scale(1e3));
+                    CHECK(node_output[0].p == doctest::Approx(900.0).scale(1e3));
+                    CHECK(node_output[0].q == doctest::Approx(90.0).scale(1e3));
+                    CHECK(node_output[1].p == doctest::Approx(-900.0).scale(1e3));
+                    CHECK(node_output[1].q == doctest::Approx(-90.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == Approx(0.0).scale(1e3));  // gen
-                    CHECK(power_sensor_output[0].q_residual == Approx(0.0).scale(1e3));  // gen
-                    CHECK(power_sensor_output[1].p_residual == Approx(0.0).scale(1e3));  // load
-                    CHECK(power_sensor_output[1].q_residual == Approx(0.0).scale(1e3));  // load
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3));  // gen
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3));  // gen
+                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3));  // load
+                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3));  // load
                 }
                 SUBCASE("Symmetric Calculation - with injection sensor") {
                     main_model.add_component<SymPowerSensor>(
@@ -124,23 +122,23 @@ TEST_CASE("Test Main Model") {
                     main_model.output_result<true, Node>(math_output, node_output.begin());
                     main_model.output_result<true, SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(gen_output[0].p == Approx(1000.0).scale(1e3));
-                    CHECK(gen_output[0].q == Approx(100.0).scale(1e3));
+                    CHECK(gen_output[0].p == doctest::Approx(1000.0).scale(1e3));
+                    CHECK(gen_output[0].q == doctest::Approx(100.0).scale(1e3));
 
-                    CHECK(load_output[0].p == Approx(2000.0).scale(1e3));
-                    CHECK(load_output[0].q == Approx(200.0).scale(1e3));
+                    CHECK(load_output[0].p == doctest::Approx(2000.0).scale(1e3));
+                    CHECK(load_output[0].q == doctest::Approx(200.0).scale(1e3));
 
-                    CHECK(node_output[0].p == Approx(1000.0).scale(1e3));
-                    CHECK(node_output[0].q == Approx(100.0).scale(1e3));
-                    CHECK(node_output[1].p == Approx(-1000.0).scale(1e3));
-                    CHECK(node_output[1].q == Approx(-100.0).scale(1e3));
+                    CHECK(node_output[0].p == doctest::Approx(1000.0).scale(1e3));
+                    CHECK(node_output[0].q == doctest::Approx(100.0).scale(1e3));
+                    CHECK(node_output[1].p == doctest::Approx(-1000.0).scale(1e3));
+                    CHECK(node_output[1].q == doctest::Approx(-100.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == Approx(100.0).scale(1e3));   // gen
-                    CHECK(power_sensor_output[0].q_residual == Approx(10.0).scale(1e3));    // gen
-                    CHECK(power_sensor_output[1].p_residual == Approx(100.0).scale(1e3));   // load
-                    CHECK(power_sensor_output[1].q_residual == Approx(10.0).scale(1e3));    // load
-                    CHECK(power_sensor_output[2].p_residual == Approx(-200.0).scale(1e3));  // node
-                    CHECK(power_sensor_output[2].q_residual == Approx(-20.0).scale(1e3));   // node
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(100.0).scale(1e3));   // gen
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(10.0).scale(1e3));    // gen
+                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(100.0).scale(1e3));   // load
+                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(10.0).scale(1e3));    // load
+                    CHECK(power_sensor_output[2].p_residual == doctest::Approx(-200.0).scale(1e3));  // node
+                    CHECK(power_sensor_output[2].q_residual == doctest::Approx(-20.0).scale(1e3));   // node
                 }
                 SUBCASE("Asymmetric Calculation - without injection sensor") {
                 }
