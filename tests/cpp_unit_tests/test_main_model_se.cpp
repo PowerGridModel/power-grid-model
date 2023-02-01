@@ -72,11 +72,11 @@ TEST_CASE("Test Main Model") {
                 {{{{{5}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
             main_model.add_component<AsymLoad>(
                 {{{{{6}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
-            main_model.add_component<SymVoltageSensor>({{{{{11}, 1}, 1e2}, 10.5e3, 0.0}});
+            main_model.add_component<SymVoltageSensor>({{{{{11}, 1}, 1e2}, 10.0e3, 0.0}});
             SUBCASE("Symmetric Power Sensor") {
                 main_model.add_component<SymPowerSensor>(
-                    {{{{{15}, 5}, MeasuredTerminalType::generator, 1e2}, 800.0, 80.0},
-                     {{{{16}, 6}, MeasuredTerminalType::load, 1e2}, 1600.0, 160.0}});
+                    {{{{{15}, 5}, MeasuredTerminalType::generator, 1e2}, 900.0, 90.0},
+                     {{{{16}, 6}, MeasuredTerminalType::load, 1e2}, 1800.0, 180.0}});
                 SUBCASE("Symmetric Calculation - without injection sensor") {
                     main_model.set_construction_complete();
                     std::vector<MathOutput<true>> const math_output =
@@ -85,20 +85,27 @@ TEST_CASE("Test Main Model") {
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
                     std::vector<SymNodeOutput> node_output(2);
+                    std::vector<SymPowerSensorOutput> power_sensor_output(2);
                     main_model.output_result<true, AsymGenerator>(math_output, gen_output.begin());
                     main_model.output_result<true, AsymLoad>(math_output, load_output.begin());
                     main_model.output_result<true, Node>(math_output, node_output.begin());
+                    main_model.output_result<true, SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(gen_output[0].p == Approx(800.0));
-                    CHECK(gen_output[0].q == Approx(80.0));
+                    CHECK(gen_output[0].p == Approx(900.0).scale(1e3));
+                    CHECK(gen_output[0].q == Approx(90.0).scale(1e3));
 
-                    CHECK(load_output[0].p == Approx(1600.0));
-                    CHECK(load_output[0].q == Approx(160.0));
+                    CHECK(load_output[0].p == Approx(1800.0).scale(1e3));
+                    CHECK(load_output[0].q == Approx(180.0).scale(1e3));
 
-                    CHECK(node_output[0].p == Approx(800.0));
-                    CHECK(node_output[0].q == Approx(80.0));
-                    CHECK(node_output[1].p == Approx(-800.0));
-                    CHECK(node_output[1].q == Approx(-80.0));
+                    CHECK(node_output[0].p == Approx(900.0).scale(1e3));
+                    CHECK(node_output[0].q == Approx(90.0).scale(1e3));
+                    CHECK(node_output[1].p == Approx(-900.0).scale(1e3));
+                    CHECK(node_output[1].q == Approx(-90.0).scale(1e3));
+
+                    CHECK(power_sensor_output[0].p_residual == Approx(0.0).scale(1e3));  // gen
+                    CHECK(power_sensor_output[0].q_residual == Approx(0.0).scale(1e3));  // gen
+                    CHECK(power_sensor_output[1].p_residual == Approx(0.0).scale(1e3));  // load
+                    CHECK(power_sensor_output[1].q_residual == Approx(0.0).scale(1e3));  // load
                 }
                 SUBCASE("Symmetric Calculation - with injection sensor") {
                     main_model.add_component<SymPowerSensor>(
@@ -111,20 +118,29 @@ TEST_CASE("Test Main Model") {
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
                     std::vector<SymNodeOutput> node_output(2);
+                    std::vector<SymPowerSensorOutput> power_sensor_output(3);
                     main_model.output_result<true, AsymGenerator>(math_output, gen_output.begin());
                     main_model.output_result<true, AsymLoad>(math_output, load_output.begin());
                     main_model.output_result<true, Node>(math_output, node_output.begin());
+                    main_model.output_result<true, SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(gen_output[0].p == Approx(1000.0));
-                    CHECK(gen_output[0].q == Approx(100.0));
+                    CHECK(gen_output[0].p == Approx(1000.0).scale(1e3));
+                    CHECK(gen_output[0].q == Approx(100.0).scale(1e3));
 
-                    CHECK(load_output[0].p == Approx(2000.0));
-                    CHECK(load_output[0].q == Approx(200.0));
+                    CHECK(load_output[0].p == Approx(2000.0).scale(1e3));
+                    CHECK(load_output[0].q == Approx(200.0).scale(1e3));
 
-                    CHECK(node_output[0].p == Approx(1000.0));
-                    CHECK(node_output[0].q == Approx(100.0));
-                    CHECK(node_output[1].p == Approx(-1000.0));
-                    CHECK(node_output[1].q == Approx(-100.0));
+                    CHECK(node_output[0].p == Approx(1000.0).scale(1e3));
+                    CHECK(node_output[0].q == Approx(100.0).scale(1e3));
+                    CHECK(node_output[1].p == Approx(-1000.0).scale(1e3));
+                    CHECK(node_output[1].q == Approx(-100.0).scale(1e3));
+
+                    CHECK(power_sensor_output[0].p_residual == Approx(100.0).scale(1e3));   // gen
+                    CHECK(power_sensor_output[0].q_residual == Approx(10.0).scale(1e3));    // gen
+                    CHECK(power_sensor_output[1].p_residual == Approx(100.0).scale(1e3));   // load
+                    CHECK(power_sensor_output[1].q_residual == Approx(10.0).scale(1e3));    // load
+                    CHECK(power_sensor_output[2].p_residual == Approx(-200.0).scale(1e3));  // node
+                    CHECK(power_sensor_output[2].q_residual == Approx(-20.0).scale(1e3));   // node
                 }
                 SUBCASE("Asymmetric Calculation - without injection sensor") {
                 }
