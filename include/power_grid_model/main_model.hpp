@@ -479,11 +479,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, std::vector<MathOutput<sym>> (MainModelImpl::*calculation_fn)(double, Idx, CalculationMethod)>
     BatchParameter batch_calculation_(double err_tol, Idx max_iter, CalculationMethod calculation_method,
                                       Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
-        // if the update batch is one empty set per component type
+        // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
-        bool const all_empty = std::all_of(update_data.cbegin(), update_data.cend(), [](auto const& x) {
-            return x.second.is_empty();
-        });
+        // NOTE: if the map is not empty but the datasets inside are empty
+        //     that will be considered as a zero batch_size
+        bool const all_empty = update_data.empty();
         if (all_empty) {
             auto const math_output = (this->*calculation_fn)(err_tol, max_iter, calculation_method);
             output_result(math_output, result_data);
@@ -496,6 +496,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(std::all_of(update_data.cbegin(), update_data.cend(), [n_batch](auto const& x) {
             return x.second.batch_size() == n_batch;
         }));
+
+        // if the batch_size is zero, it is a special case without doing any calculations at all
+        // we consider in this case the batch set is independent and but not topology cachable
+        if (n_batch == 0) {
+            return BatchParameter{true, false};
+        }
 
         // if cache_topology, the topology and math solvers will be initialized at base scenario
         // otherwise the topology and math solvers will be reset
