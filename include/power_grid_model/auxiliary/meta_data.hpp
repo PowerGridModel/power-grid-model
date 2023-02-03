@@ -182,7 +182,7 @@ struct MetaData {
         if (found >= 0) {
             return attributes[found];
         }
-        throw UnknownAttributeName{attr_name};
+        throw std::out_of_range{std::string("Unknown attribute name: ") + attr_name + "!\n"};
     }
 
     Idx find_attr(std::string const& attr_name) const {

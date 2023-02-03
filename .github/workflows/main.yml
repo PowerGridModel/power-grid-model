@@ -27,10 +27,19 @@ jobs:
     strategy:
       matrix:
         build-option: [ Debug, Release ]
-        cpp-compiler: [g++-11, clang++-14]
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CXX: ${{ matrix.cpp-compiler }}
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
 
     steps:
       - uses: actions/checkout@v3
@@ -45,7 +54,7 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json doctest
       - name: Run build script
-        run: ./build.sh -b ${{ matrix.build-option }} -s
+        run: ./build.sh -b ${{ matrix.build-option }} -s -e
 
   build-cpp-test-windows:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
@@ -80,8 +89,8 @@ jobs:
           # build
           cmake --build . --verbose -j 1
           # test
-          $env:Path += ";${pwd}\power_grid_model_c"
-          .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
+          .\bin\power_grid_model_unit_tests.exe
+          .\bin\power_grid_model_c_example.exe
 
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
@@ -103,7 +112,7 @@ jobs:
 
       - name: Build and test
         run: |
-          ./build.sh -b ${{ matrix.build-option }} -s 
+          ./build.sh -b ${{ matrix.build-option }} -s -e
 
   build-and-test-python:
     strategy:
