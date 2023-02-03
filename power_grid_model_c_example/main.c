@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     *(double*)((char*)node_input + node_u_rated_offset) = 10e3;  // 10 kV node
 
     // source attribute, we use helper function
-    // set to NaN for all values
+    // set to NaN for all values, it is recommended for input and update buffers
     PGM_buffer_set_nan(handle, "input", "source", source_input, 1);
     PGM_ID source_id = 0;
     PGM_ID node = 1;    // also used for load
@@ -150,6 +150,7 @@ int main(int argc, char** argv) {
 
     // 1 source update per scenario
     void* source_update = PGM_create_buffer(handle, "update", "source", 3);
+    // set to NaN for all values, it is recommended for input and update buffers
     PGM_buffer_set_nan(handle, "update", "source", source_update, 3);
     double u_ref_update[] = {0.95, 1.05, 1.1};
     // set all source id to the same id, stride is zero
