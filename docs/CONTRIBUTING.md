@@ -25,7 +25,7 @@ We recognize different levels of contributions as shown below in increasing orde
 
 ## Folder Structure
 
-The repository folder structure is as follows. The `examples`, `docs` and `scripts` folders are self-explanatory.
+The repository folder structure is as follows. The `docs` and `scripts` folders are self-explanatory.
 
 - The C++ calculation core is inside {{ "[include/power-grid-model]({}/include/power-grid-model)".format(gh_link_head_tree) }}.
 - The C-API is inside {{ "[power_grid_model_c]({}/power_grid_model_c)".format(gh_link_head_tree) }}.
