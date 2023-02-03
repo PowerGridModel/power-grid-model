@@ -327,11 +327,11 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
  * You can also use your own allocation function to do that
  * with size and alignment got from PGM_meta_component_size() and PGM_meta_component_alignment().
  * The buffer created by this function should be freed by PGM_destroy_buffer().
- * 
+ *
  * It is recommended to call PGM_buffer_set_nan() after you create an input or update buffer.
  * In this way all the attributes will be set to NaN.
  * And if there is a new optional attribute added in the future.
- * You have garantee that your code is still compatible 
+ * You have garantee that your code is still compatible
  * because that optional attribute will be set to NaN and the default value will be used.
  *
  * @param handle
