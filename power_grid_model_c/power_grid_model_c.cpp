@@ -2,14 +2,28 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_c.hpp"
+// include the public header
+#define PGM_DLL_EXPORTS
+#include "power_grid_model_c.h"
 
+// include private header
 #include <cstdlib>
 
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
+#include "power_grid_model/main_model.hpp"
+#include "power_grid_model/power_grid_model.hpp"
 
 using namespace power_grid_model;
 using power_grid_model::meta_data::meta_data;
+
+// assert index type
+static_assert(std::is_same_v<PGM_Idx, Idx>);
+static_assert(std::is_same_v<PGM_ID, ID>);
+
+// main model
+struct PGM_PowerGridModel : public MainModel {
+    using MainModel::MainModel;
+};
 
 // context handle
 struct PGM_Handle {
@@ -266,7 +280,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
         dataset[components[i]] = ConstDataPointer{input_data[i], component_sizes[i]};
     }
     try {
-        return new MainModel{system_frequency, dataset, 0};
+        return new PGM_PowerGridModel{system_frequency, dataset, 0};
     }
     catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
@@ -295,7 +309,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_c
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
     try {
-        return new MainModel{*model};
+        return new PGM_PowerGridModel{*model};
     }
     catch (std::exception& e) {
         handle->err_code = PGM_regular_error;

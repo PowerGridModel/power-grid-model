@@ -51,13 +51,11 @@ extern "C" {
 typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
-#ifndef PGM_DLL_EXPORTS
 /**
  * @brief Opaque struct for the PowerGridModel class
  *
  */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
-#endif
 
 /**
  * @brief Opaque struct for the handle class
@@ -66,6 +64,7 @@ typedef struct PGM_PowerGridModel PGM_PowerGridModel;
  *
  */
 typedef struct PGM_Handle PGM_Handle;
+
 /**
  * @brief Opaque struct for the option class
  *
