@@ -68,7 +68,7 @@ std::map<std::string, std::vector<std::string>> list_of_classes() {
 }
 template <class Functor>
 auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
-    static std::remove_cv_t<std::invoke_result_t<Functor>> const empty{};
+    static std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<Functor>>> const empty{};
     try {
         return func();
     }
