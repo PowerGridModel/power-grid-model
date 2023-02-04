@@ -541,6 +541,8 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
 /**
  * @brief Make a copy of an existing model
  *
+ * The returned model need to be freed by PGM_destroy_model()
+ *
  * @param handle
  * @param model Pointer to an existing model
  * @return  A opaque pointer to the new copy.
