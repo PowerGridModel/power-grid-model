@@ -57,6 +57,8 @@ typedef int32_t PGM_ID;
  *
  */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
+#endif
+
 /**
  * @brief Opaque struct for the handle class
  *
@@ -71,7 +73,6 @@ typedef struct PGM_Handle PGM_Handle;
  *
  */
 typedef struct PGM_Options PGM_Options;
-#endif
 
 // enums
 /**

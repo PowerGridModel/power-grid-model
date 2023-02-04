@@ -17,9 +17,6 @@ extern "C" {
 
 // the main model as alias
 using PGM_PowerGridModel = power_grid_model::MainModel;
-// forward declare
-struct PGM_Handle;
-struct PGM_Options;
 
 }  // C linkage
 
