@@ -25,6 +25,12 @@ In this documentation, however, the main design choices and concepts of the C-AP
 
 ## Opaque Struct/Pointer
 
+As a common C-API practice, we use [opaque struct/pointer](https://en.wikipedia.org/wiki/Opaque_pointer) in the API. 
+The user creates the object by `PGM_create_*` function and release the object by `PGM_destroy_*` function.
+In other function calls, the user provide the relevant opaque pointer as the argument.
+The real memory layout of the object is unknown to the user.
+In this way, we can provide backwards API/ABI compatibility.
+
 ## Handle
 
 ## Options
