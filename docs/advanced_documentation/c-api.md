@@ -59,3 +59,42 @@ In this way, we can ensure the API backwards compatibility.
 If we add a new option, it will get a default value in the `PGM_create_options` function.
 
 ## Buffer and Attributes
+
+The biggest challenge in the design of C-API is the handling of input/output/update data buffers.
+We define the following concepts in the data hierarchy:
+
+* Dataset: a collection of data buffers for a given purpose. 
+At this moment, we have four dataset types: `input`, `update`, `sym_output`, `asym_output`.
+* Component: a homogeneous data buffer for a component in our [data model](../user_manual/components.md), e.g., `node`.
+* Attribute: a property of given component. For example, `u_rated` attribute of `node` is the rated voltage of the node.
+
+### Create and Destroy Buffer
+
+Data buffers are almost always allocated and freed in the heap. We provide two ways of doing so.
+
+* You can use the function `PGM_create_buffer` and `PGM_destroy_buffer` to create and destroy buffer.
+In this way, the library is handling the memory (de-)allocation.
+* You can call some memory (de-)allocation function in your own code according to your platform, 
+e.g., `aligned_alloc` and `free`.
+You need to first call `PGM_meta_*` functions to retrieve the size and alignment of a component.
+
+NOTE: Do not mix these two methods in creation and destruction.
+You cannot use `PGM_destroy_buffer` to release a buffer created in your own code, or vice versa.
+
+### Set and Get Attribute
+
+Once you have the data buffer, you need to set or get attributes. We provide two ways of doing so.
+
+* You can use the function `PGM_buffer_set_value` and `PGM_buffer_get_value` to get and set values.
+* You can do pointer cast directly on the buffer pointer, by shifting the pointer to proper offset
+and cast it to a certain value type. 
+You need to first call `PGM_meta_*` functions to retrieve the correct offset.
+
+Pointer cast is generally more efficient and flexible because you are not calling into the 
+dynamic library everytime. But it requires the user to retrieve the offset information first.
+Using the buffer helper function is more convenient but with some overhead.
+
+### Set NaN Function
+
+In the C-API we have a function `PGM_buffer_set_nan` which sets all the attributes in a buffer to `NaN`.
+In the calculation core, if an optional attribute is `NaN`, it will use the default value.
