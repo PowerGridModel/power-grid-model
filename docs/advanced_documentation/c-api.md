@@ -21,7 +21,7 @@ Please also have a look at an
 {{ "[example]({}/power_grid_model_c_example/main.c)".format(gh_link_head_blob) }}
 of C program to use this C-API.
 
-In this documentation, however, the main design choices and concepts of the C-API are presented.
+In this documentation, the main design choices and concepts of the C-API are presented.
 
 ## Opaque Struct/Pointer
 
@@ -33,6 +33,28 @@ In this way, we can provide backwards API/ABI compatibility.
 
 ## Handle
 
-## Options
+During the construction and calculation of Power Grid Model, there could be errors.
+Moreover, we might want to also retrieve some meta information from the calculation process.
+The C-API uses a handle opaque object `PGM_Handle` to store all these kinds of error messages and information.
+You need to pass a handle pointer to most of the functions in the C-API.
+
+For example, after calling `PGM_create_model`, you can use `PGM_err_code` and `PGM_err_msg` 
+to check if there is error during the creation and the error message.
+
+If you are calling the C-API in multiple threads, each thread should have its own handle object created by `PGM_create_handle`.
+
+## Calculation Options
+
+To execute a power grid calculation you need to specify many options, 
+e.g., maximum number of iterations, error tolerance, etc.
+We could have declared all the calculation options as individual arguments in the `PGM_calculate` function.
+However, due to the lack of default argument in C, 
+this would mean that the C-API has a breaking change everytime we add a new option,
+which happends very often.
+
+To solve this issue, we use another opaque object `PGM_Options`. The user create an object with default options by `PGM_create_options`. You can then specify individual options by `PGM_set_*`. 
+In the `PGM_calculate` function you need to pass a pointer to `PGM_Options`.
+In this way, we can ensure the API backwards compatibility.
+If we add a new option, it will get a default value in the `PGM_create_options` function.
 
 ## Buffer and Attributes
