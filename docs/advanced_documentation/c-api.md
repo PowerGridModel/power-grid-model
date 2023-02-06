@@ -14,6 +14,7 @@ The C-API consists of a single
 {{ "[header file]({}/include/power_grid_model_c.h)".format(gh_link_head_blob) }}
 and a dynamic library (`.so` or `.dll`) built by a 
 {{ "[cmake project]({}/power_grid_model_c/CMakeLists.txt)".format(gh_link_head_blob) }}.
+Please refer to the [Build Guide](./build-guide.md) about how to build the library.
 
 You can refer to the [C-API Reference](../api_reference/power-grid-model-c-api-reference.rst)
 for a detailed documentation of the API. 
@@ -52,7 +53,7 @@ However, due to the lack of default argument in C,
 this would mean that the C-API has a breaking change everytime we add a new option,
 which happends very often.
 
-To solve this issue, we use another opaque object `PGM_Options`. The user create an object with default options by `PGM_create_options`. You can then specify individual options by `PGM_set_*`. 
+To solve this issue, we use another opaque object `PGM_Options`. The user creates an object with default options by `PGM_create_options`. You can then specify individual options by `PGM_set_*`. 
 In the `PGM_calculate` function you need to pass a pointer to `PGM_Options`.
 In this way, we can ensure the API backwards compatibility.
 If we add a new option, it will get a default value in the `PGM_create_options` function.
