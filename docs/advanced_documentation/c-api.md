@@ -115,3 +115,6 @@ Because you do not set everything to `NaN` and you only set values to the previo
 The newly added attribute will have rubbish value in the memory.
 
 Therefore, it is your choice of trade-off: maximum performance or backwards compatibility.
+
+NOTE: you do not need to call `PGM_buffer_set_nan` on output buffers, 
+because the buffer will be overwritten in the calculation core with the real output data.
