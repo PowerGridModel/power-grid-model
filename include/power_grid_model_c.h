@@ -51,12 +51,12 @@ extern "C" {
 typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
-#ifndef PGM_DLL_EXPORTS
 /**
  * @brief Opaque struct for the PowerGridModel class
  *
  */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
+
 /**
  * @brief Opaque struct for the handle class
  *
@@ -64,6 +64,7 @@ typedef struct PGM_PowerGridModel PGM_PowerGridModel;
  *
  */
 typedef struct PGM_Handle PGM_Handle;
+
 /**
  * @brief Opaque struct for the option class
  *
@@ -71,7 +72,6 @@ typedef struct PGM_Handle PGM_Handle;
  *
  */
 typedef struct PGM_Options PGM_Options;
-#endif
 
 // enums
 /**
@@ -328,6 +328,12 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
  * with size and alignment got from PGM_meta_component_size() and PGM_meta_component_alignment().
  * The buffer created by this function should be freed by PGM_destroy_buffer().
  *
+ * It is recommended to call PGM_buffer_set_nan() after you create an input or update buffer.
+ * In this way all the attributes will be set to NaN.
+ * And if there is a new optional attribute added in the future.
+ * You have garantee that your code is still compatible
+ * because that optional attribute will be set to NaN and the default value will be used.
+ *
  * @param handle
  * @param dataset dataset name
  * @param component component name
@@ -534,6 +540,8 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
 
 /**
  * @brief Make a copy of an existing model
+ *
+ * The returned model need to be freed by PGM_destroy_model()
  *
  * @param handle
  * @param model Pointer to an existing model

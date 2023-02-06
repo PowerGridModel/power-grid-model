@@ -78,6 +78,7 @@ examples/Make Test Dataset.ipynb
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
+advanced_documentation/c-api
 ```
 ```{toctree}
 :caption: "Contribution"

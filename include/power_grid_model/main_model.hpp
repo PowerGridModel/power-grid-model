@@ -35,7 +35,7 @@ template <class T, class U>
 class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
-class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> final {
+class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
    private:
     // internal type traits
     // container class
