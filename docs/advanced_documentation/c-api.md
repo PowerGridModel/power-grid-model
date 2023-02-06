@@ -98,3 +98,20 @@ Using the buffer helper function is more convenient but with some overhead.
 
 In the C-API we have a function `PGM_buffer_set_nan` which sets all the attributes in a buffer to `NaN`.
 In the calculation core, if an optional attribute is `NaN`, it will use the default value.
+
+If you just want to set some attributes and keep everything else as `NaN`, 
+calling `PGM_buffer_set_nan` before you set attribute is convenient.
+This is useful especially in `update` dataset because you do not always update all the mutable attributes.
+
+### Backwards Compatibility
+
+If you do want to set all the attributes in a component, you can skip the function call to `PGM_buffer_set_nan`.
+This will provide better performance as there is no use of setting `NaN`.
+
+However, this is at the cost of backwards compatibility.
+If we add a new optional attribute for this component in the future,
+the new version of the library will not be backwards compatible to your current code.
+Because you do not set everything to `NaN` and you only set values to the previously known attributes.
+The newly added attribute will have rubbish value in the memory.
+
+Therefore, it is your choice of trade-off: maximum performance or backwards compatibility.
