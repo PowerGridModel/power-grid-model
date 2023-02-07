@@ -181,7 +181,7 @@ TEST_CASE("C API Model") {
         PGM_set_max_iter(hl, opt, 1);
         PGM_set_err_tol(hl, opt, 1e-100);
         PGM_set_symmetric(hl, opt, 0);
-        PGM_st_threading(hl, opt, 1);
+        PGM_set_threading(hl, opt, 1);
         PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
                       0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
         CHECK(PGM_err_code(hl) == PGM_regular_error);
