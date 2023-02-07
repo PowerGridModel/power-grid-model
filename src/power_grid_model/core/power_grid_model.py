@@ -96,6 +96,7 @@ class PowerGridModel:
         """
         # destroy old instance
         pgc.destroy_model(self._model_ptr)
+        self._all_component_count = None
         # create new
         prepared_input: CDataset = prepare_cpp_array("input", input_data)
         self._model_ptr = pgc.create_model(
@@ -126,6 +127,7 @@ class PowerGridModel:
             prepared_update.n_component_elements_per_scenario,
             prepared_update.data_ptrs_per_component,
         )
+        assert_no_error()
 
     def get_indexer(self, component_type: str, ids: np.ndarray):
         """
@@ -145,6 +147,7 @@ class PowerGridModel:
         size = ids.size
         # call c function
         pgc.get_indexer(self._model, component_type, size, ids_c, indexer_c)
+        assert_no_error()
         return indexer
 
     def _calculate(
@@ -243,7 +246,7 @@ class PowerGridModel:
             prepared_update.data_ptrs_per_component,
         )
 
-        # error handeling
+        # error handling
         if not continue_on_batch_error:
             assert_no_error()
         else:
