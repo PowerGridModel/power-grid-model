@@ -10,13 +10,13 @@ from typing import Dict, List, Optional, Set, Union
 
 import numpy as np
 
+from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, find_error
 from power_grid_model.core.index_integer import ID_np, Idx_np
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import IDPtr, IdxPtr, ModelPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 from power_grid_model.enum import CalculationMethod, CalculationType
-from power_grid_model.errors import PowerGridBatchError, assert_error, find_error
 
 
 class PowerGridModel:
@@ -68,7 +68,7 @@ class PowerGridModel:
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
         new_model._model_ptr = pgc.copy_model(self._model)
-        assert_error()
+        assert_no_error()
         new_model._all_component_count = self._all_component_count
         return new_model
 
@@ -105,7 +105,7 @@ class PowerGridModel:
             prepared_input.n_component_elements_per_scenario,
             prepared_input.data_ptrs_per_component,
         )
-        assert_error()
+        assert_no_error()
         self._all_component_count = {k: v.n_elements_per_scenario for k, v in prepared_input.dataset.items()}
 
     def update(self, *, update_data: Dict[str, np.ndarray]):
@@ -245,7 +245,7 @@ class PowerGridModel:
 
         # error handeling
         if not continue_on_batch_error:
-            assert_error()
+            assert_no_error()
         else:
             # continue on batch error
             error: Optional[ValueError] = find_error()
