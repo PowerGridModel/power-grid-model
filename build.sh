@@ -10,10 +10,11 @@ usage() {
   echo "Usage: $0 -b <Debug|Release> [-c] [-s]" 1>&2
   echo "  -c option enables coverage"
   echo "  -s option enables sanitizer"
+  echo "  -e option to run C API example"
   exit 1
 }
 
-while getopts "b::cs" flag; do
+while getopts "b::cse" flag; do
   case "${flag}" in
     b)
       [ "${OPTARG}" == "Debug" -o "${OPTARG}" == "Release" ] || echo "Build type should be Debug or Release."
@@ -21,6 +22,7 @@ while getopts "b::cs" flag; do
     ;;
     c) BUILD_COVERAGE=-DPOWER_GRID_MODEL_COVERAGE=1;;
     s) BUILD_SANITIZER=-DPOWER_GRID_MODEL_SANITIZER=1;;
+    e) C_API_EXAMPLE=1;;
     *) usage ;;
   esac
 done
@@ -47,8 +49,11 @@ cmake .. -GNinja \
 # build
 VERBOSE=1 cmake --build .
 # test
-./tests/cpp_unit_tests/power_grid_model_unit_tests
-
+./bin/power_grid_model_unit_tests
+# example
+if [[ "${C_API_EXAMPLE}" ]];  then
+  ./bin/power_grid_model_c_example
+fi
 
 
 cd ..
