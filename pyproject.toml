@@ -83,6 +83,11 @@ line_length = 120
 
 [tool.pylint]
 max-line-length = 120
+disable = [
+    "R0903",
+    "R0913"
+]
+
 
 [tool.mypy]
 follow_imports = "silent"

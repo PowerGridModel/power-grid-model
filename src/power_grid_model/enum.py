@@ -9,11 +9,10 @@ Note: these enumeration match the C++ arithmetic core, so dont change the values
 
 """
 
-from enum import Enum, IntEnum
+from enum import IntEnum
+
 
 # pylint: disable=invalid-name
-
-
 class LoadGenType(IntEnum):
     """Load and Generator Types"""
 

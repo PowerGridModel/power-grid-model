@@ -20,6 +20,10 @@ from power_grid_model.enum import CalculationMethod, CalculationType
 
 
 class PowerGridModel:
+    """
+    Main class for Power Grid Model
+    """
+
     _model_ptr: ModelPtr
     _all_component_count: Optional[Dict[str, int]]
     _independent: bool  # all update datasets consists of exactly the same components
@@ -28,14 +32,29 @@ class PowerGridModel:
 
     @property
     def batch_error(self) -> Optional[PowerGridBatchError]:
+        """
+
+        Returns:
+
+        """
         return self._batch_error
 
     @property
     def independent(self) -> bool:
+        """
+
+        Returns:
+
+        """
         return self._independent
 
     @property
     def cache_topology(self) -> bool:
+        """
+
+        Returns:
+
+        """
         return self._cache_topology
 
     @property
@@ -67,15 +86,15 @@ class PowerGridModel:
             a copy of PowerGridModel
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
-        new_model._model_ptr = pgc.copy_model(self._model)
+        new_model._model_ptr = pgc.copy_model(self._model)  # pylint: disable=W0212
         assert_no_error()
-        new_model._all_component_count = self._all_component_count
+        new_model._all_component_count = self._all_component_count  # pylint: disable=W0212
         return new_model
 
     def __copy__(self):
         return self.copy()
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *_args, **_kwargs):
         instance = super().__new__(cls)
         instance._model_ptr = ModelPtr()
         instance._all_component_count = None
@@ -150,6 +169,8 @@ class PowerGridModel:
         assert_no_error()
         return indexer
 
+    # pylint: disable=R0914
+    # pylint: disable=R0912
     def _calculate(
         self,
         calculation_type: CalculationType,

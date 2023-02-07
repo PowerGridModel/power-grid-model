@@ -13,6 +13,10 @@ from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 
 class OptionSetter:
+    """
+    setter for options
+    """
+
     _setter: Callable
 
     def __init__(self, setter):
@@ -26,6 +30,10 @@ class OptionSetter:
 
 
 class Options:
+    """
+    Option class
+    """
+
     _opt: OptionsPtr
     # option setter
     calculation_type = OptionSetter(pgc.set_calculation_type)
@@ -37,6 +45,11 @@ class Options:
 
     @property
     def opt(self) -> OptionsPtr:
+        """
+
+        Returns:
+
+        """
         return self._opt
 
     def __new__(cls, *args, **kwargs):

@@ -1,6 +1,11 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+
+"""
+Load meta data from C core and define numpy structured array
+"""
+
 from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
 from typing import Dict, Mapping, Optional, Union
@@ -13,12 +18,12 @@ from power_grid_model.core.power_grid_core import IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 _ctype_numpy_map = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
-_endianness = "<" if pgc.is_little_endian() == 1 else ">"
+_ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
 _nan_value_map = {
-    f"{_endianness}f8": np.nan,
-    f"{_endianness}(3,)f8": np.nan,
-    f"{_endianness}i4": np.iinfo(f"{_endianness}i4").min,
-    f"{_endianness}i1": np.iinfo(f"{_endianness}i1").min,
+    f"{_ENDIANNESS}f8": np.nan,
+    f"{_ENDIANNESS}(3,)f8": np.nan,
+    f"{_ENDIANNESS}i4": np.iinfo(f"{_ENDIANNESS}i4").min,
+    f"{_ENDIANNESS}i1": np.iinfo(f"{_ENDIANNESS}i1").min,
 }
 
 
@@ -71,12 +76,12 @@ def _generate_meta_component(dataset: str, component_name: str) -> dict:
     py_meta_component = {
         "dtype": dtype,
         "dtype_dict": numpy_dtype_dict,
-        "nans": {x: y for x, y in zip(numpy_dtype_dict["names"], numpy_dtype_dict["nans"])},
+        "nans": dict(zip(numpy_dtype_dict["names"], numpy_dtype_dict["nans"])),
     }
     # get single nan scalar
     nan_scalar = np.zeros(1, dtype=py_meta_component["dtype"])
-    for k, v in py_meta_component["nans"].items():
-        nan_scalar[k] = v
+    for key, value in py_meta_component["nans"].items():
+        nan_scalar[key] = value
     py_meta_component["nan_scalar"] = nan_scalar
     return py_meta_component
 
@@ -100,7 +105,7 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
         attr_name: str = pgc.meta_attribute_name(dataset, component_name, i)
         attr_ctype: str = pgc.meta_attribute_ctype(dataset, component_name, attr_name)
         attr_offset: int = pgc.meta_attribute_offset(dataset, component_name, attr_name)
-        attr_np_type = f"{_endianness}{_ctype_numpy_map[attr_ctype]}"
+        attr_np_type = f"{_ENDIANNESS}{_ctype_numpy_map[attr_ctype]}"
         attr_nan = _nan_value_map[attr_np_type]
         names.append(attr_name)
         formats.append(attr_np_type)
@@ -139,18 +144,21 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
         shape = (shape,)
     if empty:
         return np.empty(shape=shape, dtype=power_grid_meta_data[data_type][component_type]["dtype"], order="C")
-    else:
-        return np.full(
-            shape=shape,
-            fill_value=power_grid_meta_data[data_type][component_type]["nan_scalar"],
-            dtype=power_grid_meta_data[data_type][component_type]["dtype"],
-            order="C",
-        )
+    return np.full(
+        shape=shape,
+        fill_value=power_grid_meta_data[data_type][component_type]["nan_scalar"],
+        dtype=power_grid_meta_data[data_type][component_type]["dtype"],
+        order="C",
+    )
 
 
 # prepared data for c api
 @dataclass
 class CBuffer:
+    """
+    Buffer for a single component
+    """
+
     data: c_void_p
     indptr: Optional[IdxPtr]  # type: ignore
     n_elements_per_scenario: int
@@ -159,6 +167,10 @@ class CBuffer:
 
 @dataclass
 class CDataset:
+    """
+    Dataset definition
+    """
+
     dataset: Dict[str, CBuffer]
     batch_size: int
     n_components: int
@@ -168,6 +180,7 @@ class CDataset:
     data_ptrs_per_component: Array
 
 
+# pylint: disable=R0912
 def prepare_cpp_array(
     data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
 ) -> CDataset:
@@ -190,26 +203,26 @@ def prepare_cpp_array(
     # process
     schema = power_grid_meta_data[data_type]
     dataset_dict = {}
-    for component_name, v in array_dict.items():
+    for component_name, entry in array_dict.items():
         if component_name not in schema:
             continue
         # homogeneous
-        if isinstance(v, np.ndarray):
-            data = v
-            ndim = v.ndim
+        if isinstance(entry, np.ndarray):
+            data = entry
+            ndim = entry.ndim
             indptr_c = IdxPtr()
             if ndim == 1:
                 batch_size = 1
-                n_elements_per_scenario = v.shape[0]
+                n_elements_per_scenario = entry.shape[0]
             elif ndim == 2:  # (n_batch, n_component)
-                batch_size = v.shape[0]
-                n_elements_per_scenario = v.shape[1]
+                batch_size = entry.shape[0]
+                n_elements_per_scenario = entry.shape[1]
             else:
                 raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
         # with indptr
         else:
-            data = v["data"]
-            indptr: np.ndarray = v["indptr"]
+            data = entry["data"]
+            indptr: np.ndarray = entry["indptr"]
             batch_size = indptr.size - 1
             n_elements_per_scenario = -1
             if data.ndim != 1:
@@ -239,7 +252,7 @@ def prepare_cpp_array(
         dataset=dataset_dict,
         batch_size=batch_size,
         n_components=n_components,
-        components=(c_char_p * n_components)(*(x.encode() for x in dataset_dict.keys())),
+        components=(c_char_p * n_components)(*(x.encode() for x in dataset_dict)),
         n_component_elements_per_scenario=(Idx_c * n_components)(
             *(x.n_elements_per_scenario for x in dataset_dict.values())
         ),

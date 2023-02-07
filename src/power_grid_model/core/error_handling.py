@@ -30,11 +30,11 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
     error_code: int = pgc.err_code()
     if error_code == 0:
         return None
-    elif error_code == 1:
+    if error_code == 1:
         error_message = pgc.err_msg()
         error_message += VALIDATOR_MSG
         return PowerGridError(error_message)
-    elif error_code == 2:
+    if error_code == 2:
         error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
         error = PowerGridBatchError(error_message)
         n_fails = pgc.n_failed_scenarios()
@@ -47,8 +47,7 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
         mask[error.failed_scenarios] = False
         error.succeeded_scenarios = all_scenarios[mask]
         return error
-    else:
-        return ValueError("Unknown error!")
+    return ValueError("Unknown error!")
 
 
 def assert_no_error(batch_size: int = 1):

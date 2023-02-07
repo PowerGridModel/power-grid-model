@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+"""
+Loader for the dynamic library
+"""
 
 import platform
 from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
@@ -25,15 +28,21 @@ _ARGS_TYPE_MAPPING = {str: c_char_p, int: Idx_c, float: c_double}
 
 
 class HandlePtr(c_void_p):
-    pass
+    """
+    Pointer to handle
+    """
 
 
 class OptionsPtr(c_void_p):
-    pass
+    """
+    Pointer to option
+    """
 
 
 class ModelPtr(c_void_p):
-    pass
+    """
+    Pointer to model
+    """
 
 
 def _load_core() -> CDLL:
@@ -57,6 +66,10 @@ def _load_core() -> CDLL:
 
 
 class WrapperFunc:
+    """
+    Functor to wrap the C function
+    """
+
     def __init__(self, cdll: CDLL, handle: HandlePtr, name: str, c_argtypes: List, c_restype):
         """
 
@@ -89,6 +102,10 @@ class WrapperFunc:
 
 
 class PowerGridCore:
+    """
+    DLL caller
+    """
+
     _cdll: CDLL
     _handle: HandlePtr
     # error handling

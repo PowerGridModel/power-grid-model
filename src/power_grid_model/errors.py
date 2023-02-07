@@ -13,10 +13,16 @@ import numpy as np
 
 
 class PowerGridError(ValueError):
-    pass
+    """
+    Generic power grid error
+    """
 
 
 class PowerGridBatchError(ValueError):
+    """
+    Error occurs in batch calculation
+    """
+
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
     error_messages: List[str]
