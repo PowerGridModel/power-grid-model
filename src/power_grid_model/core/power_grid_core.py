@@ -8,7 +8,7 @@ from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from pathlib import Path
 from typing import Callable, List
 
-from power_grid_model.index_integer import ID_c, Idx_c
+from power_grid_model.core.index_integer import ID_c, Idx_c
 
 # integer index
 IdxPtr = POINTER(Idx_c)

@@ -10,13 +10,13 @@ from typing import Dict, List, Optional, Set, Union
 
 import numpy as np
 
+from power_grid_model.core.index_integer import ID_np, Idx_np
+from power_grid_model.core.options import Options
+from power_grid_model.core.power_grid_core import IDPtr, IdxPtr, ModelPtr
+from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 from power_grid_model.enum import CalculationMethod, CalculationType
 from power_grid_model.errors import PowerGridBatchError, assert_error, find_error
-from power_grid_model.index_integer import ID_np, Idx_np
-from power_grid_model.options import Options
-from power_grid_model.power_grid_core import IDPtr, IdxPtr, ModelPtr
-from power_grid_model.power_grid_core import power_grid_core as pgc
-from power_grid_model.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 
 
 class PowerGridModel:

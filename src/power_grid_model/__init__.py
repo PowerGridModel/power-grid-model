@@ -6,6 +6,8 @@
 
 # pylint: disable=no-name-in-module
 
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
+from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
@@ -15,5 +17,3 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.power_grid_model import PowerGridModel
