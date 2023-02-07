@@ -94,9 +94,13 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     # wrong id
     case_data["update_batch"]["sym_load"]["id"][1, 0] = 5
     result = model.calculate_power_flow(update_data=case_data["update_batch"], continue_on_batch_error=True)
-    # TODO assert valid result
+    # assert error
     error = model.batch_error
     assert error is not None
     np.allclose(error.failed_scenarios, [1])
     np.allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
+    # assert value result for scenario 0
+    result = {"node": result["node"][error.succeeded_scenarios, :]}
+    expected_result = {"node": case_data["output_batch"]["node"][error.succeeded_scenarios, :]}
+    compare_result(result, expected_result, rtol=0.0, atol=1e-8)
