@@ -43,7 +43,7 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
         error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
         all_scenarios = np.arange(batch_size, dtype=Idx_np)
-        mask = np.ones(batch_size, dtype=np.bool)
+        mask = np.ones(batch_size, dtype=np.bool_)
         mask[error.failed_scenarios] = False
         error.succeeded_scenarios = all_scenarios[mask]
         return error
