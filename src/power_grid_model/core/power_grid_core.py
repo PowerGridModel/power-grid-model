@@ -172,7 +172,7 @@ class PowerGridCore:
         return instance
 
     def __init__(self):
-        for name, function in PowerGridCore.__annotations__.items():
+        for name, function in PowerGridCore.__annotations__.items():  # pylint: disable=E1101
             if name.startswith("_"):
                 continue
             # get and convert types
