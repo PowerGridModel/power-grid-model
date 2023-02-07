@@ -7,10 +7,10 @@ from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 
+from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import Idx_c, Idx_np
 from power_grid_model.core.power_grid_core import IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.core.error_handling import VALIDATOR_MSG
 
 _ctype_numpy_map = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
 _endianness = "<" if pgc.is_little_endian() == 1 else ">"

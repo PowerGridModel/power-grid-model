@@ -18,4 +18,5 @@ class PowerGridError(ValueError):
 
 class PowerGridBatchError(ValueError):
     failed_scenarios: np.ndarray
+    succeeded_scenarios: np.ndarray
     error_messages: List[str]
