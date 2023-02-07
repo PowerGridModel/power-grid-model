@@ -1,0 +1,24 @@
+[
+  {
+    "source": [
+      {
+        "id": 1,
+        "u_ref": 0.5
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 2,
+        "q_specified": 100.0
+      }
+    ]
+  },
+  {
+    "sym_load": [
+      {
+        "id": 2,
+        "q_specified": 300.0
+      }
+    ]
+  }
+]
