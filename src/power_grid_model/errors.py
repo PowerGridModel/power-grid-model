@@ -11,7 +11,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from power_grid_model.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 
