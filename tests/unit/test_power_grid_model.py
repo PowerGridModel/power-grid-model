@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from power_grid_model import PowerGridModel
+from power_grid_model import PowerGridModel, initialize_array
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
 
 from .utils import compare_result, import_case_data
@@ -48,7 +48,26 @@ def test_simple_power_flow(model: PowerGridModel, case_data):
     compare_result(result, case_data["output"], rtol=0.0, atol=1e-8)
 
 
-# TODO simple update, update error
+def test_simple_update(model: PowerGridModel, case_data):
+    update_batch = case_data["update_batch"]
+    source_indptr = update_batch["source"]["indptr"]
+    source_update = update_batch["source"]["data"]
+    update_data = {
+        "source": source_update[source_indptr[0] : source_indptr[1]],
+        "sym_load": update_batch["sym_load"][0, :],
+    }
+    model.update(update_data=update_data)
+    expected_result = {"node": case_data["output_batch"]["node"][0, :]}
+    result = model.calculate_power_flow()
+    compare_result(result, expected_result, rtol=0.0, atol=1e-8)
+
+
+def test_update_error(model: PowerGridModel):
+    load_update = initialize_array("update", "sym_load", 1)
+    load_update["id"] = 5
+    update_data = {"sym_load": load_update}
+    with pytest.raises(PowerGridError, match="The id cannot be found:"):
+        model.update(update_data=update_data)
 
 
 def test_copy_model(model: PowerGridModel, case_data):
