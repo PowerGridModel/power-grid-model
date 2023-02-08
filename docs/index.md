@@ -4,8 +4,10 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-```{warning}
-The documentation is under heavy development
+```{eval-rst}
+.. meta::
+:description lang=en: Power Grid model is a python library for distribution power system analysis. It can perform symmetric and asymmetric powerflow and state estimation calculations.
+:google-site-verification: g3AvTKdNpVRk0_4EvjoBjFGfOCeRQ3a7OcRVNwHh91s
 ```
 
 # Power Grid Model
