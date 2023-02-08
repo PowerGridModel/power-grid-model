@@ -5,7 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 <meta name="description" lang="en" content="Power Grid model is a python library for distribution power system analysis. It can perform symmetric and asymmetric powerflow and state estimation calculations.">
-<meta name="google-site-verification" content="g3AvTKdNpVRk0_4EvjoBjFGfOCeRQ3a7OcRVNwHh91s" />
+<meta name="google-site-verification" content="gNPw55cl29ym5C2pbhrynW0nYJODNBG7fifSrerRhWk" />
 
 # Power Grid Model
 
