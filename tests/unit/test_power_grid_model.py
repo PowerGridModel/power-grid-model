@@ -127,3 +127,10 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     result = {"node": result["node"][error.succeeded_scenarios, :]}
     expected_result = {"node": case_data["output_batch"]["node"][error.succeeded_scenarios, :]}
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
+    # general error before the batch
+    with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
+        model.calculate_state_estimation(
+            calculation_method="iterative_current",
+            update_data={"source": initialize_array("update", "source", shape=(5, 0))},
+            continue_on_batch_error=True,
+        )

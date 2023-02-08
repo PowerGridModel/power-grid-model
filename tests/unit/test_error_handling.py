@@ -9,7 +9,6 @@ import pytest
 from power_grid_model import PowerGridModel
 
 
-@pytest.mark.skip
 def test_empty_model():
     model = PowerGridModel.__new__(PowerGridModel)
     with pytest.raises(TypeError):
@@ -22,7 +21,6 @@ def test_empty_model():
         copy(model)
 
 
-@pytest.mark.skip
 def test_unknown_component_types():
     model = PowerGridModel(input_data={})
     with pytest.raises(KeyError, match=r"artificial_type") as e:
