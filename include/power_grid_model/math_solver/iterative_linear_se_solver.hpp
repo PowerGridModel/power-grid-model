@@ -22,7 +22,14 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-// block class for the unknown vector and/or right hand side in state estimation equation
+// struct to store bus injection information
+struct BusInjection {
+    Idx idx_full_injection = -1;
+    Idx idx_partial_injection = -1;
+    Idx n_unmeasured_appliances = 0;
+};
+
+// block class for the unknown vector and/or right-hand side in state estimation equation
 template <bool sym>
 struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
     template <int r, int c>
@@ -92,13 +99,12 @@ class MeasuredValues {
     MeasuredValues(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input)
         : math_topology_{y_bus.shared_topology()},
           idx_voltage_(math_topology().n_bus()),
-          idx_bus_injection_power_(math_topology().n_bus()),
+          bus_injection_(math_topology().n_bus()),
           idx_branch_from_power_(math_topology().n_branch()),
           idx_branch_to_power_(math_topology().n_branch()),
           idx_shunt_power_(math_topology().n_shunt()),
           idx_load_gen_power_(math_topology().n_load_gen()),
           idx_source_power_(math_topology().n_source()),
-          idx_partial_injection_(math_topology().n_bus(), -1),
           n_angle_{},
           // default angle shift
           // sym: 0
@@ -118,7 +124,7 @@ class MeasuredValues {
         return idx_voltage_[bus] >= 0;
     }
     bool has_bus_injection(Idx bus) const {
-        return idx_bus_injection_power_[bus] >= 0;
+        return bus_injection_[bus].idx_full_injection >= 0;
     }
     bool has_branch_from(Idx branch) const {
         return idx_branch_from_power_[branch] >= 0;
@@ -173,7 +179,7 @@ class MeasuredValues {
 
     // power measurement
     SensorCalcParam<sym> const& bus_injection_power(Idx bus) const {
-        return main_value_[idx_bus_injection_power_[bus]];
+        return main_value_[bus_injection_[bus].idx_full_injection];
     }
     SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
         return main_value_[idx_branch_from_power_[branch]];
@@ -217,10 +223,10 @@ class MeasuredValues {
             Idx const source_end = math_topology_->source_bus_indptr[bus + 1];
 
             // under-determined or exactly determined
-            if (idx_bus_injection_power_[bus] < 0) {
-                calculate_non_over_determined_injection(-idx_bus_injection_power_[bus],  // n_unmeasured
-                                                        load_gen_begin, load_gen_end, source_begin, source_end,
-                                                        partial_injection_[idx_partial_injection_[bus]], s[bus], pair);
+            if (bus_injection_[bus].n_unmeasured_appliances > 0) {
+                calculate_non_over_determined_injection(
+                    bus_injection_[bus].n_unmeasured_appliances, load_gen_begin, load_gen_end, source_begin, source_end,
+                    partial_injection_[bus_injection_[bus].idx_partial_injection], s[bus], pair);
             }
             // over-determined
             else {
@@ -264,16 +270,13 @@ class MeasuredValues {
     //            it is considered as measured with zero value and zero variance
     // relevant for main value
     IdxVector idx_voltage_;
-    IdxVector idx_bus_injection_power_;
+    std::vector<BusInjection> bus_injection_;
     IdxVector idx_branch_from_power_;
     IdxVector idx_branch_to_power_;
     IdxVector idx_shunt_power_;
     // relevant for extra value
     IdxVector idx_load_gen_power_;
     IdxVector idx_source_power_;
-    // index for partial injection per bus, if available
-    // 	for bus with full measurement, this is -1
-    IdxVector idx_partial_injection_;
     // number of angle measurement
     Idx n_angle_;
     // average angle shift of voltages with angle measurement
@@ -308,7 +311,7 @@ class MeasuredValues {
         zero variance.
 
         The voltage values in main_value_ can be found using idx_voltage.
-        The power values in main_value_ can be found using idx_bus_injection_power_ (for combined load_gen and source)
+        The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
         and idx_shunt_power_ (for shunt).
         */
         MathModelTopology const& topo = math_topology();
@@ -353,8 +356,8 @@ class MeasuredValues {
                                 input.measured_source_power, extra_value_, idx_source_power_);
 
             // node injection
-            process_one_object(bus, topo.node_power_sensor_indptr, node_status, input.measured_bus_injection_power,
-                               main_value_, idx_bus_injection_power_);
+            bus_injection_[bus].idx_full_injection = process_one_object(
+                bus, topo.node_power_sensor_indptr, node_status, input.measured_bus_injection_power, main_value_);
 
             // combine load_gen/source to injection measurement
             {
@@ -388,24 +391,25 @@ class MeasuredValues {
                     injection_measurement.variance += extra_value_[idx_source_power_[source]].variance;
                 }
 
+                bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
+
+                // If there are no unmeasured objects, assign the full_injection
                 if (n_unmeasured == 0) {
-                    if (idx_bus_injection_power_[bus] < 0) {  // i.e. no node injection measurement was assigned
-                        idx_bus_injection_power_[bus] = (Idx)main_value_.size();
+                    // if no node injection measurement was assigned yet, assign it
+                    if (bus_injection_[bus].idx_full_injection < 0) {
+                        bus_injection_[bus].idx_full_injection = (Idx)main_value_.size();
                         main_value_.push_back(injection_measurement);
                     }
+                    // calculate the weighted average otherwise
                     else {
-                        auto& node_injection_measurement = main_value_[idx_bus_injection_power_[bus]];
+                        auto& node_injection_measurement = main_value_[bus_injection_[bus].idx_full_injection];
                         node_injection_measurement =
                             combine_measurements({node_injection_measurement, injection_measurement}, 0, 2);
                     }
                 }
                 else {
-                    if (idx_bus_injection_power_[bus] < 0) {  // i.e. no node injection measurement was assigned
-                        // not measured, bus-appliance exactly- or under-determined
-                        idx_bus_injection_power_[bus] = -n_unmeasured;
-                    }
                     // push to partial injection
-                    idx_partial_injection_[bus] = (Idx)partial_injection_.size();
+                    bus_injection_[bus].idx_partial_injection = (Idx)partial_injection_.size();
                     partial_injection_.push_back(injection_measurement);
                 }
             }
@@ -443,12 +447,13 @@ class MeasuredValues {
         };
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
-            process_one_object(branch, topo.branch_from_power_sensor_indptr, topo.branch_bus_idx,
-                               input.measured_branch_from_power, main_value_, idx_branch_from_power_,
-                               branch_from_checker);
+            idx_branch_from_power_[branch] =
+                process_one_object(branch, topo.branch_from_power_sensor_indptr, topo.branch_bus_idx,
+                                   input.measured_branch_from_power, main_value_, branch_from_checker);
             // to side
-            process_one_object(branch, topo.branch_to_power_sensor_indptr, topo.branch_bus_idx,
-                               input.measured_branch_to_power, main_value_, idx_branch_to_power_, branch_to_checker);
+            idx_branch_to_power_[branch] =
+                process_one_object(branch, topo.branch_to_power_sensor_indptr, topo.branch_bus_idx,
+                                   input.measured_branch_to_power, main_value_, branch_to_checker);
         }
     }
 
@@ -488,7 +493,7 @@ class MeasuredValues {
                                     IntSVector const& obj_status, std::vector<SensorCalcParam<sym>> const& input_data,
                                     std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
         for (Idx obj = obj_indptr[bus]; obj != obj_indptr[bus + 1]; ++obj) {
-            process_one_object(obj, sensor_indptr, obj_status, input_data, result_data, result_idx);
+            result_idx[obj] = process_one_object(obj, sensor_indptr, obj_status, input_data, result_data);
         }
     }
 
@@ -497,22 +502,20 @@ class MeasuredValues {
         return x;
     };
     template <class TS, class StatusChecker = decltype(default_status_checker)>
-    static void process_one_object(Idx const obj, IdxVector const& sensor_indptr, std::vector<TS> const& obj_status,
-                                   std::vector<SensorCalcParam<sym>> const& input_data,
-                                   std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx,
-                                   StatusChecker status_checker = default_status_checker) {
+    static Idx process_one_object(Idx const obj, IdxVector const& sensor_indptr, std::vector<TS> const& obj_status,
+                                  std::vector<SensorCalcParam<sym>> const& input_data,
+                                  std::vector<SensorCalcParam<sym>>& result_data,
+                                  StatusChecker status_checker = default_status_checker) {
         Idx const begin = sensor_indptr[obj];
         Idx const end = sensor_indptr[obj + 1];
         if (!status_checker(obj_status[obj])) {
-            result_idx[obj] = -2;  // not connected
+            return -2;  // not connected
         }
-        else if (begin == end) {
-            result_idx[obj] = -1;  // not measured
+        if (begin == end) {
+            return -1;  // not measured
         }
-        else {
-            result_idx[obj] = (Idx)result_data.size();
-            result_data.push_back(combine_measurements(input_data, begin, end));
-        }
+        result_data.push_back(combine_measurements(input_data, begin, end));
+        return (Idx)result_data.size() - 1;
     }
 
     // normalize the variance in the main value
