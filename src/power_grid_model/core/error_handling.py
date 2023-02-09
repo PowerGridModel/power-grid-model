@@ -27,11 +27,11 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
     Returns:
 
     """
-    error_code: int = pgc.err_code()
+    error_code: int = pgc.error_code()
     if error_code == 0:
         return None
     if error_code == 1:
-        error_message = pgc.err_msg()
+        error_message = pgc.error_message()
         error_message += VALIDATOR_MSG
         return PowerGridError(error_message)
     if error_code == 2:
@@ -39,7 +39,7 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
         error = PowerGridBatchError(error_message)
         n_fails = pgc.n_failed_scenarios()
         failed_idxptr = pgc.failed_scenarios()
-        failed_msgptr = pgc.batch_errs()
+        failed_msgptr = pgc.batch_errors()
         error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
         all_scenarios = np.arange(batch_size, dtype=Idx_np)

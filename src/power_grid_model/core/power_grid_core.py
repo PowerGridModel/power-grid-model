@@ -109,11 +109,11 @@ class PowerGridCore:
     _cdll: CDLL
     _handle: HandlePtr
     # error handling
-    err_code: Callable[[], int]
-    err_msg: Callable[[], str]
+    error_code: Callable[[], int]
+    error_message: Callable[[], str]
     n_failed_scenarios: Callable[[], int]
     failed_scenarios: Callable[[], IdxPtr]  # type: ignore
-    batch_errs: Callable[[], CharDoublePtr]  # type: ignore
+    batch_errors: Callable[[], CharDoublePtr]  # type: ignore
     clear_error: Callable[[], None]
     # batch
     is_batch_independent: Callable[[], int]
