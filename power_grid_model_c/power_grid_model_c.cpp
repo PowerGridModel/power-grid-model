@@ -88,10 +88,10 @@ void PGM_destroy_handle(PGM_Handle* handle) {
 }
 
 // error handling
-PGM_Idx PGM_err_code(PGM_Handle const* handle) {
+PGM_Idx PGM_error_code(PGM_Handle const* handle) {
     return handle->err_code;
 }
-char const* PGM_err_msg(PGM_Handle const* handle) {
+char const* PGM_error_message(PGM_Handle const* handle) {
     return handle->err_msg.c_str();
 }
 PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) {
@@ -100,7 +100,7 @@ PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) {
 PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) {
     return handle->failed_scenarios.data();
 }
-char const** PGM_batch_errs(PGM_Handle const* handle) {
+char const** PGM_batch_errors(PGM_Handle const* handle) {
     handle->batch_errs_c_str.clear();
     std::transform(handle->batch_errs.begin(), handle->batch_errs.end(), std::back_inserter(handle->batch_errs_c_str),
                    [](auto const& x) {

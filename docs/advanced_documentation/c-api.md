@@ -39,7 +39,7 @@ Moreover, we might want to also retrieve some meta information from the calculat
 The C-API uses a handle opaque object `PGM_Handle` to store all these kinds of error messages and information.
 You need to pass a handle pointer to most of the functions in the C-API.
 
-For example, after calling `PGM_create_model`, you can use `PGM_err_code` and `PGM_err_msg` 
+For example, after calling `PGM_create_model`, you can use `PGM_error_code` and `PGM_error_message` 
 to check if there is error during the creation and the error message.
 
 If you are calling the C-API in multiple threads, each thread should have its own handle object created by `PGM_create_handle`.
