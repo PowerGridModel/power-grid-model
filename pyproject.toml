@@ -49,6 +49,7 @@ dev = [
 ]
 doc = [
     "sphinx",
+    "breathe",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",

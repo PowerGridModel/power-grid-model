@@ -57,6 +57,7 @@ user_manual/model-validation
 :caption: "API Reference"
 :maxdepth: 2
 api_reference/python-api-reference
+api_reference/power-grid-model-c-api-reference
 ```
 
 ```{toctree}
@@ -73,6 +74,7 @@ examples/Make Test Dataset.ipynb
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
+advanced_documentation/c-api
 ```
 ```{toctree}
 :caption: "Contribution"

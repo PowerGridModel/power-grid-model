@@ -20,34 +20,40 @@ namespace power_grid_model {
 
 namespace meta_data {
 
+// template function to add meta data
+template <class CT>
+void add_meta_data(AllPowerGridMetaData& meta) {
+    // TODO, remove this separate definition for UpdateType after migrating to gcc-11
+    // this is due to a wired bug in gcc-10
+    using UpdateType = typename CT::UpdateType;
+    meta["input"][CT::name] = get_meta<typename CT::InputType>{}();
+    meta["update"][CT::name] = get_meta<UpdateType>{}();
+    meta["sym_output"][CT::name] = get_meta<typename CT::template OutputType<true>>{}();
+    meta["asym_output"][CT::name] = get_meta<typename CT::template OutputType<false>>{}();
+}
+
 template <class T>
 struct MetaDataGeneratorImpl;
 
 template <class... ComponentType>
 struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
-    MetaDataGeneratorImpl() {
-        static constexpr std::array func_arr{&retrieve_single_type<ComponentType>...};
+    using FuncPtr = std::add_pointer_t<void(AllPowerGridMetaData& meta)>;
+    static constexpr std::array<FuncPtr, sizeof...(ComponentType)> func_arr{&add_meta_data<ComponentType>...};
+
+    static AllPowerGridMetaData create_meta() {
+        AllPowerGridMetaData meta{};
         for (auto const func : func_arr) {
-            func(*this);
+            func(meta);
         }
+        return meta;
     }
-
-    template <class CompType>
-    static void retrieve_single_type(MetaDataGeneratorImpl& inst) {
-        inst.meta_data["input"][CompType::name] = get_meta<typename CompType::InputType>{}();
-        inst.meta_data["update"][CompType::name] = get_meta<typename CompType::UpdateType>{}();
-        inst.meta_data["sym_output"][CompType::name] = get_meta<typename CompType::template OutputType<true>>{}();
-        inst.meta_data["asym_output"][CompType::name] = get_meta<typename CompType::template OutputType<false>>{}();
-    }
-
-    AllPowerGridMetaData meta_data;
 };
 
 using MetaDataGenerator = MetaDataGeneratorImpl<AllComponents>;
 
 inline AllPowerGridMetaData const& meta_data() {
-    static MetaDataGenerator const meta{};
-    return meta.meta_data;
+    static AllPowerGridMetaData const meta_data = MetaDataGenerator::create_meta();
+    return meta_data;
 }
 
 }  // namespace meta_data

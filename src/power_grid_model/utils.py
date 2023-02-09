@@ -66,7 +66,6 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
 
     batch_data: BatchDataset = {}
     for component in components:
-
         # Create a 2D array if the component exists in all datasets and number of objects is the same in each dataset
         comp_exists_in_all_datasets = all(component in x for x in list_data)
         if comp_exists_in_all_datasets:
@@ -79,7 +78,6 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
         indptr = [0]
         data = []
         for dataset in list_data:
-
             if component in dataset:
                 # If the current dataset contains the component, increase the indptr for this batch and append the data
                 objects = dataset[component]
@@ -175,7 +173,6 @@ def convert_component_list_to_numpy(
         # As each object is a separate dictionary, and the attributes may differ per object, we need to check
         # all attributes. Non-existing attributes
         for attribute, value in obj.items():
-
             # If an attribute doesn't exist, the user should explicitly state that she/he is ok with extra
             # information in the data. This is to protect the user from overlooking errors.
             if attribute not in array.dtype.names:
