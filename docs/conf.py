@@ -13,7 +13,10 @@ author = "alliander-opensource"
 
 # -- Setup
 
-import os
+import sys,os
+
+# -- Add path ------------------------
+# sys.path.insert(0, os.path.abspath('extensions'))
 
 # Fix linking in github and rtd
 link_head_gh = "https://github.com/alliander-opensource/power-grid-model/"
@@ -99,3 +102,6 @@ autodoc_default_options = {
 
 # -- sphinx.autosectionlabel config -------------------------------------------
 autosectionlabel_prefix_document = True
+
+# -- Add google html -----------------------------------
+html_extra_path = ["google6d726d2d56f95e32.html"]
