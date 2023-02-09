@@ -151,19 +151,18 @@ class Topology {
     ComponentToMathCoupling comp_coup_;
 
     void reset_topology() {
-        comp_coup_.node.resize(comp_topo_.n_node_total(), Idx2D{State::not_processed, State::not_processed});
-        comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.node.resize(comp_topo_.n_node_total(), Idx2D{State::isolated, State::not_processed});
+        comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), Idx2D{State::isolated, State::not_processed});
         comp_coup_.branch3.resize(
             comp_topo_.branch3_node_idx.size(),
             Idx2DBranch3{State::not_processed, {State::not_processed, State::not_processed, State::not_processed}});
-        comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), Idx2D{State::not_processed, State::not_processed});
-        comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(),
-                                   Idx2D{State::not_processed, State::not_processed});
-        comp_coup_.source.resize(comp_topo_.source_node_idx.size(), Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), Idx2D{State::isolated, State::not_processed});
+        comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(), Idx2D{State::isolated, State::not_processed});
+        comp_coup_.source.resize(comp_topo_.source_node_idx.size(), Idx2D{State::isolated, State::not_processed});
         comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(),
-                                         Idx2D{State::not_processed, State::not_processed});
+                                         Idx2D{State::isolated, State::not_processed});
         comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(),
-                                       Idx2D{State::not_processed, State::not_processed});
+                                       Idx2D{State::isolated, State::not_processed});
     }
 
     void build_sparse_graph() {
@@ -224,7 +223,7 @@ class Topology {
             }
             Idx const source_node = comp_topo_.source_node_idx[k];
             // if the source node is already part of a graph
-            if (comp_coup_.node[source_node].group != State::isolated) {
+            if (comp_coup_.node[source_node].group >= 0) {
                 // skip the source
                 continue;
             }
@@ -414,10 +413,10 @@ class Topology {
             // m as math model group number
             Idx const m = [&]() {
                 Idx group = State::isolated;
-                if (i_status && i_math.group != State::isolated) {
+                if (i_status && i_math.group >= 0) {
                     group = i_math.group;
                 }
-                if (j_status && j_math.group != State::isolated) {
+                if (j_status && j_math.group >= 0) {
                     group = j_math.group;
                 }
                 return group;
