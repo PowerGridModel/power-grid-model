@@ -30,7 +30,7 @@ _nan_value_map = {
 def _generate_meta_data() -> dict:
     """
 
-    Returns:
+    Returns: meta data for all dataset
 
     """
     py_meta_data = {}
@@ -45,9 +45,9 @@ def _generate_meta_dataset(dataset: str) -> dict:
     """
 
     Args:
-        dataset:
+        dataset: dataset name
 
-    Returns:
+    Returns: meta data for one dataset
 
     """
     py_meta_dataset = {}
@@ -62,10 +62,10 @@ def _generate_meta_component(dataset: str, component_name: str) -> dict:
     """
 
     Args:
-        dataset:
-        component_name:
+        dataset: dataset name
+        component_name: component name
 
-    Returns:
+    Returns: meta data for one component
 
     """
 
@@ -90,10 +90,10 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
     """
 
     Args:
-        dataset:
-        component_name:
+        dataset: dataset name
+        component_name: component name
 
-    Returns:
+    Returns: meta data for all attributes
 
     """
     names = []

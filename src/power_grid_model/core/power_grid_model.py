@@ -33,8 +33,9 @@ class PowerGridModel:
     @property
     def batch_error(self) -> Optional[PowerGridBatchError]:
         """
+        Get the batch error object, if present
 
-        Returns:
+        Returns: Batch error object, or None
 
         """
         return self._batch_error
@@ -43,7 +44,7 @@ class PowerGridModel:
     def independent(self) -> bool:
         """
 
-        Returns:
+        Returns: True if the last batch calculation is independent
 
         """
         return self._independent
@@ -52,7 +53,7 @@ class PowerGridModel:
     def cache_topology(self) -> bool:
         """
 
-        Returns:
+        Returns: True if the last batch calculation has cache topology
 
         """
         return self._cache_topology

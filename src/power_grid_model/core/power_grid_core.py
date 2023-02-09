@@ -48,7 +48,7 @@ class ModelPtr(c_void_p):
 def _load_core() -> CDLL:
     """
 
-    Returns:
+    Returns: DLL/SO object
 
     """
     if platform.system() == "Windows":
@@ -74,8 +74,11 @@ class WrapperFunc:
         """
 
         Args:
-            name:
-            c_argtypes:
+            cdll: DLL object
+            handle: pointer to handle
+            name: name of the function
+            c_argtypes: list of C argument types
+            c_restype: C return type
         """
         self._cfunc = getattr(cdll, f"PGM_{name}")
         self._handle = handle

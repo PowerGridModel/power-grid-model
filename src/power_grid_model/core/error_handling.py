@@ -16,25 +16,30 @@ from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
+# error codes
+PGM_NO_ERROR = 0
+PGM_REGULAR_ERROR = 1
+PGM_BATCH_ERROR = 2
 
 
 def find_error(batch_size: int = 1) -> Optional[ValueError]:
     """
+    Check if there is an error and return it
 
     Args:
-        batch_size:
+        batch_size: Size of batch
 
-    Returns:
+    Returns: error object, can be none
 
     """
     error_code: int = pgc.error_code()
-    if error_code == 0:
+    if error_code == PGM_NO_ERROR:
         return None
-    if error_code == 1:
+    if error_code == PGM_REGULAR_ERROR:
         error_message = pgc.error_message()
         error_message += VALIDATOR_MSG
         return PowerGridError(error_message)
-    if error_code == 2:
+    if error_code == PGM_BATCH_ERROR:
         error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
         error = PowerGridBatchError(error_message)
         n_fails = pgc.n_failed_scenarios()
@@ -52,6 +57,8 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
 
 def assert_no_error(batch_size: int = 1):
     """
+    Assert there is no error in the last operation
+    If there is an error, raise it
 
     Returns:
 

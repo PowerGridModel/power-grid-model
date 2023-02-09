@@ -47,7 +47,7 @@ class Options:
     def opt(self) -> OptionsPtr:
         """
 
-        Returns:
+        Returns: Pointer to the option object
 
         """
         return self._opt
