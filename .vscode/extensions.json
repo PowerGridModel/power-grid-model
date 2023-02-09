@@ -24,6 +24,7 @@
 		"njpwerner.autodocstring",
 		"jeff-hykin.better-cpp-syntax",
 		"twxs.cmake",
-		"matepek.vscode-catch2-test-adapter"
+		"matepek.vscode-catch2-test-adapter",
+		"cschlosser.doxdocgen"
 	]
 }
