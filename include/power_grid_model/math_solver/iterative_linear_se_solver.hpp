@@ -22,10 +22,14 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
+constexpr Idx DISCONNECTED = -1;
+constexpr Idx UNMEASURED = -2;
+constexpr Idx UNDEFINED = -3;
+
 // struct to store bus injection information
 struct BusInjection {
-    Idx idx_full_injection = -1;
-    Idx idx_partial_injection = -1;
+    Idx idx_full_injection = UNDEFINED;
+    Idx idx_partial_injection = UNDEFINED;
     Idx n_unmeasured_appliances = 0;
 };
 
@@ -161,7 +165,7 @@ class MeasuredValues {
         ComplexValueVector<sym> u(current_u.size());
         for (Idx bus = 0; bus != (Idx)current_u.size(); ++bus) {
             // no measurement
-            if (idx_voltage_[bus] == -1) {
+            if (idx_voltage_[bus] == UNMEASURED) {
                 u[bus] = current_u[bus];
             }
             // no angle measurement
@@ -259,11 +263,11 @@ class MeasuredValues {
     std::vector<SensorCalcParam<sym>> partial_injection_;
 
     // indexing array of the entries
-    // for -1 (non bus injection): connected, but no measurement
-    // for -2 (non bus injection): not connected
+    // for UNMEASURED (non bus injection): connected, but no measurement
+    // for DISCONNECTED (non bus injection): not connected
     // for <0 (bus injection): the number of unmeasured appliances in negative
-    // 	   -2 means 2 appliances are unmeasured, bus-appliance is under-determined
     //     -1 means 1 appliance is unmeasured, bus-appliance is exactly determined
+    // 	   -2 means 2 appliances are unmeasured, bus-appliance is under-determined
     // for >=0: position of this measurement in relevant flat array
     // 	    for bus injection, the bus-appliance is over-determined
     //      for bus injection with zero injection constraint,
@@ -306,9 +310,9 @@ class MeasuredValues {
         connected to one component. The extra_value of all load_gen and source, connected to the bus, are added and
         appended to injection_measurement. If all connected load_gen and source contain measurements
         injection_measurement is appended to main_value_. If one or more connected load_gen or source is not
-        measured(-1) the injection_measurement is appended to partial_injection_. NOTE: if all load_gen and source are
-        not connected. It is a zero injection constraint, which is considered as a measurement in the main_value_ with
-        zero variance.
+        measured (UNMEASURED) the injection_measurement is appended to partial_injection_. NOTE: if all load_gen and
+        source are not connected (DISCONNECTED). It is a zero injection constraint, which is considered as a measurement
+        in the main_value_ with zero variance.
 
         The voltage values in main_value_ can be found using idx_voltage.
         The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
@@ -323,7 +327,7 @@ class MeasuredValues {
                 Idx const begin = topo.voltage_sensor_indptr[bus];
                 Idx const end = topo.voltage_sensor_indptr[bus + 1];
                 if (begin == end) {
-                    idx_voltage_[bus] = -1;  // not measured
+                    idx_voltage_[bus] = UNMEASURED;
                 }
                 else {
                     idx_voltage_[bus] = (Idx)main_value_.size();
@@ -368,11 +372,11 @@ class MeasuredValues {
 
                 for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1];
                      ++load_gen) {
-                    if (idx_load_gen_power_[load_gen] == -1) {
+                    if (idx_load_gen_power_[load_gen] == UNMEASURED) {
                         ++n_unmeasured;
                         continue;
                     }
-                    else if (idx_load_gen_power_[load_gen] == -2) {
+                    else if (idx_load_gen_power_[load_gen] == DISCONNECTED) {
                         continue;
                     }
                     injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
@@ -380,11 +384,11 @@ class MeasuredValues {
                 }
 
                 for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
-                    if (idx_source_power_[source] == -1) {
+                    if (idx_source_power_[source] == UNMEASURED) {
                         ++n_unmeasured;
                         continue;
                     }
-                    else if (idx_source_power_[source] == -2) {
+                    else if (idx_source_power_[source] == DISCONNECTED) {
                         continue;
                     }
                     injection_measurement.value += extra_value_[idx_source_power_[source]].value;
@@ -426,24 +430,24 @@ class MeasuredValues {
         side.
 
         This function loops through all branches.
-        The branch_bus_idx contains the from and to bus indexes of the branch, or -1 if the branch is not connected at
-        that side. For each branch the checker checks if the from and to side are connected by checking if
-        branch_bus_idx = -1.
+        The branch_bus_idx contains the from and to bus indexes of the branch, or DISCONNECTED if the branch is not
+        connected at that side. For each branch the checker checks if the from and to side are connected by checking if
+        branch_bus_idx = DISCONNECTED.
 
-        If the branch_bus_idx = -1 (not connected),  idx_branch_to_power_/idx_branch_from_power_ is set to -2.
+        If the branch_bus_idx = DISCONNECTED, idx_branch_to_power_/idx_branch_from_power_ is set to DISCONNECTED.
         If the side is connected, but there are no measurements in this branch side
-        idx_branch_to_power_/idx_branch_from_power_ is set to -1. Else, idx_branch_to_power_/idx_branch_from_power_ is
-        set to the index of the aggregated data in main_value_
+        idx_branch_to_power_/idx_branch_from_power_ is set to DISCONNECTED.
+        Else, idx_branch_to_power_/idx_branch_from_power_ is set to the index of the aggregated data in main_value_.
 
         All measurement values for a single side of a branch are combined in a weighted average, which is appended to
         main_value_. The power values in main_value_ can be found using idx_branch_to_power_/idx_branch_from_power_.
         */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) -> bool {
-            return x[0] != -1;
+            return x[0] != DISCONNECTED;
         };
         static constexpr auto branch_to_checker = [](BranchIdx x) -> bool {
-            return x[1] != -1;
+            return x[1] != DISCONNECTED;
         };
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
@@ -509,10 +513,10 @@ class MeasuredValues {
         Idx const begin = sensor_indptr[obj];
         Idx const end = sensor_indptr[obj + 1];
         if (!status_checker(obj_status[obj])) {
-            return -2;  // not connected
+            return DISCONNECTED;
         }
         if (begin == end) {
-            return -1;  // not measured
+            return UNMEASURED;
         }
         result_data.push_back(combine_measurements(input_data, begin, end));
         return (Idx)result_data.size() - 1;
@@ -547,7 +551,7 @@ class MeasuredValues {
             if (has_load_gen(load_gen)) {
                 pair.first[load_gen].s = load_gen_power(load_gen).value;
             }
-            else if (idx_load_gen_power_[load_gen] == -1) {
+            else if (idx_load_gen_power_[load_gen] == UNMEASURED) {
                 pair.first[load_gen].s = s_residual_per_appliance;
             }
         }
@@ -555,7 +559,7 @@ class MeasuredValues {
             if (has_source(source)) {
                 pair.second[source].s = source_power(source).value;
             }
-            else if (idx_source_power_[source] == -1) {
+            else if (idx_source_power_[source] == UNMEASURED) {
                 pair.second[source].s = s_residual_per_appliance;
             }
         }
@@ -692,7 +696,7 @@ class IterativeLinearSESolver {
                 // get data idx of y bus,
                 // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
-                if (data_idx == -1) {
+                if (data_idx == DISCONNECTED) {
                     continue;
                 }
                 // fill block with voltage measurement, only diagonal
@@ -759,7 +763,7 @@ class IterativeLinearSESolver {
         // assign the hermitian transpose of the transpose entry of Q
         for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
             // skip for fill-in
-            if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
+            if (y_bus.map_lu_y_bus()[data_idx_lu] == DISCONNECTED) {
                 continue;
             }
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
