@@ -127,20 +127,20 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle);
  * @param handle Pointer to the handle you just used for an operation
  * @return  The error code, see #PGM_ErrorCode
  */
-PGM_API PGM_Idx PGM_err_code(PGM_Handle const* handle);
+PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle);
 
 /**
  * @brief Get error message of last operation
  *
  * If the error code is PGM_batch_error.
- * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), and PGM_batch_errs() to retrieve the detail.
+ * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), and PGM_batch_errors() to retrieve the detail.
  *
  * @param handle Pointer to the handle you just used for an operation
  * @return  A char const* poiner to a zero terminated string.
  * The pointer is not valid if you execute another operation.
  * You need to copy the string in your own data.
  */
-PGM_API char const* PGM_err_msg(PGM_Handle const* handle);
+PGM_API char const* PGM_error_message(PGM_Handle const* handle);
 
 /**
  * @brief Get the number of failed scenarios, only applicable when you just execute a batch calculation
@@ -169,7 +169,7 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
  * The pointer is not valid if you execute another operation.
  * You need to copy the array (and the string) in your own data.
  */
-PGM_API char const** PGM_batch_errs(PGM_Handle const* handle);
+PGM_API char const** PGM_batch_errors(PGM_Handle const* handle);
 
 /**
  * @brief Clear and reset the handle
@@ -510,7 +510,7 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  * For i-th component, input_data[i] is a void const* pointer to the data buffer for this component.
  * @return  A opaque pointer to the created model.
  * If there are errors during the creation, a NULL is returned.
- * Use PGM_err_code() and PGM_err_msg() to check the error.
+ * Use PGM_error_code() and PGM_error_message() to check the error.
  */
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
                                              char const** components, PGM_Idx const* component_sizes,
@@ -522,7 +522,7 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
  * All the elements you supply in the update dataset should have valid ids
  * which exist in the original model.
  *
- * Use PGM_err_code() and PGM_err_msg() to check if there are errors in the update.
+ * Use PGM_error_code() and PGM_error_message() to check if there are errors in the update.
  *
  * @param handle
  * @param model Pointer to the existing model
@@ -547,7 +547,7 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
  * @param model Pointer to an existing model
  * @return  A opaque pointer to the new copy.
  * If there are errors during the creation, a NULL is returned.
- * Use PGM_err_code() and PGM_err_msg() to check the error.
+ * Use PGM_error_code() and PGM_error_message() to check the error.
  */
 PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
 
@@ -560,7 +560,7 @@ PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridMode
  * Calling this function should result in a sequence array of [1, 2, 3, 2, 0, 0, 4].
  *
  * If you supply a non-existing ID in the ID array, an error will be raised.
- * Use PGM_err_code() and PGM_err_msg() to check the error.
+ * Use PGM_error_code() and PGM_error_message() to check the error.
  *
  * @param handle
  * @param model Pointer to model
@@ -584,7 +584,7 @@ PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model
  *
  * You need to pre-allocate all output buffer.
  *
- * Use PGM_err_code() and PGM_err_msg() to check the error.
+ * Use PGM_error_code() and PGM_error_message() to check the error.
  *
  * @param handle
  * @param model Pointer to model

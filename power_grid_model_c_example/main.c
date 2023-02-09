@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
     void const* input_data[] = {source_input, sym_load_input, node_input};
     // create model
     PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, 3, components, component_sizes, input_data);
-    assert(PGM_err_code(handle) == PGM_no_error);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** create output buffer ****/
     // we only create output buffer for node
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
         // batch parameter
         0, 0, NULL, NULL, NULL, NULL);
-    assert(PGM_err_code(handle) == PGM_no_error);
+    assert(PGM_error_code(handle) == PGM_no_error);
     // get value and print
     PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 1, -1);
     PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 1, -1);
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         0, 0, NULL, NULL, NULL, NULL);
     // print error code and message
     printf("\nOne-time Calculation Error\n");
-    printf("Error code: %d, error message: %s", (int)PGM_err_code(handle), PGM_err_msg(handle));
+    printf("Error code: %d, error message: %s", (int)PGM_error_code(handle), PGM_error_message(handle));
     // set back to normal iteration
     PGM_set_max_iter(handle, opt, 20);
 
@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
         handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
         // batch parameter
         3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
-    assert(PGM_err_code(handle) == PGM_no_error);
+    assert(PGM_error_code(handle) == PGM_no_error);
     // get node result and print
     PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 3, -1);
     PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 3, -1);
@@ -204,11 +204,11 @@ int main(int argc, char** argv) {
         3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
     // print error
     printf("\nBatch Calculation Error\n");
-    printf("Error code: %d\n", (int)PGM_err_code(handle));
+    printf("Error code: %d\n", (int)PGM_error_code(handle));
     // print error in detail
     PGM_Idx n_failed_scenarios = PGM_n_failed_scenarios(handle);
     PGM_Idx const* failed_scenarios = PGM_failed_scenarios(handle);
-    char const** batch_errs = PGM_batch_errs(handle);
+    char const** batch_errs = PGM_batch_errors(handle);
     for (i = 0; i != n_failed_scenarios; ++i) {
         printf("Failed scenario %d, error message: %s", (int)failed_scenarios[i], batch_errs[i]);
     }
