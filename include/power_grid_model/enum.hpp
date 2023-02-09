@@ -13,13 +13,13 @@
 namespace power_grid_model {
 
 struct State {
-    static constexpr Idx isolated = -1;
-    static constexpr Idx fill_in = -2;
-    static constexpr Idx not_processed = -3;
-    static constexpr Idx in_cycle = -4;
-    static constexpr Idx disconnected = -1;  // TODO: -5
+    static constexpr Idx undefined = -1;
+    static constexpr Idx isolated = -1;  // TODO: -2
+    static constexpr Idx fill_in = -3;
+    static constexpr Idx not_processed = -4;
+    static constexpr Idx in_cycle = -5;
+    static constexpr Idx disconnected = -1;  // TODO: -6
     static constexpr Idx unmeasured = -6;
-    static constexpr Idx undefined = std::numeric_limits<Idx>::min();
 };
 
 enum class LoadGenType : IntS {
