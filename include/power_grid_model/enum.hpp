@@ -7,8 +7,19 @@
 #define POWER_GRID_MODEL_ENUM_HPP
 
 #include "power_grid_model.hpp"
+#include <limits>
 
 namespace power_grid_model {
+
+struct State {
+    static constexpr Idx isolated = -1;
+    static constexpr Idx fill_in = -1;
+    static constexpr Idx disconnected = -1;
+    static constexpr Idx unmeasured = -2;
+    static constexpr Idx not_processed = -1;
+    static constexpr Idx in_cycle = -2;
+    static constexpr Idx undefined = std::numeric_limits<Idx>::min();
+};
 
 enum class LoadGenType : IntS {
     const_pq = 0,  // constant power

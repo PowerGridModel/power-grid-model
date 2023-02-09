@@ -94,7 +94,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
             // copy y bus data
             std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {
-                if (k == -1) {
+                if (k == State::disconnected) {
                     return ComplexTensor<sym>{};
                 }
                 else {

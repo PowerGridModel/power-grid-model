@@ -28,8 +28,8 @@ struct YBusElementMap {
 // append to element vector
 inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx bus1, Idx bus2, YBusElementType element_type,
                                   Idx idx) {
-    // skip for -1
-    if (bus1 == -1 || bus2 == -1) {
+    // skip for State::disconnected
+    if (bus1 == State::disconnected || bus2 == State::disconnected) {
         return;
     }
     // add
@@ -85,8 +85,8 @@ struct YBusStructure {
 
     // map index between LU structure and y bus structure
     // for Element i in lu matrix, it is the element map_lu_y_bus[i] in y bus
-    // if the element is a fill-in, map_lu_y_bus[i] = -1
-    // i.e. data_lu[i] = data_y_bus[map_lu_y_bus[i]]; if map_lu_y_bus[i] != -1
+    // if the element is a fill-in, map_lu_y_bus[i] = State::fill_in
+    // i.e. data_lu[i] = data_y_bus[map_lu_y_bus[i]]; if map_lu_y_bus[i] != State::fill_in
     IdxVector map_lu_y_bus;
     // transpose entry of the sparse matrix
     // length of nnz_lu Idx array.
@@ -223,7 +223,7 @@ struct YBusStructure {
                             // minus 1 because ft is 5 and tf is 6, mapped to 0 and 1
                             [static_cast<Idx>(it_element->element.element_type) - 5] = nnz_counter_lu;
                 // map between y bus and lu struct
-                map_lu_y_bus.push_back(-1);
+                map_lu_y_bus.push_back(State::fill_in);
                 // iterate counter
                 ++fill_in_counter;
                 ++nnz_counter_lu;
@@ -422,8 +422,8 @@ class YBus {
                        [&u](BranchIdx branch_idx, BranchCalcParam<sym> const& param) {
                            auto const [f, t] = branch_idx;
                            // if one side is disconnected, use zero voltage at that side
-                           ComplexValue<sym> const uf = f != -1 ? u[f] : ComplexValue<sym>{0.0};
-                           ComplexValue<sym> const ut = t != -1 ? u[t] : ComplexValue<sym>{0.0};
+                           ComplexValue<sym> const uf = f != State::disconnected ? u[f] : ComplexValue<sym>{0.0};
+                           ComplexValue<sym> const ut = t != State::disconnected ? u[t] : ComplexValue<sym>{0.0};
                            BranchMathOutput<sym> output;
 
                            // See "Branch Flow Calculation" in "State Estimation Alliander"

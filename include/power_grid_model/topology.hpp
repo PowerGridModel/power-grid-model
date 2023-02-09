@@ -111,7 +111,7 @@ class Topology {
           predecessors_(
               boost::counting_iterator<GraphIdx>{0},  // Predecessors is initialized as 0, 1, 2, ..., n_node_total() - 1
               boost::counting_iterator<GraphIdx>{(GraphIdx)comp_topo_.n_node_total()}),
-          node_status_(comp_topo_.n_node_total(), -1) {
+          node_status_(comp_topo_.n_node_total(), State::disconnected) {
     }
 
     // build topology
@@ -142,8 +142,8 @@ class Topology {
     DoubleVector phase_shift_;
     std::vector<GraphIdx> predecessors_;
     // node status
-    // -1, node not processed, assuming that node in the far end of a tree structure
-    // -2, node in cycles or between the source and cycles, reordering not yet happened
+    // State::not_processed, node not processed, assuming that node in the far end of a tree structure
+    // State::in_cycle, node in cycles or between the source and cycles, reordering not yet happened
     // >=0, temporary internal bus number for minimum degree reordering
     std::vector<Idx> node_status_;
     // output
@@ -151,14 +151,19 @@ class Topology {
     ComponentToMathCoupling comp_coup_;
 
     void reset_topology() {
-        comp_coup_.node.resize(comp_topo_.n_node_total(), Idx2D{-1, -1});
-        comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.branch3.resize(comp_topo_.branch3_node_idx.size(), Idx2DBranch3{-1, {-1, -1, -1}});
-        comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.source.resize(comp_topo_.source_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), Idx2D{-1, -1});
+        comp_coup_.node.resize(comp_topo_.n_node_total(), Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.branch3.resize(
+            comp_topo_.branch3_node_idx.size(),
+            Idx2DBranch3{State::not_processed, {State::not_processed, State::not_processed, State::not_processed}});
+        comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(),
+                                   Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.source.resize(comp_topo_.source_node_idx.size(), Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(),
+                                         Idx2D{State::not_processed, State::not_processed});
+        comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(),
+                                       Idx2D{State::not_processed, State::not_processed});
     }
 
     void build_sparse_graph() {
@@ -219,7 +224,7 @@ class Topology {
             }
             Idx const source_node = comp_topo_.source_node_idx[k];
             // if the source node is already part of a graph
-            if (comp_coup_.node[source_node].group != -1) {
+            if (comp_coup_.node[source_node].group != State::isolated) {
                 // skip the source
                 continue;
             }
@@ -282,21 +287,21 @@ class Topology {
             GraphIdx node_in_cycle = back_edge.first;
             // loop back from source in the predecessor tree
             // stop if it is already marked as in cycle
-            while (node_status_[node_in_cycle] != -2) {
+            while (node_status_[node_in_cycle] != State::in_cycle) {
                 // assign cycle status and go to predecessor
-                node_status_[node_in_cycle] = -2;
+                node_status_[node_in_cycle] = State::in_cycle;
                 node_in_cycle = predecessors_[node_in_cycle];
             }
         }
 
         // copy all the far-end non-cyclic node, in reverse order
         std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node), [this](Idx x) {
-            return node_status_[x] == -1;
+            return node_status_[x] == State::not_processed;
         });
         // copy all cyclic node
         std::vector<Idx> cyclic_node;
         std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node), [this](Idx x) {
-            return node_status_[x] == -2;
+            return node_status_[x] == State::in_cycle;
         });
         GraphIdx const n_cycle_node = cyclic_node.size();
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
@@ -316,8 +321,8 @@ class Topology {
                 // loop all edges of vertex i
                 GraphIdx global_i = (GraphIdx)cyclic_node[i];
                 BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
-                    // skip if j is not part of cyclic sub graph
-                    if (node_status_[global_j] == -1) {
+                    // skip if j is not yet prosessed; i.e. it j not part of a cyclic sub graph
+                    if (node_status_[global_j] == State::not_processed) {
                         continue;
                     }
                     GraphIdx const j = (GraphIdx)node_status_[global_j];
@@ -408,23 +413,23 @@ class Topology {
             Idx2D const j_math = comp_coup_.node[j];
             // m as math model group number
             Idx const m = [&]() {
-                Idx group = -1;
-                if (i_status && i_math.group != -1) {
+                Idx group = State::isolated;
+                if (i_status && i_math.group != State::isolated) {
                     group = i_math.group;
                 }
-                if (j_status && j_math.group != -1) {
+                if (j_status && j_math.group != State::isolated) {
                     group = j_math.group;
                 }
                 return group;
             }();
             // skip if no math model connected
-            if (m == -1) {
+            if (m == State::isolated) {
                 continue;
             }
             assert(i_status || j_status);
             // get and set branch idx in math model
-            BranchIdx const branch_idx{i_status ? assert(m == i_math.group), i_math.pos : -1,
-                                       j_status ? assert(m == j_math.group), j_math.pos : -1};
+            BranchIdx const branch_idx{i_status ? assert(m == i_math.group), i_math.pos : State::disconnected,
+                                       j_status ? assert(m == j_math.group), j_math.pos : State::disconnected};
             // current branch position index in math model
             Idx const branch_pos = (Idx)math_topology_[m].n_branch();
             // push back
@@ -446,18 +451,18 @@ class Topology {
             Idx2D const j_math = comp_coup_.node[j];
             // m as math model group number
             Idx const m = [&]() {
-                Idx group = -1;
+                Idx group = State::isolated;
                 // loop 3 way as indices n
                 for (size_t n = 0; n != 3; ++n) {
-                    if (i_status[n] && i_math[n].group != -1) {
+                    if (i_status[n] && i_math[n].group != State::isolated) {
                         group = i_math[n].group;
                     }
                 }
                 return group;
             }();
             // skip if no math model connected
-            if (m == -1) {
-                assert(j_math.group == -1);
+            if (m == State::isolated) {
+                assert(j_math.group == State::isolated);
                 continue;
             }
             assert(i_status[0] || i_status[1] || i_status[2]);
@@ -471,7 +476,8 @@ class Topology {
                 // get and set branch idx in math model
                 // j side is always connected
                 // connect i side if i_status is true
-                BranchIdx const branch_idx{i_status[n] ? assert(i_math[n].group == m), i_math[n].pos : -1, j_math.pos};
+                BranchIdx const branch_idx{i_status[n]   ? assert(i_math[n].group == m),
+                                           i_math[n].pos : State::disconnected, j_math.pos};
                 // current branch position index in math model
                 Idx const branch_pos = (Idx)math_topology_[m].n_branch();
                 // push back
@@ -597,7 +603,7 @@ class Topology {
         // assign load type
         for (Idx k = 0; k != (Idx)comp_topo_.load_gen_node_idx.size(); ++k) {
             Idx2D const idx_math = comp_coup_.load_gen[k];
-            if (idx_math.group == -1) {
+            if (idx_math.group == State::isolated) {
                 continue;
             }
             math_topology_[idx_math.group].load_gen_type[idx_math.pos] = comp_topo_.load_gen_type[k];

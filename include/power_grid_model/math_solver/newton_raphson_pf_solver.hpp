@@ -266,7 +266,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
             for (Idx k = indptr[i]; k != indptr[i + 1]; ++k) {
                 // set to zero and skip if it is a fill-in
                 Idx const k_y_bus = map_lu_y_bus[k];
-                if (k_y_bus == -1) {
+                if (k_y_bus == State::disconnected) {
                     data_jac_[k] = PFJacBlock<sym>{};
                     continue;
                 }
