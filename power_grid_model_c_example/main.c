@@ -45,7 +45,9 @@ int main(int argc, char** argv) {
     // we create input buffer data using two ways of creating buffer
     // use PGM function to create node and sym_load buffer
     void* node_input = PGM_create_buffer(handle, "input", "node", 1);
+    assert(PGM_error_code(handle) == PGM_no_error);
     void* sym_load_input = PGM_create_buffer(handle, "input", "sym_load", 2);
+    assert(PGM_error_code(handle) == PGM_no_error);
     // allocate source buffer in the caller
     size_t source_size = PGM_meta_component_size(handle, "input", "source");
     size_t source_alignment = PGM_meta_component_alignment(handle, "input", "source");
@@ -83,6 +85,7 @@ int main(int argc, char** argv) {
     PGM_buffer_set_value(handle, "input", "source", "status", source_input, &status, 1, -1);
     PGM_buffer_set_value(handle, "input", "source", "u_ref", source_input, &u_ref, 1, -1);
     PGM_buffer_set_value(handle, "input", "source", "sk", source_input, &sk, 1, -1);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     // sym_load attribute, we use helper function
     PGM_ID sym_load_id[] = {2, 3};
@@ -96,6 +99,7 @@ int main(int argc, char** argv) {
     // the stride of p and q input is 2 double value, i.e. 16 bytes
     PGM_buffer_set_value(handle, "input", "sym_load", "p_specified", sym_load_input, pq_specified, 2, 16);
     PGM_buffer_set_value(handle, "input", "sym_load", "q_specified", sym_load_input, pq_specified + 1, 2, 16);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** initialize model ****/
     // component names and sizes
@@ -112,6 +116,7 @@ int main(int argc, char** argv) {
     // for one-time calculation, we only need one
     // for batch calculation, we need buffer size of 3 because we are going to run 3 scenarios
     void* node_output = PGM_create_buffer(handle, "sym_output", "node", 3);
+    assert(PGM_error_code(handle) == PGM_no_error);
     void** output_data = &node_output;
     // value arrays to retrieve, for three scenarios
     double u_pu[3];
@@ -140,16 +145,20 @@ int main(int argc, char** argv) {
         handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
         // batch parameter
         0, 0, NULL, NULL, NULL, NULL);
+    assert(PGM_error_code(handle) != PGM_no_error);
     // print error code and message
     printf("\nOne-time Calculation Error\n");
     printf("Error code: %d, error message: %s", (int)PGM_error_code(handle), PGM_error_message(handle));
     // set back to normal iteration
     PGM_set_max_iter(handle, opt, 20);
+    // clear error
+    PGM_clear_error(handle);
 
     /**** prepare batch update dataset ****/
 
     // 1 source update per scenario
     void* source_update = PGM_create_buffer(handle, "update", "source", 3);
+    assert(PGM_error_code(handle) == PGM_no_error);
     // set to NaN for all values, it is recommended for input and update buffers
     PGM_buffer_set_nan(handle, "update", "source", source_update, 3);
     double u_ref_update[] = {0.95, 1.05, 1.1};
@@ -202,6 +211,7 @@ int main(int argc, char** argv) {
         handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
         // batch parameter
         3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
+    assert(PGM_error_code(handle) != PGM_no_error);
     // print error
     printf("\nBatch Calculation Error\n");
     printf("Error code: %d\n", (int)PGM_error_code(handle));
@@ -215,6 +225,8 @@ int main(int argc, char** argv) {
     // print normal results
     printf("Normal result:\n");
     printf("Scenario 0, u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
+    // clear error
+    PGM_clear_error(handle);
 
     /**** release all the resources ****/
     // Here we need to release all the resources allocated
