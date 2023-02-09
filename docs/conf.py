@@ -13,10 +13,7 @@ author = "alliander-opensource"
 
 # -- Setup
 
-import sys,os
-
-# -- Add path ------------------------
-# sys.path.insert(0, os.path.abspath('extensions'))
+import os
 
 # Fix linking in github and rtd
 link_head_gh = "https://github.com/alliander-opensource/power-grid-model/"
