@@ -143,7 +143,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             # compiler flag to set version
             cflags.append("-mmacosx-version-min=10.15")
 
-    # list of extensions of generated cpp files from cython
+    # list of extensions
     exts = [
         CTypesExtension(
             name="power_grid_model.core._power_grid_core",

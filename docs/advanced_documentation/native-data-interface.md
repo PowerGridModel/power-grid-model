@@ -70,7 +70,7 @@ see [Python API Reference](../api_reference/python-api-reference.md).
 input_data = {'node': node}
 ```
 
-In the `cython` wrapper the pointers to all the array data will be retrieved and passed to the C++ code.
+In the `ctypes` wrapper the pointers to all the array data will be retrieved and passed to the C++ code.
 This is also true for result dataset.
 The memory block of result dataset is allocated using `numpy`.
 The pointers are passed into C++ code so that the C++ program can write results into those memory blocks.
