@@ -101,6 +101,9 @@ autodoc_default_options = {
 # -- sphinx.autosectionlabel config -------------------------------------------
 autosectionlabel_prefix_document = True
 
+# -- Add google html -----------------------------------
+html_extra_path = ["google6d726d2d56f95e32.html"]
+
 # config doxygen for C API
 breathe_projects = {"power_grid_model_c": "./doxygen/build/xml/"}
 breathe_default_project = "power_grid_model_c"
