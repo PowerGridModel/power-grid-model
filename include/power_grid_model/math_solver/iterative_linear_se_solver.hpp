@@ -113,8 +113,7 @@ class MeasuredValues {
           // default angle shift
           // sym: 0
           // asym: 0, -120deg, -240deg
-          mean_angle_shift_{arg(ComplexValue<sym>{1.0})},
-          min_var_{} {
+          mean_angle_shift_{arg(ComplexValue<sym>{1.0})} {
         // loop bus
         process_bus_related_measurements(input);
         // loop branch
@@ -286,8 +285,6 @@ class MeasuredValues {
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
-    // scaling factor as minimum variance for the normalization
-    double min_var_;
 
     MathModelTopology const& math_topology() const {
         return *math_topology_;
@@ -528,16 +525,19 @@ class MeasuredValues {
     // in the gain matrix, the biggest weighting factor is then one
     void normalize_variance() {
         // loop to find min_var
-        min_var_ = std::numeric_limits<double>::infinity();
+        double min_var = std::numeric_limits<double>::infinity();
         for (SensorCalcParam<sym> const& x : main_value_) {
             // only non-zero variance is considered
             if (x.variance != 0.0) {
-                min_var_ = std::min(min_var_, x.variance);
+                min_var = std::min(min_var, x.variance);
             }
         }
         // scale
-        std::for_each(main_value_.begin(), main_value_.end(), [this](SensorCalcParam<sym>& x) {
-            x.variance /= min_var_;
+        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) {
+            x.variance /= min_var;
+        });
+        std::for_each(extra_value_.begin(), extra_value_.end(), [&](SensorCalcParam<sym>& x) {
+            x.variance /= min_var;
         });
     }
 
@@ -576,14 +576,14 @@ class MeasuredValues {
             if (has_load_gen(load_gen)) {
                 pair.first[load_gen].s = load_gen_power(load_gen).value -
                                          // also scale the variance here using the same normalization
-                                         (load_gen_power(load_gen).variance / min_var_) * mu;
+                                         (load_gen_power(load_gen).variance) * mu;
             }
         }
         for (Idx source = source_begin; source != source_end; ++source) {
             if (has_source(source)) {
                 pair.second[source].s = source_power(source).value -
                                         // also scale the variance here using the same normalization
-                                        (source_power(source).variance / min_var_) * mu;
+                                        (source_power(source).variance) * mu;
             }
         }
     }
