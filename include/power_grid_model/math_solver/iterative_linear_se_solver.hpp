@@ -181,7 +181,7 @@ class MeasuredValues {
     }
 
     // power measurement
-    SensorCalcParam<sym> const& bus_injection_power(Idx bus) const {
+    SensorCalcParam<sym> const& bus_injection(Idx bus) const {
         return main_value_[bus_injection_[bus].idx_full_injection];
     }
     SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
@@ -234,7 +234,7 @@ class MeasuredValues {
             // over-determined
             else {
                 calculate_over_determined_injection(load_gen_begin, load_gen_end, source_begin, source_end,
-                                                    bus_injection_power(bus), s[bus], pair);
+                                                    bus_injection(bus), s[bus], pair);
             }
             // current injection
             for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
@@ -357,8 +357,8 @@ class MeasuredValues {
                                 input.measured_source_power, extra_value_, idx_source_power_);
 
             // node injection
-            bus_injection_[bus].idx_full_injection = process_one_object(
-                bus, topo.node_power_sensor_indptr, node_status, input.measured_bus_injection_power, main_value_);
+            bus_injection_[bus].idx_full_injection = process_one_object(bus, topo.bus_power_sensor_indptr, node_status,
+                                                                        input.measured_bus_injection, main_value_);
 
             // combine load_gen/source to injection measurement
             {
@@ -744,7 +744,7 @@ class IterativeLinearSESolver {
                     // R_ii = -variance, only diagonal
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
-                        block.r() = ComplexTensor<sym>{-measured_value.bus_injection_power(row).variance};
+                        block.r() = ComplexTensor<sym>{-measured_value.bus_injection(row).variance};
                     }
                 }
                 // injection measurement not exist
@@ -831,7 +831,7 @@ class IterativeLinearSESolver {
             }
             // fill block with injection measurement, need to convert to current
             if (measured_value.has_bus_injection(bus)) {
-                rhs_block.tau() = conj(measured_value.bus_injection_power(bus).value / u[bus]);
+                rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
             }
         }
     }

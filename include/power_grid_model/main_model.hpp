@@ -1232,7 +1232,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             se_input[i].measured_shunt_power.resize(math_topology_[i]->n_shunt_power_power_sensor());
             se_input[i].measured_branch_from_power.resize(math_topology_[i]->n_branch_from_power_sensor());
             se_input[i].measured_branch_to_power.resize(math_topology_[i]->n_branch_to_power_sensor());
-            se_input[i].measured_bus_injection_power.resize(math_topology_[i]->n_node_power_sensor());
+            se_input[i].measured_bus_injection.resize(math_topology_[i]->n_node_power_sensor());
         }
 
         prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(comp_coup_->shunt, se_input);
@@ -1274,7 +1274,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_bus_injection_power, GenericPowerSensor>(
+                      &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
             comp_coup_->power_sensor, se_input, [&](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::node;
             });

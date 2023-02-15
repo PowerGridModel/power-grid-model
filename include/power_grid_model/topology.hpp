@@ -656,7 +656,7 @@ class Topology {
             });
 
         // node injection power sensors
-        couple_object_components<&MathModelTopology::node_power_sensor_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor, [&](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node;
             });
