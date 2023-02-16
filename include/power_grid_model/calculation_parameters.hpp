@@ -190,7 +190,7 @@ struct MathOutput {
 // component indices at physical model side
 // from, to node indices for branches
 // node1, node2, node3 indices for 3-way branches
-// node indices for source, loadgen, shunt
+// node indices for source, load_gen, shunt
 struct ComponentTopology {
     Idx n_node;
     std::vector<BranchIdx> branch_node_idx;

@@ -579,8 +579,8 @@ TEST_CASE("Math solver, measurements") {
     MathOutput<true> output =
         solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
 
-    CHECK(cabs(output.source[0].s) == doctest::Approx(2.0));
-    CHECK(cabs(output.branch[0].s_f) == doctest::Approx(2.0));
+    CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+    CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
 }
 
 }  // namespace power_grid_model
