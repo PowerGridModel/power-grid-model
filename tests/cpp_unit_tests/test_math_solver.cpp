@@ -516,6 +516,8 @@ TEST_CASE("Test math solver") {
     }
 }
 
+#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance);
+
 TEST_CASE("Math solver, zero variance test") {
     /*
     network, v means voltage measured
@@ -553,15 +555,15 @@ TEST_CASE("Math solver, zero variance test") {
         solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
 
     // check both voltage
-    CHECK(cabs(output.u[0] - 1.0) < numerical_tolerance);
-    CHECK(cabs(output.u[1] - 1.0) < numerical_tolerance);
+    CHECK_CLOSE(output.u[0], 1.0);
+    CHECK_CLOSE(output.u[1], 1.0);
 }
 
 TEST_CASE("Math solver, measurements") {
     /*
     network, v means voltage measured, p means power measured
 
-     bus_0(v) -(p)-branch_0-- bus_1
+     bus_0(vp) -(p)-branch_0-- bus_1
         |                        |
     source_0(p)                load_0
 
@@ -575,6 +577,7 @@ TEST_CASE("Math solver, measurements") {
     topo.load_gen_bus_indptr = {0, 0, 1};
 
     topo.voltage_sensor_indptr = {0, 1, 1};
+    topo.bus_power_sensor_indptr = {0, 1, 1};
     topo.source_power_sensor_indptr = {0, 1};
     topo.load_gen_power_sensor_indptr = {0, 0};
     topo.shunt_power_sensor_indptr = {0};
@@ -592,16 +595,19 @@ TEST_CASE("Math solver, measurements") {
     se_input.source_status = {1};
     se_input.load_gen_status = {1};
     se_input.measured_voltage = {{1.0, 0.1}};
-    se_input.measured_source_power = {{2.2, 0.2}};
-    se_input.measured_branch_from_power = {{1.9, 0.1}};
+    se_input.measured_bus_injection = {{2.2, 0.2}};
+    se_input.measured_source_power = {{1.93, 0.1}};
+    se_input.measured_branch_from_power = {{1.97, 0.1}};
 
     MathSolver<true> solver{topo_ptr, param_ptr};
     CalculationInfo info;
     MathOutput<true> output =
         solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
 
+    CHECK(cabs(output.bus_injection[0]) == doctest::Approx(2.0));
     CHECK(cabs(output.source[0].s) == doctest::Approx(2.0));
     CHECK(cabs(output.branch[0].s_f) == doctest::Approx(2.0));
+    CHECK(cabs(output.bus_injection[0] - 2.0) < 1e-8);
 }
 
 }  // namespace power_grid_model
