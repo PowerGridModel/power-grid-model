@@ -799,7 +799,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                               });
     }
 
-    // output source, loadgen, shunt individually
+    // output source, load_gen, shunt individually
     template <bool sym, class Component, class ResIt>
     std::enable_if_t<
         std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
