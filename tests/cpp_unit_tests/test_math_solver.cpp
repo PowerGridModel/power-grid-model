@@ -595,21 +595,19 @@ TEST_CASE("Math solver, measurements") {
     CalculationInfo info;
     MathOutput<true> output;
 
-    SUBCASE("Node injection and source") {
+    SUBCASE("Source and branch") {
         /*
         network, v means voltage measured, p means power measured
 
-         bus_0(vp) -(p)-branch_0-- bus_1
-            |                        |
-        source_0(p)                load_0
+         bus_0(v) -(p)-branch_0-- bus_1
+            |                       |
+        source_0(p)               load_0
 
         */
         topo.voltage_sensor_indptr = {0, 1, 1};
-        topo.bus_power_sensor_indptr = {0, 1, 1};
         topo.source_power_sensor_indptr = {0, 1};
         topo.branch_from_power_sensor_indptr = {0, 1};
 
-        se_input.measured_bus_injection = {{2.2, 0.2}};
         se_input.measured_source_power = {{1.93, 0.1}};
         se_input.measured_branch_from_power = {{1.97, 0.1}};
 
@@ -618,9 +616,35 @@ TEST_CASE("Math solver, measurements") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
 
-        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
-        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
-        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+        CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+    }
+
+    SUBCASE("Load and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0 --branch_0-(p)- bus_1(v)
+           |                     |
+        source_0              load_0(p)
+
+        */
+        topo.voltage_sensor_indptr = {0, 0, 1};
+        topo.load_gen_power_sensor_indptr = {0, 1};
+        topo.branch_to_power_sensor_indptr = {0, 1};
+
+        se_input.measured_load_gen_power = {{-1.93, 0.1}};
+        se_input.measured_branch_to_power = {{-1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-1.95));
     }
 
     SUBCASE("Node injection and source") {
@@ -651,7 +675,35 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
     }
 
-    SUBCASE("Node injection and load") {
+    SUBCASE("Node injection, source and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.bus_power_sensor_indptr = {0, 1, 1};
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.branch_from_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{2.2, 0.2}};
+        se_input.measured_source_power = {{1.93, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
+    SUBCASE("Node injection, load and branch") {
         /*
         network, v means voltage measured, p means power measured
 
