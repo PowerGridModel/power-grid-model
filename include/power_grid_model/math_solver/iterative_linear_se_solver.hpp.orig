@@ -225,15 +225,27 @@ class MeasuredValues {
             Idx const source_end = math_topology_->source_bus_indptr[bus + 1];
 
             // under-determined or exactly determined
+<<<<<<< HEAD
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
                 calculate_non_over_determined_injection(
                     bus_injection_[bus].n_unmeasured_appliances, load_gen_begin, load_gen_end, source_begin, source_end,
-                    partial_injection_[bus_injection_[bus].idx_partial_injection], s[bus], load_gen_flow, source_flow);
+                    partial_injection_[bus_injection_[bus].idx_partial_injection], s[bus], pair);
+=======
+            if (idx_bus_injection_power_[bus] < 0) {
+                calculate_non_over_determined_injection(-idx_bus_injection_power_[bus],  // n_unmeasured
+                                                        load_gen_begin, load_gen_end, source_begin, source_end,
+                                                        partial_injection_[idx_partial_injection_[bus]], s[bus],
+                                                        load_gen_flow, source_flow);
+>>>>>>> refactor/load-gen-source-flow
             }
             // over-determined
             else {
                 calculate_over_determined_injection(load_gen_begin, load_gen_end, source_begin, source_end,
-                                                    bus_injection(bus), s[bus], load_gen_flow, source_flow);
+<<<<<<< HEAD
+                                                    bus_injection(bus), s[bus], pair);
+=======
+                                                    bus_injection_power(bus), s[bus], load_gen_flow, source_flow);
+>>>>>>> refactor/load-gen-source-flow
             }
             // current injection
             for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
@@ -551,16 +563,26 @@ class MeasuredValues {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
             }
+<<<<<<< HEAD
             else if (idx_load_gen_power_[load_gen] == UNMEASURED) {
+                pair.first[load_gen].s = s_residual_per_appliance;
+=======
+            else if (idx_load_gen_power_[load_gen] == -1) {
                 load_gen_flow[load_gen].s = s_residual_per_appliance;
+>>>>>>> refactor/load-gen-source-flow
             }
         }
         for (Idx source = source_begin; source != source_end; ++source) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value;
             }
+<<<<<<< HEAD
             else if (idx_source_power_[source] == UNMEASURED) {
+                pair.second[source].s = s_residual_per_appliance;
+=======
+            else if (idx_source_power_[source] == -1) {
                 source_flow[source].s = s_residual_per_appliance;
+>>>>>>> refactor/load-gen-source-flow
             }
         }
     }
