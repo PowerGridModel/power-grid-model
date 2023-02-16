@@ -9,13 +9,19 @@ sphinx:
   configuration: docs/conf.py
 
 build:
-  os: "ubuntu-20.04"
+  os: "ubuntu-22.04"
   tools:
-    python: "3.9"
+    python: "3.11"
   jobs:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
+      # remove API DLL define in header
+      - sed -i -r "s/#define PGM.*//g" include/power_grid_model_c.h
+      - sed -i -r "s/PGM_API //g" include/power_grid_model_c.h
+      # build doxygen for C header
+      - cd docs/doxygen && doxygen && cd ../..
+      # download examples
       - wget -P docs/examples https://github.com/alliander-opensource/power-grid-model-workshop/raw/main/examples/Make%20Test%20Dataset.ipynb
       - wget -P docs/examples https://github.com/alliander-opensource/power-grid-model-workshop/raw/main/examples/Power%20Flow%20Example.ipynb
       - wget -P docs/examples https://github.com/alliander-opensource/power-grid-model-workshop/raw/main/examples/State%20Estimation%20Example.ipynb

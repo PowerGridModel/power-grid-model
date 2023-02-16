@@ -43,6 +43,7 @@ struct data_type;
 template <>
 struct data_type<double, false> {
     static constexpr const char* numpy_type = "f8";
+    static constexpr const char* ctype = "double";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -63,6 +64,7 @@ struct data_type<double, false> {
 template <>
 struct data_type<int32_t, false> {
     static constexpr const char* numpy_type = "i4";
+    static constexpr const char* ctype = "int32_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -80,6 +82,7 @@ struct data_type<int32_t, false> {
 template <>
 struct data_type<int8_t, false> {
     static constexpr const char* numpy_type = "i1";
+    static constexpr const char* ctype = "int8_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -97,6 +100,7 @@ struct data_type<int8_t, false> {
 template <>
 struct data_type<RealValue<false>, false> {
     static constexpr const char* numpy_type = "f8";
+    static constexpr const char* ctype = "double[3]";
     static constexpr size_t ndim = 1;
     static constexpr size_t const* dims = three_phase_dimension.data();
     static constexpr SetNaNFunc set_nan = [](void* ptr) {
@@ -120,8 +124,10 @@ struct data_type<T, true> : data_type<std::underlying_type_t<T>> {};
 struct DataAttribute {
     std::string name;
     std::string numpy_type;
+    std::string ctype;
     std::vector<size_t> dims;
     size_t offset;
+    size_t size;
     SetNaNFunc set_nan;
     CheckNaNFunc check_nan;
     SetValueFunc set_value;
@@ -151,7 +157,9 @@ inline DataAttribute get_data_attribute(std::string const& name) {
     DataAttribute attr{};
     attr.name = name;
     attr.numpy_type = single_data_type::numpy_type;
+    attr.ctype = single_data_type::ctype;
     attr.offset = get_offset<member_ptr>();
+    attr.size = sizeof(value_type);
     if constexpr (single_data_type::ndim > 0) {
         attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
     }
@@ -169,23 +177,25 @@ struct MetaData {
     size_t alignment;
     std::vector<DataAttribute> attributes;
 
-    DataAttribute const& find_attr(std::string const& attr_name) const {
-        for (DataAttribute const& attr : attributes) {
-            if (attr.name == attr_name) {
-                return attr;
+    DataAttribute const& get_attr(std::string const& attr_name) const {
+        Idx const found = find_attr(attr_name);
+        if (found >= 0) {
+            return attributes[found];
+        }
+        throw std::out_of_range{std::string("Unknown attribute name: ") + attr_name + "!\n"};
+    }
+
+    Idx find_attr(std::string const& attr_name) const {
+        for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
+            if (attributes[i].name == attr_name) {
+                return i;
             }
         }
-        throw UnknownAttributeName{attr_name};
+        return -1;
     }
 
     bool has_attr(std::string const& attr_name) const {
-        try {
-            find_attr(attr_name);
-        }
-        catch (const UnknownAttributeName&) {
-            return false;
-        }
-        return true;
+        return find_attr(attr_name) >= 0;
     }
 
     void* get_position(void* ptr, Idx position) const {
@@ -214,6 +224,12 @@ struct MetaData {
         ptr = get_position(ptr, position);
         void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
         attr.set_value(offset_ptr, value_ptr);
+    }
+    // get value of one attribute
+    void get_attr(void const* ptr, void* value_ptr, DataAttribute const& attr, Idx position = 0) const {
+        ptr = get_position(ptr, position);
+        void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
+        attr.set_value(value_ptr, offset_ptr);
     }
     // compare value of one attribute
     bool compare_attr(void const* ptr_x, void const* ptr_y, double atol, double rtol, DataAttribute const& attr,

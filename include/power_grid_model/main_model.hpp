@@ -35,7 +35,7 @@ template <class T, class U>
 class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
-class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> final {
+class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
    private:
     // internal type traits
     // container class
@@ -385,7 +385,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
-    void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) {
+    void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         // static function array
         static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
             [](MainModelImpl const& model, ID const* id_begin, Idx size, Idx* indexer_begin) {
@@ -484,11 +484,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, std::vector<MathOutput<sym>> (MainModelImpl::*calculation_fn)(double, Idx, CalculationMethod)>
     BatchParameter batch_calculation_(double err_tol, Idx max_iter, CalculationMethod calculation_method,
                                       Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
-        // if the update batch is one empty set per component type
+        // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
-        bool const all_empty = std::all_of(update_data.cbegin(), update_data.cend(), [](auto const& x) {
-            return x.second.is_empty();
-        });
+        // NOTE: if the map is not empty but the datasets inside are empty
+        //     that will be considered as a zero batch_size
+        bool const all_empty = update_data.empty();
         if (all_empty) {
             auto const math_output = (this->*calculation_fn)(err_tol, max_iter, calculation_method);
             output_result(math_output, result_data);
@@ -501,6 +501,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(std::all_of(update_data.cbegin(), update_data.cend(), [n_batch](auto const& x) {
             return x.second.batch_size() == n_batch;
         }));
+
+        // if the batch_size is zero, it is a special case without doing any calculations at all
+        // we consider in this case the batch set is independent and but not topology cachable
+        if (n_batch == 0) {
+            return BatchParameter{true, false};
+        }
 
         // if cache_topology, the topology and math solvers will be initialized at base scenario
         // otherwise the topology and math solvers will be reset
@@ -578,14 +584,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // handle exception message
         std::string combined_error_message;
+        IdxVector failed_scenarios;
+        std::vector<std::string> err_msgs;
         for (Idx batch = 0; batch != n_batch; ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
                 combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
+                failed_scenarios.push_back(batch);
+                err_msgs.push_back(exceptions[batch]);
             }
         }
         if (!combined_error_message.empty()) {
-            throw BatchCalculationError(combined_error_message);
+            throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
         }
 
         return BatchParameter{independent, cache_topology};
@@ -619,9 +629,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const length_per_batch = component_update.length_per_batch(0);
+        Idx const elements_per_scenario = component_update.elements_per_scenario(0);
         for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
-            if (length_per_batch != component_update.length_per_batch(batch)) {
+            if (elements_per_scenario != component_update.elements_per_scenario(batch)) {
                 return false;
             }
         }

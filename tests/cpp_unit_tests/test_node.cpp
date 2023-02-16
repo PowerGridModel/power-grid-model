@@ -43,8 +43,8 @@ TEST_CASE("Test node") {
     }
 
     SUBCASE("Test node update") {
-        BaseInput base_input;
-        UpdateChange update_change = node.update(base_input);
+        BaseUpdate base_update;
+        UpdateChange update_change = node.update(base_update);
         CHECK(update_change.topo == false);
         CHECK(update_change.param == false);
     }

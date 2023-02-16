@@ -6,11 +6,16 @@
     "C_Cpp.autoAddFileAssociations": false,
     "cmake.configureOnOpen": true,
     "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "POWER_GRID_MODEL_SANITIZER": 1
+    },
     "testMate.cpp.test.executables": "cpp_build_${command:cmake.buildType}/tests/cpp_unit_tests/power_grid_model_unit_tests",
+    "doxdocgen.generic.filteredKeywords": ["PGM_API"],
+    "doxdocgen.generic.includeTypeAtReturn": false,
     "python.testing.pytestArgs": [
         "tests",
         "--no-cov"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
+    "python.testing.pytestEnabled": true
 }

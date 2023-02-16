@@ -125,7 +125,6 @@ def validate_batch_data(
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
-
         assert_valid_data_structure(batch_update_data, "update")
         id_errors: List[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
 
@@ -158,7 +157,6 @@ def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
 
     component_dtype = {component: meta["dtype"] for component, meta in power_grid_meta_data[data_type].items()}
     for component, array in data.items():
-
         # Check if component name is valid
         if component not in component_dtype:
             raise KeyError(f"Unknown component '{component}' in {data_type}_data.")

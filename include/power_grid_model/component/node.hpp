@@ -30,7 +30,7 @@ class Node final : public Base {
     }
 
     // update node, nothing happens here
-    UpdateChange update(BaseInput const&) {
+    UpdateChange update(BaseUpdate const&) {
         return {false, false};
     }
 
