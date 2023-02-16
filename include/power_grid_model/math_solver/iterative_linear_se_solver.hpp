@@ -255,8 +255,8 @@ class MeasuredValues {
     // flat array of all the relevant measurement for the main calculation
     // branch/shunt flow, bus voltage, injection flow
     std::vector<SensorCalcParam<sym>> main_value_;
-    // flat array of all the loadgen/source measurement
-    // not relevant for the main calculation, as extra data for loadgen/source calculation
+    // flat array of all the load_gen/source measurement
+    // not relevant for the main calculation, as extra data for load_gen/source calculation
     std::vector<SensorCalcParam<sym>> extra_value_;
     // array of partial injection measurement, the bus with not all connected appliances measured
     std::vector<SensorCalcParam<sym>> partial_injection_;
