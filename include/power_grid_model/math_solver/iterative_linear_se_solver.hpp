@@ -182,7 +182,7 @@ class MeasuredValues {
     }
 
     // power measurement
-    SensorCalcParam<sym> const total_injection(Idx bus) const {
+    SensorCalcParam<sym> const bus_injection(Idx bus) const {
         if (bus_injection_[bus].idx_bus_injection < 0) {
             return main_value_[bus_injection_[bus].idx_full_injection];
         }
@@ -744,7 +744,7 @@ class IterativeLinearSESolver {
                     // R_ii = -variance, only diagonal
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
-                        block.r() = ComplexTensor<sym>{-measured_value.total_injection(row).variance};
+                        block.r() = ComplexTensor<sym>{-measured_value.bus_injection(row).variance};
                     }
                 }
                 // injection measurement not exist
@@ -831,7 +831,7 @@ class IterativeLinearSESolver {
             }
             // fill block with injection measurement, need to convert to current
             if (measured_value.has_bus_injection(bus)) {
-                rhs_block.tau() = conj(measured_value.total_injection(bus).value / u[bus]);
+                rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
             }
         }
     }
