@@ -561,11 +561,11 @@ TEST_CASE("Math solver, zero variance test") {
 
 TEST_CASE("Math solver, measurements") {
     /*
-    network, v means voltage measured, p means power measured
+    network
 
-     bus_0(vp) -(p)-branch_0-- bus_1
-        |                        |
-    source_0(p)                load_0
+     bus_0 --branch_0-- bus_1
+        |                    |
+    source_0               load_0
 
     */
     MathModelTopology topo;
@@ -576,38 +576,84 @@ TEST_CASE("Math solver, measurements") {
     topo.shunt_bus_indptr = {0, 0, 0};
     topo.load_gen_bus_indptr = {0, 0, 1};
 
-    topo.voltage_sensor_indptr = {0, 1, 1};
-    topo.bus_power_sensor_indptr = {0, 1, 1};
-    topo.source_power_sensor_indptr = {0, 1};
+    topo.voltage_sensor_indptr = {0, 0, 0};
+    topo.bus_power_sensor_indptr = {0, 0, 0};
+    topo.source_power_sensor_indptr = {0, 0};
     topo.load_gen_power_sensor_indptr = {0, 0};
     topo.shunt_power_sensor_indptr = {0};
-    topo.branch_from_power_sensor_indptr = {0, 1};
+    topo.branch_from_power_sensor_indptr = {0, 0};
     topo.branch_to_power_sensor_indptr = {0, 0};
 
     MathModelParam<true> param;
     param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
 
-    auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
-    auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-
-    // 2 Watts is flowing from source_0 via bus_0, branch_0 and bus 1, to load_0
     StateEstimationInput<true> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1};
     se_input.measured_voltage = {{1.0, 0.1}};
-    se_input.measured_bus_injection = {{2.2, 0.2}};
-    se_input.measured_source_power = {{1.93, 0.1}};
-    se_input.measured_branch_from_power = {{1.97, 0.1}};
 
-    MathSolver<true> solver{topo_ptr, param_ptr};
     CalculationInfo info;
-    MathOutput<true> output =
-        solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+    MathOutput<true> output;
 
-    CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
-    CHECK(real(output.source[0].s) == doctest::Approx(2.0));
-    CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
-    CHECK(real(output.bus_injection[0] - 2.0) < 1e-8);
+    SUBCASE("Node injection and source") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.bus_power_sensor_indptr = {0, 1, 1};
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.branch_from_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{2.2, 0.2}};
+        se_input.measured_source_power = {{1.93, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
+    SUBCASE("Node injection and load") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0 --branch_0-(p)- bus_1(vp)
+           |                     |
+        source_0              load_0(p)
+
+        */
+        topo.voltage_sensor_indptr = {0, 0, 1};
+        topo.bus_power_sensor_indptr = {0, 0, 1};
+        topo.load_gen_power_sensor_indptr = {0, 1};
+        topo.branch_to_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{-2.2, 0.2}};
+        se_input.measured_load_gen_power = {{-1.93, 0.1}};
+        se_input.measured_branch_to_power = {{-1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
+    }
+
+    CHECK(output.bus_injection[0] == output.branch[0].s_f);
+    CHECK(output.bus_injection[0] == output.source[0].s);
+    CHECK(output.bus_injection[1] == output.branch[0].s_t);
+    CHECK(output.bus_injection[1] == output.load_gen[0].s);
 }
-
 }  // namespace power_grid_model
