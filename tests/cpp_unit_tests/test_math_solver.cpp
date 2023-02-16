@@ -536,4 +536,51 @@ TEST_CASE("Math solver, zero variance test") {
     CHECK(cabs(output.u[1] - 1.0) < numerical_tolerance);
 }
 
+TEST_CASE("Math solver, measurements") {
+    /*
+    network, v means voltage measured, p means power measured
+
+     bus_0(v) -(p)-branch_0-- bus_1
+        |                        |
+    source_0(p)                load_0
+
+    */
+    MathModelTopology topo;
+    topo.slack_bus_ = 0;
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}};
+    topo.source_bus_indptr = {0, 1, 1};
+    topo.shunt_bus_indptr = {0, 0, 0};
+    topo.load_gen_bus_indptr = {0, 0, 1};
+
+    topo.voltage_sensor_indptr = {0, 1, 1};
+    topo.source_power_sensor_indptr = {0, 1};
+    topo.load_gen_power_sensor_indptr = {0, 0};
+    topo.shunt_power_sensor_indptr = {0};
+    topo.branch_from_power_sensor_indptr = {0, 1};
+    topo.branch_to_power_sensor_indptr = {0, 0};
+
+    MathModelParam<true> param;
+    param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
+
+    auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+    auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+
+    // 2 Watts is flowing from source_0 via bus_0, branch_0 and bus 1, to load_0
+    StateEstimationInput<true> se_input;
+    se_input.source_status = {1};
+    se_input.load_gen_status = {1};
+    se_input.measured_voltage = {{1.0, 0.1}};
+    se_input.measured_source_power = {{2.2, 0.2}};
+    se_input.measured_branch_from_power = {{1.9, 0.1}};
+
+    MathSolver<true> solver{topo_ptr, param_ptr};
+    CalculationInfo info;
+    MathOutput<true> output =
+        solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+    CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+    CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+}
+
 }  // namespace power_grid_model
