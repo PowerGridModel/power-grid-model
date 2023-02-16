@@ -623,6 +623,34 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
     }
 
+    SUBCASE("Node injection and source") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.bus_power_sensor_indptr = {0, 1, 1};
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.branch_from_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{2.2, 0.2}};
+        se_input.measured_source_power = {{1.93, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
     SUBCASE("Node injection and load") {
         /*
         network, v means voltage measured, p means power measured

@@ -372,48 +372,50 @@ class MeasuredValues {
                                                                        input.measured_bus_injection, main_value_);
 
             // combine load_gen/source to injection measurement
-            // if all the connected load_gen/source are measured, their sum can be considered as an injection
-            // measurement. zero injection (no connected appliances) is also considered as measured
-            Idx n_unmeasured = 0;
-            SensorCalcParam<sym> injection_measurement{};
+            {
+                // if all the connected load_gen/source are measured, their sum can be considered as an injection
+                // measurement. zero injection (no connected appliances) is also considered as measured
+                Idx n_unmeasured = 0;
+                SensorCalcParam<sym> injection_measurement{};
 
-            for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1];
-                 ++load_gen) {
-                if (idx_load_gen_power_[load_gen] == UNMEASURED) {
-                    ++n_unmeasured;
-                    continue;
+                for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1];
+                     ++load_gen) {
+                    if (idx_load_gen_power_[load_gen] == UNMEASURED) {
+                        ++n_unmeasured;
+                        continue;
+                    }
+                    else if (idx_load_gen_power_[load_gen] == DISCONNECTED) {
+                        continue;
+                    }
+                    injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
+                    injection_measurement.variance += extra_value_[idx_load_gen_power_[load_gen]].variance;
                 }
-                else if (idx_load_gen_power_[load_gen] == DISCONNECTED) {
-                    continue;
-                }
-                injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
-                injection_measurement.variance += extra_value_[idx_load_gen_power_[load_gen]].variance;
-            }
 
-            for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
-                if (idx_source_power_[source] == UNMEASURED) {
-                    ++n_unmeasured;
-                    continue;
+                for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
+                    if (idx_source_power_[source] == UNMEASURED) {
+                        ++n_unmeasured;
+                        continue;
+                    }
+                    else if (idx_source_power_[source] == DISCONNECTED) {
+                        continue;
+                    }
+                    injection_measurement.value += extra_value_[idx_source_power_[source]].value;
+                    injection_measurement.variance += extra_value_[idx_source_power_[source]].variance;
                 }
-                else if (idx_source_power_[source] == DISCONNECTED) {
-                    continue;
+
+                bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
+
+                // If there are no unmeasured objects, assign the full_injection
+                if (n_unmeasured == 0) {
+                    // if no node injection measurement was assigned yet, assign it
+                    bus_injection_[bus].idx_full_injection = (Idx)main_value_.size();
+                    main_value_.push_back(injection_measurement);
                 }
-                injection_measurement.value += extra_value_[idx_source_power_[source]].value;
-                injection_measurement.variance += extra_value_[idx_source_power_[source]].variance;
-            }
-
-            bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
-
-            // If there are no unmeasured objects, assign the full_injection
-            if (n_unmeasured == 0) {
-                // if no node injection measurement was assigned yet, assign it
-                bus_injection_[bus].idx_full_injection = (Idx)main_value_.size();
-                main_value_.push_back(injection_measurement);
-            }
-            else {
-                // push to partial injection
-                bus_injection_[bus].idx_partial_injection = (Idx)partial_injection_.size();
-                partial_injection_.push_back(injection_measurement);
+                else {
+                    // push to partial injection
+                    bus_injection_[bus].idx_partial_injection = (Idx)partial_injection_.size();
+                    partial_injection_.push_back(injection_measurement);
+                }
             }
         }
         // assign a meaningful mean angle shift, if at least one voltage has angle measurement
