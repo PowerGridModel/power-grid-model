@@ -731,6 +731,32 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
     }
 
+    SUBCASE("Node injection source and load") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         source_0(p)-bus_0(vp) -(p)-branch_0-- bus_1
+                        |
+                      load_0
+        */
+        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.bus_power_sensor_indptr = {0, 1, 1};
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.load_gen_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{2.2, 0.2}};
+        se_input.measured_source_power = {{2.8, 0.1}};
+        se_input.measured_load_gen_power = {{-1.0, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+    }
+
     CHECK(output.bus_injection[0] == output.branch[0].s_f);
     CHECK(output.bus_injection[0] == output.source[0].s);
     CHECK(output.bus_injection[1] == output.branch[0].s_t);
