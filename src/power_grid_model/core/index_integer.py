@@ -11,11 +11,7 @@ from ctypes import c_int32, c_int64
 
 import numpy as np
 
-# pylint: disable=C0103
-Idx_c = c_int64
-# pylint: disable=C0103
-Idx_np = np.int64
-# pylint: disable=C0103
-ID_c = c_int32
-# pylint: disable=C0103
-ID_np = np.int32
+IdxC = c_int64
+IdxNp = np.int64
+IdC = c_int32
+IdNp = np.int32

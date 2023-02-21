@@ -11,12 +11,12 @@ from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from pathlib import Path
 from typing import Callable, List
 
-from power_grid_model.core.index_integer import ID_c, Idx_c
+from power_grid_model.core.index_integer import IdC, IdxC
 
 # integer index
-IdxPtr = POINTER(Idx_c)
+IdxPtr = POINTER(IdxC)
 IdxDoublePtr = POINTER(IdxPtr)
-IDPtr = POINTER(ID_c)
+IDPtr = POINTER(IdC)
 # double pointer to char
 CharDoublePtr = POINTER(c_char_p)
 # double pointer to void
@@ -24,7 +24,10 @@ VoidDoublePtr = POINTER(c_void_p)
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {str: c_char_p, int: Idx_c, float: c_double}
+_ARGS_TYPE_MAPPING = {str: c_char_p, int: IdxC, float: c_double}
+
+# The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
+# pylint: disable=too-few-public-methods
 
 
 class HandlePtr(c_void_p):
@@ -70,6 +73,7 @@ class WrapperFunc:
     Functor to wrap the C function
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(self, cdll: CDLL, handle: HandlePtr, name: str, c_argtypes: List, c_restype):
         """
 
@@ -183,7 +187,7 @@ class PowerGridCore:
             py_restype = function.__args__[-1]
             c_argtypes = [_ARGS_TYPE_MAPPING.get(x, x) for x in py_argtypes]
             c_restype = _ARGS_TYPE_MAPPING.get(py_restype, py_restype)
-            if c_restype == Idx_c and name in _FUNC_SIZE_T_RES:
+            if c_restype == IdxC and name in _FUNC_SIZE_T_RES:
                 c_restype = c_size_t
             # bug in Python 3.10 https://bugs.python.org/issue43208
             if id(c_restype) == id(type(None)):
