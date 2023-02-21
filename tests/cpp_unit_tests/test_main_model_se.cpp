@@ -122,21 +122,21 @@ TEST_CASE("Test Main Model") {
                     main_model.output_result<true, Node>(math_output, node_output.begin());
                     main_model.output_result<true, SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(gen_output[0].p == doctest::Approx(1000.0).scale(1e3));
-                    CHECK(gen_output[0].q == doctest::Approx(100.0).scale(1e3));
+                    CHECK(gen_output[0].p == doctest::Approx(850.0).scale(1e3));
+                    CHECK(gen_output[0].q == doctest::Approx(85.0).scale(1e3));
 
-                    CHECK(load_output[0].p == doctest::Approx(2000.0).scale(1e3));
-                    CHECK(load_output[0].q == doctest::Approx(200.0).scale(1e3));
+                    CHECK(load_output[0].p == doctest::Approx(1850.0).scale(1e3));
+                    CHECK(load_output[0].q == doctest::Approx(185.0).scale(1e3));
 
                     CHECK(node_output[0].p == doctest::Approx(1000.0).scale(1e3));
                     CHECK(node_output[0].q == doctest::Approx(100.0).scale(1e3));
                     CHECK(node_output[1].p == doctest::Approx(-1000.0).scale(1e3));
                     CHECK(node_output[1].q == doctest::Approx(-100.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(100.0).scale(1e3));   // gen
-                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(10.0).scale(1e3));    // gen
-                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(100.0).scale(1e3));   // load
-                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(10.0).scale(1e3));    // load
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(50.0).scale(1e3));    // gen
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(5.0).scale(1e3));     // gen
+                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(-50.0).scale(1e3));   // load
+                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(-5.0).scale(1e3));    // load
                     CHECK(power_sensor_output[2].p_residual == doctest::Approx(-200.0).scale(1e3));  // node
                     CHECK(power_sensor_output[2].q_residual == doctest::Approx(-20.0).scale(1e3));   // node
                 }

@@ -407,7 +407,6 @@ class MeasuredValues {
 
                 // If there are no unmeasured objects, assign the full_injection
                 if (n_unmeasured == 0) {
-                    // if no node injection measurement was assigned yet, assign it
                     bus_injection_[bus].idx_full_injection = (Idx)main_value_.size();
                     main_value_.push_back(injection_measurement);
                 }
