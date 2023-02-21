@@ -103,8 +103,7 @@ class MeasuredValues {
           // default angle shift
           // sym: 0
           // asym: 0, -120deg, -240deg
-          mean_angle_shift_{arg(ComplexValue<sym>{1.0})},
-          min_var_{} {
+          mean_angle_shift_{arg(ComplexValue<sym>{1.0})} {
         // loop bus
         process_bus_related_measurements(input);
         // loop branch
@@ -201,14 +200,13 @@ class MeasuredValues {
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
-    // first load_gen, second source
-    using LoadGenSourceFlow = std::pair<std::vector<ApplianceMathOutput<sym>>, std::vector<ApplianceMathOutput<sym>>>;
+    using FlowVector = std::vector<ApplianceMathOutput<sym>>;
+    using LoadGenSourceFlow = std::pair<FlowVector, FlowVector>;
 
     LoadGenSourceFlow calculate_load_gen_source(ComplexValueVector<sym> const& u,
                                                 ComplexValueVector<sym> const& s) const {
-        LoadGenSourceFlow pair{};
-        pair.first.resize(math_topology_->n_load_gen());
-        pair.second.resize(math_topology_->n_source());
+        std::vector<ApplianceMathOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
+        std::vector<ApplianceMathOutput<sym>> source_flow(math_topology_->n_source());
         // loop all buses
         for (Idx bus = 0; bus != math_topology_->n_bus(); ++bus) {
             Idx const load_gen_begin = math_topology_->load_gen_bus_indptr[bus];
@@ -220,23 +218,24 @@ class MeasuredValues {
             if (idx_bus_injection_power_[bus] < 0) {
                 calculate_non_over_determined_injection(-idx_bus_injection_power_[bus],  // n_unmeasured
                                                         load_gen_begin, load_gen_end, source_begin, source_end,
-                                                        partial_injection_[idx_partial_injection_[bus]], s[bus], pair);
+                                                        partial_injection_[idx_partial_injection_[bus]], s[bus],
+                                                        load_gen_flow, source_flow);
             }
             // over-determined
             else {
                 calculate_over_determined_injection(load_gen_begin, load_gen_end, source_begin, source_end,
-                                                    bus_injection_power(bus), s[bus], pair);
+                                                    bus_injection_power(bus), s[bus], load_gen_flow, source_flow);
             }
             // current injection
             for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
-                pair.first[load_gen].i = conj(pair.first[load_gen].s / u[bus]);
+                load_gen_flow[load_gen].i = conj(load_gen_flow[load_gen].s / u[bus]);
             }
             for (Idx source = source_begin; source != source_end; ++source) {
-                pair.second[source].i = conj(pair.second[source].s / u[bus]);
+                source_flow[source].i = conj(source_flow[source].s / u[bus]);
             }
         }
 
-        return pair;
+        return std::make_pair(load_gen_flow, source_flow);
     }
 
    private:
@@ -246,8 +245,8 @@ class MeasuredValues {
     // flat array of all the relevant measurement for the main calculation
     // branch/shunt flow, bus voltage, injection flow
     std::vector<SensorCalcParam<sym>> main_value_;
-    // flat array of all the loadgen/source measurement
-    // not relevant for the main calculation, as extra data for loadgen/source calculation
+    // flat array of all the load_gen/source measurement
+    // not relevant for the main calculation, as extra data for load_gen/source calculation
     std::vector<SensorCalcParam<sym>> extra_value_;
     // array of partial injection measurement, the bus with not all connected appliances measured
     std::vector<SensorCalcParam<sym>> partial_injection_;
@@ -279,8 +278,6 @@ class MeasuredValues {
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
-    // scaling factor as minimum variance for the normalization
-    double min_var_;
 
     MathModelTopology const& math_topology() const {
         return *math_topology_;
@@ -506,62 +503,66 @@ class MeasuredValues {
     // in the gain matrix, the biggest weighting factor is then one
     void normalize_variance() {
         // loop to find min_var
-        min_var_ = std::numeric_limits<double>::infinity();
+        double min_var = std::numeric_limits<double>::infinity();
         for (SensorCalcParam<sym> const& x : main_value_) {
             // only non-zero variance is considered
             if (x.variance != 0.0) {
-                min_var_ = std::min(min_var_, x.variance);
+                min_var = std::min(min_var, x.variance);
             }
         }
         // scale
-        std::for_each(main_value_.begin(), main_value_.end(), [this](SensorCalcParam<sym>& x) {
-            x.variance /= min_var_;
+        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) {
+            x.variance /= min_var;
+        });
+        std::for_each(extra_value_.begin(), extra_value_.end(), [&](SensorCalcParam<sym>& x) {
+            x.variance /= min_var;
         });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
                                                  Idx source_begin, Idx source_end,
                                                  SensorCalcParam<sym> const& partial_injection,
-                                                 ComplexValue<sym> const& s, LoadGenSourceFlow& pair) const {
+                                                 ComplexValue<sym> const& s, FlowVector& load_gen_flow,
+                                                 FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
         ComplexValue<sym> const s_residual_per_appliance = (s - partial_injection.value) / (double)n_unmeasured;
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
-                pair.first[load_gen].s = load_gen_power(load_gen).value;
+                load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
             }
             else if (idx_load_gen_power_[load_gen] == -1) {
-                pair.first[load_gen].s = s_residual_per_appliance;
+                load_gen_flow[load_gen].s = s_residual_per_appliance;
             }
         }
         for (Idx source = source_begin; source != source_end; ++source) {
             if (has_source(source)) {
-                pair.second[source].s = source_power(source).value;
+                source_flow[source].s = source_power(source).value;
             }
             else if (idx_source_power_[source] == -1) {
-                pair.second[source].s = s_residual_per_appliance;
+                source_flow[source].s = s_residual_per_appliance;
             }
         }
     }
 
     void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end, Idx source_begin, Idx source_end,
                                              SensorCalcParam<sym> const& full_injection, ComplexValue<sym> const& s,
-                                             LoadGenSourceFlow& pair) const {
+                                             FlowVector& load_gen_flow, FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
         ComplexValue<sym> const mu = (full_injection.value - s) / full_injection.variance;
         // S_i = S_i_mea - var_i * mu
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
-                pair.first[load_gen].s = load_gen_power(load_gen).value -
-                                         // also scale the variance here using the same normalization
-                                         (load_gen_power(load_gen).variance / min_var_) * mu;
+                load_gen_flow[load_gen].s = load_gen_power(load_gen).value -
+                                            // also scale the variance here using the same normalization
+                                            (load_gen_power(load_gen).variance) * mu;
             }
         }
         for (Idx source = source_begin; source != source_end; ++source) {
             if (has_source(source)) {
-                pair.second[source].s = source_power(source).value -
+                source_flow[source].s = source_power(source).value -
                                         // also scale the variance here using the same normalization
-                                        (source_power(source).variance / min_var_) * mu;
+                                        (source_power(source).variance) * mu;
             }
         }
     }
