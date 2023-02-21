@@ -34,8 +34,8 @@ def _generate_meta_data() -> dict:
 
     """
     py_meta_data = {}
-    n_dataset = pgc.meta_n_datasets()
-    for i in range(n_dataset):
+    n_datasets = pgc.meta_n_datasets()
+    for i in range(n_datasets):
         dataset = pgc.meta_dataset_name(i)
         py_meta_data[dataset] = _generate_meta_dataset(dataset)
     return py_meta_data
