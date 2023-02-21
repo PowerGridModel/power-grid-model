@@ -8,7 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
-from typing import Dict, Mapping, Optional, Union
+from typing import Any, Dict, Mapping, Optional, Union
 
 import numpy as np
 
@@ -27,7 +27,19 @@ _NAN_VALUE_MAP = {
 }
 
 
-def _generate_meta_data() -> dict:
+@dataclass
+class ComponentMetaData:
+    dtype: np.dtype
+    dtype_dict: Dict[str, Any]
+    nans: Dict[str, Union[float, int]]
+    nan_scalar: np.ndarray
+
+
+DatasetMetaData = Dict[str, ComponentMetaData]
+PowerGridMetaData = Dict[str, DatasetMetaData]
+
+
+def _generate_meta_data() -> PowerGridMetaData:
     """
 
     Returns: meta data for all dataset
@@ -41,7 +53,7 @@ def _generate_meta_data() -> dict:
     return py_meta_data
 
 
-def _generate_meta_dataset(dataset: str) -> dict:
+def _generate_meta_dataset(dataset: str) -> DatasetMetaData:
     """
 
     Args:
@@ -58,7 +70,7 @@ def _generate_meta_dataset(dataset: str) -> dict:
     return py_meta_dataset
 
 
-def _generate_meta_component(dataset: str, component_name: str) -> dict:
+def _generate_meta_component(dataset: str, component_name: str) -> ComponentMetaData:
     """
 
     Args:
@@ -69,21 +81,17 @@ def _generate_meta_component(dataset: str, component_name: str) -> dict:
 
     """
 
-    numpy_dtype_dict = _generate_meta_attributes(dataset, component_name)
-    dtype = np.dtype({k: v for k, v in numpy_dtype_dict.items() if k != "nans"})  # type: ignore
+    dtype_dict = _generate_meta_attributes(dataset, component_name)
+    dtype = np.dtype({k: v for k, v in dtype_dict.items() if k != "nans"})  # type: ignore
+    nans = dict(zip(dtype_dict["names"], dtype_dict["nans"]))
     if dtype.alignment != pgc.meta_component_alignment(dataset, component_name):
         raise TypeError(f'Aligment mismatch for component type: "{component_name}" !')
-    py_meta_component = {
-        "dtype": dtype,
-        "dtype_dict": numpy_dtype_dict,
-        "nans": dict(zip(numpy_dtype_dict["names"], numpy_dtype_dict["nans"])),
-    }
     # get single nan scalar
-    nan_scalar = np.zeros(1, dtype=py_meta_component["dtype"])
-    for key, value in py_meta_component["nans"].items():
+    nan_scalar = np.empty(1, dtype=dtype)
+    for key, value in nans.items():
         nan_scalar[key] = value
-    py_meta_component["nan_scalar"] = nan_scalar
-    return py_meta_component
+    # return component
+    return ComponentMetaData(dtype=dtype, dtype_dict=dtype_dict, nans=nans, nan_scalar=nan_scalar)
 
 
 def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
@@ -143,11 +151,11 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
     if not isinstance(shape, tuple):
         shape = (shape,)
     if empty:
-        return np.empty(shape=shape, dtype=power_grid_meta_data[data_type][component_type]["dtype"], order="C")
+        return np.empty(shape=shape, dtype=power_grid_meta_data[data_type][component_type].dtype, order="C")
     return np.full(
         shape=shape,
-        fill_value=power_grid_meta_data[data_type][component_type]["nan_scalar"],
-        dtype=power_grid_meta_data[data_type][component_type]["dtype"],
+        fill_value=power_grid_meta_data[data_type][component_type].nan_scalar,
+        dtype=power_grid_meta_data[data_type][component_type].dtype,
         order="C",
     )
 
@@ -235,7 +243,7 @@ def prepare_cpp_array(
                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
             indptr_c = np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
         # convert data array
-        data_c = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
+        data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(c_void_p)
         dataset_dict[component_name] = CBuffer(
             data=data_c, indptr=indptr_c, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
         )
