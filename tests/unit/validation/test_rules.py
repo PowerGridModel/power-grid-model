@@ -7,6 +7,7 @@ from enum import IntEnum
 import numpy as np
 import pytest
 
+from power_grid_model import LoadGenType, initialize_array
 from power_grid_model.validation.errors import (
     ComparisonError,
     InfinityError,
@@ -262,29 +263,20 @@ def test_all_cross_unique(cross_only):
 
 
 def test_all_valid_enum_values():
-    class MyEnum(IntEnum):
-        alpha = 2
-        bravo = 5
-
-    # TODO replace this hack with some patch to power_grid_meta_data or nan_type
-    from power_grid_model import power_grid_meta_data
-
-    power_grid_meta_data["input"]["test"] = {"nans": {"value": -128}}
-
-    valid = {"test": np.array([(1, 2), (2, 5)], dtype=[("id", "i4"), ("value", "i4")])}
-    errors = all_valid_enum_values(valid, "test", "value", MyEnum)
+    valid_load = initialize_array("input", "sym_load", 2)
+    valid_load["id"] = [1, 2]
+    valid_load["type"] = LoadGenType.const_power
+    valid = {"sym_load": valid_load}
+    errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
     assert not errors
 
-    invalid = {"test": np.array([(1, 2), (2, 4)], dtype=[("id", "i4"), ("value", "i4")])}
-    errors = all_valid_enum_values(invalid, "test", "value", MyEnum)
+    invalid_load = initialize_array("input", "sym_load", 2)
+    invalid_load["id"] = [1, 2]
+    invalid_load["type"] = [LoadGenType.const_power, 5]
+    invalid = {"sym_load": invalid_load}
+    errors = all_valid_enum_values(invalid, "sym_load", "type", LoadGenType)
     assert len(errors) == 1
-    assert InvalidEnumValueError("test", "value", [2], MyEnum) in errors
-    # TODO replace this hack with some patch to power_grid_meta_data or nan_type
-    del power_grid_meta_data["input"]["test"]
-
-    # try with a real enum LoadGenType
-    # this is a bug in numpy
-    from power_grid_model import LoadGenType, initialize_array
+    assert InvalidEnumValueError("sym_load", "type", [2], LoadGenType) in errors
 
     valid = {"sym_load": initialize_array("input", "sym_load", 20)}
     valid["sym_load"]["id"] = np.arange(20)
