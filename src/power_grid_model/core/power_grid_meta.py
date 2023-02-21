@@ -17,9 +17,9 @@ from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
-_ctype_numpy_map = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
+_CTYPE_NUMPY_MAP = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
 _ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
-_nan_value_map = {
+_NAN_VALUE_MAP = {
     f"{_ENDIANNESS}f8": np.nan,
     f"{_ENDIANNESS}(3,)f8": np.nan,
     f"{_ENDIANNESS}i4": np.iinfo(f"{_ENDIANNESS}i4").min,
@@ -105,8 +105,8 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
         attr_name: str = pgc.meta_attribute_name(dataset, component_name, i)
         attr_ctype: str = pgc.meta_attribute_ctype(dataset, component_name, attr_name)
         attr_offset: int = pgc.meta_attribute_offset(dataset, component_name, attr_name)
-        attr_np_type = f"{_ENDIANNESS}{_ctype_numpy_map[attr_ctype]}"
-        attr_nan = _nan_value_map[attr_np_type]
+        attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[attr_ctype]}"
+        attr_nan = _NAN_VALUE_MAP[attr_np_type]
         names.append(attr_name)
         formats.append(attr_np_type)
         offsets.append(attr_offset)
