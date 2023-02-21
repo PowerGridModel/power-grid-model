@@ -286,28 +286,39 @@ def test_all_valid_enum_values():
 
 
 def test_all_valid_ids():
+    # This data is for testing purpuse
+    # The values in the data do not make sense for a real grid
+    node = initialize_array("input", "node", 3)
+    node["id"] = [1, 2, 3]
+    source = initialize_array("input", "source", 3)
+    source["id"] = [4, 5, 6]
+    line = initialize_array("input", "line", 3)
+    line["id"] = [7, 8, 9]
+    line["from_node"] = [1, 2, 6]
+    line["to_node"] = [0, 0, 1]
+
     input_data = {
-        "mountain": np.array([(1,), (2,), (3,)], dtype=[("id", "i4")]),
-        "planet": np.array([(4,), (5,), (6,)], dtype=[("id", "i4")]),
-        "flag": np.array([(7, 1, "m"), (8, 2, "m"), (9, 6, "p")], dtype=[("id", "i4"), ("obj", "i4"), ("type", "U1")]),
+        "node": node,
+        "source": source,
+        "line": line,
     }
 
-    errors = all_valid_ids(input_data, "flag", "obj", ["mountain", "planet"])
+    errors = all_valid_ids(input_data, "line", "from_node", ["node", "source"])
     assert not errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "mountain", type="m")
+    errors = all_valid_ids(input_data, "line", "from_node", "node", to_node=0)
     assert not errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "planet", type="p")
+    errors = all_valid_ids(input_data, "line", "from_node", "source", to_node=1)
     assert not errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "mountain")
+    errors = all_valid_ids(input_data, "line", "from_node", "node")
     assert len(errors) == 1
-    assert InvalidIdError("flag", "obj", [9], ["mountain"]) in errors
+    assert InvalidIdError("line", "from_node", [9], ["node"]) in errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "planet")
+    errors = all_valid_ids(input_data, "line", "from_node", "source")
     assert len(errors) == 1
-    assert InvalidIdError("flag", "obj", [7, 8], ["planet"]) in errors
+    assert InvalidIdError("line", "from_node", [7, 8], ["source"]) in errors
 
 
 def test_all_boolean():

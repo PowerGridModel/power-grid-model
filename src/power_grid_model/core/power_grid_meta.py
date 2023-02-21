@@ -32,6 +32,7 @@ class ComponentMetaData:
     """
     Data class for component metadata
     """
+
     dtype: np.dtype
     dtype_dict: Dict[str, Any]
     nans: Dict[str, Union[float, int]]
