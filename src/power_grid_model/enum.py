@@ -5,14 +5,16 @@
 """
 Common Enumerations
 
-Note: these enumeration match the C++ arithmetic core, so dont change the values unless you change thmn in C++ as well
+Note: these enumeration match the C++ arithmetic core, so don't change the values unless you change them in C++ as well
 
 """
 
 from enum import IntEnum
 
-
+# Value names are defines in lower case instead of upper case
 # pylint: disable=invalid-name
+
+
 class LoadGenType(IntEnum):
     """Load and Generator Types"""
 

@@ -11,7 +11,7 @@ from typing import Optional
 
 import numpy as np
 
-from power_grid_model.core.index_integer import Idx_np
+from power_grid_model.core.index_integer import IdxNp
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
 
@@ -47,7 +47,7 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
         failed_msgptr = pgc.batch_errors()
         error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
-        all_scenarios = np.arange(batch_size, dtype=Idx_np)
+        all_scenarios = np.arange(batch_size, dtype=IdxNp)
         mask = np.ones(batch_size, dtype=np.bool_)
         mask[error.failed_scenarios] = False
         error.succeeded_scenarios = all_scenarios[mask]

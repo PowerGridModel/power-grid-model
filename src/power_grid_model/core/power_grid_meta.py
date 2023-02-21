@@ -13,7 +13,7 @@ from typing import Dict, Mapping, Optional, Union
 import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
-from power_grid_model.core.index_integer import Idx_c, Idx_np
+from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
@@ -233,7 +233,7 @@ def prepare_cpp_array(
                 raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
             if np.any(np.diff(indptr) < 0):
                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-            indptr_c = np.ascontiguousarray(indptr, dtype=Idx_np).ctypes.data_as(IdxPtr)
+            indptr_c = np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
         # convert data array
         data_c = np.ascontiguousarray(data, dtype=schema[component_name]["dtype"]).ctypes.data_as(c_void_p)
         dataset_dict[component_name] = CBuffer(
@@ -253,7 +253,7 @@ def prepare_cpp_array(
         batch_size=batch_size,
         n_components=n_components,
         components=(c_char_p * n_components)(*(x.encode() for x in dataset_dict)),
-        n_component_elements_per_scenario=(Idx_c * n_components)(
+        n_component_elements_per_scenario=(IdxC * n_components)(
             *(x.n_elements_per_scenario for x in dataset_dict.values())
         ),
         indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore

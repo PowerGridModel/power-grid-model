@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Set, Union
 import numpy as np
 
 from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, find_error
-from power_grid_model.core.index_integer import ID_np, Idx_np
+from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import IDPtr, IdxPtr, ModelPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
@@ -161,8 +161,8 @@ class PowerGridModel:
             array of inderxers, same shape as input array ids
 
         """
-        ids_c = np.ascontiguousarray(ids, dtype=ID_np).ctypes.data_as(IDPtr)
-        indexer = np.empty_like(ids, dtype=Idx_np, order="C")
+        ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
+        indexer = np.empty_like(ids, dtype=IdxNp, order="C")
         indexer_c = indexer.ctypes.data_as(IdxPtr)
         size = ids.size
         # call c function
@@ -170,8 +170,9 @@ class PowerGridModel:
         assert_no_error()
         return indexer
 
-    # pylint: disable=R0914
-    # pylint: disable=R0912
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-arguments
     def _calculate(
         self,
         calculation_type: CalculationType,
