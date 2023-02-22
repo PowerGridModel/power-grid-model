@@ -155,111 +155,111 @@ class PowerGridCore:
 
     @make_c_binding
     def error_code(self) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def error_message(self) -> str:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def n_failed_scenarios(self) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def batch_errors(self) -> CharDoublePtr:  # type: ignore[empty-body, valid-type]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def clear_error(self) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def is_batch_independent(self) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def is_batch_cache_topology(self) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_n_datasets(self) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_dataset_name(self, idx: int) -> str:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_n_components(self, dataset: str) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_component_name(self, dataset: str, idx: int) -> str:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_component_alignment(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_component_size(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_n_attributes(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_attribute_name(self, dataset: str, component: str, idx: int) -> str:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_attribute_ctype(self, dataset: str, component: str, attribute: str) -> str:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def meta_attribute_offset(self, dataset: str, component: str, attribute: str) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def is_little_endian(self) -> int:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def create_options(self) -> OptionsPtr:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def destroy_options(self, opt: OptionsPtr) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_calculation_type(self, opt: OptionsPtr, calculation_type: int) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_calculation_method(self, opt: OptionsPtr, method: int) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_symmetric(self, opt: OptionsPtr, sym: int) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_err_tol(self, opt: OptionsPtr, err_tol: float) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_max_iter(self, opt: OptionsPtr, max_iter: int) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_threading(self, opt: OptionsPtr, threading: int) -> None:  # type: ignore[empty-body]
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def create_model(  # type: ignore[empty-body]
@@ -270,7 +270,7 @@ class PowerGridCore:
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         input_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> ModelPtr:
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def update_model(  # type: ignore[empty-body]
@@ -281,14 +281,14 @@ class PowerGridCore:
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> None:
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def copy_model(  # type: ignore[empty-body]
         self,
         model: ModelPtr,
     ) -> ModelPtr:
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def get_indexer(  # type: ignore[empty-body]
@@ -299,14 +299,14 @@ class PowerGridCore:
         ids: IDPtr,  # type: ignore[valid-type]
         indexer: IdxPtr,  # type: ignore[valid-type]
     ) -> None:
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def destroy_model(  # type: ignore[empty-body]
         self,
         model: ModelPtr,
     ) -> None:
-        pass
+        pass  # pragma: no cover
 
     @make_c_binding
     def calculate(  # type: ignore[empty-body]
@@ -325,7 +325,7 @@ class PowerGridCore:
         indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> None:
-        pass
+        pass  # pragma: no cover
 
 
 # make one instance
