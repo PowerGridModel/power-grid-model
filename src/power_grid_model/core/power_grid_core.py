@@ -10,7 +10,7 @@ import platform
 from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable
 
 from power_grid_model.core.index_integer import IdC, IdxC
 
@@ -125,45 +125,6 @@ def make_c_binding(func: Callable):
     return cbind_func
 
 
-class WrapperFunc:
-    """
-    Functor to wrap the C function
-    """
-
-    # pylint: disable=too-many-arguments
-    def __init__(self, handle: HandlePtr, name: str, c_argtypes: List, c_restype):
-        """
-
-        Args:
-            handle: pointer to handle
-            name: name of the function
-            c_argtypes: list of C argument types
-            c_restype: C return type
-        """
-        self._cfunc = getattr(_CDLL, f"PGM_{name}")
-        self._handle = handle
-        self._name = name
-        self._c_argtypes = c_argtypes
-        self._c_restype = c_restype
-
-    def __call__(self, *args):
-        if "destroy" in self._name:
-            c_inputs = []
-        else:
-            c_inputs = [self._handle]
-        for arg, arg_type in zip(args, self._c_argtypes):
-            if arg_type == c_char_p:
-                c_inputs.append(arg.encode())
-            else:
-                c_inputs.append(arg)
-        # call
-        res = self._cfunc(*c_inputs)
-        # convert to string for c_char_p
-        if self._c_restype == c_char_p:
-            res = res.decode()
-        return res
-
-
 # pylint: disable=too-many-arguments
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods
@@ -178,35 +139,6 @@ class PowerGridCore:
         instance = super().__new__(cls, *args, **kwargs)
         instance._handle = _CDLL.PGM_create_handle()
         return instance
-
-    def __init__(self):
-        for name, function in PowerGridCore.__annotations__.items():  # pylint: disable=E1101
-            if name.startswith("_"):
-                continue
-            # get and convert types
-            py_argtypes = function.__args__[:-1]
-            py_restype = function.__args__[-1]
-            c_argtypes = [_ARGS_TYPE_MAPPING.get(x, x) for x in py_argtypes]
-            c_restype = _ARGS_TYPE_MAPPING.get(py_restype, py_restype)
-            if c_restype == IdxC and name in _FUNC_SIZE_T_RES:
-                c_restype = c_size_t
-            # bug in Python 3.10 https://bugs.python.org/issue43208
-            if id(c_restype) == id(type(None)):
-                c_restype = None
-            # set argument in dll
-            # mostly with handle pointer, except destroy function
-            is_destroy_func = "destroy" in name
-            if is_destroy_func:
-                getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
-            else:
-                getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
-            getattr(_CDLL, f"PGM_{name}").restype = c_restype
-            # set wrapper functor to instance
-            setattr(
-                self,
-                name,
-                WrapperFunc(handle=self._handle, name=name, c_argtypes=c_argtypes, c_restype=c_restype),
-            )
 
     def __del__(self):
         _CDLL.PGM_destroy_handle(self._handle)
