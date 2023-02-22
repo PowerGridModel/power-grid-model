@@ -163,7 +163,6 @@ def nan_type(component: str, field: str, data_type="input"):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
-    # return power_grid_meta_data.get(data_type, {}).get(component, {}).nans.get(field, float("nan"))
     return power_grid_meta_data[data_type][component].nans[field]
 
 
