@@ -10,6 +10,7 @@ import platform
 from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from pathlib import Path
 from typing import Callable, List
+from inspect import signature
 
 from power_grid_model.core.index_integer import IdC, IdxC
 
@@ -68,23 +69,26 @@ def _load_core() -> CDLL:
     return cdll
 
 
+# load dll once
+_CDLL: CDLL = _load_core()
+
+
 class WrapperFunc:
     """
     Functor to wrap the C function
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, cdll: CDLL, handle: HandlePtr, name: str, c_argtypes: List, c_restype):
+    def __init__(self, handle: HandlePtr, name: str, c_argtypes: List, c_restype):
         """
 
         Args:
-            cdll: DLL object
             handle: pointer to handle
             name: name of the function
             c_argtypes: list of C argument types
             c_restype: C return type
         """
-        self._cfunc = getattr(cdll, f"PGM_{name}")
+        self._cfunc = getattr(_CDLL, f"PGM_{name}")
         self._handle = handle
         self._name = name
         self._c_argtypes = c_argtypes
@@ -113,7 +117,6 @@ class PowerGridCore:
     DLL caller
     """
 
-    _cdll: CDLL
     _handle: HandlePtr
     # error handling
     error_code: Callable[[], int]
@@ -174,8 +177,7 @@ class PowerGridCore:
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
-        instance._cdll = _load_core()
-        instance._handle = instance._cdll.PGM_create_handle()
+        instance._handle = _CDLL.PGM_create_handle()
         return instance
 
     def __init__(self):
@@ -196,21 +198,21 @@ class PowerGridCore:
             # mostly with handle pointer, except destroy function
             is_destroy_func = "destroy" in name
             if is_destroy_func:
-                getattr(self._cdll, f"PGM_{name}").argtypes = c_argtypes
+                getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
             else:
-                getattr(self._cdll, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
-            getattr(self._cdll, f"PGM_{name}").restype = c_restype
+                getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
+            getattr(_CDLL, f"PGM_{name}").restype = c_restype
             # set wrapper functor to instance
             setattr(
                 self,
                 name,
                 WrapperFunc(
-                    cdll=self._cdll, handle=self._handle, name=name, c_argtypes=c_argtypes, c_restype=c_restype
+                    handle=self._handle, name=name, c_argtypes=c_argtypes, c_restype=c_restype
                 ),
             )
 
     def __del__(self):
-        self._cdll.PGM_destroy_handle(self._handle)
+        _CDLL.PGM_destroy_handle(self._handle)
 
     # not copyable
     def __copy__(self):
