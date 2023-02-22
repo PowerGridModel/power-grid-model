@@ -73,8 +73,6 @@ def _load_core() -> CDLL:
 _CDLL: CDLL = _load_core()
 
 
-# pylint: disable=too-many-arguments
-# pylint: disable=missing-function-docstring
 def make_c_binding(func: Callable):
     """
     Descriptor to make the function to bind to C
@@ -166,21 +164,15 @@ class WrapperFunc:
         return res
 
 
+# pylint: disable=too-many-arguments
+# pylint: disable=missing-function-docstring
+# pylint: disable=too-many-public-methods
 class PowerGridCore:
     """
     DLL caller
     """
 
     _handle: HandlePtr
-    # options
-    create_options: Callable[[], OptionsPtr]
-    destroy_options: Callable[[OptionsPtr], None]
-    set_calculation_type: Callable[[OptionsPtr, int], None]
-    set_calculation_method: Callable[[OptionsPtr, int], None]
-    set_symmetric: Callable[[OptionsPtr, int], None]
-    set_err_tol: Callable[[OptionsPtr, float], None]
-    set_max_iter: Callable[[OptionsPtr, int], None]
-    set_threading: Callable[[OptionsPtr, int], None]
     # model
     create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]  # type: ignore
     update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]  # type: ignore
@@ -306,6 +298,38 @@ class PowerGridCore:
 
     @make_c_binding
     def is_little_endian(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def create_options(self) -> OptionsPtr:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def destroy_options(self, opt: OptionsPtr) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def set_calculation_type(self, opt: OptionsPtr, calculation_type: int) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def set_calculation_method(self, opt: OptionsPtr, method: int) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def set_symmetric(self, opt: OptionsPtr, sym: int) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def set_err_tol(self, opt: OptionsPtr, err_tol: float) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def set_max_iter(self, opt: OptionsPtr, max_iter: int) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def set_threading(self, opt: OptionsPtr, threading: int) -> None:  # type: ignore[empty-body]
         pass
 
     @make_c_binding
