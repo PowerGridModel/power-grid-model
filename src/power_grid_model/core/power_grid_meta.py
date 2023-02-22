@@ -38,6 +38,18 @@ class ComponentMetaData:
     nans: Dict[str, Union[float, int]]
     nan_scalar: np.ndarray
 
+    def __getitem__(self, item):
+        """
+        Get item of dataclass
+
+        Args:
+            item: item name
+
+        Returns:
+
+        """
+        return getattr(self, item)
+
 
 DatasetMetaData = Dict[str, ComponentMetaData]
 PowerGridMetaData = Dict[str, DatasetMetaData]
