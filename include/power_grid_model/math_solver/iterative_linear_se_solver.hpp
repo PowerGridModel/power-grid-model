@@ -28,9 +28,15 @@ constexpr Idx UNDEFINED = -3;
 
 // struct to store bus injection information
 struct BusInjection {
+    // The index in main_value_ where the total measured bus injection is stored.
+    // This includes node injection measurements, source power measurements and load/gen power measurements.
     Idx idx_bus_injection = UNDEFINED;
-    Idx idx_full_load_injection = UNDEFINED;
-    Idx idx_partial_load_injection = UNDEFINED;
+
+    // The index in main_value_ where the measured appliance injection is stored.
+    // This includes source power measurements and load/gen power measurements.
+    Idx idx_appliance_injection = UNDEFINED;
+
+    // The number of unmeasured appliances
     Idx n_unmeasured_appliances = 0;
 };
 
@@ -185,8 +191,8 @@ class MeasuredValues {
     SensorCalcParam<sym> const& bus_injection(Idx bus) const {
         return main_value_[bus_injection_[bus].idx_bus_injection];
     }
-    SensorCalcParam<sym> const& full_load_injection(Idx bus) const {
-        return main_value_[bus_injection_[bus].idx_full_load_injection];
+    SensorCalcParam<sym> const& appliance_injection(Idx bus) const {
+        return main_value_[bus_injection_[bus].idx_appliance_injection];
     }
     SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
         return main_value_[idx_branch_from_power_[branch]];
@@ -232,13 +238,13 @@ class MeasuredValues {
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
                 calculate_non_over_determined_injection(
                     bus_injection_[bus].n_unmeasured_appliances, load_gen_begin, load_gen_end, source_begin, source_end,
-                    partial_load_injection_[bus_injection_[bus].idx_partial_load_injection], s[bus], load_gen_flow,
+                    partial_load_injection_[bus_injection_[bus].idx_appliance_injection], s[bus], load_gen_flow,
                     source_flow);
             }
             // over-determined
             else {
                 calculate_over_determined_injection(load_gen_begin, load_gen_end, source_begin, source_end,
-                                                    full_load_injection(bus), s[bus], load_gen_flow, source_flow);
+                                                    appliance_injection(bus), s[bus], load_gen_flow, source_flow);
             }
             // current injection
             for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
@@ -398,23 +404,23 @@ class MeasuredValues {
 
                 bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
 
-                // If there are no unmeasured objects, assign the full_load_injection
+                // If there are no unmeasured objects, add it to the bus injection
                 if (n_unmeasured == 0) {
-                    bus_injection_[bus].idx_full_load_injection = (Idx)main_value_.size();
+                    bus_injection_[bus].idx_appliance_injection = (Idx)main_value_.size();
                     main_value_.push_back(injection_measurement);
                     if (bus_injection_[bus].idx_bus_injection < 0) {
-                        bus_injection_[bus].idx_bus_injection = bus_injection_[bus].idx_full_load_injection;
+                        bus_injection_[bus].idx_bus_injection = bus_injection_[bus].idx_appliance_injection;
                     }
                     else {
                         main_value_[bus_injection_[bus].idx_bus_injection] =
                             combine_measurements({main_value_[bus_injection_[bus].idx_bus_injection],
-                                                  main_value_[bus_injection_[bus].idx_full_load_injection]},
+                                                  main_value_[bus_injection_[bus].idx_appliance_injection]},
                                                  0, 2);
                     }
                 }
                 else {
                     // push to partial injection
-                    bus_injection_[bus].idx_partial_load_injection = (Idx)partial_load_injection_.size();
+                    bus_injection_[bus].idx_appliance_injection = (Idx)partial_load_injection_.size();
                     partial_load_injection_.push_back(injection_measurement);
                 }
             }
@@ -571,12 +577,12 @@ class MeasuredValues {
     }
 
     void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end, Idx source_begin, Idx source_end,
-                                             SensorCalcParam<sym> const& full_load_injection,
+                                             SensorCalcParam<sym> const& appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        ComplexValue<sym> const mu = (full_load_injection.value - s) / full_load_injection.variance;
+        ComplexValue<sym> const mu = (appliance_injection.value - s) / appliance_injection.variance;
         // S_i = S_i_mea - var_i * mu
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {

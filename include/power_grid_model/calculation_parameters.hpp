@@ -103,7 +103,7 @@ struct MathModelTopology {
     IdxVector shunt_power_sensor_indptr;        // indptr of the shunt
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
-    IdxVector bus_power_sensor_indptr;          // indptr of the node
+    IdxVector bus_power_sensor_indptr;          // indptr of the bus
 
     Idx n_bus() const {
         return (Idx)phase_shift.size();
@@ -149,7 +149,7 @@ struct MathModelTopology {
         return branch_to_power_sensor_indptr.back();
     }
 
-    Idx n_node_power_sensor() const {
+    Idx n_bus_power_sensor() const {
         return bus_power_sensor_indptr.back();
     }
 };
@@ -163,8 +163,8 @@ struct MathModelParam {
 
 template <bool sym>
 struct PowerFlowInput {
-    ComplexVector source;                 // Complex u_ref of each load
-    ComplexValueVector<sym> s_injection;  // Specified injection power for each loadgen
+    ComplexVector source;                 // Complex u_ref of each source
+    ComplexValueVector<sym> s_injection;  // Specified injection power of each load_gen
 };
 
 template <bool sym>
