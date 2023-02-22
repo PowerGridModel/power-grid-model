@@ -20,7 +20,7 @@ from power_grid_model.validation.validation import (
     validate_values,
 )
 
-NaN = power_grid_meta_data["input"]["node"]["nans"]["id"]
+NaN = power_grid_meta_data["input"]["node"].nans["id"]
 
 
 def test_assert_valid_data_structure():

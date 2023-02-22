@@ -74,7 +74,6 @@ The table below shows the Python dependencies
 
 | Library name                                                                            | Remark                   | License                                                                               |
 |-----------------------------------------------------------------------------------------|--------------------------|---------------------------------------------------------------------------------------|
-| [cython](https://cython.org/)                                                           | build dependency         | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)                |
 | [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE) |
 | [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                         |
 | [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                            | 

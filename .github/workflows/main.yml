@@ -178,7 +178,7 @@ jobs:
 
       - name: Get tag
         id: tag
-        run: echo "::set-output name=tag::v$(ls ./wheelhouse/*cp310*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')"
+        run: echo "tag=v$(ls ./wheelhouse/*py3*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')" >> $GITHUB_OUTPUT
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
