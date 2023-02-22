@@ -9,6 +9,7 @@ Loader for the dynamic library
 import platform
 from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
+from itertools import chain
 from pathlib import Path
 from typing import Callable
 
@@ -88,7 +89,7 @@ def make_c_binding(func: Callable):
     sig = signature(func)
 
     # get and convert types, skip first argument, as it is self
-    py_argnames = list(sig.parameters.keys())[1:]  # pylint: disable=unused-variable
+    py_argnames = list(sig.parameters.keys())[1:]
     py_argtypes = [v.annotation for v in sig.parameters.values()][1:]
     py_restype = sig.return_annotation
     c_argtypes = [_ARGS_TYPE_MAPPING.get(x, x) for x in py_argtypes]
@@ -105,16 +106,18 @@ def make_c_binding(func: Callable):
     getattr(_CDLL, f"PGM_{name}").restype = c_restype
 
     # binding function
-    def cbind_func(self, *args):
+    def cbind_func(self, *args, **kwargs):
         if "destroy" in name:
             c_inputs = []
         else:
             c_inputs = [self._handle]  # pylint: disable=protected-access
+        args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
         for arg, arg_type in zip(args, c_argtypes):
             if arg_type == c_char_p:
                 c_inputs.append(arg.encode())
             else:
                 c_inputs.append(arg)
+
         # call
         res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
         # convert to string for c_char_p

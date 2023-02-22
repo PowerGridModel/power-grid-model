@@ -121,10 +121,10 @@ class PowerGridModel:
         prepared_input: CDataset = prepare_cpp_array("input", input_data)
         self._model_ptr = pgc.create_model(
             system_frequency,
-            prepared_input.n_components,
-            prepared_input.components,
-            prepared_input.n_component_elements_per_scenario,
-            prepared_input.data_ptrs_per_component,
+            components=prepared_input.components,
+            n_components=prepared_input.n_components,
+            component_sizes=prepared_input.n_component_elements_per_scenario,
+            input_data=prepared_input.data_ptrs_per_component,
         )
         assert_no_error()
         self._all_component_count = {k: v.n_elements_per_scenario for k, v in prepared_input.dataset.items()}
