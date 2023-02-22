@@ -90,7 +90,6 @@ def make_c_binding(func: Callable):
     sig = signature(func)
 
     # get and convert types, skip first argument, as it is self
-    # TODO match argument names
     py_argnames = list(sig.parameters.keys())[1:]  # pylint: disable=unused-variable
     py_argtypes = [v.annotation for v in sig.parameters.values()][1:]
     py_restype = sig.return_annotation
@@ -173,25 +172,6 @@ class PowerGridCore:
     """
 
     _handle: HandlePtr
-    # error handling
-    failed_scenarios: Callable[[], IdxPtr]  # type: ignore
-    batch_errors: Callable[[], CharDoublePtr]  # type: ignore
-    clear_error: Callable[[], None]
-    # batch
-    is_batch_independent: Callable[[], int]
-    is_batch_cache_topology: Callable[[], int]
-    # meta data
-    meta_n_datasets: Callable[[], int]
-    meta_dataset_name: Callable[[int], str]
-    meta_n_components: Callable[[str], int]
-    meta_component_name: Callable[[str, int], str]
-    meta_component_size: Callable[[str, str], int]
-    meta_component_alignment: Callable[[str, str], int]
-    meta_n_attributes: Callable[[str, str], int]
-    meta_attribute_name: Callable[[str, str, int], str]
-    meta_attribute_ctype: Callable[[str, str, str], str]
-    meta_attribute_offset: Callable[[str, str, str], int]
-    is_little_endian: Callable[[], int]
     # options
     create_options: Callable[[], OptionsPtr]
     destroy_options: Callable[[OptionsPtr], None]
@@ -262,6 +242,70 @@ class PowerGridCore:
 
     @make_c_binding
     def n_failed_scenarios(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]
+        pass
+
+    @make_c_binding
+    def batch_errors(self) -> CharDoublePtr:  # type: ignore[empty-body, valid-type]
+        pass
+
+    @make_c_binding
+    def clear_error(self) -> None:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def is_batch_independent(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def is_batch_cache_topology(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_n_datasets(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_dataset_name(self, idx: int) -> str:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_n_components(self, dataset: str) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_component_name(self, dataset: str, idx: int) -> str:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_component_alignment(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_component_size(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_n_attributes(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_attribute_name(self, dataset: str, component: str, idx: int) -> str:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_attribute_ctype(self, dataset: str, component: str, attribute: str) -> str:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def meta_attribute_offset(self, dataset: str, component: str, attribute: str) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def is_little_endian(self) -> int:  # type: ignore[empty-body]
         pass
 
     @make_c_binding
