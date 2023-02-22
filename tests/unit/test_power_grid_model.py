@@ -3,15 +3,15 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from copy import copy
-from pathlib import Path
 
 import numpy as np
 import pytest
 
 from power_grid_model import PowerGridModel, initialize_array
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
+from power_grid_model.utils import convert_python_to_numpy
 
-from .utils import compare_result, import_case_data
+from .utils import compare_result
 
 """
 Testing network
@@ -32,10 +32,34 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 """
 
 
+# test data
+INPUT = {
+    "node": [{"id": 0, "u_rated": 100.0}],
+    "source": [{"id": 1, "node": 0, "status": 1, "u_ref": 1.0, "sk": 1000.0, "rx_ratio": 0.0}],
+    "sym_load": [{"id": 2, "node": 0, "status": 1, "type": 2, "p_specified": 0.0, "q_specified": 500.0}],
+}
+
+SYM_OUTPUT = {"node": [{"id": 0, "u": 50.0, "u_pu": 0.5, "u_angle": 0.0}]}
+
+SYM_OUTPUT_BATCH = [
+    {"node": [{"id": 0, "u": 40.0, "u_pu": 0.4, "u_angle": 0.0}]},
+    {"node": [{"id": 0, "u": 70.0, "u_pu": 0.7, "u_angle": 0.0}]},
+]
+
+UPDATE_BATCH = [
+    {"source": [{"id": 1, "u_ref": 0.5}], "sym_load": [{"id": 2, "q_specified": 100.0}]},
+    {"sym_load": [{"id": 2, "q_specified": 300.0}]},
+]
+
+
 @pytest.fixture
 def case_data():
-    case_dir = Path(__file__).parent.parent / "data" / "unit_test"
-    return import_case_data(case_dir, sym=True)
+    return {
+        "input": convert_python_to_numpy(INPUT, "input"),
+        "output": convert_python_to_numpy(SYM_OUTPUT, "sym_output"),
+        "update_batch": convert_python_to_numpy(UPDATE_BATCH, "update"),
+        "output_batch": convert_python_to_numpy(SYM_OUTPUT_BATCH, "sym_output"),
+    }
 
 
 @pytest.fixture
