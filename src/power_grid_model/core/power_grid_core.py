@@ -8,9 +8,9 @@ Loader for the dynamic library
 
 import platform
 from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
+from inspect import signature
 from pathlib import Path
 from typing import Callable, List
-from inspect import signature
 
 from power_grid_model.core.index_integer import IdC, IdxC
 
@@ -73,6 +73,61 @@ def _load_core() -> CDLL:
 _CDLL: CDLL = _load_core()
 
 
+# pylint: disable=too-many-arguments
+# pylint: disable=missing-function-docstring
+def make_c_binding(func: Callable):
+    """
+    Descriptor to make the function to bind to C
+
+    Args:
+        func: method object from PowerGridCore
+
+    Returns:
+        Binded function
+
+    """
+    name = func.__name__
+    sig = signature(func)
+
+    # get and convert types, skip first argument, as it is self
+    # TODO match argument names
+    py_argnames = list(sig.parameters.keys())[1:]  # pylint: disable=unused-variable
+    py_argtypes = [v.annotation for v in sig.parameters.values()][1:]
+    py_restype = sig.return_annotation
+    c_argtypes = [_ARGS_TYPE_MAPPING.get(x, x) for x in py_argtypes]
+    c_restype = _ARGS_TYPE_MAPPING.get(py_restype, py_restype)
+    if c_restype == IdxC and name in _FUNC_SIZE_T_RES:
+        c_restype = c_size_t
+    # set argument in dll
+    # mostly with handle pointer, except destroy function
+    is_destroy_func = "destroy" in name
+    if is_destroy_func:
+        getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
+    else:
+        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
+    getattr(_CDLL, f"PGM_{name}").restype = c_restype
+
+    # binding function
+    def cbind_func(self, *args):
+        if "destroy" in name:
+            c_inputs = []
+        else:
+            c_inputs = [self._handle]  # pylint: disable=protected-access
+        for arg, arg_type in zip(args, c_argtypes):
+            if arg_type == c_char_p:
+                c_inputs.append(arg.encode())
+            else:
+                c_inputs.append(arg)
+        # call
+        res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
+        # convert to string for c_char_p
+        if c_restype == c_char_p:
+            res = res.decode()
+        return res
+
+    return cbind_func
+
+
 class WrapperFunc:
     """
     Functor to wrap the C function
@@ -119,9 +174,6 @@ class PowerGridCore:
 
     _handle: HandlePtr
     # error handling
-    error_code: Callable[[], int]
-    error_message: Callable[[], str]
-    n_failed_scenarios: Callable[[], int]
     failed_scenarios: Callable[[], IdxPtr]  # type: ignore
     batch_errors: Callable[[], CharDoublePtr]  # type: ignore
     clear_error: Callable[[], None]
@@ -154,25 +206,6 @@ class PowerGridCore:
     update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]  # type: ignore
     copy_model: Callable[[ModelPtr], ModelPtr]
     get_indexer: Callable[[ModelPtr, str, int, IDPtr, IdxPtr], None]  # type: ignore
-    calculate: Callable[  # type: ignore
-        [
-            # model
-            ModelPtr,
-            OptionsPtr,
-            # output
-            int,
-            CharDoublePtr,  # type: ignore
-            VoidDoublePtr,  # type: ignore
-            # update
-            int,
-            int,
-            CharDoublePtr,  # type: ignore
-            IdxPtr,
-            IdxDoublePtr,  # type: ignore
-            VoidDoublePtr,  # type: ignore
-        ],
-        None,
-    ]
     destroy_model: Callable[[ModelPtr], None]
 
     def __new__(cls, *args, **kwargs):
@@ -206,9 +239,7 @@ class PowerGridCore:
             setattr(
                 self,
                 name,
-                WrapperFunc(
-                    handle=self._handle, name=name, c_argtypes=c_argtypes, c_restype=c_restype
-                ),
+                WrapperFunc(handle=self._handle, name=name, c_argtypes=c_argtypes, c_restype=c_restype),
             )
 
     def __del__(self):
@@ -220,6 +251,37 @@ class PowerGridCore:
 
     def __deepcopy__(self, memodict):
         raise NotImplementedError("class not copyable")
+
+    @make_c_binding
+    def error_code(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def error_message(self) -> str:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def n_failed_scenarios(self) -> int:  # type: ignore[empty-body]
+        pass
+
+    @make_c_binding
+    def calculate(
+        self,
+        model: ModelPtr,
+        opt: OptionsPtr,
+        # output
+        n_output_components: int,
+        output_components: CharDoublePtr,  # type: ignore
+        output_data: VoidDoublePtr,  # type: ignore
+        # update
+        n_scenarios: int,
+        n_update_components: int,
+        update_components: CharDoublePtr,  # type: ignore
+        n_component_elements_per_scenario: IdxPtr,  # type: ignore
+        indptrs_per_component: IdxDoublePtr,  # type: ignore
+        update_data: VoidDoublePtr,  # type: ignore
+    ) -> None:  # type: ignore[empty-body]
+        pass
 
 
 # make one instance
