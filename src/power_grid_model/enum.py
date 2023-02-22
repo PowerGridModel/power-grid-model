@@ -5,12 +5,13 @@
 """
 Common Enumerations
 
-Note: these enumeration match the C++ arithmetic core, so dont change the values unless you change thmn in C++ as well
+Note: these enumeration match the C++ arithmetic core, so don't change the values unless you change them in C++ as well
 
 """
 
-from enum import Enum, IntEnum
+from enum import IntEnum
 
+# Value names are defined in lower case instead of upper case
 # pylint: disable=invalid-name
 
 
@@ -47,11 +48,11 @@ class Branch3Side(IntEnum):
     side_3 = 2
 
 
-class CalculationType(Enum):
+class CalculationType(IntEnum):
     """Calculation Types"""
 
-    power_flow = "power_flow"
-    state_estimation = "state_estimation"
+    power_flow = 0
+    state_estimation = 1
 
 
 class CalculationMethod(IntEnum):

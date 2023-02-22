@@ -155,7 +155,7 @@ def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
     if data_type not in {"input", "update"}:
         raise KeyError(f"Unexpected data type '{data_type}' (should be 'input' or 'update')")
 
-    component_dtype = {component: meta["dtype"] for component, meta in power_grid_meta_data[data_type].items()}
+    component_dtype = {component: meta.dtype for component, meta in power_grid_meta_data[data_type].items()}
     for component, array in data.items():
         # Check if component name is valid
         if component not in component_dtype:
