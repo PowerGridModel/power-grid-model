@@ -748,7 +748,7 @@ TEST_CASE("Math solver, measurements") {
 
         se_input.load_gen_status = {1, 1};
         se_input.measured_bus_injection = {{-2.2, 0.2}};
-        se_input.measured_load_gen_power = {{-2.95, 0.1}, {1.00, 0.1}};
+        se_input.measured_load_gen_power = {{-2.90, 0.1}, {1.00, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -756,16 +756,18 @@ TEST_CASE("Math solver, measurements") {
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
-        CHECK(real(output.load_gen[0].s) == doctest::Approx(-3.0));
-        CHECK(real(output.load_gen[1].s) == doctest::Approx(3.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.95));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(0.95));
     }
+
+    // We may have multiple load/gens, let's add their powers
     const ComplexValue<true> load_gen_s =
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
                         bind(std::plus<ComplexValue<true>>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
+
     CHECK(output.bus_injection[0] == output.branch[0].s_f);
     CHECK(output.bus_injection[0] == output.source[0].s);
     CHECK(output.bus_injection[1] == output.branch[0].s_t);
     CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
-
 }
 }  // namespace power_grid_model

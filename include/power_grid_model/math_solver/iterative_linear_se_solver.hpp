@@ -29,8 +29,8 @@ constexpr Idx UNDEFINED = -3;
 // struct to store bus injection information
 struct BusInjection {
     Idx idx_bus_injection = UNDEFINED;
-    Idx idx_full_injection = UNDEFINED;
-    Idx idx_partial_injection = UNDEFINED;
+    Idx idx_full_load_injection = UNDEFINED;
+    Idx idx_partial_load_injection = UNDEFINED;
     Idx n_unmeasured_appliances = 0;
 };
 
@@ -128,7 +128,7 @@ class MeasuredValues {
         return idx_voltage_[bus] >= 0;
     }
     bool has_bus_injection(Idx bus) const {
-        return bus_injection_[bus].idx_full_injection >= 0 || bus_injection_[bus].idx_bus_injection >= 0;
+        return bus_injection_[bus].idx_bus_injection >= 0;
     }
     bool has_branch_from(Idx branch) const {
         return idx_branch_from_power_[branch] >= 0;
@@ -182,19 +182,11 @@ class MeasuredValues {
     }
 
     // power measurement
-    SensorCalcParam<sym> const bus_injection(Idx bus) const {
-        if (bus_injection_[bus].idx_bus_injection < 0) {
-            return main_value_[bus_injection_[bus].idx_full_injection];
-        }
-        if (bus_injection_[bus].idx_full_injection < 0) {
-            return main_value_[bus_injection_[bus].idx_bus_injection];
-        }
-        const SensorCalcParam<sym>& bus_injection = main_value_[bus_injection_[bus].idx_bus_injection];
-        const SensorCalcParam<sym>& full_injection = main_value_[bus_injection_[bus].idx_full_injection];
-        return combine_measurements({bus_injection, full_injection}, 0, 2);
+    SensorCalcParam<sym> const& bus_injection(Idx bus) const {
+        return main_value_[bus_injection_[bus].idx_bus_injection];
     }
-    SensorCalcParam<sym> const& full_injection(Idx bus) const {
-        return main_value_[bus_injection_[bus].idx_full_injection];
+    SensorCalcParam<sym> const& full_load_injection(Idx bus) const {
+        return main_value_[bus_injection_[bus].idx_full_load_injection];
     }
     SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
         return main_value_[idx_branch_from_power_[branch]];
@@ -240,12 +232,13 @@ class MeasuredValues {
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
                 calculate_non_over_determined_injection(
                     bus_injection_[bus].n_unmeasured_appliances, load_gen_begin, load_gen_end, source_begin, source_end,
-                    partial_injection_[bus_injection_[bus].idx_partial_injection], s[bus], load_gen_flow, source_flow);
+                    partial_load_injection_[bus_injection_[bus].idx_partial_load_injection], s[bus], load_gen_flow,
+                    source_flow);
             }
             // over-determined
             else {
                 calculate_over_determined_injection(load_gen_begin, load_gen_end, source_begin, source_end,
-                                                    full_injection(bus), s[bus], load_gen_flow, source_flow);
+                                                    full_load_injection(bus), s[bus], load_gen_flow, source_flow);
             }
             // current injection
             for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
@@ -270,7 +263,7 @@ class MeasuredValues {
     // not relevant for the main calculation, as extra data for load_gen/source calculation
     std::vector<SensorCalcParam<sym>> extra_value_;
     // array of partial injection measurement, the bus with not all connected appliances measured
-    std::vector<SensorCalcParam<sym>> partial_injection_;
+    std::vector<SensorCalcParam<sym>> partial_load_injection_;
 
     // indexing array of the entries
     // for UNMEASURED (non bus injection): connected, but no measurement
@@ -318,9 +311,9 @@ class MeasuredValues {
         connected to one component. The extra_value of all load_gen and source, connected to the bus, are added and
         appended to injection_measurement. If all connected load_gen and source contain measurements
         injection_measurement is appended to main_value_. If one or more connected load_gen or source is not
-        measured (UNMEASURED) the injection_measurement is appended to partial_injection_. NOTE: if all load_gen and
-        source are not connected (DISCONNECTED). It is a zero injection constraint, which is considered as a measurement
-        in the main_value_ with zero variance.
+        measured (UNMEASURED) the injection_measurement is appended to partial_load_injection_. NOTE: if all load_gen
+        and source are not connected (DISCONNECTED). It is a zero injection constraint, which is considered as a
+        measurement in the main_value_ with zero variance.
 
         The voltage values in main_value_ can be found using idx_voltage.
         The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
@@ -405,15 +398,24 @@ class MeasuredValues {
 
                 bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
 
-                // If there are no unmeasured objects, assign the full_injection
+                // If there are no unmeasured objects, assign the full_load_injection
                 if (n_unmeasured == 0) {
-                    bus_injection_[bus].idx_full_injection = (Idx)main_value_.size();
+                    bus_injection_[bus].idx_full_load_injection = (Idx)main_value_.size();
                     main_value_.push_back(injection_measurement);
+                    if (bus_injection_[bus].idx_bus_injection < 0) {
+                        bus_injection_[bus].idx_bus_injection = bus_injection_[bus].idx_full_load_injection;
+                    }
+                    else {
+                        main_value_[bus_injection_[bus].idx_bus_injection] =
+                            combine_measurements({main_value_[bus_injection_[bus].idx_bus_injection],
+                                                  main_value_[bus_injection_[bus].idx_full_load_injection]},
+                                                 0, 2);
+                    }
                 }
                 else {
                     // push to partial injection
-                    bus_injection_[bus].idx_partial_injection = (Idx)partial_injection_.size();
-                    partial_injection_.push_back(injection_measurement);
+                    bus_injection_[bus].idx_partial_load_injection = (Idx)partial_load_injection_.size();
+                    partial_load_injection_.push_back(injection_measurement);
                 }
             }
         }
@@ -545,11 +547,11 @@ class MeasuredValues {
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
                                                  Idx source_begin, Idx source_end,
-                                                 SensorCalcParam<sym> const& partial_injection,
+                                                 SensorCalcParam<sym> const& partial_load_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
-        ComplexValue<sym> const s_residual_per_appliance = (s - partial_injection.value) / (double)n_unmeasured;
+        ComplexValue<sym> const s_residual_per_appliance = (s - partial_load_injection.value) / (double)n_unmeasured;
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
@@ -569,11 +571,12 @@ class MeasuredValues {
     }
 
     void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end, Idx source_begin, Idx source_end,
-                                             SensorCalcParam<sym> const& full_injection, ComplexValue<sym> const& s,
-                                             FlowVector& load_gen_flow, FlowVector& source_flow) const {
+                                             SensorCalcParam<sym> const& full_load_injection,
+                                             ComplexValue<sym> const& s, FlowVector& load_gen_flow,
+                                             FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        ComplexValue<sym> const mu = (full_injection.value - s) / full_injection.variance;
+        ComplexValue<sym> const mu = (full_load_injection.value - s) / full_load_injection.variance;
         // S_i = S_i_mea - var_i * mu
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
