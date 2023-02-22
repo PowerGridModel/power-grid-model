@@ -48,3 +48,7 @@ def test_sensor_meta_data():
 
             for name in expected_attrs:
                 assert name in attr_names
+
+
+def test_dict_like_access():
+    assert power_grid_meta_data["input"]["node"].dtype == power_grid_meta_data["input"]["node"]["dtype"]
