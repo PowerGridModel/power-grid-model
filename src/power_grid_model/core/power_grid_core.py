@@ -174,7 +174,6 @@ class PowerGridCore:
 
     _handle: HandlePtr
     # model
-    create_model: Callable[[float, int, CharDoublePtr, IdxPtr, VoidDoublePtr], ModelPtr]  # type: ignore
     update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]  # type: ignore
     copy_model: Callable[[ModelPtr], ModelPtr]
     get_indexer: Callable[[ModelPtr, str, int, IDPtr, IdxPtr], None]  # type: ignore
@@ -333,22 +332,33 @@ class PowerGridCore:
         pass
 
     @make_c_binding
-    def calculate(
+    def create_model(  # type: ignore[empty-body]
+        self,
+        system_frequency: float,
+        n_components: int,
+        components: CharDoublePtr,  # type: ignore[valid-type]
+        component_sizes: IdxPtr,  # type: ignore[valid-type]
+        input_data: VoidDoublePtr,  # type: ignore[valid-type]
+    ) -> ModelPtr:
+        pass
+
+    @make_c_binding
+    def calculate(  # type: ignore[empty-body]
         self,
         model: ModelPtr,
         opt: OptionsPtr,
         # output
         n_output_components: int,
-        output_components: CharDoublePtr,  # type: ignore
-        output_data: VoidDoublePtr,  # type: ignore
+        output_components: CharDoublePtr,  # type: ignore[valid-type]
+        output_data: VoidDoublePtr,  # type: ignore[valid-type]
         # update
         n_scenarios: int,
         n_update_components: int,
-        update_components: CharDoublePtr,  # type: ignore
-        n_component_elements_per_scenario: IdxPtr,  # type: ignore
-        indptrs_per_component: IdxDoublePtr,  # type: ignore
-        update_data: VoidDoublePtr,  # type: ignore
-    ) -> None:  # type: ignore[empty-body]
+        update_components: CharDoublePtr,  # type: ignore[valid-type]
+        n_component_elements_per_scenario: IdxPtr,  # type: ignore[valid-type]
+        indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
+        update_data: VoidDoublePtr,  # type: ignore[valid-type]
+    ) -> None:
         pass
 
 
