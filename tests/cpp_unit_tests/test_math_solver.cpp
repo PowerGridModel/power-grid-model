@@ -578,7 +578,7 @@ TEST_CASE("Math solver, measurements") {
     topo.shunt_bus_indptr = {0, 0, 0};
     topo.load_gen_bus_indptr = {0, 0, 1};
 
-    topo.voltage_sensor_indptr = {0, 0, 0};
+    topo.voltage_sensor_indptr = {0, 1, 1};
     topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.source_power_sensor_indptr = {0, 0};
     topo.load_gen_power_sensor_indptr = {0, 0};
@@ -606,7 +606,6 @@ TEST_CASE("Math solver, measurements") {
         source_0(p)               load_0
 
         */
-        topo.voltage_sensor_indptr = {0, 1, 1};
         topo.source_power_sensor_indptr = {0, 1};
         topo.branch_from_power_sensor_indptr = {0, 1};
 
@@ -627,12 +626,11 @@ TEST_CASE("Math solver, measurements") {
         /*
         network, v means voltage measured, p means power measured
 
-         bus_0 --branch_0-(p)- bus_1(v)
-           |                     |
-        source_0              load_0(p)
+         bus_0(v) --branch_0-(p)- bus_1
+           |                        |
+        source_0                 load_0(p)
 
         */
-        topo.voltage_sensor_indptr = {0, 0, 1};
         topo.load_gen_power_sensor_indptr = {0, 1};
         topo.branch_to_power_sensor_indptr = {0, 1};
 
@@ -658,7 +656,6 @@ TEST_CASE("Math solver, measurements") {
         source_0(p)                load_0
 
         */
-        topo.voltage_sensor_indptr = {0, 1, 1};
         topo.bus_power_sensor_indptr = {0, 1, 1};
         topo.source_power_sensor_indptr = {0, 1};
         topo.branch_from_power_sensor_indptr = {0, 1};
@@ -686,7 +683,6 @@ TEST_CASE("Math solver, measurements") {
         source_0(p)                load_0
 
         */
-        topo.voltage_sensor_indptr = {0, 1, 1};
         topo.bus_power_sensor_indptr = {0, 1, 1};
         topo.source_power_sensor_indptr = {0, 1};
         topo.branch_from_power_sensor_indptr = {0, 1};
@@ -709,12 +705,11 @@ TEST_CASE("Math solver, measurements") {
         /*
         network, v means voltage measured, p means power measured
 
-         bus_0 --branch_0-(p)- bus_1(vp)
-           |                     |
-        source_0              load_0(p)
+         bus_0(v) --branch_0-(p)- bus_1(p)
+           |                        |
+        source_0                 load_0(p)
 
         */
-        topo.voltage_sensor_indptr = {0, 0, 1};
         topo.bus_power_sensor_indptr = {0, 0, 1};
         topo.load_gen_power_sensor_indptr = {0, 1};
         topo.branch_to_power_sensor_indptr = {0, 1};
@@ -733,22 +728,21 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
     }
 
-    SUBCASE("Node injection, load and gen") {
+    SUBCASE("Load and gen") {
         /*
         network, v means voltage measured, p means power measured
 
-         bus_0 --branch_0-- bus_1(vp)
-           |                  /   \
-        source_0        load_0(p)  gen_1(p)
+         bus_0(v) --branch_0-- bus_1
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+
         */
+
         topo.load_gen_bus_indptr = {0, 0, 2};
-        topo.voltage_sensor_indptr = {0, 0, 1};
-        topo.bus_power_sensor_indptr = {0, 0, 1};
         topo.load_gen_power_sensor_indptr = {0, 1, 2};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_bus_injection = {{-2.2, 0.2}};
-        se_input.measured_load_gen_power = {{-2.90, 0.1}, {1.00, 0.1}};
+        se_input.measured_load_gen_power = {{-3.0, 0.1}, {1.0, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -756,11 +750,40 @@ TEST_CASE("Math solver, measurements") {
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
-        CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.95));
-        CHECK(real(output.load_gen[1].s) == doctest::Approx(0.95));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-3.0));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(1.0));
     }
 
-    // We may have multiple load/gens, let's add their powers
+    SUBCASE("Node injection, load and gen") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1(p)
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+        */
+
+        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.load_gen_bus_indptr = {0, 0, 2};
+        topo.load_gen_power_sensor_indptr = {0, 1, 2};
+        topo.bus_power_sensor_indptr = {0, 0, 1};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-1.8, 0.1}, {0.9, 0.1}};
+        se_input.measured_bus_injection = {{-1.1, 0.2}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(0.85));
+    }
+
+    // We may have multiple load/gens, let's sum their powers
     const ComplexValue<true> load_gen_s =
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
                         bind(std::plus<ComplexValue<true>>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
