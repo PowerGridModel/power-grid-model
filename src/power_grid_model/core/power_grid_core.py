@@ -173,11 +173,6 @@ class PowerGridCore:
     """
 
     _handle: HandlePtr
-    # model
-    update_model: Callable[[ModelPtr, int, CharDoublePtr, IdxPtr, VoidDoublePtr], None]  # type: ignore
-    copy_model: Callable[[ModelPtr], ModelPtr]
-    get_indexer: Callable[[ModelPtr, str, int, IDPtr, IdxPtr], None]  # type: ignore
-    destroy_model: Callable[[ModelPtr], None]
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
@@ -340,6 +335,42 @@ class PowerGridCore:
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         input_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> ModelPtr:
+        pass
+
+    @make_c_binding
+    def update_model(  # type: ignore[empty-body]
+        self,
+        model: ModelPtr,
+        n_components: int,
+        components: CharDoublePtr,  # type: ignore[valid-type]
+        component_sizes: IdxPtr,  # type: ignore[valid-type]
+        update_data: VoidDoublePtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass
+
+    @make_c_binding
+    def copy_model(  # type: ignore[empty-body]
+        self,
+        model: ModelPtr,
+    ) -> ModelPtr:
+        pass
+
+    @make_c_binding
+    def get_indexer(  # type: ignore[empty-body]
+        self,
+        model: ModelPtr,
+        component: str,
+        size: int,
+        ids: IDPtr,  # type: ignore[valid-type]
+        indexer: IdxPtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass
+
+    @make_c_binding
+    def destroy_model(  # type: ignore[empty-body]
+        self,
+        model: ModelPtr,
+    ) -> None:
         pass
 
     @make_c_binding
