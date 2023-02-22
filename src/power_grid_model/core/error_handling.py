@@ -22,7 +22,7 @@ PGM_REGULAR_ERROR = 1
 PGM_BATCH_ERROR = 2
 
 
-def find_error(batch_size: int = 1) -> Optional[ValueError]:
+def find_error(batch_size: int = 1) -> Optional[RuntimeError]:
     """
     Check if there is an error and return it
 
@@ -52,7 +52,7 @@ def find_error(batch_size: int = 1) -> Optional[ValueError]:
         mask[error.failed_scenarios] = False
         error.succeeded_scenarios = all_scenarios[mask]
         return error
-    return ValueError("Unknown error!")
+    return RuntimeError("Unknown error!")
 
 
 def assert_no_error(batch_size: int = 1):

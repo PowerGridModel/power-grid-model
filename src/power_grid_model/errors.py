@@ -12,13 +12,13 @@ from typing import List
 import numpy as np
 
 
-class PowerGridError(ValueError):
+class PowerGridError(RuntimeError):
     """
     Generic power grid error
     """
 
 
-class PowerGridBatchError(ValueError):
+class PowerGridBatchError(PowerGridError):
     """
     Error occurs in batch calculation
     """

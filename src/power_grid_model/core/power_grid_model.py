@@ -274,7 +274,7 @@ class PowerGridModel:
             assert_no_error(batch_size=batch_size)
         else:
             # continue on batch error
-            error: Optional[ValueError] = find_error(batch_size=batch_size)
+            error: Optional[RuntimeError] = find_error(batch_size=batch_size)
             if error is not None:
                 if isinstance(error, PowerGridBatchError):
                     # continue on batch error
