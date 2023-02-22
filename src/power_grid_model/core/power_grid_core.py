@@ -141,10 +141,10 @@ class PowerGridCore:
 
     # singleton of power grid core
     def __new__(cls, *args, **kwargs):
-        if PowerGridCore._instance is None:
-            PowerGridCore._instance = super().__new__(cls, *args, **kwargs)
-            PowerGridCore._instance._handle = _CDLL.PGM_create_handle()
-        return PowerGridCore._instance
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._instance._handle = _CDLL.PGM_create_handle()
+        return cls._instance
 
     def __del__(self):
         _CDLL.PGM_destroy_handle(self._handle)
