@@ -22,24 +22,6 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-constexpr Idx DISCONNECTED = -1;
-constexpr Idx UNMEASURED = -2;
-constexpr Idx UNDEFINED = -3;
-
-// struct to store bus injection information
-struct BusInjection {
-    // The index in main_value_ where the total measured bus injection is stored.
-    // This includes node injection measurements, source power measurements and load/gen power measurements.
-    Idx idx_bus_injection = UNDEFINED;
-
-    // The index in main_value_ where the measured appliance injection is stored.
-    // This includes source power measurements and load/gen power measurements.
-    Idx idx_appliance_injection = UNDEFINED;
-
-    // The number of unmeasured appliances
-    Idx n_unmeasured_appliances = 0;
-};
-
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <bool sym>
 struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
@@ -105,6 +87,24 @@ class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
 // accumulate for bus injection measurement
 template <bool sym>
 class MeasuredValues {
+    static constexpr Idx DISCONNECTED = -1;
+    static constexpr Idx UNMEASURED = -2;
+    static constexpr Idx UNDEFINED = -3;
+
+    // struct to store bus injection information
+    struct BusInjection {
+        // The index in main_value_ where the total measured bus injection is stored.
+        // This includes node injection measurements, source power measurements and load/gen power measurements.
+        Idx idx_bus_injection = UNDEFINED;
+
+        // The index in main_value_ where the measured appliance injection is stored.
+        // This includes source power measurements and load/gen power measurements.
+        Idx idx_appliance_injection = UNDEFINED;
+
+        // The number of unmeasured appliances
+        Idx n_unmeasured_appliances = 0;
+    };
+
    public:
     // construct
     MeasuredValues(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input)
@@ -704,7 +704,7 @@ class IterativeLinearSESolver {
                 // get data idx of y bus,
                 // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
-                if (data_idx == DISCONNECTED) {
+                if (data_idx == -1) {
                     continue;
                 }
                 // fill block with voltage measurement, only diagonal
@@ -771,7 +771,7 @@ class IterativeLinearSESolver {
         // assign the hermitian transpose of the transpose entry of Q
         for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
             // skip for fill-in
-            if (y_bus.map_lu_y_bus()[data_idx_lu] == DISCONNECTED) {
+            if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
                 continue;
             }
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
