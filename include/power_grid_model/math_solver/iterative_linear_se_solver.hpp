@@ -540,12 +540,6 @@ class MeasuredValues {
         std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) {
             x.variance /= min_var;
         });
-        std::for_each(extra_value_.begin(), extra_value_.end(), [&](SensorCalcParam<sym>& x) {
-            x.variance /= min_var;
-        });
-        std::for_each(bus_appliance_injection_.begin(), bus_appliance_injection_.end(), [&](SensorCalcParam<sym>& x) {
-            x.variance /= min_var;
-        });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
