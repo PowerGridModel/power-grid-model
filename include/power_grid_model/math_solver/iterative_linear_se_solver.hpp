@@ -391,20 +391,20 @@ class MeasuredValues {
                 bus_appliance_injection_[bus] = appliance_injection_measurement;
                 bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
 
-                // get direct bus injection measurement, it will has nan if there is no direct bus injection measurement
+                // get direct bus injection measurement, it will has infinite variance if there is no direct bus injection measurement
                 SensorCalcParam<sym> const direct_injection_measurement =
                     combine_measurements(input.measured_bus_injection, topo.bus_power_sensor_indptr[bus],
                                          topo.bus_power_sensor_indptr[bus + 1]);
 
                 // combine valid appliance_injection_measurement and direct_injection_measurement
                 // three scenarios, check if we have valid injection measurement
-                if (n_unmeasured == 0 || !is_nan(direct_injection_measurement.variance)) {
+                if (n_unmeasured == 0 || !std::isinf(direct_injection_measurement.variance)) {
                     bus_injection_[bus].idx_bus_injection = (Idx)main_value_.size();
                     if (n_unmeasured > 0) {
                         // only direct injection
                         main_value_.push_back(direct_injection_measurement);
                     }
-                    else if (is_nan(direct_injection_measurement.variance)) {
+                    else if (std::isinf(direct_injection_measurement.variance)) {
                         // only appliance injection
                         main_value_.push_back(appliance_injection_measurement);
                     }
@@ -413,6 +413,9 @@ class MeasuredValues {
                         main_value_.push_back(combine_measurements(
                             {direct_injection_measurement, appliance_injection_measurement}, 0, 2));
                     }
+                }
+                else {
+                    bus_injection_[bus].idx_bus_injection = UNMEASURED;
                 }
             }
         }
