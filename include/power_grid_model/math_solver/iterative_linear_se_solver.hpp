@@ -318,7 +318,6 @@ class MeasuredValues {
         */
         MathModelTopology const& topo = math_topology();
         RealValue<sym> angle_cum{};  // cumulative angle
-        IntSVector node_status(topo.n_bus(), 1);
         for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
             // voltage
             {
@@ -391,7 +390,8 @@ class MeasuredValues {
                 bus_appliance_injection_[bus] = appliance_injection_measurement;
                 bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
 
-                // get direct bus injection measurement, it will has infinite variance if there is no direct bus injection measurement
+                // get direct bus injection measurement, it will has infinite variance if there is no direct bus
+                // injection measurement
                 SensorCalcParam<sym> const direct_injection_measurement =
                     combine_measurements(input.measured_bus_injection, topo.bus_power_sensor_indptr[bus],
                                          topo.bus_power_sensor_indptr[bus + 1]);
@@ -543,15 +543,18 @@ class MeasuredValues {
         std::for_each(extra_value_.begin(), extra_value_.end(), [&](SensorCalcParam<sym>& x) {
             x.variance /= min_var;
         });
+        std::for_each(bus_appliance_injection_.begin(), bus_appliance_injection_.end(), [&](SensorCalcParam<sym>& x) {
+            x.variance /= min_var;
+        });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
                                                  Idx source_begin, Idx source_end,
-                                                 SensorCalcParam<sym> const& partial_load_injection,
+                                                 SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
-        ComplexValue<sym> const s_residual_per_appliance = (s - partial_load_injection.value) / (double)n_unmeasured;
+        ComplexValue<sym> const s_residual_per_appliance = (s - bus_appliance_injection.value) / (double)n_unmeasured;
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
@@ -571,12 +574,12 @@ class MeasuredValues {
     }
 
     void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end, Idx source_begin, Idx source_end,
-                                             SensorCalcParam<sym> const& appliance_injection,
+                                             SensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        ComplexValue<sym> const mu = (appliance_injection.value - s) / appliance_injection.variance;
+        ComplexValue<sym> const mu = (bus_appliance_injection.value - s) / bus_appliance_injection.variance;
         // S_i = S_i_mea - var_i * mu
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
