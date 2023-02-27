@@ -406,6 +406,10 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors += all_valid_clocks(data, "transformer", "clock", "winding_from", "winding_to")
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
+
+    # When no value given, tap_nom will have a default value of 0
+    mask = data["transformer"]["tap_nom"] == np.iinfo("i1").min
+    data["transformer"]["tap_nom"][mask] = 0
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
     errors += all_greater_or_equal(data, "transformer", "uk_min", "pk_min/sn")
