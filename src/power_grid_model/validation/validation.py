@@ -49,7 +49,7 @@ from power_grid_model.validation.rules import (
     all_valid_ids,
     none_missing,
 )
-from power_grid_model.validation.utils import update_input_data
+from power_grid_model.validation.utils import nan_type, update_input_data
 
 
 def validate_input_data(
@@ -408,7 +408,7 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
 
     # When no value given, tap_nom will have a default value of 0
-    mask = data["transformer"]["tap_nom"] == np.iinfo("i1").min
+    mask = data["transformer"]["tap_nom"] == nan_type("transformer", "tap_nom")
     data["transformer"]["tap_nom"][mask] = 0
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
