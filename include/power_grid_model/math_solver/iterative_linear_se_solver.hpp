@@ -315,11 +315,11 @@ class MeasuredValues {
         load_gen, source)) are combined in a weighted average, which is appended to main_value_ (for shunt) or
         extra_value_ (for load_gen and source). E.g. a value in extra_value contains the weighted average of all sensors
         connected to one component. The extra_value of all load_gen and source, connected to the bus, are added and
-        appended to injection_measurement. If all connected load_gen and source contain measurements
-        injection_measurement is appended to main_value_. If one or more connected load_gen or source is not
-        measured (UNMEASURED) the injection_measurement is appended to partial_load_injection_. NOTE: if all load_gen
-        and source are not connected (DISCONNECTED). It is a zero injection constraint, which is considered as a
-        measurement in the main_value_ with zero variance.
+        appended to appliance_injection_measurement. If all connected load_gen and source contain measurements
+        appliance_injection_measurement is appended to main_value_. If one or more connected load_gen or source is not
+        measured (UNMEASURED) the appliance_injection_measurement is appended to partial_load_injection_. NOTE: if all
+        load_gen and source are not connected (DISCONNECTED). It is a zero injection constraint, which is considered as
+        a measurement in the main_value_ with zero variance.
 
         The voltage values in main_value_ can be found using idx_voltage.
         The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
@@ -375,7 +375,7 @@ class MeasuredValues {
                 // if all the connected load_gen/source are measured, their sum can be considered as an injection
                 // measurement. zero injection (no connected appliances) is also considered as measured
                 Idx n_unmeasured = 0;
-                SensorCalcParam<sym> injection_measurement{};
+                SensorCalcParam<sym> appliance_injection_measurement{};
 
                 for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1];
                      ++load_gen) {
@@ -386,8 +386,8 @@ class MeasuredValues {
                     else if (idx_load_gen_power_[load_gen] == DISCONNECTED) {
                         continue;
                     }
-                    injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
-                    injection_measurement.variance += extra_value_[idx_load_gen_power_[load_gen]].variance;
+                    appliance_injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
+                    appliance_injection_measurement.variance += extra_value_[idx_load_gen_power_[load_gen]].variance;
                 }
 
                 for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
@@ -398,8 +398,8 @@ class MeasuredValues {
                     else if (idx_source_power_[source] == DISCONNECTED) {
                         continue;
                     }
-                    injection_measurement.value += extra_value_[idx_source_power_[source]].value;
-                    injection_measurement.variance += extra_value_[idx_source_power_[source]].variance;
+                    appliance_injection_measurement.value += extra_value_[idx_source_power_[source]].value;
+                    appliance_injection_measurement.variance += extra_value_[idx_source_power_[source]].variance;
                 }
 
                 bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
@@ -407,7 +407,7 @@ class MeasuredValues {
                 // If there are no unmeasured objects, add it to the bus injection
                 if (n_unmeasured == 0) {
                     bus_injection_[bus].idx_appliance_injection = (Idx)main_value_.size();
-                    main_value_.push_back(injection_measurement);
+                    main_value_.push_back(appliance_injection_measurement);
                     if (bus_injection_[bus].idx_bus_injection < 0) {
                         bus_injection_[bus].idx_bus_injection = bus_injection_[bus].idx_appliance_injection;
                     }
@@ -421,7 +421,7 @@ class MeasuredValues {
                 else {
                     // push to partial injection
                     bus_injection_[bus].idx_appliance_injection = (Idx)partial_load_injection_.size();
-                    partial_load_injection_.push_back(injection_measurement);
+                    partial_load_injection_.push_back(appliance_injection_measurement);
                 }
             }
         }
@@ -553,11 +553,11 @@ class MeasuredValues {
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
                                                  Idx source_begin, Idx source_end,
-                                                 SensorCalcParam<sym> const& partial_load_injection,
+                                                 SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
-        ComplexValue<sym> const s_residual_per_appliance = (s - partial_load_injection.value) / (double)n_unmeasured;
+        ComplexValue<sym> const s_residual_per_appliance = (s - bus_appliance_injection.value) / (double)n_unmeasured;
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
