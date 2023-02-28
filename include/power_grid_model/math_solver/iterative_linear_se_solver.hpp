@@ -317,9 +317,9 @@ class MeasuredValues {
         connected to one component. The extra_value of all load_gen and source, connected to the bus, are added and
         appended to appliance_injection_measurement. If all connected load_gen and source contain measurements
         appliance_injection_measurement is appended to main_value_. If one or more connected load_gen or source is not
-        measured (UNMEASURED) the appliance_injection_measurement is appended to partial_load_injection_. NOTE: if all
-        load_gen and source are not connected (DISCONNECTED). It is a zero injection constraint, which is considered as
-        a measurement in the main_value_ with zero variance.
+        measured (UNMEASURED) the appliance_injection_measurement is appended to partial_load_injection_.
+        NOTE: if all load_gen and source are not connected (DISCONNECTED). It is a zero injection constraint, which is
+        considered as a measurement in the main_value_ with zero variance.
 
         The voltage values in main_value_ can be found using idx_voltage.
         The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
