@@ -470,6 +470,10 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_valid_clocks(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
     errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
     errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
+
+    # When no value given, tap_nom will have a default value of 0
+    mask = data["three_winding_transformer"]["tap_nom"] == nan_type("three_winding_transformer", "tap_nom")
+    data["three_winding_transformer"]["tap_nom"][mask] = 0
     errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max")
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
     errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_1")

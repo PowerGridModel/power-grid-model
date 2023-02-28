@@ -22,6 +22,7 @@ from power_grid_model.validation.errors import (
     NotUniqueError,
     TwoValuesZeroError,
 )
+from power_grid_model.validation.utils import nan_type
 
 
 @pytest.fixture
@@ -69,7 +70,7 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["tap_pos"] = [-1, 6, -4]
     transformer["tap_min"] = [-2, 4, 3]
     transformer["tap_max"] = [2, -4, -3]
-    transformer["tap_nom"] = [-3, -128, 4]
+    transformer["tap_nom"] = [-3, nan_type("transformer", "tap_nom"), 4]
     transformer["tap_size"] = [262.5, 0.0, -10.0]
     transformer["uk_min"] = [0.0000000005, 0.0, 0.9]
     transformer["uk_max"] = [0.0000000005, 0.0, 0.8]
@@ -108,7 +109,7 @@ def input_data() -> Dict[str, np.ndarray]:
     three_winding_transformer["tap_min"] = [-10, -10, -10, -10]
     three_winding_transformer["tap_max"] = [10, 10, 10, 10]
     three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
-    three_winding_transformer["tap_nom"] = [-12, 41, 3, 0]
+    three_winding_transformer["tap_nom"] = [-12, 41, nan_type("three_winding_transformer", "tap_nom"), 0]
     three_winding_transformer["uk_12_min"] = [-1, 1.1, 0.05, 0.1]
     three_winding_transformer["uk_13_min"] = [-2, 1.2, 0.3, 0.2]
     three_winding_transformer["uk_23_min"] = [-1.5, 1, 0.15, 0.2]
