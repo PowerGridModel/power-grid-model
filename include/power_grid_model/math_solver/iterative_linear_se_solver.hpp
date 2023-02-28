@@ -302,7 +302,7 @@ class MeasuredValues {
         load_gen, source)) are combined in a weighted average, which is appended to main_value_ (for shunt) or
         extra_value_ (for load_gen and source). E.g. a value in extra_value contains the weighted average of all sensors
         connected to one component. The extra_value_ of all load_gen and source, connected to the bus, are added and
-        appended to injection_measurement.
+        appended to appliace_injection_measurement.
 
         We combine all the available load_gen and source measurements into appliance_injection_measurement by summing
         them up, and store it in bus_appliance_injection_. If all the connected load_gen and source are measured, we
