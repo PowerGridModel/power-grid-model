@@ -8,8 +8,6 @@
 #include "power_grid_model/math_solver/newton_raphson_pf_solver.hpp"
 #include "power_grid_model/three_phase_tensor.hpp"
 
-using namespace std::placeholders;
-
 namespace power_grid_model {
 
 TEST_CASE("Test block") {
@@ -784,6 +782,7 @@ TEST_CASE("Math solver, measurements") {
     }
 
     // We may have multiple load/gens, let's sum their powers
+    using namespace std::placeholders;
     const ComplexValue<true> load_gen_s =
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
                         bind(std::plus<ComplexValue<true>>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
