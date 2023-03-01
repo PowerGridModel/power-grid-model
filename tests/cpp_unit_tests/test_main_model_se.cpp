@@ -71,11 +71,11 @@ TEST_CASE("Test Main Model") {
             main_model.add_component<AsymLoad>(
                 {{{{{6}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
             main_model.add_component<SymVoltageSensor>({{{{{11}, 1}, 1e2}, 10.0e3, 0.0}});
-            SUBCASE("Symmetric Power Sensor") {
+            SUBCASE("Symmetric Power Sensor - Symmetric Calculation") {
                 main_model.add_component<SymPowerSensor>(
                     {{{{{15}, 5}, MeasuredTerminalType::generator, 1e2}, 900.0, 90.0},
                      {{{{16}, 6}, MeasuredTerminalType::load, 1e2}, 1800.0, 180.0}});
-                SUBCASE("Symmetric Calculation - without injection sensor") {
+                SUBCASE("Without Injection Sensor") {
                     main_model.set_construction_complete();
                     std::vector<MathOutput<true>> const math_output =
                         main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
@@ -105,7 +105,7 @@ TEST_CASE("Test Main Model") {
                     CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3));  // load
                     CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3));  // load
                 }
-                SUBCASE("Symmetric Calculation - with injection sensor") {
+                SUBCASE("With Injection Sensor") {
                     main_model.add_component<SymPowerSensor>(
                         {{{{{12}, 2}, MeasuredTerminalType::node, 2e2}, -1200.0, -120.0}});
                     main_model.set_construction_complete();
@@ -139,20 +139,6 @@ TEST_CASE("Test Main Model") {
                     CHECK(power_sensor_output[1].q_residual == doctest::Approx(-5.0).scale(1e3));    // load
                     CHECK(power_sensor_output[2].p_residual == doctest::Approx(-200.0).scale(1e3));  // node
                     CHECK(power_sensor_output[2].q_residual == doctest::Approx(-20.0).scale(1e3));   // node
-                }
-                SUBCASE("Asymmetric Calculation - without injection sensor") {
-                }
-                SUBCASE("Asymmetric Calculation - with injection sensor") {
-                }
-            }
-            SUBCASE("Asymmetric Power Sensor") {
-                SUBCASE("Symmetric Calculation - without injection sensor") {
-                }
-                SUBCASE("Symmetric Calculation - with injection sensor") {
-                }
-                SUBCASE("Asymmetric Calculation - without injection sensor") {
-                }
-                SUBCASE("Asymmetric Calculation - with injection sensor") {
                 }
             }
         }
