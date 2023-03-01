@@ -250,7 +250,7 @@ def all_between_or_at(
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
-    default_value: Optional[Union[np.ndarray, int, float]] = None,  # type: ignore
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
