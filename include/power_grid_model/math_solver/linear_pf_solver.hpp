@@ -144,7 +144,6 @@ class LinearPFSolver {
                 ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
                 output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
                 output.source[source].s = output.u[bus] * conj(output.source[source].i);
-                output.bus_injection[bus] += output.source[source].s;
             }
 
             // load_gen
@@ -153,9 +152,9 @@ class LinearPFSolver {
                 // power is always quadratic relation to voltage for linear pf
                 output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus]);
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
-                output.bus_injection[bus] += output.load_gen[load_gen].s;
             }
         }
+        output.bus_injection = y_bus.calculate_injection(output.u);
     }
 };
 
