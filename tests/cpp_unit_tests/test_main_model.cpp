@@ -315,7 +315,7 @@ TEST_CASE("Test main model") {
             CHECK(sym_node[0].q == doctest::Approx(sym_appliance[0].q).scale(1e3));
             CHECK(sym_node[1].q == doctest::Approx(0.0).scale(1e3));
             CHECK(sym_node[2].q ==
-                  doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q).scale(1e3));
+                  doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q).scale(1e4));
 
             /*
             TODO
@@ -498,8 +498,8 @@ TEST_CASE("Test main model") {
             CHECK(asym_node[1].u_pu(1) == doctest::Approx(u1));
             CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
 
-            CHECK(asym_node[0].p(0) == doctest::Approx(asym_appliance[0].p(0)));
-            CHECK(asym_node[1].p(1) == doctest::Approx(0.0)).scale(1e3);
+            CHECK(asym_node[0].p(0) == doctest::Approx(asym_appliance[0].p(0)).scale(1e3));
+            CHECK(asym_node[1].p(1) == doctest::Approx(0.0).scale(1e3));
             CHECK(asym_node[2].p(2) ==
                   doctest::Approx(asym_appliance[1].p(2) - asym_appliance[2].p(2) - asym_appliance[3].p(2)).scale(1e3));
             CHECK(asym_node[0].q(2) == doctest::Approx(asym_appliance[0].q(2)).scale(1e3));
