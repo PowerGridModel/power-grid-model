@@ -315,7 +315,7 @@ TEST_CASE("Test main model") {
             CHECK(sym_node[0].q == doctest::Approx(sym_appliance[0].q).scale(1e3));
             CHECK(sym_node[1].q == doctest::Approx(0.0).scale(1e3));
             CHECK(sym_node[2].q ==
-                  doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q).scale(1e4));
+                  doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q).scale(2e3));
 
             /*
             TODO

@@ -145,7 +145,7 @@ TEST_CASE("Test Main Model") {
                 SUBCASE("Asymmetric Calculation - with injection sensor") {
                 }
             }
-            SUBCASE("Symmetric Power Sensor") {
+            SUBCASE("Asymmetric Power Sensor") {
                 SUBCASE("Symmetric Calculation - without injection sensor") {
                 }
                 SUBCASE("Symmetric Calculation - with injection sensor") {
