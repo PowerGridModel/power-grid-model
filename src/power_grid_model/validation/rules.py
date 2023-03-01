@@ -85,7 +85,12 @@ def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> Li
     return all_greater_than(data, component, field, 0.0)
 
 
-def all_greater_than_or_equal_to_zero(data: SingleDataset, component: str, field: str) -> List[NotGreaterOrEqualError]:
+def all_greater_than_or_equal_to_zero(
+    data: SingleDataset,
+    component: str,
+    field: str,
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
+) -> List[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
     or equal to zero. Returns an empty list on success, or a list containing a single error object on failure.
@@ -94,12 +99,15 @@ def all_greater_than_or_equal_to_zero(data: SingleDataset, component: str, field
         data: The input/update data set for all components
         component: The component of interest
         field: The field of interest
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
         interest was less than zero.
     """
-    return all_greater_or_equal(data, component, field, 0.0)
+    return all_greater_or_equal(data, component, field, 0.0, default_value)
 
 
 def all_greater_than(
