@@ -129,7 +129,11 @@ def all_greater_than(
 
 
 def all_greater_or_equal(
-    data: SingleDataset, component: str, field: str, ref_value: Union[int, float, str]
+    data: SingleDataset,
+    component: str,
+    field: str,
+    ref_value: Union[int, float, str],
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
@@ -143,6 +147,9 @@ def all_greater_or_equal(
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
@@ -153,7 +160,9 @@ def all_greater_or_equal(
     def not_greater_or_equal(val: np.ndarray, *ref: np.ndarray):
         return np.less(val, *ref)
 
-    return none_match_comparison(data, component, field, not_greater_or_equal, ref_value, NotGreaterOrEqualError)
+    return none_match_comparison(
+        data, component, field, not_greater_or_equal, ref_value, NotGreaterOrEqualError, default_value
+    )
 
 
 def all_less_than(
@@ -216,6 +225,7 @@ def all_between(
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotBetweenError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are (exclusively)
@@ -232,6 +242,9 @@ def all_between(
         ref_value_2: The second reference value against which all values in the 'field' column are compared. If the
         reference value is a string, it is assumed to be another field (e.g. 'field_x') of the same component,
         or a ratio between two fields (e.g. 'field_x / field_y')
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotBetweenErrors, listing all ids where the value in the field of interest was
@@ -241,7 +254,9 @@ def all_between(
     def outside(val: np.ndarray, *ref: np.ndarray) -> np.ndarray:
         return np.logical_or(np.less_equal(val, np.minimum(*ref)), np.greater_equal(val, np.maximum(*ref)))
 
-    return none_match_comparison(data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenError)
+    return none_match_comparison(
+        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenError, default_value
+    )
 
 
 def all_between_or_at(

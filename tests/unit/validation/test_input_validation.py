@@ -72,8 +72,8 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["tap_max"] = [2, -4, -3]
     transformer["tap_nom"] = [-3, nan_type("transformer", "tap_nom"), 4]
     transformer["tap_size"] = [262.5, 0.0, -10.0]
-    transformer["uk_min"] = [0.0000000005, 0.0, 0.9]
-    transformer["uk_max"] = [0.0000000005, 0.0, 0.8]
+    transformer["uk_min"] = [0.0000000005, nan_type("transformer", "uk_min"), 0.9]
+    transformer["uk_max"] = [0.0000000005, nan_type("transformer", "uk_max"), 0.8]
     transformer["pk_min"] = [300.0, 0.0, -10.0]
     transformer["pk_max"] = [400.0, -0.1, -10.0]
 

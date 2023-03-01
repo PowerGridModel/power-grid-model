@@ -204,7 +204,10 @@ def set_default_value(data: SingleDataset, component: str, field: str, default_v
     Returns:
 
     """
-    mask = data[component][field] == nan_type(component, field)
+    if np.isnan(nan_type(component, field)):
+        mask = np.isnan(data[component][field])
+    else:
+        mask = data[component][field] == nan_type(component, field)
     if isinstance(default_value, np.ndarray):
         data[component][field][mask] = default_value[mask]
     else:
