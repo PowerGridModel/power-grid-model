@@ -308,12 +308,14 @@ TEST_CASE("Test main model") {
             CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
             CHECK(sym_node[1].u_pu == doctest::Approx(u1));
             CHECK(sym_node[2].u_pu == doctest::Approx(u1));
-            CHECK(sym_node[0].p == doctest::Approx(sym_appliance[0].p));
-            CHECK(sym_node[1].p == doctest::Approx(0.0));
-            CHECK(sym_node[2].p == doctest::Approx(sym_appliance[1].p - sym_appliance[2].p - sym_appliance[3].p));
-            CHECK(sym_node[0].q == doctest::Approx(sym_appliance[0].q));
-            CHECK(sym_node[1].q == doctest::Approx(0.0));
-            CHECK(sym_node[2].q == doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q));
+            CHECK(sym_node[0].p == doctest::Approx(sym_appliance[0].p).scale(1e3));
+            CHECK(sym_node[1].p == doctest::Approx(0.0).scale(1e3));
+            CHECK(sym_node[2].p ==
+                  doctest::Approx(sym_appliance[1].p - sym_appliance[2].p - sym_appliance[3].p).scale(1e3));
+            CHECK(sym_node[0].q == doctest::Approx(sym_appliance[0].q).scale(1e3));
+            CHECK(sym_node[1].q == doctest::Approx(0.0).scale(1e3));
+            CHECK(sym_node[2].q ==
+                  doctest::Approx(sym_appliance[1].q - sym_appliance[2].q - sym_appliance[3].q).scale(1e3));
 
             /*
             TODO
@@ -497,13 +499,13 @@ TEST_CASE("Test main model") {
             CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
 
             CHECK(asym_node[0].p(0) == doctest::Approx(asym_appliance[0].p(0)));
-            CHECK(asym_node[1].p(1) == doctest::Approx(0.0));
+            CHECK(asym_node[1].p(1) == doctest::Approx(0.0)).scale(1e3);
             CHECK(asym_node[2].p(2) ==
-                  doctest::Approx(asym_appliance[1].p(2) - asym_appliance[2].p(2) - asym_appliance[3].p(2)));
-            CHECK(asym_node[0].q(2) == doctest::Approx(asym_appliance[0].q(2)));
-            CHECK(asym_node[1].q(1) == doctest::Approx(0.0));
+                  doctest::Approx(asym_appliance[1].p(2) - asym_appliance[2].p(2) - asym_appliance[3].p(2)).scale(1e3));
+            CHECK(asym_node[0].q(2) == doctest::Approx(asym_appliance[0].q(2)).scale(1e3));
+            CHECK(asym_node[1].q(1) == doctest::Approx(0.0).scale(1e3));
             CHECK(asym_node[2].q(0) ==
-                  doctest::Approx(asym_appliance[1].q(0) - asym_appliance[2].q(0) - asym_appliance[3].q(0)));
+                  doctest::Approx(asym_appliance[1].q(0) - asym_appliance[2].q(0) - asym_appliance[3].q(0)).scale(1e3));
         }
 
         SUBCASE("AsymVoltageSensor, asym output") {
