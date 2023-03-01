@@ -8,6 +8,7 @@ Power Grid Model Validation Functions.
 Although all functions are 'public', you probably only need validate_input_data() and validate_batch_data().
 
 """
+import copy
 from itertools import chain
 from typing import Dict, List, Optional
 
@@ -49,7 +50,7 @@ from power_grid_model.validation.rules import (
     all_valid_ids,
     none_missing,
 )
-from power_grid_model.validation.utils import nan_type, update_input_data
+from power_grid_model.validation.utils import update_input_data
 
 
 def validate_input_data(
@@ -74,12 +75,14 @@ def validate_input_data(
     Returns:
         None if the data is valid, or a list containing all validation errors.
     """
-    assert_valid_data_structure(input_data, "input")
+    # A deep copy is made of the input data, since default values will be added in the validation process
+    input_data_copy = copy.deepcopy(input_data)
+    assert_valid_data_structure(input_data_copy, "input")
 
     errors: List[ValidationError] = []
-    errors += validate_required_values(input_data, calculation_type, symmetric)
-    errors += validate_unique_ids_across_components(input_data)
-    errors += validate_values(input_data)
+    errors += validate_required_values(input_data_copy, calculation_type, symmetric)
+    errors += validate_unique_ids_across_components(input_data_copy)
+    errors += validate_values(input_data_copy)
     return errors if errors else None
 
 
@@ -406,11 +409,7 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors += all_valid_clocks(data, "transformer", "clock", "winding_from", "winding_to")
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
     errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
-
-    # When no value given, tap_nom will have a default value of 0
-    mask = data["transformer"]["tap_nom"] == nan_type("transformer", "tap_nom")
-    data["transformer"]["tap_nom"][mask] = 0
-    errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max")
+    errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max", 0)
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
     errors += all_greater_or_equal(data, "transformer", "uk_min", "pk_min/sn")
     errors += all_between(data, "transformer", "uk_min", 0, 1)
@@ -470,11 +469,7 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_valid_clocks(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
     errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
     errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
-
-    # When no value given, tap_nom will have a default value of 0
-    mask = data["three_winding_transformer"]["tap_nom"] == nan_type("three_winding_transformer", "tap_nom")
-    data["three_winding_transformer"]["tap_nom"][mask] = 0
-    errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max")
+    errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max", 0)
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
     errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_1")
     errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_2")

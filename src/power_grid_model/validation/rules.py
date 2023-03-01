@@ -35,7 +35,7 @@ Output data:
 
 """
 from enum import Enum
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
 
@@ -62,7 +62,7 @@ from power_grid_model.validation.errors import (
     TwoValuesZeroError,
     ValidationError,
 )
-from power_grid_model.validation.utils import eval_expression, nan_type
+from power_grid_model.validation.utils import eval_expression, nan_type, set_default_value
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
@@ -250,6 +250,7 @@ def all_between_or_at(
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
+    default_value: Optional[Union[np.ndarray, int, float]] = None,  # type: ignore
 ) -> List[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
@@ -266,6 +267,9 @@ def all_between_or_at(
         ref_value_2: The second reference value against which all values in the 'field' column are compared. If the
         reference value is a string, it is assumed to be another field (e.g. 'field_x') of the same component,
         or a ratio between two fields (e.g. 'field_x / field_y')
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotBetweenOrAtErrors, listing all ids where the value in the field of interest was
@@ -275,7 +279,9 @@ def all_between_or_at(
     def outside(val: np.ndarray, *ref: np.ndarray) -> np.ndarray:
         return np.logical_or(np.less(val, np.minimum(*ref)), np.greater(val, np.maximum(*ref)))
 
-    return none_match_comparison(data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError)
+    return none_match_comparison(
+        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value
+    )
 
 
 def none_match_comparison(
@@ -285,6 +291,7 @@ def none_match_comparison(
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[CompError]:
     # pylint: disable=too-many-arguments
     """
@@ -301,11 +308,16 @@ def none_match_comparison(
         are compared using the compare_fn. If a reference value is a string, it is assumed to be another field
         (e.g. 'field_x') of the same component, or a ratio between two fields (e.g. 'field_x / field_y')
         error: The type (class) of error that should be returned in case any of the values match the comparison.
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
-        A list containing zero or one comparison errors (should be a sub class of ComparisonError), listing all ids
+        A list containing zero or one comparison errors (should be a subclass of ComparisonError), listing all ids
         where the value in the field of interest matched the comparison.
     """
+    if default_value is not None:
+        set_default_value(data=data, component=component, field=field, default_value=default_value)
     component_data = data[component]
     if isinstance(ref_value, tuple):
         ref = tuple(eval_expression(component_data, v) for v in ref_value)
