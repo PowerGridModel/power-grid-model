@@ -445,10 +445,10 @@ class MeasuredValues {
         */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) -> bool {
-            return x[0] != disconnected;
+            return x[0] != -1;
         };
         static constexpr auto branch_to_checker = [](BranchIdx x) -> bool {
-            return x[1] != disconnected;
+            return x[1] != -1;
         };
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
