@@ -33,6 +33,10 @@ The base type for all power grid components.
 | `u_pu` | `RealValueOutput` | - | per-unit voltage magnitude | | &#10060; | &#10060; | &#10004; | |
 | `u_angle` | `RealValueOutput` | rad | voltage angle | | &#10060; | &#10060; | &#10004; | |
 | `u` | `RealValueOutput` | volt (V) | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation | | &#10060; | &#10060; | &#10004; | |
+| `p` | `RealValueOutput` | watt (W) | active power injection | | &#10060; | &#10060; | &#10004; | |
+| `q` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection | | &#10060; | &#10060; | &#10004; | |
+
+
 
 ## Branch
 

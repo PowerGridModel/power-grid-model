@@ -39,7 +39,8 @@ enum class MeasuredTerminalType : IntS {
     generator = 5,
     branch3_1 = 6,
     branch3_2 = 7,
-    branch3_3 = 8
+    branch3_3 = 8,
+    node = 9
 };
 
 enum class ComponentType : IntS {

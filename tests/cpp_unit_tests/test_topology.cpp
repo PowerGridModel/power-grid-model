@@ -8,7 +8,7 @@
 #include "power_grid_model/topology.hpp"
 
 /*
- *  [0]   = Node
+ *  [0]   = Node / Bus
  * --0--> = Branch (from --id--> to)
  * -(b0)- = Virtual node, representing Branch3,
  *          the sequence within the branch 3 is indicated by $0 $1 $2
@@ -17,36 +17,36 @@
  *  s0X   = disconnected source
  *  lg0   = load_gen
  *  h0    = shunt
- *  v0    = voltage sensor
+ *  +v0   = voltage sensor
  *  +p0   = power sensor
  *  +p?0  = components power sensor (e.g. +ps1 = source power sensor 1)
- *          (f = branch_from, t = branch_to, s = source, h = shunt, l = load, g = generator)
+ *          (f = branch_from, t = branch_to, s = source, h = shunt, l = load, g = generator, b = bus)
  *
  * Topology:
- *
- *                                              7 -> [5:s1+p1+p12,lg2+p4+p8,v4]     [6:h1+p5+p9] -X-4-> [7] -3-> [8,v5]
- *      0 ----->+p13 [1:lg3+p7,v1]             /     /                       \        /                  \        /
- *     /          +p14\            5 ---X--- [4] <- 6                         $2     $1                   $1     $2
- *    /                $0         /          ^                                 \    /                      \    /
- *   /                  \        v          /                                   (b2)                        (b1)
- *  [0:s0,lg0]         (b0)-$2- [2:v0,v2]  /                                     |                           |
- *   +p0+p11            /    +p15         X                                      $0                          $0
- *    \                $1                /         [9:s2X+p3,h2]                 X                           |
- *     \          +p16/                 /                                       [10]                        [11:lg1+p6]
- *      1 -->+p2+p10 [3:s3X,h0,v3] -- 2
+ *                                               7 -> [5+v4+p17:          ]
+ *                                              /     [s1+p1+p12,lg2+p4+p8]     [6:h1+p5+p9] -X-4-> [7] -3-> [8+v5]
+ *      0 ----->+p13 [1+v1:lg3+p7]             /     /                     \        /                  \        /
+ *     /          +p14\            5 ---X--- [4] <- 6                       $2     $1                   $1     $2
+ *    /                $0         /          ^                               \    /                      \    /
+ *   /                  \        v          /                                 (b2)                        (b1)
+ *  [0:s0,lg0]         (b0)-$2- [2+v0+v2]  /                                   |                           |
+ *   +p0+p11            /    +p15         X                                    $0                          $0
+ *    \                $1                /         [9:s2X+p3,h2]               X                           |
+ *     \          +p16/                 /                                     [10]                        [11:lg1+p6]
+ *      1 -->+p2+p10 [3+v3:s3X,h0] -- 2
  *
  *
  * Math model #0:                       Math model #1:
  *
- *      0 ----->+pt0 [2:lg0+pg0,v3]             1 -> [3:s0+ps0+ps1,lg0+pl0+pl1,v0] [0:h1+ps0+ps1]
- *     /          +pf2\             3 --X      /       /                     \       /
- *    /                4           /         [2] <- 0                         3     4
- *   /                  v         v                                            v   v
- *  [4:s0,lg1]          [3] <-6- [0:v0,v1]                                      [1]
- *   +pf0+pf1           ^     +pf4                                               ^
- *    \                5                                                         2
- *     \          +pf3/                                                          X
- *      1 ->+pt1+pt2 [1:h0,v2] -- 2 --X
+ *      0 ----->+pt0 [2+v3:lg0+pg0]             1 -> [3+v0+pb0:s0+ps0+ps1,lg0+pl0+pl1]         [0:h1+ps0+ps1]
+ *     /          +pf2\             3 --X      /     /                                \       /
+ *    /                4           /         [2] <- 0                                  3     4
+ *   /                  v         v                                                     v   v
+ *  [4:s0,lg1]          [3] <-6- [0+v0+v1]                                               [1]
+ *   +pf0+pf1           ^     +pf4                                                        ^
+ *    \                5                                                                  2
+ *     \          +pf3/                                                                 X
+ *      1 ->+pt1+pt2 [1+v2:h0] -- 2 --X
  *
  * Extra fill-in:
  * (3, 4)  by removing node 1
@@ -125,7 +125,7 @@ TEST_CASE("Test topology") {
                                LoadGenType::const_y};
     comp_topo.shunt_node_idx = {3, 6, 9};
     comp_topo.voltage_sensor_node_idx = {2, 1, 2, 3, 5, 8};
-    comp_topo.power_sensor_object_idx = {1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0, 0, 0, 0};
+    comp_topo.power_sensor_object_idx = {1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0, 0, 0, 0, 5};
     comp_topo.power_sensor_terminal_type = {
         MeasuredTerminalType::branch_from,  // 0 (branch   1)
         MeasuredTerminalType::source,       // 1 (source   1)
@@ -144,6 +144,7 @@ TEST_CASE("Test topology") {
         MeasuredTerminalType::branch3_1,    // 14 (branch3  0)
         MeasuredTerminalType::branch3_3,    // 15 (branch3  0)
         MeasuredTerminalType::branch3_2,    // 16 (branch3  0)
+        MeasuredTerminalType::node,         // 17 (node     5)
     };
 
     // component connection
@@ -235,7 +236,8 @@ TEST_CASE("Test topology") {
         {0, 0},    // 13 branch_to
         {0, 2},    // 14 branch_from
         {0, 4},    // 15 branch_from
-        {0, 3}     // 16 branch_from
+        {0, 3},    // 16 branch_from
+        {1, 0}     // 17 node
     };
 
     // Sub graph / math model 0
@@ -248,6 +250,7 @@ TEST_CASE("Test topology") {
     math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
     math0.shunt_bus_indptr = {0, 0, 1, 1, 1, 1};
     math0.voltage_sensor_indptr = {0, 2, 3, 4, 4, 4};
+    math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math0.source_power_sensor_indptr = {0, 0};
     math0.shunt_power_sensor_indptr = {0, 0};
     math0.load_gen_power_sensor_indptr = {0, 1, 1};
@@ -270,6 +273,7 @@ TEST_CASE("Test topology") {
     math1.load_gen_type = {LoadGenType::const_i};
     math1.shunt_bus_indptr = {0, 1, 1, 1, 1};
     math1.voltage_sensor_indptr = {0, 0, 0, 0, 1};
+    math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
     math1.source_power_sensor_indptr = {0, 2};
     math1.shunt_power_sensor_indptr = {0, 2};
     math1.load_gen_power_sensor_indptr = {0, 2};
@@ -306,6 +310,7 @@ TEST_CASE("Test topology") {
             CHECK(math.load_gen_type == math_ref.load_gen_type);
             CHECK(math.shunt_bus_indptr == math_ref.shunt_bus_indptr);
             CHECK(math.voltage_sensor_indptr == math_ref.voltage_sensor_indptr);
+            CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
             CHECK(math.source_power_sensor_indptr == math_ref.source_power_sensor_indptr);
             CHECK(math.shunt_power_sensor_indptr == math_ref.shunt_power_sensor_indptr);
             CHECK(math.load_gen_power_sensor_indptr == math_ref.load_gen_power_sensor_indptr);

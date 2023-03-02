@@ -131,9 +131,11 @@ class LinearPFSolver {
         output.branch = y_bus.calculate_branch_flow(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
 
-        // prepare source and load gen
+        // prepare source, load gen and node injection
         output.source.resize(source_bus_indptr_->back());
         output.load_gen.resize(load_gen_bus_indptr_->back());
+        output.bus_injection.resize(n_bus_);
+
         // loop all bus
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // source
@@ -152,6 +154,7 @@ class LinearPFSolver {
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
             }
         }
+        output.bus_injection = y_bus.calculate_injection(output.u);
     }
 };
 
