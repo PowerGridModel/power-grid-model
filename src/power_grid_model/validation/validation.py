@@ -650,5 +650,12 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         ref_components="three_winding_transformer",
         measured_terminal_type=MeasuredTerminalType.branch3_3,
     )
+    errors += all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components="node",
+        measured_terminal_type=MeasuredTerminalType.node,
+    )
 
     return errors
