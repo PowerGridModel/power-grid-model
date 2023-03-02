@@ -110,15 +110,45 @@ def input_data() -> Dict[str, np.ndarray]:
     three_winding_transformer["tap_max"] = [10, 10, 10, 10]
     three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
     three_winding_transformer["tap_nom"] = [-12, 41, nan_type("three_winding_transformer", "tap_nom"), 0]
-    three_winding_transformer["uk_12_min"] = [-1, 1.1, 0.05, 0.1]
-    three_winding_transformer["uk_13_min"] = [-2, 1.2, 0.3, 0.2]
-    three_winding_transformer["uk_23_min"] = [-1.5, 1, 0.15, 0.2]
+    three_winding_transformer["uk_12_min"] = [
+        nan_type("three_winding_transformer", "uk_12_min"),
+        1.1,
+        0.05,
+        nan_type("three_winding_transformer", "uk_12_min"),
+    ]
+    three_winding_transformer["uk_13_min"] = [
+        nan_type("three_winding_transformer", "uk_13_min"),
+        1.2,
+        0.3,
+        nan_type("three_winding_transformer", "uk_13_min"),
+    ]
+    three_winding_transformer["uk_23_min"] = [
+        nan_type("three_winding_transformer", "uk_23_min"),
+        1,
+        0.15,
+        nan_type("three_winding_transformer", "uk_23_min"),
+    ]
     three_winding_transformer["pk_12_min"] = [-450, 100, 10, 40]
     three_winding_transformer["pk_13_min"] = [-40, 50, 40, 50]
     three_winding_transformer["pk_23_min"] = [-120, 1, 40, 30]
-    three_winding_transformer["uk_12_max"] = [-1, 1.1, 0.05, 0.1]
-    three_winding_transformer["uk_13_max"] = [-2, 1.2, 0.3, 0.2]
-    three_winding_transformer["uk_23_max"] = [-1.5, 1, 0.15, 0.2]
+    three_winding_transformer["uk_12_max"] = [
+        nan_type("three_winding_transformer", "uk_12_max"),
+        1.1,
+        0.05,
+        nan_type("three_winding_transformer", "uk_12_max"),
+    ]
+    three_winding_transformer["uk_13_max"] = [
+        nan_type("three_winding_transformer", "uk_13_max"),
+        1.2,
+        0.3,
+        nan_type("three_winding_transformer", "uk_13_max"),
+    ]
+    three_winding_transformer["uk_23_max"] = [
+        nan_type("three_winding_transformer", "uk_23_max"),
+        1,
+        0.15,
+        nan_type("three_winding_transformer", "uk_23_max"),
+    ]
     three_winding_transformer["pk_12_max"] = [-450, 100, 10, 40]
     three_winding_transformer["pk_13_max"] = [-40, 50, 40, 50]
     three_winding_transformer["pk_23_max"] = [-120, 1, 40, 30]

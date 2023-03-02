@@ -469,30 +469,60 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
     errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max", 0)
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_1")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_2")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_1")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_3")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_2")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_3")
-    errors += all_between(data, "three_winding_transformer", "uk_12_min", 0, 1)
-    errors += all_between(data, "three_winding_transformer", "uk_13_min", 0, 1)
-    errors += all_between(data, "three_winding_transformer", "uk_23_min", 0, 1)
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_1")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_2")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_1")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_3")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_2")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_3")
-    errors += all_between(data, "three_winding_transformer", "uk_12_max", 0, 1)
-    errors += all_between(data, "three_winding_transformer", "uk_13_max", 0, 1)
-    errors += all_between(data, "three_winding_transformer", "uk_23_max", 0, 1)
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_12_min")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_13_min")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_23_min")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_12_max")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_13_max")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "uk_23_max")
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_1", data["three_winding_transformer"]["uk_12"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_2", data["three_winding_transformer"]["uk_12"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_1", data["three_winding_transformer"]["uk_13"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_3", data["three_winding_transformer"]["uk_13"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_2", data["three_winding_transformer"]["uk_23"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_3", data["three_winding_transformer"]["uk_23"]
+    )
+    errors += all_between(
+        data, "three_winding_transformer", "uk_12_min", 0, 1, data["three_winding_transformer"]["uk_12"]
+    )
+    errors += all_between(
+        data, "three_winding_transformer", "uk_13_min", 0, 1, data["three_winding_transformer"]["uk_13"]
+    )
+    errors += all_between(
+        data, "three_winding_transformer", "uk_23_min", 0, 1, data["three_winding_transformer"]["uk_23"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_1", data["three_winding_transformer"]["uk_12"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_2", data["three_winding_transformer"]["uk_12"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_1", data["three_winding_transformer"]["uk_13"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_3", data["three_winding_transformer"]["uk_13"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_2", data["three_winding_transformer"]["uk_23"]
+    )
+    errors += all_greater_or_equal(
+        data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_3", data["three_winding_transformer"]["uk_23"]
+    )
+    errors += all_between(
+        data, "three_winding_transformer", "uk_12_max", 0, 1, data["three_winding_transformer"]["uk_12"]
+    )
+    errors += all_between(
+        data, "three_winding_transformer", "uk_13_max", 0, 1, data["three_winding_transformer"]["uk_13"]
+    )
+    errors += all_between(
+        data, "three_winding_transformer", "uk_23_max", 0, 1, data["three_winding_transformer"]["uk_23"]
+    )
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12_min")
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13_min")
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23_min")
