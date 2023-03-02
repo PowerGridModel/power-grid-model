@@ -87,9 +87,9 @@ class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
 // accumulate for bus injection measurement
 template <bool sym>
 class MeasuredValues {
-    static constexpr Idx undefined = -1;
-    static constexpr Idx disconnected = -2;
-    static constexpr Idx unmeasured = -3;
+    static constexpr Idx disconnected = -1;
+    static constexpr Idx unmeasured = -2;
+    static constexpr Idx undefined = -3;
 
     // struct to store bus injection information
     struct BusInjection {
