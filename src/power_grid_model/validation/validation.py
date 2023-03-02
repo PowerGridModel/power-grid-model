@@ -523,12 +523,24 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_between(
         data, "three_winding_transformer", "uk_23_max", 0, 1, data["three_winding_transformer"]["uk_23"]
     )
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12_min")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13_min")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23_min")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12_max")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13_max")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23_max")
+    errors += all_greater_than_or_equal_to_zero(
+        data, "three_winding_transformer", "pk_12_min", data["three_winding_transformer"]["pk_12"]
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, "three_winding_transformer", "pk_13_min", data["three_winding_transformer"]["pk_13"]
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, "three_winding_transformer", "pk_23_min", data["three_winding_transformer"]["pk_23"]
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, "three_winding_transformer", "pk_12_max", data["three_winding_transformer"]["pk_12"]
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, "three_winding_transformer", "pk_13_max", data["three_winding_transformer"]["pk_13"]
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, "three_winding_transformer", "pk_23_max", data["three_winding_transformer"]["pk_23"]
+    )
     return errors
 
 

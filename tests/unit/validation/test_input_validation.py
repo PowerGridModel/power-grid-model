@@ -128,9 +128,9 @@ def input_data() -> Dict[str, np.ndarray]:
         0.15,
         nan_type("three_winding_transformer", "uk_23_min"),
     ]
-    three_winding_transformer["pk_12_min"] = [-450, 100, 10, 40]
-    three_winding_transformer["pk_13_min"] = [-40, 50, 40, 50]
-    three_winding_transformer["pk_23_min"] = [-120, 1, 40, 30]
+    three_winding_transformer["pk_12_min"] = [-450, nan_type("three_winding_transformer", "pk_12_min"), 10, 40]
+    three_winding_transformer["pk_13_min"] = [-40, nan_type("three_winding_transformer", "pk_13_min"), 40, 50]
+    three_winding_transformer["pk_23_min"] = [-120, nan_type("three_winding_transformer", "pk_23_min"), 40, 30]
     three_winding_transformer["uk_12_max"] = [
         nan_type("three_winding_transformer", "uk_12_max"),
         1.1,
@@ -149,9 +149,9 @@ def input_data() -> Dict[str, np.ndarray]:
         0.15,
         nan_type("three_winding_transformer", "uk_23_max"),
     ]
-    three_winding_transformer["pk_12_max"] = [-450, 100, 10, 40]
-    three_winding_transformer["pk_13_max"] = [-40, 50, 40, 50]
-    three_winding_transformer["pk_23_max"] = [-120, 1, 40, 30]
+    three_winding_transformer["pk_12_max"] = [-450, nan_type("three_winding_transformer", "pk_12_max"), 10, 40]
+    three_winding_transformer["pk_13_max"] = [-40, nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
+    three_winding_transformer["pk_23_max"] = [-120, nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
 
     source = initialize_array("input", "source", 3)
     source["id"] = [16, 17, 1]
