@@ -227,7 +227,7 @@ def all_less_or_equal(
     return none_match_comparison(data, component, field, not_less_or_equal, ref_value, NotLessOrEqualError)
 
 
-def all_between(
+def all_between(  # pylint: disable=too-many-arguments
     data: SingleDataset,
     component: str,
     field: str,
@@ -267,7 +267,7 @@ def all_between(
     )
 
 
-def all_between_or_at(
+def all_between_or_at(  # pylint: disable=too-many-arguments
     data: SingleDataset,
     component: str,
     field: str,
