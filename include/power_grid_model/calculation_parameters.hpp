@@ -50,6 +50,7 @@ struct BranchCalcParam {
         return value[3];
     }
 };
+
 template <bool sym>
 struct BranchMathOutput {
     ComplexValue<sym> s_f;
@@ -102,6 +103,7 @@ struct MathModelTopology {
     IdxVector shunt_power_sensor_indptr;        // indptr of the shunt
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
+    IdxVector bus_power_sensor_indptr;          // indptr of the bus
 
     Idx n_bus() const {
         return (Idx)phase_shift.size();
@@ -146,6 +148,10 @@ struct MathModelTopology {
     Idx n_branch_to_power_sensor() const {
         return branch_to_power_sensor_indptr.back();
     }
+
+    Idx n_bus_power_sensor() const {
+        return bus_power_sensor_indptr.back();
+    }
 };
 
 template <bool sym>
@@ -157,8 +163,8 @@ struct MathModelParam {
 
 template <bool sym>
 struct PowerFlowInput {
-    ComplexVector source;
-    ComplexValueVector<sym> s_injection;
+    ComplexVector source;                 // Complex u_ref of each source
+    ComplexValueVector<sym> s_injection;  // Specified injection power of each load_gen
 };
 
 template <bool sym>
@@ -176,11 +182,13 @@ struct StateEstimationInput {
     std::vector<SensorCalcParam<sym>> measured_shunt_power;
     std::vector<SensorCalcParam<sym>> measured_branch_from_power;
     std::vector<SensorCalcParam<sym>> measured_branch_to_power;
+    std::vector<SensorCalcParam<sym>> measured_bus_injection;
 };
 
 template <bool sym>
 struct MathOutput {
-    ComplexValueVector<sym> u;
+    std::vector<ComplexValue<sym>> u;
+    std::vector<ComplexValue<sym>> bus_injection;
     std::vector<BranchMathOutput<sym>> branch;
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;

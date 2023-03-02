@@ -26,6 +26,8 @@ struct NodeOutput : BaseOutput {
     RealValue<sym> u_pu;  // voltage magnitude and angle
     RealValue<sym> u;  // voltage magnitude and angle
     RealValue<sym> u_angle;  // voltage magnitude and angle
+    RealValue<sym> p;  // node injection
+    RealValue<sym> q;  // node injection
 };
 using SymNodeOutput = NodeOutput<true>;
 using AsymNodeOutput = NodeOutput<false>;
@@ -121,6 +123,8 @@ struct get_meta<NodeOutput<sym>> {
         meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::u_pu>("u_pu"));
         meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::u>("u"));
         meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::u_angle>("u_angle"));
+        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::p>("p"));
+        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::q>("q"));
         return meta;
     }
 };
