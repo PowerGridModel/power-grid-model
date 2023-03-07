@@ -216,7 +216,7 @@ def input_data() -> Dict[str, np.ndarray]:
 
     asym_power_sensor = initialize_array("input", "asym_power_sensor", 4)
     asym_power_sensor["id"] = [7, 8, 9, 10]
-    asym_power_sensor["measured_object"] = [13, 3, 13, 200]
+    asym_power_sensor["measured_object"] = [12, 3, 13, 200]
     asym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
 
