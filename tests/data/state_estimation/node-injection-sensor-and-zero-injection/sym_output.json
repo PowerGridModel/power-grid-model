@@ -1,0 +1,57 @@
+{
+  "line": [
+    {
+      "id": 4,
+      "energized": 1,
+      "loading": 0.0,
+      "p_from": 0.0,
+      "q_from": 0.0,
+      "i_from": 0.0,
+      "s_from": 0.0,
+      "p_to": 0.0,
+      "q_to": 0.0,
+      "i_to": 0.0,
+      "s_to": 0.0
+    }
+  ],
+  "node": [
+    {
+      "id": 1,
+      "energized": 1,
+      "u_pu": 1.0,
+      "u": 100.0,
+      "u_angle": 0.0
+    },
+    {
+      "id": 2,
+      "energized": 1,
+      "u_pu": 1.0,
+      "u": 100.0,
+      "u_angle": 0.0
+    }
+  ],
+  "source": [
+    {
+      "id": 6,
+      "energized": 1,
+      "p": 0.0,
+      "q": 0.0,
+      "i": 0.0,
+      "s": 0.0,
+      "pf": 0.0
+    }
+  ],
+  "sym_voltage_sensor": [
+    {
+      "id": 101,
+      "u_residual": 0.0
+    }
+  ],
+  "sym_power_sensor": [
+    {
+      "id": 401,
+      "p_residual": 100e3,
+      "q_residual": 100e3
+    }
+  ]
+}
