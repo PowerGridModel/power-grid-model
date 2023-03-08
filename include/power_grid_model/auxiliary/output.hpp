@@ -93,6 +93,13 @@ struct PowerSensorOutput : BaseOutput {
 using SymPowerSensorOutput = PowerSensorOutput<true>;
 using AsymPowerSensorOutput = PowerSensorOutput<false>;
 
+template <bool sym>
+struct ShortCircuitOutput : BaseOutput {
+    RealValue<sym> i_sc;  // short circuit current
+};
+using SymShortCircuitOutput = ShortCircuitOutput<true>;
+using AsymShortCircuitOutput = ShortCircuitOutput<false>;
+
 
 
 // template specialization functors to get meta data
@@ -216,6 +223,19 @@ struct get_meta<PowerSensorOutput<sym>> {
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&PowerSensorOutput<sym>::p_residual>("p_residual"));
         meta.attributes.push_back(get_data_attribute<&PowerSensorOutput<sym>::q_residual>("q_residual"));
+        return meta;
+    }
+};
+
+template <bool sym>
+struct get_meta<ShortCircuitOutput<sym>> {
+    MetaData operator() () {
+        MetaData meta{};
+        meta.name = "ShortCircuitOutput";      
+        meta.size = sizeof(ShortCircuitOutput<sym>);  
+        meta.alignment = alignof(ShortCircuitOutput<sym>);
+        meta.attributes = get_meta<BaseOutput>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<&ShortCircuitOutput<sym>::i_sc>("i_sc"));
         return meta;
     }
 };

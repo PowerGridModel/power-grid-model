@@ -125,6 +125,18 @@
                     "description": "deviation between the measured value and calculated value"
                 }
             ]
+        },
+                {
+            "name": "ShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": "i_sc",
+                    "description": "short circuit current"
+                }
+            ]
         }
     ]
 }
