@@ -74,6 +74,10 @@ struct PowerSensorUpdate : BaseUpdate {
 using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
+struct ShortCircuitUpdate : BaseUpdate {
+    ID short_circuit_object;  // ID of the faulted object
+};
+
 
 
 // template specialization functors to get meta data
@@ -214,6 +218,19 @@ struct get_meta<PowerSensorUpdate<sym>> {
         meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::power_sigma>("power_sigma"));
         meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::p_measured>("p_measured"));
         meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::q_measured>("q_measured"));
+        return meta;
+    }
+};
+
+template<>
+struct get_meta<ShortCircuitUpdate> {
+    MetaData operator() () {
+        MetaData meta{};
+        meta.name = "ShortCircuitUpdate";      
+        meta.size = sizeof(ShortCircuitUpdate);  
+        meta.alignment = alignof(ShortCircuitUpdate);
+        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<&ShortCircuitUpdate::short_circuit_object>("short_circuit_object"));
         return meta;
     }
 };

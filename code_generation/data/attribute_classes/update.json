@@ -142,6 +142,17 @@
                     "description": "measured active/reactive power"
                 }
             ]
+        },
+        {
+            "name": "ShortCircuitUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "short_circuit_object",
+                    "description": "ID of the faulted object"
+                }
+            ]
         }
     ]
 }
