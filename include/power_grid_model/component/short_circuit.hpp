@@ -6,6 +6,17 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 #define POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 
-namespace power_grid_model {}
+#include "../auxiliary/input.hpp"
+#include "base.hpp"
+
+namespace power_grid_model {
+
+Class ShortCircuit final : public Base {
+   public:
+    using InputType = ShortCircuitInput;
+    static constexpr char *const "short_circuit";
+}
+
+}  // namespace power_grid_model
 
 #endif

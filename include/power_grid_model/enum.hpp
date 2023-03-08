@@ -56,6 +56,15 @@ enum class ComponentType : IntS {
     branch3 = 9
 };
 
+enum class ShortCircuitObjectType : IntS { node = 1 };
+
+enum class ShortCircuitType : IntS {
+    three_phase = 0,
+    two_phase = 1,
+    two_phase_to_ground = 2,
+    sinlge_phase_to_ground = 3
+};
+
 // DO NOT change the order of enumerations
 // this has special meaning
 // for 0b00 - 0b11

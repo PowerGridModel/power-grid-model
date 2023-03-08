@@ -189,6 +189,12 @@ struct PowerSensorInput : GenericPowerSensorInput {
 using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
 
+struct ShortCircuitInput : BaseInput {
+    ID short_circuit_object;  // ID of the faulted object
+    ShortCircuitObjectType short_circuit_object_type; // type of the faulted object
+    ShortCircuitType short_circuit_type;  // type of the short circuit
+};
+
 
 
 // template specialization functors to get meta data
