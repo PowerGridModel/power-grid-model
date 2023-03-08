@@ -24,8 +24,8 @@ Class ShortCircuit final : public Base {
     ShortCircuit(ShortCircuitInput const& short_circuit_input)
         : Base{short_circuit_input},
           short_circuit_object_{short_circuit_input.short_circuit_object},
-          r_sc_{short_circuit_input.r_sc},
-          x_sc_{short_circuit_input.x_sc} {
+          r_sc_{is_nan(short_circuit_input.r_sc) ? (bool)0.0 : short_circuit_input.r_sc},
+          x_sc_{is_nan(short_circuit_input.x_sc) ? (bool)0.0 : short_circuit_input.x_sc} {
     }
 
    private:
