@@ -19,7 +19,20 @@ Class ShortCircuit final : public Base {
     using UpdateType = ShortCircuitUpdate;
     template <bool sym>
     using OutputType = ShortCircuitOutput<sym>;
-    static constexpr char *const "short_circuit";
+    static constexpr char* const "short_circuit";
+
+    ShortCircuit(ShortCircuitInput const& short_circuit_input)
+        : Base{short_circuit_input},
+          short_circuit_object_{short_circuit_input.short_circuit_object},
+          r_sc_{short_circuit_input.r_sc},
+          x_sc_{short_circuit_input.x_sc} {
+    }
+
+   private:
+    // short circuit parameters
+    ID short_circuit_object_;
+    bool r_sc_;
+    bool x_sc_;
 }
 
 }  // namespace power_grid_model
