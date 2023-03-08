@@ -389,14 +389,12 @@
                     "description": "ID of the faulted object"
                 },
                 {
-                    "data_type": "ShortCircuitObjectType",
-                    "names": "short_circuit_object_type",
-                    "description": "type of the faulted object"
-                },
-                                {
-                    "data_type": "ShortCircuitType",
-                    "names": "short_circuit_type",
-                    "description": "type of the short circuit fault"
+                    "data_type": "double",
+                    "names": [
+                        "r_sc",
+                        "x_sc"
+                    ],
+                    "description": "short circuit impedance"
                 }
             ]
         }
