@@ -378,6 +378,27 @@
                     "description": "measured active/reactive power"
                 }
             ]
+        },
+        {
+            "name": "ShortCircuitInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "short_circuit_object",
+                    "description": "ID of the faulted object"
+                },
+                {
+                    "data_type": "ShortCircuitObjectType",
+                    "names": "short_circuit_object_type",
+                    "description": "type of the faulted object"
+                },
+                                {
+                    "data_type": "ShortCircuitType",
+                    "names": "short_circuit_type",
+                    "description": "type of the short circuit fault"
+                }
+            ]
         }
     ]
 }
