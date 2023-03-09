@@ -144,12 +144,12 @@
             ]
         },
         {
-            "name": "ShortCircuitUpdate",
+            "name": "FaultUpdate",
             "base": "BaseUpdate",
             "attributes": [
                 {
                     "data_type": "ID",
-                    "names": "short_circuit_object",
+                    "names": "fault_object",
                     "description": "ID of the faulted object"
                 }
             ]

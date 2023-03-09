@@ -74,8 +74,8 @@ struct PowerSensorUpdate : BaseUpdate {
 using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
-struct ShortCircuitUpdate : BaseUpdate {
-    ID short_circuit_object;  // ID of the faulted object
+struct FaultUpdate : BaseUpdate {
+    ID fault_object;  // ID of the faulted object
 };
 
 
@@ -223,14 +223,14 @@ struct get_meta<PowerSensorUpdate<sym>> {
 };
 
 template<>
-struct get_meta<ShortCircuitUpdate> {
+struct get_meta<FaultUpdate> {
     MetaData operator() () {
         MetaData meta{};
-        meta.name = "ShortCircuitUpdate";      
-        meta.size = sizeof(ShortCircuitUpdate);  
-        meta.alignment = alignof(ShortCircuitUpdate);
+        meta.name = "FaultUpdate";      
+        meta.size = sizeof(FaultUpdate);  
+        meta.alignment = alignof(FaultUpdate);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ShortCircuitUpdate::short_circuit_object>("short_circuit_object"));
+        meta.attributes.push_back(get_data_attribute<&FaultUpdate::fault_object>("fault_object"));
         return meta;
     }
 };

@@ -189,8 +189,8 @@ struct PowerSensorInput : GenericPowerSensorInput {
 using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
 
-struct ShortCircuitInput : BaseInput {
-    ID short_circuit_object;  // ID of the faulted object
+struct FaultInput : BaseInput {
+    ID fault_object;  // ID of the faulted object
     double r_sc;  // short circuit impedance
     double x_sc;  // short circuit impedance
 };
@@ -527,16 +527,16 @@ struct get_meta<PowerSensorInput<sym>> {
 };
 
 template<>
-struct get_meta<ShortCircuitInput> {
+struct get_meta<FaultInput> {
     MetaData operator() () {
         MetaData meta{};
-        meta.name = "ShortCircuitInput";      
-        meta.size = sizeof(ShortCircuitInput);  
-        meta.alignment = alignof(ShortCircuitInput);
+        meta.name = "FaultInput";      
+        meta.size = sizeof(FaultInput);  
+        meta.alignment = alignof(FaultInput);
         meta.attributes = get_meta<BaseInput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ShortCircuitInput::short_circuit_object>("short_circuit_object"));
-        meta.attributes.push_back(get_data_attribute<&ShortCircuitInput::r_sc>("r_sc"));
-        meta.attributes.push_back(get_data_attribute<&ShortCircuitInput::x_sc>("x_sc"));
+        meta.attributes.push_back(get_data_attribute<&FaultInput::fault_object>("fault_object"));
+        meta.attributes.push_back(get_data_attribute<&FaultInput::r_sc>("r_sc"));
+        meta.attributes.push_back(get_data_attribute<&FaultInput::x_sc>("x_sc"));
         return meta;
     }
 };

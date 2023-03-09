@@ -127,7 +127,7 @@
             ]
         },
                 {
-            "name": "ShortCircuitOutput",
+            "name": "FaultOutput",
             "base": "BaseOutput",
             "is_template": true,
             "attributes": [
