@@ -9,6 +9,7 @@
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
+#include "../enum.hpp"
 #include "base.hpp"
 
 namespace power_grid_model {
@@ -20,6 +21,9 @@ Class Fault final : public Base {
     template <bool sym>
     using OutputType = FaultOutput<sym>;
     static constexpr char* const "short_circuit";
+    ComponentType math_model_type() const final {
+        return ComponentType::fault;
+    }
 
     Fault(FaultInput const& fault_input)
         : Base{short_circuit_input},
