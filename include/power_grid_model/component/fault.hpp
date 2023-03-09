@@ -28,6 +28,10 @@ Class Fault final : public Base {
           x_sc_{is_nan(fault_input.x_sc) ? (bool)0.0 : fault_input.x_sc} {
     }
 
+    bool energized(bool is_connected_to_source) const final {
+        return is_connected_to_source;
+    }
+
    private:
     // short circuit parameters
     ID fault_object_;
