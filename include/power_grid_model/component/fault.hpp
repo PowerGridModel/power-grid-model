@@ -28,6 +28,13 @@ Class Fault final : public Base {
           x_sc_{is_nan(fault_input.x_sc) ? (bool)0.0 : fault_input.x_sc} {
     }
 
+    template <bool sym>
+    FaultOutput<sym> get_null_output() const {
+        FaultOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
+
     bool energized(bool is_connected_to_source) const final {
         return is_connected_to_source;
     }
