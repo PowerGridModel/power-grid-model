@@ -28,8 +28,8 @@ class Fault final : public Base {
     Fault(FaultInput const& fault_input)
         : Base{short_circuit_input},
           fault_object_{fault_input.short_circuit_object},
-          r_sc_{is_nan(fault_input.r_sc) ? (bool)0.0 : fault_input.r_sc},
-          x_sc_{is_nan(fault_input.x_sc) ? (bool)0.0 : fault_input.x_sc} {
+          r_f_{is_nan(fault_input.r_f) ? (bool)0.0 : fault_input.r_f},
+          x_f_{is_nan(fault_input.x_f) ? (bool)0.0 : fault_input.x_f} {
     }
 
     template <bool sym>
@@ -52,8 +52,8 @@ class Fault final : public Base {
         // result object
         FaultShortCircuitOutput<sym> output{};
         // calculate current magnitude and angle
-        output.i_sc = cabs(i_f);
-        output.i_sc_angle = arg(i_f);
+        output.i_f = cabs(i_f);
+        output.i_f_angle = arg(i_f);
         return output;
     }
 
@@ -73,8 +73,8 @@ class Fault final : public Base {
    private:
     // short circuit parameters
     ID fault_object_;
-    double r_sc_;
-    double x_sc_;
+    double r_f_;
+    double x_f_;
 }
 
 }  // namespace power_grid_model

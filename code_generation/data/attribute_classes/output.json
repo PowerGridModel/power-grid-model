@@ -138,12 +138,12 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_sc",
+                    "names": "i_f",
                     "description": "short circuit current magnitude"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_sc_angle",
+                    "names": "i_f_angle",
                     "description": "short circuit current angle"
                 }
             ]

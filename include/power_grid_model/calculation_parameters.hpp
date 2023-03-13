@@ -59,6 +59,18 @@ struct BranchMathOutput {
     ComplexValue<sym> i_t;
 };
 
+// fault math calculation parameters and math output
+template <bool sym>
+struct FaultCalcParam {
+    ID fault_object;
+    ComplexTensor<sym> y_fault;
+};
+
+template <bool sym>
+struct FaultMathOutput {
+    ComplexValue<sym> i_f;
+};
+
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>

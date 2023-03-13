@@ -191,8 +191,8 @@ using AsymPowerSensorInput = PowerSensorInput<false>;
 
 struct FaultInput : BaseInput {
     ID fault_object;  // ID of the faulted object
-    double r_sc;  // short circuit impedance
-    double x_sc;  // short circuit impedance
+    double r_f;  // short circuit impedance
+    double x_f;  // short circuit impedance
 };
 
 
@@ -535,8 +535,8 @@ struct get_meta<FaultInput> {
         meta.alignment = alignof(FaultInput);
         meta.attributes = get_meta<BaseInput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&FaultInput::fault_object>("fault_object"));
-        meta.attributes.push_back(get_data_attribute<&FaultInput::r_sc>("r_sc"));
-        meta.attributes.push_back(get_data_attribute<&FaultInput::x_sc>("x_sc"));
+        meta.attributes.push_back(get_data_attribute<&FaultInput::r_f>("r_f"));
+        meta.attributes.push_back(get_data_attribute<&FaultInput::x_f>("x_f"));
         return meta;
     }
 };

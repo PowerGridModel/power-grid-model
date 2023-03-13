@@ -391,8 +391,8 @@
                 {
                     "data_type": "double",
                     "names": [
-                        "r_sc",
-                        "x_sc"
+                        "r_f",
+                        "x_f"
                     ],
                     "description": "short circuit impedance"
                 }
