@@ -93,12 +93,15 @@ struct PowerSensorOutput : BaseOutput {
 using SymPowerSensorOutput = PowerSensorOutput<true>;
 using AsymPowerSensorOutput = PowerSensorOutput<false>;
 
-template <bool sym>
 struct FaultOutput : BaseOutput {
+};
+
+template <bool sym>
+struct FaultShortCircuitOutput : BaseOutput {
     RealValue<sym> i_sc;  // short circuit current
 };
-using SymFaultOutput = FaultOutput<true>;
-using AsymFaultOutput = FaultOutput<false>;
+using SymFaultShortCircuitOutput = FaultShortCircuitOutput<true>;
+using AsymFaultShortCircuitOutput = FaultShortCircuitOutput<false>;
 
 
 
@@ -227,15 +230,27 @@ struct get_meta<PowerSensorOutput<sym>> {
     }
 };
 
-template <bool sym>
-struct get_meta<FaultOutput<sym>> {
+template<>
+struct get_meta<FaultOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "FaultOutput";      
-        meta.size = sizeof(FaultOutput<sym>);  
-        meta.alignment = alignof(FaultOutput<sym>);
+        meta.size = sizeof(FaultOutput);  
+        meta.alignment = alignof(FaultOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&FaultOutput<sym>::i_sc>("i_sc"));
+        return meta;
+    }
+};
+
+template <bool sym>
+struct get_meta<FaultShortCircuitOutput<sym>> {
+    MetaData operator() () {
+        MetaData meta{};
+        meta.name = "FaultShortCircuitOutput";      
+        meta.size = sizeof(FaultShortCircuitOutput<sym>);  
+        meta.alignment = alignof(FaultShortCircuitOutput<sym>);
+        meta.attributes = get_meta<BaseOutput>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<&FaultShortCircuitOutput<sym>::i_sc>("i_sc"));
         return meta;
     }
 };

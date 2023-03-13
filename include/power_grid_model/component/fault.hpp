@@ -20,7 +20,7 @@ Class Fault final : public Base {
     using UpdateType = FaultUpdate;
     template <bool sym>
     using OutputType = FaultOutput<sym>;
-    static constexpr char* const "short_circuit";
+    static constexpr char const* name = "fault";
     ComponentType math_model_type() const final {
         return ComponentType::fault;
     }
@@ -37,6 +37,16 @@ Class Fault final : public Base {
         FaultOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
+    }
+    FaultOutput get_output() {
+        // During power flow and state estimation the fault object will have an empty output
+        FaultOutput output{};
+        return output;
+    }
+
+    template <bool sym>
+    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double u_rated) {
+        // translate pu to A + angle + return output
     }
 
     // update faulted object
@@ -55,8 +65,8 @@ Class Fault final : public Base {
    private:
     // short circuit parameters
     ID fault_object_;
-    bool r_sc_;
-    bool x_sc_;
+    double r_sc_;
+    double x_sc_;
 }
 
 }  // namespace power_grid_model

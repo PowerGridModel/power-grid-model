@@ -126,8 +126,13 @@
                 }
             ]
         },
-                {
+        {
             "name": "FaultOutput",
+            "base": "BaseOutput",
+            "attributes": []
+        },
+        {
+            "name": "FaultShortCircuitOutput",
             "base": "BaseOutput",
             "is_template": true,
             "attributes": [
