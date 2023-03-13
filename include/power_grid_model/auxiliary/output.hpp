@@ -98,7 +98,8 @@ struct FaultOutput : BaseOutput {
 
 template <bool sym>
 struct FaultShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_sc;  // short circuit current
+    RealValue<sym> i_sc;  // short circuit current magnitude
+    RealValue<sym> i_sc_angle;  // short circuit current angle
 };
 using SymFaultShortCircuitOutput = FaultShortCircuitOutput<true>;
 using AsymFaultShortCircuitOutput = FaultShortCircuitOutput<false>;
@@ -251,6 +252,7 @@ struct get_meta<FaultShortCircuitOutput<sym>> {
         meta.alignment = alignof(FaultShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&FaultShortCircuitOutput<sym>::i_sc>("i_sc"));
+        meta.attributes.push_back(get_data_attribute<&FaultShortCircuitOutput<sym>::i_sc_angle>("i_sc_angle"));
         return meta;
     }
 };

@@ -14,7 +14,7 @@
 
 namespace power_grid_model {
 
-Class Fault final : public Base {
+class Fault final : public Base {
    public:
     using InputType = FaultInput;
     using UpdateType = FaultUpdate;
@@ -46,7 +46,15 @@ Class Fault final : public Base {
 
     template <bool sym>
     FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double u_rated) {
-        // translate pu to A + angle + return output
+        // translate pu to A
+        double const base_i = base_power_3p / u_rated / sqrt3;
+        i_f = i_f * base_i;
+        // result object
+        FaultShortCircuitOutput<sym> output{};
+        // calculate current magnitude and angle
+        output.i_sc = cabs(i_f);
+        output.i_sc_angle = arg(i_f);
+        return output;
     }
 
     // update faulted object
