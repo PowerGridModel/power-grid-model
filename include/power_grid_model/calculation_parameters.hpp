@@ -60,10 +60,9 @@ struct BranchMathOutput {
 };
 
 // fault math calculation parameters and math output
-template <bool sym>
 struct FaultCalcParam {
-    ID fault_object;
-    ComplexTensor<sym> y_fault;
+    Idx math_fault_object{-1};
+    DoubleComplex y_fault;
 };
 
 template <bool sym>

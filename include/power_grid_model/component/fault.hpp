@@ -32,6 +32,19 @@ class Fault final : public Base {
           x_f_{is_nan(fault_input.x_f) ? (bool)0.0 : fault_input.x_f} {
     }
 
+    FaultCalcParam calc_param(bool is_connected_to_source = true, double u_rated) const {
+        if (!energized(is_connected_to_source)) {
+            return FaultCalcParam{};
+        }
+        // param object
+        FaultCalcParam param{};
+        // calculate the fault admittance in p.u.
+        double const base_y = base_power_3p / u_rated / u_rated;
+        DoubleComplex y_f = 1.0 / (r_f_ + 1.0i * x_f_) / base_y;
+        param.y_fault = y_f;
+        return param;
+    }
+
     template <bool sym>
     FaultOutput<sym> get_null_output() const {
         FaultOutput<sym> output{};
@@ -68,6 +81,11 @@ class Fault final : public Base {
 
     bool energized(bool is_connected_to_source) const final {
         return is_connected_to_source;
+    }
+
+    // getter
+    ID get_fault_object() {
+        return fault_object_;
     }
 
    private:
