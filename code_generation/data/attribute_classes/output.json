@@ -125,6 +125,73 @@
                     "description": "deviation between the measured value and calculated value"
                 }
             ]
+        },
+        {
+            "name": "NodeShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "u_pu",
+                        "u",
+                        "u_angle"
+                    ],
+                    "description": "Initial short circuit voltage magnitude and angle"
+                }
+            ]
+        },
+        {
+            "name": "BranchShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["i_from"],
+                    "description": "Initial short circuit current flow at from-side"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["i_to"],
+                    "description": "Initial short circuit current flow at to-side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3ShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["i_1"],
+                    "description": "Initial short circuit current flow at side 1"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["i_2"],
+                    "description": "Initial short circuit current flow at side 2"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["i_3"],
+                    "description": "Initial short circuit current flow at side 3"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["i"],
+                    "description": "Initial short circuit current flow of the appliance"
+                }
+            ]
         }
     ]
 }
