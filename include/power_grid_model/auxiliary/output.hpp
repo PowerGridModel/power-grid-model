@@ -93,39 +93,6 @@ struct PowerSensorOutput : BaseOutput {
 using SymPowerSensorOutput = PowerSensorOutput<true>;
 using AsymPowerSensorOutput = PowerSensorOutput<false>;
 
-template <bool sym>
-struct NodeShortCircuitOutput : BaseOutput {
-    RealValue<sym> u_pu;  // Initial short circuit voltage magnitude and angle
-    RealValue<sym> u;  // Initial short circuit voltage magnitude and angle
-    RealValue<sym> u_angle;  // Initial short circuit voltage magnitude and angle
-};
-using SymNodeShortCircuitOutput = NodeShortCircuitOutput<true>;
-using AsymNodeShortCircuitOutput = NodeShortCircuitOutput<false>;
-
-template <bool sym>
-struct BranchShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_from;  // Initial short circuit current flow at from-side
-    RealValue<sym> i_to;  // Initial short circuit current flow at to-side
-};
-using SymBranchShortCircuitOutput = BranchShortCircuitOutput<true>;
-using AsymBranchShortCircuitOutput = BranchShortCircuitOutput<false>;
-
-template <bool sym>
-struct Branch3ShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_1;  // Initial short circuit current flow at side 1
-    RealValue<sym> i_2;  // Initial short circuit current flow at side 2
-    RealValue<sym> i_3;  // Initial short circuit current flow at side 3
-};
-using SymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<true>;
-using AsymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<false>;
-
-template <bool sym>
-struct ApplianceShortCircuitOutput : BaseOutput {
-    RealValue<sym> i;  // Initial short circuit current flow of the appliance
-};
-using SymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<true>;
-using AsymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<false>;
-
 
 
 // template specialization functors to get meta data
@@ -249,63 +216,6 @@ struct get_meta<PowerSensorOutput<sym>> {
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&PowerSensorOutput<sym>::p_residual>("p_residual"));
         meta.attributes.push_back(get_data_attribute<&PowerSensorOutput<sym>::q_residual>("q_residual"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<NodeShortCircuitOutput<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "NodeShortCircuitOutput";      
-        meta.size = sizeof(NodeShortCircuitOutput<sym>);  
-        meta.alignment = alignof(NodeShortCircuitOutput<sym>);
-        meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&NodeShortCircuitOutput<sym>::u_pu>("u_pu"));
-        meta.attributes.push_back(get_data_attribute<&NodeShortCircuitOutput<sym>::u>("u"));
-        meta.attributes.push_back(get_data_attribute<&NodeShortCircuitOutput<sym>::u_angle>("u_angle"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<BranchShortCircuitOutput<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "BranchShortCircuitOutput";      
-        meta.size = sizeof(BranchShortCircuitOutput<sym>);  
-        meta.alignment = alignof(BranchShortCircuitOutput<sym>);
-        meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from>("i_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to>("i_to"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<Branch3ShortCircuitOutput<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "Branch3ShortCircuitOutput";      
-        meta.size = sizeof(Branch3ShortCircuitOutput<sym>);  
-        meta.alignment = alignof(Branch3ShortCircuitOutput<sym>);
-        meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_1>("i_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_2>("i_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_3>("i_3"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<ApplianceShortCircuitOutput<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "ApplianceShortCircuitOutput";      
-        meta.size = sizeof(ApplianceShortCircuitOutput<sym>);  
-        meta.alignment = alignof(ApplianceShortCircuitOutput<sym>);
-        meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i>("i"));
         return meta;
     }
 };
