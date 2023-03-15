@@ -32,7 +32,7 @@ class Fault final : public Base {
           x_f_{is_nan(fault_input.x_f) ? (bool)0.0 : fault_input.x_f} {
     }
 
-    FaultCalcParam calc_param(double u_rated, bool is_connected_to_source = true) const {
+    FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return FaultCalcParam{};
         }
