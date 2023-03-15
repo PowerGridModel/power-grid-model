@@ -16,14 +16,14 @@ TEST_CASE("Test fault") {
         // Not connected to source
         FaultCalcParam param = fault.calc_param(400.0, false);
         CHECK(param.math_fault_object == -1);
-        CHECK(cabs(param.y_fault) < numerical_tolerance);
+        CHECK(cabs(param.y_fault) == doctest::Approx(0.0));
 
         // Connected to source
         param = fault.calc_param(400.0);
         double const base_y = base_power_3p / (400.0 * 400.0);
         DoubleComplex y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
         CHECK(param.math_fault_object == -1);
-        CHECK(cabs(param.y_fault - y_f) < numerical_tolerance);
+        CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
     }
 
     SUBCASE("Test get_null_output") {
@@ -47,7 +47,7 @@ TEST_CASE("Test fault") {
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.i_f == doctest::Approx(cabs(i_f)));
-        CHECK(output.i_f_angle - 0.25 * pi < numerical_tolerance);
+        CHECK(output.i_f_angle == doctest::Approx(0.25 * pi));
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
