@@ -12,16 +12,19 @@ TEST_CASE("Test fault") {
     CHECK(fault.math_model_type() == ComponentType::fault);
     CHECK(fault.get_fault_object() == 2);
 
+    double const u_rated = 400.0;
+    double const base_i = base_power_3p / (u_rated * sqrt3);
+
     SUBCASE("Test calc_param") {
         // Not connected to source
-        FaultCalcParam param = fault.calc_param(400.0, false);
+        FaultCalcParam param = fault.calc_param(u_rated, false);
         CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault) == doctest::Approx(0.0));
 
         // Connected to source
-        param = fault.calc_param(400.0);
-        double const base_y = base_power_3p / (400.0 * 400.0);
-        DoubleComplex y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
+        param = fault.calc_param(u_rated);
+        double const base_y = base_i / (u_rated / sqrt(3));
+        DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
         CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
     }
@@ -39,11 +42,10 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test get_short_circuit_output sym") {
-        ComplexValue<true> i_f_pu = 1.0 + 1.0i;
-        double const base_i = base_power_3p / (400.0 * sqrt3);
-        ComplexValue<true> i_f = i_f_pu * base_i;
+        ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
+        ComplexValue<true> const i_f = i_f_pu * base_i;
 
-        FaultShortCircuitOutput<true> output = fault.get_short_circuit_output<true>(i_f_pu, 400.0);
+        FaultShortCircuitOutput<true> output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.i_f == doctest::Approx(cabs(i_f)));
@@ -53,10 +55,9 @@ TEST_CASE("Test fault") {
     SUBCASE("Test get_short_circuit_output asym") {
         ComplexValue<false> i_f_pu{};
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
-        double const base_i = base_power_3p / (400.0 * sqrt3);
         ComplexValue<false> i_f = i_f_pu * base_i;
 
-        FaultShortCircuitOutput<false> output = fault.get_short_circuit_output<false>(i_f_pu, 400.0);
+        FaultShortCircuitOutput<false> output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK((output.i_f - cabs(i_f) < numerical_tolerance).all());
@@ -69,7 +70,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test update") {
-        FaultUpdate fault_update{{1}, 10};
+        FaultUpdate const fault_update{{1}, 10};
         UpdateChange updated = fault.update(fault_update);
 
         CHECK(!updated.param);
