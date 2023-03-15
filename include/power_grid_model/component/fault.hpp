@@ -19,20 +19,20 @@ class Fault final : public Base {
     using InputType = FaultInput;
     using UpdateType = FaultUpdate;
     template <bool sym>
-    using OutputType = FaultOutput<sym>;
+    using OutputType = FaultOutput;
     static constexpr char const* name = "fault";
     ComponentType math_model_type() const final {
         return ComponentType::fault;
     }
 
     Fault(FaultInput const& fault_input)
-        : Base{short_circuit_input},
-          fault_object_{fault_input.short_circuit_object},
+        : Base{fault_input},
+          fault_object_{fault_input.fault_object},
           r_f_{is_nan(fault_input.r_f) ? (bool)0.0 : fault_input.r_f},
           x_f_{is_nan(fault_input.x_f) ? (bool)0.0 : fault_input.x_f} {
     }
 
-    FaultCalcParam calc_param(bool is_connected_to_source = true, double u_rated) const {
+    FaultCalcParam calc_param(double u_rated, bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return FaultCalcParam{};
         }
@@ -45,25 +45,25 @@ class Fault final : public Base {
         return param;
     }
 
-    template <bool sym>
-    FaultOutput<sym> get_null_output() const {
-        FaultOutput<sym> output{};
+    FaultOutput get_null_output() const {
+        FaultOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
-    FaultOutput get_output() {
+    FaultOutput get_output() const {
         // During power flow and state estimation the fault object will have an empty output
-        FaultOutput output{};
-        return output;
+        return get_null_output();
     }
 
+    // energized
     template <bool sym>
-    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double u_rated) {
+    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
         // result object
         FaultShortCircuitOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
         // calculate current magnitude and angle
         output.i_f = cabs(i_f);
         output.i_f_angle = arg(i_f);
@@ -93,7 +93,7 @@ class Fault final : public Base {
     ID fault_object_;
     double r_f_;
     double x_f_;
-}
+};
 
 }  // namespace power_grid_model
 
