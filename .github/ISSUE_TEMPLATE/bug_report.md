@@ -13,13 +13,13 @@ A clear and concise description of what the bug is.
 
 **Input Data Validity**
 
-Did you check the validity of input data using the helper function, see examples
-[here](../blob/main/examples/Validation Examples.ipynb)?
+Did you check the validity of input data using the helper function? Examples
+[here](https://power-grid-model.readthedocs.io/en/stable/examples/Validation%20Examples.html)
 
 **Data Dump**
 
-Please dump the input (and maybe also the output) data into json files using the helper function, see examples
-[here](../blob/main/examples/Make Test Dataset.ipynb)?
+Please dump the input (and maybe also the output) data into json files using the helper function? Examples
+[here](https://power-grid-model.readthedocs.io/en/stable/examples/Make%20Test%20Dataset.html#export-to-json)
 
 **To Reproduce**
 
