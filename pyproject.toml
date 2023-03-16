@@ -43,6 +43,8 @@ dev = [
     "pylint",
     "pytest",
     "pytest-cov",
+    "dataclasses_json",
+    "jinja2",
 ]
 doc = [
     "sphinx",

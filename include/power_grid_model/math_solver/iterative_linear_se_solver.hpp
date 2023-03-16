@@ -404,8 +404,11 @@ class MeasuredValues {
                         // only direct injection
                         main_value_.push_back(direct_injection_measurement);
                     }
-                    else if (std::isinf(direct_injection_measurement.variance)) {
-                        // only appliance injection
+                    else if (std::isinf(direct_injection_measurement.variance) ||
+                             appliance_injection_measurement.variance == 0.0) {
+                        // only appliance injection if
+                        //    there is no direct injection measurement,
+                        //    or we have zero injection
                         main_value_.push_back(appliance_injection_measurement);
                     }
                     else {
