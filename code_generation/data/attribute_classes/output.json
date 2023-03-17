@@ -149,12 +149,12 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_from",
+                    "names": ["i_from, i_from_angle"],
                     "description": "Initial short circuit current flow at from-side"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_to",
+                    "names": ["i_to, i_to_angle"],
                     "description": "Initial short circuit current flow at to-side"
                 }
             ]
@@ -166,17 +166,17 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_1",
+                    "names": ["i_1", "i_1_angle"],
                     "description": "Initial short circuit current flow at side 1"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_2",
+                    "names": ["i_2", "i_2_angle"],
                     "description": "Initial short circuit current flow at side 2"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i_3",
+                    "names": ["i_3", "i_3_angle"],
                     "description": "Initial short circuit current flow at side 3"
                 }
             ]
@@ -188,7 +188,7 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": "i",
+                    "names": ["i", "i_angle"],
                     "description": "Initial short circuit current flow of the appliance"
                 }
             ]

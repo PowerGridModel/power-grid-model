@@ -104,8 +104,8 @@ using AsymNodeShortCircuitOutput = NodeShortCircuitOutput<false>;
 
 template <bool sym>
 struct BranchShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_from;  // Initial short circuit current flow at from-side
-    RealValue<sym> i_to;  // Initial short circuit current flow at to-side
+    RealValue<sym> i_from, i_from_angle;  // Initial short circuit current flow at from-side
+    RealValue<sym> i_to, i_to_angle;  // Initial short circuit current flow at to-side
 };
 using SymBranchShortCircuitOutput = BranchShortCircuitOutput<true>;
 using AsymBranchShortCircuitOutput = BranchShortCircuitOutput<false>;
@@ -113,8 +113,11 @@ using AsymBranchShortCircuitOutput = BranchShortCircuitOutput<false>;
 template <bool sym>
 struct Branch3ShortCircuitOutput : BaseOutput {
     RealValue<sym> i_1;  // Initial short circuit current flow at side 1
+    RealValue<sym> i_1_angle;  // Initial short circuit current flow at side 1
     RealValue<sym> i_2;  // Initial short circuit current flow at side 2
+    RealValue<sym> i_2_angle;  // Initial short circuit current flow at side 2
     RealValue<sym> i_3;  // Initial short circuit current flow at side 3
+    RealValue<sym> i_3_angle;  // Initial short circuit current flow at side 3
 };
 using SymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<true>;
 using AsymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<false>;
@@ -122,6 +125,7 @@ using AsymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<false>;
 template <bool sym>
 struct ApplianceShortCircuitOutput : BaseOutput {
     RealValue<sym> i;  // Initial short circuit current flow of the appliance
+    RealValue<sym> i_angle;  // Initial short circuit current flow of the appliance
 };
 using SymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<true>;
 using AsymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<false>;
@@ -276,8 +280,8 @@ struct get_meta<BranchShortCircuitOutput<sym>> {
         meta.size = sizeof(BranchShortCircuitOutput<sym>);  
         meta.alignment = alignof(BranchShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from>("i_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to>("i_to"));
+        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from, i_from_angle>("i_from, i_from_angle"));
+        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to, i_to_angle>("i_to, i_to_angle"));
         return meta;
     }
 };
@@ -291,8 +295,11 @@ struct get_meta<Branch3ShortCircuitOutput<sym>> {
         meta.alignment = alignof(Branch3ShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_1>("i_1"));
+        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_1_angle>("i_1_angle"));
         meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_2>("i_2"));
+        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_2_angle>("i_2_angle"));
         meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_3>("i_3"));
+        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_3_angle>("i_3_angle"));
         return meta;
     }
 };
@@ -306,6 +313,7 @@ struct get_meta<ApplianceShortCircuitOutput<sym>> {
         meta.alignment = alignof(ApplianceShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i>("i"));
+        meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i_angle>("i_angle"));
         return meta;
     }
 };
