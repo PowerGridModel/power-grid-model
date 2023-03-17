@@ -104,8 +104,10 @@ using AsymNodeShortCircuitOutput = NodeShortCircuitOutput<false>;
 
 template <bool sym>
 struct BranchShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_from, i_from_angle;  // Initial short circuit current flow at from-side
-    RealValue<sym> i_to, i_to_angle;  // Initial short circuit current flow at to-side
+    RealValue<sym> i_from;  // Initial short circuit current flow at from-side
+    RealValue<sym> i_from_angle;  // Initial short circuit current flow at from-side
+    RealValue<sym> i_to;  // Initial short circuit current flow at to-side
+    RealValue<sym> i_to_angle;  // Initial short circuit current flow at to-side
 };
 using SymBranchShortCircuitOutput = BranchShortCircuitOutput<true>;
 using AsymBranchShortCircuitOutput = BranchShortCircuitOutput<false>;
@@ -280,8 +282,10 @@ struct get_meta<BranchShortCircuitOutput<sym>> {
         meta.size = sizeof(BranchShortCircuitOutput<sym>);  
         meta.alignment = alignof(BranchShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from, i_from_angle>("i_from, i_from_angle"));
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to, i_to_angle>("i_to, i_to_angle"));
+        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from>("i_from"));
+        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from_angle>("i_from_angle"));
+        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to>("i_to"));
+        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to_angle>("i_to_angle"));
         return meta;
     }
 };

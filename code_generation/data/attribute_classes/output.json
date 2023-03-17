@@ -149,12 +149,12 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["i_from, i_from_angle"],
+                    "names": ["i_from", "i_from_angle"],
                     "description": "Initial short circuit current flow at from-side"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["i_to, i_to_angle"],
+                    "names": ["i_to", "i_to_angle"],
                     "description": "Initial short circuit current flow at to-side"
                 }
             ]
