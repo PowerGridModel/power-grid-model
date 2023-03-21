@@ -6,7 +6,19 @@ SPDX-License-Identifier: MPL-2.0
 
 # Dataset Terminology
 
-The terms are loosely defined, and you might find places in the code where terms have been misused; e.g. where a scenarios are called a batches, or an array is called a dataset.
+Some terms regarding the data structures are explained here. They are loosely defined, and you might find places in the code where terms have been misused; e.g. where a scenarios are called a batches, or an array is called a dataset.
+
+## Data structures
+
+- **SingleDataset:** A data type storing input data (ie. all elements of all components) for a single scenario
+
+- **BatchDataset:** A data type storing update and or output data for one or more scenarios
+
+- **Dataset:** Either a single or a batch dataset
+
+- **Array:** All elements of one specific component, for one or more scenarios. I.e. a node array or line array. An array can be one dimensional (containing all elements of a single component for one scenario), two dimensional (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is essentially a dictionary with a data buffer and an index pointer.
+
+## Terms regarding data structures
 
 - **Component:** The definition of a part of a grid: eg. node, source, line etc. Check highlighted section of graph in [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
 
@@ -30,15 +42,7 @@ The Power Grid Model can process many scenarios (i.e. time steps, switch states,
 
 - **Sub batch:** Only used internally, in the C++ code, when all scenarios in a batch calculation are distributed over multiple threads, so that each thread can handle a sub batch, to utilize the calculation power of multi-core processors.
 
-## Data structures
-
-- **SingleDataset:** A data type storing input data (ie. all elements of all components) for a single scenario
-
-- **BatchDataset:** A data type storing update and or output data for one or more scenarios
-
-- **Dataset:** Either a single or a batch dataset
-
-- **Array:** All elements of one specific component, for one or more scenarios. I.e. a node array or line array. An array can be one dimensional (containing all elements of a single component for one scenario), two dimensional (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is essentially a dictionary with a data buffer and an index pointer.
+- **Dataset data type:** The type of Dataset. ie. input, update, sym_output, asym_output, sym_sc_output, asym_sc_output.
 
 ## Attributes of Components
 
