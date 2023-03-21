@@ -196,6 +196,10 @@ struct StateEstimationInput {
     std::vector<SensorCalcParam<sym>> measured_bus_injection;
 };
 
+struct ShortCircuitInput {
+    std::vector<FaultCalcParam> faults;
+};
+
 template <bool sym>
 struct MathOutput {
     std::vector<ComplexValue<sym>> u;
