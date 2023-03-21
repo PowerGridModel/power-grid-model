@@ -16,19 +16,31 @@ Some terms regarding the data structures are explained here. They are loosely de
 
 - **Dataset:** Either a single or a batch dataset
 
-- **Array:** All elements of one specific component, for one or more scenarios. I.e. a node array or line array. An array can be one dimensional (containing all elements of a single component for one scenario), two dimensional (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is essentially a dictionary with a data buffer and an index pointer.
+### Data type of Dataset 
+
+The type of Dataset. i.e. `input`, `update`, `sym_output`, `asym_output`, `sym_sc_output`, `asym_sc_output`.
+The examples in brackets are given in context of a dataset of a `line` component.
+
+- **input:** Contains attributes relevant to configuration of grid.(eg. `id`, `from_node`, `from_status`, ...)
+- **update:** Contains attributes relevant to multiple scenarios. (eg. `from_status`,`to_status`)
+- **sym_output:** Contains attributes relevant to symmetrical steady state output of powerflow or state estimation calculation. (eg. `p_from`, `p_to`, ...) 
+- **asym_output:** Contains attributes relevant to asymmetrical steady state output of powerflow or state estimation calculation. (eg. `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
+- **sym_sc_output:** Contains attributes relevant to symmetrical short circuit calculation. (eg. `i_from`, `i_from_angle`, ...) 
+- **asym_sc_output:** Contains attributes relevant to asymmetrical short cirucit calculation. (eg. `i_from`, `i_from_angle`, ...). Attributes are similar `sym_sc_output` while some values of the asymmetrical dataset will contain detailed data for all 3 phases individually. 
 
 ## Terms regarding data structures
 
-- **Component:** The definition of a part of a grid: eg. node, source, line etc. Check highlighted section of graph in [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
+- **Component:** The definition of a part of a grid: e.g. `node`, `source`, `line`, etc. Check highlighted section of graph in [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
 
 - **Element:** A single instance of a node, source, line etc.
 
-- **Attribute:** The definition of id, energized, p, etc of any component.
+- **Attribute:** The definition of `id`, `energized`, `p`, etc. of any component.
 
 - **Value:** The value under an attribute, ie. id, energized, p, etc.
 
-The Power Grid Model can process many scenarios (i.e. time steps, switch states, etc) at once, which we call a batch. The batch size is the number of scenarios.
+- **Array:** All elements of one specific component, for one or more scenarios. I.e. a node array or line array. An array can be one dimensional (containing all elements of a single component for one scenario), two-dimensional (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is essentially a dictionary with a data buffer and an index pointer.
+
+The Power Grid Model can process many scenarios (i.e. time steps, switch states, etc.) at once, which we call a batch. The batch size is the number of scenarios.
 
 - **Scenario:** A single time step / switch state topology.
 
@@ -41,8 +53,6 @@ The Power Grid Model can process many scenarios (i.e. time steps, switch states,
 - **n_component_elements_per_scenario:** The number of elements of a specific component for each scenario. This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
 
 - **Sub batch:** Only used internally, in the C++ code, when all scenarios in a batch calculation are distributed over multiple threads, so that each thread can handle a sub batch, to utilize the calculation power of multi-core processors.
-
-- **Dataset data type:** The type of Dataset. ie. input, update, sym_output, asym_output, sym_sc_output, asym_sc_output.
 
 ## Attributes of Components
 
