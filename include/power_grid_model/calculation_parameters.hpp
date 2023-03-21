@@ -65,11 +65,6 @@ struct FaultCalcParam {
     DoubleComplex y_fault;
 };
 
-template <bool sym>
-struct FaultMathOutput {
-    ComplexValue<sym> i_f;
-};
-
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>
@@ -208,6 +203,15 @@ struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;
     std::vector<ApplianceMathOutput<sym>> load_gen;
+};
+
+template <bool sym>
+struct ShortCircuitMathOutput {
+    std::vector<ComplexValue<sym>> i_fault;
+    std::vector<ComplexValue<sym>> u_bus;
+    std::vector<ComplexValue<sym>> i_branch_from;
+    std::vector<ComplexValue<sym>> i_branch_to;
+    std::vector<ComplexValue<sym>> i_source;
 };
 
 // component indices at physical model side
