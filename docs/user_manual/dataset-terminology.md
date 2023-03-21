@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-# Structure of datasets
+# Dataset Terminology
 
 The terms are loosely defined, and you might find places in the code where terms have been misused; e.g. where a scenarios are called a batches, or an array is called a dataset.
 
