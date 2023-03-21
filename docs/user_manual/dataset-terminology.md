@@ -25,8 +25,8 @@ The examples in brackets are given in context of a dataset of a `line` component
 - **update:** Contains attributes relevant to multiple scenarios. (eg. `from_status`,`to_status`)
 - **sym_output:** Contains attributes relevant to symmetrical steady state output of powerflow or state estimation calculation. (eg. `p_from`, `p_to`, ...) 
 - **asym_output:** Contains attributes relevant to asymmetrical steady state output of powerflow or state estimation calculation. (eg. `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
-- **sym_sc_output:** Contains attributes relevant to symmetrical short circuit calculation. (eg. `i_from`, `i_from_angle`, ...) 
-- **asym_sc_output:** Contains attributes relevant to asymmetrical short cirucit calculation. (eg. `i_from`, `i_from_angle`, ...). Attributes are similar `sym_sc_output` while some values of the asymmetrical dataset will contain detailed data for all 3 phases individually. 
+- **sym_sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...) 
+- **asym_sc_output:** Contains attributes relevant to asymmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...). Attributes are similar `sym_sc_output` while some values of the asymmetrical dataset will contain detailed data for all 3 phases individually. 
 
 ## Terms regarding data structures
 
