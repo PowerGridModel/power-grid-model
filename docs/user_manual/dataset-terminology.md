@@ -8,31 +8,31 @@ SPDX-License-Identifier: MPL-2.0
 
 The terms are loosely defined, and you might find places in the code where terms have been misused; e.g. where a scenarios are called a batches, or an array is called a dataset.
 
-- **Component:** the definition of a node, source, line etc.
+- **Component:** The definition of a part of a grid: eg. node, source, line etc. Check highlighted section of graph in [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
 
-- **Element:** a single instance of a node, source, line etc.
+- **Element:** A single instance of a node, source, line etc.
 
-- **Attribute:** the definition of id, energized, p, etc.
+- **Attribute:** The definition of id, energized, p, etc of any component.
 
-- **Value:** the value of id, energized, p, etc.
+- **Value:** The value under an attribute, ie. id, energized, p, etc.
 
 The Power Grid Model can process many scenarios (i.e. time steps, switch states, etc) at once, which we call a batch. The batch size is the number of scenarios.
 
-- **Scenario:** A single time step / switch state topology
+- **Scenario:** A single time step / switch state topology.
 
-- **Batch:** The total set of scenarios (there is only one batch)
+- **Batch:** The total set of scenarios. (there is only one batch)
 
-- **Batch size:** The total number of scenarios in the batch
+- **Batch size:** The total number of scenarios in the batch.
 
-- **n_scenarios** The total number of scenarios in the batch
+- **n_scenarios:** The total number of scenarios in the batch. (Same as Batch Size)
 
-- **n_component_elements_per_scenario** The number of elements of a specific component for each scenario. This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
+- **n_component_elements_per_scenario:** The number of elements of a specific component for each scenario. This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
 
-- **Sub batch:** Only used internally, in the C++ code, when all scenarios in a batch calculation are distributed over multiple threads, so that each thread can handle a sub batch, to utilize the calculation power of multi-core processers.
+- **Sub batch:** Only used internally, in the C++ code, when all scenarios in a batch calculation are distributed over multiple threads, so that each thread can handle a sub batch, to utilize the calculation power of multi-core processors.
 
 ## Data structures
 
-- **SingleDataset:** A data type storing input data (=all elements of all components) for a single scenario
+- **SingleDataset:** A data type storing input data (ie. all elements of all components) for a single scenario
 
 - **BatchDataset:** A data type storing update and or output data for one or more scenarios
 
