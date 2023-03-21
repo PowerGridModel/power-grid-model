@@ -30,8 +30,8 @@ class Fault final : public Base {
     Fault(FaultInput const& fault_input)
         : Base{fault_input},
           fault_object_{fault_input.fault_object},
-          r_f_{is_nan(fault_input.r_f) ? (bool)0.0 : fault_input.r_f},
-          x_f_{is_nan(fault_input.x_f) ? (bool)0.0 : fault_input.x_f} {
+          r_f_{is_nan(fault_input.r_f) ? (double)0.0 : fault_input.r_f},
+          x_f_{is_nan(fault_input.x_f) ? (double)0.0 : fault_input.x_f} {
     }
 
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
@@ -42,7 +42,14 @@ class Fault final : public Base {
         FaultCalcParam param{};
         // calculate the fault admittance in p.u.
         double const base_y = base_power_3p / u_rated / u_rated;
-        DoubleComplex y_f = 1.0 / (r_f_ + 1.0i * x_f_) / base_y;
+        DoubleComplex y_f{};
+        if (r_f_ == 0.0 && x_f_ == 0.0) {
+            y_f.real(std::numeric_limits<double>::infinity());
+            y_f.imag(std::numeric_limits<double>::infinity());
+        }
+        else {
+            y_f = 1.0 / (r_f_ + 1.0i * x_f_) / base_y;
+        }
         param.y_fault = y_f;
         return param;
     }

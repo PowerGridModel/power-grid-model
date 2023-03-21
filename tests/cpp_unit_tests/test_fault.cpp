@@ -29,6 +29,13 @@ TEST_CASE("Test fault") {
         CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
     }
 
+    SUBCASE("Test calc param with nan impedance input") {
+        Fault fault_nan_imp{{{1}, 2}};
+        FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
+        CHECK(std::isinf(param.y_fault.real()));
+        CHECK(std::isinf(param.y_fault.imag()));
+    }
+
     SUBCASE("Test get_null_output") {
         FaultOutput output = fault.get_null_output();
         CHECK(output.id == 1);
