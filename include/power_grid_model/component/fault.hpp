@@ -20,6 +20,8 @@ class Fault final : public Base {
     using UpdateType = FaultUpdate;
     template <bool sym>
     using OutputType = FaultOutput;
+    template <bool sym>
+    using ShortCircuitOutputType = FaultShortCircuitOutput<sym>;
     static constexpr char const* name = "fault";
     ComponentType math_model_type() const final {
         return ComponentType::fault;
