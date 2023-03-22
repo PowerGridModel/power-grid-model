@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Dataset Terminology
 
-Some terms regarding the data structures are explained here. They are loosely defined, and you might find places in the code where terms have been misused; e.g. where a scenarios are called a batches, or an array is called a dataset.
+Some terms regarding the data structures are explained here, including the definition of dataset, component, and attribute.
 
 ## Data structures
 
@@ -16,15 +16,15 @@ Some terms regarding the data structures are explained here. They are loosely de
 
 - **Dataset:** Either a single or a batch dataset
 
-### Data type of Dataset 
+### Type of Dataset 
 
 The type of Dataset. i.e. `input`, `update`, `sym_output`, `asym_output`, `sym_sc_output`, `asym_sc_output`.
 The examples in brackets are given in context of a dataset of a `line` component.
 
 - **input:** Contains attributes relevant to configuration of grid.(eg. `id`, `from_node`, `from_status`, ...)
 - **update:** Contains attributes relevant to multiple scenarios. (eg. `from_status`,`to_status`)
-- **sym_output:** Contains attributes relevant to symmetrical steady state output of powerflow or state estimation calculation. (eg. `p_from`, `p_to`, ...) 
-- **asym_output:** Contains attributes relevant to asymmetrical steady state output of powerflow or state estimation calculation. (eg. `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
+- **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation calculation. (eg. `p_from`, `p_to`, ...) 
+- **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation calculation. (eg. `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
 - **sym_sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...) 
 - **asym_sc_output:** Contains attributes relevant to asymmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...). Attributes are similar `sym_sc_output` while some values of the asymmetrical dataset will contain detailed data for all 3 phases individually. 
 
@@ -52,7 +52,7 @@ The Power Grid Model can process many scenarios (i.e. time steps, switch states,
 
 - **n_component_elements_per_scenario:** The number of elements of a specific component for each scenario. This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
 
-- **Sub batch:** Only used internally, in the C++ code, when all scenarios in a batch calculation are distributed over multiple threads, so that each thread can handle a sub batch, to utilize the calculation power of multi-core processors.
+- **Sub-batch:** Only used internally, in the C++ code, when all scenarios in a batch calculation are distributed over multiple threads, so that each thread can handle a sub-batch, to utilize the calculation power of multi-core processors.
 
 ## Attributes of Components
 
@@ -65,7 +65,5 @@ The Power Grid Model can process many scenarios (i.e. time steps, switch states,
 | unit                     | Unit of the attribute, if it is   applicable. As a general rule, only standard SI units without any prefix are   used.                                                                                                                                                                                       |
 | description              | Description of the attribute.                                                                                                                                                                                                                                                                                |
 | required                 | If the attribute is required. If   not, then it is optional. Note if you choose not to specify an optional   attribute, it should have the null value as defined in [](../advanced_documentation/native-data-interface.md#basic-data-types).                                                                 |
-| input                    | If the attribute is part of an   input dataset.                                                                                                                                                                                                                                                              |
 | update                   | If the attribute can be mutated by   the update call `PowerGridModel.update` on an existing instance, only   applicable when this attribute is part of an input dataset.                                                                                                                                     |
-| output                   | If the attribute is part of an   output dataset.                                                                                                                                                                                                                                                             |
 | valid values             | If applicable, an indication which   values are valid for the input data                                                                                                                                                                                                                                     |
