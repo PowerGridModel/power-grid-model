@@ -132,6 +132,12 @@ struct ApplianceShortCircuitOutput : BaseOutput {
 using SymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<true>;
 using AsymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<false>;
 
+template <bool sym>
+struct SensorShortCircuitOutput : BaseOutput {
+};
+using SymSensorShortCircuitOutput = SensorShortCircuitOutput<true>;
+using AsymSensorShortCircuitOutput = SensorShortCircuitOutput<false>;
+
 
 
 // template specialization functors to get meta data
@@ -318,6 +324,18 @@ struct get_meta<ApplianceShortCircuitOutput<sym>> {
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i>("i"));
         meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i_angle>("i_angle"));
+        return meta;
+    }
+};
+
+template <bool sym>
+struct get_meta<SensorShortCircuitOutput<sym>> {
+    MetaData operator() () {
+        MetaData meta{};
+        meta.name = "SensorShortCircuitOutput";      
+        meta.size = sizeof(SensorShortCircuitOutput<sym>);  
+        meta.alignment = alignof(SensorShortCircuitOutput<sym>);
+        meta.attributes = get_meta<BaseOutput>{}().attributes;
         return meta;
     }
 };

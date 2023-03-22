@@ -23,6 +23,8 @@ class Branch : public Base {
     using UpdateType = BranchUpdate;
     template <bool sym>
     using OutputType = BranchOutput<sym>;
+    template <bool sym>
+    using ShortCircuitOutputType = BranchShortCircuitOutput<sym>;
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final {
         return ComponentType::branch;
