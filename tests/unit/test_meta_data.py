@@ -52,3 +52,14 @@ def test_sensor_meta_data():
 
 def test_dict_like_access():
     assert power_grid_meta_data["input"]["node"].dtype == power_grid_meta_data["input"]["node"]["dtype"]
+
+
+def test_all_datasets():
+    assert set(power_grid_meta_data.keys()) == {
+        "input",
+        "update",
+        "sym_output",
+        "asym_output",
+        "sym_sc_output",
+        "asym_sc_output",
+    }
