@@ -22,6 +22,8 @@ class Appliance : public Base {
     using UpdateType = ApplianceUpdate;
     template <bool sym>
     using OutputType = ApplianceOutput<sym>;
+    template <bool sym>
+    using ShortCircuitOutputType = ApplianceShortCircuitOutput<sym>;
     static constexpr char const* name = "appliance";
 
     Appliance(ApplianceInput const& appliance_input, double u)

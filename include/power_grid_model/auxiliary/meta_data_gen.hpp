@@ -30,6 +30,8 @@ void add_meta_data(AllPowerGridMetaData& meta) {
     meta["update"][CT::name] = get_meta<UpdateType>{}();
     meta["sym_output"][CT::name] = get_meta<typename CT::template OutputType<true>>{}();
     meta["asym_output"][CT::name] = get_meta<typename CT::template OutputType<false>>{}();
+    meta["sym_sc_output"][CT::name] = get_meta<typename CT::template ShortCircuitOutputType<true>>{}();
+    meta["asym_sc_output"][CT::name] = get_meta<typename CT::template ShortCircuitOutputType<false>>{}();
 }
 
 template <class T>

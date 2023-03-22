@@ -220,6 +220,8 @@ PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
  *   - update
  *   - sym_output
  *   - asym_output
+ *   - sym_sc_output
+ *   - asym_sc_output
  *
  * @param handle
  * @param dataset name of dataset
