@@ -47,6 +47,7 @@ quickstart
 :caption: "User Manual"
 :maxdepth: 2
 user_manual/data-model
+user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
 user_manual/performance-guide

@@ -76,22 +76,6 @@ components. On the other hand, the same model can execute symmetric or asymmetri
 * In case of asymmetric calculation, the `sym_load` will be treated as an asymmetric load by dividing the total
   specified power equally into three phases.
 
-## Attributes of Components
-
-| Attribute    | Description                                                                                                                                                                                                                                                        |
-|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| name         |  Name   of the attribute. It is exactly the same as the attribute name in   `power_grid_model.power_grid_meta_data`.                                                                                                                                               |
-| data type    |  Data type of the attribute. It is either a type from the table in [Native Data Interface](../advanced_documentation/native-data-interface.md#basic-data-types). Or it can be an enumeration as above defined. There are two special data types `RealValueInput` and `RealValueOutput` which are independent. |
-|              |     `RealValueInput` is used for some input   attributes. It is a `double` for a symmetric class (e.g. `sym_load`)  and `double[3]` an asymmetric class (e.g.   `asym_load`). It is explained in detail in the corresponding types.                                |
-|              |     `RealValueOutput` is used for many output   attributes. It is a `double` in symmetric calculation and `double[3]` for   asymmetric calculation.                                                                                                                |
-| unit         |  Unit of the attribute, if it is   applicable. As a general rule, only standard SI units without any prefix are   used.                                                                                                                                            |
-| description  |  Description of the attribute.                                                                                                                                                                                                                                     |
-| required     |  If the attribute is required. If   not, then it is optional. Note if you choose not to specify an optional   attribute, it should have the null value as defined in [](../advanced_documentation/native-data-interface.md#basic-data-types).                                          |
-| input        |  If the attribute is part of an   input dataset.                                                                                                                                                                                                                   |
-| update       |  If the attribute can be mutated by   the update call `PowerGridModel.update` on an existing instance, only   applicable when this attribute is part of an input dataset.                                                                                          |
-| output       |  If the attribute is part of an   output dataset.                                                                                                                                                                                                                  |
-| valid values |  If applicable, an indication which   values are valid for the input data                                                                                                                                                                                          |
-
 ## Reference Direction
 
 The sign of active/reactive power of the {ref}`user_manual/components:Appliance` and
