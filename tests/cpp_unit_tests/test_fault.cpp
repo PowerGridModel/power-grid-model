@@ -30,7 +30,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with nan impedance input") {
-        Fault fault_nan_imp{{{1}, 2}};
+        Fault fault_nan_imp{{{1}, 2, nan, nan}};
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
