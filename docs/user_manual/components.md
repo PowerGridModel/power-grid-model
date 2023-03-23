@@ -473,3 +473,26 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 | `p_residual` | `RealValueOutput` | watt (W)                   | residual value between measured active power and calculated active power     |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power |
 
+## Fault
+
+* type name: `fault`
+* * base: {hoverxreftooltip}`user_manual/components:base`
+
+`fault` defines a short circuit location in the grid. At this moment a fault can only happen at a `node`.
+
+#### Input
+| name           | data type | unit    | description                                         |       required       |  update  |   valid values    |
+|----------------|-----------|---------|-----------------------------------------------------|:--------------------:|:--------:|:-----------------:|
+| `fault_object` | `int32_t` | -       | ID of the component where the short circuit happens |       &#10004;       | &#10004; | A valid `node` ID |
+| `r_f`          | `double`  | ohm (Ω) | Short circuit resistance                            | &#10060; default 0.0 | &#10060; |                   |
+| `x_f`          | `double`  | ohm (Ω) | Short circuit reactance                             | &#10060; default 0.0 | &#10060; |                   |
+
+#### Steady state output
+A `fault` has no steady state output.
+
+#### Short circuit output
+| name        | data type         | unit       | description   |
+|-------------|-------------------|------------|---------------|
+| `i_f`       | `RealValueOutput` | ampere (A) | current       |
+| `i_f_angle` | `RealValueOutput` | rad        | current angle |
+

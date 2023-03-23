@@ -53,7 +53,8 @@ enum class ComponentType : IntS {
     generic_load_gen = 6,
     shunt = 7,
     source = 8,
-    branch3 = 9
+    branch3 = 9,
+    fault = 10
 };
 
 // DO NOT change the order of enumerations

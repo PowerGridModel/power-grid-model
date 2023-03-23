@@ -164,6 +164,28 @@
             ]
         },
         {
+            "name": "FaultOutput",
+            "base": "BaseOutput",
+            "attributes": []
+        },
+        {
+            "name": "FaultShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": "i_f",
+                    "description": "short circuit current magnitude"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": "i_f_angle",
+                    "description": "short circuit current angle"
+                }
+            ]
+        },
+        {
             "name": "NodeShortCircuitOutput",
             "base": "BaseOutput",
             "is_template": true,

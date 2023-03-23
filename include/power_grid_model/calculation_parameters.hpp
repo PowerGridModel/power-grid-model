@@ -59,6 +59,12 @@ struct BranchMathOutput {
     ComplexValue<sym> i_t;
 };
 
+// fault math calculation parameters and math output
+struct FaultCalcParam {
+    Idx math_fault_object{-1};
+    DoubleComplex y_fault;
+};
+
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>
@@ -185,6 +191,10 @@ struct StateEstimationInput {
     std::vector<SensorCalcParam<sym>> measured_bus_injection;
 };
 
+struct ShortCircuitInput {
+    std::vector<FaultCalcParam> faults;
+};
+
 template <bool sym>
 struct MathOutput {
     std::vector<ComplexValue<sym>> u;
@@ -193,6 +203,15 @@ struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;
     std::vector<ApplianceMathOutput<sym>> load_gen;
+};
+
+template <bool sym>
+struct ShortCircuitMathOutput {
+    std::vector<ComplexValue<sym>> i_fault;
+    std::vector<ComplexValue<sym>> u_bus;
+    std::vector<ComplexValue<sym>> i_branch_from;
+    std::vector<ComplexValue<sym>> i_branch_to;
+    std::vector<ComplexValue<sym>> i_source;
 };
 
 // component indices at physical model side

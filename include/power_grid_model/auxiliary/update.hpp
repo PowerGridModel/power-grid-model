@@ -74,6 +74,10 @@ struct PowerSensorUpdate : BaseUpdate {
 using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
+struct FaultUpdate : BaseUpdate {
+    ID fault_object;  // ID of the faulted object
+};
+
 
 
 // template specialization functors to get meta data
@@ -214,6 +218,19 @@ struct get_meta<PowerSensorUpdate<sym>> {
         meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::power_sigma>("power_sigma"));
         meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::p_measured>("p_measured"));
         meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::q_measured>("q_measured"));
+        return meta;
+    }
+};
+
+template<>
+struct get_meta<FaultUpdate> {
+    MetaData operator() () {
+        MetaData meta{};
+        meta.name = "FaultUpdate";      
+        meta.size = sizeof(FaultUpdate);  
+        meta.alignment = alignof(FaultUpdate);
+        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<&FaultUpdate::fault_object>("fault_object"));
         return meta;
     }
 };
