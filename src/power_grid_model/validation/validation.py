@@ -588,6 +588,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         component,
         field="measured_object",
         ref_components=[
+            "node",
             "line",
             "transformer",
             "three_winding_transformer",

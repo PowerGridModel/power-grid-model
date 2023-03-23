@@ -21,6 +21,8 @@ class Node final : public Base {
     using InputType = NodeInput;
     template <bool sym>
     using OutputType = NodeOutput<sym>;
+    template <bool sym>
+    using ShortCircuitOutputType = NodeShortCircuitOutput<sym>;
     static constexpr char const* name = "node";
     ComponentType math_model_type() const final {
         return ComponentType::node;

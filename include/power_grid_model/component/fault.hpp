@@ -20,6 +20,8 @@ class Fault final : public Base {
     using UpdateType = FaultUpdate;
     template <bool sym>
     using OutputType = FaultOutput;
+    template <bool sym>
+    using ShortCircuitOutputType = FaultShortCircuitOutput<sym>;
     static constexpr char const* name = "fault";
     ComponentType math_model_type() const final {
         return ComponentType::fault;
@@ -28,20 +30,25 @@ class Fault final : public Base {
     Fault(FaultInput const& fault_input)
         : Base{fault_input},
           fault_object_{fault_input.fault_object},
-          r_f_{is_nan(fault_input.r_f) ? (bool)0.0 : fault_input.r_f},
-          x_f_{is_nan(fault_input.x_f) ? (bool)0.0 : fault_input.x_f} {
+          r_f_{is_nan(fault_input.r_f) ? (double)0.0 : fault_input.r_f},
+          x_f_{is_nan(fault_input.x_f) ? (double)0.0 : fault_input.x_f} {
     }
 
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
-        if (!energized(is_connected_to_source)) {
-            return FaultCalcParam{};
-        }
         // param object
         FaultCalcParam param{};
+        if (!energized(is_connected_to_source)) {
+            return param;
+        }
+        // set the fault admittance to inf if the impedance is zero
+        if (r_f_ == 0.0 && x_f_ == 0.0) {
+            param.y_fault.real(std::numeric_limits<double>::infinity());
+            param.y_fault.imag(std::numeric_limits<double>::infinity());
+            return param;
+        }
         // calculate the fault admittance in p.u.
-        double const base_y = base_power_3p / u_rated / u_rated;
-        DoubleComplex y_f = 1.0 / (r_f_ + 1.0i * x_f_) / base_y;
-        param.y_fault = y_f;
+        double const base_z = u_rated * u_rated / base_power_3p;
+        param.y_fault = base_z / (r_f_ + 1.0i * x_f_);
         return param;
     }
 
@@ -57,7 +64,7 @@ class Fault final : public Base {
 
     // energized
     template <bool sym>
-    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) {
+    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
@@ -73,7 +80,7 @@ class Fault final : public Base {
     // update faulted object
     UpdateChange update(FaultUpdate const& update) {
         assert(update.id == id());
-        if (update.fault_object != na_IntS) {
+        if (update.fault_object != na_IntID) {
             fault_object_ = update.fault_object;
         }
         return {false, false};  // topology and parameters do not change
@@ -84,7 +91,7 @@ class Fault final : public Base {
     }
 
     // getter
-    ID get_fault_object() {
+    ID get_fault_object() const {
         return fault_object_;
     }
 
