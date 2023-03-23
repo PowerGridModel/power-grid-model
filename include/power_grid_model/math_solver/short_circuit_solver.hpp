@@ -18,7 +18,17 @@ namespace math_model_impl {
 template <bool sym>
 class ShortCircuitSolver {
    public:
-    ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr) {
+    ShortCircuitSolver(YBus<sym> const& y_bus) {
+    }
+
+    ShortCircuitMathOutput<sym> run_short_circuit() {
+        // check combination of sym and fault type, should match!
+
+        // prepare matrix + rhs
+
+        // solve matrix
+
+        // post processing
     }
 };
 
