@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
 
 #include "../calculation_parameters.hpp"
+#include "../enum.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -21,8 +22,9 @@ class ShortCircuitSolver {
     ShortCircuitSolver(YBus<sym> const& y_bus) {
     }
 
-    ShortCircuitMathOutput<sym> run_short_circuit() {
-        // check combination of sym and fault type, should match!
+    ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitType short_circuit_type,
+                                                  ShortCircuitPhases short_circuit_phases) {
+        // check combination of sym and fault type AND type to phases, should match!
 
         // prepare matrix + rhs
 
