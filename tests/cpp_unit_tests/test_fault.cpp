@@ -83,6 +83,11 @@ TEST_CASE("Test fault") {
         CHECK(!updated.param);
         CHECK(!updated.topo);
         CHECK(fault.get_fault_object() == 10);
+
+        // update without updating
+        FaultUpdate const fault_update_nan{{1}, na_IntID};
+        fault.update(fault_update_nan);
+        CHECK(fault.get_fault_object() == 10);
     }
 }
 

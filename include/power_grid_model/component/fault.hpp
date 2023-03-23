@@ -82,7 +82,7 @@ class Fault final : public Base {
     // update faulted object
     UpdateChange update(FaultUpdate const& update) {
         assert(update.id == id());
-        if (update.fault_object != na_IntS) {
+        if (update.fault_object != na_IntID) {
             fault_object_ = update.fault_object;
         }
         return {false, false};  // topology and parameters do not change
