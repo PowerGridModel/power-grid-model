@@ -66,7 +66,7 @@ class Fault final : public Base {
 
     // energized
     template <bool sym>
-    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) {
+    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
@@ -93,7 +93,7 @@ class Fault final : public Base {
     }
 
     // getter
-    ID get_fault_object() {
+    ID get_fault_object() const {
         return fault_object_;
     }
 
