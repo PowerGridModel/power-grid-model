@@ -35,22 +35,20 @@ class Fault final : public Base {
     }
 
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
-        if (!energized(is_connected_to_source)) {
-            return FaultCalcParam{};
-        }
         // param object
         FaultCalcParam param{};
-        // calculate the fault admittance in p.u.
-        double const base_y = base_power_3p / u_rated / u_rated;
-        DoubleComplex y_f{};
+        if (!energized(is_connected_to_source)) {
+            return param;
+        }
+        // set the fault admittance to inf if the impedance is zero
         if (r_f_ == 0.0 && x_f_ == 0.0) {
-            y_f.real(std::numeric_limits<double>::infinity());
-            y_f.imag(std::numeric_limits<double>::infinity());
+            param.y_fault.real(std::numeric_limits<double>::infinity());
+            param.y_fault.imag(std::numeric_limits<double>::infinity());
+            return param;
         }
-        else {
-            y_f = 1.0 / (r_f_ + 1.0i * x_f_) / base_y;
-        }
-        param.y_fault = y_f;
+        // calculate the fault admittance in p.u.
+        double const base_z = u_rated * u_rated / base_power_3p;
+        param.y_fault = base_z / (r_f_ + 1.0i * x_f_);
         return param;
     }
 
