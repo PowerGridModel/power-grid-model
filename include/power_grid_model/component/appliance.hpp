@@ -64,6 +64,12 @@ class Appliance : public Base {
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
+    template <bool sym>
+    ApplianceShortCircuitOutput<sym> get_null_sc_output() const {
+        ApplianceShortCircuitOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
 
     template <bool sym>
     ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
@@ -88,6 +94,13 @@ class Appliance : public Base {
                     output.pf(j) = output.p(j) / output.s(j);
             }
         }
+        return output;
+    }
+    template <bool sym>
+    ApplianceShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> i) const {
+        ApplianceShortCircuitOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        output.i = base_i_ * cabs(i);
         return output;
     }
     template <bool sym>
