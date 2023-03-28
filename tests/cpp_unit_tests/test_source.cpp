@@ -85,6 +85,15 @@ TEST_CASE("Test source") {
         CHECK(sym_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
+    SUBCASE("test source short circuit sym results") {
+        DoubleComplex i = 1.0 + 2.0i;
+        ApplianceShortCircuitOutput<true> const sym_sc_result = source.get_sc_output<true>(i);
+        CHECK(sym_sc_result.id == 1);
+        CHECK(sym_sc_result.energized);
+        CHECK(sym_sc_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(sym_sc_result.i_angle == doctest::Approx(arg(1.0 + 2.0i)));
+    }
+
     SUBCASE("test source asym results; u as input") {
         ApplianceOutput<false> const asym_result = source.get_output<false>(ComplexValue<false>{u});
         CHECK(asym_result.id == 1);
@@ -108,6 +117,17 @@ TEST_CASE("Test source") {
         CHECK(asym_result.pf(1) == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
+    SUBCASE("test source asym short circuit results") {
+        ComplexValue<false> const i{1.0 + 2.0i};
+        ApplianceShortCircuitOutput<false> const asym_sc_result = source.get_sc_output<false>(i);
+        CHECK(asym_sc_result.id == 1);
+        CHECK(asym_sc_result.energized);
+        CHECK(asym_sc_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(asym_sc_result.i(2) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(asym_sc_result.i_angle(1) == doctest::Approx(arg(1.0 + 2.0i) - deg_120));
+        CHECK(asym_sc_result.i_angle(2) == doctest::Approx(arg(1.0 + 2.0i) - deg_240));
+    }
+
     SUBCASE("test no source") {
         ApplianceOutput<false> const asym_result = source.get_null_output<false>();
         CHECK(asym_result.id == 1);
@@ -117,6 +137,16 @@ TEST_CASE("Test source") {
         CHECK(asym_result.s(2) == doctest::Approx(0.0));
         CHECK(asym_result.i(0) == doctest::Approx(0.0));
         CHECK(asym_result.pf(1) == doctest::Approx(0.0));
+    }
+
+    SUBCASE("test no source for short circuit") {
+        ApplianceShortCircuitOutput<false> const asym_sc_result = source.get_null_sc_output<false>();
+        CHECK(asym_sc_result.id == 1);
+        CHECK(!asym_sc_result.energized);
+        CHECK(asym_sc_result.i(1) == doctest::Approx(0.0));
+        CHECK(asym_sc_result.i(2) == doctest::Approx(0.0));
+        CHECK(asym_sc_result.i_angle(0) == doctest::Approx(0.0));
+        CHECK(asym_sc_result.i_angle(1) == doctest::Approx(0.0));
     }
 
     SUBCASE("test update") {

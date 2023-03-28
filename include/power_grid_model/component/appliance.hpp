@@ -101,6 +101,7 @@ class Appliance : public Base {
         ApplianceShortCircuitOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         output.i = base_i_ * cabs(i);
+        output.i_angle = arg(i);
         return output;
     }
     template <bool sym>

@@ -133,13 +133,12 @@ class Branch : public Base {
         return output;
     }
 
-        template <bool sym>
+    template <bool sym>
     BranchShortCircuitOutput<sym> get_null_sc_output() const {
         BranchShortCircuitOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
-
 
     // setter
     bool set_status(IntS new_from_status, IntS new_to_status) {
