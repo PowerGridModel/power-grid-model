@@ -169,7 +169,7 @@ def substitute_github_links(pkg_dir: Path):
         readme = raw_readme
     else:
         sha = os.environ["GITHUB_SHA"].lower()
-        url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
+        url = f"https://github.com/PowerGridModel/power-grid-model/blob/{sha}/"
         readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
     with open("README.md", "w") as f:
         f.write(readme)
