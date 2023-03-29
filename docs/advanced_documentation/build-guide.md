@@ -177,7 +177,7 @@ Clone repository, create and activate virtual environment.
 Go to a root folder you prefer to save the repositories.
 
 ```shell
-git clone https://github.com/alliander-opensource/power-grid-model.git
+git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
 python3.10 -m venv .venv
 source ./.venv/bin/activate
@@ -248,7 +248,7 @@ Clone repository, create and activate `conda` environment.
 Go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
-git clone https://github.com/alliander-opensource/power-grid-model.git
+git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
 Then open a Miniconda PowerShell Prompt, go to the repository folder.
@@ -302,7 +302,7 @@ It is recommended to create a virtual environment. Clone repository, create and 
 install the build dependency. go to a root folder you prefer to save the repositories.
 
 ```shell
-git clone https://github.com/alliander-opensource/power-grid-model.git 
+git clone https://github.com/PowerGridModel/power-grid-model.git 
 cd power-grid-model
 python3.10 -m venv .venv
 source ./.venv/bin/activate

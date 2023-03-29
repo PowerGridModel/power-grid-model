@@ -19,7 +19,7 @@ Currently, it supports the following calculations:
 * Symmetric and asymmetric power flow calculation with Newton-Raphson method, iterative current method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
 
-For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io) repository.
+For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
 ## Install from PyPI
 
@@ -80,9 +80,10 @@ advanced_documentation/c-api
 ```{toctree}
 :caption: "Contribution"
 :maxdepth: 2
-CODE_OF_CONDUCT.md
-CONTRIBUTING.md
-PROJECT_GOVERNANCE.md
+contribution/CODE_OF_CONDUCT.md
+contribution/CONTRIBUTING.md
+contribution/folder-structure.md
+contribution/PROJECT_GOVERNANCE.md
 ```
 ```{toctree}
 :caption: "Release and Support"

@@ -10,6 +10,7 @@ import pytest
 from power_grid_model import PowerGridModel, initialize_array
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
 from power_grid_model.utils import convert_python_to_numpy
+from power_grid_model.validation import assert_valid_input_data
 
 from .utils import compare_result
 
@@ -158,3 +159,19 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
             update_data={"source": initialize_array("update", "source", shape=(5, 0))},
             continue_on_batch_error=True,
         )
+
+
+def test_empty_input():
+    node = initialize_array("input", "node", 0)
+    line = initialize_array("input", "line", 0)
+    sym_load = initialize_array("input", "sym_load", 0)
+    source = initialize_array("input", "source", 0)
+
+    input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source}
+
+    assert_valid_input_data(input_data)
+    model = PowerGridModel(input_data, system_frequency=50.0)
+
+    result = model.calculate_power_flow()
+
+    assert result == {}

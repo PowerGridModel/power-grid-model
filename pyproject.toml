@@ -58,7 +58,7 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://github.com/alliander-opensource/power-grid-model"
+Home-page = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 
 [tool.setuptools.packages.find]
