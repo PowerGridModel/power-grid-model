@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "doctest/doctest.h"
-#include "power_grid_model//component/fault.hpp"
+#include "power_grid_model/component/fault.hpp"
 
 namespace power_grid_model {
 
