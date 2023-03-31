@@ -127,7 +127,9 @@ class PowerGridModel:
             input_data=prepared_input.data_ptrs_per_component,
         )
         assert_no_error()
-        self._all_component_count = {k: v.n_elements_per_scenario for k, v in prepared_input.dataset.items()}
+        self._all_component_count = {
+            k: v.n_elements_per_scenario for k, v in prepared_input.dataset.items() if v.n_elements_per_scenario > 0
+        }
 
     def update(self, *, update_data: Dict[str, np.ndarray]):
         """
