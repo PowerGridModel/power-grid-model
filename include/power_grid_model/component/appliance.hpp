@@ -97,11 +97,11 @@ class Appliance : public Base {
         return output;
     }
     template <bool sym>
-    ApplianceShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> i) const {
+    ApplianceShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i) const {
         ApplianceShortCircuitOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         output.i = base_i_ * cabs(i);
-        output.i_angle = arg(i);
+        output.i_angle = arg(i * injection_direction());
         return output;
     }
     template <bool sym>
