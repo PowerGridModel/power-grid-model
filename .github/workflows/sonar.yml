@@ -89,7 +89,7 @@ jobs:
 
       - name: Run sonar-scanner
         # only run sonar server in push event or pull request event from own repo
-        if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'alliander-opensource') }} 
+        if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'PowerGridModel') }} 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
