@@ -178,7 +178,7 @@ The `vision-example` is a minimal case with only node, source, cable and load.
 
 ### Netowork case
 
-The vision files were exported to excel which was then converted to power-grid-model input using [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io).
+The vision files were exported to excel which was then converted to power-grid-model input using [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io).
 The `vision-network` case has the following characteristics:
 - It contains 26 nodes (plus 20 from transformer load secondary node). 
 - The voltage level of grid input is at 110kV from which it is stepped down to 10.5kV level. 
