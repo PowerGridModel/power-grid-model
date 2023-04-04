@@ -1,0 +1,105 @@
+{
+    "buildPresets": [
+        {
+            "name": "base",
+            "verbose": true
+        },
+        {
+            "name": "vc17-release",
+            "configurePreset": "vc17-release",
+            "inherits": "base"
+        },
+        {
+            "name": "vc17-relwithdebinfo",
+            "configurePreset": "vc17-relwithdebinfo",
+            "inherits": "base"
+        },
+        {
+            "name": "vc17-debug",
+            "configurePreset": "vc17-debug",
+            "inherits": "base"
+        }
+    ],
+    "configurePresets": [
+        {
+            "name": "base",
+            "binaryDir": "${sourceDir}/cpp_build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}"
+            },
+            "hidden": true
+        },
+        {
+            "name": "release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "hidden": true
+        },
+        {
+            "name": "relwithdebinfo",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            },
+            "hidden": true
+        },
+        {
+            "name": "debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "hidden": true
+        },
+        {
+            "name": "vc17-base",
+            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc"
+            },
+            "environment": {
+                "CMAKE_PREFIX_PATH": "C:/conda_envs/cpp_pkgs/Library"
+            },
+            "hidden": true
+        },
+        {
+            "name": "vc17-release",
+            "inherits": [
+                "vc17-base",
+                "release"
+            ]
+        },
+        {
+            "name": "vc17-relwithdebinfo",
+            "inherits": [
+                "vc17-base",
+                "relwithdebinfo"
+            ]
+        },
+        {
+            "name": "vc17-debug",
+            "inherits": [
+                "vc17-base",
+                "debug"
+            ]
+        }
+    ],
+    "version": 2,
+    "testPresets": [
+        {
+            "name": "vc17-release",
+            "configurePreset": "vc17-release"
+        },
+        {
+            "name": "vc17-relwithdebinfo",
+            "configurePreset": "vc17-relwithdebinfo"
+        },
+        {
+            "name": "vc17-debug",
+            "configurePreset": "vc17-debug"
+        }
+    ]
+}
