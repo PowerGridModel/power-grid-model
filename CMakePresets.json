@@ -8,6 +8,10 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
       "hidden": true
     },
     {
@@ -34,7 +38,8 @@
         "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc"
       },
       "environment": {
-        "CMAKE_PREFIX_PATH": "C:/conda_envs/cpp_pkgs/Library"
+        "CMAKE_PREFIX_PATH": "C:/conda_envs/cpp_pkgs/Library",
+        "PreferredToolArchitecture": "x64"
       },
       "condition": {
         "type": "equals",
@@ -77,7 +82,7 @@
     },
     {
       "name": "clang-cl-debug",
-      "displayName": "Debug (clang cl)",
+      "displayName": "Debug (Clang CL)",
       "inherits": [
         "clang-cl-base",
         "debug"
@@ -85,7 +90,7 @@
     },
     {
       "name": "clang-cl-release",
-      "displayName": "Release (clang cl)",
+      "displayName": "Release (Clang CL)",
       "inherits": [
         "clang-cl-base",
         "release"
