@@ -9,23 +9,15 @@ namespace power_grid_model {
 
 TEST_CASE("Test load generator") {
     LoadGenInput<true> sym_load_gen_input{{{{1}, 2, true}, LoadGenType::const_pq}, 3e6, 3e6};
-    //LoadGenInput<true> sym_load_gen_input_reverse = {{{{1}, 2, true}, LoadGenType::const_pq}, -3e6, -3e6};
     LoadGenInput<false> asym_load_gen_input{
         {{{1}, 2, true}, LoadGenType::const_pq}, RealValue<false>{1e6}, RealValue<false>{1e6}};
     SymGenerator sym_gen_pq{sym_load_gen_input, 10e3};
-    //SymGenerator sym_gen_pq_reverse{sym_load_gen_input_reverse, 10e3};
     AsymLoad asym_load_pq{asym_load_gen_input, 10e3};
     sym_load_gen_input.type = LoadGenType::const_i;
     asym_load_gen_input.type = LoadGenType::const_y;
     SymLoad sym_load_i{sym_load_gen_input, 10e3};
-    //SymLoad sym_load_i_reverse{sym_load_gen_input_reverse, 10e3};
     AsymGenerator asym_gen_y{asym_load_gen_input, 10e3};
 
-    //LoadGenInput<true> sym_load_gen_input_reverse = {{{{1}, 2, true}, LoadGenType::const_pq}, -3e6, -3e6};
-    //SymGenerator sym_gen_pq_reverse{sym_load_gen_input_reverse, 10e3};
-    //sym_load_gen_input_reverse.type = LoadGenType::const_i;
-    //SymLoad sym_load_i_reverse{sym_load_gen_input_reverse, 10e3};
-    
     double const base_i = base_power_1p / (10e3 / sqrt3);
     DoubleComplex const u{1.1 * std::exp(1.0i * 10.0)};
     ComplexValue<false> const ua{1.1 * std::exp(1.0i * 10.0)};
@@ -124,7 +116,6 @@ TEST_CASE("Test load generator") {
         CHECK(reverse_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<true>));
         CHECK(reverse_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(reverse_result.pf == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
-
     }
 
     SUBCASE("Test asymmetric load with constant power; u as input") {
