@@ -36,7 +36,10 @@ The base type for all power grid components.
 | `p` | `RealValueOutput` | watt (W) | active power injection | | &#10060; | &#10060; | &#10004; | |
 | `q` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection | | &#10060; | &#10060; | &#10004; | |
 
-
+```{note}
+The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
+{hoverxreftooltip}`user_manual/data-model:Reference Direction`
+```
 
 ## Branch
 
@@ -351,7 +354,14 @@ terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
-Note: due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
+```{note} 
+1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
+
+2. The node injection power sensor gets placed on a node. 
+In the state estimation result, the power from this injection is distributed equally among the connected appliances at that node.
+Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor is placed for it to function.
+
+```
 
 | name | data type | unit | description | required | input | update | output |                    valid values                     |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |:---------------------------------------------------:|
