@@ -49,8 +49,23 @@ class Node final : public Base {
         return output;
     }
     template <bool sym>
+    NodeShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& u_pu) const {
+        NodeShortCircuitOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        output.u_pu = cabs(u_pu);
+        output.u = u_scale<sym> * u_rated_ * output.u_pu;
+        output.u_angle = arg(u_pu);
+        return output;
+    }
+    template <bool sym>
     NodeOutput<sym> get_null_output() const {
         NodeOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
+    template <bool sym>
+    NodeShortCircuitOutput<sym> get_null_sc_output() const {
+        NodeShortCircuitOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

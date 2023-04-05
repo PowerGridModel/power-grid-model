@@ -114,8 +114,28 @@ class Branch : public Base {
     }
 
     template <bool sym>
+    BranchShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
+        // result object
+        BranchShortCircuitOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        // calculate result
+        output.i_from = base_i_from() * cabs(i_f);
+        output.i_to = base_i_to() * cabs(i_t);
+        output.i_from_angle = arg(i_f);
+        output.i_to_angle = arg(i_t);
+        return output;
+    }
+
+    template <bool sym>
     BranchOutput<sym> get_null_output() const {
         BranchOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
+
+    template <bool sym>
+    BranchShortCircuitOutput<sym> get_null_sc_output() const {
+        BranchShortCircuitOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
