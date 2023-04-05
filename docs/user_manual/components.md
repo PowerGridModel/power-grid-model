@@ -36,7 +36,7 @@ The base type for all power grid components.
 | `p` | `RealValueOutput` | watt (W) | active power injection | | &#10060; | &#10060; | &#10004; | |
 | `q` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection | | &#10060; | &#10060; | &#10004; | |
 
-````{note}
+```{note}
 The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
 {hoverxreftooltip}`user_manual/data-model:Reference Direction`
 ````
