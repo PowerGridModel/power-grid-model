@@ -39,7 +39,7 @@ The base type for all power grid components.
 ```{note}
 The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
 {hoverxreftooltip}`user_manual/data-model:Reference Direction`
-````
+```
 
 ## Branch
 
