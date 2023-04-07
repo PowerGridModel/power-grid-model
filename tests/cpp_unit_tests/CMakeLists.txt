@@ -5,7 +5,9 @@
 project (power_grid_model_unit_tests)
 
 find_package(doctest REQUIRED)
+
 find_package(nlohmann_json CONFIG REQUIRED)
+include("${doctest_DIR}/doctest.cmake")
 
 set(PROJECT_SOURCES
 	test_power_grid_model.cpp
@@ -45,4 +47,4 @@ target_link_libraries(power_grid_model_unit_tests
 )
 target_compile_definitions(power_grid_model_unit_tests PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data")
 
-add_test(PGMUnitTests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power_grid_model_unit_tests)
+doctest_discover_tests(power_grid_model_unit_tests)
