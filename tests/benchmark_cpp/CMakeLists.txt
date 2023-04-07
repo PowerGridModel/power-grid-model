@@ -14,3 +14,4 @@ target_link_libraries(power_grid_model_benchmark_cpp
 )
 # set_target_properties(power_grid_model_benchmark_cpp PROPERTIES LINK_WHAT_YOU_USE TRUE)
 
+add_test(PGMBenchmark ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power_grid_model_benchmark_cpp)

@@ -44,3 +44,5 @@ target_link_libraries(power_grid_model_unit_tests
 	PRIVATE nlohmann_json nlohmann_json::nlohmann_json
 )
 target_compile_definitions(power_grid_model_unit_tests PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data")
+
+add_test(PGMUnitTests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power_grid_model_unit_tests)
