@@ -49,7 +49,7 @@ cmake .. -GNinja \
 # build
 VERBOSE=1 cmake --build .
 # test
-./bin/power_grid_model_unit_tests
+ctest --test-dir . -E PGMExample
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
   ./bin/power_grid_model_c_example
