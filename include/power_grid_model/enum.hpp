@@ -76,7 +76,7 @@ enum class ShortCircuitType : IntS {
     three_phase = 0,
     two_phase = 1,
     two_phase_to_ground = 2,
-    sinlge_phase_to_ground = 3
+    single_phase_to_ground = 3
 };
 
 enum class ShortCircuitPhases : IntS { a = 0, b = 1, c = 2, ab = 3, ac = 4, bc = 5, abc = 6, default_value = na_IntS };

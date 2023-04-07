@@ -20,7 +20,8 @@ namespace math_model_impl {
 template <bool sym>
 class ShortCircuitSolver {
    public:
-    ShortCircuitSolver(YBus<sym> const& y_bus) : mat_data_(y_bus.nnz_lu()) {
+    ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+        : n_bus_{y_bus.size()}, source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr}, mat_data_(y_bus.nnz_lu()) {
     }
 
     ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitType short_circuit_type,
@@ -65,6 +66,16 @@ class ShortCircuitSolver {
         });
 
         // prepare matrix + rhs
+        // loop through all sources and faults to update y_bus
+        IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+            Idx const data_sequence = bus_entry[bus_number];
+            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+                 ++source_number) {
+                // TODO: constants[bus] += y_source * U_source * c
+                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+            }
+        }
 
         // solve matrix
 
@@ -74,6 +85,9 @@ class ShortCircuitSolver {
     }
 
    private:
+    Idx n_bus_;
+    // shared topo data
+    std::shared_ptr<IdxVector const> source_bus_indptr_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
 };
