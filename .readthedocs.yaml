@@ -17,8 +17,8 @@ build:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
       # remove API DLL define in header
-      - sed -i -r "s/#define PGM.*//g" include/power_grid_model_c.h
-      - sed -i -r "s/PGM_API //g" include/power_grid_model_c.h
+      - sed -i -r "s/#define PGM.*//g" power_grid_model_c/power_grid_model_c/include/power_grid_model_c.h
+      - sed -i -r "s/PGM_API //g" power_grid_model_c/power_grid_model_c/include/power_grid_model_c.h
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
       # download examples

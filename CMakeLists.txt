@@ -28,14 +28,6 @@ enable_testing()
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Boost REQUIRED)
 
-add_library(power_grid_model INTERFACE)
-target_link_libraries(power_grid_model INTERFACE Eigen3::Eigen)
-include_directories(${Boost_INCLUDE_DIRS})
-# only use MPL version of eigen
-target_compile_definitions(power_grid_model INTERFACE EIGEN_MPL2_ONLY=1)
-# header only library
-target_include_directories(power_grid_model INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 if(WIN32)
   add_compile_options(/utf-8 /WX /bigobj /FC)
 else()
@@ -60,7 +52,6 @@ else()
   endif()
   # thread
   find_package(Threads REQUIRED)
-  target_link_libraries(power_grid_model INTERFACE Threads::Threads)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -69,13 +60,10 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 # add C library
-add_subdirectory(power_grid_model_c)
+add_subdirectory("power_grid_model_c")
 
 # get tests
-add_subdirectory(tests/cpp_unit_tests)
-
-# get benchmark
-add_subdirectory(tests/benchmark_cpp)
+add_subdirectory("tests")
 
 # get c api example
-add_subdirectory(power_grid_model_c_example)
+add_subdirectory("power_grid_model_c_example")
