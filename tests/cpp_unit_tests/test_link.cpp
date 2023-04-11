@@ -24,6 +24,12 @@ TEST_CASE("Test link") {
     DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
     DoubleComplex const s_t = conj(i1t) * u1t * 50e3 * sqrt3;
 
+    // Short circuit results
+    DoubleComplex if_sc{1.0, 1.0};
+    DoubleComplex it_sc{2.0, 2.0 * sqrt(3)};
+    ComplexValue<false> const if_sc_asym{1.0 + 1.0i};
+    ComplexValue<false> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
+
     CHECK(link.math_model_type() == ComponentType::branch);
 
     SUBCASE("General") {
@@ -69,6 +75,16 @@ TEST_CASE("Test link") {
         CHECK(output.q_to == doctest::Approx(imag(s_t)));
     }
 
+    SUBCASE("Symmetric short circuit results") {
+        BranchShortCircuitOutput<true> output = branch.get_sc_output<true>(if_sc, it_sc);
+        CHECK(output.id == 1);
+        CHECK(output.energized);
+        CHECK(output.i_from == doctest::Approx(cabs(if_sc) * base_i_from));
+        CHECK(output.i_to == doctest::Approx(cabs(it_sc) * base_i_to));
+        CHECK(output.i_from_angle == doctest::Approx(arg(if_sc)));
+        CHECK(output.i_to_angle == doctest::Approx(arg(it_sc)));
+    }
+
     SUBCASE("Asymmetric results") {
         BranchOutput<false> output = branch.get_output<false>(uaf, uat);
         CHECK(output.id == 1);
@@ -82,6 +98,16 @@ TEST_CASE("Test link") {
         CHECK(output.p_to(2) == doctest::Approx(real(s_t) / 3.0));
         CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
         CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
+    }
+
+    SUBCASE("Asymmetric short circuit results") {
+        BranchShortCircuitOutput<false> output = branch.get_sc_output<false>(if_sc_asym, it_sc_asym);
+        CHECK(output.id == 1);
+        CHECK(output.energized);
+        CHECK(output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i_from));
+        CHECK(output.i_to(1) == doctest::Approx(cabs(it_sc) * base_i_to));
+        CHECK(output.i_from_angle(1) == doctest::Approx(pi / 4 - 2 * pi / 3));
+        CHECK(output.i_to_angle(2) == doctest::Approx(pi));
     }
 }
 
