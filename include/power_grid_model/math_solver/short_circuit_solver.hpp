@@ -21,7 +21,10 @@ template <bool sym>
 class ShortCircuitSolver {
    public:
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : n_bus_{y_bus.size()}, source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr}, mat_data_(y_bus.nnz_lu()) {
+        : n_bus_{y_bus.size()},
+          n_fault_{topo_ptr->n_fault()},
+          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          mat_data_(y_bus.nnz_lu()) {
     }
 
     ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitType short_circuit_type,
@@ -66,6 +69,9 @@ class ShortCircuitSolver {
         });
 
         // prepare matrix + rhs
+        ComplexValueVector<sym> rhs(n_bus_);
+        IdxVector zero_fault_counter(n_bus_);
+        ComplexValueVector<sym> i_fault(n_fault_);
         // loop through all sources and faults to update y_bus
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
@@ -86,6 +92,7 @@ class ShortCircuitSolver {
 
    private:
     Idx n_bus_;
+    Idx n_fault_;
     // shared topo data
     std::shared_ptr<IdxVector const> source_bus_indptr_;
     // sparse linear equation
