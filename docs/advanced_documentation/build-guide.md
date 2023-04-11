@@ -197,15 +197,15 @@ There is a convenient shell script to build the cmake project: {{ "[`build.sh`](
 As an example, go to the root folder of repo. Use the following command to build the project in release mode:
 
 ```shell
-./build.sh -b Release
+./build.sh -p <preset>
 ```
 
 One can run the unit tests and C API example by:
 
 ```shell
-./cpp_build_script_Release/bin/power_grid_model_unit_tests
+build_cpp/<preset>/cpp_build_script_Release/bin/power_grid_model_unit_tests
 
-./cpp_build_script_Release/bin/power_grid_model_c_example
+build_cpp/<preset>/cpp_build_script_Release/bin/power_grid_model_c_example
 ```
 
 ## Example Setup for Windows 10
@@ -271,7 +271,9 @@ The IDE should be able to automatically detect the Visual Studio cmake configura
 ```{note}
 - The `Release` presets are compiled with debug symbols.
 - The `Clang CL` presets require `clang-cl` to be installed, e.g. by installing `C++ Clang tools for Windows`.
-- When using an IDE that does not automatically set the toolchain environment using `vcvarsall.bat`, e.g. Visual Studio Code, make sure to open that IDE from a terminal that does so instead (e.g. `x64 Native Tools Command Prompt`).
+- When using an IDE that does not automatically set the toolchain environment using `vcvarsall.bat`, e.g. Visual
+  Studio Code, make sure to open that IDE from a terminal that does so instead (e.g. `x64 Native Tools Command
+  Prompt`).
 ```
 
 ## Example Setup for macOS (Big Sur)

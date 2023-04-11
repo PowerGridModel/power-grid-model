@@ -8,6 +8,14 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
+      "environment": {
+        "PLATFORM_C_FLAGS": "",
+        "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",
+        "COMPILER_C_FLAGS": "",
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
+        "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
+        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}"
+      },
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -29,17 +37,28 @@
       "hidden": true
     },
     {
-      "name": "msvc-base",
-      "description": "Target Windows using the MSVC compiler.",
+      "name": "unix-base",
+      "description": "Target Unix platform.",
       "hidden": true,
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe",
-        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc"
+      "environment": {
+        "PLATFORM_C_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-deprecated-declarations",
+        "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS} -Wno-deprecated-copy"
       },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base"
+    },
+    {
+      "name": "windows-base",
+      "description": "Target Windows platform.",
+      "hidden": true,
       "environment": {
         "CMAKE_PREFIX_PATH": "C:/conda_envs/cpp_pkgs/Library",
-        "PreferredToolArchitecture": "x64"
+        "PreferredToolArchitecture": "x64",
+        "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc /utf-8 /bigobj /FC"
       },
       "condition": {
         "type": "equals",
@@ -54,15 +73,78 @@
       }
     },
     {
+      "name": "linux-base",
+      "description": "Target Linux platform.",
+      "hidden": true,
+      "environment": {
+        "CMAKE_PREFIX_PATH": "/home/linuxbrew/.linuxbrew",
+        "PATH": "$penv{PATH}:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "inherits": "unix-base"
+    },
+    {
+      "name": "macos-base",
+      "description": "Target MacOS platform.",
+      "hidden": true,
+      "environment": {
+        "CMAKE_PREFIX_PATH": "/usr/local"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "inherits": "unix-base"
+    },
+    {
+      "name": "msvc-base",
+      "description": "Target Windows using the MSVC compiler.",
+      "hidden": true,
+      "environment": {
+        "CC": "cl.exe",
+        "CXX": "cl.exe"
+      },
+      "inherits": "windows-base"
+    },
+    {
       "name": "clang-cl-base",
       "description": "Target Windows using Clang with CL-like command line.",
       "hidden": true,
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-cl.exe",
-        "CMAKE_CXX_COMPILER": "clang-cl.exe",
-        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc -Wno-uninitialized-const-reference"
+      "environment": {
+        "CC": "clang-cl.exe",
+        "CXX": "clang-cl.exe",
+        "CXXFLAGS": "$penv{CXXFLAGS} -Wno-uninitialized-const-reference"
       },
-      "inherits": "msvc-base"
+      "inherits": "windows-base"
+    },
+    {
+      "name": "unix-coverage",
+      "environment": {
+        "COVERAGE_FLAGS": "-fprofile-arcs -ftest-coverage"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "unix-sanitizer",
+      "environment": {
+        "SANITIZER_FLAGS": "-fsanitize=address"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "unix-coverage-sanitizer",
+      "inherits": [
+        "unix-sanitizer",
+        "unix-coverage"
+      ],
+      "hidden": true
     },
     {
       "name": "msvc-debug",
@@ -95,6 +177,129 @@
         "clang-cl-base",
         "release"
       ]
+    },
+    {
+      "name": "gcc-base",
+      "description": "Target CI using GCC.",
+      "inherits": "linux-base",
+      "hidden": true
+    },
+    {
+      "name": "ci-unix-release",
+      "inherits": [
+        "release",
+        "unix-sanitizer"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "ci-unix-debug",
+      "inherits": [
+        "debug",
+        "unix-coverage-sanitizer"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "ci-linux-clang-release",
+      "inherits": [
+        "ci-unix-release",
+        "linux-base"
+      ]
+    },
+    {
+      "name": "ci-linux-clang-debug",
+      "inherits": [
+        "ci-unix-debug",
+        "linux-base"
+      ]
+    },
+    {
+      "name": "ci-linux-gcc-release",
+      "environment": {
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "inherits": [
+        "ci-unix-release",
+        "linux-base"
+      ]
+    },
+    {
+      "name": "ci-linux-gcc-debug",
+      "environment": {
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "inherits": [
+        "ci-unix-debug",
+        "linux-base"
+      ]
+    },
+    {
+      "name": "ci-macos-clang-release",
+      "inherits": [
+        "ci-unix-release",
+        "macos-base"
+      ]
+    },
+    {
+      "name": "ci-macos-clang-debug",
+      "inherits": [
+        "ci-unix-debug",
+        "macos-base"
+      ]
+    },
+    {
+      "name": "ci-sonar",
+      "inherits": [
+        "unix-coverage",
+        "debug"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug"
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "msvc-release"
+    },
+    {
+      "name": "clang-cl-debug",
+      "configurePreset": "clang-cl-debug"
+    },
+    {
+      "name": "clang-cl-release",
+      "configurePreset": "clang-cl-release"
+    },
+    {
+      "name": "ci-linux-clang-debug",
+      "configurePreset": "ci-linux-clang-debug"
+    },
+    {
+      "name": "ci-linux-clang-release",
+      "configurePreset": "ci-linux-clang-release"
+    },
+    {
+      "name": "ci-linux-gcc-debug",
+      "configurePreset": "ci-linux-gcc-debug"
+    },
+    {
+      "name": "ci-linux-gcc-release",
+      "configurePreset": "ci-linux-gcc-release"
+    },
+    {
+      "name": "ci-macos-clang-debug",
+      "configurePreset": "ci-macos-clang-debug"
+    },
+    {
+      "name": "ci-macos-clang-release",
+      "configurePreset": "ci-macos-clang-release"
+    },
+    {
+      "name": "ci-sonar",
+      "configurePreset": "ci-sonar"
     }
   ]
 }

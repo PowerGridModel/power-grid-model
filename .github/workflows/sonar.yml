@@ -74,16 +74,17 @@ jobs:
 
       - name: Run build-wrapper for C++
         run: |
-          mkdir cpp_build
-          cmake -S . -B cpp_build -GNinja -DCMAKE_BUILD_TYPE=Debug -DPOWER_GRID_MODEL_COVERAGE=1
-          VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build cpp_build/
+          cmake --preset ci-sonar
+          VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build --preset ci-sonar
 
       - name: C++ test and coverage
+        env:
+          binaries: cpp_build/ci-sonar
         run: |
-          cd cpp_build
+          cd cpp_build/ci-sonar
           ./bin/power_grid_model_unit_tests
-          PATH=${PATH}:${PWD}/.. gcovr --gcov-executable llvm-gcov.sh --sonarqube ../cpp_coverage.xml -r ..
-          cd ..
+          PATH=${PATH}:${PWD}/../.. gcovr --gcov-executable llvm-gcov.sh --sonarqube ../../cpp_coverage.xml -r ../..
+          cd ../..
           # remove branch hits count, since it does not make sense in heavy C++ templates
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 

@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        build-option: [ Debug, Release ]
+        build-option: [ debug, release ]
         compiler: [gcc, clang]
         include:
           - compiler: gcc
@@ -40,6 +40,7 @@ jobs:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
+      PRESET: ci-linux-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -53,15 +54,18 @@ jobs:
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json doctest
-      - name: Run build script
-        run: ./build.sh -b ${{ matrix.build-option }} -s -e
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e
 
   build-cpp-test-windows:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: windows-latest
     strategy:
       matrix:
-        build-option: [ Debug, Release ]
+        build-option: [ debug, release ]
+
+    env:
+      PRESET: msvc-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -79,29 +83,24 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          mkdir cpp_build_${{ matrix.build-option }}
-          cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
-          cmake .. `
-            -G "Ninja" `
-            -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} `
-            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library
+          cmake --preset ${{ env.PRESET }}
           # build
-          cmake --build . --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           # test
-          .\bin\power_grid_model_unit_tests.exe
-          .\bin\power_grid_model_c_example.exe
+          cpp_build\${{ env.PRESET }}\bin\power_grid_model_unit_tests.exe
+          cpp_build\${{ env.PRESET }}\bin\power_grid_model_c_example.exe
 
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: macos-latest
     strategy:
       matrix:
-        build-option: [ Debug, Release ]
+        build-option: [ debug, release ]
     env:
       CC: clang
       CXX: clang++
-      CMAKE_PREFIX_PATH: /usr/local
+      PRESET: ci-macos-clang-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -111,8 +110,7 @@ jobs:
           brew install ninja boost eigen nlohmann-json doctest
 
       - name: Build and test
-        run: |
-          ./build.sh -b ${{ matrix.build-option }} -s -e
+        run: ./build.sh -p ${{ env.PRESET }} -e
 
   build-and-test-python:
     strategy:
