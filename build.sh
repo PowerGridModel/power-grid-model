@@ -38,7 +38,7 @@ rm -rf ${BUILD_DIR}/
 # generate
 cmake --preset ${PRESET}
 # build
-cmake --build --preset ${PRESET} --verbose
+cmake --build --preset ${PRESET} --verbose -j1
 # test
 ${BUILD_DIR}/bin/power_grid_model_unit_tests
 # example
