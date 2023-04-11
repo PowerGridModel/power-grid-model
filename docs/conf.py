@@ -107,3 +107,6 @@ html_extra_path = ["google6d726d2d56f95e32.html"]
 # config doxygen for C API
 breathe_projects = {"power_grid_model_c": "./doxygen/build/xml/"}
 breathe_default_project = "power_grid_model_c"
+
+# Override theme CSS with style adjustments of our own
+html_style = "css/custom.css"
