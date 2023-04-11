@@ -210,15 +210,6 @@ One can run the unit tests and C API example by:
 
 ## Example Setup for Windows 10
 
-### Environment variables
-
-Define the following environment variables in user wide.
-
-| Name                      | Value                                                |
-|---------------------------|------------------------------------------------------|
-| PreferredToolArchitecture | x64                                                  |
-| CMAKE_PREFIX_PATH         | C:\conda_envs\cpp_pkgs\Library                       |
-
 ### Software Toolchains
 
 You need to install the MSVC compiler. You can either install the whole Visual Studio IDE or just the build tools.
@@ -227,6 +218,7 @@ You need to install the MSVC compiler. You can either install the whole Visual S
     * Select C++ build tools
 * Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable. Check the license!)
     * Select Desktop Development with C++
+      * [Optional] Select `C++ Clang tools for Windows`
 
 Other toolchains:
 
@@ -269,10 +261,18 @@ pytest
 
 If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
 The IDE should be able to automatically detect the Visual Studio cmake configuration file
-`CMakeSettings.json`. Two configurations are pre-defined. It includes debug or release build.
+`CMakePresets.json`. Several configurations are pre-defined. It includes debug and release builds.
 
-* `x64-Debug`
-* `x64-Release`
+* `msvc-debug`, displayed as `Debug (MSVC)`
+* `msvc-release`, displayed as `Release (MSVC)`.
+* `clang-cl-debug`, displayed as `Debug (Clang CL)`
+* `clang-cl-release`, displayed as `Release (Clang CL)`
+
+```{note}
+- The `Release` presets are compiled with debug symbols.
+- The `Clang CL` presets require `clang-cl` to be installed, e.g. by installing `C++ Clang tools for Windows`.
+- When using an IDE that does not automatically set the toolchain environment using `vcvarsall.bat`, e.g. Visual Studio Code, make sure to open that IDE from a terminal that does so instead (e.g. `x64 Native Tools Command Prompt`).
+```
 
 ## Example Setup for macOS (Big Sur)
 

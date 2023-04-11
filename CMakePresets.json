@@ -1,0 +1,100 @@
+﻿{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "Base",
+      "description": "Base for all presets.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cpp_build/${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "hidden": true
+    },
+    {
+      "name": "release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "hidden": true
+    },
+    {
+      "name": "debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "hidden": true
+    },
+    {
+      "name": "msvc-base",
+      "description": "Target Windows using the MSVC compiler.",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc"
+      },
+      "environment": {
+        "CMAKE_PREFIX_PATH": "C:/conda_envs/cpp_pkgs/Library",
+        "PreferredToolArchitecture": "x64"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base",
+      "vendor": {
+        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+        }
+      }
+    },
+    {
+      "name": "clang-cl-base",
+      "description": "Target Windows using Clang with CL-like command line.",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "clang-cl.exe",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc -Wno-uninitialized-const-reference"
+      },
+      "inherits": "msvc-base"
+    },
+    {
+      "name": "msvc-debug",
+      "displayName": "Debug (MSVC)",
+      "inherits": [
+        "msvc-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "msvc-release",
+      "displayName": "Release (MSVC)",
+      "inherits": [
+        "msvc-base",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-cl-debug",
+      "displayName": "Debug (Clang CL)",
+      "inherits": [
+        "clang-cl-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "clang-cl-release",
+      "displayName": "Release (Clang CL)",
+      "inherits": [
+        "clang-cl-base",
+        "release"
+      ]
+    }
+  ]
+}
