@@ -66,7 +66,14 @@ if [[ "${BUILD_TYPE}" = "Debug" ]] && [[ "${BUILD_COVERAGE}" ]];  then
     GCOV_TOOL=
   fi
 
-  PATH=${PATH}:${PWD} lcov -q -c -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir -d ${BUILD_DIR}/power_grid_model_c/CMakeFiles//power_grid_model_c.dir -b . --no-external --output-file cpp_coverage.info ${GCOV_TOOL}
+  PATH=${PATH}:${PWD} lcov -q -c \
+    -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir \
+    -d ${BUILD_DIR}/tests/cpp_c_api_tests/CMakeFiles/power_grid_model_c_api_tests.dir \
+    -d ${BUILD_DIR}/power_grid_model_c/CMakeFiles//power_grid_model_c.dir \
+    -b . \
+    --no-external \
+    --output-file cpp_coverage.info \
+    ${GCOV_TOOL}
   genhtml -q cpp_coverage.info --output-directory cpp_cov_html
   rm cpp_coverage.info
 fi
