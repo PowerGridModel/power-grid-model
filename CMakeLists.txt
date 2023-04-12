@@ -6,7 +6,10 @@
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.9)
-project (power_grid_model)
+
+include("cmake/pgm_version.cmake")
+
+project (power_grid_model VERSION ${PGM_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -67,3 +70,5 @@ add_subdirectory("tests")
 
 # get c api example
 add_subdirectory("power_grid_model_c_example")
+
+install(EXPORT "PGM" DESTINATION "lib/PGM")

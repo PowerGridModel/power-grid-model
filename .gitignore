@@ -491,6 +491,9 @@ dmypy.json
 src/power_grid_model/**/*.cpp
 cpp_build*/
 
+# install
+install/
+
 # clion
 cmake-build-*/
 
