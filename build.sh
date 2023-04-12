@@ -40,7 +40,7 @@ cmake --preset ${PRESET}
 # build
 cmake --build --preset ${PRESET} --verbose -j1
 # test
-${BUILD_DIR}/bin/power_grid_model_unit_tests
+ctest --test-dir . -E PGMExample
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
   ${BUILD_DIR}/bin/power_grid_model_c_example
