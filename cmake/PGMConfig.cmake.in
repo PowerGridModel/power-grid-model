@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+# CMake package of power_grid_model
+
+@PACKAGE_INIT@
+
+if (NOT TARGET PGM::power_grid_model_c)
+  include ("${CMAKE_CURRENT_LIST_DIR}/PGMTargets.cmake")
+endif ()
+
+check_required_components(PGM)

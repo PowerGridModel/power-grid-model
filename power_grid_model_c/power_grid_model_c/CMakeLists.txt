@@ -20,5 +20,7 @@ set_target_properties(power_grid_model_c PROPERTIES
 )
 
 install(TARGETS power_grid_model_c
-  EXPORT PGM
-  PUBLIC_HEADER RESOURCE ${RESOURCE_FILES})
+  EXPORT PGMTargets
+  COMPONENT PGM
+  PUBLIC_HEADER
+)
