@@ -17,7 +17,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 
-<img src="docs\images\pgm-logo-color.svg" alt="Power Grid Model logo" width="100"/>
+[![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
 
 # Power Grid Model
 

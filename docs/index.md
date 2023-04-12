@@ -6,9 +6,9 @@ SPDX-License-Identifier: MPL-2.0
 
 # Power Grid Model
 
-```{image} images/pgm-logo-color.svg
+```{image} https://github.com/PowerGridModel/.github/raw/main/artwork/svg/color.svg
 :alt: pgm_logo
-:width: 150px
+:width: 300px
 :align: right
 ```
 
