@@ -7,65 +7,59 @@
 set -e
 
 usage() {
-  echo "Usage: $0 -b <Debug|Release> [-c] [-s] [-e] [-i]" 1>&2
-  echo "  -c option enables coverage"
-  echo "  -s option enables sanitizer"
+  echo "Usage: $0 -p <preset> [-c] [-e] [-i]" 1>&2
+  echo "  -c option generates coverage if available"
   echo "  -e option to run C API example"
   echo "  -i option to install package"
+  cmake --list-presets
   exit 1
 }
 
-while getopts "b::csei" flag; do
+while getopts "p::cei" flag; do
   case "${flag}" in
-    b)
-      [ "${OPTARG}" == "Debug" -o "${OPTARG}" == "Release" ] || echo "Build type should be Debug or Release."
-      BUILD_TYPE=${OPTARG}
+    p)
+      PRESET=${OPTARG}
     ;;
-    c) BUILD_COVERAGE=-DPOWER_GRID_MODEL_COVERAGE=1;;
-    s) BUILD_SANITIZER=-DPOWER_GRID_MODEL_SANITIZER=1;;
+    c) COVERAGE=1;;
     e) C_API_EXAMPLE=1;;
     i) INSTALL=1;;
     *) usage ;;
   esac
 done
 
-if [ -z "${BUILD_TYPE}" ] ; then
+if [ -z "${PRESET}" ] ; then
   usage
 fi
 
-echo "BUILD_TYPE = ${BUILD_TYPE}"
-echo "BUILD_COVERAGE = ${BUILD_COVERAGE}"
-echo "BUILD_SANITIZER = ${BUILD_SANITIZER}"
+echo "PRESET = ${PRESET}"
 echo "INSTALL = ${INSTALL}"
 
-BUILD_DIR=cpp_build_script_${BUILD_TYPE}
+BUILD_DIR=cpp_build/${PRESET}
 echo "Build dir: ${BUILD_DIR}"
 
 rm -rf ${BUILD_DIR}/
-mkdir ${BUILD_DIR}
-cd ${BUILD_DIR}
+
 # generate
-cmake .. -GNinja \
-    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-    ${BUILD_COVERAGE} \
-    ${BUILD_SANITIZER}
+cmake --preset ${PRESET}
+
 # build
-VERBOSE=1 cmake --build .
+cmake --build --preset ${PRESET} --verbose -j1
+
 # test
 ctest --test-dir . -E PGMExample
+
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
-  ./bin/power_grid_model_c_example
+  ctest --test-dir . -R PGMExample
 fi
 
+# install
 if [[ ${INSTALL} ]]; then
-  echo
-  cmake --build . --target install
+  cmake --build --preset ${PRESET} --target install
 fi
 
-cd ..
 # test coverage report for debug build and for linux
-if [[ "${BUILD_TYPE}" = "Debug" ]] && [[ "${BUILD_COVERAGE}" ]];  then
+if [[ "${COVERAGE}" ]];  then
   echo "Generating coverage report..."
   if [[ ${CXX} == "clang++"* ]]; then
     GCOV_TOOL="--gcov-tool llvm-gcov.sh"
