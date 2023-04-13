@@ -78,7 +78,7 @@ class ShortCircuitSolver {
         IdxVector const& fault_bus_indptr = *fault_bus_indptr_;
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            Idx const data_sequence = bus_entry[bus_number];
+            Idx const data_sequence = bus_entry[bus_number];  // rename to diagonal_position
             // add all sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
@@ -90,6 +90,24 @@ class ShortCircuitSolver {
             // add all faults
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
                  ++fault_number) {
+                if (std::isinf(input.faults[fault_number].y_fault.real())) {
+                    assert(std::isinf(input.faults[fault_number].y_fault.imag());
+                    zero_fault_counter[bus_number] += 1;
+                    if constexpr (sym) {  // three phase fault
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            if (row_number != bus_number) {
+                                mat_data[col_data_index] = 0;
+                            }
+                            else {
+                                mat_data_[col_data_index] = -1;
+                            }
+                        }
+                        rhs[bus_number] = 0;
+                    }
+                }
             }
         }
 
