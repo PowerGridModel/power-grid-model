@@ -12,8 +12,6 @@ target_include_directories(power_grid_model_c PUBLIC
 target_link_libraries(power_grid_model_c PRIVATE power_grid_model)
 
 set_target_properties(power_grid_model_c PROPERTIES
-  FRAMEWORK TRUE
-  FRAMEWORK_VERSION ${PGM_VERSION}
   VERSION ${PGM_VERSION}
   SOVERSION ${PGM_VERSION}
   PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c.h"
