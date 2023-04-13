@@ -198,7 +198,8 @@ struct StateEstimationInput {
 
 struct ShortCircuitInput {
     std::vector<FaultCalcParam> faults;
-    ComplexVector source;  // Complex u_ref of each source
+    ComplexVector source;     // Complex u_ref of each source
+    bool source_voltage_ref;  // The constant "c" to increase or decrease U_source: c * U_source
 };
 
 template <bool sym>

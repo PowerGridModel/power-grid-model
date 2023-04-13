@@ -79,11 +79,10 @@ class ShortCircuitSolver {
             Idx const data_sequence = bus_entry[bus_number];
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
-                // TODO: constants[bus] += y_source * U_source * c
                 ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
-                mat_data_[data_sequence] += y_source;
-                rhs[bus_number] += y_source * input.source[source_number] * c;  // Y_source * U_source * c
-                // TODO define u_source and c
+                mat_data_[data_sequence] += y_source;  // Add y_source to the diagonal of Ybus
+                rhs[bus_number] +=
+                    y_source * input.source[source_number] * input.source_voltage_ref;  // Y_source * U_source * c
             }
         }
 
