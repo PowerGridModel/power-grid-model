@@ -6,8 +6,8 @@
 
 @PACKAGE_INIT@
 
-if (NOT TARGET PGM::power_grid_model_c)
-  include ("${CMAKE_CURRENT_LIST_DIR}/PGMTargets.cmake")
+if (NOT TARGET power_grid_model::power_grid_model_c)
+  include ("${CMAKE_CURRENT_LIST_DIR}/power_grid_modelTargets.cmake")
 endif ()
 
-check_required_components(PGM)
+check_required_components(power_grid_model)

@@ -18,7 +18,7 @@ set_target_properties(power_grid_model_c PROPERTIES
 )
 
 install(TARGETS power_grid_model_c
-  EXPORT PGMTargets
-  COMPONENT PGM
+  EXPORT power_grid_modelTargets
+  COMPONENT power_grid_model
   PUBLIC_HEADER
 )

@@ -10,26 +10,26 @@ install(FILES "LICENSE"
 )
 
 # export the power grid model targets
-install(EXPORT "PGMTargets"
-  DESTINATION "lib/cmake/PGM"
-  NAMESPACE PGM::
-  COMPONENT PGM
+install(EXPORT "power_grid_modelTargets"
+  DESTINATION "lib/cmake/power_grid_model"
+  NAMESPACE power_grid_model::
+  COMPONENT power_grid_model
 )
 
-# export configuration and version to enable find_package(PGM)
+# export configuration and version to enable find_package(power_grid_model)
 include(CMakePackageConfigHelpers)
 
-configure_package_config_file("${CMAKE_SOURCE_DIR}/cmake/PGMConfig.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfig.cmake"
-  INSTALL_DESTINATION "lib/cmake/PGM"
+configure_package_config_file("${CMAKE_SOURCE_DIR}/cmake/power_grid_modelConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/power_grid_model"
 )
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfigVersion.cmake"
   VERSION ${PGM_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 install(FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfig.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfigVersion.cmake"
-  DESTINATION "lib/cmake/PGM"
+  "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfigVersion.cmake"
+  DESTINATION "lib/cmake/power_grid_model"
 )

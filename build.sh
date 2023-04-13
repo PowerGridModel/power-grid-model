@@ -7,15 +7,16 @@
 set -e
 
 usage() {
-  echo "Usage: $0 -p <preset> [-c] [-e] [-i]" 1>&2
+  echo "Usage: $0 -p <preset> [-c] [-e] [-i] [-t]" 1>&2
   echo "  -c option generates coverage if available"
   echo "  -e option to run C API example"
   echo "  -i option to install package"
+  echo "  -t option to run integration test (requires '-i')"
   cmake --list-presets
   exit 1
 }
 
-while getopts "p::cei" flag; do
+while getopts "p::ceit" flag; do
   case "${flag}" in
     p)
       PRESET=${OPTARG}
@@ -23,6 +24,7 @@ while getopts "p::cei" flag; do
     c) COVERAGE=1;;
     e) C_API_EXAMPLE=1;;
     i) INSTALL=1;;
+    t) INTEGRATION_TEST=1;;
     *) usage ;;
   esac
 done
@@ -35,7 +37,9 @@ echo "PRESET = ${PRESET}"
 echo "INSTALL = ${INSTALL}"
 
 BUILD_DIR=cpp_build/${PRESET}
+INSTALL_DIR=install/${PRESET}
 echo "Build dir: ${BUILD_DIR}"
+echo "Install dir: ${INSTALL_DIR}"
 
 rm -rf ${BUILD_DIR}/
 
@@ -46,16 +50,11 @@ cmake --preset ${PRESET}
 cmake --build --preset ${PRESET} --verbose -j1
 
 # test
-ctest --test-dir . -E PGMExample
+ctest --test-dir ${BUILD_DIR} -E PGMExample
 
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
-  ctest --test-dir . -R PGMExample
-fi
-
-# install
-if [[ ${INSTALL} ]]; then
-  cmake --build --preset ${PRESET} --target install
+  ctest --test-dir ${BUILD_DIR} -R PGMExample
 fi
 
 # test coverage report for debug build and for linux
@@ -77,4 +76,19 @@ if [[ "${COVERAGE}" ]];  then
     ${GCOV_TOOL}
   genhtml -q cpp_coverage.info --output-directory cpp_cov_html
   rm cpp_coverage.info
+fi
+
+# install
+if [[ ${INSTALL} ]]; then
+  cmake --build --preset ${PRESET} --target install
+  
+  # integration test
+  if [[ ${INTEGRATION_TEST} ]]; then
+    cd tests/package_tests
+    cmake --preset ${PRESET}
+    cmake --build --preset ${PRESET} --verbose -j1
+    cmake --build --preset ${PRESET} --verbose -j1 --target install
+    install/${PRESET}/bin/power_grid_model_package_test
+    cd ../..
+  fi
 fi
