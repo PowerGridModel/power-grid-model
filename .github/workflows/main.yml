@@ -91,10 +91,9 @@ jobs:
           ctest --test-dir .
           # install
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
-      
-      - name: Run integration test
-        working-directory: tests/package_tests
-        run: |
+
+          # build and run integration test
+          cd tests/package_tests
           cmake --preset ${{ env.PRESET }}
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
