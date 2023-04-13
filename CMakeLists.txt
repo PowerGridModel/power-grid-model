@@ -28,6 +28,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(CTest)
 enable_testing()
 
+include(GNUInstallDirs)
+
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Boost REQUIRED)
 
