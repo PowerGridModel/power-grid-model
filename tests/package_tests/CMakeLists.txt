@@ -19,7 +19,9 @@ set(PROJECT_SOURCES
 	"test_c_api_package.cpp"
 )
 
+# Link against shared PGM object installed by main project
 add_executable(power_grid_model_package_test ${PROJECT_SOURCES})
 target_link_libraries(power_grid_model_package_test PRIVATE PGM::power_grid_model_c)
+
 install(TARGETS power_grid_model_package_test)
 install(IMPORTED_RUNTIME_ARTIFACTS PGM::power_grid_model_c)

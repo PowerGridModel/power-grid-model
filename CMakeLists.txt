@@ -71,24 +71,5 @@ add_subdirectory("tests")
 # get c api example
 add_subdirectory("power_grid_model_c_example")
 
-install(EXPORT "PGMTargets"
-  DESTINATION "lib/cmake/PGM"
-  NAMESPACE PGM::
-  COMPONENT PGM
-)
-
-include(CMakePackageConfigHelpers)
-configure_package_config_file("cmake/PGMConfig.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfig.cmake"
-  INSTALL_DESTINATION "lib/cmake/PGM"
-)
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfigVersion.cmake"
-  VERSION ${PGM_VERSION}
-  COMPATIBILITY SameMajorVersion
-)
-install(FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfig.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/PGM/PGMConfigVersion.cmake"
-  DESTINATION "lib/cmake/PGM"
-)
+# export the power grid model
+include("cmake/export_pgm.cmake")

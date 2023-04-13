@@ -7,14 +7,15 @@
 set -e
 
 usage() {
-  echo "Usage: $0 -b <Debug|Release> [-c] [-s]" 1>&2
+  echo "Usage: $0 -b <Debug|Release> [-c] [-s] [-e] [-i]" 1>&2
   echo "  -c option enables coverage"
   echo "  -s option enables sanitizer"
   echo "  -e option to run C API example"
+  echo "  -i option to install package"
   exit 1
 }
 
-while getopts "b::cse" flag; do
+while getopts "b::csei" flag; do
   case "${flag}" in
     b)
       [ "${OPTARG}" == "Debug" -o "${OPTARG}" == "Release" ] || echo "Build type should be Debug or Release."
@@ -23,6 +24,7 @@ while getopts "b::cse" flag; do
     c) BUILD_COVERAGE=-DPOWER_GRID_MODEL_COVERAGE=1;;
     s) BUILD_SANITIZER=-DPOWER_GRID_MODEL_SANITIZER=1;;
     e) C_API_EXAMPLE=1;;
+    i) INSTALL=1;;
     *) usage ;;
   esac
 done
@@ -34,6 +36,7 @@ fi
 echo "BUILD_TYPE = ${BUILD_TYPE}"
 echo "BUILD_COVERAGE = ${BUILD_COVERAGE}"
 echo "BUILD_SANITIZER = ${BUILD_SANITIZER}"
+echo "INSTALL = ${INSTALL}"
 
 BUILD_DIR=cpp_build_script_${BUILD_TYPE}
 echo "Build dir: ${BUILD_DIR}"
@@ -55,6 +58,10 @@ if [[ "${C_API_EXAMPLE}" ]];  then
   ./bin/power_grid_model_c_example
 fi
 
+if [[ ${INSTALL} ]]; then
+  echo
+  cmake --build . --target install
+fi
 
 cd ..
 # test coverage report for debug build and for linux

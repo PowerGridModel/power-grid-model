@@ -20,7 +20,7 @@ struct DeleterFunctor {
 using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<PGM_destroy_handle>>;
 }  // namespace
 
-auto main(int argc, const char** argv) -> int {
+auto main() -> int {
     // get handle
     HandlePtr const unique_handle{PGM_create_handle()};
     std::cout << (unique_handle ? "Handle created: API is available.\n" : "No handle could be created.\n");
