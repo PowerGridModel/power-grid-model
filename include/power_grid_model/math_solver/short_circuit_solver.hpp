@@ -24,12 +24,13 @@ class ShortCircuitSolver {
         : n_bus_{y_bus.size()},
           n_fault_{topo_ptr->n_fault()},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          fault_bus_indptr_{topo_ptr, &topo_ptr->fault_bus_indptr},
           mat_data_(y_bus.nnz_lu()) {
     }
 
     ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitType short_circuit_type,
-                                                  ShortCircuitPhases short_circuit_phases, YBus<sym> const& y_bus,
-                                                  ShortCircuitInput const& input) {
+                                                  ShortCircuitPhases short_circuit_phases, double source_voltage_ref,
+                                                  YBus<sym> const& y_bus, ShortCircuitInput const& input) {
         // TODO: put the (a)sym checks below in separate (private) function
         // calculation type (sym/asym) should match the short circuit type (sym/asym)
         if constexpr (sym) {
@@ -73,16 +74,22 @@ class ShortCircuitSolver {
         ComplexValueVector<sym> rhs(n_bus_){};
         IdxVector zero_fault_counter(n_bus_){};
         ComplexValueVector<sym> i_fault(n_fault_){};
-        // loop through all sources and faults to update y_bus
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        IdxVector const& fault_bus_indptr = *fault_bus_indptr_;
+        // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const data_sequence = bus_entry[bus_number];
+            // add all sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
-                mat_data_[data_sequence] += y_source;  // Add y_source to the diagonal of Ybus
+                mat_data_[data_sequence] += y_source;  // add y_source to the diagonal of Ybus
                 rhs[bus_number] +=
-                    y_source * input.source[source_number] * input.source_voltage_ref;  // Y_source * U_source * c
+                    y_source * input.source[source_number] * source_voltage_ref;  // Y_source * U_source * c
+            }
+            // add all faults
+            for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
+                 ++fault_number) {
             }
         }
 
@@ -98,6 +105,7 @@ class ShortCircuitSolver {
     Idx n_fault_;
     // shared topo data
     std::shared_ptr<IdxVector const> source_bus_indptr_;
+    std::shared_ptr<IdxVector const> fault_bus_indptr_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
 };

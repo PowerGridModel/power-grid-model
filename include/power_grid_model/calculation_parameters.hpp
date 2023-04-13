@@ -110,7 +110,7 @@ struct MathModelTopology {
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
-    IdxVector fault_indptr;                     // indptr of the fault
+    IdxVector fault_bus_indptr;                 // indptr of the fault
 
     Idx n_bus() const {
         return (Idx)phase_shift.size();
@@ -161,7 +161,7 @@ struct MathModelTopology {
     }
 
     Idx n_fault() const {
-        return fault_indptr.back();
+        return fault_bus_indptr.back();
     }
 };
 
@@ -198,8 +198,7 @@ struct StateEstimationInput {
 
 struct ShortCircuitInput {
     std::vector<FaultCalcParam> faults;
-    ComplexVector source;     // Complex u_ref of each source
-    bool source_voltage_ref;  // The constant "c" to increase or decrease U_source: c * U_source
+    ComplexVector source;  // Complex u_ref of each source
 };
 
 template <bool sym>
