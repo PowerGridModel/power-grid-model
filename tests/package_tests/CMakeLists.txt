@@ -13,7 +13,6 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 find_package(power_grid_model REQUIRED)
 
 get_target_property(LIB_INCLUDES power_grid_model::power_grid_model_c INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "here  ${LIB_INCLUDES}")
 
 set(PROJECT_SOURCES 
 	"test_c_api_package.cpp"
@@ -22,6 +21,7 @@ set(PROJECT_SOURCES
 # Link against shared power_grid_model object installed by main project
 add_executable(power_grid_model_package_test ${PROJECT_SOURCES})
 target_link_libraries(power_grid_model_package_test PRIVATE power_grid_model::power_grid_model_c)
+set_target_properties(power_grid_model_package_test PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 install(TARGETS power_grid_model_package_test)
 install(IMPORTED_RUNTIME_ARTIFACTS power_grid_model::power_grid_model_c)

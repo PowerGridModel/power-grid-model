@@ -8,6 +8,14 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
+      "environment": {
+        "PLATFORM_C_FLAGS": "",
+        "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",
+        "COMPILER_C_FLAGS": "",
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
+        "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
+        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}"
+      },
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -32,6 +40,17 @@
       "hidden": true
     },
     {
+      "name": "unix-base",
+      "description": "Target Unix platform.",
+      "hidden": true,
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base"
+    },
+    {
       "name": "windows-base",
       "description": "Target Windows platform.",
       "hidden": true,
@@ -54,7 +73,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       },
-      "inherits": "base"
+      "inherits": "unix-base"
     },
     {
       "name": "macos-base",
@@ -65,7 +84,15 @@
         "lhs": "${hostSystemName}",
         "rhs": "Darwin"
       },
-      "inherits": "base"
+      "inherits": "unix-base"
+    },
+    {
+      "name": "ci-unix",
+      "environment": {
+        "SANITIZER_FLAGS": "-fsanitize=address"
+      },
+      "inherits": "unix-base",
+      "hidden": true
     },
     {
       "name": "msvc-base",
@@ -123,6 +150,7 @@
       "name": "ci-linux-clang-release",
       "inherits": [
         "linux-base",
+        "ci-unix",
         "release"
       ]
     },
@@ -130,6 +158,7 @@
       "name": "ci-linux-clang-debug",
       "inherits": [
         "linux-base",
+        "ci-unix",
         "debug"
       ]
     },
@@ -137,6 +166,7 @@
       "name": "ci-linux-gcc-release",
       "inherits": [
         "linux-base",
+        "ci-unix",
         "release"
       ]
     },
@@ -144,6 +174,7 @@
       "name": "ci-linux-gcc-debug",
       "inherits": [
         "linux-base",
+        "ci-unix",
         "debug"
       ]
     },
@@ -151,6 +182,7 @@
       "name": "ci-macos-clang-release",
       "inherits": [
         "macos-base",
+        "ci-unix",
         "release"
       ]
     },
@@ -158,6 +190,7 @@
       "name": "ci-macos-clang-debug",
       "inherits": [
         "macos-base",
+        "ci-unix",
         "debug"
       ]
     },
