@@ -55,7 +55,7 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json doctest
       - name: Build and test
-        run: ./build.sh -p ${{ env.PRESET }} -e
+        run: ./build.sh -p ${{ env.PRESET }} -e -i
 
   build-cpp-test-windows:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
@@ -89,6 +89,8 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           # test
           ctest --test-dir .
+          # install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
 
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
@@ -109,7 +111,7 @@ jobs:
           brew install ninja boost eigen nlohmann-json doctest
 
       - name: Build and test
-        run: ./build.sh -p ${{ env.PRESET }} -e
+        run: ./build.sh -p ${{ env.PRESET }} -e -i
 
   build-and-test-python:
     strategy:
