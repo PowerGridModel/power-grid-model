@@ -17,3 +17,5 @@ target_link_libraries(power_grid_model_c_api_tests
 	PRIVATE power_grid_model_c
 	PRIVATE doctest::doctest
 )
+
+doctest_discover_tests(power_grid_model_c_api_tests)

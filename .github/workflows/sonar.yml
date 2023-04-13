@@ -81,7 +81,7 @@ jobs:
       - name: C++ test and coverage
         run: |
           cd cpp_build
-          ./bin/power_grid_model_unit_tests
+          ctest --test-dir .
           PATH=${PATH}:${PWD}/.. gcovr --gcov-executable llvm-gcov.sh --sonarqube ../cpp_coverage.xml -r ..
           cd ..
           # remove branch hits count, since it does not make sense in heavy C++ templates
