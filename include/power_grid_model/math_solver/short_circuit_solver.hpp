@@ -28,7 +28,8 @@ class ShortCircuitSolver {
     }
 
     ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitType short_circuit_type,
-                                                  ShortCircuitPhases short_circuit_phases, YBus<sym> const& y_bus) {
+                                                  ShortCircuitPhases short_circuit_phases, YBus<sym> const& y_bus,
+                                                  ShortCircuitInput const& input) {
         // TODO: put the (a)sym checks below in separate (private) function
         // calculation type (sym/asym) should match the short circuit type (sym/asym)
         if constexpr (sym) {
@@ -69,9 +70,9 @@ class ShortCircuitSolver {
         });
 
         // prepare matrix + rhs
-        ComplexValueVector<sym> rhs(n_bus_);
-        IdxVector zero_fault_counter(n_bus_);
-        ComplexValueVector<sym> i_fault(n_fault_);
+        ComplexValueVector<sym> rhs(n_bus_){};
+        IdxVector zero_fault_counter(n_bus_){};
+        ComplexValueVector<sym> i_fault(n_fault_){};
         // loop through all sources and faults to update y_bus
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
@@ -79,7 +80,10 @@ class ShortCircuitSolver {
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 // TODO: constants[bus] += y_source * U_source * c
-                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
+                mat_data_[data_sequence] += y_source;
+                rhs[bus_number] += y_source * input.source[source_number] * c;  // Y_source * U_source * c
+                // TODO define u_source and c
             }
         }
 
