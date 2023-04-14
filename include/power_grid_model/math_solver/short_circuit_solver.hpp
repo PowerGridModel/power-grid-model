@@ -93,11 +93,12 @@ class ShortCircuitSolver {
                 if (std::isinf(input.faults[fault_number].y_fault.real())) {
                     assert(std::isinf(input.faults[fault_number].y_fault.imag());
                     zero_fault_counter[bus_number] += 1;
-                    for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                            data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                        Idx row_number = y_bus.col_indices_lu()[data_index];
-                        Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
-                        if constexpr (sym) {
+                    if constexpr (sym) {
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+
                             // three phase fault
                             // mat_data[:,bus] = 0
                             // mat_data[bus,bus] = -1
@@ -108,19 +109,10 @@ class ShortCircuitSolver {
                                 mat_data_[col_data_index] = -1;
                             }
                         }
-                        else if (short_circuit_type == ShortCircuitType::single_phase_to_ground) {
-                            int faulted_phase = short_circuit_phases;
-                        }
-                        else if (short_circuit_type == ShortCircuitType::two_phase) {
-                        }
-                        else {
-                            assert((short_circuit_type == ShortCircuitType::two_phase_to_ground));
-                        }
-                    }
-                    if constexpr (sym) {  // three phase fault
                         rhs[bus_number] = 0;
                     }
                     else if (short_circuit_type == ShortCircuitType::single_phase_to_ground) {
+                        int faulted_phase = short_circuit_phases;
                     }
                     else if (short_circuit_type == ShortCircuitType::two_phase) {
                     }
