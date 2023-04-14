@@ -12,8 +12,6 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 find_package(power_grid_model REQUIRED)
 
-get_target_property(LIB_INCLUDES power_grid_model::power_grid_model_c INTERFACE_INCLUDE_DIRECTORIES)
-
 set(PROJECT_SOURCES 
 	"test_c_api_package.cpp"
 )

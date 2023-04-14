@@ -24,6 +24,17 @@ of C program to use this C API.
 
 In this documentation, the main design choices and concepts of the C API are presented.
 
+## Finding and linking the package
+
+The package can be loaded using the Config mode of the `find_package` CMake command. An
+{{ "[example project]({}/tests/package_tests/CMakeLists.txt)".format(gh_link_head_blob) }} is provided by the
+{{ "[Git project]({})".format(gh_link_head_blob) }}, which is also used for testing the package.
+
+```{note}
+Since the C API is a dynamically linked library, the user is responsible for placing the library in the right location,
+and making it available to their binaries, e.g. by adding its location to `PATH` or `RPATH`.
+```
+
 ## Opaque Struct/Pointer
 
 As a common C API practice, we use [opaque struct/pointer](https://en.wikipedia.org/wiki/Opaque_pointer) in the API. 
