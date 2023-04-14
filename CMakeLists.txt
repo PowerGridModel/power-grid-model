@@ -48,4 +48,4 @@ add_subdirectory("tests")
 add_subdirectory("power_grid_model_c_example")
 
 # export the power grid model
-include("cmake/export_pgm.cmake")
+include("cmake/export_power_grid_model.cmake")

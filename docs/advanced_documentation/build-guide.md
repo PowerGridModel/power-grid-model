@@ -7,15 +7,18 @@ SPDX-License-Identifier: MPL-2.0
 # Build Guide
 
 This document explains how you can build this library from source, including some examples of build environment. In this
-repository there are two builds:
+repository there are three builds:
 
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
-* A [CMake](https://cmake.org/) project consisting the C++ header-only calculation core, 
-and the following build targets:
+* A [CMake](https://cmake.org/) project consisting of the C++ header-only calculation core, and the following build targets:
     * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
     * Native C++ unit tests
+    * C API tests
     * A performance benchmark program
-    * An example C program to call the dynamic library
+    * An example C program to call the shared library
+    * An install target that installs a package that contains the dynamic library
+* A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the installable
+  package.
 
 ## Build Requirements
 
@@ -62,10 +65,10 @@ This repository uses [CMake](https://cmake.org/) and [Ninja](https://ninja-build
 The table below shows the C++ build dependencies
 
 | Library name                                      | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                       |
-|---------------------------------------------------|--------------------------------------|---------------------------------------------|-------------|-------------------------------------------------------------------------------|
+| ------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
 | [boost](https://www.boost.org/)                   | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt) |
 | [eigen3](https://eigen.tuxfamily.org/)            | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/) |
-| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)            |
+| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)             |
 | [nlohmann-json](https://github.com/nlohmann/json) | None                                 | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)              |
 
 #### Python
@@ -73,10 +76,10 @@ The table below shows the C++ build dependencies
 The table below shows the Python dependencies
 
 | Library name                                                                            | Remark                   | License                                                                               |
-|-----------------------------------------------------------------------------------------|--------------------------|---------------------------------------------------------------------------------------|
+| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
 | [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE) |
 | [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                         |
-| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                            | 
+| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                            |
 | [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                         |
 | [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                   |
 
@@ -103,23 +106,27 @@ dependencies and the build options for the project. The core algorithm is implem
 library `power_grid_model`. There are four sub-projects defined in the root cmake file:
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
-* `tests/cpp_unit_tests`: the unit test project using `doctest` framework.
+* `tests/cpp_unit_tests`: the unit test project for the C++ core using the `doctest` framework.
+* `tests/c_api_tests`: the C API test project using the `doctest` framework
 * `tests/benchmark_cpp`: the C++ benchmark project for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
-
-In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. When you
-use `cmake build` for the root cmake file, the following additional options are available besides the standard cmake
-option.
-
-| Option                             | Description                                                                                                 |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `POWER_GRID_MODEL_COVERAGE`        | When set to `1`, build with test coverage. This is only applicable for Linux.                               |
-| `POWER_GRID_MODEL_SANITIZER`       | When set to `1`, build with address sanitizer. This is only applicable for Linux.                           |
+In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. It is also possible to use
+the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.19+). Supported presets
+for your development platform can be listed using `cmake --list-presets`.
 
 ## Visual Studio Code Support
 
-You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
+You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically. 
+
+```{note}
+VSCode (as well as some other IDEs) does not set its own build environment itself. For optimal usage, open the folder
+using `cmake <project_dir>` from a terminal that has the environment set up. E.g.:
+
+* For x64 Windows native development using MSVC or Clang CL, use the `x64 Native Command Prompt`, which uses
+  `vcvarsall.bat` to set the appropriate build environment.
+* For Linux/WSL using the LLVM-14 `clang`, `source` or `export` `CC=clang-14`, `CXX=clang++-14` and `LLVM_COV=llvm-cov-14`.
+```
 
 ## Build Script for Linux/macOS
 
@@ -128,10 +135,11 @@ There is a convenient shell script to build the cmake project in Linux or macOS:
 The following options are supported in the build script.
 
 ```shell
-Usage: build.sh -b <Debug|Release> [-c] [-s]
-  -c option enables coverage
-  -s option enables sanitizer
+Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
+  -c option generates coverage if available
   -e option to run C API example
+  -i option to install package
+  -t option to run integration test (requires '-i')
 ```
 
 ## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
@@ -203,10 +211,23 @@ As an example, go to the root folder of repo. Use the following command to build
 One can run the unit tests and C API example by:
 
 ```shell
-build_cpp/<preset>/cpp_build_script_Release/bin/power_grid_model_unit_tests
-
-build_cpp/<preset>/cpp_build_script_Release/bin/power_grid_model_c_example
+ctest --test-dir cpp_build/<preset>
 ```
+
+or
+
+```shell
+cpp_build/<preset>/bin/power_grid_model_unit_tests
+
+cpp_build/<preset>/bin/power_grid_model_c_example
+```
+
+or install using
+
+```shell
+cmake --build --preset <preset> --target install
+```
+
 
 ## Example Setup for Windows 10
 
@@ -218,7 +239,7 @@ You need to install the MSVC compiler. You can either install the whole Visual S
     * Select C++ build tools
 * Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable. Check the license!)
     * Select Desktop Development with C++
-      * [Optional] Select `C++ Clang tools for Windows`
+        * [Optional] Select `C++ Clang tools for Windows`
 
 Other toolchains:
 
@@ -326,13 +347,39 @@ There is a convenient shell script to build the cmake project: {{ "[`build.sh`](
 As an example, go to the root folder of repo. Use the following command to build the project in release mode:
 
 ```shell
-./build.sh -b Release
+./build.sh -p <preset>
 ```
 
 One can run the unit tests and C API example by:
 
 ```shell
-./cpp_build_script_Release/bin/power_grid_model_unit_tests
+ctest --test-dir cpp_build/<preset>
+```
 
-./cpp_build_script_Release/bin/power_grid_model_c_example
+or
+
+```shell
+cpp_build/<preset>/bin/power_grid_model_unit_tests
+
+cpp_build/<preset>/bin/power_grid_model_c_example
+```
+
+or install using
+
+```shell
+cmake --build --preset <preset> --target install
+```
+
+## Package tests
+
+The {{ "[package tests]({}/tests/package_tests)".format(gh_link_head_blob) }} project is a completely separate CMake
+project contained in {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blob) }}.
+
+This project is designed to test and illustrate finding and linking to the installed package from the Power Grid Model
+project. Setup of this project is done the same way as the setup of the main project mentioned in the above, but with
+the {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blob) }} directory as its root folder.
+
+```{note}
+This project has the main project as a required dependency. Configuration will fail if the main project has not been
+built and installed, e.g. using `cmake --build --preset <preset> --target install` for the current preset.
 ```

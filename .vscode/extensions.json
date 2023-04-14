@@ -25,6 +25,7 @@
 		"jeff-hykin.better-cpp-syntax",
 		"twxs.cmake",
 		"matepek.vscode-catch2-test-adapter",
-		"cschlosser.doxdocgen"
+		"cschlosser.doxdocgen",
+		"fredericbonnet.cmake-test-adapter"
 	]
 }

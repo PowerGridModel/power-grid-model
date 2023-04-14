@@ -4,8 +4,9 @@
 
 cmake_minimum_required (VERSION 3.9)
 
-# export the license
-install(FILES "LICENSE"
+# export the license and readme
+configure_file("${CMAKE_SOURCE_DIR}/cmake/README.md.in" "${CMAKE_CURRENT_BINARY_DIR}/README.md")
+install(FILES "LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/README.md"
   DESTINATION "share"
 )
 
