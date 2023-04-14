@@ -11,9 +11,9 @@ This library also provides a C-API.
 The main use case of C-API is to integrate Power Grid Model into a non-Python application/library, namely, C, C++, JAVA, C#, etc. 
 
 The C-API consists of a single 
-{{ "[header file]({}/include/power_grid_model_c.h)".format(gh_link_head_blob) }}
+{{ "[header file]({}/power_grid_model_c/power_grid_model_c/include/power_grid_model_c.h)".format(gh_link_head_blob) }}
 and a dynamic library (`.so` or `.dll`) built by a 
-{{ "[cmake project]({}/power_grid_model_c/CMakeLists.txt)".format(gh_link_head_blob) }}.
+{{ "[cmake project]({}/power_grid_model_c/power_grid_model_c/CMakeLists.txt)".format(gh_link_head_blob) }}.
 Please refer to the [Build Guide](./build-guide.md) about how to build the library.
 
 You can refer to the [C-API Reference](../api_reference/power-grid-model-c-api-reference.rst)
