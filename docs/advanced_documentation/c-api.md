@@ -28,7 +28,7 @@ In this documentation, the main design choices and concepts of the C API are pre
 
 The package can be loaded using the Config mode of the `find_package` CMake command. An
 {{ "[example project]({}/tests/package_tests/CMakeLists.txt)".format(gh_link_head_blob) }} is provided by the
-{{ "[Git project]({})".format(gh_link_head_blob) }}, which is also used for testing the package.
+{{ "[Git project]({})".format(gh_link_head_tree) }}, which is also used for testing the package.
 
 ```{note}
 Since the C API is a dynamically linked library, the user is responsible for placing the library in the right location,

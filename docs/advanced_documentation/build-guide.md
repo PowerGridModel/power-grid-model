@@ -135,10 +135,11 @@ There is a convenient shell script to build the cmake project in Linux or macOS:
 The following options are supported in the build script.
 
 ```shell
-Usage: build.sh -b <Debug|Release> [-c] [-s]
-  -c option enables coverage
-  -s option enables sanitizer
+Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
+  -c option generates coverage if available
   -e option to run C API example
+  -i option to install package
+  -t option to run integration test (requires '-i')
 ```
 
 ## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
@@ -220,6 +221,13 @@ cpp_build/<preset>/bin/power_grid_model_unit_tests
 
 cpp_build/<preset>/bin/power_grid_model_c_example
 ```
+
+or install using
+
+```shell
+cmake --build --preset <preset> --target install
+```
+
 
 ## Example Setup for Windows 10
 
@@ -356,10 +364,16 @@ cpp_build/<preset>/bin/power_grid_model_unit_tests
 cpp_build/<preset>/bin/power_grid_model_c_example
 ```
 
+or install using
+
+```shell
+cmake --build --preset <preset> --target install
+```
+
 ## Package tests
 
-The package tests project is a completely separate CMake project contained in
-{{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blob) }}.
+The {{ "[package tests]({}/tests/package_tests)".format(gh_link_head_blob) }} project is a completely separate CMake
+project contained in {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blob) }}.
 
 This project is designed to test and illustrate finding and linking to the installed package from the Power Grid Model
 project. Setup of this project is done the same way as the setup of the main project mentioned in the above, but with
