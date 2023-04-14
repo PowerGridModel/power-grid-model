@@ -77,8 +77,8 @@
       "id": 10,
       "node": 2,
       "status": 1,
-      "type": 0,
-      "phase": -128,
+      "type": 2,
+      "phase": 5,
       "r_f": 0.08,
       "x_f": 0.04
     }
