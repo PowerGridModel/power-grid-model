@@ -6,7 +6,10 @@
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.9)
-project (power_grid_model)
+
+include("cmake/pgm_version.cmake")
+
+project (power_grid_model VERSION ${PGM_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,6 +28,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(CTest)
 enable_testing()
 
+include(GNUInstallDirs)
+
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Boost REQUIRED)
 
@@ -41,3 +46,6 @@ add_subdirectory("tests")
 
 # get c api example
 add_subdirectory("power_grid_model_c_example")
+
+# export the power grid model
+include("cmake/export_pgm.cmake")
