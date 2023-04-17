@@ -84,7 +84,7 @@ jobs:
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
           # generate cmake cache
-          cmake --preset ${{ env.PRESET }}
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library
           # build
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           # test
@@ -106,6 +106,7 @@ jobs:
       matrix:
         build-option: [ debug, release ]
     env:
+      CMAKE_PREFIX_PATH: /usr/local
       CC: clang
       CXX: clang++
       PRESET: ci-clang-${{ matrix.build-option }}

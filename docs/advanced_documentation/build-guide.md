@@ -142,6 +142,8 @@ Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
   -t option to run integration test (requires '-i')
 ```
 
+To list the available presets, run `./build.sh -h`.
+
 ## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
 
 In this section an example is given for setup in Ubuntu 22.04. You can use this example in Windows Subsystem for Linux (
@@ -208,6 +210,8 @@ As an example, go to the root folder of repo. Use the following command to build
 ./build.sh -p <preset>
 ```
 
+To list the available presets, run `./build.sh -h`.
+
 One can run the unit tests and C API example by:
 
 ```shell
@@ -230,6 +234,12 @@ cmake --build --preset <preset> --target install
 
 
 ## Example Setup for Windows 10
+
+Define the following environment variable user-wide:
+
+| Name                | Value                            |
+| ------------------- | -------------------------------- |
+| `CMAKE_PREFIX_PATH` | `C:\conda_envs\cpp_pkgs\Library` |
 
 ### Software Toolchains
 
@@ -349,6 +359,8 @@ As an example, go to the root folder of repo. Use the following command to build
 ```shell
 ./build.sh -p <preset>
 ```
+
+To list the available presets, run `./build.sh -h`.
 
 One can run the unit tests and C API example by:
 

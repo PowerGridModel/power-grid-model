@@ -136,7 +136,8 @@
       "inherits": [
         "clang-cl-base",
         "debug"
-      ]
+      ],
+      "hidden": true
     },
     {
       "name": "clang-cl-release",
@@ -144,7 +145,8 @@
       "inherits": [
         "clang-cl-base",
         "release"
-      ]
+      ],
+      "hidden": true
     },
     {
       "name": "ci-clang-release",
