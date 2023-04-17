@@ -181,22 +181,6 @@
       ]
     },
     {
-      "name": "ci-clang-release",
-      "inherits": [
-        "macos-base",
-        "ci-unix",
-        "release"
-      ]
-    },
-    {
-      "name": "ci-clang-debug",
-      "inherits": [
-        "macos-base",
-        "ci-unix",
-        "debug"
-      ]
-    },
-    {
       "name": "ci-sonar",
       "inherits": [
         "linux-base",
