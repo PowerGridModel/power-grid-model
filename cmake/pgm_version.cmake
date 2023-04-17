@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_c)
+cmake_minimum_required (VERSION 3.9)
 
-add_subdirectory("power_grid_model")
-add_subdirectory("power_grid_model_c")
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" PGM_VERSION)

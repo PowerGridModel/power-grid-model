@@ -3,6 +3,6 @@ Upstream-Name: power-grid-model
 Upstream-Contact: Dynamic Grid Calculation <dynamic.grid.calculation@alliander.com>
 Source: https://github.com/PowerGridModel/power-grid-model
 
-Files: include/power_gri_model/*
+Files: *
 Copyright: 2017-2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 License: MPL-2.0
