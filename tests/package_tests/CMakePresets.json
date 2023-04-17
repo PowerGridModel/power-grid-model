@@ -62,31 +62,6 @@
       "inherits": "base"
     },
     {
-      "name": "linux-base",
-      "description": "Target Linux platform.",
-      "hidden": true,
-      "environment": {
-        "PATH": "$penv{PATH}:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "inherits": "unix-base"
-    },
-    {
-      "name": "macos-base",
-      "description": "Target MacOS platform.",
-      "hidden": true,
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "inherits": "unix-base"
-    },
-    {
       "name": "ci-unix",
       "environment": {
         "SANITIZER_FLAGS": "-fsanitize=address"
@@ -151,7 +126,6 @@
     {
       "name": "ci-clang-release",
       "inherits": [
-        "linux-base",
         "ci-unix",
         "release"
       ]
@@ -159,7 +133,6 @@
     {
       "name": "ci-clang-debug",
       "inherits": [
-        "linux-base",
         "ci-unix",
         "debug"
       ]
@@ -167,7 +140,6 @@
     {
       "name": "ci-gcc-release",
       "inherits": [
-        "linux-base",
         "ci-unix",
         "release"
       ]
@@ -175,7 +147,6 @@
     {
       "name": "ci-gcc-debug",
       "inherits": [
-        "linux-base",
         "ci-unix",
         "debug"
       ]
@@ -183,7 +154,7 @@
     {
       "name": "ci-sonar",
       "inherits": [
-        "linux-base",
+        "unix-base",
         "debug"
       ]
     }
