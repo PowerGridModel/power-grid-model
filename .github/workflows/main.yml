@@ -40,7 +40,7 @@ jobs:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
-      PRESET: ci-linux-${{ matrix.compiler }}-${{ matrix.build-option }}
+      PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -108,7 +108,7 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      PRESET: ci-macos-clang-${{ matrix.build-option }}
+      PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3

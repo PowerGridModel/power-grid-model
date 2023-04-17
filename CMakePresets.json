@@ -56,7 +56,6 @@
       "description": "Target Windows platform.",
       "hidden": true,
       "environment": {
-        "CMAKE_PREFIX_PATH": "C:/conda_envs/cpp_pkgs/Library",
         "PreferredToolArchitecture": "x64",
         "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc /utf-8 /bigobj /FC"
       },
@@ -71,35 +70,6 @@
           "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
         }
       }
-    },
-    {
-      "name": "linux-base",
-      "description": "Target Linux platform.",
-      "hidden": true,
-      "environment": {
-        "CMAKE_PREFIX_PATH": "/home/linuxbrew/.linuxbrew",
-        "PATH": "$penv{PATH}:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "inherits": "unix-base"
-    },
-    {
-      "name": "macos-base",
-      "description": "Target MacOS platform.",
-      "hidden": true,
-      "environment": {
-        "CMAKE_PREFIX_PATH": "/usr/local"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "inherits": "unix-base"
     },
     {
       "name": "msvc-base",
@@ -179,12 +149,6 @@
       ]
     },
     {
-      "name": "gcc-base",
-      "description": "Target CI using GCC.",
-      "inherits": "linux-base",
-      "hidden": true
-    },
-    {
       "name": "ci-unix-release",
       "inherits": [
         "release",
@@ -201,51 +165,33 @@
       "hidden": true
     },
     {
-      "name": "ci-linux-clang-release",
+      "name": "ci-clang-release",
       "inherits": [
-        "ci-unix-release",
-        "linux-base"
+        "ci-unix-release"
       ]
     },
     {
-      "name": "ci-linux-clang-debug",
+      "name": "ci-clang-debug",
       "inherits": [
-        "ci-unix-debug",
-        "linux-base"
+        "ci-unix-debug"
       ]
     },
     {
-      "name": "ci-linux-gcc-release",
+      "name": "ci-gcc-release",
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
       },
       "inherits": [
-        "ci-unix-release",
-        "linux-base"
+        "ci-unix-release"
       ]
     },
     {
-      "name": "ci-linux-gcc-debug",
+      "name": "ci-gcc-debug",
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
       },
       "inherits": [
-        "ci-unix-debug",
-        "linux-base"
-      ]
-    },
-    {
-      "name": "ci-macos-clang-release",
-      "inherits": [
-        "ci-unix-release",
-        "macos-base"
-      ]
-    },
-    {
-      "name": "ci-macos-clang-debug",
-      "inherits": [
-        "ci-unix-debug",
-        "macos-base"
+        "ci-unix-debug"
       ]
     },
     {
@@ -274,28 +220,58 @@
       "configurePreset": "clang-cl-release"
     },
     {
-      "name": "ci-linux-clang-debug",
-      "configurePreset": "ci-linux-clang-debug"
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
     },
     {
-      "name": "ci-linux-clang-release",
-      "configurePreset": "ci-linux-clang-release"
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
     },
     {
-      "name": "ci-linux-gcc-debug",
-      "configurePreset": "ci-linux-gcc-debug"
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
     },
     {
-      "name": "ci-linux-gcc-release",
-      "configurePreset": "ci-linux-gcc-release"
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
     },
     {
-      "name": "ci-macos-clang-debug",
-      "configurePreset": "ci-macos-clang-debug"
+      "name": "ci-sonar",
+      "configurePreset": "ci-sonar"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug"
     },
     {
-      "name": "ci-macos-clang-release",
-      "configurePreset": "ci-macos-clang-release"
+      "name": "msvc-release",
+      "configurePreset": "msvc-release"
+    },
+    {
+      "name": "clang-cl-debug",
+      "configurePreset": "clang-cl-debug"
+    },
+    {
+      "name": "clang-cl-release",
+      "configurePreset": "clang-cl-release"
+    },
+    {
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
+    },
+    {
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
+    },
+    {
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
+    },
+    {
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
     },
     {
       "name": "ci-sonar",

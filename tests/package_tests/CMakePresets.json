@@ -147,7 +147,7 @@
       ]
     },
     {
-      "name": "ci-linux-clang-release",
+      "name": "ci-clang-release",
       "inherits": [
         "linux-base",
         "ci-unix",
@@ -155,7 +155,7 @@
       ]
     },
     {
-      "name": "ci-linux-clang-debug",
+      "name": "ci-clang-debug",
       "inherits": [
         "linux-base",
         "ci-unix",
@@ -163,7 +163,7 @@
       ]
     },
     {
-      "name": "ci-linux-gcc-release",
+      "name": "ci-gcc-release",
       "inherits": [
         "linux-base",
         "ci-unix",
@@ -171,7 +171,7 @@
       ]
     },
     {
-      "name": "ci-linux-gcc-debug",
+      "name": "ci-gcc-debug",
       "inherits": [
         "linux-base",
         "ci-unix",
@@ -179,7 +179,7 @@
       ]
     },
     {
-      "name": "ci-macos-clang-release",
+      "name": "ci-clang-release",
       "inherits": [
         "macos-base",
         "ci-unix",
@@ -187,7 +187,7 @@
       ]
     },
     {
-      "name": "ci-macos-clang-debug",
+      "name": "ci-clang-debug",
       "inherits": [
         "macos-base",
         "ci-unix",
@@ -220,28 +220,20 @@
       "configurePreset": "clang-cl-release"
     },
     {
-      "name": "ci-linux-clang-debug",
-      "configurePreset": "ci-linux-clang-debug"
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
     },
     {
-      "name": "ci-linux-clang-release",
-      "configurePreset": "ci-linux-clang-release"
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
     },
     {
-      "name": "ci-linux-gcc-debug",
-      "configurePreset": "ci-linux-gcc-debug"
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
     },
     {
-      "name": "ci-linux-gcc-release",
-      "configurePreset": "ci-linux-gcc-release"
-    },
-    {
-      "name": "ci-macos-clang-debug",
-      "configurePreset": "ci-macos-clang-debug"
-    },
-    {
-      "name": "ci-macos-clang-release",
-      "configurePreset": "ci-macos-clang-release"
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
     },
     {
       "name": "ci-sonar",
