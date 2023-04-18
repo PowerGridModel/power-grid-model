@@ -168,6 +168,8 @@ class ShortCircuitSolver {
                         rhs[bus_number](phase_1) = 0;
                         rhs[bus_number](phase_2) = 0;
                     }
+                    // If there is a fault with infinite admittance, there is no need to add other faults to that bus
+                    break;
                 }
             }
         }
