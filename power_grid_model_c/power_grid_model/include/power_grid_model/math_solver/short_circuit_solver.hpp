@@ -54,30 +54,10 @@ class ShortCircuitSolver {
             }
         }
 
-        // set phase 1 and two index for single and two phase faults
+        // set phase 1 and 2 index for single and two phase faults
         int phase_1{-1};
         int phase_2{-1};
-        if (short_circuit_phases == ShortCircuitPhases::a) {
-            phase_1 = 0;
-        }
-        else if (short_circuit_phases == ShortCircuitPhases::b) {
-            phase_1 = 1;
-        }
-        else if (short_circuit_phases == ShortCircuitPhases::c) {
-            phase_1 = 2;
-        }
-        else if (short_circuit_phases == ShortCircuitPhases::ab) {
-            phase_1 = 0;
-            phase_2 = 1;
-        }
-        else if (short_circuit_phases == ShortCircuitPhases::ac) {
-            phase_1 = 0;
-            phase_2 = 2;
-        }
-        else if (short_circuit_phases == ShortCircuitPhases::bc) {
-            phase_1 = 2;
-            phase_2 = 3;
-        }
+        set_phase_index(phase_1, phase_2);
 
         // getter
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
@@ -161,6 +141,31 @@ class ShortCircuitSolver {
     std::shared_ptr<IdxVector const> fault_bus_indptr_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
+
+    void set_phase_index_(double& phase_1, double& phase_2) {
+        // This function updates the phase index for single and two phase faults
+        if (short_circuit_phases == ShortCircuitPhases::a) {
+            phase_1 = 0;
+        }
+        else if (short_circuit_phases == ShortCircuitPhases::b) {
+            phase_1 = 1;
+        }
+        else if (short_circuit_phases == ShortCircuitPhases::c) {
+            phase_1 = 2;
+        }
+        else if (short_circuit_phases == ShortCircuitPhases::ab) {
+            phase_1 = 0;
+            phase_2 = 1;
+        }
+        else if (short_circuit_phases == ShortCircuitPhases::ac) {
+            phase_1 = 0;
+            phase_2 = 2;
+        }
+        else if (short_circuit_phases == ShortCircuitPhases::bc) {
+            phase_1 = 2;
+            phase_2 = 3;
+        }
+    }
 };
 
 }  // namespace math_model_impl
