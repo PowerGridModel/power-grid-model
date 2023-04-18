@@ -13,4 +13,3 @@ target_link_libraries(power_grid_model_benchmark_cpp
 	PRIVATE power_grid_model 
 )
 # set_target_properties(power_grid_model_benchmark_cpp PROPERTIES LINK_WHAT_YOU_USE TRUE)
-

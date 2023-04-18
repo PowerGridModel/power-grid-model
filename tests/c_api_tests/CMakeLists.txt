@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_c_api_tests)
-
 set(PROJECT_SOURCES
 	"test_c_api_meta_data.cpp"
 	"test_c_api_model.cpp"

@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_validation_tests)
-
 set(PROJECT_SOURCES
 	"test_entry_point.cpp"
 	"test_validation.cpp"
