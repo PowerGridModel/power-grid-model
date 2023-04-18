@@ -109,7 +109,7 @@ library `power_grid_model`. There are four sub-projects defined in the root cmak
 * `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
 * `tests/c_api_tests`: the C API test target using the `doctest` framework
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
-* `tests/benchmark_cpp`: the C++ benchmark project for performance measure.
+* `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. It is also possible to use
