@@ -20,6 +20,7 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+CMakeUserPresets.json
 
 # User-specific files
 *.rsuser
@@ -489,6 +490,9 @@ dmypy.json
 # build
 src/power_grid_model/**/*.cpp
 cpp_build*/
+
+# install
+install/
 
 # clion
 cmake-build-*/
