@@ -119,16 +119,33 @@ class ShortCircuitSolver {
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                             Idx row_number = y_bus.col_indices_lu()[data_index];
                             Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[:,bus][:,v] = 0
-                            // mat_data[bus,bus][v,v] = -1
+                            // mat_data[:,bus][:, phase_1] = 0
+                            // mat_data[bus,bus][phase_1, phase_1] = -1
                             mat_data[col_data_index].col(phase_1) = 0;
                             if (row_number == bus_number) {
                                 mat_data_[col_data_index](phase_1, phase_1) = -1;
                             }
                         }
-                        
+                        rhs[bus_number](phase_1) = 0;
                     }
                     else if (short_circuit_type == ShortCircuitType::two_phase) {
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
+                            // mat_data[:,bus][:, phase_2] = 0
+                            // mat_data[bus,bus][phase_1, phase_2] = -1
+                            // mat_data[bus,bus][phase_2, phase_2] = 1
+                            mat_data[col_data_index].col(phase_1) += mat_data[col_data_index].col(phase_1);
+                            mat_data[col_data_index].col(phase_2) = 0;
+                            if (row_number == bus_number) {
+                                mat_data_[col_data_index](phase_1, phase_2) = -1;
+                                mat_data_[col_data_index](phase_2, phase_2) = 1;
+                            }
+                        }
+                        rhs[bus_number](phase_2) += rhs[bus_number](phase_1);
+                        rhs[bus_number](phase_1) = 0;
                     }
                     else {
                         assert((short_circuit_type == ShortCircuitType::two_phase_to_ground));
