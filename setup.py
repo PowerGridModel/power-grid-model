@@ -91,17 +91,21 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     """
     # fetch dependent headers
     resolver = HeaderResolver({"eigen": None, "boost": None})
+    pgm = Path("power_grid_model")
+    pgm_c = Path("power_grid_model_c")
+
     # include-folders
     include_dirs = [
         str(resolver.get_include()),
-        str(pkg_dir / "include"),  # The include-folder of the repo self
+        str(pkg_dir / pgm_c / pgm / "include"),  # The include-folder of the library
+        str(pkg_dir / pgm_c / pgm_c / "include"),  # The include-folder of the C API self
     ]
     # compiler and link flag
     cflags: List[str] = []
     lflags: List[str] = []
     library_dirs: List[str] = []
     libraries: List[str] = []
-    sources = ["power_grid_model_c/power_grid_model_c.cpp"]
+    sources = [str(pgm_c / pgm_c / pgm_c.with_suffix(".cpp"))]
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
