@@ -2,9 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_c_example)
-
-
 add_executable(power_grid_model_c_example main.c)
 
 target_link_libraries(power_grid_model_c_example
