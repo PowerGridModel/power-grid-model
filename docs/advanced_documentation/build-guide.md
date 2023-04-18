@@ -106,9 +106,10 @@ dependencies and the build options for the project. The core algorithm is implem
 library `power_grid_model`. There are four sub-projects defined in the root cmake file:
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
-* `tests/cpp_unit_tests`: the unit test project for the C++ core using the `doctest` framework.
-* `tests/c_api_tests`: the C API test project using the `doctest` framework
-* `tests/benchmark_cpp`: the C++ benchmark project for performance measure.
+* `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
+* `tests/c_api_tests`: the C API test target using the `doctest` framework
+* `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
+* `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. It is also possible to use
