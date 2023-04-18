@@ -7,7 +7,7 @@ project (power_grid_model_c_api_tests)
 set(PROJECT_SOURCES
 	"test_c_api_meta_data.cpp"
 	"test_c_api_model.cpp"
-	"test_power_grid_model_c.cpp"
+	"test_entry_point.cpp"
 )
 
 add_executable(power_grid_model_c_api_tests ${PROJECT_SOURCES})

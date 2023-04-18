@@ -5,7 +5,7 @@
 project (power_grid_model_unit_tests)
 
 set(PROJECT_SOURCES
-	"test_power_grid_model.cpp"
+	"test_entry_point.cpp"
 	"test_main_model_se.cpp"
 	"test_main_model.cpp"
 	"test_main_model_static.cpp"
@@ -26,7 +26,6 @@ set(PROJECT_SOURCES
 	"test_meta_data_generation.cpp"
 	"test_voltage_sensor.cpp"
 	"test_power_sensor.cpp"
-	"test_validation.cpp"
 	"test_three_winding_transformer.cpp"
 )
 
