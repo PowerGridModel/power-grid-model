@@ -7,58 +7,58 @@
 set -e
 
 usage() {
-  echo "Usage: $0 -b <Debug|Release> [-c] [-s]" 1>&2
-  echo "  -c option enables coverage"
-  echo "  -s option enables sanitizer"
+  echo "Usage: $0 -p <preset> [-c] [-e] [-i] [-t]" 1>&2
+  echo "  -c option generates coverage if available"
   echo "  -e option to run C API example"
+  echo "  -i option to install package"
+  echo "  -t option to run integration test (requires '-i')"
+  cmake --list-presets
   exit 1
 }
 
-while getopts "b::cse" flag; do
+while getopts "p::ceit" flag; do
   case "${flag}" in
-    b)
-      [ "${OPTARG}" == "Debug" -o "${OPTARG}" == "Release" ] || echo "Build type should be Debug or Release."
-      BUILD_TYPE=${OPTARG}
+    p)
+      PRESET=${OPTARG}
     ;;
-    c) BUILD_COVERAGE=-DPOWER_GRID_MODEL_COVERAGE=1;;
-    s) BUILD_SANITIZER=-DPOWER_GRID_MODEL_SANITIZER=1;;
+    c) COVERAGE=1;;
     e) C_API_EXAMPLE=1;;
+    i) INSTALL=1;;
+    t) INTEGRATION_TEST=1;;
     *) usage ;;
   esac
 done
 
-if [ -z "${BUILD_TYPE}" ] ; then
+if [ -z "${PRESET}" ] ; then
   usage
 fi
 
-echo "BUILD_TYPE = ${BUILD_TYPE}"
-echo "BUILD_COVERAGE = ${BUILD_COVERAGE}"
-echo "BUILD_SANITIZER = ${BUILD_SANITIZER}"
+echo "PRESET = ${PRESET}"
+echo "INSTALL = ${INSTALL}"
 
-BUILD_DIR=cpp_build_script_${BUILD_TYPE}
+BUILD_DIR=cpp_build/${PRESET}
+INSTALL_DIR=install/${PRESET}
 echo "Build dir: ${BUILD_DIR}"
+echo "Install dir: ${INSTALL_DIR}"
 
 rm -rf ${BUILD_DIR}/
-mkdir ${BUILD_DIR}
-cd ${BUILD_DIR}
+
 # generate
-cmake .. -GNinja \
-    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-    ${BUILD_COVERAGE} \
-    ${BUILD_SANITIZER}
+cmake --preset ${PRESET}
+
 # build
-VERBOSE=1 cmake --build .
+cmake --build --preset ${PRESET} --verbose -j1
+
 # test
-./bin/power_grid_model_unit_tests
+ctest --test-dir ${BUILD_DIR} -E PGMExample
+
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
-  ./bin/power_grid_model_c_example
+  ctest --test-dir ${BUILD_DIR} -R PGMExample
 fi
 
-
-cd ..
 # test coverage report for debug build and for linux
-if [[ "${BUILD_TYPE}" = "Debug" ]] && [[ "${BUILD_COVERAGE}" ]];  then
+if [[ "${COVERAGE}" ]];  then
   echo "Generating coverage report..."
   if [[ ${CXX} == "clang++"* ]]; then
     GCOV_TOOL="--gcov-tool llvm-gcov.sh"
@@ -66,7 +66,29 @@ if [[ "${BUILD_TYPE}" = "Debug" ]] && [[ "${BUILD_COVERAGE}" ]];  then
     GCOV_TOOL=
   fi
 
-  PATH=${PATH}:${PWD} lcov -q -c -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir -d ${BUILD_DIR}/power_grid_model_c/CMakeFiles//power_grid_model_c.dir -b . --no-external --output-file cpp_coverage.info ${GCOV_TOOL}
+  PATH=${PATH}:${PWD} lcov -q -c \
+    -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir \
+    -d ${BUILD_DIR}/tests/c_api_tests/CMakeFiles/power_grid_model_c_api_tests.dir \
+    -d ${BUILD_DIR}/power_grid_model_c/power_grid_model_c/CMakeFiles/power_grid_model_c.dir \
+    -b . \
+    --no-external \
+    --output-file cpp_coverage.info \
+    ${GCOV_TOOL}
   genhtml -q cpp_coverage.info --output-directory cpp_cov_html
   rm cpp_coverage.info
+fi
+
+# install
+if [[ ${INSTALL} ]]; then
+  cmake --build --preset ${PRESET} --target install
+  
+  # integration test
+  if [[ ${INTEGRATION_TEST} ]]; then
+    cd tests/package_tests
+    cmake --preset ${PRESET}
+    cmake --build --preset ${PRESET} --verbose -j1
+    cmake --build --preset ${PRESET} --verbose -j1 --target install
+    install/${PRESET}/bin/power_grid_model_package_test
+    cd ../..
+  fi
 fi

@@ -6,13 +6,13 @@ SPDX-License-Identifier: MPL-2.0
 
 # Power Grid Model
 
-```{image} images/pgm-logo-color.svg
+```{image} https://github.com/PowerGridModel/.github/raw/main/artwork/svg/color.svg
 :alt: pgm_logo
-:width: 150px
+:width: 300px
 :align: right
 ```
 
-`power-grid-model` is a Python library for steady-state distribution power system analysis.
+`power-grid-model` is a library for steady-state distribution power system analysis distributed for Python and C.
 The core of the library is written in C++.
 Currently, it supports the following calculations:
 
