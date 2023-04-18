@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_tests)
-
 find_package(doctest REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 

@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_benchmark_cpp)
-
 set(PROJECT_SOURCES 
 	benchmark.cpp
 )
