@@ -57,7 +57,7 @@ class ShortCircuitSolver {
         // set phase 1 and 2 index for single and two phase faults
         int phase_1{-1};
         int phase_2{-1};
-        set_phase_index(phase_1, phase_2);
+        set_phase_index_(phase_1, phase_2);
 
         // getter
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
@@ -115,6 +115,17 @@ class ShortCircuitSolver {
                         rhs[bus_number] = 0;
                     }
                     else if (short_circuit_type == ShortCircuitType::single_phase_to_ground) {
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            // mat_data[:,bus][:,v] = 0
+                            // mat_data[bus,bus][v,v] = -1
+                            mat_data[col_data_index].col(phase_1) = 0;
+                            if (row_number == bus_number) {
+                                mat_data_[col_data_index](phase_1, phase_1) = -1;
+                            }
+                        }
                         
                     }
                     else if (short_circuit_type == ShortCircuitType::two_phase) {
