@@ -300,7 +300,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_c
         dataset[components[i]] = ConstDataPointer{update_data[i], component_sizes[i]};
     }
     try {
-        model->update_component(dataset);
+        model->update_component<false>(dataset);
     }
     catch (std::exception& e) {
         handle->err_code = PGM_regular_error;

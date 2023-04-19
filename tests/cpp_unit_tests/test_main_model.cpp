@@ -641,12 +641,12 @@ TEST_CASE("Test main model") {
 
     SUBCASE("Test update with unknown id") {
         std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan, nan}};
-        CHECK_THROWS_AS(main_model.update_component<Source>(source_update2), IDNotFound);
+        CHECK_THROWS_AS((main_model.update_component<Source, false>(source_update2)), IDNotFound);
     }
 
     SUBCASE("Test update only load") {
-        main_model.update_component<SymLoad>(sym_load_update);
-        main_model.update_component<AsymLoad>(asym_load_update);
+        main_model.update_component<SymLoad, false>(sym_load_update);
+        main_model.update_component<AsymLoad, false>(asym_load_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -681,9 +681,9 @@ TEST_CASE("Test main model") {
 
     SUBCASE("Test update load and shunt param") {
         sym_load_update[0].p_specified = 2.5e6;
-        main_model.update_component<SymLoad>(sym_load_update);
-        main_model.update_component<AsymLoad>(asym_load_update);
-        main_model.update_component<Shunt>(shunt_update);
+        main_model.update_component<SymLoad, false>(sym_load_update);
+        main_model.update_component<AsymLoad, false>(asym_load_update);
+        main_model.update_component<Shunt, false>(shunt_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -717,11 +717,11 @@ TEST_CASE("Test main model") {
     }
     SUBCASE("Test all updates") {
         sym_load_update[0].p_specified = 2.5e6;
-        main_model.update_component<AsymLoad>(asym_load_update);
-        main_model.update_component<SymLoad>(sym_load_update);
-        main_model.update_component<Shunt>(shunt_update);
-        main_model.update_component<Source>(source_update);
-        main_model.update_component<Link>(link_update);
+        main_model.update_component<AsymLoad, false>(asym_load_update);
+        main_model.update_component<SymLoad, false>(sym_load_update);
+        main_model.update_component<Shunt, false>(shunt_update);
+        main_model.update_component<Source, false>(source_update);
+        main_model.update_component<Link, false>(link_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -804,7 +804,7 @@ TEST_CASE("Test main model") {
         CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
 
         // update and calculation
-        model.update_component(update_data);
+        model.update_component<false>(update_data);
         model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
         CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
