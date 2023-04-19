@@ -54,23 +54,23 @@ struct RetrievableTypes;
 template <class... T>
 class Container;
 // real definition with retrievable types
-template <class... GettableTypes, class... SettableTypes>
-class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
+template <class... GettableTypes, class... StorageableTypes>
+class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
    public:
-    static constexpr size_t num_settable = sizeof...(SettableTypes);
+    static constexpr size_t num_storageable = sizeof...(StorageableTypes);
     static constexpr size_t num_gettable = sizeof...(GettableTypes);
 
     // default constructor, operator
 
     // reserve space
-    template <class U>
+    template <class Storageable>
     void reserve(size_t size) {
-        std::vector<U>& vec = std::get<std::vector<U>>(vectors_);
+        std::vector<Storageable>& vec = std::get<std::vector<Storageable>>(vectors_);
         vec.reserve(size);
     }
 
     // emplace component
-    template <class Settable, class... Args>
+    template <class Storageable, class... Args>
     void emplace(ID id, Args&&... args) {
         // template<class... Args> Args&&... args perfect forwarding
         assert(!construction_complete_);
@@ -79,8 +79,8 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
             throw ConflictID{id};
         }
         // find group and position
-        Idx const group = static_cast<Idx>(get_cls_pos_v<Settable, SettableTypes...>);
-        std::vector<Settable>& vec = std::get<std::vector<Settable>>(vectors_);
+        Idx const group = static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
+        std::vector<Storageable>& vec = std::get<std::vector<Storageable>>(vectors_);
         Idx const pos = static_cast<Idx>(vec.size());
         // create object
         vec.emplace_back(std::forward<Args>(args)...);
@@ -91,16 +91,16 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     // get item based on Idx2D
     template <class Gettable>
     Gettable& get_item(Idx2D idx_2d) {
-        constexpr std::array<GetItemFuncPtr<Gettable>, num_settable> func_arr{
-            select_get_item_func_ptr<Gettable, SettableTypes>::ptr...};
+        constexpr std::array<GetItemFuncPtr<Gettable>, num_storageable> func_arr{
+            select_get_item_func_ptr<Gettable, StorageableTypes>::ptr...};
         // selected group should be de derived class of Gettable
         assert(is_base<Gettable>[idx_2d.group]);
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
     template <class Gettable>
     Gettable const& get_item(Idx2D idx_2d) const {
-        constexpr std::array<GetItemFuncPtrConst<Gettable>, num_settable> func_arr{
-            select_get_item_func_ptr<Gettable, SettableTypes>::ptr_const...};
+        constexpr std::array<GetItemFuncPtrConst<Gettable>, num_storageable> func_arr{
+            select_get_item_func_ptr<Gettable, StorageableTypes>::ptr_const...};
         // selected group should be de derived class of Gettable
         assert(is_base<Gettable>[idx_2d.group]);
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
@@ -153,7 +153,7 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     template <class Gettable>
     Idx get_seq(ID id) const {
         assert(construction_complete_);
-        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
+        std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = map_.find(id);
         assert(found != map_.end());
         return cum_size[found->second.group] + found->second.pos;
@@ -164,7 +164,7 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     Idx2D get_idx_2d_by_seq(Idx seq) const {
         assert(construction_complete_);
         assert(seq >= 0);
-        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
+        std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = std::upper_bound(cum_size.begin(), cum_size.end(), seq);
         assert(found != cum_size.end());
         Idx2D res;
@@ -175,19 +175,19 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
 
     // get start idx based on two classes
     // the GettableBaseType specifies the iterator range of all components whish is subclass of GettableBaseType
-    // the SettableSubType specifies a subset of iterator range of GettableBaseType
-    // the function returns the start index of the first SettableSubType (or its subclass)
+    // the StorageableSubType specifies a subset of iterator range of GettableBaseType
+    // the function returns the start index of the first StorageableSubType (or its subclass)
     //      in the iterator range of U
-    template <class GettableBaseType, class SettableSubType>
+    template <class GettableBaseType, class StorageableSubType>
     Idx get_start_idx() const {
-        std::array<Idx, num_settable + 1> const& cum_size =
+        std::array<Idx, num_storageable + 1> const& cum_size =
             cum_size_[get_cls_pos_v<GettableBaseType, GettableTypes...>];
-        return cum_size[get_sub_cls_pos_v<SettableSubType, SettableTypes...>];
+        return cum_size[get_sub_cls_pos_v<StorageableSubType, StorageableTypes...>];
     }
 
-    template <class Settable>
+    template <class Storageable>
     Idx get_type_idx() const {
-        return static_cast<Idx>(get_type_index<Settable, SettableTypes...>());
+        return static_cast<Idx>(get_type_index<Storageable, StorageableTypes...>());
     }
 
     void set_construction_complete() {
@@ -200,10 +200,13 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     };
 
    private:
-    std::tuple<std::vector<SettableTypes>...> vectors_;
+    std::tuple<std::vector<StorageableTypes>...> vectors_;
     std::unordered_map<ID, Idx2D> map_;
     std::array<Idx, num_gettable> size_;
-    std::array<std::array<Idx, num_settable + 1>, num_gettable> cum_size_;
+    std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_;
+
+    std::tuple<std::vector<StorageableTypes>...> cached_vectors_;
+    std::array<std::vector<Idx>, num_storageable> cached_indices_;
 
 #ifndef NDEBUG
     // set construction_complete is used for debug assertions only
@@ -211,60 +214,60 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
 #endif  // !NDEBUG
 
     // get item per type
-    template <class GettableBaseType, class SettableSubType>
+    template <class GettableBaseType, class StorageableSubType>
     GettableBaseType& get_item_type(Idx pos) {
-        static_assert(std::is_base_of_v<GettableBaseType, SettableSubType>);
-        return std::get<std::vector<SettableSubType>>(vectors_)[pos];
+        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+        return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
-    template <class GettableBaseType, class SettableSubType>
+    template <class GettableBaseType, class StorageableSubType>
     GettableBaseType const& get_item_type(Idx pos) const {
-        static_assert(std::is_base_of_v<GettableBaseType, SettableSubType>);
-        return std::get<std::vector<SettableSubType>>(vectors_)[pos];
+        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+        return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
 
     // templates to select function pointer
-    template <class Settable>
-    using GetItemFuncPtr = Settable& (Container::*)(Idx pos);
-    template <class Settable>
-    using GetItemFuncPtrConst = Settable const& (Container::*)(Idx pos) const;
-    template <class GettableBaseType, class SettableSubType, class = void>
+    template <class Storageable>
+    using GetItemFuncPtr = Storageable& (Container::*)(Idx pos);
+    template <class Storageable>
+    using GetItemFuncPtrConst = Storageable const& (Container::*)(Idx pos) const;
+    template <class GettableBaseType, class StorageableSubType, class = void>
     struct select_get_item_func_ptr {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr = nullptr;
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
-    template <class GettableBaseType, class SettableSubType>
-    struct select_get_item_func_ptr<GettableBaseType, SettableSubType,
-                                    std::enable_if_t<std::is_base_of_v<GettableBaseType, SettableSubType>>> {
+    template <class GettableBaseType, class StorageableSubType>
+    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType,
+                                    std::enable_if_t<std::is_base_of_v<GettableBaseType, StorageableSubType>>> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
-            &Container::get_item_type<GettableBaseType, SettableSubType>;
+            &Container::get_item_type<GettableBaseType, StorageableSubType>;
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const =
-            &Container::get_item_type<GettableBaseType, SettableSubType>;
+            &Container::get_item_type<GettableBaseType, StorageableSubType>;
     };
 
     // array of base judge
     template <class Gettable>
-    static constexpr std::array<bool, num_settable> is_base{std::is_base_of_v<Gettable, SettableTypes>...};
+    static constexpr std::array<bool, num_storageable> is_base{std::is_base_of_v<Gettable, StorageableTypes>...};
     // array of relevant vector size, for a non-derived class, the size is zero
     template <class Gettable>
-    std::array<Idx, num_settable> size_per_vector() const {
+    std::array<Idx, num_storageable> size_per_vector() const {
         assert(construction_complete_);
-        return std::array<Idx, num_settable>{
-            std::is_base_of_v<Gettable, SettableTypes>
-                ? static_cast<Idx>(std::get<std::vector<SettableTypes>>(vectors_).size())
+        return std::array<Idx, num_storageable>{
+            std::is_base_of_v<Gettable, StorageableTypes>
+                ? static_cast<Idx>(std::get<std::vector<StorageableTypes>>(vectors_).size())
                 : 0 ...};
     }
     // total size of a type
     template <class Gettable>
     Idx size_per_type() const {
         assert(construction_complete_);
-        std::array<Idx, num_settable> const size_vec = size_per_vector<Gettable>();
+        std::array<Idx, num_storageable> const size_vec = size_per_vector<Gettable>();
         return std::reduce(size_vec.begin(), size_vec.end(), Idx{});
     }
     template <class Gettable>
-    std::array<Idx, num_settable + 1> accumulate_size_per_vector() const {
+    std::array<Idx, num_storageable + 1> accumulate_size_per_vector() const {
         assert(construction_complete_);
-        std::array<Idx, num_settable> const size_vec = size_per_vector<Gettable>();
-        std::array<Idx, num_settable + 1> res{};
+        std::array<Idx, num_storageable> const size_vec = size_per_vector<Gettable>();
+        std::array<Idx, num_storageable + 1> res{};
         std::inclusive_scan(size_vec.begin(), size_vec.end(), res.begin() + 1);
         return res;
     }
