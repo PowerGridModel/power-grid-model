@@ -228,7 +228,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, class ForwardIterator>
+    template <class CompType, class ForwardIterator, bool cached_update>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
         // check forward iterator
@@ -241,8 +241,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // get component
             // either using ID via hash map
             // either directly using sequence id
-            CompType& comp = has_sequence_id ? components_.template get_item<CompType>(sequence_idx[seq])
-                                             : components_.template get_item<CompType>(it->id);
+            Idx2D const sequence_single = has_sequence_id ? sequence_idx[seq]
+                                             : components_.template get_seq<CompType>(ID id);
+            if constexpr(cached_update){
+                
+                components_.cache_item<CompType>(sequence_single.pos)
+            }
+                                             
+            CompType& comp = components_.template get_item<CompType>(sequence_single)
             // update, get changed variable
             UpdateChange changed = comp.update(*it);
             // if topology changed, everything is not up to date
