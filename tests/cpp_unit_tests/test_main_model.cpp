@@ -6,8 +6,16 @@
 #include "power_grid_model/main_model.hpp"
 
 namespace power_grid_model {
+namespace {
+struct regular_update_tag {
+    static constexpr auto cached_update = false;
+};
+struct cached_update_tag {
+    static constexpr auto cached_update = false;
+};
+}  // namespace
 
-TEST_CASE("Test main model") {
+TEST_CASE_TEMPLATE("Test main model", settings, regular_update_tag, cached_update_tag) {
     std::vector<NodeInput> node_input{{{1}, 10e3}, {{2}, 10e3}, {{3}, 10e3}};
     std::vector<LineInput> line_input{{{{4}, 1, 2, true, true}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
     std::vector<LinkInput> link_input{{{{5}, 2, 3, true, true}}};
@@ -641,12 +649,12 @@ TEST_CASE("Test main model") {
 
     SUBCASE("Test update with unknown id") {
         std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan, nan}};
-        CHECK_THROWS_AS((main_model.update_component<Source, false>(source_update2)), IDNotFound);
+        CHECK_THROWS_AS((main_model.update_component<Source, settings::cached_update>(source_update2)), IDNotFound);
     }
 
     SUBCASE("Test update only load") {
-        main_model.update_component<SymLoad, false>(sym_load_update);
-        main_model.update_component<AsymLoad, false>(asym_load_update);
+        main_model.update_component<SymLoad, settings::cached_update>(sym_load_update);
+        main_model.update_component<AsymLoad, settings::cached_update>(asym_load_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -681,9 +689,9 @@ TEST_CASE("Test main model") {
 
     SUBCASE("Test update load and shunt param") {
         sym_load_update[0].p_specified = 2.5e6;
-        main_model.update_component<SymLoad, false>(sym_load_update);
-        main_model.update_component<AsymLoad, false>(asym_load_update);
-        main_model.update_component<Shunt, false>(shunt_update);
+        main_model.update_component<SymLoad, settings::cached_update>(sym_load_update);
+        main_model.update_component<AsymLoad, settings::cached_update>(asym_load_update);
+        main_model.update_component<Shunt, settings::cached_update>(shunt_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -715,13 +723,14 @@ TEST_CASE("Test main model") {
             CHECK(asym_appliance[4].i(2) == doctest::Approx(0.0));
         }
     }
+
     SUBCASE("Test all updates") {
         sym_load_update[0].p_specified = 2.5e6;
-        main_model.update_component<AsymLoad, false>(asym_load_update);
-        main_model.update_component<SymLoad, false>(sym_load_update);
-        main_model.update_component<Shunt, false>(shunt_update);
-        main_model.update_component<Source, false>(source_update);
-        main_model.update_component<Link, false>(link_update);
+        main_model.update_component<AsymLoad, settings::cached_update>(asym_load_update);
+        main_model.update_component<SymLoad, settings::cached_update>(sym_load_update);
+        main_model.update_component<Shunt, settings::cached_update>(shunt_update);
+        main_model.update_component<Source, settings::cached_update>(source_update);
+        main_model.update_component<Link, settings::cached_update>(link_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -751,6 +760,59 @@ TEST_CASE("Test main model") {
             CHECK(asym_appliance[2].i(0) == doctest::Approx(i));
             CHECK(asym_appliance[3].i(1) == doctest::Approx(0.0));
             CHECK(asym_appliance[4].i(2) == doctest::Approx(0.0));
+        }
+    }
+
+    SUBCASE("Restore components") {
+        auto const math_output_orig = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+
+        main_model.update_component<SymLoad, settings::cached_update>(sym_load_update);
+        main_model.update_component<AsymLoad, settings::cached_update>(asym_load_update);
+        main_model.restore_components();
+
+        SUBCASE("Symmetrical") {
+            auto const math_output_result = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+            main_model.output_result<true, Node>(math_output_result, sym_node.begin());
+            main_model.output_result<true, Branch>(math_output_result, sym_branch.begin());
+            main_model.output_result<true, Appliance>(math_output_result, sym_appliance.begin());
+
+            CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[1].u_pu == doctest::Approx(u1));
+            CHECK(sym_node[2].u_pu == doctest::Approx(u1));
+            CHECK(sym_branch[0].i_from == doctest::Approx(i));
+            CHECK(sym_appliance[0].i == doctest::Approx(i));
+            CHECK(sym_appliance[1].i == doctest::Approx(0.0));
+            if constexpr (settings::cached_update) {
+                CHECK(sym_appliance[2].i == doctest::Approx(i_load));
+                CHECK(sym_appliance[3].i == doctest::Approx(i_load));
+            }
+            else {
+                CHECK(sym_appliance[2].i == doctest::Approx(i_load * 2));
+                CHECK(sym_appliance[3].i == doctest::Approx(0.0));
+            }
+            CHECK(sym_appliance[4].i == doctest::Approx(i_shunt));
+        }
+        SUBCASE("Asymmetrical") {
+            auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
+            main_model.output_result<false, Node>(math_output, asym_node.begin());
+            main_model.output_result<false, Branch>(math_output, asym_branch.begin());
+            main_model.output_result<false, Appliance>(math_output, asym_appliance.begin());
+
+            CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
+            CHECK(asym_node[1].u_pu(1) == doctest::Approx(u1));
+            CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+            CHECK(asym_branch[0].i_from(0) == doctest::Approx(i));
+            CHECK(asym_appliance[0].i(1) == doctest::Approx(i));
+            CHECK(asym_appliance[1].i(2) == doctest::Approx(0.0));
+            if constexpr (settings::cached_update) {
+                CHECK(asym_appliance[2].i(0) == doctest::Approx(i_load));
+                CHECK(asym_appliance[3].i(1) == doctest::Approx(i_load));
+            }
+            else {
+                CHECK(asym_appliance[2].i(0) == doctest::Approx(i_load * 2));
+                CHECK(asym_appliance[3].i(1) == doctest::Approx(0.0));
+            }
+            CHECK(asym_appliance[4].i(2) == doctest::Approx(i_shunt));
         }
     }
 

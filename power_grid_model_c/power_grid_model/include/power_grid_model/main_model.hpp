@@ -288,6 +288,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
+    // restore the initial values of all components
+    void restore_components() {
+        components_.restore_values();
+    }
+
     // set complete construction
     // initialize internal arrays
     void set_construction_complete() {
