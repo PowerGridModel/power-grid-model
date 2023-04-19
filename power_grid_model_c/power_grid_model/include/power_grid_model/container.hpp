@@ -70,7 +70,7 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     }
 
     // emplace component
-    template <class U, class... Args>
+    template <class Settable, class... Args>
     void emplace(ID id, Args&&... args) {
         // template<class... Args> Args&&... args perfect forwarding
         assert(!construction_complete_);
@@ -79,8 +79,8 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
             throw ConflictID{id};
         }
         // find group and position
-        Idx const group = static_cast<Idx>(get_cls_pos_v<U, SettableTypes...>);
-        std::vector<U>& vec = std::get<std::vector<U>>(vectors_);
+        Idx const group = static_cast<Idx>(get_cls_pos_v<Settable, SettableTypes...>);
+        std::vector<Settable>& vec = std::get<std::vector<Settable>>(vectors_);
         Idx const pos = static_cast<Idx>(vec.size());
         // create object
         vec.emplace_back(std::forward<Args>(args)...);
@@ -89,82 +89,82 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     }
 
     // get item based on Idx2D
-    template <class U>
-    U& get_item(Idx2D idx_2d) {
-        constexpr std::array<GetItemFuncPtr<U>, num_settable> func_arr{
-            select_get_item_func_ptr<U, SettableTypes>::ptr...};
-        // selected group should be de derived class of U
-        assert(is_base<U>[idx_2d.group]);
+    template <class Gettable>
+    Gettable& get_item(Idx2D idx_2d) {
+        constexpr std::array<GetItemFuncPtr<Gettable>, num_settable> func_arr{
+            select_get_item_func_ptr<Gettable, SettableTypes>::ptr...};
+        // selected group should be de derived class of Gettable
+        assert(is_base<Gettable>[idx_2d.group]);
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
-    template <class U>
-    U const& get_item(Idx2D idx_2d) const {
-        constexpr std::array<GetItemFuncPtrConst<U>, num_settable> func_arr{
-            select_get_item_func_ptr<U, SettableTypes>::ptr_const...};
-        // selected group should be de derived class of U
-        assert(is_base<U>[idx_2d.group]);
+    template <class Gettable>
+    Gettable const& get_item(Idx2D idx_2d) const {
+        constexpr std::array<GetItemFuncPtrConst<Gettable>, num_settable> func_arr{
+            select_get_item_func_ptr<Gettable, SettableTypes>::ptr_const...};
+        // selected group should be de derived class of Gettable
+        assert(is_base<Gettable>[idx_2d.group]);
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
     // get idx by id
-    template <class U = void>
+    template <class Gettable = void>
     Idx2D get_idx_by_id(ID id) const {
         auto const found = map_.find(id);
         if (found == map_.end()) {
             throw IDNotFound{id};
         }
-        if constexpr (!std::is_void_v<U>) {
-            if (!is_base<U>[found->second.group]) {
+        if constexpr (!std::is_void_v<Gettable>) {
+            if (!is_base<Gettable>[found->second.group]) {
                 throw IDWrongType{id};
             }
         }
         return found->second;
     }
     // get item based on ID
-    template <class U>
-    U& get_item(ID id) {
-        Idx2D const idx = get_idx_by_id<U>(id);
-        return get_item<U>(idx);
+    template <class Gettable>
+    Gettable& get_item(ID id) {
+        Idx2D const idx = get_idx_by_id<Gettable>(id);
+        return get_item<Gettable>(idx);
     }
-    template <class U>
-    U const& get_item(ID id) const {
-        Idx2D const idx = get_idx_by_id<U>(id);
-        return get_item<U>(idx);
+    template <class Gettable>
+    Gettable const& get_item(ID id) const {
+        Idx2D const idx = get_idx_by_id<Gettable>(id);
+        return get_item<Gettable>(idx);
     }
     // get item based on sequence
-    template <class U>
-    U& get_item_by_seq(Idx seq) {
+    template <class Gettable>
+    Gettable& get_item_by_seq(Idx seq) {
         assert(construction_complete_);
-        return get_item<U>(get_idx_2d_by_seq<U>(seq));
+        return get_item<Gettable>(get_idx_2d_by_seq<Gettable>(seq));
     }
-    template <class U>
-    U const& get_item_by_seq(Idx seq) const {
+    template <class Gettable>
+    Gettable const& get_item_by_seq(Idx seq) const {
         assert(construction_complete_);
-        return get_item<U>(get_idx_2d_by_seq<U>(seq));
+        return get_item<Gettable>(get_idx_2d_by_seq<Gettable>(seq));
     }
 
     // get size
-    template <class U>
+    template <class Gettable>
     Idx size() const {
         assert(construction_complete_);
-        return size_[get_cls_pos_v<U, GettableTypes...>];
+        return size_[get_cls_pos_v<Gettable, GettableTypes...>];
     }
 
     // get sequence idx based on id
-    template <class U>
+    template <class Gettable>
     Idx get_seq(ID id) const {
         assert(construction_complete_);
-        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<U, GettableTypes...>];
+        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = map_.find(id);
         assert(found != map_.end());
         return cum_size[found->second.group] + found->second.pos;
     }
 
     // get idx_2d based on sequence
-    template <class U>
+    template <class Gettable>
     Idx2D get_idx_2d_by_seq(Idx seq) const {
         assert(construction_complete_);
         assert(seq >= 0);
-        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<U, GettableTypes...>];
+        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = std::upper_bound(cum_size.begin(), cum_size.end(), seq);
         assert(found != cum_size.end());
         Idx2D res;
@@ -174,19 +174,20 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     }
 
     // get start idx based on two classes
-    // the U specifies the iterator range of all components whish is subclass of U
-    // the US specifies a subset of iterator range of U
-    // the function returns the start index of the first US (or its subclass)
+    // the GettableBaseType specifies the iterator range of all components whish is subclass of GettableBaseType
+    // the SettableSubType specifies a subset of iterator range of GettableBaseType
+    // the function returns the start index of the first SettableSubType (or its subclass)
     //      in the iterator range of U
-    template <class U, class US>
+    template <class GettableBaseType, class SettableSubType>
     Idx get_start_idx() const {
-        std::array<Idx, num_settable + 1> const& cum_size = cum_size_[get_cls_pos_v<U, GettableTypes...>];
-        return cum_size[get_sub_cls_pos_v<US, SettableTypes...>];
+        std::array<Idx, num_settable + 1> const& cum_size =
+            cum_size_[get_cls_pos_v<GettableBaseType, GettableTypes...>];
+        return cum_size[get_sub_cls_pos_v<SettableSubType, SettableTypes...>];
     }
 
-    template <class U>
+    template <class Settable>
     Idx get_type_idx() const {
-        return static_cast<Idx>(get_type_index<U, SettableTypes...>());
+        return static_cast<Idx>(get_type_index<Settable, SettableTypes...>());
     }
 
     void set_construction_complete() {
@@ -210,56 +211,59 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
 #endif  // !NDEBUG
 
     // get item per type
-    template <class U1, class U2>
-    U1& get_item_type(Idx pos) {
-        static_assert(std::is_base_of_v<U1, U2>);
-        return std::get<std::vector<U2>>(vectors_)[pos];
+    template <class GettableBaseType, class SettableSubType>
+    GettableBaseType& get_item_type(Idx pos) {
+        static_assert(std::is_base_of_v<GettableBaseType, SettableSubType>);
+        return std::get<std::vector<SettableSubType>>(vectors_)[pos];
     }
-    template <class U1, class U2>
-    U1 const& get_item_type(Idx pos) const {
-        static_assert(std::is_base_of_v<U1, U2>);
-        return std::get<std::vector<U2>>(vectors_)[pos];
+    template <class GettableBaseType, class SettableSubType>
+    GettableBaseType const& get_item_type(Idx pos) const {
+        static_assert(std::is_base_of_v<GettableBaseType, SettableSubType>);
+        return std::get<std::vector<SettableSubType>>(vectors_)[pos];
     }
 
     // templates to select function pointer
-    template <class U>
-    using GetItemFuncPtr = U& (Container::*)(Idx pos);
-    template <class U>
-    using GetItemFuncPtrConst = U const& (Container::*)(Idx pos) const;
-    template <class U1, class U2, class = void>
+    template <class Settable>
+    using GetItemFuncPtr = Settable& (Container::*)(Idx pos);
+    template <class Settable>
+    using GetItemFuncPtrConst = Settable const& (Container::*)(Idx pos) const;
+    template <class GettableBaseType, class SettableSubType, class = void>
     struct select_get_item_func_ptr {
-        static constexpr GetItemFuncPtr<U1> ptr = nullptr;
-        static constexpr GetItemFuncPtrConst<U1> ptr_const = nullptr;
+        static constexpr GetItemFuncPtr<GettableBaseType> ptr = nullptr;
+        static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
-    template <class U1, class U2>
-    struct select_get_item_func_ptr<U1, U2, std::enable_if_t<std::is_base_of_v<U1, U2>>> {
-        static constexpr GetItemFuncPtr<U1> ptr = &Container::get_item_type<U1, U2>;
-        static constexpr GetItemFuncPtrConst<U1> ptr_const = &Container::get_item_type<U1, U2>;
+    template <class GettableBaseType, class SettableSubType>
+    struct select_get_item_func_ptr<GettableBaseType, SettableSubType,
+                                    std::enable_if_t<std::is_base_of_v<GettableBaseType, SettableSubType>>> {
+        static constexpr GetItemFuncPtr<GettableBaseType> ptr =
+            &Container::get_item_type<GettableBaseType, SettableSubType>;
+        static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const =
+            &Container::get_item_type<GettableBaseType, SettableSubType>;
     };
 
     // array of base judge
-    template <class U>
-    static constexpr std::array<bool, num_settable> is_base{std::is_base_of_v<U, SettableTypes>...};
+    template <class Gettable>
+    static constexpr std::array<bool, num_settable> is_base{std::is_base_of_v<Gettable, SettableTypes>...};
     // array of relevant vector size, for a non-derived class, the size is zero
-    template <class U>
+    template <class Gettable>
     std::array<Idx, num_settable> size_per_vector() const {
         assert(construction_complete_);
         return std::array<Idx, num_settable>{
-            std::is_base_of_v<U, SettableTypes>
+            std::is_base_of_v<Gettable, SettableTypes>
                 ? static_cast<Idx>(std::get<std::vector<SettableTypes>>(vectors_).size())
                 : 0 ...};
     }
     // total size of a type
-    template <class U>
+    template <class Gettable>
     Idx size_per_type() const {
         assert(construction_complete_);
-        std::array<Idx, num_settable> const size_vec = size_per_vector<U>();
+        std::array<Idx, num_settable> const size_vec = size_per_vector<Gettable>();
         return std::reduce(size_vec.begin(), size_vec.end(), Idx{});
     }
-    template <class U>
+    template <class Gettable>
     std::array<Idx, num_settable + 1> accumulate_size_per_vector() const {
         assert(construction_complete_);
-        std::array<Idx, num_settable> const size_vec = size_per_vector<U>();
+        std::array<Idx, num_settable> const size_vec = size_per_vector<Gettable>();
         std::array<Idx, num_settable + 1> res{};
         std::inclusive_scan(size_vec.begin(), size_vec.end(), res.begin() + 1);
         return res;
@@ -267,26 +271,27 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
 
    private:
     // define iterator
-    template <class U>
-    class Iterator : public boost::iterator_facade<Iterator<U>, U, boost::random_access_traversal_tag, U&, Idx> {
+    template <class Gettable>
+    class Iterator : public boost::iterator_facade<Iterator<Gettable>, Gettable, boost::random_access_traversal_tag,
+                                                   Gettable&, Idx> {
        public:
-        static constexpr bool is_const = std::is_const_v<U>;
-        using base_type = std::remove_cv_t<U>;
+        static constexpr bool is_const = std::is_const_v<Gettable>;
+        using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
         // constructor including default
         explicit Iterator(container_type* container_ptr = nullptr, Idx idx = 0)
             : container_ptr_{container_ptr}, idx_{idx} {
         }
         // conversion to const iterator
-        template <class UX = U>
-        operator std::enable_if_t<!is_const, Iterator<UX const>>() const {
-            return Iterator<UX const>{container_ptr_, idx_};
+        template <class ConstGettable = Gettable>
+        operator std::enable_if_t<!is_const, Iterator<ConstGettable const>>() const {
+            return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
        private:
         friend class boost::iterator_core_access;
 
-        U& dereference() const {
+        Gettable& dereference() const {
             return container_ptr_->template get_item_by_seq<base_type>(idx_);
         }
         bool equal(Iterator const& other) const {
@@ -313,41 +318,41 @@ class Container<RetrievableTypes<GettableTypes...>, SettableTypes...> {
     };
 
     // define proxy
-    template <class U>
+    template <class Gettable>
     class Proxy {
        private:
-        static constexpr bool is_const = std::is_const_v<U>;
-        using base_type = std::remove_cv_t<U>;
+        static constexpr bool is_const = std::is_const_v<Gettable>;
+        using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
 
        public:
         Proxy(container_type& container)
             : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {
         }
-        Iterator<U> begin() {
+        Iterator<Gettable> begin() {
             return begin_;
         }
-        Iterator<U> end() {
+        Iterator<Gettable> end() {
             return end_;
         }
 
        private:
-        Iterator<U> const begin_;
-        Iterator<U> const end_;
+        Iterator<Gettable> const begin_;
+        Iterator<Gettable> const end_;
     };
 
    public:
-    template <class U>
-    Proxy<U> iter() {
-        return Proxy<U>{*this};
+    template <class Gettable>
+    Proxy<Gettable> iter() {
+        return Proxy<Gettable>{*this};
     }
-    template <class U>
-    Proxy<U const> iter() const {
-        return Proxy<U const>{*this};
+    template <class Gettable>
+    Proxy<Gettable const> iter() const {
+        return Proxy<Gettable const>{*this};
     }
-    template <class U>
-    Proxy<U const> citer() const {
-        return iter<U>();
+    template <class Gettable>
+    Proxy<Gettable const> citer() const {
+        return iter<Gettable>();
     }
 };
 
