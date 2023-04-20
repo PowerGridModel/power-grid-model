@@ -83,10 +83,10 @@ Buffer parse_single_type(json const& j, MetaData const& meta) {
     size_t const length = j.size();
     size_t const obj_size = meta.size;
     buffer.ptr = create_buffer(obj_size, length);
-    for (Idx position = 0; position != (Idx)length; ++position) {
+    for (Idx position = 0; position != static_cast<Idx>(length); ++position) {
         parse_single_object(buffer.ptr.get(), j[position], meta, position);
     }
-    buffer.indptr = {0, (Idx)length};
+    buffer.indptr = {0, static_cast<Idx>(length)};
     buffer.data_ptr = MutableDataPointer{buffer.ptr.get(), buffer.indptr.data(), 1};
     return buffer;
 }
@@ -165,7 +165,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
     for (auto const& j_single : j) {
         batch_data.individual_batch.push_back(convert_json_single(j_single, data_type));
     }
-    Idx const n_batch = (Idx)batch_data.individual_batch.size();
+    Idx const n_batch = static_cast<Idx>(batch_data.individual_batch.size());
     // summerize count of object per component
     std::map<std::string, Idx> obj_count;
     for (SingleData const& single_data : batch_data.individual_batch) {
@@ -435,7 +435,7 @@ void validate_batch_case(CaseParam const& param) {
     SingleData result = create_result_dataset(validation_case.input, output_prefix);
     // create model
     MainModel model{50.0, validation_case.input.const_dataset, 0};
-    Idx const n_batch = (Idx)validation_case.update_batch.individual_batch.size();
+    Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
     CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
 
     // run in loops

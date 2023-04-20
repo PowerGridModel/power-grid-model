@@ -819,29 +819,33 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
 
     SUBCASE("Test runtime dispatch") {
         ConstDataset input_data;
-        input_data["node"] = DataPointer<true>{node_input.data(), (Idx)node_input.size()};
-        input_data["line"] = DataPointer<true>{line_input.data(), (Idx)line_input.size()};
-        input_data["link"] = DataPointer<true>{link_input.data(), (Idx)link_input.size()};
-        input_data["source"] = DataPointer<true>{source_input.data(), (Idx)source_input.size()};
-        input_data["sym_load"] = DataPointer<true>{sym_load_input.data(), (Idx)sym_load_input.size()};
-        input_data["asym_load"] = DataPointer<true>{asym_load_input.data(), (Idx)asym_load_input.size()};
-        input_data["shunt"] = DataPointer<true>{shunt_input.data(), (Idx)shunt_input.size()};
+        input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};
+        input_data["line"] = DataPointer<true>{line_input.data(), static_cast<Idx>(line_input.size())};
+        input_data["link"] = DataPointer<true>{link_input.data(), static_cast<Idx>(link_input.size())};
+        input_data["source"] = DataPointer<true>{source_input.data(), static_cast<Idx>(source_input.size())};
+        input_data["sym_load"] = DataPointer<true>{sym_load_input.data(), static_cast<Idx>(sym_load_input.size())};
+        input_data["asym_load"] = DataPointer<true>{asym_load_input.data(), static_cast<Idx>(asym_load_input.size())};
+        input_data["shunt"] = DataPointer<true>{shunt_input.data(), static_cast<Idx>(shunt_input.size())};
+
         ConstDataset update_data;
-        update_data["sym_load"] = DataPointer<true>{sym_load_update.data(), (Idx)sym_load_update.size()};
-        update_data["asym_load"] = DataPointer<true>{asym_load_update.data(), (Idx)asym_load_update.size()};
-        update_data["shunt"] = DataPointer<true>{shunt_update.data(), (Idx)shunt_update.size()};
-        update_data["source"] = DataPointer<true>{source_update.data(), (Idx)source_update.size()};
-        update_data["link"] = DataPointer<true>{link_update.data(), (Idx)link_update.size()};
+        update_data["sym_load"] = DataPointer<true>{sym_load_update.data(), static_cast<Idx>(sym_load_update.size())};
+        update_data["asym_load"] =
+            DataPointer<true>{asym_load_update.data(), static_cast<Idx>(asym_load_update.size())};
+        update_data["shunt"] = DataPointer<true>{shunt_update.data(), static_cast<Idx>(shunt_update.size())};
+        update_data["source"] = DataPointer<true>{source_update.data(), static_cast<Idx>(source_update.size())};
+        update_data["link"] = DataPointer<true>{link_update.data(), static_cast<Idx>(link_update.size())};
+
         Dataset sym_result_data;
-        sym_result_data["node"] = DataPointer<false>{sym_node.data(), (Idx)sym_node.size()};
-        sym_result_data["line"] = DataPointer<false>{sym_line.data(), (Idx)sym_line.size()};
-        sym_result_data["link"] = DataPointer<false>{sym_link.data(), (Idx)sym_link.size()};
-        sym_result_data["source"] = DataPointer<false>{sym_source.data(), (Idx)sym_source.size()};
-        sym_result_data["sym_load"] = DataPointer<false>{sym_load_sym.data(), (Idx)sym_load_sym.size()};
-        sym_result_data["asym_load"] = DataPointer<false>{sym_load_asym.data(), (Idx)sym_load_asym.size()};
-        sym_result_data["shunt"] = DataPointer<false>{sym_shunt.data(), (Idx)sym_shunt.size()};
+        sym_result_data["node"] = DataPointer<false>{sym_node.data(), static_cast<Idx>(sym_node.size())};
+        sym_result_data["line"] = DataPointer<false>{sym_line.data(), static_cast<Idx>(sym_line.size())};
+        sym_result_data["link"] = DataPointer<false>{sym_link.data(), static_cast<Idx>(sym_link.size())};
+        sym_result_data["source"] = DataPointer<false>{sym_source.data(), static_cast<Idx>(sym_source.size())};
+        sym_result_data["sym_load"] = DataPointer<false>{sym_load_sym.data(), static_cast<Idx>(sym_load_sym.size())};
+        sym_result_data["asym_load"] = DataPointer<false>{sym_load_asym.data(), static_cast<Idx>(sym_load_asym.size())};
+        sym_result_data["shunt"] = DataPointer<false>{sym_shunt.data(), static_cast<Idx>(sym_shunt.size())};
+
         Dataset asym_result_data;
-        asym_result_data["node"] = DataPointer<false>{asym_node.data(), (Idx)asym_node.size()};
+        asym_result_data["node"] = DataPointer<false>{asym_node.data(), static_cast<Idx>(asym_node.size())};
 
         MainModel model{50.0, input_data};
         auto const count = model.all_component_count();
@@ -901,7 +905,32 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
         CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
         CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+
         // no dependent updates within batches
+        model = MainModel{50.0, input_data};
+        ConstDataset dependent_update_data;
+        Dataset dependent_result_data;
+
+        std::vector<SymLoadGenUpdate> sym_load_update_2{
+            {{{7}, true}, nan, 1.0e7}, {{{7}, true}, 1.0e3, nan}, {{{7}, true}, 1.0e3, 1.0e7}};
+        dependent_update_data["sym_load"] =
+            DataPointer<true>{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
+
+        std::vector<NodeOutput<true>> sym_node_2(sym_load_update_2.size() * sym_node.size());
+        dependent_result_data["node"] = DataPointer<false>{
+            sym_node_2.data(), static_cast<Idx>(sym_load_update_2.size()), static_cast<Idx>(sym_node.size())};
+
+        model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, dependent_result_data,
+                                         dependent_update_data, -1);
+        CHECK(sym_node_2[0].u_pu == doctest::Approx(1.05));
+        CHECK(sym_node_2[1].u_pu == doctest::Approx(0.66).epsilon(0.005));
+        CHECK(sym_node_2[2].u_pu == doctest::Approx(0.66).epsilon(0.005));
+        CHECK(sym_node_2[3].u_pu == doctest::Approx(1.05));
+        CHECK(sym_node_2[4].u_pu == doctest::Approx(0.87).epsilon(0.005));
+        CHECK(sym_node_2[5].u_pu == doctest::Approx(0.87).epsilon(0.005));
+        CHECK(sym_node_2[6].u_pu == doctest::Approx(1.05));
+        CHECK(sym_node_2[7].u_pu == doctest::Approx(0.67).epsilon(0.005));
+        CHECK(sym_node_2[8].u_pu == doctest::Approx(0.67).epsilon(0.005));
     }
 }
 
