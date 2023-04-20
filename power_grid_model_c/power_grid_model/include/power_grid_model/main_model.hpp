@@ -81,6 +81,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
 
    public:
+    struct cached_update_t {
+        static constexpr auto cached_update = true;
+    };
+
+    struct permanent_update_t {
+        static constexpr auto cached_update = false;
+    };
+
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
@@ -222,7 +230,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, bool cached_update, class ForwardIterator>
+    template <class CompType, class CacheType, class ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
         // check forward iterator
@@ -238,7 +246,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             Idx2D const sequence_single =
                 has_sequence_id ? sequence_idx[seq] : components_.template get_idx_by_id<CompType>(it->id);
 
-            if constexpr (cached_update) {
+            if constexpr (CacheType::cached_update) {
                 components_.cache_item<CompType>(sequence_single.pos);
             }
 
@@ -254,20 +262,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to update vectors of components
-    template <class CompType, bool cached_update>
+    template <class CompType, class CacheType>
     void update_component(std::vector<typename CompType::UpdateType> const& components) {
-        update_component<CompType, cached_update>(components.cbegin(), components.cend());
+        update_component<CompType, CacheType>(components.cbegin(), components.cend());
     }
 
     // update all components
-    template <bool cached_update>
+    template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos = 0,
                           std::map<std::string, std::vector<Idx2D>> const& sequence_idx_map = {}) {
         static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
                                                                    DataPointer<true> const& data_ptr, Idx position,
                                                                    std::vector<Idx2D> const& sequence_idx) {
             auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::UpdateType>(position);
-            model.update_component<ComponentType, cached_update>(begin, end, sequence_idx);
+            model.update_component<ComponentType, CacheType>(begin, end, sequence_idx);
         }...};
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = update_data.find(entry.name);
@@ -557,8 +565,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
                 // try to update model and run calculation
                 try {
-                    constexpr auto cached_update = false;  // TODO replace with actual implementation
-                    model.update_component<cached_update>(update_data, batch_number, sequence_idx_map);
+                    // TODO replace actual implementation using cached_update_t
+                    model.update_component<permanent_update_t>(update_data, batch_number, sequence_idx_map);
                     auto const math_output = (model.*calculation_fn)(err_tol, max_iter, calculation_method);
                     model.output_result(math_output, result_data, batch_number);
                 }

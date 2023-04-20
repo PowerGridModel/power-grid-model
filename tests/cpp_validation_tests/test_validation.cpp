@@ -442,7 +442,8 @@ void validate_batch_case(CaseParam const& param) {
     for (Idx batch = 0; batch != n_batch; ++batch) {
         MainModel model_copy{model};
         // update and run
-        model_copy.update_component<false>(validation_case.update_batch.individual_batch[batch].const_dataset);
+        model_copy.update_component<MainModel::permanent_update_t>(
+            validation_case.update_batch.individual_batch[batch].const_dataset);
         (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
         // check
         assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
