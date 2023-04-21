@@ -827,110 +827,118 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
         input_data["asym_load"] = DataPointer<true>{asym_load_input.data(), static_cast<Idx>(asym_load_input.size())};
         input_data["shunt"] = DataPointer<true>{shunt_input.data(), static_cast<Idx>(shunt_input.size())};
 
-        ConstDataset update_data;
-        update_data["sym_load"] = DataPointer<true>{sym_load_update.data(), static_cast<Idx>(sym_load_update.size())};
-        update_data["asym_load"] =
-            DataPointer<true>{asym_load_update.data(), static_cast<Idx>(asym_load_update.size())};
-        update_data["shunt"] = DataPointer<true>{shunt_update.data(), static_cast<Idx>(shunt_update.size())};
-        update_data["source"] = DataPointer<true>{source_update.data(), static_cast<Idx>(source_update.size())};
-        update_data["link"] = DataPointer<true>{link_update.data(), static_cast<Idx>(link_update.size())};
+        SUBCASE("Single-size batches") {
+            ConstDataset update_data;
+            update_data["sym_load"] =
+                DataPointer<true>{sym_load_update.data(), static_cast<Idx>(sym_load_update.size())};
+            update_data["asym_load"] =
+                DataPointer<true>{asym_load_update.data(), static_cast<Idx>(asym_load_update.size())};
+            update_data["shunt"] = DataPointer<true>{shunt_update.data(), static_cast<Idx>(shunt_update.size())};
+            update_data["source"] = DataPointer<true>{source_update.data(), static_cast<Idx>(source_update.size())};
+            update_data["link"] = DataPointer<true>{link_update.data(), static_cast<Idx>(link_update.size())};
 
-        Dataset sym_result_data;
-        sym_result_data["node"] = DataPointer<false>{sym_node.data(), static_cast<Idx>(sym_node.size())};
-        sym_result_data["line"] = DataPointer<false>{sym_line.data(), static_cast<Idx>(sym_line.size())};
-        sym_result_data["link"] = DataPointer<false>{sym_link.data(), static_cast<Idx>(sym_link.size())};
-        sym_result_data["source"] = DataPointer<false>{sym_source.data(), static_cast<Idx>(sym_source.size())};
-        sym_result_data["sym_load"] = DataPointer<false>{sym_load_sym.data(), static_cast<Idx>(sym_load_sym.size())};
-        sym_result_data["asym_load"] = DataPointer<false>{sym_load_asym.data(), static_cast<Idx>(sym_load_asym.size())};
-        sym_result_data["shunt"] = DataPointer<false>{sym_shunt.data(), static_cast<Idx>(sym_shunt.size())};
+            Dataset sym_result_data;
+            sym_result_data["node"] = DataPointer<false>{sym_node.data(), static_cast<Idx>(sym_node.size())};
+            sym_result_data["line"] = DataPointer<false>{sym_line.data(), static_cast<Idx>(sym_line.size())};
+            sym_result_data["link"] = DataPointer<false>{sym_link.data(), static_cast<Idx>(sym_link.size())};
+            sym_result_data["source"] = DataPointer<false>{sym_source.data(), static_cast<Idx>(sym_source.size())};
+            sym_result_data["sym_load"] =
+                DataPointer<false>{sym_load_sym.data(), static_cast<Idx>(sym_load_sym.size())};
+            sym_result_data["asym_load"] =
+                DataPointer<false>{sym_load_asym.data(), static_cast<Idx>(sym_load_asym.size())};
+            sym_result_data["shunt"] = DataPointer<false>{sym_shunt.data(), static_cast<Idx>(sym_shunt.size())};
 
-        Dataset asym_result_data;
-        asym_result_data["node"] = DataPointer<false>{asym_node.data(), static_cast<Idx>(asym_node.size())};
+            Dataset asym_result_data;
+            asym_result_data["node"] = DataPointer<false>{asym_node.data(), static_cast<Idx>(asym_node.size())};
 
-        MainModel model{50.0, input_data};
-        auto const count = model.all_component_count();
-        CHECK(count.at("node") == 3);
-        CHECK(count.at("source") == 2);
-        CHECK(count.find("sym_gen") == count.cend());
+            MainModel model{50.0, input_data};
+            auto const count = model.all_component_count();
+            CHECK(count.at("node") == 3);
+            CHECK(count.at("source") == 2);
+            CHECK(count.find("sym_gen") == count.cend());
 
-        // calculation
-        model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
-        CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[1].u_pu == doctest::Approx(u1));
-        CHECK(sym_node[2].u_pu == doctest::Approx(u1));
-        CHECK(sym_line[0].i_from == doctest::Approx(i));
-        CHECK(sym_link[0].i_from == doctest::Approx(i));
-        CHECK(sym_source[0].i == doctest::Approx(i));
-        CHECK(sym_source[1].i == doctest::Approx(0.0));
-        CHECK(sym_load_sym[0].i == doctest::Approx(i_load));
-        CHECK(sym_load_asym[0].i == doctest::Approx(i_load));
-        CHECK(sym_shunt[0].i == doctest::Approx(i_shunt));
-        model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data);
-        CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(asym_node[1].u_pu(1) == doctest::Approx(u1));
-        CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+            // calculation
+            model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
+            CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[1].u_pu == doctest::Approx(u1));
+            CHECK(sym_node[2].u_pu == doctest::Approx(u1));
+            CHECK(sym_line[0].i_from == doctest::Approx(i));
+            CHECK(sym_link[0].i_from == doctest::Approx(i));
+            CHECK(sym_source[0].i == doctest::Approx(i));
+            CHECK(sym_source[1].i == doctest::Approx(0.0));
+            CHECK(sym_load_sym[0].i == doctest::Approx(i_load));
+            CHECK(sym_load_asym[0].i == doctest::Approx(i_load));
+            CHECK(sym_shunt[0].i == doctest::Approx(i_shunt));
+            model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data);
+            CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
+            CHECK(asym_node[1].u_pu(1) == doctest::Approx(u1));
+            CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
 
-        // update and calculation
-        model.update_component<MainModel::permanent_update_t>(update_data);
-        model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
-        CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[2].u_pu == doctest::Approx(u1));
-        model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data);
-        CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+            // update and calculation
+            model.update_component<MainModel::permanent_update_t>(update_data);
+            model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
+            CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[2].u_pu == doctest::Approx(u1));
+            model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data);
+            CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
+            CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
+            CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
 
-        // test batch calculation
-        model = MainModel{50.0, input_data};
-        // symmetric sequential
-        model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data, update_data, -1);
-        CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[2].u_pu == doctest::Approx(u1));
-        // symmetric parallel
-        model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data, update_data, 0);
-        CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node[2].u_pu == doctest::Approx(u1));
-        // asymmetric sequential
-        model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data, update_data,
-                                          -1);
-        CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
-        // asymmetric parallel
-        model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data, update_data,
-                                          0);
-        CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+            // test batch calculation
+            model = MainModel{50.0, input_data};
+            // symmetric sequential
+            model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data, update_data,
+                                             -1);
+            CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[2].u_pu == doctest::Approx(u1));
+            // symmetric parallel
+            model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data, update_data,
+                                             0);
+            CHECK(sym_node[0].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[1].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node[2].u_pu == doctest::Approx(u1));
+            // asymmetric sequential
+            model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data,
+                                              update_data, -1);
+            CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
+            CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
+            CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+            // asymmetric parallel
+            model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data,
+                                              update_data, 0);
+            CHECK(asym_node[0].u_pu(0) == doctest::Approx(1.05));
+            CHECK(asym_node[1].u_pu(1) == doctest::Approx(1.05));
+            CHECK(asym_node[2].u_pu(2) == doctest::Approx(u1));
+        }
 
-        // no dependent updates within batches
-        model = MainModel{50.0, input_data};
-        ConstDataset dependent_update_data;
-        Dataset dependent_result_data;
+        SUBCASE("no dependent updates within batches") {
+            MainModel model{50.0, input_data};
+            ConstDataset dependent_update_data;
+            Dataset dependent_result_data;
 
-        std::vector<SymLoadGenUpdate> sym_load_update_2{
-            {{{7}, true}, nan, 1.0e7}, {{{7}, true}, 1.0e3, nan}, {{{7}, true}, 1.0e3, 1.0e7}};
-        dependent_update_data["sym_load"] =
-            DataPointer<true>{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
+            std::vector<SymLoadGenUpdate> sym_load_update_2{
+                {{{7}, true}, nan, 1.0e7}, {{{7}, true}, 1.0e3, nan}, {{{7}, true}, 1.0e3, 1.0e7}};
+            dependent_update_data["sym_load"] =
+                DataPointer<true>{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
 
-        std::vector<NodeOutput<true>> sym_node_2(sym_load_update_2.size() * sym_node.size());
-        dependent_result_data["node"] = DataPointer<false>{
-            sym_node_2.data(), static_cast<Idx>(sym_load_update_2.size()), static_cast<Idx>(sym_node.size())};
+            std::vector<NodeOutput<true>> sym_node_2(sym_load_update_2.size() * sym_node.size());
+            dependent_result_data["node"] = DataPointer<false>{
+                sym_node_2.data(), static_cast<Idx>(sym_load_update_2.size()), static_cast<Idx>(sym_node.size())};
 
-        model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, dependent_result_data,
-                                         dependent_update_data, -1);
-        CHECK(sym_node_2[0].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node_2[1].u_pu == doctest::Approx(0.66).epsilon(0.005));
-        CHECK(sym_node_2[2].u_pu == doctest::Approx(0.66).epsilon(0.005));
-        CHECK(sym_node_2[3].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node_2[4].u_pu == doctest::Approx(0.87).epsilon(0.005));
-        CHECK(sym_node_2[5].u_pu == doctest::Approx(0.87).epsilon(0.005));
-        CHECK(sym_node_2[6].u_pu == doctest::Approx(1.05));
-        CHECK(sym_node_2[7].u_pu == doctest::Approx(0.67).epsilon(0.005));
-        CHECK(sym_node_2[8].u_pu == doctest::Approx(0.67).epsilon(0.005));
+            model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, dependent_result_data,
+                                             dependent_update_data, -1);
+            CHECK(sym_node_2[0].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node_2[1].u_pu == doctest::Approx(0.66).epsilon(0.005));
+            CHECK(sym_node_2[2].u_pu == doctest::Approx(0.66).epsilon(0.005));
+            CHECK(sym_node_2[3].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node_2[4].u_pu == doctest::Approx(0.87).epsilon(0.005));
+            CHECK(sym_node_2[5].u_pu == doctest::Approx(0.87).epsilon(0.005));
+            CHECK(sym_node_2[6].u_pu == doctest::Approx(1.05));
+            CHECK(sym_node_2[7].u_pu == doctest::Approx(0.67).epsilon(0.005));
+            CHECK(sym_node_2[8].u_pu == doctest::Approx(0.67).epsilon(0.005));
+        }
     }
 }
 

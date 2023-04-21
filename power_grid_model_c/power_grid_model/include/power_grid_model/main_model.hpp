@@ -299,6 +299,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // restore the initial values of all components
     void restore_components() {
         components_.restore_values();
+        is_topology_up_to_date_ = false;
+        is_sym_parameter_up_to_date_ = false;
+        is_asym_parameter_up_to_date_ = false;
     }
 
     // set complete construction
@@ -565,10 +568,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
                 // try to update model and run calculation
                 try {
-                    // TODO replace actual implementation using cached_update_t
-                    model.update_component<permanent_update_t>(update_data, batch_number, sequence_idx_map);
+                    model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
                     auto const math_output = (model.*calculation_fn)(err_tol, max_iter, calculation_method);
                     model.output_result(math_output, result_data, batch_number);
+                    model.restore_components();
                 }
                 catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
