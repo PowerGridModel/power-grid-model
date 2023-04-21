@@ -650,12 +650,13 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
 
     SUBCASE("Test update with unknown id") {
         std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan, nan}};
-        CHECK_THROWS_AS((main_model.update_component<Source, settings::update_type>(source_update2)), IDNotFound);
+        CHECK_THROWS_AS((main_model.update_component<Source, typename settings::update_type>(source_update2)),
+                        IDNotFound);
     }
 
     SUBCASE("Test update only load") {
-        main_model.update_component<SymLoad, settings::update_type>(sym_load_update);
-        main_model.update_component<AsymLoad, settings::update_type>(asym_load_update);
+        main_model.update_component<SymLoad, typename settings::update_type>(sym_load_update);
+        main_model.update_component<AsymLoad, typename settings::update_type>(asym_load_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -690,9 +691,9 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
 
     SUBCASE("Test update load and shunt param") {
         sym_load_update[0].p_specified = 2.5e6;
-        main_model.update_component<SymLoad, settings::update_type>(sym_load_update);
-        main_model.update_component<AsymLoad, settings::update_type>(asym_load_update);
-        main_model.update_component<Shunt, settings::update_type>(shunt_update);
+        main_model.update_component<SymLoad, typename settings::update_type>(sym_load_update);
+        main_model.update_component<AsymLoad, typename settings::update_type>(asym_load_update);
+        main_model.update_component<Shunt, typename settings::update_type>(shunt_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -727,11 +728,11 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
 
     SUBCASE("Test all updates") {
         sym_load_update[0].p_specified = 2.5e6;
-        main_model.update_component<AsymLoad, settings::update_type>(asym_load_update);
-        main_model.update_component<SymLoad, settings::update_type>(sym_load_update);
-        main_model.update_component<Shunt, settings::update_type>(shunt_update);
-        main_model.update_component<Source, settings::update_type>(source_update);
-        main_model.update_component<Link, settings::update_type>(link_update);
+        main_model.update_component<AsymLoad, typename settings::update_type>(asym_load_update);
+        main_model.update_component<SymLoad, typename settings::update_type>(sym_load_update);
+        main_model.update_component<Shunt, typename settings::update_type>(shunt_update);
+        main_model.update_component<Source, typename settings::update_type>(source_update);
+        main_model.update_component<Link, typename settings::update_type>(link_update);
         SUBCASE("Symmetrical") {
             auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
             main_model.output_result<true, Node>(math_output, sym_node.begin());
@@ -767,8 +768,8 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
     SUBCASE("Restore components") {
         auto const math_output_orig = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
 
-        main_model.update_component<SymLoad, settings::update_type>(sym_load_update);
-        main_model.update_component<AsymLoad, settings::update_type>(asym_load_update);
+        main_model.update_component<SymLoad, typename settings::update_type>(sym_load_update);
+        main_model.update_component<AsymLoad, typename settings::update_type>(asym_load_update);
         main_model.restore_components();
 
         SUBCASE("Symmetrical") {
