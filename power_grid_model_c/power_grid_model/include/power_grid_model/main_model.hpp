@@ -247,7 +247,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 has_sequence_id ? sequence_idx[seq] : components_.template get_idx_by_id<CompType>(it->id);
 
             if constexpr (CacheType::cached_update) {
-                components_.cache_item<CompType>(sequence_single.pos);
+                components_.template cache_item<CompType>(sequence_single.pos);
             }
 
             CompType& comp = components_.template get_item<CompType>(sequence_single);
