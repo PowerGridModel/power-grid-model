@@ -144,7 +144,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
