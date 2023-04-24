@@ -558,10 +558,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // copy base model
             MainModelImpl model{base_model};
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
-                // duplicate model if updates are not independent
-                if (!independent) {
-                    model = base_model;
-                }
                 // try to update model and run calculation
                 try {
                     model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
