@@ -553,8 +553,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<std::string> exceptions(n_batch, "");
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, n_batch, independent,
-                          err_tol, max_iter, calculation_method](Idx start, Idx stride) {
+        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, n_batch, err_tol,
+                          max_iter, calculation_method](Idx start, Idx stride) {
             // copy base model
             MainModelImpl model{base_model};
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
