@@ -81,13 +81,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
 
    public:
-    struct cached_update_t {
-        static constexpr auto cached_update = true;
-    };
+    struct cached_update_t : std::true_type {};
 
-    struct permanent_update_t {
-        static constexpr auto cached_update = false;
-    };
+    struct cached_update_t : std::false_type {};
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
@@ -246,7 +242,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             Idx2D const sequence_single =
                 has_sequence_id ? sequence_idx[seq] : components_.template get_idx_by_id<CompType>(it->id);
 
-            if constexpr (CacheType::cached_update) {
+            if constexpr (CacheType::value) {
                 components_.template cache_item<CompType>(sequence_single.pos);
             }
 

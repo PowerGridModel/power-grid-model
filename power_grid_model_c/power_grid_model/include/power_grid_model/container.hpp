@@ -205,15 +205,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         const auto& value = get_raw<Storageable, Storageable>(pos);
         auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
 
-        auto it = std::find_if(cached_vec.begin(), cached_vec.end(), [pos](const auto& e) {
-            return e.first == pos;
-        });
-        if (it == cached_vec.end()) {
-            cached_vec.emplace_back(pos, value);
-        }
-        else {
-            it->second = value;
-        }
+        cached_vec.emplace_back(pos, value);
     }
 
     void restore_values() {
@@ -295,7 +287,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     template <class Storageable>
     void restore_values_impl() {
         auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
-        for (auto const& cache : cached_vec) {
+        for (auto it = cached_vec.rcbegin(); it != cached_vec.rcend(); ++it) {
+            auto const& cache = *it;
             get_raw<Storageable, Storageable>(cache.first) = cache.second;
         }
         cached_vec.clear();
