@@ -612,7 +612,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
         }
 
-        return BatchParameter{independent, cache_topology};
+        return BatchParameter{independent, MainModelImpl::is_topology_cacheable(update_data)};
     }
 
    public:
