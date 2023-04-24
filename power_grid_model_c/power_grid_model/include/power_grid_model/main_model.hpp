@@ -249,11 +249,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             CompType& comp = components_.template get_item<CompType>(sequence_single);
             // update, get changed variable
             UpdateChange changed = comp.update(*it);
-            // if topology changed, everything is not up to date
-            // if only param changed, set param to not up to date
-            is_topology_up_to_date_ = is_topology_up_to_date_ && !changed.topo;
-            is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changed.topo && !changed.param;
-            is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changed.topo && !changed.param;
+            update_state(changed);
+            if constexpr (CacheType::value) {
+                cached_state_changes_ = cached_state_changes_ || changed;
+            }
         }
     }
 
@@ -295,9 +294,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // restore the initial values of all components
     void restore_components() {
         components_.restore_values();
-        is_topology_up_to_date_ = false;
-        is_sym_parameter_up_to_date_ = false;
-        is_asym_parameter_up_to_date_ = false;
+
+        update_state(cached_state_changes_);
+        cached_state_changes_ = {};
     }
 
     // set complete construction
@@ -421,6 +420,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
    private:
+    void update_state(const UpdateChange& changes) {
+        // if topology changed, everything is not up to date
+        // if only param changed, set param to not up to date
+        is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
+        is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changes.topo && !changes.param;
+        is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
+    }
+
     template <bool sym, typename InputType, std::vector<InputType> (MainModelImpl::*PrepareInputFn)(),
               MathOutput<sym> (MathSolver<sym>::*SolveFn)(InputType const&, double, Idx, CalculationInfo&,
                                                           CalculationMethod)>
@@ -1020,6 +1027,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_topology_up_to_date_{false};
     bool is_sym_parameter_up_to_date_{false};
     bool is_asym_parameter_up_to_date_{false};
+    UpdateChange cached_state_changes_{};
     CalculationInfo calculation_info_;
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
