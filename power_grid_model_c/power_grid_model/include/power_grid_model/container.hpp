@@ -287,7 +287,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     template <class Storageable>
     void restore_values_impl() {
         auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
-        for (auto it = cached_vec.rcbegin(); it != cached_vec.rcend(); ++it) {
+        for (auto it = cached_vec.crbegin(); it != cached_vec.crend(); ++it) {
             auto const& cache = *it;
             get_raw<Storageable, Storageable>(cache.first) = cache.second;
         }

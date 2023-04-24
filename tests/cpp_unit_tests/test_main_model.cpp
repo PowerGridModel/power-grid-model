@@ -784,7 +784,7 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
             CHECK(sym_branch[0].i_from == doctest::Approx(i));
             CHECK(sym_appliance[0].i == doctest::Approx(i));
             CHECK(sym_appliance[1].i == doctest::Approx(0.0));
-            if constexpr (settings::update_type::cached_update) {
+            if constexpr (settings::update_type::value) {
                 CHECK(sym_appliance[2].i == doctest::Approx(i_load));
                 CHECK(sym_appliance[3].i == doctest::Approx(i_load));
             }
@@ -806,7 +806,7 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
             CHECK(asym_branch[0].i_from(0) == doctest::Approx(i));
             CHECK(asym_appliance[0].i(1) == doctest::Approx(i));
             CHECK(asym_appliance[1].i(2) == doctest::Approx(0.0));
-            if constexpr (settings::update_type::cached_update) {
+            if constexpr (settings::update_type::value) {
                 CHECK(asym_appliance[2].i(0) == doctest::Approx(i_load));
                 CHECK(asym_appliance[3].i(1) == doctest::Approx(i_load));
             }

@@ -83,7 +83,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
    public:
     struct cached_update_t : std::true_type {};
 
-    struct cached_update_t : std::false_type {};
+    struct permanent_update_t : std::false_type {};
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)

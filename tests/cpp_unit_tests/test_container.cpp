@@ -211,7 +211,7 @@ TEST_CASE("Test component container") {
             CHECK(container.get_item<C1>(id).a == reset_value);
         }
 
-        SUBCASE("Update cached value") {
+        SUBCASE("Originally cached value is restored") {
             container.cache_item<C1>(idx);
 
             container.get_item<C>(id).a = other_value_a;
@@ -220,12 +220,12 @@ TEST_CASE("Test component container") {
 
             container.cache_item<C1>(idx);
             container.restore_values();
-            CHECK(container.get_item<C>(id).a == other_value_a);
+            CHECK(container.get_item<C>(id).a == reset_value);
 
-            container.get_item<C>(id).a = reset_value;
+            container.get_item<C>(id).a = other_value_a;
             container.cache_item<C1>(idx);
             container.restore_values();
-            CHECK(container.get_item<C>(id).a == reset_value);
+            CHECK(container.get_item<C>(id).a == other_value_a);
         }
     }
 }
