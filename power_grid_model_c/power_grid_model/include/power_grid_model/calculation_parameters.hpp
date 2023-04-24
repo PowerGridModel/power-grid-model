@@ -262,11 +262,11 @@ struct ComponentToMathCoupling {
 struct UpdateChange {
     bool topo{};
     bool param{};
-};
 
-constexpr UpdateChange operator||(UpdateChange const& a, UpdateChange const& b) {
-    return UpdateChange{a.topo || b.topo, a.param || b.param};
-}
+    static constexpr UpdateChange operator||(UpdateChange const& a, UpdateChange const& b) {
+        return UpdateChange{a.topo || b.topo, a.param || b.param};
+    }
+};
 
 }  // namespace power_grid_model
 
