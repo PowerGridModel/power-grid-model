@@ -534,21 +534,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return BatchParameter{true, false};
         }
 
-        // if cache_topology, the topology and math solvers will be initialized at base scenario
-        // otherwise the topology and math solvers will be reset
-        bool const cache_topology = MainModelImpl::is_topology_cacheable(update_data);
-        // if independent is true, the base scenario will not be copied in each loop
-        // otherwise in each loop a new instance is made with base scenario
+        // independent update allows caching update order
         bool const independent = MainModelImpl::is_update_independent(update_data);
 
         // calculate once for cache topology, ignore results, all math solvers are initialized
-        if (cache_topology) {
-            (this->*calculation_fn)(err_tol, max_iter, calculation_method);
-        }
-        else {
-            // otherwise reset solvers
-            reset_solvers();
-        }
+        (this->*calculation_fn)(err_tol, max_iter, calculation_method);
+
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
