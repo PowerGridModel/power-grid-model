@@ -179,22 +179,6 @@ PGM_API char const** PGM_batch_errors(PGM_Handle const* handle);
 PGM_API void PGM_clear_error(PGM_Handle* handle);
 
 /**
- * @brief Get if the batch is independent, only applicable when you just execute a batch calculation
- *
- * @param handle Pointer to the handle you just used for a batch calculation
- * @return  One if the batch is independent, otherwise zero
- */
-PGM_API PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle);
-
-/**
- * @brief Get if the batch has cached topology, only applicable when you just execute a batch calculation
- *
- * @param handle Pointer to the handle you just used for a batch calculation
- * @return  One if the batch has cached topology, otherwise zero
- */
-PGM_API PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle);
-
-/**
  * @brief Get number of datasets
  *
  * @param handle

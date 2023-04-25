@@ -342,10 +342,6 @@ inline void add_cases(std::filesystem::path const& case_dir, std::string const& 
                 else {
                     j_atol.get_to(param.atol);
                 }
-                if (param.is_batch) {
-                    j.at("independent").get_to(param.batch_parameter.independent);
-                    j.at("cache_topology").get_to(param.batch_parameter.cache_topology);
-                }
                 param.case_name += sym ? "-sym" : "-asym";
                 param.case_name += "-" + param.calculation_method;
                 param.case_name += is_batch ? "-batch" : "";
@@ -458,9 +454,6 @@ void validate_batch_case(CaseParam const& param) {
                           validation_case.update_batch.const_dataset, threading);
         assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
                       param.rtol);
-        // check batch parameters
-        CHECK(batch_parameter.independent == param.batch_parameter.independent);
-        CHECK(batch_parameter.cache_topology == param.batch_parameter.cache_topology);
     }
 }
 

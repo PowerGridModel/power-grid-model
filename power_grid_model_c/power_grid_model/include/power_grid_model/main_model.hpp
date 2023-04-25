@@ -531,21 +531,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent and but not topology cachable
         if (n_batch == 0) {
-            return BatchParameter{true, false};
+            return BatchParameter{};
         }
 
-        // independent update allows caching update order
-        bool const independent = MainModelImpl::is_update_independent(update_data);
-
-        // calculate once for cache topology, ignore results, all math solvers are initialized
+        // calculate once to cache topology, ignore results, all math solvers are initialized
         (this->*calculation_fn)(err_tol, max_iter, calculation_method);
 
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
-        // get component sequence idx cache if update dataset is independent
+        // cache component update order if possible
         std::map<std::string, std::vector<Idx2D>> const sequence_idx_map =
-            independent ? get_sequence_idx_map(update_data) : std::map<std::string, std::vector<Idx2D>>{};
+            MainModelImpl::is_update_independent(update_data) ? get_sequence_idx_map(update_data)
+                                                              : std::map<std::string, std::vector<Idx2D>>{};
 
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
@@ -612,7 +610,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
         }
 
-        return BatchParameter{independent, MainModelImpl::is_topology_cacheable(update_data)};
+        return BatchParameter{};
     }
 
    public:
@@ -663,50 +661,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                       return obj.id == first.id;
                                   });
             });
-    }
-
-    static bool is_topology_cacheable(ConstDataset const& update_data) {
-        // check all components
-        return std::all_of(AllComponents::component_index_map.cbegin(), AllComponents::component_index_map.cend(),
-                           [&update_data](ComponentEntry const& entry) {
-                               static constexpr std::array check_component_update_cacheable{
-                                   &is_topology_cacheable_component<ComponentType>...};
-                               auto const found = update_data.find(entry.name);
-                               // return true if this component update does not exist
-                               if (found == update_data.cend()) {
-                                   return true;
-                               }
-                               // check for this component update
-                               return check_component_update_cacheable[entry.index](found->second);
-                           });
-    }
-
-    template <class Component>
-    static bool is_topology_cacheable_component(ConstDataPointer const& component_update) {
-        // The topology is cacheable if there are no changes in the branch and source switching statusses
-        auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType<Component>>(-1);
-        if constexpr (std::is_base_of_v<Branch, Component>) {
-            // Check for all batches
-            return std::all_of(it_begin, it_end, [](BranchUpdate const& update) {
-                return is_nan(update.from_status) && is_nan(update.to_status);
-            });
-        }
-        else if constexpr (std::is_base_of_v<Branch3, Component>) {
-            // Check for all batches
-            return std::all_of(it_begin, it_end, [](Branch3Update const& update) {
-                return is_nan(update.status_1) && is_nan(update.status_2) && is_nan(update.status_3);
-            });
-        }
-        else if constexpr (std::is_base_of_v<Source, Component>) {
-            // Check for all batches
-            return std::all_of(it_begin, it_end, [](SourceUpdate const& update) {
-                return is_nan(update.status);
-            });
-        }
-        else {
-            // Other components have no impact on topology caching
-            return true;
-        }
     }
 
     // Single load flow calculation, returning math output results

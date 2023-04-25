@@ -111,12 +111,6 @@ char const** PGM_batch_errors(PGM_Handle const* handle) {
 void PGM_clear_error(PGM_Handle* handle) {
     *handle = PGM_Handle{};
 }
-PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle) {
-    return handle->batch_parameter.independent;
-}
-PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle) {
-    return handle->batch_parameter.cache_topology;
-}
 
 // retrieve meta data
 // dataset

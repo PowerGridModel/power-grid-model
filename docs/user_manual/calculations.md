@@ -435,7 +435,7 @@ the following rule-of-thumb may be used:
 
 ```py
 # 3 scenarios, 3 objects (lines)
-# for each scenario, only one object is specified
+# for each scenario, only one line is specified
 line_update = initialize_array('update', 'line', (3, 1))
 
 # set the mutations for each scenario: disable one of the three lines
