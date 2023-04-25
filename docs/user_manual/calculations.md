@@ -402,34 +402,31 @@ Algorithm call: `CalculationMethod.iterative_linear`
 ## Batch Calculations
 
 Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
-Any form of multiple number of calculations can be carried out in power-grid-model using batch calculations. 
-Batches are not restricted to any particular types of calculations like timeseries or contingency analysis or their combination.
+Any form of multiple calculations can be carried out in power-grid-model using batch calculations. 
+Batches are not restricted to any particular type of calculations, like timeseries or contingency analysis or their combination.
 They can be used for determining hosting/loading capacity, determining optimal tap positions, estimating system losses, monte-carlo simulations or any other form of multiple calculations required in a power-flow study.
-The framework of creating the batches remains the same.
-The attributes of each component which can be updated over batches are mentioned in [Components](components.md).
-An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
+The framework for creating the batches is the same for all types of calculations.
+For every component, the attributes that can be updated in a batch scenario are mentioned in [Components](components.md).
+Examples of batch calculations for timeseries and contingency analysis are given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
 The same method as for single calculations, `calculate_power_flow`, can be used to calculate a number of scenarios in one go.
-To do this, you need to supply a `update_data` argument. 
+To do this, you need to supply an `update_data` argument. 
 This argument contains a dictionary of 2D update arrays (one array per component type).
 
-The performance for different batches vary. power-grid-model automatically makes efficient calculations wherever possible in case of [caching topology](calculations.md#caching-topology).
+The performance for different batches vary. power-grid-model automatically makes efficient calculations whenever possible. See the [Performance Guide](performance-guide.md#topology-caching) for ways to optimally use the performance optimizations.
 
-### Batch dataset
+### Batch data set
 
-The parameters of the individual scenarios within a batch can be done by providing deltas compared to the existing
-state of the model. The values of unchanged attributes and components parameters within a scenario may be implicit
-(like a delta update) or explicit (similar to how one would provide a full state). In the context of the
-power-grid-model, these are called **dependent** (implicit) and **independent** (explicit) batch updates, respectively.
-See also below examples.
-
-```{note}
-Both types of batches allow for different performance optimizations. To ensure that the right choice is always made,
-the following rule-of-thumb may be used:
+The parameters of the individual scenarios within a batch can be done by providing deltas compared to the existing state of the model.
+The values of unchanged attributes and components parameters within a scenario may be implicit (like a delta update) or explicit (similarly to how one would provide a full state).
+In the context of the power-grid-model, these are called **dependent** (implicit) and **independent** (explicit) batch updates, respectively.
+In both cases, all scenario updates are relative to the state of the model before the call of the calculation.
+See the examples below for usage.
 
 - Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
 - Independent batches are useful for a dense sampling of a small subset of components, e.g. time seris power flow calculation.
-```
+
+See the [Performance Guide](performance-guide.md#using-independent-batches) for more suggestions.
 
 #### Example: dependent batch update
 
@@ -466,32 +463,6 @@ for component_idx, scenario in enumerate(line_update):
     component['to_status'] = 0
 
 independent_update_data = {'line': line_update}
-```
-
-### Caching topology
-
-To perform the calculations, a graph topology of the grid is constructed from the input data.
-Topology caching can bring performance benefits.
-
-The topology cannot be cached when any of the switching statuses (`from_status`, `to_status` or `status`) of the
-following components are updated:
-
-1. Branches: Lines, Links, Transformers
-2. Branch3: Three winding transformer
-3. Appliances: Sources
-
-- If none of the provided batch scenarios change the status of branches and sources, the model will re-use the
-pre-built internal graph/matrices for each calculation. Time-series load profile calculation is a typical use case.
-
-- If your batch scenarios are changing the switching status of branches and sources, the topology changes and is thus
-reconstructed before and after each scenario that does so. N-1 check is a typical use case.
-
-```{note}
-In other use cases that require many different parameter calculations for only a small set of different topologies, it
-is recommended to split the calculation in different batches - once for each topology - to optimize performance.
-
-If for any reason, it is desired to provide the entire set of scenarios in a single batch, it is recommended to sort
-the scenarios by topology to minimize the amount of reconstructions.
 ```
 
 ### Parallel Computing
