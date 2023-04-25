@@ -427,7 +427,7 @@ See also below examples.
 Both types of batches allow for different performance optimizations. To ensure that the right choice is always made,
 the following rule-of-thumb may be used:
 
-- Dependent batches are useful for a sparse sampling for many different component, e.g. for N-1 checks.
+- Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
 - Independent batches are useful for a dense sampling of a small subset of components, e.g. when optimizing certain parameters.
 ```
 
@@ -471,18 +471,19 @@ line_update['to_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
 independent_update_data = {'line': line_update}
 ```
 
-Or, equivalently using a double `for` loop:
+Or, equivalently using a `for` loop:
 
 ```py
 line_update = initialize_array('update', 'line', (3, 3))  # 3 scenarios, 3 objects (lines)
 # below the same broadcasting trick
 line_update['id'] = [[3, 5, 8]]
+line_update['from_status'] = 1
+line_update['to_status'] = 1
 # fully specify the status of all lines, even it is the same as the base scenario
-for scenario_idx, scenario in enumerate(line_update):
-    for component_idx, component in enumerate(scenario):
-        status = 0 if component_idx == scenario_idx else 1
-        component['from_status'] = status
-        component['to_status'] = status
+for component_idx, scenario in enumerate(line_update):
+    component = scenario[component_idx]
+    component['from_status'] = 0
+    component['to_status'] = 0
 
 independent_update_data = {'line': line_update}
 ```

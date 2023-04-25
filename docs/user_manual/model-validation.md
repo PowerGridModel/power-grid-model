@@ -176,7 +176,7 @@ Their vision files are included as well.
 
 The `vision-example` is a minimal case with only node, source, cable and load.
 
-### Netowork case
+### Network case
 
 The vision files were exported to excel which was then converted to power-grid-model input using [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io).
 The `vision-network` case has the following characteristics:
