@@ -57,7 +57,7 @@ Sparsity of sampling should be reflected by sparsity in the batch update paramet
 To elaborate:
 
 - Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
-- Independent batches are useful for a dense sampling of a small subset of components, e.g. time seris power flow calculation.
+- Independent batches are useful for a dense sampling of a small subset of components, e.g. time series power flow calculation.
 
 ## Parallel computing
 
