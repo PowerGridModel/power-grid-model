@@ -428,28 +428,17 @@ Both types of batches allow for different performance optimizations. To ensure t
 the following rule-of-thumb may be used:
 
 - Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
-- Independent batches are useful for a dense sampling of a small subset of components, e.g. when optimizing certain parameters.
+- Independent batches are useful for a dense sampling of a small subset of components, e.g. time seris power flow calculation.
 ```
 
 #### Example: dependent batch update
 
 ```py
-line_update = initialize_array('update', 'line', (3, 1))  # 3 scenarios, 3 objects (lines)
-# for each mutation, only one object is specified
-line_update['id'] = [[3], [5], [8]]
-# specify only the changed status (switch off) of one line
-line_update['from_status'] = [[0], [0], [0]]
-line_update['to_status'] = [[0], [0], [0]]
+# 3 scenarios, 3 objects (lines)
+# for each scenario, only one object is specified
+line_update = initialize_array('update', 'line', (3, 1))
 
-non_independent_update_data = {'line': line_update}
-```
-
-Or, equivalently using a `for` loop
-
-```py
-line_update = initialize_array('update', 'line', (3, 1))  # 3 scenarios, 3 objects (lines)
-
-# for each mutation, only one object is specified
+# set the mutations for each scenario: disable one of the three lines
 for component_update, component_id in zip(line_update, (3, 5, 8)):
     component_update['id'] = component_id
     component_update['from_status'] = 0
@@ -461,25 +450,16 @@ non_independent_update_data = {'line': line_update}
 #### Example: full batch update data
 
 ```py
-line_update = initialize_array('update', 'line', (3, 3))  # 3 scenarios, 3 objects (lines)
-# below the same broadcasting trick
-line_update['id'] = [[3, 5, 8]]
-# fully specify the status of all lines, even it is the same as the base scenario
-line_update['from_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
-line_update['to_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+# 3 scenarios, 3 objects (lines)
+# for each scenario, all lines are specified
+line_update = initialize_array('update', 'line', (3, 3))
 
-independent_update_data = {'line': line_update}
-```
-
-Or, equivalently using a `for` loop:
-
-```py
-line_update = initialize_array('update', 'line', (3, 3))  # 3 scenarios, 3 objects (lines)
-# below the same broadcasting trick
+# use broadcasting to specify the default state
 line_update['id'] = [[3, 5, 8]]
 line_update['from_status'] = 1
 line_update['to_status'] = 1
-# fully specify the status of all lines, even it is the same as the base scenario
+
+# set the mutations for each scenario: disable one of the three lines
 for component_idx, scenario in enumerate(line_update):
     component = scenario[component_idx]
     component['from_status'] = 0
