@@ -273,49 +273,49 @@
       "id": 24,
       "measured_object": 1,
       "u_sigma": 100.0,
-      "u_measured": 4323.72668
+      "u_measured": 20000.0
     },
     {
       "id": 25,
       "measured_object": 2,
       "u_sigma": 100.0,
-      "u_measured": 84.4579757
+      "u_measured": 400.0
     },
     {
       "id": 26,
       "measured_object": 3,
       "u_sigma": 100.0,
-      "u_measured": 84.2855329
+      "u_measured": 400.0
     },
     {
       "id": 27,
       "measured_object": 4,
       "u_sigma": 100.0,
-      "u_measured": 84.1126605
+      "u_measured": 400.0
     },
     {
       "id": 28,
       "measured_object": 5,
       "u_sigma": 100.0,
-      "u_measured": 82.8973372
+      "u_measured": 400.0
     },
     {
       "id": 29,
       "measured_object": 6,
       "u_sigma": 100.0,
-      "u_measured": 79.6383203
+      "u_measured": 400.0
     },
     {
       "id": 30,
       "measured_object": 7,
       "u_sigma": 100.0,
-      "u_measured": 56.6848254
+      "u_measured": 400.0
     },
     {
       "id": 31,
       "measured_object": 8,
       "u_sigma": 100.0,
-      "u_measured": 31.5406048
+      "u_measured": 400.0
     }
   ],
   "sym_power_sensor": [
@@ -324,144 +324,144 @@
       "measured_object": 9,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 105936.9431,
-      "q_measured": 36639.4089
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 33,
       "measured_object": 9,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -105872.3446,
-      "q_measured": -36618.31556
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 34,
       "measured_object": 10,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 182797.1614,
-      "q_measured": 70540.00026
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 35,
       "measured_object": 10,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -182614.4985,
-      "q_measured": -70352.59282
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 36,
       "measured_object": 11,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 65872.34459,
-      "q_measured": 21618.31556
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 37,
       "measured_object": 11,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -65550.00004,
-      "q_measured": -21514.85752
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 38,
       "measured_object": 12,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 132614.4985,
-      "q_measured": 50352.59282
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 39,
       "measured_object": 12,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -130495.6073,
-      "q_measured": -49639.64825
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 40,
       "measured_object": 13,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 3.65,
-      "q_measured": -25.14247914
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 41,
       "measured_object": 13,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": 1.35,
-      "q_measured": -7.994
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 42,
       "measured_object": 14,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 60495.60729,
-      "q_measured": 19639.64825
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 43,
       "measured_object": 14,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -55425.12038,
-      "q_measured": -18368.78947
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 44,
       "measured_object": 15,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 55425.12038,
-      "q_measured": 18368.78947
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 45,
       "measured_object": 15,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -50250.0,
-      "q_measured": -15800.0
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 46,
       "measured_object": 17,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 144876.3773,
-      "q_measured": 59765.58305
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 47,
       "measured_object": 17,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -144367.0523,
-      "q_measured": -53589.70458
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 48,
       "measured_object": 18,
       "measured_terminal_type": 0,
       "power_sigma": 100.0,
-      "p_measured": 144876.3773,
-      "q_measured": 59765.58305
+      "p_measured": 0.0,
+      "q_measured": 0.0
     },
     {
       "id": 49,
       "measured_object": 18,
       "measured_terminal_type": 1,
       "power_sigma": 100.0,
-      "p_measured": -144367.0523,
-      "q_measured": -53589.70458
+      "p_measured": 0.0,
+      "q_measured": 0.0
     }
   ]
 }
