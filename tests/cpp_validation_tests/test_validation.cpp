@@ -449,9 +449,8 @@ void validate_batch_case(CaseParam const& param) {
     // run in one-go, with different threading possibility
     SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
     for (Idx threading : {-1, 0, 1, 2}) {
-        BatchParameter batch_parameter =
-            (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
-                          validation_case.update_batch.const_dataset, threading);
+        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
+                      validation_case.update_batch.const_dataset, threading);
         assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
                       param.rtol);
     }
