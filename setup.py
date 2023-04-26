@@ -128,8 +128,8 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     # different treat for windows and linux
     # determine platform specific options
     if if_win:
-        # flag for C++17
-        cflags += ["/std:c++17"]
+        # flag for C++20
+        cflags += ["/std:c++20"]
         include_dirs += [str(env_base_path / "Library" / "include")]
         library_dirs += [str(env_base_path / "Library" / "lib")]
     else:
@@ -137,7 +137,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         library_dirs += [str(env_base_path / "lib")]
         # flags for Linux and Mac
         cflags += [
-            "-std=c++17",
+            "-std=c++20",
             "-O3",
             "-fvisibility=hidden",
         ]
