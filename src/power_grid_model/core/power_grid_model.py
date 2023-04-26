@@ -26,8 +26,6 @@ class PowerGridModel:
 
     _model_ptr: ModelPtr
     _all_component_count: Optional[Dict[str, int]]
-    _independent: bool  # all update datasets consists of exactly the same components
-    _cache_topology: bool  # there are no changes in topology (branch, source) in the update dataset
     _batch_error: Optional[PowerGridBatchError]
 
     @property
@@ -39,24 +37,6 @@ class PowerGridModel:
 
         """
         return self._batch_error
-
-    @property
-    def independent(self) -> bool:
-        """
-
-        Returns: True if the last batch calculation is independent
-
-        """
-        return self._independent
-
-    @property
-    def cache_topology(self) -> bool:
-        """
-
-        Returns: True if the last batch calculation has cache topology
-
-        """
-        return self._cache_topology
 
     @property
     def _model(self):
@@ -99,9 +79,6 @@ class PowerGridModel:
         instance = super().__new__(cls)
         instance._model_ptr = ModelPtr()
         instance._all_component_count = None
-        instance._independent = False
-        instance._cache_topology = False
-        instance._batch_error = None
         return instance
 
     def __init__(self, input_data: Dict[str, np.ndarray], system_frequency: float = 50.0):
@@ -288,9 +265,6 @@ class PowerGridModel:
         # flatten array for normal calculation
         if not batch_calculation:
             result_dict = {k: v.ravel() for k, v in result_dict.items()}
-        # batch parameters
-        self._independent = bool(pgc.is_batch_independent())
-        self._cache_topology = bool(pgc.is_batch_cache_topology())
 
         return result_dict
 

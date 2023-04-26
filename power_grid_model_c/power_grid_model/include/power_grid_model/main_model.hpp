@@ -81,6 +81,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
 
    public:
+    struct cached_update_t : std::true_type {};
+
+    struct permanent_update_t : std::false_type {};
+
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
@@ -218,17 +222,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // helper function to update vectors of components
-    template <class CompType>
-    void update_component(std::vector<typename CompType::UpdateType> const& components) {
-        update_component<CompType>(components.cbegin(), components.cend());
-    }
-
     // template to update components
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, class ForwardIterator>
+    template <class CompType, class CacheType, class ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
         // check forward iterator
@@ -241,26 +239,38 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // get component
             // either using ID via hash map
             // either directly using sequence id
-            CompType& comp = has_sequence_id ? components_.template get_item<CompType>(sequence_idx[seq])
-                                             : components_.template get_item<CompType>(it->id);
+            Idx2D const sequence_single =
+                has_sequence_id ? sequence_idx[seq] : components_.template get_idx_by_id<CompType>(it->id);
+
+            if constexpr (CacheType::value) {
+                components_.template cache_item<CompType>(sequence_single.pos);
+            }
+
+            CompType& comp = components_.template get_item<CompType>(sequence_single);
             // update, get changed variable
             UpdateChange changed = comp.update(*it);
-            // if topology changed, everything is not up to date
-            // if only param changed, set param to not up to date
-            is_topology_up_to_date_ = is_topology_up_to_date_ && !changed.topo;
-            is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changed.topo && !changed.param;
-            is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changed.topo && !changed.param;
+            update_state(changed);
+            if constexpr (CacheType::value) {
+                cached_state_changes_ = cached_state_changes_ || changed;
+            }
         }
     }
 
+    // helper function to update vectors of components
+    template <class CompType, class CacheType>
+    void update_component(std::vector<typename CompType::UpdateType> const& components) {
+        update_component<CompType, CacheType>(components.cbegin(), components.cend());
+    }
+
     // update all components
+    template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos = 0,
                           std::map<std::string, std::vector<Idx2D>> const& sequence_idx_map = {}) {
         static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
                                                                    DataPointer<true> const& data_ptr, Idx position,
                                                                    std::vector<Idx2D> const& sequence_idx) {
             auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::UpdateType>(position);
-            model.update_component<ComponentType>(begin, end, sequence_idx);
+            model.update_component<ComponentType, CacheType>(begin, end, sequence_idx);
         }...};
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = update_data.find(entry.name);
@@ -279,6 +289,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 update[entry.index](*this, found->second, pos, found_seq->second);
             }
         }
+    }
+
+    // restore the initial values of all components
+    void restore_components() {
+        components_.restore_values();
+
+        update_state(cached_state_changes_);
+        cached_state_changes_ = {};
     }
 
     // set complete construction
@@ -402,6 +420,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
    private:
+    void update_state(const UpdateChange& changes) {
+        // if topology changed, everything is not up to date
+        // if only param changed, set param to not up to date
+        is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
+        is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changes.topo && !changes.param;
+        is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
+    }
+
     template <bool sym, typename InputType, std::vector<InputType> (MainModelImpl::*PrepareInputFn)(),
               MathOutput<sym> (MathSolver<sym>::*SolveFn)(InputType const&, double, Idx, CalculationInfo&,
                                                           CalculationMethod)>
@@ -505,49 +531,35 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent and but not topology cachable
         if (n_batch == 0) {
-            return BatchParameter{true, false};
+            return BatchParameter{};
         }
 
-        // if cache_topology, the topology and math solvers will be initialized at base scenario
-        // otherwise the topology and math solvers will be reset
-        bool const cache_topology = MainModelImpl::is_topology_cacheable(update_data);
-        // if independent is true, the base scenario will not be copied in each loop
-        // otherwise in each loop a new instance is made with base scenario
-        bool const independent = MainModelImpl::is_update_independent(update_data);
+        // calculate once to cache topology, ignore results, all math solvers are initialized
+        (this->*calculation_fn)(err_tol, max_iter, calculation_method);
 
-        // calculate once for cache topology, ignore results, all math solvers are initialized
-        if (cache_topology) {
-            (this->*calculation_fn)(err_tol, max_iter, calculation_method);
-        }
-        else {
-            // otherwise reset solvers
-            reset_solvers();
-        }
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
-        // get component sequence idx cache if update dataset is independent
+        // cache component update order if possible
         std::map<std::string, std::vector<Idx2D>> const sequence_idx_map =
-            independent ? get_sequence_idx_map(update_data) : std::map<std::string, std::vector<Idx2D>>{};
+            MainModelImpl::is_update_independent(update_data) ? get_sequence_idx_map(update_data)
+                                                              : std::map<std::string, std::vector<Idx2D>>{};
 
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, n_batch, independent,
-                          err_tol, max_iter, calculation_method](Idx start, Idx stride) {
+        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, n_batch, err_tol,
+                          max_iter, calculation_method](Idx start, Idx stride) {
             // copy base model
             MainModelImpl model{base_model};
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
-                // duplicate model if updates are not independent
-                if (!independent) {
-                    model = base_model;
-                }
                 // try to update model and run calculation
                 try {
-                    model.update_component(update_data, batch_number, sequence_idx_map);
+                    model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
                     auto const math_output = (model.*calculation_fn)(err_tol, max_iter, calculation_method);
                     model.output_result(math_output, result_data, batch_number);
+                    model.restore_components();
                 }
                 catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
@@ -598,7 +610,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
         }
 
-        return BatchParameter{independent, cache_topology};
+        return BatchParameter{};
     }
 
    public:
@@ -649,50 +661,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                       return obj.id == first.id;
                                   });
             });
-    }
-
-    static bool is_topology_cacheable(ConstDataset const& update_data) {
-        // check all components
-        return std::all_of(AllComponents::component_index_map.cbegin(), AllComponents::component_index_map.cend(),
-                           [&update_data](ComponentEntry const& entry) {
-                               static constexpr std::array check_component_update_cacheable{
-                                   &is_topology_cacheable_component<ComponentType>...};
-                               auto const found = update_data.find(entry.name);
-                               // return true if this component update does not exist
-                               if (found == update_data.cend()) {
-                                   return true;
-                               }
-                               // check for this component update
-                               return check_component_update_cacheable[entry.index](found->second);
-                           });
-    }
-
-    template <class Component>
-    static bool is_topology_cacheable_component(ConstDataPointer const& component_update) {
-        // The topology is cacheable if there are no changes in the branch and source switching statusses
-        auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType<Component>>(-1);
-        if constexpr (std::is_base_of_v<Branch, Component>) {
-            // Check for all batches
-            return std::all_of(it_begin, it_end, [](BranchUpdate const& update) {
-                return is_nan(update.from_status) && is_nan(update.to_status);
-            });
-        }
-        else if constexpr (std::is_base_of_v<Branch3, Component>) {
-            // Check for all batches
-            return std::all_of(it_begin, it_end, [](Branch3Update const& update) {
-                return is_nan(update.status_1) && is_nan(update.status_2) && is_nan(update.status_3);
-            });
-        }
-        else if constexpr (std::is_base_of_v<Source, Component>) {
-            // Check for all batches
-            return std::all_of(it_begin, it_end, [](SourceUpdate const& update) {
-                return is_nan(update.status);
-            });
-        }
-        else {
-            // Other components have no impact on topology caching
-            return true;
-        }
     }
 
     // Single load flow calculation, returning math output results
@@ -1004,6 +972,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_topology_up_to_date_{false};
     bool is_sym_parameter_up_to_date_{false};
     bool is_asym_parameter_up_to_date_{false};
+    UpdateChange cached_state_changes_{};
     CalculationInfo calculation_info_;
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only

@@ -285,7 +285,12 @@ struct ComponentToMathCoupling {
 
 // change of update cause topology and param change, or just param change
 struct UpdateChange {
-    bool topo, param;
+    bool topo{};
+    bool param{};
+
+    friend constexpr UpdateChange operator||(UpdateChange const& x, UpdateChange const& y) {
+        return UpdateChange{x.topo || y.topo, x.param || y.param};
+    }
 };
 
 }  // namespace power_grid_model

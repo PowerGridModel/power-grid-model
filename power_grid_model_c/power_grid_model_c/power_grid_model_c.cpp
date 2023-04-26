@@ -111,12 +111,6 @@ char const** PGM_batch_errors(PGM_Handle const* handle) {
 void PGM_clear_error(PGM_Handle* handle) {
     *handle = PGM_Handle{};
 }
-PGM_Idx PGM_is_batch_independent(PGM_Handle const* handle) {
-    return handle->batch_parameter.independent;
-}
-PGM_Idx PGM_is_batch_cache_topology(PGM_Handle const* handle) {
-    return handle->batch_parameter.cache_topology;
-}
 
 // retrieve meta data
 // dataset
@@ -300,7 +294,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_c
         dataset[components[i]] = ConstDataPointer{update_data[i], component_sizes[i]};
     }
     try {
-        model->update_component(dataset);
+        model->update_component<MainModel::permanent_update_t>(dataset);
     }
     catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
