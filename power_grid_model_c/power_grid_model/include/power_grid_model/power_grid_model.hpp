@@ -98,10 +98,7 @@ template <class... T>
 struct ComponentList {};
 
 // batch parameter
-struct BatchParameter {
-    bool independent;     // all update datasets consists of exactly the same components
-    bool cache_topology;  // there are no changes in topology (branch, source) in the update datasets
-};
+struct BatchParameter {};
 
 }  // namespace power_grid_model
 

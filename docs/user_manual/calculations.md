@@ -70,10 +70,6 @@ of importance. Also, there should be at least one voltage measurement. The [iter
 state estimation algorithm assumes voltage angles to be zero when not given. This might result in the calculation succeeding, but giving 
 a faulty outcome instead of raising a singular matrix error. 
 
-
-
-
-
 ### Power flow algorithms
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
 Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, in tradeoff to accuracy. 
@@ -81,12 +77,12 @@ They can be used where approximate solutions are acceptable.
 Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
 The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-| Algorithm                                        | Speed    | Accuracy | Algorithm call                        |
-|--------------------------------------------------|----------|----------|---------------------------------------|
-| [Newton-Raphson](calculations.md#newton-raphson) |          | &#10004; | `CalculationMethod.newton_raphson`    |
-| [Iterative current](calculations.md#iterative-current)          |          | &#10004; | `CalculationMethod.iterative_current` | 
-| [Linear](calculations.md#linear)                                | &#10004; |          | `CalculationMethod.linear`            | 
-| [Linear current](calculations.md#linear-current)                | &#10004; |          | `CalculationMethod.linear_current`    |
+| Algorithm                                              | Speed    | Accuracy | Algorithm call                        |
+| ------------------------------------------------------ | -------- | -------- | ------------------------------------- |
+| [Newton-Raphson](calculations.md#newton-raphson)       |          | &#10004; | `CalculationMethod.newton_raphson`    |
+| [Iterative current](calculations.md#iterative-current) |          | &#10004; | `CalculationMethod.iterative_current` |
+| [Linear](calculations.md#linear)                       | &#10004; |          | `CalculationMethod.linear`            |
+| [Linear current](calculations.md#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
 Note: When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
 This is because this method will then be accurate and fastest.
@@ -223,7 +219,6 @@ Factorizing the matrix of linear equation is the most computationally heavy task
 The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations. 
 The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like timeseries calculations.
 
-
 #### Linear
 
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual `LoadGenType`.
@@ -248,7 +243,6 @@ The reason is the same: the $Y_{bus}$ matrix does not change across batches and 
 In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](calculations.md#linear) in such case. This is because we approximate the load as current instead of impedance.
 There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations. They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level. 
 When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage. When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
-
 
 ### State estimation algorithms
 Weighted least squares (WLS) state estimation can be performed with power-grid-model.
@@ -408,71 +402,68 @@ Algorithm call: `CalculationMethod.iterative_linear`
 ## Batch Calculations
 
 Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
-Any form of multiple number of calculations can be carried out in power-grid-model using batch calculations. 
-Batches are not restricted to any particular types of calculations like timeseries or contingency analysis or their combination.
+Any form of multiple calculations can be carried out in power-grid-model using batch calculations. 
+Batches are not restricted to any particular type of calculations, like timeseries or contingency analysis or their combination.
 They can be used for determining hosting/loading capacity, determining optimal tap positions, estimating system losses, monte-carlo simulations or any other form of multiple calculations required in a power-flow study.
-The framework of creating the batches remains the same.
-The attributes of each component which can be updated over batches are mentioned in [Components](components.md).
-An example of batch calculation of timeseries and contingency analysis is given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
+The framework for creating the batches is the same for all types of calculations.
+For every component, the attributes that can be updated in a batch scenario are mentioned in [Components](components.md).
+Examples of batch calculations for timeseries and contingency analysis are given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
 The same method as for single calculations, `calculate_power_flow`, can be used to calculate a number of scenarios in one go.
-To do this, you need to supply a `update_data` argument. 
+To do this, you need to supply an `update_data` argument. 
 This argument contains a dictionary of 2D update arrays (one array per component type).
 
-The performance for different batches vary. power-grid-model automatically makes efficient calculations wherever possible in case of [independent batches](calculations.md#independent-batch-dataset) and [caching topology](calculations.md#caching-topology).
+The performance for different batches vary. power-grid-model automatically makes efficient calculations whenever possible. See the [Performance Guide](performance-guide.md#topology-caching) for ways to optimally use the performance optimizations.
 
-### Independent Batch dataset
+### Batch data set
 
-There are two ways to specify batches.
+The parameters of the individual scenarios within a batch can be done by providing deltas compared to the existing state of the model.
+The values of unchanged attributes and components parameters within a scenario may be implicit (like a delta update) or explicit (similarly to how one would provide a full state).
+In the context of the power-grid-model, these are called **dependent** (implicit) and **independent** (explicit) batch updates, respectively.
+In both cases, all scenario updates are relative to the state of the model before the call of the calculation.
+See the examples below for usage.
 
-- Only specify the objects and attributes that are changed in this batch.
-Here original model is copied everytime for each batch.
+- Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
+- Independent batches are useful for a dense sampling of a small subset of components, e.g. time series power flow calculation.
 
-Example:
-```
-line_update = initialize_array('update', 'line', (3, 1)) 
-# for each mutation, only one object is specified
-line_update['id'] = [[3], [5], [8]]
-# specify only the changed status (switch off) of one line
-line_update['from_status'] = [[0], [0], [0]]
-line_update['to_status'] = [[0], [0], [0]]
+See the [Performance Guide](performance-guide.md#using-independent-batches) for more suggestions.
+
+#### Example: dependent batch update
+
+```py
+# 3 scenarios, 3 objects (lines)
+# for each scenario, only one line is specified
+line_update = initialize_array('update', 'line', (3, 1))
+
+# set the mutations for each scenario: disable one of the three lines
+for component_update, component_id in zip(line_update, (3, 5, 8)):
+    component_update['id'] = component_id
+    component_update['from_status'] = 0
+    component_update['to_status'] = 0
 
 non_independent_update_data = {'line': line_update}
 ```
 
-- We specify all objects and attributes including the unchanged ones in one or more scenarios. i.e. The attributes to be updated have data for all batches.
-This is an **independent** batch dataset (In a sense that each batch is independent of the original model input).
-We do not need to keep a copy of the original model in such case.
-The original model data is copied only once while we mutate over that data for all the batches. 
-This brings performance benefits.
+#### Example: full batch update data
 
-Example:
-```
-line_update = initialize_array('update', 'line', (3, 3))  # 3 scenarios, 3 objects (lines)
-# below the same broadcasting trick
+```py
+# 3 scenarios, 3 objects (lines)
+# for each scenario, all lines are specified
+line_update = initialize_array('update', 'line', (3, 3))
+
+# use broadcasting to specify the default state
 line_update['id'] = [[3, 5, 8]]
-# fully specify the status of all lines, even it is the same as the base scenario
-line_update['from_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
-line_update['to_status'] = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+line_update['from_status'] = 1
+line_update['to_status'] = 1
+
+# set the mutations for each scenario: disable one of the three lines
+for component_idx, scenario in enumerate(line_update):
+    component = scenario[component_idx]
+    component['from_status'] = 0
+    component['to_status'] = 0
 
 independent_update_data = {'line': line_update}
 ```
-
-### Caching topology
-
-To perform the calculations, a graph topology of the grid is to be constructed from the input data first. 
-
-- If your batch scenarios are changing the switching status of branches and sources the base model is then kept as empty model without any internal cached graph/matrices. 
-Thus, the topology is constructed for each batch from the input data.
-N-1 check is a typical use case.
-
-- If all your batch scenarios do not change the switching status of branches and sources the model will re-use the pre-built internal graph/matrices for each calculation.
-Time-series load profile calculation is a typical use case. This can bring performance benefits.
-
-The topology is not cached when any of the switching statuses (`from_status`, `to_status` or `status`) of the following components are updated:
-1. Branches: Lines, Links, Transformers
-2. Branch3: Three winding transformer
-3. Appliances: Sources
 
 ### Parallel Computing
 

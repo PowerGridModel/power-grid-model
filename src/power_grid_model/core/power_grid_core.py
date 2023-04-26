@@ -181,14 +181,6 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def is_batch_independent(self) -> int:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
-    def is_batch_cache_topology(self) -> int:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
     def meta_n_datasets(self) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
