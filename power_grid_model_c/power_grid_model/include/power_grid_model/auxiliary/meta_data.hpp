@@ -6,6 +6,7 @@
 #ifndef POWER_GRID_MODEL_META_DATA_HPP
 #define POWER_GRID_MODEL_META_DATA_HPP
 
+#include <bit>
 #include <string>
 
 #include "../enum.hpp"
@@ -141,13 +142,8 @@ inline size_t get_offset() {
     return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
 }
 
-inline bool is_little_endian() {
-    union {
-        uint32_t i;
-        char c[4];
-    } bint = {0x01020304};
-
-    return bint.c[0] == 4;
+constexpr bool is_little_endian() {
+    return std::endian::native == std::endian::little;
 }
 
 template <auto member_ptr>
