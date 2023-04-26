@@ -6,11 +6,6 @@ SPDX-License-Identifier: MPL-2.0
 
 # Guidelines for performance enhancement
 
-```{warning}
-[Issue 79](https://github.com/PowerGridModel/power-grid-model/issues/79)
-```
-% TODO Explain grid types interpreted by power-grid-model and its relation with performance or any other tips/tricks//hacks (Check examples)
-
 ## Batch calculations
 
 Depending on the details of the batch, a number of performance optimizations are possible:
