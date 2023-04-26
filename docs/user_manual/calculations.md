@@ -424,7 +424,7 @@ In both cases, all scenario updates are relative to the state of the model befor
 See the examples below for usage.
 
 - Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
-- Independent batches are useful for a dense sampling of a small subset of components, e.g. time seris power flow calculation.
+- Independent batches are useful for a dense sampling of a small subset of components, e.g. time series power flow calculation.
 
 See the [Performance Guide](performance-guide.md#using-independent-batches) for more suggestions.
 
