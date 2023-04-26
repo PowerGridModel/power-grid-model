@@ -2,7 +2,5 @@
 
   "calculation_method": ["newton_raphson", "iterative_current"],
   "rtol": 1e-03,
-  "atol": 1e-03,
-  "independent": true,
-  "cache_topology": true
+  "atol": 1e-03
 }

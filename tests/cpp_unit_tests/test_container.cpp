@@ -163,6 +163,71 @@ TEST_CASE("Test component container") {
         CHECK(const_container2.get_item_by_seq<C>(1).a == 66);
         CHECK(const_container2.get_item_by_seq<C>(2).a == 7);
     }
+
+    SUBCASE("Test cache / restore") {
+        constexpr auto id = ID{2};
+        constexpr auto idx = Idx{0};
+        constexpr auto reset_value = Idx{6};
+        constexpr auto other_value_a = Idx{7};
+        constexpr auto other_value_b = Idx{11};
+
+        container.restore_values();
+        CHECK(container.get_idx_by_id(id).pos == idx);
+        CHECK(container.get_item<C>(id).a == reset_value);
+        CHECK(container.get_item<C1>(id).a == reset_value);
+
+        SUBCASE("No prior caching results in no reset") {
+            container.get_item<C>(id).a = other_value_a;
+            CHECK(container.get_item<C>(id).a == other_value_a);
+            CHECK(container.get_item<C1>(id).a == other_value_a);
+
+            container.restore_values();
+            CHECK(container.get_item<C>(id).a == other_value_a);
+            CHECK(container.get_item<C1>(id).a == other_value_a);
+        }
+
+        SUBCASE("Restore single change") {
+            container.cache_item<C1>(idx);
+
+            container.get_item<C1>(id).a = other_value_a;
+            CHECK(container.get_item<C>(id).a == other_value_a);
+            CHECK(container.get_item<C1>(id).a == other_value_a);
+
+            container.restore_values();
+            CHECK(container.get_item<C>(id).a == reset_value);
+            CHECK(container.get_item<C1>(id).a == reset_value);
+        }
+
+        SUBCASE("Restore double change") {
+            container.cache_item<C1>(idx);
+
+            container.get_item<C1>(id).a = other_value_a;
+            container.get_item<C>(id).a = other_value_b;
+            CHECK(container.get_item<C>(id).a == other_value_b);
+            CHECK(container.get_item<C1>(id).a == other_value_b);
+
+            container.restore_values();
+            CHECK(container.get_item<C>(id).a == reset_value);
+            CHECK(container.get_item<C1>(id).a == reset_value);
+        }
+
+        SUBCASE("Originally cached value is restored") {
+            container.cache_item<C1>(idx);
+
+            container.get_item<C>(id).a = other_value_a;
+            CHECK(container.get_item<C>(id).a == other_value_a);
+            CHECK(container.get_item<C1>(id).a == other_value_a);
+
+            container.cache_item<C1>(idx);
+            container.restore_values();
+            CHECK(container.get_item<C>(id).a == reset_value);
+
+            container.get_item<C>(id).a = other_value_a;
+            container.cache_item<C1>(idx);
+            container.restore_values();
+            CHECK(container.get_item<C>(id).a == other_value_a);
+        }
+    }
 }
 
 }  // namespace power_grid_model

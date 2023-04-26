@@ -82,7 +82,7 @@ jobs:
           binaries: cpp_build/ci-sonar
         run: |
           cd cpp_build/ci-sonar
-          ctest --test-dir .
+          ctest --test-dir . --output-on-failure
           PATH=${PATH}:${PWD}/../.. gcovr --gcov-executable llvm-gcov.sh --sonarqube ../../cpp_coverage.xml -r ../..
           cd ../..
           # remove branch hits count, since it does not make sense in heavy C++ templates

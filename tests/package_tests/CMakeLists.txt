@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-find_package(power_grid_model REQUIRED)
+find_package(power_grid_model REQUIRED CONFIG)
 
 set(PROJECT_SOURCES 
 	"test_c_api_package.cpp"

@@ -83,10 +83,10 @@ Buffer parse_single_type(json const& j, MetaData const& meta) {
     size_t const length = j.size();
     size_t const obj_size = meta.size;
     buffer.ptr = create_buffer(obj_size, length);
-    for (Idx position = 0; position != (Idx)length; ++position) {
+    for (Idx position = 0; position != static_cast<Idx>(length); ++position) {
         parse_single_object(buffer.ptr.get(), j[position], meta, position);
     }
-    buffer.indptr = {0, (Idx)length};
+    buffer.indptr = {0, static_cast<Idx>(length)};
     buffer.data_ptr = MutableDataPointer{buffer.ptr.get(), buffer.indptr.data(), 1};
     return buffer;
 }
@@ -165,7 +165,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
     for (auto const& j_single : j) {
         batch_data.individual_batch.push_back(convert_json_single(j_single, data_type));
     }
-    Idx const n_batch = (Idx)batch_data.individual_batch.size();
+    Idx const n_batch = static_cast<Idx>(batch_data.individual_batch.size());
     // summerize count of object per component
     std::map<std::string, Idx> obj_count;
     for (SingleData const& single_data : batch_data.individual_batch) {
@@ -342,10 +342,6 @@ inline void add_cases(std::filesystem::path const& case_dir, std::string const& 
                 else {
                     j_atol.get_to(param.atol);
                 }
-                if (param.is_batch) {
-                    j.at("independent").get_to(param.batch_parameter.independent);
-                    j.at("cache_topology").get_to(param.batch_parameter.cache_topology);
-                }
                 param.case_name += sym ? "-sym" : "-asym";
                 param.case_name += "-" + param.calculation_method;
                 param.case_name += is_batch ? "-batch" : "";
@@ -435,14 +431,15 @@ void validate_batch_case(CaseParam const& param) {
     SingleData result = create_result_dataset(validation_case.input, output_prefix);
     // create model
     MainModel model{50.0, validation_case.input.const_dataset, 0};
-    Idx const n_batch = (Idx)validation_case.update_batch.individual_batch.size();
+    Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
     CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
 
     // run in loops
     for (Idx batch = 0; batch != n_batch; ++batch) {
         MainModel model_copy{model};
         // update and run
-        model_copy.update_component(validation_case.update_batch.individual_batch[batch].const_dataset);
+        model_copy.update_component<MainModel::permanent_update_t>(
+            validation_case.update_batch.individual_batch[batch].const_dataset);
         (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
         // check
         assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
@@ -452,14 +449,10 @@ void validate_batch_case(CaseParam const& param) {
     // run in one-go, with different threading possibility
     SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
     for (Idx threading : {-1, 0, 1, 2}) {
-        BatchParameter batch_parameter =
-            (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
-                          validation_case.update_batch.const_dataset, threading);
+        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
+                      validation_case.update_batch.const_dataset, threading);
         assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
                       param.rtol);
-        // check batch parameters
-        CHECK(batch_parameter.independent == param.batch_parameter.independent);
-        CHECK(batch_parameter.cache_topology == param.batch_parameter.cache_topology);
     }
 }
 
