@@ -37,7 +37,7 @@ minimum.
 
 ### Compiler Support
 
-You need a C++ compiler with C++17 support. Below is a list of tested compilers:
+You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
 **Linux**
 
@@ -48,7 +48,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 **Windows**
 
-* MSVC >= 14.2 (Visual Studio 2019, IDE or build tools)
+* MSVC >= 16.0 (Visual Studio 2019, IDE or build tools)
 
 **macOS**
 
