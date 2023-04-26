@@ -48,7 +48,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 **Windows**
 
-* MSVC >= 16.2 (Visual Studio 2019, IDE or build tools)
+* MSVC >= 16.0 (Visual Studio 2019, IDE or build tools)
 
 **macOS**
 
