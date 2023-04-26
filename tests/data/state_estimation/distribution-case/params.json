@@ -4,7 +4,5 @@
   "atol": {
     "default": 1e-03,
     ".+_residual": 1
-  },
-  "independent": true,
-  "cache_topology": false
+  }
 }

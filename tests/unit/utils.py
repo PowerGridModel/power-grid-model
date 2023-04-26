@@ -67,8 +67,6 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
                             params["rtol"],
                             params["atol"],
                         ]
-                        if get_batch_cases:
-                            pytest_param += [params["independent"], params["cache_topology"]]
                         kwargs = {}
                         if "fail" in params:
                             kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)

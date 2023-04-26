@@ -50,11 +50,11 @@ cmake --preset ${PRESET}
 cmake --build --preset ${PRESET} --verbose -j1
 
 # test
-ctest --test-dir ${BUILD_DIR} -E PGMExample
+ctest --test-dir ${BUILD_DIR} -E PGMExample --output-on-failure
 
 # example
 if [[ "${C_API_EXAMPLE}" ]];  then
-  ctest --test-dir ${BUILD_DIR} -R PGMExample
+  ctest --test-dir ${BUILD_DIR} -R PGMExample --output-on-failure
 fi
 
 # test coverage report for debug build and for linux

@@ -74,7 +74,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     void emplace(ID id, Args&&... args) {
         // template<class... Args> Args&&... args perfect forwarding
         assert(!construction_complete_);
-        // throw if id already exist
+        // throw if id already exists
         if (map_.find(id) != map_.end()) {
             throw ConflictID{id};
         }
@@ -199,14 +199,26 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         cum_size_ = {accumulate_size_per_vector<GettableTypes>()...};
     };
 
+    // cache a Storagable item with index pos to restore to when restore_values() is called
+    template <class Storageable>
+    void cache_item(Idx pos) {
+        const auto& value = get_raw<Storageable, Storageable>(pos);
+        auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
+
+        cached_vec.emplace_back(pos, value);
+    }
+
+    void restore_values() {
+        (restore_values_impl<StorageableTypes>(), ...);
+    }
+
    private:
     std::tuple<std::vector<StorageableTypes>...> vectors_;
     std::unordered_map<ID, Idx2D> map_;
     std::array<Idx, num_gettable> size_;
     std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_;
 
-    std::tuple<std::vector<StorageableTypes>...> cached_vectors_;
-    std::array<std::vector<Idx>, num_storageable> cached_indices_;
+    std::tuple<std::vector<std::pair<Idx, StorageableTypes>>...> cached_reset_values_;  // indices + reset values
 
 #ifndef NDEBUG
     // set construction_complete is used for debug assertions only
@@ -215,12 +227,12 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // get item per type
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType& get_item_type(Idx pos) {
+    GettableBaseType& get_raw(Idx pos) {
         static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType const& get_item_type(Idx pos) const {
+    GettableBaseType const& get_raw(Idx pos) const {
         static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
@@ -239,9 +251,9 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     struct select_get_item_func_ptr<GettableBaseType, StorageableSubType,
                                     std::enable_if_t<std::is_base_of_v<GettableBaseType, StorageableSubType>>> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
-            &Container::get_item_type<GettableBaseType, StorageableSubType>;
+            &Container::get_raw<GettableBaseType, StorageableSubType>;
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const =
-            &Container::get_item_type<GettableBaseType, StorageableSubType>;
+            &Container::get_raw<GettableBaseType, StorageableSubType>;
     };
 
     // array of base judge
@@ -270,6 +282,16 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         std::array<Idx, num_storageable + 1> res{};
         std::inclusive_scan(size_vec.begin(), size_vec.end(), res.begin() + 1);
         return res;
+    }
+
+    template <class Storageable>
+    void restore_values_impl() {
+        auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
+        for (auto it = cached_vec.crbegin(); it != cached_vec.crend(); ++it) {
+            auto const& cache = *it;
+            get_raw<Storageable, Storageable>(cache.first) = cache.second;
+        }
+        cached_vec.clear();
     }
 
    private:
