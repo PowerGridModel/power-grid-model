@@ -535,7 +535,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
-        (this->*calculation_fn)(err_tol, max_iter, calculation_method);
+        (this->*calculation_fn)(std::numeric_limits<double>::infinity(), 1, calculation_method);
 
         // const ref of current instance
         MainModelImpl const& base_model = *this;

@@ -638,7 +638,7 @@ class IterativeLinearSESolver {
 
         // loop to iterate
         Idx num_iter = 0;
-        while (max_dev > err_tol) {
+        while (max_dev > err_tol || (err_tol == std::numeric_limits<double>::infinity() && num_iter == 0)) {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
