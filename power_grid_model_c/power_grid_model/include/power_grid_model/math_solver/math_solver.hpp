@@ -52,7 +52,15 @@ class MathSolver {
                 Timer timer(calculation_info, 2210, "Create math solver");
                 linear_pf_solver_.emplace(y_bus_, topo_ptr_);
             }
-            return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
+            try {
+                return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
+            }
+            catch (const SparseMatrixError&) {
+                if (err_tol == std::numeric_limits<double>::infinity()) {
+                    return {};
+                }
+                throw;
+            }
         }
 
         else if (calculation_method == CalculationMethod::iterative_current ||
@@ -62,8 +70,8 @@ class MathSolver {
                 iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
             }
             if (calculation_method == CalculationMethod::linear_current) {
-                err_tol = 1000;
-                max_iter = 2;
+                err_tol = std::numeric_limits<double>::infinity();
+                max_iter = 1;
             }
             return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
                                                                        calculation_info);

@@ -38,7 +38,7 @@ class IterativePFSolver {
         // prepare
         MathOutput<sym> output;
         output.u.resize(n_bus_);
-        double max_dev = std::numeric_limits<double>::max();
+        double max_dev = std::numeric_limits<double>::infinity();
 
         Timer main_timer{calculation_info, 2220, "Math solver"};
 
@@ -69,7 +69,7 @@ class IterativePFSolver {
         // start calculation
         // iteration
         Idx num_iter = 0;
-        while (max_dev > err_tol || (err_tol == std::numeric_limits<double>::infinity() && num_iter == 0)) {
+        do {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
@@ -88,7 +88,7 @@ class IterativePFSolver {
                 Timer sub_timer{calculation_info, 2224, "Iterate unknown"};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
-        }
+        } while (max_dev > err_tol);
 
         // calculate math result
         {
