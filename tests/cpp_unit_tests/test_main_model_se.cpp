@@ -165,7 +165,7 @@ TEST_CASE("Test Main Model") {
     }
 
     SUBCASE("Test incomplete input but complete update dataset") {
-        std::vector<Node> node_input{{{{1}, 10e3}}};
+        std::vector<NodeInput> node_input{{{{1}, 10e3}}};
 
         std::vector<SourceInput> incomplete_source_input{{{{{2}, 1, true}, nan, nan, nan, nan, nan}}};
         std::vector<SymVoltageSensorInput> incomplete_sym_sensor_input{{{{{{3}, 1}, 1e2}, nan, nan}}};
@@ -200,27 +200,39 @@ TEST_CASE("Test Main Model") {
             ref_model.update_component<MainModel::permanent_update_t>(update_data);
 
             SUBCASE("Symmetric Calculation") {
-                std::vector<MathOutput<true>> const test_output =
-                    test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
-                std::vector<MathOutput<true>> const ref_output =
-                    ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
-
                 std::vector<NodeOutput<true>> test_node_output(1);
                 std::vector<NodeOutput<true>> ref_node_output(1);
-                test_model.output_result<true, Node>(test_output, test_node_output.begin());
-                ref_model.output_result<true, Node>(ref_output, ref_node_output.begin());
+
+                Dataset test_result_data;
+                Dataset ref_result_data;
+                test_result_data["node"] =
+                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                ref_result_data["node"] =
+                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+
+                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                            test_result_data, update_data, -1);
+                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                           ref_result_data, update_data, -1);
+
                 CHECK(test_node_output[0].u == doctest::Approx(ref_node_output[0].u));
             }
             SUBCASE("Asymmetric Calculation") {
-                std::vector<MathOutput<false>> const test_output =
-                    test_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
-                std::vector<MathOutput<false>> const ref_output =
-                    ref_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
-
                 std::vector<NodeOutput<false>> test_node_output(1);
                 std::vector<NodeOutput<false>> ref_node_output(1);
-                test_model.output_result<false, Node>(test_output, test_node_output.begin());
-                ref_model.output_result<false, Node>(ref_output, ref_node_output.begin());
+
+                Dataset test_result_data;
+                Dataset ref_result_data;
+                test_result_data["node"] =
+                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                ref_result_data["node"] =
+                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+
+                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                            test_result_data, update_data, -1);
+                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                           ref_result_data, update_data, -1);
+
                 CHECK(test_node_output[0].u.x() == doctest::Approx(ref_node_output[0].u.x()));
                 CHECK(test_node_output[0].u.y() == doctest::Approx(ref_node_output[0].u.y()));
                 CHECK(test_node_output[0].u.z() == doctest::Approx(ref_node_output[0].u.z()));
