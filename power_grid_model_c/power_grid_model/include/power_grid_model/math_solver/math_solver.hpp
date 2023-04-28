@@ -25,6 +25,11 @@ namespace power_grid_model {
 
 template <bool sym>
 class MathSolver {
+   private:
+    template <CalculationMethod>
+    MathOutput<sym> run_power_flow_(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
+                                    CalculationInfo& calculation_info);
+
    public:
     MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr,
                std::shared_ptr<MathModelParam<sym> const> const& param,
@@ -40,45 +45,19 @@ class MathSolver {
                                    CalculationInfo& calculation_info, CalculationMethod calculation_method) {
         // set method to always linear if there are all load_gen with const_y
         calculation_method = all_const_y_ ? CalculationMethod::linear : calculation_method;
-        if (calculation_method == CalculationMethod::newton_raphson) {
-            if (!newton_pf_solver_.has_value()) {
-                Timer timer(calculation_info, 2210, "Create math solver");
-                newton_pf_solver_.emplace(y_bus_, topo_ptr_);
-            }
-            return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
-        }
-        else if (calculation_method == CalculationMethod::linear) {
-            if (!linear_pf_solver_.has_value()) {
-                Timer timer(calculation_info, 2210, "Create math solver");
-                linear_pf_solver_.emplace(y_bus_, topo_ptr_);
-            }
-            try {
-                return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
-            }
-            catch (const SparseMatrixError&) {
-                if (err_tol == std::numeric_limits<double>::infinity()) {
-                    return {};
-                }
-                throw;
-            }
-        }
 
-        else if (calculation_method == CalculationMethod::iterative_current ||
-                 calculation_method == CalculationMethod::linear_current) {
-            if (!iterative_current_pf_solver_.has_value()) {
-                Timer timer(calculation_info, 2210, "Create math solver");
-                iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
-            }
-            if (calculation_method == CalculationMethod::linear_current) {
-                err_tol = std::numeric_limits<double>::infinity();
-                max_iter = 1;
-            }
-            return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter,
-                                                                       calculation_info);
-        }
-
-        else {
-            throw InvalidCalculationMethod{};
+        switch (calculation_method) {
+            case CalculationMethod::newton_raphson:
+                return run_power_flow_<CalculationMethod::newton_raphson>(input, err_tol, max_iter, calculation_info);
+            case CalculationMethod::linear:
+                return run_power_flow_<CalculationMethod::linear>(input, err_tol, max_iter, calculation_info);
+            case CalculationMethod::linear_current:
+                return run_power_flow_<CalculationMethod::linear_current>(input, err_tol, max_iter, calculation_info);
+            case CalculationMethod::iterative_current:
+                return run_power_flow_<CalculationMethod::iterative_current>(input, err_tol, max_iter,
+                                                                             calculation_info);
+            default:
+                throw InvalidCalculationMethod{};
         }
     }
 
@@ -122,6 +101,54 @@ class MathSolver {
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
     std::optional<IterativeCurrentPFSolver<sym>> iterative_current_pf_solver_;
+
+    template <>
+    MathOutput<sym> run_power_flow_<CalculationMethod::newton_raphson>(PowerFlowInput<sym> const& input, double err_tol,
+                                                                       Idx max_iter,
+                                                                       CalculationInfo& calculation_info) {
+        if (!newton_pf_solver_.has_value()) {
+            Timer timer(calculation_info, 2210, "Create math solver");
+            newton_pf_solver_.emplace(y_bus_, topo_ptr_);
+        }
+        return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+    }
+
+    template <>
+    MathOutput<sym> run_power_flow_<CalculationMethod::linear>(PowerFlowInput<sym> const& input, double err_tol,
+                                                               Idx max_iter, CalculationInfo& calculation_info) {
+        if (!linear_pf_solver_.has_value()) {
+            Timer timer(calculation_info, 2210, "Create math solver");
+            linear_pf_solver_.emplace(y_bus_, topo_ptr_);
+        }
+        try {
+            return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
+        }
+        catch (const SparseMatrixError&) {
+            if (err_tol == std::numeric_limits<double>::infinity()) {
+                return {};
+            }
+            throw;
+        }
+    }
+
+    template <>
+    MathOutput<sym> run_power_flow_<CalculationMethod::iterative_current>(PowerFlowInput<sym> const& input,
+                                                                          double err_tol, Idx max_iter,
+                                                                          CalculationInfo& calculation_info) {
+        if (!iterative_current_pf_solver_.has_value()) {
+            Timer timer(calculation_info, 2210, "Create math solver");
+            iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
+        }
+        return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
+    }
+
+    template <>
+    MathOutput<sym> run_power_flow_<CalculationMethod::linear_current>(PowerFlowInput<sym> const& input, double err_tol,
+                                                                       Idx max_iter,
+                                                                       CalculationInfo& calculation_info) {
+        return run_power_flow_<CalculationMethod::iterative_current>(input, std::numeric_limits<double>::infinity(), 1,
+                                                                     calculation_info);
+    }
 };
 
 template class MathSolver<true>;
