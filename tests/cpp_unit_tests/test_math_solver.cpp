@@ -37,38 +37,39 @@ TEST_CASE("Test block") {
     }
 }
 
-#define CHECK_CLOSE(x, y)                             \
-    if constexpr (sym)                                \
-        CHECK(cabs((x) - (y)) < numerical_tolerance); \
-    else                                              \
-        CHECK((cabs((x) - (y)) < numerical_tolerance).all());
+#define CHECK_CLOSE(x, y, tolerance)        \
+    if constexpr (sym)                      \
+        CHECK(cabs((x) - (y)) < tolerance); \
+    else                                    \
+        CHECK((cabs((x) - (y)) < tolerance).all());
 
 template <bool sym>
-void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false) {
+void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
+                   double tolerance = numerical_tolerance) {
     DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
     for (size_t i = 0; i != output.u.size(); ++i) {
-        CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset);
+        CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.bus_injection.size(); ++i) {
-        CHECK_CLOSE(output.bus_injection[i], output_ref.bus_injection[i]);
+        CHECK_CLOSE(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
     }
     for (size_t i = 0; i != output.branch.size(); ++i) {
-        CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f);
-        CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t);
-        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset);
-        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset);
+        CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
+        CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
+        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
+        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.source.size(); ++i) {
-        CHECK_CLOSE(output.source[i].s, output_ref.source[i].s);
-        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset);
+        CHECK_CLOSE(output.source[i].s, output_ref.source[i].s, tolerance);
+        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.load_gen.size(); ++i) {
-        CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s);
-        CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset);
+        CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
+        CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.shunt.size(); ++i) {
-        CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s);
-        CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset);
+        CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
+        CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
     }
 }
 
@@ -395,6 +396,19 @@ TEST_CASE("Test math solver") {
         assert_output(output, output_ref);
     }
 
+    SUBCASE("Test symmetric linear current pf solver") {
+        // low precision
+        constexpr auto error_tolerance{5e-3};
+        constexpr auto result_tolerance{5e-2};
+
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+        MathOutput<true> output =
+            solver.run_power_flow(pf_input, error_tolerance, 20, info, CalculationMethod::linear_current);
+        // verify
+        assert_output(output, output_ref, false, result_tolerance);
+    }
+
     SUBCASE("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
@@ -423,13 +437,28 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test singular ybus") {
+        constexpr auto methods = {CalculationMethod::linear, CalculationMethod::newton_raphson,
+                                  CalculationMethod::linear_current, CalculationMethod::iterative_current};
+
         param.branch_param[0] = BranchCalcParam<true>{};
         param.branch_param[1] = BranchCalcParam<true>{};
         param.shunt_param[0] = 0.0;
         MathSolver<true> solver{topo_ptr, std::make_shared<MathModelParam<true> const>(param)};
         CalculationInfo info;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson),
-                        SparseMatrixError);
+
+        SUBCASE("Finite error") {
+            for (auto method : methods) {
+                CAPTURE(method);
+                CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method), SparseMatrixError);
+            }
+        }
+        SUBCASE("Infinite error") {
+            for (auto method : methods) {
+                CAPTURE(method);
+                CHECK_NOTHROW(
+                    solver.run_power_flow(pf_input, std::numeric_limits<double>::infinity(), 2, info, method));
+            }
+        }
     }
 
     SUBCASE("Test asymmetric pf solver") {
