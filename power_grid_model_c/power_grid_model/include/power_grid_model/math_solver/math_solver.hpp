@@ -41,25 +41,17 @@ class MathSolver {
         // set method to always linear if all load_gens have const_y
         calculation_method = all_const_y_ ? CalculationMethod::linear : calculation_method;
 
-        try {
-            switch (calculation_method) {
-                case CalculationMethod::newton_raphson:
-                    return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
-                case CalculationMethod::linear:
-                    return run_power_flow_linear(input, err_tol, max_iter, calculation_info);
-                case CalculationMethod::linear_current:
-                    return run_power_flow_linear_current(input, err_tol, max_iter, calculation_info);
-                case CalculationMethod::iterative_current:
-                    return run_power_flow_iterative_current(input, err_tol, max_iter, calculation_info);
-                default:
-                    throw InvalidCalculationMethod{};
-            }
-        }
-        catch (const SparseMatrixError&) {
-            if (err_tol == std::numeric_limits<double>::infinity()) {
-                return {};
-            }
-            throw;
+        switch (calculation_method) {
+            case CalculationMethod::newton_raphson:
+                return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
+            case CalculationMethod::linear:
+                return run_power_flow_linear(input, err_tol, max_iter, calculation_info);
+            case CalculationMethod::linear_current:
+                return run_power_flow_linear_current(input, err_tol, max_iter, calculation_info);
+            case CalculationMethod::iterative_current:
+                return run_power_flow_iterative_current(input, err_tol, max_iter, calculation_info);
+            default:
+                throw InvalidCalculationMethod{};
         }
     }
 

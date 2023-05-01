@@ -447,18 +447,9 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, std::make_shared<MathModelParam<true> const>(param)};
         CalculationInfo info;
 
-        SUBCASE("Finite error") {
-            for (auto method : methods) {
-                CAPTURE(method);
-                CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method), SparseMatrixError);
-            }
-        }
-        SUBCASE("Infinite error") {
-            for (auto method : methods) {
-                CAPTURE(method);
-                CHECK_NOTHROW(
-                    solver.run_power_flow(pf_input, std::numeric_limits<double>::infinity(), 2, info, method));
-            }
+        for (auto method : methods) {
+            CAPTURE(method);
+            CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method), SparseMatrixError);
         }
     }
 
