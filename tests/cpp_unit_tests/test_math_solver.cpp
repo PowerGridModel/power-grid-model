@@ -437,8 +437,9 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test singular ybus") {
-        constexpr auto methods = {CalculationMethod::linear, CalculationMethod::newton_raphson,
-                                  CalculationMethod::linear_current, CalculationMethod::iterative_current};
+        constexpr std::vector<CalculationMethod> methods{CalculationMethod::linear, CalculationMethod::newton_raphson,
+                                                         CalculationMethod::linear_current,
+                                                         CalculationMethod::iterative_current};
 
         param.branch_param[0] = BranchCalcParam<true>{};
         param.branch_param[1] = BranchCalcParam<true>{};
