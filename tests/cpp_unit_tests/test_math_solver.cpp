@@ -9,6 +9,13 @@
 #include "power_grid_model/three_phase_tensor.hpp"
 
 namespace power_grid_model {
+namespace {
+using CalculationMethod::iterative_current;
+using CalculationMethod::iterative_linear;
+using CalculationMethod::linear;
+using CalculationMethod::linear_current;
+using CalculationMethod::newton_raphson;
+}  // namespace
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {
@@ -371,18 +378,18 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref);
         // copy
         MathSolver<true> solver2{solver};
         solver2.clear_solver();
-        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref);
         // move
         MathSolver<true> solver3{std::move(solver)};
-        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref);
     }
@@ -390,8 +397,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_current);
+        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current);
         // verify
         assert_output(output, output_ref);
     }
@@ -403,8 +409,7 @@ TEST_CASE("Test math solver") {
 
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_power_flow(pf_input, error_tolerance, 20, info, CalculationMethod::linear_current);
+        MathOutput<true> output = solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current);
         // verify
         assert_output(output, output_ref, false, result_tolerance);
     }
@@ -412,10 +417,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_linear),
-                        InvalidCalculationMethod);
-        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, CalculationMethod::linear),
-                        InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_linear), InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, linear), InvalidCalculationMethod);
     }
 
     SUBCASE("Test const z pf solver") {
@@ -423,7 +426,7 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
 
         // const z
-        MathOutput<true> output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, CalculationMethod::linear);
+        MathOutput<true> output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -432,14 +435,11 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         pf_input.s_injection[6] = 1e6;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson),
-                        IterationDiverge);
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson), IterationDiverge);
     }
 
     SUBCASE("Test singular ybus") {
-        constexpr std::vector<CalculationMethod> methods{CalculationMethod::linear, CalculationMethod::newton_raphson,
-                                                         CalculationMethod::linear_current,
-                                                         CalculationMethod::iterative_current};
+        std::vector<CalculationMethod> const methods{linear, newton_raphson, linear_current, iterative_current};
 
         param.branch_param[0] = BranchCalcParam<true>{};
         param.branch_param[1] = BranchCalcParam<true>{};
@@ -467,8 +467,7 @@ TEST_CASE("Test math solver") {
         // construct from existing y bus struct
         MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        MathOutput<false> output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -476,8 +475,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test iterative current asymmetric pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::iterative_current);
+        MathOutput<false> output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -486,7 +484,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         // const z
-        MathOutput<false> output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, CalculationMethod::linear);
+        MathOutput<false> output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -494,8 +492,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_state_estimation(se_input_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<true> output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref);
     }
@@ -503,8 +500,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se without angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<true> output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref, true);
     }
@@ -513,7 +509,7 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> output =
-            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, CalculationMethod::iterative_linear);
+            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -521,8 +517,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<false> output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -531,7 +526,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> output =
-            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_asym, true);
     }
@@ -540,7 +535,8 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
-                                                               CalculationMethod::iterative_linear);
+
+                                                               iterative_linear);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -581,8 +577,7 @@ TEST_CASE("Math solver, zero variance test") {
 
     MathSolver<true> solver{topo_ptr, param_ptr};
     CalculationInfo info;
-    MathOutput<true> output =
-        solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+    MathOutput<true> output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
     // check both voltage
     CHECK_CLOSE(output.u[0], 1.0);
@@ -643,7 +638,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
         CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -668,7 +663,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
@@ -695,7 +690,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -722,7 +717,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -749,7 +744,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
@@ -775,7 +770,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
@@ -804,7 +799,7 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));

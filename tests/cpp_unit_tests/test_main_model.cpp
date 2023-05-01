@@ -943,6 +943,11 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
     }
 
     SUBCASE("Test incomplete input but complete update dataset") {
+        using CalculationMethod::iterative_current;
+        using CalculationMethod::linear;
+        using CalculationMethod::linear_current;
+        using CalculationMethod::newton_raphson;
+
         std::vector<SourceInput> incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
                                                          {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
         std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, nan, nan}};
@@ -986,31 +991,23 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
             ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
 
             SUBCASE("Test linear calculation") {
-                test_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear, test_result_data,
-                                                      update_data, -1);
-                main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear, ref_result_data, update_data,
-                                                      -1);
+                test_model.calculate_power_flow<true>(1e-8, 20, linear, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, linear, ref_result_data, update_data, -1);
             }
 
             SUBCASE("Test linear current calculation") {
-                test_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear_current, test_result_data,
-                                                      update_data, -1);
-                main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear_current, ref_result_data,
-                                                      update_data, -1);
+                test_model.calculate_power_flow<true>(1e-8, 20, linear_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, linear_current, ref_result_data, update_data, -1);
             }
 
             SUBCASE("Test iterative current calculation") {
-                test_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::iterative_current, test_result_data,
-                                                      update_data, -1);
-                main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::iterative_current, ref_result_data,
-                                                      update_data, -1);
+                test_model.calculate_power_flow<true>(1e-8, 20, iterative_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, iterative_current, ref_result_data, update_data, -1);
             }
 
             SUBCASE("Test iterative Newton-Raphson calculation") {
-                test_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, test_result_data,
-                                                      update_data, -1);
-                main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, ref_result_data,
-                                                      update_data, -1);
+                test_model.calculate_power_flow<true>(1e-8, 20, newton_raphson, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, newton_raphson, ref_result_data, update_data, -1);
             }
 
             CHECK(test_sym_node[0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
@@ -1026,31 +1023,23 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
             ref_result_data["node"] = DataPointer<false>{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
 
             SUBCASE("Test linear calculation") {
-                test_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear, test_result_data,
-                                                       update_data, -1);
-                main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear, ref_result_data,
-                                                       update_data, -1);
+                test_model.calculate_power_flow<false>(1e-8, 20, linear, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, linear, ref_result_data, update_data, -1);
             }
 
             SUBCASE("Test linear current calculation") {
-                test_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear_current, test_result_data,
-                                                       update_data, -1);
-                main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear_current, ref_result_data,
-                                                       update_data, -1);
+                test_model.calculate_power_flow<false>(1e-8, 20, linear_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, linear_current, ref_result_data, update_data, -1);
             }
 
             SUBCASE("Test iterative current calculation") {
-                test_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::iterative_current, test_result_data,
-                                                       update_data, -1);
-                main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::iterative_current, ref_result_data,
-                                                       update_data, -1);
+                test_model.calculate_power_flow<false>(1e-8, 20, iterative_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, iterative_current, ref_result_data, update_data, -1);
             }
 
             SUBCASE("Test iterative Newton-Rhapson calculation") {
-                test_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, test_result_data,
-                                                       update_data, -1);
-                main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, ref_result_data,
-                                                       update_data, -1);
+                test_model.calculate_power_flow<false>(1e-8, 20, newton_raphson, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, newton_raphson, ref_result_data, update_data, -1);
             }
 
             CHECK(test_asym_node[0].u_pu(0) == doctest::Approx(ref_asym_node[0].u_pu(0)));
