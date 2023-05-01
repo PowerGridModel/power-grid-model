@@ -113,7 +113,7 @@ class MathSolver {
         return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
     }
 
-    MathOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double err_tol, Idx /* max_iter */,
+    MathOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double /* err_tol */, Idx /* max_iter */,
                                           CalculationInfo& calculation_info) {
         if (!linear_pf_solver_.has_value()) {
             Timer timer(calculation_info, 2210, "Create math solver");
