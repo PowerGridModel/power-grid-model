@@ -151,6 +151,42 @@
       "hidden": true
     },
     {
+      "name": "clang-release",
+      "inherits": [
+        "release",
+        "unix-base"
+      ]
+    },
+    {
+      "name": "clang-debug",
+      "inherits": [
+        "release",
+        "unix-base"
+      ]
+    },
+    {
+      "name": "gcc-base",
+      "environment": {
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "gcc-release",
+      "inherits": [
+        "release",
+        "gcc-base"
+      ]
+    },
+    {
+      "name": "gcc-debug",
+      "inherits": [
+        "debug",
+        "gcc-base"
+      ]
+    },
+    {
       "name": "ci-unix-release",
       "inherits": [
         "release",
