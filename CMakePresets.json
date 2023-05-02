@@ -160,7 +160,7 @@
     {
       "name": "clang-debug",
       "inherits": [
-        "release",
+        "debug",
         "unix-base"
       ]
     },
