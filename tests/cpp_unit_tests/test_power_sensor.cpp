@@ -587,8 +587,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor.update(sym_power_sensor_update);
 
         auto const result = sym_power_sensor.get_output<true>({});
-        CHECK(result.p_residual != nan);
-        CHECK(result.q_residual != nan);
+        CHECK_FALSE(std::isnan(result.p_residual));
+        CHECK_FALSE(std::isnan(result.q_residual));
     }
 
     // -------------------------------------------------------

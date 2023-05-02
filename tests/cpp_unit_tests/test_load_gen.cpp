@@ -336,8 +336,8 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         load_gen.update(update);
 
         auto const result = load_gen.template calc_param<true>(true);
-        CHECK(result.real() != nan);
-        CHECK(result.imag() != nan);
+        CHECK_FALSE(std::isnan(result.real()));
+        CHECK_FALSE(std::isnan(result.imag()));
     }
 }
 }  // namespace power_grid_model
