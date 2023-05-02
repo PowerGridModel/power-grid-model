@@ -332,12 +332,10 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         update.p_specified = RealValueType{1.0};
         update.q_specified = r_nan;
 
-        LoadGenType load_gen{input, 0.0};
-
-        auto result = load_gen.template calc_param<true>(true);
+        LoadGenType load_gen{input, 1.0};
         load_gen.update(update);
 
-        result = load_gen.template calc_param<true>(true);
+        auto const result = load_gen.template calc_param<true>(true);
         CHECK(result.real() != nan);
         CHECK(result.imag() != nan);
     }
