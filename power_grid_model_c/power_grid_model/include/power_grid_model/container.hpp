@@ -256,9 +256,12 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             &Container::get_raw<GettableBaseType, StorageableSubType>;
     };
 
+#pragma warning(push)
+#pragma warning(disable : 4268)
     // array of base judge
     template <class Gettable>
     static constexpr std::array<bool, num_storageable> is_base{std::is_base_of_v<Gettable, StorageableTypes>...};
+#pragma warning(pop)
     // array of relevant vector size, for a non-derived class, the size is zero
     template <class Gettable>
     std::array<Idx, num_storageable> size_per_vector() const {

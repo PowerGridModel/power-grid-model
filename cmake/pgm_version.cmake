@@ -2,6 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.15)
 
 file(READ "${CMAKE_SOURCE_DIR}/VERSION" PGM_VERSION)

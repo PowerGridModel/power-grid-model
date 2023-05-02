@@ -24,6 +24,9 @@
 
 namespace power_grid_model {
 
+#pragma warning(push)
+#pragma warning(disable : 4701)  // disable boost iteration macro issue
+
 class Topology {
     using GraphIdx = size_t;
 
@@ -662,6 +665,8 @@ class Topology {
             });
     }
 };
+
+#pragma warning(pop)
 
 }  // namespace power_grid_model
 

@@ -89,23 +89,25 @@ TEST_CASE("Test component container") {
     }
 
     SUBCASE("Test get item by idx_2d") {
-        C const& c = const_container.get_item<C>({0, 0});
-        C const& c1 = const_container.get_item<C>({1, 0});
-        C const& c2 = const_container.get_item<C2>({2, 0});
+        C const& c = const_container.template get_item<C>({0, 0});
+        C const& c1 = const_container.template get_item<C>({1, 0});
+        C const& c2 = const_container.template get_item<C2>({2, 0});
         CHECK(c.a == 5);
         CHECK(c1.a == 6);
         CHECK(c2.a == 7);
     }
 
     SUBCASE("Test get item by id") {
-        C const& c = const_container.get_item<C>(1);
-        C const& c1 = const_container.get_item<C>(2);
-        C const& c2 = const_container.get_item<C2>(3);
+        static_assert(std::is_base_of_v<C, C1>);
+        static_assert(std::is_base_of_v<C, C2>);
+        C const& c = const_container.template get_item<C>(1);
+        C const& c1 = const_container.template get_item<C>(2);
+        C const& c2 = const_container.template get_item<C2>(3);
         CHECK(c.a == 5);
         CHECK(c1.a == 6);
         CHECK(c2.a == 7);
-        CHECK_THROWS_AS(container.get_item<C2>(2), IDWrongType);
-        CHECK_THROWS_AS(container.get_item<C>(8), IDNotFound);
+        CHECK_THROWS_AS(container.template get_item<C2>(2), IDWrongType);
+        CHECK_THROWS_AS(container.template get_item<C>(8), IDNotFound);
     }
 
     SUBCASE("Test size of a component class collection") {

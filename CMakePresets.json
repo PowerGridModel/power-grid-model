@@ -58,7 +58,7 @@
       "hidden": true,
       "environment": {
         "PreferredToolArchitecture": "x64",
-        "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc /utf-8 /bigobj /FC"
+        "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W4 /WX /GR /EHsc /utf-8 /bigobj /FC"
       },
       "condition": {
         "type": "equals",
