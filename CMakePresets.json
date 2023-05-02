@@ -233,6 +233,22 @@
       "configurePreset": "clang-cl-release"
     },
     {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    },
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
+    },
+    {
       "name": "ci-clang-debug",
       "configurePreset": "ci-clang-debug"
     },
@@ -269,6 +285,22 @@
     {
       "name": "clang-cl-release",
       "configurePreset": "clang-cl-release"
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    },
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
     },
     {
       "name": "ci-clang-debug",
