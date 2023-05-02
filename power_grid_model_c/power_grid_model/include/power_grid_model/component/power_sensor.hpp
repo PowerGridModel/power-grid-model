@@ -69,20 +69,12 @@ class PowerSensor : public GenericPowerSensor {
     using OutputType = PowerSensorOutput<sym_calc>;
 
     PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
-        : GenericPowerSensor{power_sensor_input},
-          s_measured_{((power_sensor_input.p_measured + 1i * power_sensor_input.q_measured) /
-                       base_power<sym>)*convert_direction()},
-          power_sigma_{power_sensor_input.power_sigma / base_power<sym>}
-
-          {};
+        : GenericPowerSensor{power_sensor_input}, power_sigma_{power_sensor_input.power_sigma / base_power<sym>} {
+        set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
+    };
 
     UpdateChange update(PowerSensorUpdate<sym> const& power_sensor_update) {
-        double const scalar = convert_direction() / base_power<sym>;
-        RealValue<sym> ps = real(s_measured_);
-        RealValue<sym> qs = imag(s_measured_);
-        update_real_value<sym>(power_sensor_update.p_measured, ps, scalar);
-        update_real_value<sym>(power_sensor_update.q_measured, qs, scalar);
-        s_measured_ = ps + 1.0i * qs;
+        set_power(power_sensor_update.p_measured, power_sensor_update.q_measured);
 
         if (!is_nan(power_sensor_update.power_sigma)) {
             power_sigma_ = power_sensor_update.power_sigma / base_power<sym>;
@@ -91,8 +83,17 @@ class PowerSensor : public GenericPowerSensor {
     }
 
    private:
-    ComplexValue<sym> s_measured_;
+    ComplexValue<sym> s_measured_{};
     double power_sigma_;
+
+    void set_power(RealValue<sym> const& p_measured, RealValue<sym> const& q_measured) {
+        double const scalar = convert_direction() / base_power<sym>;
+        RealValue<sym> ps = real(s_measured_);
+        RealValue<sym> qs = imag(s_measured_);
+        update_real_value<sym>(p_measured, ps, scalar);
+        update_real_value<sym>(q_measured, qs, scalar);
+        s_measured_ = ps + 1.0i * qs;
+    }
 
     SensorCalcParam<true> sym_calc_param() const final {
         SensorCalcParam<true> calc_param{};

@@ -163,6 +163,82 @@ TEST_CASE("Test Main Model") {
                             InvalidMeasuredObject);
         }
     }
+
+    SUBCASE("Test incomplete input but complete update dataset") {
+        std::vector<NodeInput> node_input{{{{1}, 10e3}}};
+
+        std::vector<SourceInput> incomplete_source_input{{{{{2}, 1, true}, nan, nan, nan, nan, nan}}};
+        std::vector<SymVoltageSensorInput> incomplete_sym_sensor_input{{{{{{3}, 1}, 1e2}, nan, nan}}};
+        std::vector<AsymVoltageSensorInput> incomplete_asym_sensor_input{
+            {{{{{4}, 1}, 1e2}, RealValue<false>{nan}, RealValue<false>{nan}}}};
+
+        std::vector<SourceUpdate> complete_source_update{{{{2}, true}, 1.0, nan}};
+        std::vector<SymVoltageSensorUpdate> complete_sym_sensor_update{{{3}, 1.0, 12.345e3, 0.1}};
+        std::vector<AsymVoltageSensorUpdate> complete_asym_sensor_update{
+            {{4}, 1.0, RealValue<false>{12.345e3}, RealValue<false>{0.1}}};
+
+        ConstDataset input_data;
+        input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};
+        input_data["source"] =
+            DataPointer<true>{incomplete_source_input.data(), static_cast<Idx>(incomplete_source_input.size())};
+        input_data["sym_voltage_sensor"] =
+            DataPointer<true>{incomplete_sym_sensor_input.data(), static_cast<Idx>(incomplete_sym_sensor_input.size())};
+        input_data["asym_voltage_sensor"] = DataPointer<true>{incomplete_asym_sensor_input.data(),
+                                                              static_cast<Idx>(incomplete_asym_sensor_input.size())};
+
+        ConstDataset update_data;
+        update_data["source"] =
+            DataPointer<true>{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
+        update_data["sym_voltage_sensor"] =
+            DataPointer<true>{complete_sym_sensor_update.data(), static_cast<Idx>(complete_sym_sensor_update.size())};
+        update_data["asym_voltage_sensor"] =
+            DataPointer<true>{complete_asym_sensor_update.data(), static_cast<Idx>(complete_asym_sensor_update.size())};
+
+        SUBCASE("State Estimation") {
+            MainModel test_model{50.0, input_data};
+            MainModel ref_model{50.0, input_data};
+            ref_model.update_component<MainModel::permanent_update_t>(update_data);
+
+            SUBCASE("Symmetric Calculation") {
+                std::vector<NodeOutput<true>> test_node_output(1);
+                std::vector<NodeOutput<true>> ref_node_output(1);
+
+                Dataset test_result_data;
+                Dataset ref_result_data;
+                test_result_data["node"] =
+                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                ref_result_data["node"] =
+                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+
+                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                            test_result_data, update_data, -1);
+                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                           ref_result_data, update_data, -1);
+
+                CHECK(test_node_output[0].u == doctest::Approx(ref_node_output[0].u));
+            }
+            SUBCASE("Asymmetric Calculation") {
+                std::vector<NodeOutput<false>> test_node_output(1);
+                std::vector<NodeOutput<false>> ref_node_output(1);
+
+                Dataset test_result_data;
+                Dataset ref_result_data;
+                test_result_data["node"] =
+                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                ref_result_data["node"] =
+                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+
+                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                            test_result_data, update_data, -1);
+                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                           ref_result_data, update_data, -1);
+
+                CHECK(test_node_output[0].u.x() == doctest::Approx(ref_node_output[0].u.x()));
+                CHECK(test_node_output[0].u.y() == doctest::Approx(ref_node_output[0].u.y()));
+                CHECK(test_node_output[0].u.z() == doctest::Approx(ref_node_output[0].u.z()));
+            }
+        }
+    }
 }
 
 }  // namespace power_grid_model

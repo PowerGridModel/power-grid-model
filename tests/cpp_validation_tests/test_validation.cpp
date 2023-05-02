@@ -426,6 +426,9 @@ void validate_single_case(CaseParam const& param) {
 
 void validate_batch_case(CaseParam const& param) {
     std::cout << "Validation test: " << param.case_name << std::endl;
+    if (param.case_name == "power_flow/dummy-test-batch-incomplete-input-sym-linear-batch") {
+        std::cout << "here" << std::endl;
+    }
     ValidationCase const validation_case = create_validation_case(param);
     std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
     SingleData result = create_result_dataset(validation_case.input, output_prefix);
