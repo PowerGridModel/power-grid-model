@@ -316,8 +316,8 @@ TEST_CASE("Test load generator") {
 }
 
 TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
-    using InputType = LoadGenType::InputType;
-    using UpdateType = LoadGenType::UpdateType;
+    using InputType = typename LoadGenType::InputType;
+    using UpdateType = typename LoadGenType::UpdateType;
     using RealValueType = decltype(InputType::p_specified);
 
     auto const r_nan = RealValueType{nan};
@@ -334,10 +334,10 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
 
         LoadGenType load_gen{input, 0.0};
 
-        auto result = load_gen.calc_param<true>({});
+        auto result = load_gen.template calc_param<true>(true);
         load_gen.update(update);
 
-        result = load_gen.calc_param<true>({});
+        result = load_gen.template calc_param<true>(true);
         CHECK(result.real() != nan);
         CHECK(result.imag() != nan);
     }
