@@ -14,7 +14,8 @@
         "COMPILER_C_FLAGS": "",
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
         "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
-        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}"
+        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
+        "LDFLAGS": "$env{SANITIZER_FLAGS}"
       },
       "architecture": {
         "value": "x64",
@@ -109,14 +110,6 @@
       "hidden": true
     },
     {
-      "name": "unix-coverage-sanitizer",
-      "inherits": [
-        "unix-sanitizer",
-        "unix-coverage"
-      ],
-      "hidden": true
-    },
-    {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
       "inherits": [
@@ -154,14 +147,14 @@
       "name": "clang-release",
       "inherits": [
         "release",
-        "unix-base"
+        "unix-sanitizer"
       ]
     },
     {
       "name": "clang-debug",
       "inherits": [
         "debug",
-        "unix-base"
+        "unix-sanitizer"
       ]
     },
     {
@@ -169,7 +162,7 @@
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
       },
-      "inherits": "unix-base",
+      "inherits": "unix-sanitizer",
       "hidden": true
     },
     {
@@ -187,40 +180,21 @@
       ]
     },
     {
-      "name": "ci-unix-release",
-      "inherits": [
-        "release",
-        "unix-sanitizer"
-      ],
-      "hidden": true
-    },
-    {
-      "name": "ci-unix-debug",
-      "inherits": [
-        "debug",
-        "unix-coverage-sanitizer"
-      ],
-      "hidden": true
-    },
-    {
       "name": "ci-clang-release",
-      "inherits": [
-        "ci-unix-release"
-      ]
+      "inherits": "clang-release"
     },
     {
       "name": "ci-clang-debug",
       "inherits": [
-        "ci-unix-debug"
+        "clang-debug",
+        "unix-coverage"
       ]
     },
     {
       "name": "ci-gcc-release",
-      "environment": {
-        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
-      },
       "inherits": [
-        "ci-unix-release"
+        "gcc-release",
+        "unix-coverage"
       ]
     },
     {
@@ -229,7 +203,8 @@
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
       },
       "inherits": [
-        "ci-unix-debug"
+        "gcc-debug",
+        "unix-coverage"
       ]
     },
     {
