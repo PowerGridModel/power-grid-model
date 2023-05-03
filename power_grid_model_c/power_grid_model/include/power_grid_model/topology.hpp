@@ -24,9 +24,6 @@
 
 namespace power_grid_model {
 
-#pragma warning(push)
-#pragma warning(disable : 4701)  // disable boost iteration macro issue
-
 class Topology {
     using GraphIdx = size_t;
 
@@ -164,6 +161,39 @@ class Topology {
         comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), Idx2D{-1, -1});
     }
 
+#pragma warning(push)
+#pragma warning(disable : 4701)  // disable boost iteration macro issue
+    template <typename F>
+    static void for_all_vertices(GlobalGraph& graph, F&& func) {
+        BGL_FORALL_VERTICES(v, graph, GlobalGraph) {
+            func(v);
+        }
+    }
+
+    template <typename F>
+    static void for_all_vertices(ReorderGraph& graph, F&& func) {
+        BGL_FORALL_VERTICES(v, graph, ReorderGraph) {
+            func(v);
+        }
+    }
+
+    template <typename F>
+    static void for_all_adjacent_vertices(boost::graph_traits<GlobalGraph>::vertex_descriptor current,
+                                          GlobalGraph& graph, F&& func) {
+        BGL_FORALL_ADJ(current, adjacent, graph, GlobalGraph) {
+            func(adjacent);
+        }
+    }
+
+    template <typename F>
+    static void for_all_adjacent_vertices(boost::graph_traits<ReorderGraph>::vertex_descriptor current,
+                                          ReorderGraph& graph, F&& func) {
+        BGL_FORALL_ADJ(current, adjacent, graph, ReorderGraph) {
+            func(adjacent);
+        }
+    }
+#pragma warning(pop)
+
     void build_sparse_graph() {
         std::vector<std::pair<GraphIdx, GraphIdx>> edges;
         std::vector<GlobalEdge> edge_props;
@@ -205,10 +235,9 @@ class Topology {
         // build graph
         global_graph_ = GlobalGraph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
                                     edge_props.cbegin(), (GraphIdx)comp_topo_.n_node_total()};
-        // set color
-        BGL_FORALL_VERTICES(v, global_graph_, GlobalGraph) {
+        for_all_vertices(global_graph_, [this](boost::graph_traits<GlobalGraph>::vertex_descriptor const& v) {
             global_graph_[v].color = boost::default_color_type::white_color;
-        }
+        });
     }
 
     void dfs_search() {
@@ -275,6 +304,9 @@ class Topology {
     // return list of fill-ins when factorize the matrix
     std::vector<BranchIdx> reorder_node(std::vector<Idx>& dfs_node,
                                         std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
+        using GlobalVertexDesc = boost::graph_traits<GlobalGraph>::vertex_descriptor;
+        using ReorderVertexDesc = boost::graph_traits<ReorderGraph>::vertex_descriptor;
+
         std::vector<BranchIdx> fill_in;
         // make a copy and clear current vector
         std::vector<Idx> const dfs_node_copy(dfs_node);
@@ -318,16 +350,15 @@ class Topology {
             for (GraphIdx i = 0; i != n_cycle_node; ++i) {
                 // loop all edges of vertex i
                 GraphIdx global_i = (GraphIdx)cyclic_node[i];
-                BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
+                for_all_adjacent_vertices(global_i, global_graph_, [&](GlobalVertexDesc const& global_j) {
                     // skip if j is not part of cyclic sub graph
-                    if (node_status_[global_j] == -1) {
-                        continue;
+                    if (node_status_[global_j] != -1) {
+                        GraphIdx const j = (GraphIdx)node_status_[global_j];
+                        if (!boost::edge(i, j, g).second) {
+                            boost::add_edge(i, j, g);
+                        }
                     }
-                    GraphIdx const j = (GraphIdx)node_status_[global_j];
-                    if (!boost::edge(i, j, g).second) {
-                        boost::add_edge(i, j, g);
-                    }
-                }
+                });
             }
         };
         ReorderGraph meshed_graph{n_cycle_node};
@@ -359,24 +390,24 @@ class Topology {
         meshed_graph = ReorderGraph{n_cycle_node};
         build_graph(meshed_graph);
         // begin to remove vertices from graph, create fill-ins
-        BGL_FORALL_VERTICES(i, meshed_graph, ReorderGraph) {
+        for_all_vertices(meshed_graph, [&](ReorderVertexDesc const& i) {
             // double loop to loop all pairs of adjacent vertices
-            BGL_FORALL_ADJ(i, j1, meshed_graph, ReorderGraph) {
+            for_all_adjacent_vertices(i, meshed_graph, [&](ReorderVertexDesc const& j1) {
                 // skip for already removed vertices
                 if (j1 < i) {
-                    continue;
+                    return;
                 }
-                BGL_FORALL_ADJ(i, j2, meshed_graph, ReorderGraph) {
+                for_all_adjacent_vertices(i, meshed_graph, [&](ReorderVertexDesc const& j2) {
                     // no self edges
                     assert(i != j1);
                     assert(i != j2);
                     // skip for already removed vertices
                     if (j2 < i) {
-                        continue;
+                        return;
                     }
                     // only keep pair with j1 < j2
                     if (j1 >= j2) {
-                        continue;
+                        return;
                     }
                     // if edge j1 -> j2 does not already exists
                     // it is a fill-in
@@ -389,9 +420,9 @@ class Topology {
                         // add to fill-in
                         fill_in.push_back({(Idx)j1, (Idx)j2});
                     }
-                }
-            }
-        }
+                });
+            });
+        });
         // offset fill-in indices by n_node - n_cycle_node
         Idx const offset = (Idx)(dfs_node.size() - n_cycle_node);
         std::for_each(fill_in.begin(), fill_in.end(), [offset](BranchIdx& b) {
@@ -665,8 +696,6 @@ class Topology {
             });
     }
 };
-
-#pragma warning(pop)
 
 }  // namespace power_grid_model
 
