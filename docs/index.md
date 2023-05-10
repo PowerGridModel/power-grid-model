@@ -82,7 +82,7 @@ advanced_documentation/c-api
 contribution/CODE_OF_CONDUCT.md
 contribution/CONTRIBUTING.md
 contribution/folder-structure.md
-contribution/PROJECT_GOVERNANCE.md
+contribution/GOVERNANCE.md
 ```
 ```{toctree}
 :caption: "Release and Support"
