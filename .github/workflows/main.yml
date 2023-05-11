@@ -244,7 +244,7 @@ jobs:
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         with:
           files: |
-            ./wheelhouse/*.whl
+            ./wheelhouse/*
           tag_name: ${{ steps.tag.outputs.tag }}
           prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
           generate_release_notes: true
