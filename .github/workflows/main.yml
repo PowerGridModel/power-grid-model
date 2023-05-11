@@ -135,7 +135,7 @@ jobs:
 
       - name: Set PyPI Version
         run: |
-          pip install requests
+          pip install requests build
           python set_pypi_version.py
 
       - name: Build SDist
