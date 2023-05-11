@@ -11,7 +11,6 @@ from pathlib import Path
 from sysconfig import get_paths
 from typing import List
 
-
 # noinspection PyPackageRequirements
 from pybuild_header_dependency import HeaderResolver
 from setuptools import Extension, setup

@@ -6,8 +6,9 @@
 # read VERSION and PyPI, set PYPI_VERSION
 
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 import requests
 
 

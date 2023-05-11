@@ -2,6 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+include PYPI_VERSION
 include VERSION
-include src/power_grid_model/*.pyx
-recursive-include include *
+recursive-include power_grid_model_c *
