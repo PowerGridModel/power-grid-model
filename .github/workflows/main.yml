@@ -23,7 +23,7 @@ jobs:
 
   build-cpp-test-linux:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         build-option: [ debug, release ]
@@ -121,6 +121,29 @@ jobs:
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
+  
+  set-python-version:
+    runs-on: ubuntu-latest
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Set PyPI Version
+        run: |
+          pip install requests
+          python set_pypi_version.py
+
+      - name: Keep version file
+        uses: actions/upload-artifact@v3
+        with:
+          name: version
+          path: PYPI_VERSION      
+  
   build-and-test-python:
     strategy:
       matrix:
@@ -134,10 +157,15 @@ jobs:
             os: windows-latest
 
     runs-on: ${{ matrix.os }}
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
+    needs: [set-python-version]
 
     steps:
       - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: version
+          path: .
 
       - name: Set up QEMU
         if: matrix.platform == 'linux'
@@ -179,13 +207,18 @@ jobs:
           name: wheelhouse
           path: wheelhouse
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: version
+          path: .
+
       - name: List assets
         run: |
           ls ./wheelhouse/*.whl -al
 
       - name: Get tag
         id: tag
-        run: echo "tag=v$(ls ./wheelhouse/*py3*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')" >> $GITHUB_OUTPUT
+        run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
