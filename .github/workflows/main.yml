@@ -223,7 +223,7 @@ jobs:
 
       - name: List assets
         run: |
-          ls ./wheelhouse/*.whl -al
+          ls ./wheelhouse/ -al
 
       - name: Get tag
         id: tag
