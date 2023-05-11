@@ -6,6 +6,6 @@ include PYPI_VERSION
 include VERSION
 recursive-include power_grid_model_c *
 
-# the following is neede for running tests in conda recipe
+# the following is needed for running tests in conda recipe
 recursive-include tests/unit *
 recursive-include tests/data *
