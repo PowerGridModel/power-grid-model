@@ -180,7 +180,7 @@ def substitute_github_links(pkg_dir: Path):
 
 def set_version(pkg_dir: Path):
     # if PYPI_VERSION does not exist, copy from VERSION
-    pypi_file = pkg_dir / "VERSION"
+    pypi_file = pkg_dir / "PYPI_VERSION"
     if not pypi_file.exists():
         with open(pkg_dir / "VERSION") as f:
             version = f.read().strip().strip("\n")
