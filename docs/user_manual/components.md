@@ -33,6 +33,13 @@ The base type for all power grid components.
 | `u_pu` | `RealValueOutput` | - | per-unit voltage magnitude | | &#10060; | &#10060; | &#10004; | |
 | `u_angle` | `RealValueOutput` | rad | voltage angle | | &#10060; | &#10060; | &#10004; | |
 | `u` | `RealValueOutput` | volt (V) | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation | | &#10060; | &#10060; | &#10004; | |
+| `p` | `RealValueOutput` | watt (W) | active power injection | | &#10060; | &#10060; | &#10004; | |
+| `q` | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection | | &#10060; | &#10060; | &#10004; | |
+
+```{note}
+The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
+{hoverxreftooltip}`user_manual/data-model:Reference Direction`
+```
 
 ## Branch
 
@@ -84,7 +91,8 @@ also modeled as `line`. A `line` can only connect two nodes with the same rated 
 
 `link` is a {hoverxreftooltip}`user_manual/components:branch` which usually represents a short internal cable/connection between
 two busbars inside a substation. It has a very high admittance (small impedance) which is set to a fixed per-unit value
-(equivalent to 10e6 siemens for 10kV network). There is no additional attribute for `link`.
+(equivalent to 10e6 siemens for 10kV network). Therefore, it is chosen by design that no sensors can be coupled to a `link`.
+There is no additional attribute for `link`.
 
 ### Transformer
 
@@ -341,10 +349,19 @@ The table below shows a list of attributes.
 
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 {hoverxreftooltip}`user_manual/components:sensor`. It measures the active/reactive power flow of a terminal. The terminal is
-either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` and a `node`. In case of a
+either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` (except `link`) and a `node`. In case of a
 terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_manual/data-model:Reference Direction` in the
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
+
+```{note} 
+1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
+
+2. The node injection power sensor gets placed on a node. 
+In the state estimation result, the power from this injection is distributed equally among the connected appliances at that node.
+Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor is placed for it to function.
+
+```
 
 | name | data type | unit | description | required | input | update | output |                    valid values                     |
 | --- | --- | --- | --- | :---: | :---: | :---: | :---: |:---------------------------------------------------:|

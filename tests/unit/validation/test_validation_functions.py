@@ -2,21 +2,25 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from typing import List, Union
+from unittest.mock import ANY, MagicMock, patch
+
 import numpy as np
 import pytest
 
-from power_grid_model import initialize_array, power_grid_meta_data
+from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
 from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
+    validate_generic_power_sensor,
     validate_ids_exist,
     validate_required_values,
     validate_unique_ids_across_components,
     validate_values,
 )
 
-NaN = power_grid_meta_data["input"]["node"]["nans"]["id"]
+NaN = power_grid_meta_data["input"]["node"].nans["id"]
 
 
 def test_assert_valid_data_structure():
@@ -352,3 +356,51 @@ def test_validate_values():
 
     # The errors should add up (in this simple case)
     assert both_errors == node_errors + line_errors
+
+
+@pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
+@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_ids")
+def test_validate_generic_power_sensor__all_terminal_types(
+    all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_power_sensor(data={}, component="")
+
+    # Assert
+    all_valid_ids.assert_any_call(
+        ANY, ANY, field=ANY, ref_components=ANY, measured_terminal_type=measured_terminal_type
+    )
+
+
+@pytest.mark.parametrize(
+    ("ref_component", "measured_terminal_type"),
+    [
+        (["line", "transformer"], MeasuredTerminalType.branch_from),
+        (["line", "transformer"], MeasuredTerminalType.branch_to),
+        ("source", MeasuredTerminalType.source),
+        ("shunt", MeasuredTerminalType.shunt),
+        (["sym_load", "asym_load"], MeasuredTerminalType.load),
+        (["sym_gen", "asym_gen"], MeasuredTerminalType.generator),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_1),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_2),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_3),
+        ("node", MeasuredTerminalType.node),
+    ],
+)
+@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_ids")
+def test_validate_generic_power_sensor__terminal_types(
+    all_valid_ids: MagicMock, ref_component: Union[str, List[str]], measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_power_sensor(data={}, component="")
+
+    # Assert
+    all_valid_ids.assert_any_call(
+        ANY, ANY, field=ANY, ref_components=ref_component, measured_terminal_type=measured_terminal_type
+    )

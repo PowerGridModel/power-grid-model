@@ -8,15 +8,15 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "power-grid-model"
-copyright = "2022, alliander-opensource"
-author = "alliander-opensource"
+copyright = "2022, Alliander Dynamic Grid Calculation"
+author = "Alliander Dynamic Grid Calculation"
 
 # -- Setup
 
 import os
 
 # Fix linking in github and rtd
-link_head_gh = "https://github.com/alliander-opensource/power-grid-model/"
+link_head_gh = "https://github.com/PowerGridModel/power-grid-model/"
 if "READTHEDOCS" in os.environ:
     import git
 
@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
+    "breathe",
     "numpydoc",
     "hoverxref.extension",
     "myst_nb",
@@ -56,7 +57,7 @@ exclude_patterns = [
 
 # -- myst parser and myst_nb config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
-myst_heading_anchors = 3
+myst_heading_anchors = 4
 # execute jupter notebooks output before building webpage
 jupyter_execute_notebooks = "off"
 # Extentions in myst
@@ -99,3 +100,13 @@ autodoc_default_options = {
 
 # -- sphinx.autosectionlabel config -------------------------------------------
 autosectionlabel_prefix_document = True
+
+# -- Add google html -----------------------------------
+html_extra_path = ["google6d726d2d56f95e32.html"]
+
+# config doxygen for C API
+breathe_projects = {"power_grid_model_c": "./doxygen/build/xml/"}
+breathe_default_project = "power_grid_model_c"
+
+# Override theme CSS with style adjustments of our own
+html_style = "css/custom.css"

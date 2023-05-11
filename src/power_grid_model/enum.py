@@ -5,12 +5,13 @@
 """
 Common Enumerations
 
-Note: these enumeration match the C++ arithmetic core, so dont change the values unless you change thmn in C++ as well
+Note: these enumeration match the C++ arithmetic core, so don't change the values unless you change them in C++ as well
 
 """
 
-from enum import Enum, IntEnum
+from enum import IntEnum
 
+# Value names are defined in lower case instead of upper case
 # pylint: disable=invalid-name
 
 
@@ -47,11 +48,11 @@ class Branch3Side(IntEnum):
     side_3 = 2
 
 
-class CalculationType(Enum):
+class CalculationType(IntEnum):
     """Calculation Types"""
 
-    power_flow = "power_flow"
-    state_estimation = "state_estimation"
+    power_flow = 0
+    state_estimation = 1
 
 
 class CalculationMethod(IntEnum):
@@ -69,11 +70,11 @@ class MeasuredTerminalType(IntEnum):
 
     branch_from = 0
     """
-    Measuring the from-terminal between a branch and a node
+    Measuring the from-terminal between a branch (except link) and a node
     """
     branch_to = 1
     """
-    Measuring the to-terminal between a branch and a node
+    Measuring the to-terminal between a branch (except link) and a node
     """
     source = 2
     """
@@ -102,4 +103,8 @@ class MeasuredTerminalType(IntEnum):
     branch3_3 = 8
     """
     Measuring the terminal-3 between a branch3 and a node
+    """
+    node = 9
+    """
+    Measuring the total power injection into a node
     """

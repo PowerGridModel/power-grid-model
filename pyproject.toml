@@ -6,8 +6,6 @@
 requires = [
     "setuptools",
     "wheel",
-    "cython",
-    "oldest-supported-numpy",
     "requests",
     "pybuild-header-dependency",
 ]
@@ -23,7 +21,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: C++",
-    "Programming Language :: Cython",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
@@ -33,7 +30,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 dependencies = [
     "numpy>=1.21.0",
 ]
@@ -46,9 +43,12 @@ dev = [
     "pylint",
     "pytest",
     "pytest-cov",
+    "dataclasses_json",
+    "jinja2",
 ]
 doc = [
     "sphinx",
+    "breathe",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
@@ -60,7 +60,7 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://github.com/alliander-opensource/power-grid-model"
+Home-page = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 
 [tool.setuptools.packages.find]

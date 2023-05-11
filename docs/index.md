@@ -4,26 +4,22 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-```{warning}
-The documentation is under heavy development
-```
-
 # Power Grid Model
 
-```{image} images/pgm-logo-color.svg
+```{image} https://github.com/PowerGridModel/.github/raw/main/artwork/svg/color.svg
 :alt: pgm_logo
-:width: 150px
+:width: 300px
 :align: right
 ```
 
-`power-grid-model` is a Python library for steady-state distribution power system analysis.
+`power-grid-model` is a library for steady-state distribution power system analysis distributed for Python and C.
 The core of the library is written in C++.
 Currently, it supports the following calculations:
 
 * Symmetric and asymmetric power flow calculation with Newton-Raphson method, iterative current method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
 
-For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/alliander-opensource/power-grid-model-io) repository.
+For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
 ## Install from PyPI
 
@@ -55,11 +51,13 @@ user_manual/components
 user_manual/calculations
 user_manual/performance-guide
 user_manual/data-validator
+user_manual/model-validation
 ```
 ```{toctree}
 :caption: "API Reference"
 :maxdepth: 2
 api_reference/python-api-reference
+api_reference/power-grid-model-c-api-reference
 ```
 
 ```{toctree}
@@ -76,13 +74,15 @@ examples/Make Test Dataset.ipynb
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
+advanced_documentation/c-api
 ```
 ```{toctree}
 :caption: "Contribution"
 :maxdepth: 2
-CODE_OF_CONDUCT.md
-CONTRIBUTING.md
-PROJECT_GOVERNANCE.md
+contribution/CODE_OF_CONDUCT.md
+contribution/CONTRIBUTING.md
+contribution/folder-structure.md
+contribution/GOVERNANCE.md
 ```
 ```{toctree}
 :caption: "Release and Support"

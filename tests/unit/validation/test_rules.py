@@ -7,6 +7,7 @@ from enum import IntEnum
 import numpy as np
 import pytest
 
+from power_grid_model import LoadGenType, initialize_array
 from power_grid_model.validation.errors import (
     ComparisonError,
     InfinityError,
@@ -39,6 +40,7 @@ from power_grid_model.validation.rules import (
     all_not_two_values_equal,
     all_not_two_values_zero,
     all_unique,
+    all_valid_clocks,
     all_valid_enum_values,
     all_valid_ids,
     none_match_comparison,
@@ -261,43 +263,62 @@ def test_all_cross_unique(cross_only):
 
 
 def test_all_valid_enum_values():
-    class MyEnum(IntEnum):
-        alpha = 2
-        bravo = 5
-
-    valid = {"test": np.array([(1, 2), (2, 5)], dtype=[("id", "i4"), ("value", "i4")])}
-    errors = all_valid_enum_values(valid, "test", "value", MyEnum)
+    valid_load = initialize_array("input", "sym_load", 2)
+    valid_load["id"] = [1, 2]
+    valid_load["type"] = LoadGenType.const_power
+    valid = {"sym_load": valid_load}
+    errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
     assert not errors
 
-    invalid = {"test": np.array([(1, 2), (2, 4)], dtype=[("id", "i4"), ("value", "i4")])}
-    errors = all_valid_enum_values(invalid, "test", "value", MyEnum)
+    invalid_load = initialize_array("input", "sym_load", 2)
+    invalid_load["id"] = [1, 2]
+    invalid_load["type"] = [LoadGenType.const_power, 5]
+    invalid = {"sym_load": invalid_load}
+    errors = all_valid_enum_values(invalid, "sym_load", "type", LoadGenType)
     assert len(errors) == 1
-    assert InvalidEnumValueError("test", "value", [2], MyEnum) in errors
+    assert InvalidEnumValueError("sym_load", "type", [2], LoadGenType) in errors
+
+    valid = {"sym_load": initialize_array("input", "sym_load", 20)}
+    valid["sym_load"]["id"] = np.arange(20)
+    valid["sym_load"]["type"] = 0
+    errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
+    assert not errors
 
 
 def test_all_valid_ids():
+    # This data is for testing purpuse
+    # The values in the data do not make sense for a real grid
+    node = initialize_array("input", "node", 3)
+    node["id"] = [1, 2, 3]
+    source = initialize_array("input", "source", 3)
+    source["id"] = [4, 5, 6]
+    line = initialize_array("input", "line", 3)
+    line["id"] = [7, 8, 9]
+    line["from_node"] = [1, 2, 6]
+    line["to_node"] = [0, 0, 1]
+
     input_data = {
-        "mountain": np.array([(1,), (2,), (3,)], dtype=[("id", "i4")]),
-        "planet": np.array([(4,), (5,), (6,)], dtype=[("id", "i4")]),
-        "flag": np.array([(7, 1, "m"), (8, 2, "m"), (9, 6, "p")], dtype=[("id", "i4"), ("obj", "i4"), ("type", "U1")]),
+        "node": node,
+        "source": source,
+        "line": line,
     }
 
-    errors = all_valid_ids(input_data, "flag", "obj", ["mountain", "planet"])
+    errors = all_valid_ids(input_data, "line", "from_node", ["node", "source"])
     assert not errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "mountain", type="m")
+    errors = all_valid_ids(input_data, "line", "from_node", "node", to_node=0)
     assert not errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "planet", type="p")
+    errors = all_valid_ids(input_data, "line", "from_node", "source", to_node=1)
     assert not errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "mountain")
+    errors = all_valid_ids(input_data, "line", "from_node", "node")
     assert len(errors) == 1
-    assert InvalidIdError("flag", "obj", [9], ["mountain"]) in errors
+    assert InvalidIdError("line", "from_node", [9], ["node"]) in errors
 
-    errors = all_valid_ids(input_data, "flag", "obj", "planet")
+    errors = all_valid_ids(input_data, "line", "from_node", "source")
     assert len(errors) == 1
-    assert InvalidIdError("flag", "obj", [7, 8], ["planet"]) in errors
+    assert InvalidIdError("line", "from_node", [7, 8], ["source"]) in errors
 
 
 def test_all_boolean():
@@ -352,15 +373,21 @@ def test_all_finite():
 
     dfoo = [("id", "i4"), ("foo", "f8")]
     dbar = [("id", "i4"), ("bar", "f8")]
-    valid = {
+    invalid = {
         "foo_test": np.array([(1, 0.1), (2, np.inf), (3, -0.3)], dtype=dfoo),
         "bar_test": np.array([(4, 0.4), (5, 0.5), (6, -np.inf)], dtype=dbar),
     }
-    errors = all_finite(valid)
+    errors = all_finite(invalid)
     assert len(errors) == 2
     assert InfinityError("foo_test", "foo", [2]) in errors
     assert InfinityError("bar_test", "bar", [6]) in errors
 
 
+@pytest.mark.skip("No unit tests available for none_missing")
 def test_none_missing():
-    none_missing
+    raise NotImplementedError(f"Unit test for {none_missing}")
+
+
+@pytest.mark.skip("No unit tests available for all_valid_clocks")
+def test_all_valid_clocks():
+    raise NotImplementedError(f"Unit test for {all_valid_clocks}")

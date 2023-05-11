@@ -162,9 +162,8 @@ def errors_to_string(
 def nan_type(component: str, field: str, data_type="input"):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
-    It silently returns float('nan') if data_type/component/field can't be found.
     """
-    return power_grid_meta_data.get(data_type, {}).get(component, {}).get("nans", {}).get(field, float("nan"))
+    return power_grid_meta_data[data_type][component].nans[field]
 
 
 def get_indexer(input_ids: np.ndarray, update_ids: np.ndarray) -> np.ndarray:
@@ -187,3 +186,29 @@ def get_indexer(input_ids: np.ndarray, update_ids: np.ndarray) -> np.ndarray:
     return permutation_sort[
         np.searchsorted(input_ids, update_ids, sorter=permutation_sort)
     ]  # complexity O(N_update * logN_input)
+
+
+def set_default_value(data: SingleDataset, component: str, field: str, default_value: Union[int, float, np.ndarray]):
+    """
+    This function sets the default value in the data that is to be validated, so the default values are included in the
+    validation.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field: The field of interest
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
+
+    Returns:
+
+    """
+    if np.isnan(nan_type(component, field)):
+        mask = np.isnan(data[component][field])
+    else:
+        mask = data[component][field] == nan_type(component, field)
+    if isinstance(default_value, np.ndarray):
+        data[component][field][mask] = default_value[mask]
+    else:
+        data[component][field][mask] = default_value

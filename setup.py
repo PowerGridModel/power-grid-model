@@ -12,16 +12,11 @@ from sysconfig import get_paths
 from typing import List
 
 # noinspection PyPackageRequirements
-import Cython.Compiler.Main as CythonCompiler
-
-# noinspection PyPackageRequirements
-import numpy as np
-
-# noinspection PyPackageRequirements
 import requests
 from pybuild_header_dependency import HeaderResolver
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
+from wheel.bdist_wheel import bdist_wheel
 
 # determine platform, only windows or linux
 if platform.system() == "Windows":
@@ -30,6 +25,21 @@ elif platform.system() in ["Linux", "Darwin"]:
     if_win = False
 else:
     raise SystemError("Only Windows, Linux, or MacOS is supported!")
+
+
+# custom class for ctypes
+class CTypesExtension(Extension):
+    pass
+
+
+class bdist_wheel_abi_none(bdist_wheel):
+    def finalize_options(self):
+        bdist_wheel.finalize_options(self)
+        self.root_is_pure = False
+
+    def get_tag(self):
+        python, abi, plat = bdist_wheel.get_tag(self)
+        return "py3", "none", plat
 
 
 # custom compiler for linux
@@ -60,14 +70,13 @@ class MyBuildExt(build_ext):
             print(self.compiler.compiler_so)
             print("-------linker arguments----------")
             print(self.compiler.linker_so)
+        return super().build_extensions()
 
-        build_ext.build_extensions(self)
+    def get_export_symbols(self, ext):
+        return ext.export_symbols
 
-
-def get_ext_name(src_file: Path, pkg_dir: Path, pkg_name: str):
-    module_name = str(src_file.relative_to(pkg_dir / "src" / pkg_name).with_suffix(""))
-    module_name = module_name.replace("\\", ".").replace("/", ".")
-    return module_name
+    def get_ext_filename(self, ext_name):
+        return os.path.join(*ext_name.split(".")) + (".dll" if if_win else ".so")
 
 
 def generate_build_ext(pkg_dir: Path, pkg_name: str):
@@ -82,17 +91,21 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     """
     # fetch dependent headers
     resolver = HeaderResolver({"eigen": None, "boost": None})
+    pgm = Path("power_grid_model")
+    pgm_c = Path("power_grid_model_c")
+
     # include-folders
     include_dirs = [
         str(resolver.get_include()),
-        np.get_include(),  # The include-folder of numpy header
-        str(pkg_dir / "include"),  # The include-folder of the repo self
+        str(pkg_dir / pgm_c / pgm / "include"),  # The include-folder of the library
+        str(pkg_dir / pgm_c / pgm_c / "include"),  # The include-folder of the C API self
     ]
     # compiler and link flag
     cflags: List[str] = []
     lflags: List[str] = []
     library_dirs: List[str] = []
     libraries: List[str] = []
+    sources = [str(pgm_c / pgm_c / pgm_c.with_suffix(".cpp"))]
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
@@ -104,7 +117,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     if build_dir.exists():
         shutil.rmtree(build_dir)
     # remove binary
-    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.pyd")))
+    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll")))
     for bin_file in bin_files:
         print(f"Remove binary file: {bin_file}")
         bin_file.unlink()
@@ -115,8 +128,8 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     # different treat for windows and linux
     # determine platform specific options
     if if_win:
-        # flag for C++17
-        cflags += ["/std:c++17"]
+        # flag for C++20
+        cflags += ["/std:c++20"]
         include_dirs += [str(env_base_path / "Library" / "include")]
         library_dirs += [str(env_base_path / "Library" / "lib")]
     else:
@@ -124,35 +137,21 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         library_dirs += [str(env_base_path / "lib")]
         # flags for Linux and Mac
         cflags += [
-            "-std=c++17",
+            "-std=c++20",
             "-O3",
             "-fvisibility=hidden",
         ]
         lflags += ["-lpthread", "-O3"]
-        # for linux/macos add visibility to the init function
-        define_macros.append(("PyMODINIT_FUNC", 'extern "C" __attribute__((visibility ("default"))) PyObject*'))
-        # # extra flag for Mac
+        # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
             cflags.append("-mmacosx-version-min=10.15")
 
-    # list of compiled cython files, without file extension
-    cython_src = list(pkg_bin_dir.rglob(r"*.pyx"))
-    cython_src = [x.with_suffix("") for x in cython_src]
-    # compile cython
-    cython_src_pyx = [x.with_suffix(".pyx") for x in cython_src]
-    print("Compile Cython extensions")
-    print(cython_src_pyx)
-    CythonCompiler.compile(cython_src_pyx, cplus=True, language_level=3)
-    cython_src_cpp = [x.with_suffix(".cpp") for x in cython_src]
-    print("Generated cpp files")
-    print(cython_src_cpp)
-
-    # list of extensions of generated cpp files from cython
+    # list of extensions
     exts = [
-        Extension(
-            name=get_ext_name(src_file=src_file, pkg_dir=pkg_dir, pkg_name=pkg_name),
-            sources=[str(src_file.relative_to(pkg_dir))],
+        CTypesExtension(
+            name="power_grid_model.core._power_grid_core",
+            sources=sources,
             include_dirs=include_dirs,
             library_dirs=library_dirs,
             libraries=libraries,
@@ -161,11 +160,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
             define_macros=define_macros,
             language="c++",
         )
-        for src_file in cython_src_cpp
     ]
 
     # return dict of exts
-    return dict(ext_package=pkg_name, ext_modules=exts, cmdclass={"build_ext": MyBuildExt})
+    return dict(ext_modules=exts, cmdclass={"build_ext": MyBuildExt, "bdist_wheel": bdist_wheel_abi_none})
 
 
 def substitute_github_links(pkg_dir: Path):
@@ -175,7 +173,7 @@ def substitute_github_links(pkg_dir: Path):
         readme = raw_readme
     else:
         sha = os.environ["GITHUB_SHA"].lower()
-        url = f"https://github.com/alliander-opensource/power-grid-model/blob/{sha}/"
+        url = f"https://github.com/PowerGridModel/power-grid-model/blob/{sha}/"
         readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
     with open("README.md", "w") as f:
         f.write(readme)

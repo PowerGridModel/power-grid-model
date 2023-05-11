@@ -26,11 +26,21 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        build-option: [ Debug, Release ]
-        cpp-compiler: [g++-11, clang++-14]
+        build-option: [ debug, release ]
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CXX: ${{ matrix.cpp-compiler }}
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -44,15 +54,18 @@ jobs:
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json doctest
-      - name: Run build script
-        run: ./build.sh  ${{ matrix.build-option }}
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: windows-latest
     strategy:
       matrix:
-        build-option: [ Debug, Release ]
+        build-option: [ debug, release ]
+
+    env:
+      PRESET: msvc-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -70,29 +83,33 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          mkdir cpp_build_${{ matrix.build-option }}
-          cd cpp_build_${{ matrix.build-option }}
           # generate cmake cache
-          cmake .. `
-            -G "Ninja" `
-            -DCMAKE_BUILD_TYPE=${{ matrix.build-option }} `
-            -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library `
-            -DPOWER_GRID_MODEL_BUILD_BENCHMARK=1
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library
           # build
-          cmake --build . --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           # test
-          .\tests\cpp_unit_tests\power_grid_model_unit_tests.exe
+          ctest --test-dir . --output-on-failure
+          # install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+
+          # build and run integration test
+          cd tests/package_tests
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          install\${{ env.PRESET }}\bin\power_grid_model_package_test
 
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: macos-latest
     strategy:
       matrix:
-        build-option: [ Debug, Release ]
+        build-option: [ debug, release ]
     env:
+      CMAKE_PREFIX_PATH: /usr/local
       CC: clang
       CXX: clang++
-      CMAKE_PREFIX_PATH: /usr/local
+      PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3
@@ -102,8 +119,7 @@ jobs:
           brew install ninja boost eigen nlohmann-json doctest
 
       - name: Build and test
-        run: |
-          ./build.sh  ${{ matrix.build-option }} 
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-and-test-python:
     strategy:
@@ -128,7 +144,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.2
+        uses: pypa/cibuildwheel@v2.12.3
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -169,7 +185,7 @@ jobs:
 
       - name: Get tag
         id: tag
-        run: echo "::set-output name=tag::v$(ls ./wheelhouse/*cp310*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')"
+        run: echo "tag=v$(ls ./wheelhouse/*py3*manylinux2014_x86_64*.whl | awk -F'[-]' '{print $2}')" >> $GITHUB_OUTPUT
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"

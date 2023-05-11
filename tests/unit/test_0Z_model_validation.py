@@ -49,31 +49,23 @@ def test_single_validation(
     if EXPORT_OUTPUT:
         save_json_data(f"{case_id}.json", result)
 
+    # test calculate with only node and source result
+    result = calculation_function_map[calculation_type](
+        model, symmetric=sym, calculation_method=calculation_method, output_component_types=["node", "source"]
+    )
+    assert set(result.keys()) == {"node", "source"}
+    result = calculation_function_map[calculation_type](
+        model, symmetric=sym, calculation_method=calculation_method, output_component_types={"node", "source"}
+    )
+    assert set(result.keys()) == {"node", "source"}
+
 
 @pytest.mark.parametrize(
-    [
-        "case_id",
-        "case_path",
-        "sym",
-        "calculation_type",
-        "calculation_method",
-        "rtol",
-        "atol",
-        "independent",
-        "cache_topology",
-    ],
+    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol"],
     pytest_cases(get_batch_cases=True),
 )
 def test_batch_validation(
-    case_id: str,
-    case_path: Path,
-    sym: bool,
-    calculation_type: str,
-    calculation_method: str,
-    rtol: float,
-    atol: float,
-    independent: bool,
-    cache_topology: bool,
+    case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float
 ):
     # Initialization
     case_data = import_case_data(case_path, sym=sym)
@@ -100,9 +92,6 @@ def test_batch_validation(
         result_list = convert_batch_dataset_to_batch_list(result_batch)
         for result, reference_result in zip(result_list, reference_output_list):
             compare_result(result, reference_result, rtol, atol)
-        # assert batch parameters
-        assert independent == model.independent
-        assert cache_topology == model.cache_topology
 
     # export data if needed
     if EXPORT_OUTPUT:

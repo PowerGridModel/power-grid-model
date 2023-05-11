@@ -35,7 +35,7 @@ Output data:
 
 """
 from enum import Enum
-from typing import Any, Dict, List, Protocol, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
 
@@ -62,19 +62,10 @@ from power_grid_model.validation.errors import (
     TwoValuesZeroError,
     ValidationError,
 )
-from power_grid_model.validation.utils import eval_expression, nan_type
+from power_grid_model.validation.utils import eval_expression, nan_type, set_default_value
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
-
-
-class ComparisonFn(Protocol):  # pylint: disable=too-few-public-methods
-    """
-    A protocol defining a function on one or more numpy arrays, resulting in a single numpy array.
-    """
-
-    def __call__(self, val: np.ndarray, *ref: np.ndarray) -> np.ndarray:
-        ...
 
 
 def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> List[NotGreaterThanError]:
@@ -94,7 +85,12 @@ def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> Li
     return all_greater_than(data, component, field, 0.0)
 
 
-def all_greater_than_or_equal_to_zero(data: SingleDataset, component: str, field: str) -> List[NotGreaterOrEqualError]:
+def all_greater_than_or_equal_to_zero(
+    data: SingleDataset,
+    component: str,
+    field: str,
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
+) -> List[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
     or equal to zero. Returns an empty list on success, or a list containing a single error object on failure.
@@ -103,12 +99,15 @@ def all_greater_than_or_equal_to_zero(data: SingleDataset, component: str, field
         data: The input/update data set for all components
         component: The component of interest
         field: The field of interest
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
         interest was less than zero.
     """
-    return all_greater_or_equal(data, component, field, 0.0)
+    return all_greater_or_equal(data, component, field, 0.0, default_value)
 
 
 def all_greater_than(
@@ -138,7 +137,11 @@ def all_greater_than(
 
 
 def all_greater_or_equal(
-    data: SingleDataset, component: str, field: str, ref_value: Union[int, float, str]
+    data: SingleDataset,
+    component: str,
+    field: str,
+    ref_value: Union[int, float, str],
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
@@ -152,6 +155,9 @@ def all_greater_or_equal(
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
@@ -162,7 +168,9 @@ def all_greater_or_equal(
     def not_greater_or_equal(val: np.ndarray, *ref: np.ndarray):
         return np.less(val, *ref)
 
-    return none_match_comparison(data, component, field, not_greater_or_equal, ref_value, NotGreaterOrEqualError)
+    return none_match_comparison(
+        data, component, field, not_greater_or_equal, ref_value, NotGreaterOrEqualError, default_value
+    )
 
 
 def all_less_than(
@@ -219,12 +227,13 @@ def all_less_or_equal(
     return none_match_comparison(data, component, field, not_less_or_equal, ref_value, NotLessOrEqualError)
 
 
-def all_between(
+def all_between(  # pylint: disable=too-many-arguments
     data: SingleDataset,
     component: str,
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotBetweenError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are (exclusively)
@@ -241,6 +250,9 @@ def all_between(
         ref_value_2: The second reference value against which all values in the 'field' column are compared. If the
         reference value is a string, it is assumed to be another field (e.g. 'field_x') of the same component,
         or a ratio between two fields (e.g. 'field_x / field_y')
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotBetweenErrors, listing all ids where the value in the field of interest was
@@ -250,15 +262,18 @@ def all_between(
     def outside(val: np.ndarray, *ref: np.ndarray) -> np.ndarray:
         return np.logical_or(np.less_equal(val, np.minimum(*ref)), np.greater_equal(val, np.maximum(*ref)))
 
-    return none_match_comparison(data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenError)
+    return none_match_comparison(
+        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenError, default_value
+    )
 
 
-def all_between_or_at(
+def all_between_or_at(  # pylint: disable=too-many-arguments
     data: SingleDataset,
     component: str,
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
@@ -275,6 +290,9 @@ def all_between_or_at(
         ref_value_2: The second reference value against which all values in the 'field' column are compared. If the
         reference value is a string, it is assumed to be another field (e.g. 'field_x') of the same component,
         or a ratio between two fields (e.g. 'field_x / field_y')
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotBetweenOrAtErrors, listing all ids where the value in the field of interest was
@@ -284,16 +302,19 @@ def all_between_or_at(
     def outside(val: np.ndarray, *ref: np.ndarray) -> np.ndarray:
         return np.logical_or(np.less(val, np.minimum(*ref)), np.greater(val, np.maximum(*ref)))
 
-    return none_match_comparison(data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError)
+    return none_match_comparison(
+        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value
+    )
 
 
 def none_match_comparison(
     data: SingleDataset,
     component: str,
     field: str,
-    compare_fn: ComparisonFn,
+    compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
+    default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[CompError]:
     # pylint: disable=too-many-arguments
     """
@@ -310,11 +331,16 @@ def none_match_comparison(
         are compared using the compare_fn. If a reference value is a string, it is assumed to be another field
         (e.g. 'field_x') of the same component, or a ratio between two fields (e.g. 'field_x / field_y')
         error: The type (class) of error that should be returned in case any of the values match the comparison.
+        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
+        input validation, these default values should be included in the validation. It can be a fixed value for the
+        entire column (int/float) or be different for each element (np.ndarray).
 
     Returns:
-        A list containing zero or one comparison errors (should be a sub class of ComparisonError), listing all ids
+        A list containing zero or one comparison errors (should be a subclass of ComparisonError), listing all ids
         where the value in the field of interest matched the comparison.
     """
+    if default_value is not None:
+        set_default_value(data=data, component=component, field=field, default_value=default_value)
     component_data = data[component]
     if isinstance(ref_value, tuple):
         ref = tuple(eval_expression(component_data, v) for v in ref_value)
@@ -409,7 +435,7 @@ def all_valid_enum_values(
         was not a valid value in the supplied enum type.
     """
     valid = [nan_type(component, field)] + list(enum)
-    invalid = np.isin(data[component][field], valid, invert=True)
+    invalid = np.isin(data[component][field], np.array(valid, dtype=np.int8), invert=True)
     if invalid.any():
         ids = data[component]["id"][invalid].flatten().tolist()
         return [InvalidEnumValueError(component, field, ids, enum)]
@@ -613,7 +639,7 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
     return errors
 
 
-def all_clocks_valid(
+def all_valid_clocks(
     data: SingleDataset, component: str, clock_field: str, winding_from_field: str, winding_to_field: str
 ) -> List[TransformerClockError]:
     """

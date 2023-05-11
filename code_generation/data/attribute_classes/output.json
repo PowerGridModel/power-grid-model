@@ -1,0 +1,130 @@
+{
+    "name": "output",
+    "include_guard": "OUTPUT",
+    "classes": [
+        {
+            "name": "BaseOutput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "id",
+                    "description": "ID of the object"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "energized",
+                    "description": "if the object is energized"
+                }
+            ]
+        },
+        {
+            "name": "NodeOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "u_pu",
+                        "u",
+                        "u_angle"
+                    ],
+                    "description": "voltage magnitude and angle"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p",
+                        "q"
+                    ],
+                    "description": "node injection"
+                }
+            ]
+        },
+        {
+            "name": "BranchOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "loading",
+                    "description": "loading of the branch"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p_from", "q_from", "i_from", "s_from"],
+                    "description": "power flow at from-side"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p_to", "q_to", "i_to", "s_to"],
+                    "description": "power flow at to-side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3Output",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "loading",
+                    "description": "loading of the branch"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p_1", "q_1", "i_1", "s_1"],
+                    "description": "power flow at side 1"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p_2", "q_2", "i_2", "s_2"],
+                    "description": "power flow at side 2"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p_3", "q_3", "i_3", "s_3"],
+                    "description": "power flow at side 3"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p", "q", "i", "s", "pf"],
+                    "description": "power flow of the appliance"
+                }
+            ]
+        },
+        {
+            "name": "VoltageSensorOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["u_residual", "u_angle_residual"],
+                    "description": "deviation between the measured value and calculated value"
+                }
+            ]
+        },
+        {
+            "name": "PowerSensorOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": ["p_residual", "q_residual"],
+                    "description": "deviation between the measured value and calculated value"
+                }
+            ]
+        }
+    ]
+}

@@ -40,6 +40,10 @@ TEST_CASE("Test load generator") {
     appliance_math_output_sym.i = 1.0 + 2.0i;
     appliance_math_output_sym.s = 3.0 + 4.0i;
 
+    ApplianceMathOutput<true> appliance_math_output_sym_reverse;
+    appliance_math_output_sym_reverse.i = -1.0 - 2.0i;
+    appliance_math_output_sym_reverse.s = -3.0 - 4.0i;
+
     ApplianceMathOutput<false> appliance_math_output_asym;
     ComplexValue<false> const i_a{1.0 + 2.0i};
     ComplexValue<false> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
@@ -103,6 +107,15 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<false>));
         CHECK(asym_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(asym_result.pf(1) == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
+        // reverse result
+        ApplianceOutput<true> const reverse_result = load_gen.get_output<true>(appliance_math_output_sym_reverse);
+        CHECK(reverse_result.id == 1);
+        CHECK(reverse_result.energized);
+        CHECK(reverse_result.p == doctest::Approx(-3.0 * base_power<true>));
+        CHECK(reverse_result.q == doctest::Approx(-4.0 * base_power<true>));
+        CHECK(reverse_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<true>));
+        CHECK(reverse_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(reverse_result.pf == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
     }
 
     SUBCASE("Test asymmetric load with constant power; u as input") {
@@ -190,6 +203,15 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<false>));
         CHECK(asym_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(asym_result.pf(1) == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
+        // reverse direction
+        ApplianceOutput<true> const reverse_result = load_gen.get_output<true>(appliance_math_output_sym_reverse);
+        CHECK(reverse_result.id == 1);
+        CHECK(reverse_result.energized);
+        CHECK(reverse_result.p == doctest::Approx(3.0 * base_power<true>));
+        CHECK(reverse_result.q == doctest::Approx(4.0 * base_power<true>));
+        CHECK(reverse_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<true>));
+        CHECK(reverse_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(reverse_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
     SUBCASE("Test asymmetric generator with constant addmittance; u as input ") {
@@ -293,4 +315,29 @@ TEST_CASE("Test load generator") {
     }
 }
 
+TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
+    using InputType = typename LoadGenType::InputType;
+    using UpdateType = typename LoadGenType::UpdateType;
+    using RealValueType = decltype(InputType::p_specified);
+
+    auto const r_nan = RealValueType{nan};
+
+    SUBCASE("Partial initialization and full update") {
+        InputType input{};
+
+        input.p_specified = r_nan;
+        input.q_specified = RealValueType{1.0};
+
+        UpdateType update{};
+        update.p_specified = RealValueType{1.0};
+        update.q_specified = r_nan;
+
+        LoadGenType load_gen{input, 1.0};
+        load_gen.update(update);
+
+        auto const result = load_gen.template calc_param<true>(true);
+        CHECK_FALSE(std::isnan(result.real()));
+        CHECK_FALSE(std::isnan(result.imag()));
+    }
+}
 }  // namespace power_grid_model

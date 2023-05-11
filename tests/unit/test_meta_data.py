@@ -8,7 +8,7 @@ from power_grid_model import initialize_array, power_grid_meta_data
 
 
 def test_nan_scalar():
-    assert np.isnan(power_grid_meta_data["input"]["node"]["nan_scalar"]["u_rated"])
+    assert np.isnan(power_grid_meta_data["input"]["node"].nan_scalar["u_rated"])
 
 
 def test_initialize_array():
@@ -32,7 +32,7 @@ def test_sensor_meta_data():
             # comp_names = list(meta_data.keys())
             # assert sensor in comp_names
             meta_data_sensor = meta_data[sensor]
-            attr_names = meta_data_sensor["dtype_dict"]["names"]
+            attr_names = meta_data_sensor.dtype_dict["names"]
             assert "id" in attr_names
             # check specific attributes
             if "voltage" in sensor:
@@ -48,3 +48,7 @@ def test_sensor_meta_data():
 
             for name in expected_attrs:
                 assert name in attr_names
+
+
+def test_dict_like_access():
+    assert power_grid_meta_data["input"]["node"].dtype == power_grid_meta_data["input"]["node"]["dtype"]

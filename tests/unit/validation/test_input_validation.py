@@ -22,6 +22,7 @@ from power_grid_model.validation.errors import (
     NotUniqueError,
     TwoValuesZeroError,
 )
+from power_grid_model.validation.utils import nan_type
 
 
 @pytest.fixture
@@ -69,12 +70,12 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["tap_pos"] = [-1, 6, -4]
     transformer["tap_min"] = [-2, 4, 3]
     transformer["tap_max"] = [2, -4, -3]
-    transformer["tap_nom"] = [-3, 3, 4]
+    transformer["tap_nom"] = [-3, nan_type("transformer", "tap_nom"), 4]
     transformer["tap_size"] = [262.5, 0.0, -10.0]
-    transformer["uk_min"] = [0.0000000005, 0.0, 0.9]
-    transformer["uk_max"] = [0.0000000005, 0.0, 0.8]
-    transformer["pk_min"] = [300.0, 0.0, -10.0]
-    transformer["pk_max"] = [400.0, -0.1, -10.0]
+    transformer["uk_min"] = [0.0000000005, nan_type("transformer", "uk_min"), 0.9]
+    transformer["uk_max"] = [0.0000000005, nan_type("transformer", "uk_max"), 0.8]
+    transformer["pk_min"] = [300.0, 0.0, nan_type("transformer", "pk_min")]
+    transformer["pk_max"] = [400.0, -0.1, nan_type("transformer", "pk_max")]
 
     three_winding_transformer = initialize_array("input", "three_winding_transformer", 4)
     three_winding_transformer["id"] = [1, 28, 29, 30]
@@ -108,19 +109,49 @@ def input_data() -> Dict[str, np.ndarray]:
     three_winding_transformer["tap_min"] = [-10, -10, -10, -10]
     three_winding_transformer["tap_max"] = [10, 10, 10, 10]
     three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
-    three_winding_transformer["tap_nom"] = [-12, 41, 3, 0]
-    three_winding_transformer["uk_12_min"] = [-1, 1.1, 0.05, 0.1]
-    three_winding_transformer["uk_13_min"] = [-2, 1.2, 0.3, 0.2]
-    three_winding_transformer["uk_23_min"] = [-1.5, 1, 0.15, 0.2]
-    three_winding_transformer["pk_12_min"] = [-450, 100, 10, 40]
-    three_winding_transformer["pk_13_min"] = [-40, 50, 40, 50]
-    three_winding_transformer["pk_23_min"] = [-120, 1, 40, 30]
-    three_winding_transformer["uk_12_max"] = [-1, 1.1, 0.05, 0.1]
-    three_winding_transformer["uk_13_max"] = [-2, 1.2, 0.3, 0.2]
-    three_winding_transformer["uk_23_max"] = [-1.5, 1, 0.15, 0.2]
-    three_winding_transformer["pk_12_max"] = [-450, 100, 10, 40]
-    three_winding_transformer["pk_13_max"] = [-40, 50, 40, 50]
-    three_winding_transformer["pk_23_max"] = [-120, 1, 40, 30]
+    three_winding_transformer["tap_nom"] = [-12, 41, nan_type("three_winding_transformer", "tap_nom"), 0]
+    three_winding_transformer["uk_12_min"] = [
+        nan_type("three_winding_transformer", "uk_12_min"),
+        1.1,
+        0.05,
+        nan_type("three_winding_transformer", "uk_12_min"),
+    ]
+    three_winding_transformer["uk_13_min"] = [
+        nan_type("three_winding_transformer", "uk_13_min"),
+        1.2,
+        0.3,
+        nan_type("three_winding_transformer", "uk_13_min"),
+    ]
+    three_winding_transformer["uk_23_min"] = [
+        nan_type("three_winding_transformer", "uk_23_min"),
+        1,
+        0.15,
+        nan_type("three_winding_transformer", "uk_23_min"),
+    ]
+    three_winding_transformer["pk_12_min"] = [-450, nan_type("three_winding_transformer", "pk_12_min"), 10, 40]
+    three_winding_transformer["pk_13_min"] = [-40, nan_type("three_winding_transformer", "pk_13_min"), 40, 50]
+    three_winding_transformer["pk_23_min"] = [-120, nan_type("three_winding_transformer", "pk_23_min"), 40, 30]
+    three_winding_transformer["uk_12_max"] = [
+        nan_type("three_winding_transformer", "uk_12_max"),
+        1.1,
+        0.05,
+        nan_type("three_winding_transformer", "uk_12_max"),
+    ]
+    three_winding_transformer["uk_13_max"] = [
+        nan_type("three_winding_transformer", "uk_13_max"),
+        1.2,
+        0.3,
+        nan_type("three_winding_transformer", "uk_13_max"),
+    ]
+    three_winding_transformer["uk_23_max"] = [
+        nan_type("three_winding_transformer", "uk_23_max"),
+        1,
+        0.15,
+        nan_type("three_winding_transformer", "uk_23_max"),
+    ]
+    three_winding_transformer["pk_12_max"] = [-450, nan_type("three_winding_transformer", "pk_12_max"), 10, 40]
+    three_winding_transformer["pk_13_max"] = [-40, nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
+    three_winding_transformer["pk_23_max"] = [-120, nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
 
     source = initialize_array("input", "source", 3)
     source["id"] = [16, 17, 1]
@@ -179,13 +210,13 @@ def input_data() -> Dict[str, np.ndarray]:
 
     sym_power_sensor = initialize_array("input", "sym_power_sensor", 4)
     sym_power_sensor["id"] = [7, 8, 9, 10]
-    sym_power_sensor["measured_object"] = [2, 3, 0, 200]
+    sym_power_sensor["measured_object"] = [12, 3, 13, 200]
     sym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
     sym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
 
     asym_power_sensor = initialize_array("input", "asym_power_sensor", 4)
     asym_power_sensor["id"] = [7, 8, 9, 10]
-    asym_power_sensor["measured_object"] = [2, 3, 0, 200]
+    asym_power_sensor["measured_object"] = [12, 3, 13, 200]
     asym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
 
@@ -343,7 +374,18 @@ def test_validate_input_data_sym_calculation(input_data):
             "sym_power_sensor",
             "measured_object",
             [7, 9, 10],
-            ["line", "transformer", "source", "shunt", "sym_load", "asym_load", "sym_gen", "asym_gen"],
+            [
+                "node",
+                "line",
+                "transformer",
+                "three_winding_transformer",
+                "source",
+                "shunt",
+                "sym_load",
+                "asym_load",
+                "sym_gen",
+                "asym_gen",
+            ],
         )
         in validation_errors
     )
@@ -368,7 +410,18 @@ def test_validate_input_data_sym_calculation(input_data):
             "asym_power_sensor",
             "measured_object",
             [7, 9, 10],
-            ["line", "transformer", "source", "shunt", "sym_load", "asym_load", "sym_gen", "asym_gen"],
+            [
+                "node",
+                "line",
+                "transformer",
+                "three_winding_transformer",
+                "source",
+                "shunt",
+                "sym_load",
+                "asym_load",
+                "sym_gen",
+                "asym_gen",
+            ],
         )
         in validation_errors
     )
