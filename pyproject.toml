@@ -6,7 +6,6 @@
 requires = [
     "setuptools",
     "wheel",
-    "requests",
     "pybuild-header-dependency",
 ]
 build-backend = "setuptools.build_meta"
