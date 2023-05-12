@@ -217,11 +217,11 @@ jobs:
           conda info
           conda list
       
-      - name: Build and test
-        run: |
-          python -m pip install . -vv --no-build-isolation --no-deps
-          pytest
+      - name: Build
+        run: python -m pip install . -vv --no-build-isolation --no-deps   
 
+      - name: Test
+        run: pytest
 
   publish-wheels:
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
