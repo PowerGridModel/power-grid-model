@@ -941,6 +941,118 @@ TEST_CASE_TEMPLATE("Test main model", settings, regular_update, cached_update) {
             CHECK(sym_node_2[8].u_pu == doctest::Approx(0.67).epsilon(0.005));
         }
     }
+
+    SUBCASE("Test incomplete input but complete update dataset") {
+        using CalculationMethod::iterative_current;
+        using CalculationMethod::linear;
+        using CalculationMethod::linear_current;
+        using CalculationMethod::newton_raphson;
+
+        std::vector<SourceInput> incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
+                                                         {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
+        std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, nan, nan}};
+        std::vector<AsymLoadGenInput> incomplete_asym_load_input{
+            {{{{8}, 3, true}, LoadGenType::const_y}, RealValue<false>{nan}, RealValue<false>{nan}}};
+
+        ConstDataset input_data;
+        input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};
+        input_data["line"] = DataPointer<true>{line_input.data(), static_cast<Idx>(line_input.size())};
+        input_data["link"] = DataPointer<true>{link_input.data(), static_cast<Idx>(link_input.size())};
+        input_data["source"] = DataPointer<true>{source_input.data(), static_cast<Idx>(source_input.size())};
+        input_data["sym_load"] =
+            DataPointer<true>{incomplete_sym_load_input.data(), static_cast<Idx>(incomplete_sym_load_input.size())};
+        input_data["asym_load"] =
+            DataPointer<true>{incomplete_asym_load_input.data(), static_cast<Idx>(incomplete_asym_load_input.size())};
+        input_data["shunt"] = DataPointer<true>{shunt_input.data(), static_cast<Idx>(shunt_input.size())};
+
+        std::vector<SourceUpdate> complete_source_update{{{{6}, true}, 1.05, nan}, {{{10}, true}, 1.05, 0}};
+        std::vector<SymLoadGenUpdate> complete_sym_load_update{{{{7}, true}, 0.5e6, 0.0}};
+        std::vector<AsymLoadGenUpdate> complete_asym_load_update{
+            {{{8}, true}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
+
+        ConstDataset update_data;
+        update_data["source"] =
+            DataPointer<true>{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
+        update_data["sym_load"] =
+            DataPointer<true>{complete_sym_load_update.data(), static_cast<Idx>(complete_sym_load_update.size())};
+        update_data["asym_load"] =
+            DataPointer<true>{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
+
+        MainModel test_model{50.0, input_data};
+        MainModel ref_model{main_model};
+
+        Dataset test_result_data;
+        Dataset ref_result_data;
+
+        SUBCASE("Symmetrical") {
+            std::vector<NodeOutput<true>> test_sym_node(sym_node.size());
+            std::vector<NodeOutput<true>> ref_sym_node(sym_node.size());
+            test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+            ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
+
+            SUBCASE("Test linear calculation") {
+                test_model.calculate_power_flow<true>(1e-8, 20, linear, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, linear, ref_result_data, update_data, -1);
+            }
+
+            SUBCASE("Test linear current calculation") {
+                test_model.calculate_power_flow<true>(1e-8, 20, linear_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, linear_current, ref_result_data, update_data, -1);
+            }
+
+            SUBCASE("Test iterative current calculation") {
+                test_model.calculate_power_flow<true>(1e-8, 20, iterative_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, iterative_current, ref_result_data, update_data, -1);
+            }
+
+            SUBCASE("Test iterative Newton-Raphson calculation") {
+                test_model.calculate_power_flow<true>(1e-8, 20, newton_raphson, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<true>(1e-8, 20, newton_raphson, ref_result_data, update_data, -1);
+            }
+
+            CHECK(test_sym_node[0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
+            CHECK(test_sym_node[1].u_pu == doctest::Approx(ref_sym_node[1].u_pu));
+            CHECK(test_sym_node[2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
+        }
+
+        SUBCASE("Asymmetrical") {
+            std::vector<NodeOutput<false>> test_asym_node(asym_node.size());
+            std::vector<NodeOutput<false>> ref_asym_node(asym_node.size());
+            test_result_data["node"] =
+                DataPointer<false>{test_asym_node.data(), static_cast<Idx>(test_asym_node.size())};
+            ref_result_data["node"] = DataPointer<false>{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+
+            SUBCASE("Test linear calculation") {
+                test_model.calculate_power_flow<false>(1e-8, 20, linear, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, linear, ref_result_data, update_data, -1);
+            }
+
+            SUBCASE("Test linear current calculation") {
+                test_model.calculate_power_flow<false>(1e-8, 20, linear_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, linear_current, ref_result_data, update_data, -1);
+            }
+
+            SUBCASE("Test iterative current calculation") {
+                test_model.calculate_power_flow<false>(1e-8, 20, iterative_current, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, iterative_current, ref_result_data, update_data, -1);
+            }
+
+            SUBCASE("Test iterative Newton-Rhapson calculation") {
+                test_model.calculate_power_flow<false>(1e-8, 20, newton_raphson, test_result_data, update_data, -1);
+                main_model.calculate_power_flow<false>(1e-8, 20, newton_raphson, ref_result_data, update_data, -1);
+            }
+
+            CHECK(test_asym_node[0].u_pu(0) == doctest::Approx(ref_asym_node[0].u_pu(0)));
+            CHECK(test_asym_node[0].u_pu(1) == doctest::Approx(ref_asym_node[0].u_pu(1)));
+            CHECK(test_asym_node[0].u_pu(2) == doctest::Approx(ref_asym_node[0].u_pu(2)));
+            CHECK(test_asym_node[1].u_pu(0) == doctest::Approx(ref_asym_node[1].u_pu(0)));
+            CHECK(test_asym_node[1].u_pu(1) == doctest::Approx(ref_asym_node[1].u_pu(1)));
+            CHECK(test_asym_node[1].u_pu(2) == doctest::Approx(ref_asym_node[1].u_pu(2)));
+            CHECK(test_asym_node[2].u_pu(0) == doctest::Approx(ref_asym_node[2].u_pu(0)));
+            CHECK(test_asym_node[2].u_pu(1) == doctest::Approx(ref_asym_node[2].u_pu(1)));
+            CHECK(test_asym_node[2].u_pu(2) == doctest::Approx(ref_asym_node[2].u_pu(2)));
+        }
+    }
 }
 
 }  // namespace power_grid_model

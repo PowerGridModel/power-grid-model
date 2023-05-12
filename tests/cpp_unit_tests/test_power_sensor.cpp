@@ -572,6 +572,25 @@ TEST_CASE("Test power sensor") {
         CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
     }
 
+    SUBCASE("Symmetric Power Sensor - Partial initialization and full update") {
+        auto const r_nan = RealValue<true>{nan};
+
+        PowerSensorInput<true> sym_power_sensor_input{};
+        sym_power_sensor_input.p_measured = r_nan;
+        sym_power_sensor_input.q_measured = RealValue<true>{1.0};
+
+        PowerSensorUpdate<true> sym_power_sensor_update{};
+        sym_power_sensor_update.p_measured = RealValue<true>{1.0};
+        sym_power_sensor_update.q_measured = r_nan;
+
+        PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
+        sym_power_sensor.update(sym_power_sensor_update);
+
+        auto const result = sym_power_sensor.get_output<true>({});
+        CHECK_FALSE(std::isnan(result.p_residual));
+        CHECK_FALSE(std::isnan(result.q_residual));
+    }
+
     // -------------------------------------------------------
     // --------------- Asymmetric power sensor ---------------
     // -------------------------------------------------------
@@ -1137,6 +1156,29 @@ TEST_CASE("Test power sensor") {
         CHECK(imag(asym_sensor_param.value[0]) == doctest::Approx(-24.0 * 1e-3));
         CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-27.0 * 1e-3));
         CHECK(imag(asym_sensor_param.value[2]) == doctest::Approx(-12.0 * 1e-3));
+    }
+
+    SUBCASE("Asymmetric Power Sensor - Partial initialization and full update") {
+        auto const r_nan = RealValue<false>{nan};
+
+        PowerSensorInput<false> asym_power_sensor_input{};
+        asym_power_sensor_input.p_measured = r_nan;
+        asym_power_sensor_input.q_measured = RealValue<false>{1.0};
+
+        PowerSensorUpdate<false> asym_power_sensor_update{};
+        asym_power_sensor_update.p_measured = RealValue<false>{1.0};
+        asym_power_sensor_update.q_measured = r_nan;
+
+        PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
+        asym_power_sensor.update(asym_power_sensor_update);
+
+        auto const result = asym_power_sensor.get_output<false>({});
+        CHECK(result.p_residual[0] != r_nan[0]);
+        CHECK(result.p_residual[1] != r_nan[1]);
+        CHECK(result.p_residual[2] != r_nan[2]);
+        CHECK(result.q_residual[0] != r_nan[0]);
+        CHECK(result.q_residual[1] != r_nan[1]);
+        CHECK(result.q_residual[2] != r_nan[2]);
     }
 }
 }  // namespace power_grid_model

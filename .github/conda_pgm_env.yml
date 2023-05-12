@@ -1,0 +1,13 @@
+name: conda-pgm-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - wheel
+  - setuptools
+  - boost-cpp
+  - eigen
+  - numpy
+  - pytest
+  - pytest-cov
