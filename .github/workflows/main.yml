@@ -219,7 +219,7 @@ jobs:
           pytest
 
 
-  publish:
+  publish-wheels:
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     runs-on: ubuntu-latest
     permissions:
