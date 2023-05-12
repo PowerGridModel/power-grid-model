@@ -9,3 +9,5 @@ dependencies:
   - boost-cpp
   - eigen
   - numpy
+  - pytest
+  - pytest-cov
