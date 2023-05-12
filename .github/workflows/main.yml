@@ -193,8 +193,13 @@ jobs:
 
 
   build-and-test-conda:
-    name: Build and test in Conda Linux
-    runs-on: ubuntu-latest
+    name: Build and test in Conda
+  
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ["ubuntu", "macos", "windows"]
+  
     defaults:
       run:
         shell: bash -el {0}
@@ -211,7 +216,6 @@ jobs:
         run: |
           conda info
           conda list
-          printenv | sort
       
       - name: Build and test
         run: |
