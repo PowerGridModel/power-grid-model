@@ -535,7 +535,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
-        (this->*calculation_fn)(err_tol, max_iter, calculation_method);
+        try {
+            (this->*calculation_fn)(std::numeric_limits<double>::infinity(), 1, calculation_method);
+        }
+        catch (const SparseMatrixError&) {
+            // missing entries are provided in the update data
+        }
 
         // const ref of current instance
         MainModelImpl const& base_model = *this;

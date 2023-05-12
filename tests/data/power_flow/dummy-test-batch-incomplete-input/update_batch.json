@@ -1,0 +1,31 @@
+[
+  {
+    "sym_load": [
+      {
+        "id": 8,
+        "p_specified": 0.0,
+        "q_specified": 33.333333333333336
+      }
+    ]
+  },
+  {
+    "sym_load": [
+      {
+        "id": 8,
+        "q_specified": 33.333333333333336
+      }
+    ]
+  },
+  {
+    "sym_load": [
+      {
+        "id": 7,
+        "q_specified": 10.0
+      },
+      {
+        "id": 8,
+        "q_specified": 2.5
+      }
+    ]
+  }
+]

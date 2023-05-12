@@ -19,7 +19,7 @@ jobs:
   sonar-cloud:
     if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     name: SonarCloud
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       SONAR_SCANNER_VERSION: 4.4.0.2170
       SONAR_SERVER_URL: "https://sonarcloud.io"

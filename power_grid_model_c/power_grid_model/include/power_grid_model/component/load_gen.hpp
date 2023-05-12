@@ -72,10 +72,8 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
     static constexpr char const* name = sym ? (is_gen ? "sym_gen" : "sym_load") : (is_gen ? "asym_gen" : "asym_load");
 
-    LoadGen(LoadGenInput<sym> const& load_gen_input, double u)
-        : BaseClass{load_gen_input, u},
-          s_specified_{direction_ / base_power<sym> *
-                       (load_gen_input.p_specified + 1.0i * load_gen_input.q_specified)} {
+    LoadGen(LoadGenInput<sym> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
+        set_power(load_gen_input.p_specified, load_gen_input.q_specified);
     }
 
     void set_power(RealValue<sym> const& new_p_specified, RealValue<sym> const& new_q_specified) {
@@ -98,7 +96,7 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     }
 
    private:
-    ComplexValue<sym> s_specified_;  // specified power injection
+    ComplexValue<sym> s_specified_{};  // specified power injection
 
     // direction of load_gen
     static constexpr double direction_ = is_gen ? 1.0 : -1.0;
