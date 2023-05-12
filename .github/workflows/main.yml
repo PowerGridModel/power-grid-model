@@ -124,8 +124,6 @@ jobs:
   
   set-python-version-build-sdist:
     runs-on: ubuntu-latest
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos]
-
     steps:
       - uses: actions/checkout@v3
 
@@ -194,7 +192,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   publish-wheels:
-    needs: build-and-test-python
+    needs: needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python]
     runs-on: ubuntu-latest
     permissions:
       contents: write
