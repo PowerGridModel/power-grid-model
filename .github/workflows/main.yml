@@ -192,7 +192,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   publish-wheels:
-    needs: needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python]
     runs-on: ubuntu-latest
     permissions:
       contents: write
