@@ -59,8 +59,11 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://github.com/PowerGridModel/power-grid-model"
+Home-page = "https://lfenergy.org/projects/power-grid-model/"
+GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
+Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
+Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
 [tool.setuptools.packages.find]
 where = ["src"]
