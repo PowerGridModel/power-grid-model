@@ -293,6 +293,10 @@ Install from source in develop mode, and run `pytest`.
 pip install -e .[dev]
 pytest
 ```
+```{note}
+Long paths for (dependencies in) the miniconda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
+```
 
 ### Build CMake Project
 
