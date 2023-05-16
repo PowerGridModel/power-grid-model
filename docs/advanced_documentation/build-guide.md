@@ -294,9 +294,8 @@ pip install -e .[dev]
 pytest
 ```
 ```{note}
-Using long path for miniconda environment location for the installation might lead to crossing the `maximum path length limitation` set by windows.
-This might cross the installtion to fail.
-It is then possible to enable long paths in windows or alternatively place the environment in a small path location.  
+Long paths for (dependencies in) the miniconda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
 ### Build CMake Project
