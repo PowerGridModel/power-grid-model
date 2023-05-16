@@ -293,6 +293,11 @@ Install from source in develop mode, and run `pytest`.
 pip install -e .[dev]
 pytest
 ```
+```{note}
+Using long path for miniconda environment location for the installation might lead to crossing the `maximum path length limitation` set by windows.
+This might cross the installtion to fail.
+It is then possible to enable long paths in windows or alternatively place the environment in a small path location.  
+```
 
 ### Build CMake Project
 
