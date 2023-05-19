@@ -197,19 +197,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     return dict(ext_modules=exts, cmdclass={"build_ext": MyBuildExt, "bdist_wheel": bdist_wheel_abi_none})
 
 
-def substitute_github_links(pkg_dir: Path):
-    with open(pkg_dir / "README.md", "r") as f:
-        raw_readme = f.read()
-    if "GITHUB_SHA" not in os.environ:
-        readme = raw_readme
-    else:
-        sha = os.environ["GITHUB_SHA"].lower()
-        url = f"https://github.com/PowerGridModel/power-grid-model/blob/{sha}/"
-        readme = re.sub(r"(\[[^\(\)\[\]]+\]\()((?!http)[^\(\)\[\]]+\))", f"\\1{url}\\2", raw_readme)
-    with open("README.md", "w") as f:
-        f.write(readme)
-
-
 def set_version(pkg_dir: Path):
     # if PYPI_VERSION does not exist, copy from VERSION
     pypi_file = pkg_dir / "PYPI_VERSION"
@@ -234,7 +221,6 @@ def prepare_pkg(setup_file: Path) -> dict:
     pkg_pip_name = "power-grid-model"
     pkg_name = pkg_pip_name.replace("-", "_")
     set_version(pkg_dir)
-    substitute_github_links(pkg_dir)
     return generate_build_ext(pkg_dir=pkg_dir, pkg_name=pkg_name)
 
 
