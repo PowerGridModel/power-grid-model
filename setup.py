@@ -47,18 +47,19 @@ def get_conda_include() -> List[str]:
     Returns:
         either empty list or a list of header paths
     """
-    if "CONDA_PREFIX" in os.environ:
-        conda_path = os.environ["CONDA_PREFIX"]
-        if if_win:
-            # windows has Library folder prefix
-            return [
-                os.path.join(conda_path, "Library", "include"),
-                os.path.join(conda_path, "Library", "include", "eigen3"),
-            ]
-        else:
-            return [os.path.join(conda_path, "include"), os.path.join(conda_path, "include", "eigen3")]
-    else:
-        return []
+    include_paths = []
+    # in the conda build system the system root is defined in CONDA_PREFIX or BUILD_PREFIX
+    for prefix in ["CONDA_PREFIX", "BUILD_PREFIX"]:
+        if prefix in os.environ:
+            conda_path = os.environ[prefix]
+            if if_win:
+                # windows has Library folder prefix
+                include_paths.append(os.path.join(conda_path, "Library", "include"))
+                include_paths.append(os.path.join(conda_path, "Library", "include", "eigen3"))
+            else:
+                include_paths.append(os.path.join(conda_path, "include"))
+                include_paths.append(os.path.join(conda_path, "include", "eigen3"))
+    return include_paths
 
 
 # custom class for ctypes
