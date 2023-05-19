@@ -4,6 +4,7 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 [![PyPI version](https://badge.fury.io/py/power-grid-model.svg)](https://badge.fury.io/py/power-grid-model)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg)](https://anaconda.org/conda-forge/power-grid-model)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
 [![Build and Test C++ and Python](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml)
@@ -39,6 +40,14 @@ You can directly install the package from PyPI.
 
 ```
 pip install power-grid-model
+```
+
+## Install from Conda
+
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
+
+```
+conda install -c conda-forge power-grid-model
 ```
 
 ## Build and install from Source
