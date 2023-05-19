@@ -103,19 +103,19 @@ test-extras = ["dev"]
 test-command = "pytest {package}/tests"
 
 [tool.cibuildwheel.linux]
-build = ["cp*-manylinux_x86_64", "cp*-manylinux_aarch64", "pp*-manylinux_x86_64", "pp*-manylinux_aarch64"]
+build = ["cp*-manylinux_x86_64", "cp*-manylinux_aarch64"]
 archs = ["x86_64", "aarch64"]
 environment = { CC="gcc", CXX="g++" }
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
 
 [tool.cibuildwheel.macos]
-build = ["cp*-macosx_*", "pp*-macosx_x86_64"]
+build = ["cp*-macosx_*"]
 archs = ["x86_64", "arm64"]
 environment = { CC="clang", CXX="clang++" }
 # Skip trying to test arm64 builds on Intel Macs
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 
 [tool.cibuildwheel.windows]
-build = ["cp*-win_amd64", "pp*-win_amd64"]
+build = ["cp*-win_amd64"]
 archs = ["AMD64"]
