@@ -4,6 +4,7 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 [![PyPI version](https://badge.fury.io/py/power-grid-model.svg)](https://badge.fury.io/py/power-grid-model)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg)](https://anaconda.org/conda-forge/power-grid-model)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
 [![Build and Test C++ and Python](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml)
@@ -41,9 +42,17 @@ You can directly install the package from PyPI.
 pip install power-grid-model
 ```
 
+## Install from Conda
+
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
+
+```
+conda install -c conda-forge power-grid-model
+```
+
 ## Build and install from Source
 
-To install the library from source, refer to the [Build Guide](docs/advanced_documentation/build-guide.md).
+To install the library from source, refer to the [Build Guide](https://power-grid-model.readthedocs.io/en/stable/advanced_documentation/build-guide.html).
 
 # Examples
 
@@ -51,13 +60,13 @@ Please refer to [Examples](https://github.com/PowerGridModel/power-grid-model-wo
 Notebooks for validating the input data and exporting input/output data are also included.
 
 # License
-This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
+This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE) for details.
 
 # Licenses third-party libraries
 This project includes third-party libraries, 
 which are licensed under their own respective Open-Source licenses.
 SPDX-License-Identifier headers are used to show which license is applicable. 
-The concerning license files can be found in the [LICENSES](LICENSES) directory.
+The concerning license files can be found in the [LICENSES](https://github.com/PowerGridModel/power-grid-model/tree/main/LICENSES) directory.
 
 # Contributing
 Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/main/CODE_OF_CONDUCT.md), [CONTRIBUTING](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md), [PROJECT GOVERNANCE](https://github.com/PowerGridModel/.github/blob/main/GOVERNANCE.md) and [RELEASE](https://github.com/PowerGridModel/.github/blob/main/RELEASE.md) for details on the process 
