@@ -32,9 +32,9 @@ Currently, it supports the following calculations:
 See the [power-grid-model documentation](https://power-grid-model.readthedocs.io/en/stable/) for more information.
 For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
-# Installation
+## Installation
 
-## Install from PyPI
+### Install from PyPI
 
 You can directly install the package from PyPI.
 
@@ -42,7 +42,7 @@ You can directly install the package from PyPI.
 pip install power-grid-model
 ```
 
-## Install from Conda
+### Install from Conda
 
 If you are using `conda`, you can directly install the package from `conda-forge` channel.
 
@@ -50,27 +50,33 @@ If you are using `conda`, you can directly install the package from `conda-forge
 conda install -c conda-forge power-grid-model
 ```
 
-## Build and install from Source
+### Build and install from Source
 
 To install the library from source, refer to the [Build Guide](https://power-grid-model.readthedocs.io/en/stable/advanced_documentation/build-guide.html).
 
-# Examples
+## Examples
 
 Please refer to [Examples](https://github.com/PowerGridModel/power-grid-model-workshop/tree/main/examples) for more detailed examples for power flow and state estimation. 
 Notebooks for validating the input data and exporting input/output data are also included.
 
-# License
+## License
+
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE) for details.
 
-# Licenses third-party libraries
+## Licenses third-party libraries
+
 This project includes third-party libraries, 
 which are licensed under their own respective Open-Source licenses.
 SPDX-License-Identifier headers are used to show which license is applicable. 
 The concerning license files can be found in the [LICENSES](https://github.com/PowerGridModel/power-grid-model/tree/main/LICENSES) directory.
 
-# Contributing
+## Contributing
+
 Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/main/CODE_OF_CONDUCT.md), [CONTRIBUTING](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md), [PROJECT GOVERNANCE](https://github.com/PowerGridModel/.github/blob/main/GOVERNANCE.md) and [RELEASE](https://github.com/PowerGridModel/.github/blob/main/RELEASE.md) for details on the process 
 for submitting pull requests to us.
 
-# Contact
+Visit [Contribute](https://github.com/PowerGridModel/power-grid-model/contribute) for a list of good first issues in this repo.
+
+## Contact
+
 Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.
