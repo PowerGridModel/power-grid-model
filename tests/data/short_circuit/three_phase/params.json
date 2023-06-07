@@ -1,0 +1,8 @@
+{
+  "calculation_method": "short_circuit",
+  "rtol": 1e-08,
+  "atol": {
+    "default": 1e-08,
+    ".+_residual": 0.0001
+  }
+}
