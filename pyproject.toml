@@ -29,7 +29,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.21.0",
 ]
@@ -105,9 +105,10 @@ test-command = "pytest {package}/tests"
 [tool.cibuildwheel.linux]
 build = ["cp*-manylinux_x86_64", "cp*-manylinux_aarch64"]
 archs = ["x86_64", "aarch64"]
-environment = { CC="gcc", CXX="g++" }
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
+# force auditwheel to use manylinux_2_24 to support Amazon Linux 2
+environment = { CC="gcc", CXX="g++", AUDITWHEEL_PLAT="manylinux_2_24_$(uname -m)" }
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
 build = ["cp*-macosx_*"]
