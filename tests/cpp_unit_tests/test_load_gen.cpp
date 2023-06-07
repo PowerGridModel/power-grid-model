@@ -315,4 +315,29 @@ TEST_CASE("Test load generator") {
     }
 }
 
+TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
+    using InputType = typename LoadGenType::InputType;
+    using UpdateType = typename LoadGenType::UpdateType;
+    using RealValueType = decltype(InputType::p_specified);
+
+    auto const r_nan = RealValueType{nan};
+
+    SUBCASE("Partial initialization and full update") {
+        InputType input{};
+
+        input.p_specified = r_nan;
+        input.q_specified = RealValueType{1.0};
+
+        UpdateType update{};
+        update.p_specified = RealValueType{1.0};
+        update.q_specified = r_nan;
+
+        LoadGenType load_gen{input, 1.0};
+        load_gen.update(update);
+
+        auto const result = load_gen.template calc_param<true>(true);
+        CHECK_FALSE(std::isnan(result.real()));
+        CHECK_FALSE(std::isnan(result.imag()));
+    }
+}
 }  // namespace power_grid_model
