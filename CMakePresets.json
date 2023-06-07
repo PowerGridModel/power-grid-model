@@ -170,7 +170,7 @@
       "inherits": [
         "release",
         "clang-tidy-base",
-        "unix-sanitizer"
+        "unix-base"
       ]
     },
     {
@@ -178,7 +178,7 @@
       "inherits": [
         "debug",
         "clang-tidy-base",
-        "unix-sanitizer"
+        "unix-base"
       ]
     },
     {
