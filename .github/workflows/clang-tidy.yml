@@ -43,4 +43,4 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json doctest
       - name: Build and test
-        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+        run: ./build.sh -p ${{ env.PRESET }}
