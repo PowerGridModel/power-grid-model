@@ -110,6 +110,14 @@
       "hidden": true
     },
     {
+      "name": "clang-tidy-base",
+      "cacheVariables": {
+        "CMAKE_C_CLANG_TIDY": "$env{CLANG_TIDY}",
+        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}"
+      },
+      "hidden": true
+    },
+    {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
       "inherits": [
@@ -155,6 +163,22 @@
       "inherits": [
         "debug",
         "unix-sanitizer"
+      ]
+    },
+    {
+      "name": "clang-tidy-release",
+      "inherits": [
+        "release",
+        "clang-tidy-base",
+        "unix-base"
+      ]
+    },
+    {
+      "name": "clang-tidy-debug",
+      "inherits": [
+        "debug",
+        "clang-tidy-base",
+        "unix-base"
       ]
     },
     {
@@ -213,6 +237,14 @@
         "unix-coverage",
         "debug"
       ]
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "inherits": "clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "inherits": "clang-tidy-debug"
     }
   ],
   "buildPresets": [
@@ -241,6 +273,14 @@
       "configurePreset": "clang-release"
     },
     {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
+    },
+    {
       "name": "gcc-debug",
       "configurePreset": "gcc-debug"
     },
@@ -267,6 +307,14 @@
     {
       "name": "ci-sonar",
       "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
     }
   ],
   "testPresets": [
@@ -295,6 +343,14 @@
       "configurePreset": "clang-release"
     },
     {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
+    },
+    {
       "name": "gcc-debug",
       "configurePreset": "gcc-debug"
     },
@@ -321,6 +377,14 @@
     {
       "name": "ci-sonar",
       "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
     }
   ]
 }
