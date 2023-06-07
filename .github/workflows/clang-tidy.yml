@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Clang Tidy
+
+on:
+  # run pipeline on push event of main or release branch
+  push:
+    branches:
+      - main
+      - 'release/**'
+
+  # run pipeline on pull request
+  pull_request:
+
+
+jobs:
+  clang-tidy:
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      CC: clang-14
+      CXX: clang++-14
+      CLANG_TIDY: clang-tidy-14
+      PRESET: ci-clang-tidy-${{ matrix.build-option }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Enable brew
+        run: |
+          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json doctest
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t

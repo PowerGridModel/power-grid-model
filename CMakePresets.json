@@ -110,20 +110,10 @@
       "hidden": true
     },
     {
-      "name": "clang-tidy-debug-base",
+      "name": "clang-tidy-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_CLANG_TIDY": "clang-tidy",
-        "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
-      },
-      "hidden": true
-    },
-    {
-      "name": "clang-tidy-release-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CMAKE_C_CLANG_TIDY": "clang-tidy",
-        "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+        "CMAKE_C_CLANG_TIDY": "$env{CLANG_TIDY}",
+        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}"
       },
       "hidden": true
     },
@@ -178,14 +168,16 @@
     {
       "name": "clang-tidy-release",
       "inherits": [
-        "clang-tidy-release-base",
+        "release",
+        "clang-tidy-base",
         "unix-sanitizer"
       ]
     },
     {
       "name": "clang-tidy-debug",
       "inherits": [
-        "clang-tidy-debug-base",
+        "debug",
+        "clang-tidy-base",
         "unix-sanitizer"
       ]
     },
@@ -245,10 +237,6 @@
         "unix-coverage",
         "debug"
       ]
-    },
-    {
-      "name": "ci-clang-tidy",
-      "inherits": "clang-tidy-debug"
     }
   ],
   "buildPresets": [
