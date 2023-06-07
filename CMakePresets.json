@@ -144,22 +144,6 @@
       ]
     },
     {
-      "name": "msvc-clang-tidy-debug",
-      "displayName": "Debug (MSVC with clang-tidy)",
-      "inherits": [
-        "msvc-base",
-        "clang-tidy-debug"
-      ]
-    },
-    {
-      "name": "msvc-clang-tidy-release",
-      "displayName": "Release (MSVC with clang-tidy)",
-      "inherits": [
-        "msvc-base",
-        "clang-tidy-release-base"
-      ]
-    },
-    {
       "name": "clang-cl-debug",
       "displayName": "Debug (Clang CL)",
       "inherits": [
@@ -277,14 +261,6 @@
       "configurePreset": "msvc-release"
     },
     {
-      "name": "msvc-clang-tidy-debug",
-      "configurePreset": "msvc-clang-tidy-debug"
-    },
-    {
-      "name": "msvc-clang-tidy-release",
-      "configurePreset": "msvc-clang-tidy-release"
-    },
-    {
       "name": "clang-cl-debug",
       "configurePreset": "clang-cl-debug"
     },
@@ -349,14 +325,6 @@
     {
       "name": "msvc-release",
       "configurePreset": "msvc-release"
-    },
-    {
-      "name": "msvc-clang-tidy-debug",
-      "configurePreset": "msvc-clang-tidy-debug"
-    },
-    {
-      "name": "msvc-clang-tidy-release",
-      "configurePreset": "msvc-clang-tidy-release"
     },
     {
       "name": "clang-cl-debug",
