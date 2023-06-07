@@ -110,6 +110,24 @@
       "hidden": true
     },
     {
+      "name": "clang-tidy-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_CLANG_TIDY": "clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--extra-arg-before=/EHsc"
+      },
+      "hidden": true
+    },
+    {
+      "name": "clang-tidy-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_C_CLANG_TIDY": "clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--extra-arg-before=/EHsc"
+      },
+      "hidden": true
+    },
+    {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
       "inherits": [
@@ -123,6 +141,22 @@
       "inherits": [
         "msvc-base",
         "release"
+      ]
+    },
+    {
+      "name": "msvc-clang-tidy-debug",
+      "displayName": "Debug (MSVC with clang-tidy)",
+      "inherits": [
+        "msvc-base",
+        "clang-tidy-debug"
+      ]
+    },
+    {
+      "name": "msvc-clang-tidy-release",
+      "displayName": "Release (MSVC with clang-tidy)",
+      "inherits": [
+        "msvc-base",
+        "clang-tidy-release"
       ]
     },
     {
@@ -154,6 +188,20 @@
       "name": "clang-debug",
       "inherits": [
         "debug",
+        "unix-sanitizer"
+      ]
+    },
+    {
+      "name": "clang-tidy-release",
+      "inherits": [
+        "clang-tidy-release",
+        "unix-sanitizer"
+      ]
+    },
+    {
+      "name": "clang-tidy-debug",
+      "inherits": [
+        "clang-tidy-debug",
         "unix-sanitizer"
       ]
     },
@@ -213,6 +261,10 @@
         "unix-coverage",
         "debug"
       ]
+    },
+    {
+      "name": "ci-clang-tidy",
+      "inherits": "clang-tidy-debug"
     }
   ],
   "buildPresets": [
@@ -225,6 +277,14 @@
       "configurePreset": "msvc-release"
     },
     {
+      "name": "msvc-clang-tidy-debug",
+      "configurePreset": "msvc-clang-tidy-debug"
+    },
+    {
+      "name": "msvc-clang-tidy-release",
+      "configurePreset": "msvc-clang-tidy-release"
+    },
+    {
       "name": "clang-cl-debug",
       "configurePreset": "clang-cl-debug"
     },
@@ -239,6 +299,14 @@
     {
       "name": "clang-release",
       "configurePreset": "clang-release"
+    },
+    {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
     },
     {
       "name": "gcc-debug",
@@ -267,6 +335,10 @@
     {
       "name": "ci-sonar",
       "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy",
+      "configurePreset": "ci-clang-tidy"
     }
   ],
   "testPresets": [
@@ -279,6 +351,14 @@
       "configurePreset": "msvc-release"
     },
     {
+      "name": "msvc-clang-tidy-debug",
+      "configurePreset": "msvc-clang-tidy-debug"
+    },
+    {
+      "name": "msvc-clang-tidy-release",
+      "configurePreset": "msvc-clang-tidy-release"
+    },
+    {
       "name": "clang-cl-debug",
       "configurePreset": "clang-cl-debug"
     },
@@ -293,6 +373,14 @@
     {
       "name": "clang-release",
       "configurePreset": "clang-release"
+    },
+    {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
     },
     {
       "name": "gcc-debug",
@@ -321,6 +409,10 @@
     {
       "name": "ci-sonar",
       "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy",
+      "configurePreset": "ci-clang-tidy"
     }
   ]
 }
