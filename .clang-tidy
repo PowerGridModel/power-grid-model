@@ -13,10 +13,10 @@ performance-*,
 readability-*,
 '
 
-WarningsAsErrors:     '*'
+WarningsAsErrors: '*'
 
-HeaderFilterRegex:    'power_grid_model_c/.*/include/.*'
-Includes:             '-*,doctest.h'
+HeaderFilter:     '.*'
+Includes:         '-*,doctest.h'
 
-FormatStyle:          file
+FormatStyle:      file
 ...
