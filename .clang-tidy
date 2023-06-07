@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+---
+Checks: '
+-*,
+bugprone-*,
+cppcoreguidelines-*,
+google-build-using-namespace,
+misc-unused-parameters,
+modernize-*,
+performance-*,
+readability-*,
+'
+
+WarningsAsErrors:     '*'
+
+HeaderFilterRegex:    'power_grid_model_c/.*/include/.*'
+Includes:             '-*,doctest.h'
+
+FormatStyle:          file
+...
