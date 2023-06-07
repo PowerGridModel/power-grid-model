@@ -237,6 +237,14 @@
         "unix-coverage",
         "debug"
       ]
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "inherits": "clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "inherits": "clang-tidy-debug"
     }
   ],
   "buildPresets": [
@@ -301,8 +309,12 @@
       "configurePreset": "ci-sonar"
     },
     {
-      "name": "ci-clang-tidy",
-      "configurePreset": "ci-clang-tidy"
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
     }
   ],
   "testPresets": [
@@ -367,8 +379,12 @@
       "configurePreset": "ci-sonar"
     },
     {
-      "name": "ci-clang-tidy",
-      "configurePreset": "ci-clang-tidy"
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
     }
   ]
 }
