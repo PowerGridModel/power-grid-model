@@ -2,6 +2,6 @@
   "calculation_method": "short_circuit",
   "rtol": 1e-08,
   "atol": 1e-08,
-  "fault_type": 0,
-  "fault_phase": 6
+  "fault_type": "three_phase",
+  "fault_phase": "abc"
 }
