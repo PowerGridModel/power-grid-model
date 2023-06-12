@@ -1,0 +1,7 @@
+{
+  "calculation_method": "short_circuit",
+  "rtol": 1e-08,
+  "atol": 1e-08,
+  "fault_type": "two_phase",
+  "fault_phase": "ab"
+}
