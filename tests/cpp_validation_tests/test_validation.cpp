@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <concepts>
 #include <cstdlib>
 #include <cstring>
 #include <deque>
@@ -20,6 +21,8 @@
 namespace power_grid_model {
 
 namespace meta_data {
+
+namespace {
 
 using nlohmann::json;
 
@@ -309,7 +312,7 @@ struct CaseParam {
     }
 };
 
-inline std::string get_output_type(std::string const& calculation_type, bool sym) {
+std::string get_output_type(std::string const& calculation_type, bool sym) {
     using namespace std::string_literals;
 
     auto const sym_prefix = sym ? "sym_"s : "asym_"s;
@@ -318,8 +321,8 @@ inline std::string get_output_type(std::string const& calculation_type, bool sym
     return sym_prefix + sc_prefix + "output"s;
 }
 
-inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
-                      std::vector<CaseParam>& cases) {
+void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
+               std::vector<CaseParam>& cases) {
     using namespace std::string_literals;
 
     auto const batch_suffix = is_batch ? "_batch"s : ""s;
@@ -393,10 +396,10 @@ ValidationCase create_validation_case(CaseParam const& param) {
     return validation_case;
 }
 
-inline std::vector<CaseParam> read_all_cases(bool is_batch) {
+std::vector<CaseParam> read_all_cases(bool is_batch) {
     std::vector<CaseParam> all_cases;
     // detect all test cases
-    for (std::string calculation_type : {"power_flow", "state_estimation"}) {
+    for (std::string calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
         // loop all sub-directories
         for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_path / calculation_type)) {
             std::filesystem::path const case_dir = dir_entry.path();
@@ -411,64 +414,93 @@ inline std::vector<CaseParam> read_all_cases(bool is_batch) {
     return all_cases;
 }
 
-inline std::vector<CaseParam> const& get_all_single_cases() {
+std::vector<CaseParam> const& get_all_single_cases() {
     static std::vector<CaseParam> const all_cases = read_all_cases(false);
     return all_cases;
 }
 
-inline std::vector<CaseParam> const& get_all_batch_cases() {
+std::vector<CaseParam> const& get_all_batch_cases() {
     static std::vector<CaseParam> const all_cases = read_all_cases(true);
     return all_cases;
 }
+
+}  // namespace
 
 TEST_CASE("Check existence of validation data path") {
     REQUIRE(std::filesystem::exists(data_path));
     std::cout << "Validation test dataset: " << data_path << '\n';
 }
 
+namespace {
+bool should_skip_test(CaseParam const& param) {
+    using namespace std::string_literals;
+
+    return param.calculation_method == "short_circuit"s;
+}
+
+void execute_test(CaseParam const& param, std::invocable auto&& func) {
+    std::cout << "Validation test: " << param.case_name;
+
+    if (should_skip_test(param)) {
+        std::cout << " [skipped]" << std::endl;
+    }
+    else {
+        std::cout << std::endl;
+        func();
+    }
+}
+
 void validate_single_case(CaseParam const& param) {
-    std::cout << "Validation test: " << param.case_name << std::endl;
-    ValidationCase const validation_case = create_validation_case(param);
-    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-    SingleData result = create_result_dataset(validation_case.input, output_prefix);
-    // create model and run
-    MainModel model{50.0, validation_case.input.const_dataset, 0};
-    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
-    (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
-    assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol, param.rtol);
+    execute_test(param, [&]() {
+        ValidationCase const validation_case = create_validation_case(param);
+        std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
+        SingleData result = create_result_dataset(validation_case.input, output_prefix);
+
+        // create model and run
+        MainModel model{50.0, validation_case.input.const_dataset, 0};
+        CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+        assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol,
+                      param.rtol);
+    });
 }
 
 void validate_batch_case(CaseParam const& param) {
-    std::cout << "Validation test: " << param.case_name << std::endl;
-    ValidationCase const validation_case = create_validation_case(param);
-    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-    SingleData result = create_result_dataset(validation_case.input, output_prefix);
-    // create model
-    MainModel model{50.0, validation_case.input.const_dataset, 0};
-    Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
-    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+    execute_test(param, [&]() {
+        ValidationCase const validation_case = create_validation_case(param);
+        std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
+        SingleData result = create_result_dataset(validation_case.input, output_prefix);
 
-    // run in loops
-    for (Idx batch = 0; batch != n_batch; ++batch) {
-        MainModel model_copy{model};
-        // update and run
-        model_copy.update_component<MainModel::permanent_update_t>(
-            validation_case.update_batch.individual_batch[batch].const_dataset);
-        (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
-        // check
-        assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
-                      output_prefix, param.atol, param.rtol);
-    }
+        // create model
+        MainModel model{50.0, validation_case.input.const_dataset, 0};
+        Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
+        CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
 
-    // run in one-go, with different threading possibility
-    SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
-    for (Idx threading : {-1, 0, 1, 2}) {
-        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
-                      validation_case.update_batch.const_dataset, threading);
-        assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
-                      param.rtol);
-    }
+        // run in loops
+        for (Idx batch = 0; batch != n_batch; ++batch) {
+            MainModel model_copy{model};
+            // update and run
+            model_copy.update_component<MainModel::permanent_update_t>(
+                validation_case.update_batch.individual_batch[batch].const_dataset);
+            (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {},
+                               -1);
+            // check
+            assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
+                          output_prefix, param.atol, param.rtol);
+        }
+
+        // run in one-go, with different threading possibility
+        SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+        for (Idx threading : {-1, 0, 1, 2}) {
+            (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
+                          validation_case.update_batch.const_dataset, threading);
+            assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix,
+                          param.atol, param.rtol);
+        }
+    });
 }
+
+}  // namespace
 
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
