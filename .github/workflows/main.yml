@@ -21,6 +21,37 @@ on:
 
 jobs:
 
+  aquire-python-version-build-sdist:
+    name: Build sdist and set version
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Set PyPI Version
+        run: |
+          pip install requests build
+          python set_pypi_version.py
+
+      - name: Build SDist
+        run:  python -m build --sdist --outdir wheelhouse .
+
+      - name: Keep version file
+        uses: actions/upload-artifact@v3
+        with:
+          name: version
+          path: PYPI_VERSION      
+
+      - name: Keep SDist
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheelhouse
+          path: ./wheelhouse/*.tar.gz
+
   build-cpp-test-linux:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
@@ -121,36 +152,6 @@ jobs:
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
-  
-  set-python-version-build-sdist:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Set PyPI Version
-        run: |
-          pip install requests build
-          python set_pypi_version.py
-
-      - name: Build SDist
-        run:  python -m build --sdist --outdir wheelhouse .
-
-      - name: Keep version file
-        uses: actions/upload-artifact@v3
-        with:
-          name: version
-          path: PYPI_VERSION      
-
-      - name: Keep SDist
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheelhouse
-          path: ./wheelhouse/*.tar.gz
-
   build-and-test-python:
     strategy:
       matrix:
@@ -164,7 +165,7 @@ jobs:
             os: windows-latest
 
     runs-on: ${{ matrix.os }}
-    needs: [set-python-version-build-sdist]
+    needs: [aquire-python-version-build-sdist]
 
     steps:
       - uses: actions/checkout@v3
@@ -179,7 +180,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.3
+        uses: pypa/cibuildwheel@v2.13.1
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -191,10 +192,10 @@ jobs:
           name: wheelhouse
           path: ./wheelhouse/*.whl
 
-
   build-and-test-conda:
     name: Build and test in Conda
-  
+    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
+
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:

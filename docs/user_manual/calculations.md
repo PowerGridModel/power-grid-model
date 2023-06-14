@@ -267,7 +267,7 @@ by solving:
 
 $$
    \begin{eqnarray}
-            min r(\underline{U}) = \dfrac{1}{2} (f(\underline{U}) - \underline{z})^H W (f(\underline{U}) - \underline{z})
+            \min r(\underline{U}) = \dfrac{1}{2} (f(\underline{U}) - \underline{z})^H W (f(\underline{U}) - \underline{z})
    \end{eqnarray}
 $$
 
@@ -312,7 +312,7 @@ and $W$ is the weighting factor matrix.
 At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
 
 There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
-voltage snesors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
+voltage sensors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
 
 $$
    \begin{eqnarray}
