@@ -939,6 +939,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
+    // output fault
+    template <bool sym, class Component, class ResIt>
+    std::enable_if_t<
+        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
+            std::is_same_v<Fault, Component>,
+        ResIt>
+    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+        assert(construction_complete_);
+        return std::transform(components_.template citer<Component>().begin(),
+                              components_.template citer<Component>().end(), comp_coup_->fault.cbegin(), res_it,
+                              [&math_output](Fault const& fault, Idx2D /* math_id */) {
+                                  return fault.get_output();
+                              });
+    }
+
     template <bool sym>
     void output_result(std::vector<MathOutput<sym>> const& math_output, Dataset const& result_data, Idx pos = 0) {
         static constexpr std::array<OutputFunc<sym>, n_types> get_result{
