@@ -284,6 +284,8 @@ std::map<std::pair<std::string, bool>, CalculationFunc> const calculation_type_m
     {{"power_flow", false}, &MainModel::calculate_power_flow<false>},
     {{"state_estimation", true}, &MainModel::calculate_state_estimation<true>},
     {{"state_estimation", false}, &MainModel::calculate_state_estimation<false>},
+    // {{"short_circuit", true}, &MainModel::calculate_short_circuit<true>},
+    // {{"short_circuit", false}, &MainModel::calculate_short_circuit<false>},
 };
 
 // case parameters
@@ -307,8 +309,21 @@ struct CaseParam {
     }
 };
 
+inline std::string get_output_type(std::string const& calculation_type, bool sym) {
+    using namespace std::string_literals;
+
+    auto const sym_prefix = sym ? "sym_"s : "asym_"s;
+    auto const sc_prefix = calculation_type == "short_circuit"s ? "sc_"s : ""s;
+
+    return sym_prefix + sc_prefix + "output"s;
+}
+
 inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
                       std::vector<CaseParam>& cases) {
+    using namespace std::string_literals;
+
+    auto const batch_suffix = is_batch ? "_batch"s : ""s;
+
     std::filesystem::path const param_file = case_dir / "params.json";
     json const j = read_json(param_file);
     // calculation method a string or array of strings
@@ -321,11 +336,10 @@ inline void add_cases(std::filesystem::path const& case_dir, std::string const& 
     }
     // loop sym and batch
     for (bool const sym : {true, false}) {
-        std::string const output_prefix = sym ? "sym_output" : "asym_output";
-        for (std::string const& calculation_method : calculation_methods) {
-            std::string const batch_suffix = is_batch ? "_batch" : "";
+        for (auto const& calculation_method : calculation_methods) {
             // add a case if output file exists
-            std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
+            std::filesystem::path const output_file =
+                case_dir / (get_output_type(calculation_method, sym) + batch_suffix + ".json"s);
             if (std::filesystem::exists(output_file)) {
                 CaseParam param{};
                 param.case_dir = case_dir;
@@ -363,18 +377,18 @@ struct ValidationCase {
 ValidationCase create_validation_case(CaseParam const& param) {
     ValidationCase validation_case;
     validation_case.param = param;
-    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
+    auto const output_type = get_output_type(param.calculation_type, param.sym);
+
     // input
     validation_case.input = convert_json_single(read_json(param.case_dir / "input.json"), "input");
     // output and update
     if (!param.is_batch) {
-        validation_case.output =
-            convert_json_single(read_json(param.case_dir / (output_prefix + ".json")), output_prefix);
+        validation_case.output = convert_json_single(read_json(param.case_dir / (output_type + ".json")), output_type);
     }
     else {
         validation_case.update_batch = convert_json_batch(read_json(param.case_dir / "update_batch.json"), "update");
         validation_case.output_batch =
-            convert_json_batch(read_json(param.case_dir / (output_prefix + "_batch.json")), output_prefix);
+            convert_json_batch(read_json(param.case_dir / (output_type + "_batch.json")), output_type);
     }
     return validation_case;
 }
@@ -426,9 +440,6 @@ void validate_single_case(CaseParam const& param) {
 
 void validate_batch_case(CaseParam const& param) {
     std::cout << "Validation test: " << param.case_name << std::endl;
-    if (param.case_name == "power_flow/dummy-test-batch-incomplete-input-sym-linear-batch") {
-        std::cout << "here" << std::endl;
-    }
     ValidationCase const validation_case = create_validation_case(param);
     std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
     SingleData result = create_result_dataset(validation_case.input, output_prefix);
