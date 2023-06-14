@@ -131,7 +131,7 @@ using `cmake <project_dir>` from a terminal that has the environment set up. E.g
 
 * For x64 Windows native development using MSVC or Clang CL, use the `x64 Native Command Prompt`, which uses
   `vcvarsall.bat` to set the appropriate build environment.
-* For Linux/WSL using the LLVM-14 `clang`, `source` or `export` `CC=clang-14`, `CXX=clang++-14` and `LLVM_COV=llvm-cov-14`.
+* For Linux/WSL using the LLVM-14 `clang`, `source` or `export` `CC=clang-14`, `CXX=clang++-14` and `LLVM_COV=llvm-cov-14`. Optionally, you can `export` `CLANG_TIDY=clang-tidy-14`.
 ```
 
 ## Build Script for Linux/macOS
@@ -160,10 +160,11 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-14  # or g++-11
-export CC=clang-14  # gcc-11
+export CXX=clang++-14            # or g++-11
+export CC=clang-14               # gcc-11
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
 export LLVM_COV=llvm-cov-14
+export CLANG_TIDY=clang-tidy-14  # only if you want to use one of the clang-tidy presets
 ```
 
 ### Ubuntu Software Packages
@@ -292,6 +293,10 @@ Install from source in develop mode, and run `pytest`.
 ```shell
 pip install -e .[dev]
 pytest
+```
+```{note}
+Long paths for (dependencies in) the miniconda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
 ### Build CMake Project

@@ -29,7 +29,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.21.0",
 ]
@@ -99,21 +99,21 @@ build-frontend = "build"
 build-verbosity = 1
 test-extras = ["dev"]
 test-command = "pytest {package}/tests"
+# we do not support PyPy, musllinux
+skip = ["pp*", "*musllinux*"]
 
 [tool.cibuildwheel.linux]
-build = ["cp*-manylinux_x86_64", "cp*-manylinux_aarch64"]
 archs = ["x86_64", "aarch64"]
-environment = { CC="gcc", CXX="g++" }
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
+# force auditwheel to use manylinux_2_24 to support Amazon Linux 2
+environment = { CC="gcc", CXX="g++", AUDITWHEEL_PLAT="manylinux_2_24_$(uname -m)" }
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
-build = ["cp*-macosx_*"]
 archs = ["x86_64", "arm64"]
 environment = { CC="clang", CXX="clang++" }
 # Skip trying to test arm64 builds on Intel Macs
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 
 [tool.cibuildwheel.windows]
-build = ["cp*-win_amd64"]
 archs = ["AMD64"]

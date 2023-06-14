@@ -29,6 +29,14 @@ You can directly install the package from PyPI.
 pip install power-grid-model
 ```
 
+## Install from Conda
+
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
+
+```
+conda install -c conda-forge power-grid-model
+```
+
 ## Build and install from Source
 
 To install the library from source, refer to the [Build Guide](advanced_documentation/build-guide.md).
