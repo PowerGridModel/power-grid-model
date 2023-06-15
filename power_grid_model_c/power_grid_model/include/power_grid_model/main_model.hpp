@@ -945,7 +945,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
             std::is_same_v<Fault, Component>,
         ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    output_result(std::vector<MathOutput<sym>> const& /* math_output */, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(), comp_coup_->fault.cbegin(), res_it,
