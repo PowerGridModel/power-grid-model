@@ -26,6 +26,6 @@
     ],
   "fault":
     [
-      {"id": 10, "r": 0.1, "x": 0.1, "node": 3, "status": 1}
+      {"id": 10, "r": 0.1, "x": 0.1, "fault_type": "two_phase_to_ground", "phase": "ac", "fault_object": 3, "status": 1}
     ]
 }
