@@ -949,7 +949,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(), comp_coup_->fault.cbegin(), res_it,
-                              [&math_output](Fault const& fault, Idx2D /* math_id */) {
+                              [](Fault const& fault, Idx2D /* math_id */) {
                                   return fault.get_output();
                               });
     }
