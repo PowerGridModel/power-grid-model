@@ -27,7 +27,8 @@ enum class CalculationMethod : IntS {
     newton_raphson = 1,
     iterative_linear = 2,
     iterative_current = 3,
-    linear_current = 4
+    linear_current = 4,
+    sequential_short_circuit = 5,
 };
 
 enum class MeasuredTerminalType : IntS {

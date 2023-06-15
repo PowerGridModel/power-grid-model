@@ -79,20 +79,24 @@ typedef struct PGM_Options PGM_Options;
  *
  */
 enum PGM_CalculationType {
-    PGM_power_flow = 0,      /**< power flow calculation */
-    PGM_state_estimation = 1 /**< state estimation calculation */
+    PGM_power_flow = 0,       /**< power flow calculation */
+    PGM_state_estimation = 1, /**< state estimation calculation */
+    PGM_short_circuit = 2     /**< short circuit calculation */
 };
+
 /**
  * @brief Enumeration for calculation method
  *
  */
 enum PGM_CalculationMethod {
-    PGM_linear = 0,            /**< linear constant impedance method for power flow */
-    PGM_newton_raphson = 1,    /**< Newton-Raphson method for power flow */
-    PGM_iterative_linear = 2,  /**< iterative linear method for state estimation */
-    PGM_iterative_current = 3, /**< linear current method for power flow */
-    PGM_linear_current = 4     /**< iterative constant impedance method for power flow */
+    PGM_linear = 0,                  /**< linear constant impedance method for power flow */
+    PGM_newton_raphson = 1,          /**< Newton-Raphson method for power flow */
+    PGM_iterative_linear = 2,        /**< iterative linear method for state estimation */
+    PGM_iterative_current = 3,       /**< linear current method for power flow */
+    PGM_linear_current = 4,          /**< iterative constant impedance method for power flow */
+    PGM_sequential_short_circuit = 5 /**< sequential fault analysis for short circuits */
 };
+
 /**
  * @brief Enumeration of error codes
  *
