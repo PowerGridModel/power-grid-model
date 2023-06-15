@@ -16,7 +16,7 @@
 using namespace power_grid_model;
 
 namespace {
-static meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
+meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
 }  // namespace
 
 // assert index type
