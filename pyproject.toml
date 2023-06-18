@@ -101,8 +101,11 @@ build-frontend = "build"
 build-verbosity = 1
 test-extras = ["dev"]
 test-command = "pytest {package}/tests"
-# we do not support PyPy, musllinux
-skip = ["pp*", "*musllinux*"]
+# we do not support 
+#    PyPy
+#    musllinux when python < 3.9
+#    musllinux in aarch64
+skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
