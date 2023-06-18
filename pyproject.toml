@@ -110,7 +110,8 @@ skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
 # force auditwheel to use manylinux_2_24 to support Amazon Linux 2 when building in manylinux_2_28
-environment = { CC="gcc", CXX="g++", AUDITWHEEL_PLAT="${AUDITWHEEL_PLAT//2_28/2_24}" }
+repair-wheel-command = "auditwheel repair --plat ${AUDITWHEEL_PLAT//2_28/2_24} -w {dest_dir} {wheel}"
+environment = { CC="gcc", CXX="g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_1"
