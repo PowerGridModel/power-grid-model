@@ -19,6 +19,8 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 
+[![DOI](https://zenodo.org/badge/8054429.svg)](https://zenodo.org/badge/latestdoi/8054429)
+
 [![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
 
 # Power Grid Model
@@ -77,6 +79,10 @@ Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/mai
 for submitting pull requests to us.
 
 Visit [Contribute](https://github.com/PowerGridModel/power-grid-model/contribute) for a list of good first issues in this repo.
+
+## Citations
+
+Please cite using our latest [![DOI](https://zenodo.org/badge/8054429.svg)](https://zenodo.org/badge/latestdoi/8054429).
 
 ## Contact
 
