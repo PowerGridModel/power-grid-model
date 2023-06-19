@@ -34,7 +34,7 @@ authors:
   email: Jonas.van.den.Bogaard@Alliander.com
   affiliation: "Alliander"
 - family-names: "Govers"
-  given-names: "Martinus Gerardus Herbertus"
+  given-names: "Martinus"
   email: "Martijn.Govers@Alliander.com"
   affiliation: "Alliander"
 - family-names: "Stoeller"
@@ -46,6 +46,3 @@ authors:
 title: "power-grid-model"
 doi: 10.5281:zenodo.8054429
 url: "https://github.com/PowerGridModel/power-grid-model"
-
-
-Power Grid Model, Xiang, Y. (., Salemink, P., Bharambe, N., Jagutis, L., Wang, C., van den Bogaard, J., Govers, M. G., Stoeller, B., Datta, S., & Baaijen, T. power-grid-model [Computer software]. https://doi.org/10.5281:zenodo.8054429
