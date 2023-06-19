@@ -44,5 +44,5 @@ authors:
 - family-names: "Baaijen"
   given-names: "Thijs"
 title: "power-grid-model"
-doi: 10.5281:zenodo.8054429
+doi: 10.5281/zenodo.8054429
 url: "https://github.com/PowerGridModel/power-grid-model"
