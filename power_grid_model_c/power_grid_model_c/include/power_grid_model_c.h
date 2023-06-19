@@ -89,12 +89,12 @@ enum PGM_CalculationType {
  *
  */
 enum PGM_CalculationMethod {
-    PGM_linear = 0,                  /**< linear constant impedance method for power flow */
-    PGM_newton_raphson = 1,          /**< Newton-Raphson method for power flow */
-    PGM_iterative_linear = 2,        /**< iterative linear method for state estimation */
-    PGM_iterative_current = 3,       /**< linear current method for power flow */
-    PGM_linear_current = 4,          /**< iterative constant impedance method for power flow */
-    PGM_iec60909 = 5 /**< sequential fault analysis for short circuits */
+    PGM_linear = 0,            /**< linear constant impedance method for power flow */
+    PGM_newton_raphson = 1,    /**< Newton-Raphson method for power flow */
+    PGM_iterative_linear = 2,  /**< iterative linear method for state estimation */
+    PGM_iterative_current = 3, /**< linear current method for power flow */
+    PGM_linear_current = 4,    /**< iterative constant impedance method for power flow */
+    PGM_iec60909 = 5           /**< sequential fault analysis for short circuits */
 };
 
 /**
