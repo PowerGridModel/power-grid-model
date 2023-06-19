@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- name: "Power Grid Model"
+  affiliation: "LF Energy"
+  url: https://lists.lfenergy.org/g/powergridmodel/
+- family-names: "Xiang"
+  given-names:
+  - "Yu"
+  - "Tony"
+  email: Tony.Xiang@Alliander.com
+  affiliation: "Alliander"
+- family-names: "Salemink"
+  given-names: "Peter"
+  email: Peter.Salemink@Alliander.com
+  affiliation: "Alliander"
+- family-names: "Bharambe"
+  given-names: "Nitish"
+  email: Nitish.Bharambe@Alliander.com
+  affiliation: "Alliander"
+- family-names: "Jagutis"
+  given-names: "Laurynas"
+  email: "Laurynas.Jagutis@Alliander.com"
+  affiliation: "Alliander"
+- family-names: "Wang"
+  given-names: "Chenguang"
+  email: "Chenguang.Wang@Alliander.com"
+  affiliation: "Alliander"
+- family-names: "Bogaard"
+  name-particle: "van den"
+  given-names: "Jonas"
+  email: Jonas.van.den.Bogaard@Alliander.com
+  affiliation: "Alliander"
+- family-names: "Govers"
+  given-names:
+  - "Martinus"
+  - "Gerardus"
+  - "Herbertus"
+  email: "Martijn.Govers@Alliander.com"
+  affiliation: "Alliander"
+- family-names: "Stoeller"
+  given-names: "Bram"
+- family-names: "Datta"
+  given-names: "Sattama"
+- family-names: "Baaijen"
+  given-names: "Thijs"
+title: "power-grid-model"
+doi: 10.5281:zenodo.8054429
+url: "https://github.com/PowerGridModel/power-grid-model"
