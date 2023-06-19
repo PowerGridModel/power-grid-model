@@ -7,7 +7,7 @@ message: "If you use this software, please cite it as below."
 authors:
 - name: "Power Grid Model"
   affiliation: "LF Energy"
-  url: https://lists.lfenergy.org/g/powergridmodel/
+  email: 	"powergridmodel+help@lists.lfenergy.org"
 - family-names: "Xiang"
   given-names: "Yu"
   email: Tony.Xiang@Alliander.com
