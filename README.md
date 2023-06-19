@@ -1,7 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 
-SPDX-License-Identifier: MPL-2.0
+SPDX-License-Identifier: MPL-2.0 
 -->
 [![PyPI version](https://badge.fury.io/py/power-grid-model.svg)](https://badge.fury.io/py/power-grid-model)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg)](https://anaconda.org/conda-forge/power-grid-model)
