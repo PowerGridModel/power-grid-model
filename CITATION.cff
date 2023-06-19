@@ -34,10 +34,7 @@ authors:
   email: Jonas.van.den.Bogaard@Alliander.com
   affiliation: "Alliander"
 - family-names: "Govers"
-  given-names:
-  - "Martinus"
-  - "Gerardus"
-  - "Herbertus"
+  given-names: "Martinus Gerardus Herbertus"
   email: "Martijn.Govers@Alliander.com"
   affiliation: "Alliander"
 - family-names: "Stoeller"
