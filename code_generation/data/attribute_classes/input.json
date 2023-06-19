@@ -41,7 +41,7 @@
                         "from_status",
                         "to_status"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "Whether the branch is connected at each side"
                 }
             ]
         },
@@ -65,7 +65,7 @@
                         "status_2",
                         "status_3"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "Whether the branch is connected at each side"
                 }
             ]
         },
@@ -92,7 +92,7 @@
                 {
                     "data_type": "IntS",
                     "names": "status",
-                    "description": "If the appliance is connected"
+                    "description": "Whether the appliance is connected"
                 }
             ]
         },
@@ -386,7 +386,17 @@
                 {
                     "data_type": "ID",
                     "names": "fault_object",
-                    "description": "ID of the faulted object"
+                    "description": "ID of the faulty object"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "Whether the fault is active (object is faulty)"
+                },
+                {
+                    "data_type": "FaultType",
+                    "names": "fault_type",
+                    "description": "type of fault"
                 },
                 {
                     "data_type": "double",
