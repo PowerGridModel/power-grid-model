@@ -120,7 +120,7 @@ jobs:
           # build
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           # test
-          ctest --test-dir . --output-on-failure
+          ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure
           # install
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
 
