@@ -84,14 +84,13 @@ Visit [Contribute](https://github.com/PowerGridModel/power-grid-model/contribute
 
 If you are using Power Grid Model in your research work, please consider citing our library using the following references.
 
-### Power Grid Model source code
-
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
 ```bibtex
 @software{Xiang_PowerGridModel_power-grid-model,
-  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Jagutis, Laurynas and Wang, Chenguang and van den Bogaard, Jonas and Govers, Martinus and Stoeller, Bram and {Contributors from the LF Energy project Power Grid Model}},
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
   doi = {10.5281/zenodo.8054429},
+  license = {MPL-2.0},
   title = {{PowerGridModel/power-grid-model}},
   url = {https://github.com/PowerGridModel/power-grid-model}
 }
