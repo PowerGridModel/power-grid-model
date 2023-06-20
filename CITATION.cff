@@ -67,13 +67,15 @@ references:
         given-names: "Werner"
     conference:
       name: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
+    type: conference-paper
     year: 2023
     volume: 2023
     pages: "1-5"
 
   - title: "PowerGridModel/power-grid-model-io"
-    url: "https://github.com/PowerGridModel/power-grid-model-io"
+    repository-code: "https://github.com/PowerGridModel/power-grid-model-io"
     doi: "10.5281/zenodo.8059257"
+    type: software-code
     authors:
       - family-names: "Xiang"
         given-names: "Yu"
