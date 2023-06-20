@@ -2,42 +2,70 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-cff-version: 1.1.0
+cff-version: 1.2.0
 message: "If you are using Power Grid Model in your research work, please consider citing our library as below."
-authors:
-- family-names: "Xiang"
-  given-names: "Yu"
-  email: Tony.Xiang@Alliander.com
-  affiliation: "Alliander"
-- family-names: "Salemink"
-  given-names: "Peter"
-  email: Peter.Salemink@Alliander.com
-  affiliation: "Alliander"
-- family-names: "Bharambe"
-  given-names: "Nitish"
-  email: Nitish.Bharambe@Alliander.com
-  affiliation: "Alliander"
-- family-names: "Jagutis"
-  given-names: "Laurynas"
-  email: "Laurynas.Jagutis@Alliander.com"
-  affiliation: "Alliander"
-- family-names: "Wang"
-  given-names: "Chenguang"
-  email: "Chenguang.Wang@Alliander.com"
-  affiliation: "Alliander"
-- family-names: "Bogaard"
-  name-particle: "van den"
-  given-names: "Jonas"
-  email: Jonas.van.den.Bogaard@Alliander.com
-  affiliation: "Alliander"
-- family-names: "Govers"
-  given-names: "Martinus"
-  email: "Martijn.Govers@Alliander.com"
-  affiliation: "Alliander"
-- family-names: "Stoeller"
-  given-names: "Bram"
-- name: "Contributors from the LF Energy project Power Grid Model"
-  affiliation: "LF Energy"
-  email: 	"powergridmodel+help@lists.lfenergy.org"
+
 title: "PowerGridModel/power-grid-model"
 url: "https://github.com/PowerGridModel/power-grid-model"
+authors:
+  - family-names: "Xiang"
+    given-names: "Yu"
+    email: Tony.Xiang@Alliander.com
+    affiliation: "Alliander"
+  - family-names: "Salemink"
+    given-names: "Peter"
+    email: Peter.Salemink@Alliander.com
+    affiliation: "Alliander"
+  - family-names: "Bharambe"
+    given-names: "Nitish"
+    email: Nitish.Bharambe@Alliander.com
+    affiliation: "Alliander"
+  - family-names: "Jagutis"
+    given-names: "Laurynas"
+    email: "Laurynas.Jagutis@Alliander.com"
+    affiliation: "Alliander"
+  - family-names: "Wang"
+    given-names: "Chenguang"
+    email: "Chenguang.Wang@Alliander.com"
+    affiliation: "Alliander"
+  - family-names: "Bogaard"
+    name-particle: "van den"
+    given-names: "Jonas"
+    email: Jonas.van.den.Bogaard@Alliander.com
+    affiliation: "Alliander"
+  - family-names: "Govers"
+    given-names: "Martinus"
+    email: "Martijn.Govers@Alliander.com"
+    affiliation: "Alliander"
+  - family-names: "Stoeller"
+    given-names: "Bram"
+  - name: "Contributors from the LF Energy project Power Grid Model"
+
+preferred-citation:
+  - authors:
+      - family-names: "Xiang"
+        given-names: "Yu"
+        email: Tony.Xiang@Alliander.com
+        affiliation: "Alliander"
+      - family-names: "Salemink"
+        given-names: "Peter"
+        email: Peter.Salemink@Alliander.com
+        affiliation: "Alliander"
+      - family-names: "Stoeller"
+        given-names: "Bram"
+      - family-names: "Bharambe"
+        given-names: "Nitish"
+        email: Nitish.Bharambe@Alliander.com
+        affiliation: "Alliander"
+      - family-names: "Westering"
+        name-particles: "van"
+        given-names: "Werner"
+    title: "Power grid model: A high-performance distribution grid calculation library"
+    conference: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
+    year: 2023
+    volume: 2023
+    pages: "1-5"
+
+contact:
+  - name: "LF Energy project Power Grid Model"
+    email: "powergridmodel+help@lists.lfenergy.org"
