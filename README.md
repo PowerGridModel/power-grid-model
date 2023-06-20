@@ -19,7 +19,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 
-[![DOI](https://zenodo.org/badge/8054429.svg)](https://zenodo.org/badge/latestdoi/8054429)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
 [![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
 
@@ -82,7 +82,26 @@ Visit [Contribute](https://github.com/PowerGridModel/power-grid-model/contribute
 
 ## Citations
 
-Please cite using our latest [![DOI](https://zenodo.org/badge/8054429.svg)](https://zenodo.org/badge/latestdoi/8054429).
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429).
+
+If you are using Power Grid Model in your research work, please consider citing our library using the following references.
+
+### Power Grid Model source code
+
+
+### Publications
+
+```bibtex
+@inproceedings{Xiang2023,
+  author = {Xiang, Yu and Salemink, Peter and Stoeller, Bram and Bharambe, Nitish and van Westering, Werner},
+  booktitle = {CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution},
+  title = {Power grid model: A high-performance distribution grid calculation library},
+  year = {2023},
+  volume={2023},
+  number = {},
+  pages={1-5}
+}
+```
 
 ## Contact
 
