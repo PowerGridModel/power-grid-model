@@ -42,29 +42,29 @@ authors:
   - name: "Contributors from the LF Energy project Power Grid Model"
 
 preferred-citation:
-  - authors:
-      - family-names: "Xiang"
-        given-names: "Yu"
-        email: Tony.Xiang@Alliander.com
-        affiliation: "Alliander"
-      - family-names: "Salemink"
-        given-names: "Peter"
-        email: Peter.Salemink@Alliander.com
-        affiliation: "Alliander"
-      - family-names: "Stoeller"
-        given-names: "Bram"
-      - family-names: "Bharambe"
-        given-names: "Nitish"
-        email: Nitish.Bharambe@Alliander.com
-        affiliation: "Alliander"
-      - family-names: "Westering"
-        name-particles: "van"
-        given-names: "Werner"
-    title: "Power grid model: A high-performance distribution grid calculation library"
-    conference: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
-    year: 2023
-    volume: 2023
-    pages: "1-5"
+  authors:
+    - family-names: "Xiang"
+      given-names: "Yu"
+      email: Tony.Xiang@Alliander.com
+      affiliation: "Alliander"
+    - family-names: "Salemink"
+      given-names: "Peter"
+      email: Peter.Salemink@Alliander.com
+      affiliation: "Alliander"
+    - family-names: "Stoeller"
+      given-names: "Bram"
+    - family-names: "Bharambe"
+      given-names: "Nitish"
+      email: Nitish.Bharambe@Alliander.com
+      affiliation: "Alliander"
+    - family-names: "Westering"
+      name-particles: "van"
+      given-names: "Werner"
+  title: "Power grid model: A high-performance distribution grid calculation library"
+  conference: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
+  year: 2023
+  volume: 2023
+  pages: "1-5"
 
 contact:
   - name: "LF Energy project Power Grid Model"
