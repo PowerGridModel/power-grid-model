@@ -82,16 +82,19 @@ Visit [Contribute](https://github.com/PowerGridModel/power-grid-model/contribute
 
 ## Citations
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429).
-
 If you are using Power Grid Model in your research work, please consider citing our library using the following references.
 
 ### Power Grid Model source code
 
-
-### Publications
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
 ```bibtex
+@software{Xiang_power-grid-model,
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Jagutis, Laurynas and Wang, Chenguang and van den Bogaard, Jonas and Govers, Martinus and Stoeller, Bram and {Contributors from the LF Energy project Power Grid Model}},
+  doi = {10.5281/zenodo.8054429},
+  title = {{power-grid-model}},
+  url = {https://github.com/PowerGridModel/power-grid-model}
+}
 @inproceedings{Xiang2023,
   author = {Xiang, Yu and Salemink, Peter and Stoeller, Bram and Bharambe, Nitish and van Westering, Werner},
   booktitle = {CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution},
