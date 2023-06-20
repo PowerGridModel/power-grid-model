@@ -1,8 +1,0 @@
-cff-version: 1.1.0
-message: "If you use this software, please cite it as below."
-authors:
-  - family-names: Joe
-    given-names: Johnson
-title: PowerGridModel/power-grid-model: v1.4.81-rc7
-version: v1.4.81-rc7
-date-released: 2023-06-20
