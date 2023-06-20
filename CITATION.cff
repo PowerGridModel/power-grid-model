@@ -42,7 +42,7 @@ authors:
     given-names: "Bram"
   - name: "Contributors from the LF Energy project Power Grid Model"
 
-references:
+reference:
   - title: "Power grid model: A high-performance distribution grid calculation library"
     authors:
       - family-names: "Xiang"
