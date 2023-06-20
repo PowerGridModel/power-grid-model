@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-cff-version: 1.2.0
+cff-version: 1.1.0
 message: "If you are using Power Grid Model in your research work, please consider citing our library as below."
 authors:
 - family-names: "Xiang"
@@ -39,6 +39,7 @@ authors:
 - name: "Contributors from the LF Energy project Power Grid Model"
   affiliation: "LF Energy"
   email: 	"powergridmodel+help@lists.lfenergy.org"
-title: "power-grid-model"
+title: "PowerGridModel/power-grid-model: v1.4.81-rc2"
 doi: 10.5281/zenodo.8054429
 url: "https://github.com/PowerGridModel/power-grid-model"
+version: "v1.4.81-rc2"
