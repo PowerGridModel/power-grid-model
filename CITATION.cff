@@ -39,7 +39,6 @@ authors:
 - name: "Contributors from the LF Energy project Power Grid Model"
   affiliation: "LF Energy"
   email: 	"powergridmodel+help@lists.lfenergy.org"
-title: "PowerGridModel/power-grid-model: v1.4.81-rc2"
-doi: 10.5281/zenodo.8054429
+title: "PowerGridModel/power-grid-model: v1.4.81-rc3"
 url: "https://github.com/PowerGridModel/power-grid-model"
-version: "v1.4.81-rc2"
+version: "v1.4.81-rc3"
