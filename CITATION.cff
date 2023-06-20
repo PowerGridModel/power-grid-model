@@ -41,8 +41,11 @@ authors:
   - family-names: "Stoeller"
     given-names: "Bram"
   - name: "Contributors from the LF Energy project Power Grid Model"
+contact:
+  - name: "LF Energy project Power Grid Model"
+    email: "powergridmodel+help@lists.lfenergy.org"
 
-reference:
+references:
   - title: "Power grid model: A high-performance distribution grid calculation library"
     authors:
       - family-names: "Xiang"
@@ -62,7 +65,8 @@ reference:
       - family-names: "Westering"
         name-particle: "van"
         given-names: "Werner"
-    conference: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
+    conference:
+      name: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
     year: 2023
     volume: 2023
     pages: "1-5"
@@ -103,7 +107,3 @@ reference:
       - family-names: "Stoeller"
         given-names: "Bram"
       - name: "Contributors from the LF Energy project Power Grid Model"
-
-contact:
-  - name: "LF Energy project Power Grid Model"
-    email: "powergridmodel+help@lists.lfenergy.org"
