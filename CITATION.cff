@@ -60,7 +60,7 @@ references:
         email: Nitish.Bharambe@Alliander.com
         affiliation: "Alliander"
       - family-names: "Westering"
-        name-particles: "van"
+        name-particle: "van"
         given-names: "Werner"
     conference: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
     year: 2023
