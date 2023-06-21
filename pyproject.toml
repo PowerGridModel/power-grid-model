@@ -99,15 +99,20 @@ build-frontend = "build"
 build-verbosity = 1
 test-extras = ["dev"]
 test-command = "pytest {package}/tests"
-# we do not support PyPy, musllinux
-skip = ["pp*", "*musllinux*"]
+# we do not support 
+#    PyPy
+#    musllinux when python < 3.9
+#    musllinux in aarch64
+skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
-# force auditwheel to use manylinux_2_24 to support Amazon Linux 2
-environment = { CC="gcc", CXX="g++", AUDITWHEEL_PLAT="manylinux_2_24_$(uname -m)" }
+# force auditwheel to use manylinux_2_24 to support Amazon Linux 2 when building in manylinux_2_28
+repair-wheel-command = "auditwheel repair --plat ${AUDITWHEEL_PLAT//2_28/2_24} -w {dest_dir} {wheel}"
+environment = { CC="gcc", CXX="g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+musllinux-x86_64-image = "musllinux_1_1"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]

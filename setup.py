@@ -5,9 +5,9 @@
 import os
 import platform
 import shutil
+import sys
 from itertools import chain
 from pathlib import Path
-from sysconfig import get_paths
 from typing import List
 
 # noinspection PyPackageRequirements
@@ -158,8 +158,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         bin_file.unlink()
 
     # build steps for Windows and Linux
-    # path of python env
-    env_base_path = Path(get_paths()["data"])
     # different treat for windows and linux
     # determine platform specific options
     if if_win:
@@ -168,10 +166,15 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     else:
         # flags for Linux and Mac
         cflags += [
-            "-std=c++20",
             "-O3",
             "-fvisibility=hidden",
         ]
+        # add c++20 or c++2a flag depending on gcc version
+        # TODO remove this if musllinux upgrade to newer gcc version
+        if "GCC 9." in sys.version:
+            cflags += ["-std=c++2a"]
+        else:
+            cflags += ["-std=c++20"]
         lflags += ["-lpthread", "-O3"]
         # extra flag for Mac
         if platform.system() == "Darwin":
