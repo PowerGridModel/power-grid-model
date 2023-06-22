@@ -21,18 +21,18 @@ struct BaseUpdate {
 };
 
 struct BranchUpdate : BaseUpdate {
-    IntS from_status;  // Whether the branch is connected at each side
-    IntS to_status;  // Whether the branch is connected at each side
+    IntS from_status;  // whether the branch is connected at each side
+    IntS to_status;  // whether the branch is connected at each side
 };
 
 struct Branch3Update : BaseUpdate {
-    IntS status_1;  // Whether the branch is connected at each side
-    IntS status_2;  // Whether the branch is connected at each side
-    IntS status_3;  // Whether the branch is connected at each side
+    IntS status_1;  // whether the branch is connected at each side
+    IntS status_2;  // whether the branch is connected at each side
+    IntS status_3;  // whether the branch is connected at each side
 };
 
 struct ApplianceUpdate : BaseUpdate {
-    IntS status;  // Whether the appliance is connected
+    IntS status;  // whether the appliance is connected
 };
 
 struct TransformerUpdate : BranchUpdate {
@@ -45,8 +45,8 @@ struct ThreeWindingTransformerUpdate : Branch3Update {
 
 template <bool sym>
 struct LoadGenUpdate : ApplianceUpdate {
-    RealValue<sym> p_specified;  // Specified active/reactive power
-    RealValue<sym> q_specified;  // Specified active/reactive power
+    RealValue<sym> p_specified;  // specified active/reactive power
+    RealValue<sym> q_specified;  // specified active/reactive power
 };
 using SymLoadGenUpdate = LoadGenUpdate<true>;
 using AsymLoadGenUpdate = LoadGenUpdate<false>;
@@ -75,7 +75,7 @@ using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
 struct FaultUpdate : BaseUpdate {
-    IntS status;  // Whether the fault is connected
+    IntS status;  // whether the fault is connected
     FaultType fault_type;  // type of the fault
     FaultPhase fault_phase;  // phase(s) of the fault
     ID fault_object;  // ID of the faulted object
@@ -88,7 +88,7 @@ namespace meta_data {
 
 template<>
 struct get_meta<BaseUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BaseUpdate";      
         meta.size = sizeof(BaseUpdate);  
@@ -101,7 +101,7 @@ struct get_meta<BaseUpdate> {
 
 template<>
 struct get_meta<BranchUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchUpdate";      
         meta.size = sizeof(BranchUpdate);  
@@ -115,7 +115,7 @@ struct get_meta<BranchUpdate> {
 
 template<>
 struct get_meta<Branch3Update> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3Update";      
         meta.size = sizeof(Branch3Update);  
@@ -130,7 +130,7 @@ struct get_meta<Branch3Update> {
 
 template<>
 struct get_meta<ApplianceUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceUpdate";      
         meta.size = sizeof(ApplianceUpdate);  
@@ -143,7 +143,7 @@ struct get_meta<ApplianceUpdate> {
 
 template<>
 struct get_meta<TransformerUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "TransformerUpdate";      
         meta.size = sizeof(TransformerUpdate);  
@@ -156,7 +156,7 @@ struct get_meta<TransformerUpdate> {
 
 template<>
 struct get_meta<ThreeWindingTransformerUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ThreeWindingTransformerUpdate";      
         meta.size = sizeof(ThreeWindingTransformerUpdate);  
@@ -169,7 +169,7 @@ struct get_meta<ThreeWindingTransformerUpdate> {
 
 template <bool sym>
 struct get_meta<LoadGenUpdate<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LoadGenUpdate";      
         meta.size = sizeof(LoadGenUpdate<sym>);  
@@ -183,7 +183,7 @@ struct get_meta<LoadGenUpdate<sym>> {
 
 template<>
 struct get_meta<SourceUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "SourceUpdate";      
         meta.size = sizeof(SourceUpdate);  
@@ -197,7 +197,7 @@ struct get_meta<SourceUpdate> {
 
 template <bool sym>
 struct get_meta<VoltageSensorUpdate<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "VoltageSensorUpdate";      
         meta.size = sizeof(VoltageSensorUpdate<sym>);  
@@ -212,7 +212,7 @@ struct get_meta<VoltageSensorUpdate<sym>> {
 
 template <bool sym>
 struct get_meta<PowerSensorUpdate<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "PowerSensorUpdate";      
         meta.size = sizeof(PowerSensorUpdate<sym>);  
@@ -227,7 +227,7 @@ struct get_meta<PowerSensorUpdate<sym>> {
 
 template<>
 struct get_meta<FaultUpdate> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultUpdate";      
         meta.size = sizeof(FaultUpdate);  

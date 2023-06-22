@@ -18,7 +18,7 @@ namespace power_grid_model {
 
 struct BaseOutput {
     ID id;  // ID of the object
-    IntS energized;  // if the object is energized
+    IntS energized;  // whether the object is energized
 };
 
 template <bool sym>
@@ -97,61 +97,57 @@ struct FaultOutput : BaseOutput {
 };
 
 struct FaultShortCircuitOutput : BaseOutput {
-    RealValue<false> i_f;  // Three phase short circuit current magnitude
-    RealValue<false> i_f_angle;  // Three phase short circuit current angle
-
-    RealValue<true> i1_f;  // Positive sequence short circuit current magnitude
-    RealValue<true> i1_f_angle;  // Positive sequence short circuit current angle
+    RealValue<false> i_f;  // three phase short circuit current magnitude
+    RealValue<false> i_f_angle;  // three phase short circuit current angle
+    RealValue<true> i1_f;  // positive sequence short circuit current magnitude
+    RealValue<true> i1_f_angle;  // positive sequence short circuit current angle
 };
 
 struct NodeShortCircuitOutput : BaseOutput {
-    RealValue<false> u_pu;  // Initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<false> u;  // Initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<false> u_angle;  // Initial three phase line-to-ground short circuit voltage magnitude and angle
-
-    RealValue<true> u1ll_pu;  // Initial positive sequence line-line short circuit voltage magnitude and angle
-    RealValue<true> u1ll;  // Initial positive sequence line-line short circuit voltage magnitude and angle
-    RealValue<true> u1ll_angle;  // Initial positive sequence line-line short circuit voltage magnitude and angle
+    RealValue<false> u_pu;  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<false> u;  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<false> u_angle;  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<true> u1ll_pu;  // initial positive line-to-line sequence short circuit voltage magnitude and angle
+    RealValue<true> u1ll;  // initial positive line-to-line sequence short circuit voltage magnitude and angle
+    RealValue<true> u1ll_angle;  // initial positive line-to-line sequence short circuit voltage magnitude and angle
 };
 
 struct BranchShortCircuitOutput : BaseOutput {
-    RealValue<false> i_from;  // Initial three phase short circuit current flow at from-side
-    RealValue<false> i_from_angle;  // Initial three phase short circuit current flow at from-side
-    RealValue<false> i_to;  // Initial three phase short circuit current flow at to-side
-    RealValue<false> i_to_angle;  // Initial three phase short circuit current flow at to-side
-
-    RealValue<true> i1_from;  // Initial positive sequence short circuit current flow at from-side
-    RealValue<true> i1_from_angle;  // Initial positive sequence short circuit current flow at from-side
-    RealValue<true> i1_to;  // Initial positive sequence short circuit current flow at to-side
-    RealValue<true> i1_to_angle;  // Initial positive sequence short circuit current flow at to-side
+    RealValue<false> i_from;  // initial three phase short circuit current flow at from-side
+    RealValue<false> i_from_angle;  // initial three phase short circuit current flow at from-side
+    RealValue<false> i_to;  // initial three phase short circuit current flow at to-side
+    RealValue<false> i_to_angle;  // initial three phase short circuit current flow at to-side
+    RealValue<true> i1_from;  // initial positive sequence short circuit current flow at from-side
+    RealValue<true> i1_from_angle;  // initial positive sequence short circuit current flow at from-side
+    RealValue<true> i1_to;  // initial positive sequence short circuit current flow at to-side
+    RealValue<true> i1_to_angle;  // initial positive sequence short circuit current flow at to-side
 };
 
 struct Branch3ShortCircuitOutput : BaseOutput {
-    RealValue<false> i_1;  // Initial three phase short circuit current flow at side 1
-    RealValue<false> i_1_angle;  // Initial three phase short circuit current flow at side 1
-    RealValue<false> i_2;  // Initial three phase short circuit current flow at side 2
-    RealValue<false> i_2_angle;  // Initial three phase short circuit current flow at side 2
-    RealValue<false> i_3;  // Initial three phase short circuit current flow at side 3
-    RealValue<false> i_3_angle;  // Initial three phase short circuit current flow at side 3
-
-    RealValue<true> i1_1;  // Initial positive sequence short circuit current flow at side 1
-    RealValue<true> i1_1_angle;  // Initial positive sequence short circuit current flow at side 1
-    RealValue<true> i1_2;  // Initial positive sequence short circuit current flow at side 2
-    RealValue<true> i1_2_angle;  // Initial positive sequence short circuit current flow at side 2
-    RealValue<true> i1_3;  // Initial positive sequence short circuit current flow at side 3
-    RealValue<true> i1_3_angle;  // Initial positive sequence short circuit current flow at side 3
+    RealValue<false> i_1;  // initial three phase short circuit current flow at side 1
+    RealValue<false> i_1_angle;  // initial three phase short circuit current flow at side 1
+    RealValue<false> i_2;  // initial three phase short circuit current flow at side 2
+    RealValue<false> i_2_angle;  // initial three phase short circuit current flow at side 2
+    RealValue<false> i_3;  // initial three phase short circuit current flow at side 3
+    RealValue<false> i_3_angle;  // initial three phase short circuit current flow at side 3
+    RealValue<true> i1_1;  // initial positive sequence short circuit current flow at side 1
+    RealValue<true> i1_1_angle;  // initial positive sequence short circuit current flow at side 1
+    RealValue<true> i1_2;  // initial positive sequence short circuit current flow at side 2
+    RealValue<true> i1_2_angle;  // initial positive sequence short circuit current flow at side 2
+    RealValue<true> i1_3;  // initial positive sequence short circuit current flow at side 3
+    RealValue<true> i1_3_angle;  // initial positive sequence short circuit current flow at side 3
 };
 
 struct ApplianceShortCircuitOutput : BaseOutput {
-    RealValue<false> i;  // Initial three phase short circuit current flow of the appliance
-    RealValue<false> i_angle;  // Initial three phase short circuit current flow of the appliance
-    
-    RealValue<true> i1;  // Initial positive sequence short circuit current flow of the appliance
-    RealValue<true> i1_angle;  // Initial positive sequence short circuit current flow of the appliance
+    RealValue<false> i;  // initial three phase short circuit current flow of the appliance
+    RealValue<false> i_angle;  // initial three phase short circuit current flow of the appliance
+    RealValue<true> i1;  // initial positive sequence short circuit current flow of the appliance
+    RealValue<true> i1_angle;  // initial positive sequence short circuit current flow of the appliance
 };
 
 struct SensorShortCircuitOutput : BaseOutput {
 };
+
 
 
 // template specialization functors to get meta data
@@ -159,7 +155,7 @@ namespace meta_data {
 
 template<>
 struct get_meta<BaseOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BaseOutput";      
         meta.size = sizeof(BaseOutput);  
@@ -173,7 +169,7 @@ struct get_meta<BaseOutput> {
 
 template <bool sym>
 struct get_meta<NodeOutput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "NodeOutput";      
         meta.size = sizeof(NodeOutput<sym>);  
@@ -190,7 +186,7 @@ struct get_meta<NodeOutput<sym>> {
 
 template <bool sym>
 struct get_meta<BranchOutput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchOutput";      
         meta.size = sizeof(BranchOutput<sym>);  
@@ -211,7 +207,7 @@ struct get_meta<BranchOutput<sym>> {
 
 template <bool sym>
 struct get_meta<Branch3Output<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3Output";      
         meta.size = sizeof(Branch3Output<sym>);  
@@ -236,7 +232,7 @@ struct get_meta<Branch3Output<sym>> {
 
 template <bool sym>
 struct get_meta<ApplianceOutput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceOutput";      
         meta.size = sizeof(ApplianceOutput<sym>);  
@@ -253,7 +249,7 @@ struct get_meta<ApplianceOutput<sym>> {
 
 template <bool sym>
 struct get_meta<VoltageSensorOutput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "VoltageSensorOutput";      
         meta.size = sizeof(VoltageSensorOutput<sym>);  
@@ -267,7 +263,7 @@ struct get_meta<VoltageSensorOutput<sym>> {
 
 template <bool sym>
 struct get_meta<PowerSensorOutput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "PowerSensorOutput";      
         meta.size = sizeof(PowerSensorOutput<sym>);  
@@ -281,7 +277,7 @@ struct get_meta<PowerSensorOutput<sym>> {
 
 template<>
 struct get_meta<FaultOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultOutput";      
         meta.size = sizeof(FaultOutput);  
@@ -293,116 +289,101 @@ struct get_meta<FaultOutput> {
 
 template<>
 struct get_meta<FaultShortCircuitOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultShortCircuitOutput";      
         meta.size = sizeof(FaultShortCircuitOutput);  
         meta.alignment = alignof(FaultShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-
         meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f>("i_f"));
         meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f_angle>("i_f_angle"));
-
         meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i1_f>("i1_f"));
         meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i1_f_angle>("i1_f_angle"));
-
         return meta;
     }
 };
 
 template<>
 struct get_meta<NodeShortCircuitOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "NodeShortCircuitOutput";      
         meta.size = sizeof(NodeShortCircuitOutput);  
         meta.alignment = alignof(NodeShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_pu>("u_pu"));
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u>("u"));
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_angle>("u_angle"));
-
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll_pu>("u1ll_pu"));
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll>("u1ll"));
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll_angle>("u1ll_angle"));
-
         return meta;
     }
 };
 
 template<>
 struct get_meta<BranchShortCircuitOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchShortCircuitOutput";      
         meta.size = sizeof(BranchShortCircuitOutput);  
         meta.alignment = alignof(BranchShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from>("i_from"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from_angle>("i_from_angle"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to>("i_to"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to_angle>("i_to_angle"));
-
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_from>("i1_from"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_from_angle>("i1_from_angle"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_to>("i1_to"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_to_angle>("i1_to_angle"));
-
         return meta;
     }
 };
 
 template<>
 struct get_meta<Branch3ShortCircuitOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3ShortCircuitOutput";      
         meta.size = sizeof(Branch3ShortCircuitOutput);  
         meta.alignment = alignof(Branch3ShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1>("i_1"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1_angle>("i_1_angle"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2>("i_2"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2_angle>("i_2_angle"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3>("i_3"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3_angle>("i_3_angle"));
-
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_1>("i1_1"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_1_angle>("i1_1_angle"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_2>("i1_2"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_2_angle>("i1_2_angle"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_3>("i1_3"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_3_angle>("i1_3_angle"));
-
         return meta;
     }
 };
 
-template <>
+template<>
 struct get_meta<ApplianceShortCircuitOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceShortCircuitOutput";      
         meta.size = sizeof(ApplianceShortCircuitOutput);  
         meta.alignment = alignof(ApplianceShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-
         meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i>("i"));
         meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i_angle>("i_angle"));
-
         meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i1>("i1"));
         meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i1_angle>("i1_angle"));
-
         return meta;
     }
 };
 
-template <>
+template<>
 struct get_meta<SensorShortCircuitOutput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "SensorShortCircuitOutput";      
         meta.size = sizeof(SensorShortCircuitOutput);  

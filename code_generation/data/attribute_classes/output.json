@@ -171,109 +171,176 @@
         {
             "name": "FaultShortCircuitOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": "i_f",
-                    "description": "short circuit current magnitude"
+                    "description": "three phase short circuit current magnitude"
                 },
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": "i_f_angle",
-                    "description": "short circuit current angle"
+                    "description": "three phase short circuit current angle"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": "i1_f",
+                    "description": "positive sequence short circuit current magnitude"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": "i1_f_angle",
+                    "description": "positive sequence short circuit current angle"
                 }
             ]
         },
         {
             "name": "NodeShortCircuitOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "u_pu",
                         "u",
                         "u_angle"
                     ],
-                    "description": "initial short circuit voltage magnitude and angle"
+                    "description": "initial three phase line-to-ground short circuit voltage magnitude and angle"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "u1ll_pu",
+                        "u1ll",
+                        "u1ll_angle"
+                    ],
+                    "description": "initial positive line-to-line sequence short circuit voltage magnitude and angle"
                 }
             ]
         },
         {
             "name": "BranchShortCircuitOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "i_from",
                         "i_from_angle"
                     ],
-                    "description": "initial short circuit current flow at from-side"
+                    "description": "initial three phase short circuit current flow at from-side"
                 },
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "i_to",
                         "i_to_angle"
                     ],
-                    "description": "initial short circuit current flow at to-side"
+                    "description": "initial three phase short circuit current flow at to-side"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "i1_from",
+                        "i1_from_angle"
+                    ],
+                    "description": "initial positive sequence short circuit current flow at from-side"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "i1_to",
+                        "i1_to_angle"
+                    ],
+                    "description": "initial positive sequence short circuit current flow at to-side"
                 }
             ]
         },
         {
             "name": "Branch3ShortCircuitOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "i_1",
                         "i_1_angle"
                     ],
-                    "description": "initial short circuit current flow at side 1"
+                    "description": "initial three phase short circuit current flow at side 1"
                 },
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "i_2",
                         "i_2_angle"
                     ],
-                    "description": "initial short circuit current flow at side 2"
+                    "description": "initial three phase short circuit current flow at side 2"
                 },
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "i_3",
                         "i_3_angle"
                     ],
-                    "description": "initial short circuit current flow at side 3"
+                    "description": "initial three phase short circuit current flow at side 3"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "i1_1",
+                        "i1_1_angle"
+                    ],
+                    "description": "initial positive sequence short circuit current flow at side 1"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "i1_2",
+                        "i1_2_angle"
+                    ],
+                    "description": "initial positive sequence short circuit current flow at side 2"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "i1_3",
+                        "i1_3_angle"
+                    ],
+                    "description": "initial positive sequence short circuit current flow at side 3"
                 }
             ]
         },
         {
             "name": "ApplianceShortCircuitOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<sym>",
+                    "data_type": "RealValue<false>",
                     "names": [
                         "i",
                         "i_angle"
                     ],
-                    "description": "initial short circuit current flow of the appliance"
+                    "description": "initial three phase short circuit current flow of the appliance"
+                },
+                {
+                    "data_type": "RealValue<true>",
+                    "names": [
+                        "i1",
+                        "i1_angle"
+                    ],
+                    "description": "initial positive sequence short circuit current flow of the appliance"
                 }
             ]
         },
         {
             "name": "SensorShortCircuitOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": []
         }
     ]
