@@ -195,11 +195,13 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("line", "x1", [NaN]) in required_values_errors
     assert MissingValueError("line", "c1", [NaN]) in required_values_errors
     assert MissingValueError("line", "tan1", [NaN]) in required_values_errors
-    assert MissingValueError("line", "i_n", [NaN]) in required_values_errors
     assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "x0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "c0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "tan0", [NaN]) in required_values_errors) == asym_dependent
+
+    # i_n made optional later in lines
+    assert MissingValueError("line", "i_n", [NaN]) not in required_values_errors
 
     assert MissingValueError("link", "id", [NaN]) in required_values_errors
     assert MissingValueError("link", "from_node", [NaN]) in required_values_errors
