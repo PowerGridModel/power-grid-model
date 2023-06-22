@@ -19,13 +19,13 @@ The base type for all power grid components.
 
 | name | data type | unit | description                                                                                                                      | required |                                     update                                     |
 | ---- | --------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- | :------: | :----------------------------------------------------------------------------: |
-| `id` | `int32_t` | -    | ID of a component, the id should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. | &#10004; | &#10060; (id needs to be specified in the update query, but cannot be changed) |
+| `id` | `int32_t` | -    | ID of a component, the ID should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. | &#10004; | &#10060; (id needs to be specified in the update query, but cannot be changed) |
 
 #### Steady state output and Short circuit output
 
 | name        | data type | unit | description                                                                                                                      |
 | ----------- | --------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `id`        | `int32_t` | -    | ID of a component, the id should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. |
+| `id`        | `int32_t` | -    | ID of a component, the ID should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. |
 | `energized` | `int8_t`  | -    | Indicates if a component is energized, i.e. connected to a source                                                                |
 
 ## Node
@@ -80,8 +80,8 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 
 | name          | data type | unit | description                    | required |  update  |  valid values   |
 | ------------- | --------- | ---- | ------------------------------ | :------: | :------: | :-------------: |
-| `from_node`   | `int32_t` | -    | ID of node at from-side        | &#10004; | &#10060; | a valid node id |
-| `to_node`     | `int32_t` | -    | ID of node at to-side          | &#10004; | &#10060; | a valid node id |
+| `from_node`   | `int32_t` | -    | ID of node at from-side        | &#10004; | &#10060; | a valid node ID |
+| `to_node`     | `int32_t` | -    | ID of node at to-side          | &#10004; | &#10060; | a valid node ID |
 | `from_status` | `int8_t`  | -    | connection status at from-side | &#10004; | &#10004; |   `0` or `1`    |
 | `to_status`   | `int8_t`  | -    | connection status at to-side   | &#10004; | &#10004; |   `0` or `1`    |
 
@@ -194,9 +194,9 @@ switches are always defined at side 1, 2, or 3 of the branch. In reality such sw
 
 | name       | data type | unit | description                 | required |  update  |  valid values   |
 | ---------- | --------- | ---- | --------------------------- | :------: | :------: | :-------------: |
-| `node_1`   | `int32_t` | -    | ID of node at side 1        | &#10004; | &#10060; | a valid node id |
-| `node_2`   | `int32_t` | -    | ID of node at side 2        | &#10004; | &#10060; | a valid node id |
-| `node_3`   | `int32_t` | -    | ID of node at side 3        | &#10004; | &#10060; | a valid node id |
+| `node_1`   | `int32_t` | -    | ID of node at side 1        | &#10004; | &#10060; | a valid node ID |
+| `node_2`   | `int32_t` | -    | ID of node at side 2        | &#10004; | &#10060; | a valid node ID |
+| `node_3`   | `int32_t` | -    | ID of node at side 3        | &#10004; | &#10060; | a valid node ID |
 | `status_1` | `int8_t`  | -    | connection status at side 1 | &#10004; | &#10004; |   `0` or `1`    |
 | `status_2` | `int8_t`  | -    | connection status at side 2 | &#10004; | &#10004; |   `0` or `1`    |
 | `status_3` | `int8_t`  | -    | connection status at side 3 | &#10004; | &#10004; |   `0` or `1`    |
@@ -307,7 +307,7 @@ the `appliance` and the `node`. The reference direction for power flows is menti
 
 | name     | data type | unit | description                   | required |  update  |  valid values   |
 | -------- | --------- | ---- | ----------------------------- | :------: | :------: | :-------------: |
-| `node`   | `int32_t` | -    | ID of the coupled node        | &#10004; | &#10060; | a valid node id |
+| `node`   | `int32_t` | -    | ID of the coupled node        | &#10004; | &#10060; | a valid node ID |
 | `status` | `int8_t`  | -    | connection status to the node | &#10004; | &#10004; |   `0` or `1`    |
 
 #### Steady state output
@@ -408,7 +408,7 @@ with the highest probability.
 
 | name              | data type | unit | description               | required |  update  |   valid values    |
 | ----------------- | --------- | ---- | ------------------------- | :------: | :------: | :---------------: |
-| `measured_object` | `int32_t` | -    | id of the measured object | &#10004; | &#10060; | a valid object id |
+| `measured_object` | `int32_t` | -    | ID of the measured object | &#10004; | &#10060; | a valid object ID |
 
 ### Generic Voltage Sensor
 
@@ -508,11 +508,14 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 `fault` defines a short circuit location in the grid. At this moment a fault can only happen at a `node`.
 
 #### Input
-| name           | data type | unit    | description                                         |       required       |  update  |   valid values    |
-| -------------- | --------- | ------- | --------------------------------------------------- | :------------------: | :------: | :---------------: |
-| `fault_object` | `int32_t` | -       | ID of the component where the short circuit happens |       &#10004;       | &#10004; | A valid `node` ID |
-| `r_f`          | `double`  | ohm (Ω) | Short circuit resistance                            | &#10060; default 0.0 | &#10060; |                   |
-| `x_f`          | `double`  | ohm (Ω) | Short circuit reactance                             | &#10060; default 0.0 | &#10060; |                   |
+| name           | data type                                                | unit    | description                                         |       required       |  update  |   valid values    |
+| -------------- | -------------------------------------------------------- | ------- | --------------------------------------------------- | :------------------: | :------: | :---------------: |
+| `status`       | `int8_t`                                                 | -       | whether the fault is active                         |       &#10004;       | &#10004; |    `0` or `1`     |
+| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>   | -       | the type of the fault                               |       &#10004;       | &#10004; |                   |
+| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase> | -       | the phase(s) of the fault                           |       &#10004;       | &#10004; |                   |
+| `fault_object` | `int32_t`                                                | -       | ID of the component where the short circuit happens |       &#10004;       | &#10004; | A valid `node` ID |
+| `r_f`          | `double`                                                 | ohm (Ω) | short circuit resistance                            | &#10060; default 0.0 | &#10060; |                   |
+| `x_f`          | `double`                                                 | ohm (Ω) | short circuit reactance                             | &#10060; default 0.0 | &#10060; |                   |
 
 #### Steady state output
 A `fault` has no steady state output.
