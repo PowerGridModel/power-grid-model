@@ -18,15 +18,14 @@ Some terms regarding the data structures are explained here, including the defin
 
 ### Type of Dataset 
 
-The type of Dataset. i.e. `input`, `update`, `sym_output`, `asym_output`, `sym_sc_output`, `asym_sc_output`.
+The type of Dataset. i.e. `input`, `update`, `sym_output`, `asym_output`, `sc_output`.
 The examples in brackets are given in context of a dataset of a `line` component.
 
 - **input:** Contains attributes relevant to configuration of grid.(eg. `id`, `from_node`, `from_status`, ...)
 - **update:** Contains attributes relevant to multiple scenarios. (eg. `from_status`,`to_status`)
 - **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation calculation. (eg. `p_from`, `p_to`, ...) 
 - **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation calculation. (eg. `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
-- **sym_sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...) 
-- **asym_sc_output:** Contains attributes relevant to asymmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...). Attributes are similar `sym_sc_output` while some values of the asymmetrical dataset will contain detailed data for all 3 phases individually. 
+- **sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, `i1_from`, `i1_from_angle`, ...). Both detailed data for all 3 phases individually and symmetric positive sequence attributes are provided.
 
 ## Terms regarding data structures
 
@@ -64,6 +63,6 @@ The Power Grid Model can process many scenarios (i.e. time steps, switch states,
 |                          | `RealValueOutput` is used for many output   attributes. It is a `double` in symmetric calculation and `double[3]` for   asymmetric calculation.                                                                                                                                                              |
 | unit                     | Unit of the attribute, if it is   applicable. As a general rule, only standard SI units without any prefix are   used.                                                                                                                                                                                       |
 | description              | Description of the attribute.                                                                                                                                                                                                                                                                                |
-| required                 | If the attribute is required. If   not, then it is optional. Note if you choose not to specify an optional   attribute, it should have the null value as defined in [](../advanced_documentation/native-data-interface.md#basic-data-types).                                                                 |
-| update                   | If the attribute can be mutated by   the update call `PowerGridModel.update` on an existing instance, only   applicable when this attribute is part of an input dataset.                                                                                                                                     |
-| valid values             | If applicable, an indication which   values are valid for the input data                                                                                                                                                                                                                                     |
+| required                 | Whether the attribute is required. If   not, then it is optional. Note if you choose not to specify an optional   attribute, it should have the null value as defined in [](../advanced_documentation/native-data-interface.md#basic-data-types).                                                                 |
+| update                   | Whether the attribute can be mutated by   the update call `PowerGridModel.update` on an existing instance, only   applicable when this attribute is part of an input dataset.                                                                                                                                     |
+| valid values             | Whether applicable, an indication which   values are valid for the input data                                                                                                                                                                                                                                     |
