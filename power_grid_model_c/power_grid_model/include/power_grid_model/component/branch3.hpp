@@ -32,9 +32,9 @@ class Branch3 : public Base {
           node_1_{branch3_input.node_1},
           node_2_{branch3_input.node_2},
           node_3_{branch3_input.node_3},
-          status_1_{(bool)branch3_input.status_1},
-          status_2_{(bool)branch3_input.status_2},
-          status_3_{(bool)branch3_input.status_3} {
+          status_1_{static_cast<bool>(branch3_input.status_1)},
+          status_2_{static_cast<bool>(branch3_input.status_2)},
+          status_3_{static_cast<bool>(branch3_input.status_3)} {
         if (node_1_ == node_2_ || node_1_ == node_3_ || node_2_ == node_3_) {
             throw InvalidBranch3{id(), node_1_, node_2_, node_3_};
         }
@@ -151,16 +151,16 @@ class Branch3 : public Base {
         bool const set_3 = new_status_3 != na_IntS;
         bool changed = false;
         if (set_1) {
-            changed = changed || (status_1_ != (bool)new_status_1);
-            status_1_ = (bool)new_status_1;
+            changed = changed || (status_1_ != static_cast<bool>(new_status_1));
+            status_1_ = static_cast<bool>(new_status_1);
         }
         if (set_2) {
-            changed = changed || (status_2_ != (bool)new_status_2);
-            status_2_ = (bool)new_status_2;
+            changed = changed || (status_2_ != static_cast<bool>(new_status_2));
+            status_2_ = static_cast<bool>(new_status_2);
         }
         if (set_3) {
-            changed = changed || (status_3_ != (bool)new_status_3);
-            status_3_ = (bool)new_status_3;
+            changed = changed || (status_3_ != static_cast<bool>(new_status_3));
+            status_3_ = static_cast<bool>(new_status_3);
         }
         return changed;
     }

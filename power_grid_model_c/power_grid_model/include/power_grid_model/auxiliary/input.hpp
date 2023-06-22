@@ -21,23 +21,23 @@ struct BaseInput {
 };
 
 struct NodeInput : BaseInput {
-    double u_rated;  // Rated line-line voltage
+    double u_rated;  // rated line-line voltage
 };
 
 struct BranchInput : BaseInput {
-    ID from_node;  // Node IDs to which this branch is connected at both sides
-    ID to_node;  // Node IDs to which this branch is connected at both sides
-    IntS from_status;  // If the branch is connected at each side
-    IntS to_status;  // If the branch is connected at each side
+    ID from_node;  // node IDs to which this branch is connected at both sides
+    ID to_node;  // node IDs to which this branch is connected at both sides
+    IntS from_status;  // whether the branch is connected at each side
+    IntS to_status;  // whether the branch is connected at each side
 };
 
 struct Branch3Input : BaseInput {
-    ID node_1;  // Node IDs to which this branch3 is connected at three sides
-    ID node_2;  // Node IDs to which this branch3 is connected at three sides
-    ID node_3;  // Node IDs to which this branch3 is connected at three sides
-    IntS status_1;  // If the branch is connected at each side
-    IntS status_2;  // If the branch is connected at each side
-    IntS status_3;  // If the branch is connected at each side
+    ID node_1;  // node IDs to which this branch3 is connected at three sides
+    ID node_2;  // node IDs to which this branch3 is connected at three sides
+    ID node_3;  // node IDs to which this branch3 is connected at three sides
+    IntS status_1;  // whether the branch is connected at each side
+    IntS status_2;  // whether the branch is connected at each side
+    IntS status_3;  // whether the branch is connected at each side
 };
 
 struct SensorInput : BaseInput {
@@ -45,8 +45,8 @@ struct SensorInput : BaseInput {
 };
 
 struct ApplianceInput : BaseInput {
-    ID node;  // Node ID to which this appliance is connected
-    IntS status;  // If the appliance is connected
+    ID node;  // node ID to which this appliance is connected
+    IntS status;  // whether the appliance is connected
 };
 
 struct LineInput : BranchInput {
@@ -138,13 +138,13 @@ struct ThreeWindingTransformerInput : Branch3Input {
 };
 
 struct GenericLoadGenInput : ApplianceInput {
-    LoadGenType type;  // Type of the load_gen
+    LoadGenType type;  // type of the load_gen
 };
 
 template <bool sym>
 struct LoadGenInput : GenericLoadGenInput {
-    RealValue<sym> p_specified;  // Specified active/reactive power
-    RealValue<sym> q_specified;  // Specified active/reactive power
+    RealValue<sym> p_specified;  // specified active/reactive power
+    RealValue<sym> q_specified;  // specified active/reactive power
 };
 using SymLoadGenInput = LoadGenInput<true>;
 using AsymLoadGenInput = LoadGenInput<false>;
@@ -190,6 +190,9 @@ using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
 
 struct FaultInput : BaseInput {
+    IntS status;  // whether the appliance is connected
+    FaultType fault_type;  // type of the fault
+    FaultPhase fault_phase;  // phase(s) of the fault
     ID fault_object;  // ID of the faulted object
     double r_f;  // short circuit impedance
     double x_f;  // short circuit impedance
@@ -534,6 +537,9 @@ struct get_meta<FaultInput> {
         meta.size = sizeof(FaultInput);  
         meta.alignment = alignof(FaultInput);
         meta.attributes = get_meta<BaseInput>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::status>("status"));
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_type>("fault_type"));
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_phase>("fault_phase"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_object>("fault_object"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::r_f>("r_f"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::x_f>("x_f"));

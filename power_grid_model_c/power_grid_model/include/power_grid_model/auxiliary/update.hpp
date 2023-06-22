@@ -21,18 +21,18 @@ struct BaseUpdate {
 };
 
 struct BranchUpdate : BaseUpdate {
-    IntS from_status;  // If the branch is connected at each side
-    IntS to_status;  // If the branch is connected at each side
+    IntS from_status;  // Whether the branch is connected at each side
+    IntS to_status;  // Whether the branch is connected at each side
 };
 
 struct Branch3Update : BaseUpdate {
-    IntS status_1;  // If the branch is connected at each side
-    IntS status_2;  // If the branch is connected at each side
-    IntS status_3;  // If the branch is connected at each side
+    IntS status_1;  // Whether the branch is connected at each side
+    IntS status_2;  // Whether the branch is connected at each side
+    IntS status_3;  // Whether the branch is connected at each side
 };
 
 struct ApplianceUpdate : BaseUpdate {
-    IntS status;  // If the appliance is connected
+    IntS status;  // Whether the appliance is connected
 };
 
 struct TransformerUpdate : BranchUpdate {
@@ -75,6 +75,9 @@ using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
 struct FaultUpdate : BaseUpdate {
+    IntS status;  // Whether the fault is connected
+    FaultType fault_type;  // type of the fault
+    FaultPhase fault_phase;  // phase(s) of the fault
     ID fault_object;  // ID of the faulted object
 };
 
@@ -230,6 +233,9 @@ struct get_meta<FaultUpdate> {
         meta.size = sizeof(FaultUpdate);  
         meta.alignment = alignof(FaultUpdate);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::status>("status"));
+        meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::fault_type>("fault_type"));
+        meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::fault_phase>("fault_phase"));
         meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::fault_object>("fault_object"));
         return meta;
     }

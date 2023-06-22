@@ -34,8 +34,8 @@ class Branch : public Base {
         : Base{branch_input},
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},
-          from_status_{(bool)branch_input.from_status},
-          to_status_{(bool)branch_input.to_status} {
+          from_status_{static_cast<bool>(branch_input.from_status)},
+          to_status_{static_cast<bool>(branch_input.to_status)} {
         if (from_node_ == to_node_) {
             throw InvalidBranch{id(), from_node_};
         }
@@ -146,12 +146,12 @@ class Branch : public Base {
         bool const set_to = new_to_status != na_IntS;
         bool changed = false;
         if (set_from) {
-            changed = changed || (from_status_ != (bool)new_from_status);
-            from_status_ = (bool)new_from_status;
+            changed = changed || (from_status_ != static_cast<bool>(new_from_status));
+            from_status_ = static_cast<bool>(new_from_status);
         }
         if (set_to) {
-            changed = changed || (to_status_ != (bool)new_to_status);
-            to_status_ = (bool)new_to_status;
+            changed = changed || (to_status_ != static_cast<bool>(new_to_status));
+            to_status_ = static_cast<bool>(new_to_status);
         }
         return changed;
     }

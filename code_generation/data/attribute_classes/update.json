@@ -22,7 +22,7 @@
                         "from_status",
                         "to_status"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "Whether the branch is connected at each side"
                 }
             ]
         },
@@ -37,7 +37,7 @@
                         "status_2",
                         "status_3"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "Whether the branch is connected at each side"
                 }
             ]
         },
@@ -48,7 +48,7 @@
                 {
                     "data_type": "IntS",
                     "names": "status",
-                    "description": "If the appliance is connected"
+                    "description": "Whether the appliance is connected"
                 }
             ]
         },
@@ -147,6 +147,21 @@
             "name": "FaultUpdate",
             "base": "BaseUpdate",
             "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "Whether the fault is connected"
+                },
+                {
+                    "data_type": "FaultType",
+                    "names": "fault_type",
+                    "description": "type of the fault"
+                },
+                {
+                    "data_type": "FaultPhase",
+                    "names": "fault_phase",
+                    "description": "phase(s) of the fault"
+                },
                 {
                     "data_type": "ID",
                     "names": "fault_object",

@@ -29,7 +29,7 @@ class Appliance : public Base {
     Appliance(ApplianceInput const& appliance_input, double u)
         : Base{appliance_input},
           node_{appliance_input.node},
-          status_{(bool)appliance_input.status},
+          status_{appliance_input.status != 0},
           base_i_{base_power_3p / u / sqrt3} {
     }
 
@@ -51,9 +51,9 @@ class Appliance : public Base {
     bool set_status(IntS new_status) {
         if (new_status == na_IntS)
             return false;
-        if ((bool)new_status == status_)
+        if (static_cast<bool>(new_status) == status_)
             return false;
-        status_ = (bool)new_status;
+        status_ = static_cast<bool>(new_status);
         return true;
     }
 
