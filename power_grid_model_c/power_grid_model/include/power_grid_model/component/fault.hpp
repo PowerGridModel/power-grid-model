@@ -133,10 +133,10 @@ class Fault final : public Base {
 
    private:
     // short circuit parameters
+    bool status_;
     FaultType fault_type_;
     FaultPhase fault_phase_;
     ID fault_object_;
-    bool status_;
     double r_f_;
     double x_f_;
 };
