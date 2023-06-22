@@ -13,7 +13,7 @@
                 {
                     "data_type": "IntS",
                     "names": "energized",
-                    "description": "if the object is energized"
+                    "description": "whether the object is energized"
                 }
             ]
         },
@@ -197,7 +197,7 @@
                         "u",
                         "u_angle"
                     ],
-                    "description": "Initial short circuit voltage magnitude and angle"
+                    "description": "initial short circuit voltage magnitude and angle"
                 }
             ]
         },
@@ -212,7 +212,7 @@
                         "i_from",
                         "i_from_angle"
                     ],
-                    "description": "Initial short circuit current flow at from-side"
+                    "description": "initial short circuit current flow at from-side"
                 },
                 {
                     "data_type": "RealValue<sym>",
@@ -220,7 +220,7 @@
                         "i_to",
                         "i_to_angle"
                     ],
-                    "description": "Initial short circuit current flow at to-side"
+                    "description": "initial short circuit current flow at to-side"
                 }
             ]
         },
@@ -235,7 +235,7 @@
                         "i_1",
                         "i_1_angle"
                     ],
-                    "description": "Initial short circuit current flow at side 1"
+                    "description": "initial short circuit current flow at side 1"
                 },
                 {
                     "data_type": "RealValue<sym>",
@@ -243,7 +243,7 @@
                         "i_2",
                         "i_2_angle"
                     ],
-                    "description": "Initial short circuit current flow at side 2"
+                    "description": "initial short circuit current flow at side 2"
                 },
                 {
                     "data_type": "RealValue<sym>",
@@ -251,7 +251,7 @@
                         "i_3",
                         "i_3_angle"
                     ],
-                    "description": "Initial short circuit current flow at side 3"
+                    "description": "initial short circuit current flow at side 3"
                 }
             ]
         },
@@ -266,7 +266,7 @@
                         "i",
                         "i_angle"
                     ],
-                    "description": "Initial short circuit current flow of the appliance"
+                    "description": "initial short circuit current flow of the appliance"
                 }
             ]
         },

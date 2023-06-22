@@ -22,7 +22,7 @@
                         "from_status",
                         "to_status"
                     ],
-                    "description": "Whether the branch is connected at each side"
+                    "description": "whether the branch is connected at each side"
                 }
             ]
         },
@@ -37,7 +37,7 @@
                         "status_2",
                         "status_3"
                     ],
-                    "description": "Whether the branch is connected at each side"
+                    "description": "whether the branch is connected at each side"
                 }
             ]
         },
@@ -48,7 +48,7 @@
                 {
                     "data_type": "IntS",
                     "names": "status",
-                    "description": "Whether the appliance is connected"
+                    "description": "whether the appliance is connected"
                 }
             ]
         },
@@ -85,7 +85,7 @@
                         "p_specified",
                         "q_specified"
                     ],
-                    "description": "Specified active/reactive power"
+                    "description": "specified active/reactive power"
                 }
             ]
         },
@@ -150,7 +150,7 @@
                 {
                     "data_type": "IntS",
                     "names": "status",
-                    "description": "Whether the fault is connected"
+                    "description": "whether the fault is connected"
                 },
                 {
                     "data_type": "FaultType",
