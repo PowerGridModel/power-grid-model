@@ -162,8 +162,8 @@ struct get_meta<BaseOutput> {
         meta.size = sizeof(BaseOutput);  
         meta.alignment = alignof(BaseOutput);
         
-        meta.attributes.push_back(get_data_attribute<&BaseOutput::id>("id"));
-        meta.attributes.push_back(get_data_attribute<&BaseOutput::energized>("energized"));
+        meta.attributes.push_back(get_data_attribute<BaseOutput, &BaseOutput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<BaseOutput, &BaseOutput::energized>("energized"));
         return meta;
     }
 };
@@ -176,11 +176,11 @@ struct get_meta<NodeOutput<sym>> {
         meta.size = sizeof(NodeOutput<sym>);  
         meta.alignment = alignof(NodeOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::u_pu>("u_pu"));
-        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::u>("u"));
-        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::u_angle>("u_angle"));
-        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::p>("p"));
-        meta.attributes.push_back(get_data_attribute<&NodeOutput<sym>::q>("q"));
+        meta.attributes.push_back(get_data_attribute<NodeOutput<sym>, &NodeOutput<sym>::u_pu>("u_pu"));
+        meta.attributes.push_back(get_data_attribute<NodeOutput<sym>, &NodeOutput<sym>::u>("u"));
+        meta.attributes.push_back(get_data_attribute<NodeOutput<sym>, &NodeOutput<sym>::u_angle>("u_angle"));
+        meta.attributes.push_back(get_data_attribute<NodeOutput<sym>, &NodeOutput<sym>::p>("p"));
+        meta.attributes.push_back(get_data_attribute<NodeOutput<sym>, &NodeOutput<sym>::q>("q"));
         return meta;
     }
 };
@@ -193,15 +193,15 @@ struct get_meta<BranchOutput<sym>> {
         meta.size = sizeof(BranchOutput<sym>);  
         meta.alignment = alignof(BranchOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::loading>("loading"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::p_from>("p_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::q_from>("q_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::i_from>("i_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::s_from>("s_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::p_to>("p_to"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::q_to>("q_to"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::i_to>("i_to"));
-        meta.attributes.push_back(get_data_attribute<&BranchOutput<sym>::s_to>("s_to"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::loading>("loading"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::p_from>("p_from"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::q_from>("q_from"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::i_from>("i_from"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::s_from>("s_from"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::p_to>("p_to"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::q_to>("q_to"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::i_to>("i_to"));
+        meta.attributes.push_back(get_data_attribute<BranchOutput<sym>, &BranchOutput<sym>::s_to>("s_to"));
         return meta;
     }
 };
@@ -214,19 +214,19 @@ struct get_meta<Branch3Output<sym>> {
         meta.size = sizeof(Branch3Output<sym>);  
         meta.alignment = alignof(Branch3Output<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::loading>("loading"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::p_1>("p_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::q_1>("q_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::i_1>("i_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::s_1>("s_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::p_2>("p_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::q_2>("q_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::i_2>("i_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::s_2>("s_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::p_3>("p_3"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::q_3>("q_3"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::i_3>("i_3"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Output<sym>::s_3>("s_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::loading>("loading"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::p_1>("p_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::q_1>("q_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::i_1>("i_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::s_1>("s_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::p_2>("p_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::q_2>("q_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::i_2>("i_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::s_2>("s_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::p_3>("p_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::q_3>("q_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::i_3>("i_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3Output<sym>, &Branch3Output<sym>::s_3>("s_3"));
         return meta;
     }
 };
@@ -239,11 +239,11 @@ struct get_meta<ApplianceOutput<sym>> {
         meta.size = sizeof(ApplianceOutput<sym>);  
         meta.alignment = alignof(ApplianceOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ApplianceOutput<sym>::p>("p"));
-        meta.attributes.push_back(get_data_attribute<&ApplianceOutput<sym>::q>("q"));
-        meta.attributes.push_back(get_data_attribute<&ApplianceOutput<sym>::i>("i"));
-        meta.attributes.push_back(get_data_attribute<&ApplianceOutput<sym>::s>("s"));
-        meta.attributes.push_back(get_data_attribute<&ApplianceOutput<sym>::pf>("pf"));
+        meta.attributes.push_back(get_data_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::p>("p"));
+        meta.attributes.push_back(get_data_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::q>("q"));
+        meta.attributes.push_back(get_data_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::i>("i"));
+        meta.attributes.push_back(get_data_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::s>("s"));
+        meta.attributes.push_back(get_data_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::pf>("pf"));
         return meta;
     }
 };
@@ -256,8 +256,8 @@ struct get_meta<VoltageSensorOutput<sym>> {
         meta.size = sizeof(VoltageSensorOutput<sym>);  
         meta.alignment = alignof(VoltageSensorOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorOutput<sym>::u_residual>("u_residual"));
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorOutput<sym>::u_angle_residual>("u_angle_residual"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_residual>("u_residual"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_angle_residual>("u_angle_residual"));
         return meta;
     }
 };
@@ -270,8 +270,8 @@ struct get_meta<PowerSensorOutput<sym>> {
         meta.size = sizeof(PowerSensorOutput<sym>);  
         meta.alignment = alignof(PowerSensorOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&PowerSensorOutput<sym>::p_residual>("p_residual"));
-        meta.attributes.push_back(get_data_attribute<&PowerSensorOutput<sym>::q_residual>("q_residual"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::p_residual>("p_residual"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::q_residual>("q_residual"));
         return meta;
     }
 };
@@ -296,8 +296,8 @@ struct get_meta<FaultShortCircuitOutput<sym>> {
         meta.size = sizeof(FaultShortCircuitOutput<sym>);  
         meta.alignment = alignof(FaultShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&FaultShortCircuitOutput<sym>::i_f>("i_f"));
-        meta.attributes.push_back(get_data_attribute<&FaultShortCircuitOutput<sym>::i_f_angle>("i_f_angle"));
+        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput<sym>, &FaultShortCircuitOutput<sym>::i_f>("i_f"));
+        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput<sym>, &FaultShortCircuitOutput<sym>::i_f_angle>("i_f_angle"));
         return meta;
     }
 };
@@ -310,9 +310,9 @@ struct get_meta<NodeShortCircuitOutput<sym>> {
         meta.size = sizeof(NodeShortCircuitOutput<sym>);  
         meta.alignment = alignof(NodeShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&NodeShortCircuitOutput<sym>::u_pu>("u_pu"));
-        meta.attributes.push_back(get_data_attribute<&NodeShortCircuitOutput<sym>::u>("u"));
-        meta.attributes.push_back(get_data_attribute<&NodeShortCircuitOutput<sym>::u_angle>("u_angle"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput<sym>, &NodeShortCircuitOutput<sym>::u_pu>("u_pu"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput<sym>, &NodeShortCircuitOutput<sym>::u>("u"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput<sym>, &NodeShortCircuitOutput<sym>::u_angle>("u_angle"));
         return meta;
     }
 };
@@ -325,10 +325,10 @@ struct get_meta<BranchShortCircuitOutput<sym>> {
         meta.size = sizeof(BranchShortCircuitOutput<sym>);  
         meta.alignment = alignof(BranchShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from>("i_from"));
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_from_angle>("i_from_angle"));
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to>("i_to"));
-        meta.attributes.push_back(get_data_attribute<&BranchShortCircuitOutput<sym>::i_to_angle>("i_to_angle"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_from>("i_from"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_from_angle>("i_from_angle"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_to>("i_to"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_to_angle>("i_to_angle"));
         return meta;
     }
 };
@@ -341,12 +341,12 @@ struct get_meta<Branch3ShortCircuitOutput<sym>> {
         meta.size = sizeof(Branch3ShortCircuitOutput<sym>);  
         meta.alignment = alignof(Branch3ShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_1>("i_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_1_angle>("i_1_angle"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_2>("i_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_2_angle>("i_2_angle"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_3>("i_3"));
-        meta.attributes.push_back(get_data_attribute<&Branch3ShortCircuitOutput<sym>::i_3_angle>("i_3_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_1>("i_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_1_angle>("i_1_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_2>("i_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_2_angle>("i_2_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_3>("i_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_3_angle>("i_3_angle"));
         return meta;
     }
 };
@@ -359,8 +359,8 @@ struct get_meta<ApplianceShortCircuitOutput<sym>> {
         meta.size = sizeof(ApplianceShortCircuitOutput<sym>);  
         meta.alignment = alignof(ApplianceShortCircuitOutput<sym>);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i>("i"));
-        meta.attributes.push_back(get_data_attribute<&ApplianceShortCircuitOutput<sym>::i_angle>("i_angle"));
+        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput<sym>, &ApplianceShortCircuitOutput<sym>::i>("i"));
+        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput<sym>, &ApplianceShortCircuitOutput<sym>::i_angle>("i_angle"));
         return meta;
     }
 };
