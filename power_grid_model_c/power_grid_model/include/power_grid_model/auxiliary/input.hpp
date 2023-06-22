@@ -205,7 +205,7 @@ namespace meta_data {
 
 template<>
 struct get_meta<BaseInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BaseInput";      
         meta.size = sizeof(BaseInput);  
@@ -218,7 +218,7 @@ struct get_meta<BaseInput> {
 
 template<>
 struct get_meta<NodeInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "NodeInput";      
         meta.size = sizeof(NodeInput);  
@@ -231,7 +231,7 @@ struct get_meta<NodeInput> {
 
 template<>
 struct get_meta<BranchInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchInput";      
         meta.size = sizeof(BranchInput);  
@@ -247,7 +247,7 @@ struct get_meta<BranchInput> {
 
 template<>
 struct get_meta<Branch3Input> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3Input";      
         meta.size = sizeof(Branch3Input);  
@@ -265,7 +265,7 @@ struct get_meta<Branch3Input> {
 
 template<>
 struct get_meta<SensorInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "SensorInput";      
         meta.size = sizeof(SensorInput);  
@@ -278,7 +278,7 @@ struct get_meta<SensorInput> {
 
 template<>
 struct get_meta<ApplianceInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceInput";      
         meta.size = sizeof(ApplianceInput);  
@@ -292,7 +292,7 @@ struct get_meta<ApplianceInput> {
 
 template<>
 struct get_meta<LineInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LineInput";      
         meta.size = sizeof(LineInput);  
@@ -313,7 +313,7 @@ struct get_meta<LineInput> {
 
 template<>
 struct get_meta<LinkInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LinkInput";      
         meta.size = sizeof(LinkInput);  
@@ -325,7 +325,7 @@ struct get_meta<LinkInput> {
 
 template<>
 struct get_meta<TransformerInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "TransformerInput";      
         meta.size = sizeof(TransformerInput);  
@@ -361,7 +361,7 @@ struct get_meta<TransformerInput> {
 
 template<>
 struct get_meta<ThreeWindingTransformerInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ThreeWindingTransformerInput";      
         meta.size = sizeof(ThreeWindingTransformerInput);  
@@ -416,7 +416,7 @@ struct get_meta<ThreeWindingTransformerInput> {
 
 template<>
 struct get_meta<GenericLoadGenInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "GenericLoadGenInput";      
         meta.size = sizeof(GenericLoadGenInput);  
@@ -429,7 +429,7 @@ struct get_meta<GenericLoadGenInput> {
 
 template <bool sym>
 struct get_meta<LoadGenInput<sym>> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LoadGenInput";      
         meta.size = sizeof(LoadGenInput<sym>);  
@@ -443,7 +443,7 @@ struct get_meta<LoadGenInput<sym>> {
 
 template<>
 struct get_meta<ShuntInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ShuntInput";      
         meta.size = sizeof(ShuntInput);  
@@ -459,7 +459,7 @@ struct get_meta<ShuntInput> {
 
 template<>
 struct get_meta<SourceInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "SourceInput";      
         meta.size = sizeof(SourceInput);  
@@ -476,7 +476,7 @@ struct get_meta<SourceInput> {
 
 template<>
 struct get_meta<GenericVoltageSensorInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "GenericVoltageSensorInput";      
         meta.size = sizeof(GenericVoltageSensorInput);  
@@ -489,7 +489,7 @@ struct get_meta<GenericVoltageSensorInput> {
 
 template <bool sym>
 struct get_meta<VoltageSensorInput<sym>> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "VoltageSensorInput";      
         meta.size = sizeof(VoltageSensorInput<sym>);  
@@ -503,7 +503,7 @@ struct get_meta<VoltageSensorInput<sym>> {
 
 template<>
 struct get_meta<GenericPowerSensorInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "GenericPowerSensorInput";      
         meta.size = sizeof(GenericPowerSensorInput);  
@@ -517,7 +517,7 @@ struct get_meta<GenericPowerSensorInput> {
 
 template <bool sym>
 struct get_meta<PowerSensorInput<sym>> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "PowerSensorInput";      
         meta.size = sizeof(PowerSensorInput<sym>);  
@@ -531,7 +531,7 @@ struct get_meta<PowerSensorInput<sym>> {
 
 template<>
 struct get_meta<FaultInput> {
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultInput";      
         meta.size = sizeof(FaultInput);  

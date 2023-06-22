@@ -49,7 +49,7 @@ struct get_meta<{{ attribute_class.name }}<sym>> {
 template<>
 struct get_meta<{{ attribute_class.name }}> {
 {%- endif %}
-    constexpr MetaData operator() () const {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "{{ attribute_class.name }}";      
         meta.size = sizeof({{ attribute_class.full_name }});  
