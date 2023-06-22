@@ -88,7 +88,7 @@ namespace meta_data {
 
 template<>
 struct get_meta<BaseUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "BaseUpdate";      
         meta.size = sizeof(BaseUpdate);  
@@ -101,7 +101,7 @@ struct get_meta<BaseUpdate> {
 
 template<>
 struct get_meta<BranchUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchUpdate";      
         meta.size = sizeof(BranchUpdate);  
@@ -115,7 +115,7 @@ struct get_meta<BranchUpdate> {
 
 template<>
 struct get_meta<Branch3Update> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3Update";      
         meta.size = sizeof(Branch3Update);  
@@ -130,7 +130,7 @@ struct get_meta<Branch3Update> {
 
 template<>
 struct get_meta<ApplianceUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceUpdate";      
         meta.size = sizeof(ApplianceUpdate);  
@@ -143,7 +143,7 @@ struct get_meta<ApplianceUpdate> {
 
 template<>
 struct get_meta<TransformerUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "TransformerUpdate";      
         meta.size = sizeof(TransformerUpdate);  
@@ -156,7 +156,7 @@ struct get_meta<TransformerUpdate> {
 
 template<>
 struct get_meta<ThreeWindingTransformerUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "ThreeWindingTransformerUpdate";      
         meta.size = sizeof(ThreeWindingTransformerUpdate);  
@@ -169,7 +169,7 @@ struct get_meta<ThreeWindingTransformerUpdate> {
 
 template <bool sym>
 struct get_meta<LoadGenUpdate<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "LoadGenUpdate";      
         meta.size = sizeof(LoadGenUpdate<sym>);  
@@ -183,7 +183,7 @@ struct get_meta<LoadGenUpdate<sym>> {
 
 template<>
 struct get_meta<SourceUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "SourceUpdate";      
         meta.size = sizeof(SourceUpdate);  
@@ -197,7 +197,7 @@ struct get_meta<SourceUpdate> {
 
 template <bool sym>
 struct get_meta<VoltageSensorUpdate<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "VoltageSensorUpdate";      
         meta.size = sizeof(VoltageSensorUpdate<sym>);  
@@ -212,7 +212,7 @@ struct get_meta<VoltageSensorUpdate<sym>> {
 
 template <bool sym>
 struct get_meta<PowerSensorUpdate<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "PowerSensorUpdate";      
         meta.size = sizeof(PowerSensorUpdate<sym>);  
@@ -227,7 +227,7 @@ struct get_meta<PowerSensorUpdate<sym>> {
 
 template<>
 struct get_meta<FaultUpdate> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultUpdate";      
         meta.size = sizeof(FaultUpdate);  

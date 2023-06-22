@@ -155,7 +155,7 @@ namespace meta_data {
 
 template<>
 struct get_meta<BaseOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "BaseOutput";      
         meta.size = sizeof(BaseOutput);  
@@ -169,7 +169,7 @@ struct get_meta<BaseOutput> {
 
 template <bool sym>
 struct get_meta<NodeOutput<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "NodeOutput";      
         meta.size = sizeof(NodeOutput<sym>);  
@@ -186,7 +186,7 @@ struct get_meta<NodeOutput<sym>> {
 
 template <bool sym>
 struct get_meta<BranchOutput<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchOutput";      
         meta.size = sizeof(BranchOutput<sym>);  
@@ -207,7 +207,7 @@ struct get_meta<BranchOutput<sym>> {
 
 template <bool sym>
 struct get_meta<Branch3Output<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3Output";      
         meta.size = sizeof(Branch3Output<sym>);  
@@ -232,7 +232,7 @@ struct get_meta<Branch3Output<sym>> {
 
 template <bool sym>
 struct get_meta<ApplianceOutput<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceOutput";      
         meta.size = sizeof(ApplianceOutput<sym>);  
@@ -249,7 +249,7 @@ struct get_meta<ApplianceOutput<sym>> {
 
 template <bool sym>
 struct get_meta<VoltageSensorOutput<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "VoltageSensorOutput";      
         meta.size = sizeof(VoltageSensorOutput<sym>);  
@@ -263,7 +263,7 @@ struct get_meta<VoltageSensorOutput<sym>> {
 
 template <bool sym>
 struct get_meta<PowerSensorOutput<sym>> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "PowerSensorOutput";      
         meta.size = sizeof(PowerSensorOutput<sym>);  
@@ -277,7 +277,7 @@ struct get_meta<PowerSensorOutput<sym>> {
 
 template<>
 struct get_meta<FaultOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultOutput";      
         meta.size = sizeof(FaultOutput);  
@@ -289,7 +289,7 @@ struct get_meta<FaultOutput> {
 
 template<>
 struct get_meta<FaultShortCircuitOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultShortCircuitOutput";      
         meta.size = sizeof(FaultShortCircuitOutput);  
@@ -305,7 +305,7 @@ struct get_meta<FaultShortCircuitOutput> {
 
 template<>
 struct get_meta<NodeShortCircuitOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "NodeShortCircuitOutput";      
         meta.size = sizeof(NodeShortCircuitOutput);  
@@ -323,7 +323,7 @@ struct get_meta<NodeShortCircuitOutput> {
 
 template<>
 struct get_meta<BranchShortCircuitOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchShortCircuitOutput";      
         meta.size = sizeof(BranchShortCircuitOutput);  
@@ -343,7 +343,7 @@ struct get_meta<BranchShortCircuitOutput> {
 
 template<>
 struct get_meta<Branch3ShortCircuitOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3ShortCircuitOutput";      
         meta.size = sizeof(Branch3ShortCircuitOutput);  
@@ -367,7 +367,7 @@ struct get_meta<Branch3ShortCircuitOutput> {
 
 template<>
 struct get_meta<ApplianceShortCircuitOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceShortCircuitOutput";      
         meta.size = sizeof(ApplianceShortCircuitOutput);  
@@ -383,7 +383,7 @@ struct get_meta<ApplianceShortCircuitOutput> {
 
 template<>
 struct get_meta<SensorShortCircuitOutput> {
-    MetaData operator() () const {
+    constexpr MetaData operator() () const {
         MetaData meta{};
         meta.name = "SensorShortCircuitOutput";      
         meta.size = sizeof(SensorShortCircuitOutput);  
