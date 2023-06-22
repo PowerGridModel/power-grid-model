@@ -23,8 +23,7 @@ class Branch : public Base {
     using UpdateType = BranchUpdate;
     template <bool sym>
     using OutputType = BranchOutput<sym>;
-    template <bool sym>
-    using ShortCircuitOutputType = BranchShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = BranchShortCircuitOutput;
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final {
         return ComponentType::branch;
@@ -114,15 +113,24 @@ class Branch : public Base {
     }
 
     template <bool sym>
-    BranchShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
+    BranchShortCircuitOutput get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
         // result object
-        BranchShortCircuitOutput<sym> output{};
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.i_from = base_i_from() * cabs(i_f);
-        output.i_to = base_i_to() * cabs(i_t);
-        output.i_from_angle = arg(i_f);
-        output.i_to_angle = arg(i_t);
+        // TODO(NITISH) always output both
+        if constexpr (sym) {
+            output.i1_from = base_i_from() * cabs(i_f);
+            output.i1_to = base_i_to() * cabs(i_t);
+            output.i1_from_angle = arg(i_f);
+            output.i1_to_angle = arg(i_t);
+        }
+        else {
+            output.i_from = base_i_from() * cabs(i_f);
+            output.i_to = base_i_to() * cabs(i_t);
+            output.i_from_angle = arg(i_f);
+            output.i_to_angle = arg(i_t);
+        }
         return output;
     }
 
@@ -133,9 +141,8 @@ class Branch : public Base {
         return output;
     }
 
-    template <bool sym>
-    BranchShortCircuitOutput<sym> get_null_sc_output() const {
-        BranchShortCircuitOutput<sym> output{};
+    BranchShortCircuitOutput get_null_sc_output() const {
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

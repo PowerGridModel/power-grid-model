@@ -60,6 +60,5 @@ def test_all_datasets():
         "update",
         "sym_output",
         "asym_output",
-        "sym_sc_output",
-        "asym_sc_output",
+        "sc_output",
     }

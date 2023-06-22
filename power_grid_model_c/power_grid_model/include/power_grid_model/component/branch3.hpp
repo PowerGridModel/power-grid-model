@@ -20,8 +20,7 @@ class Branch3 : public Base {
     using UpdateType = Branch3Update;
     template <bool sym>
     using OutputType = Branch3Output<sym>;
-    template <bool sym>
-    using ShortCircuitOutputType = Branch3ShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = Branch3ShortCircuitOutput;
     static constexpr char const* name = "branch3";
     ComponentType math_model_type() const final {
         return ComponentType::branch3;
@@ -115,18 +114,29 @@ class Branch3 : public Base {
     }
 
     template <bool sym>
-    Branch3ShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i_1, ComplexValue<sym> const& i_2,
-                                                 ComplexValue<sym> const& i_3) const {
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<sym> const& i_1, ComplexValue<sym> const& i_2,
+                                            ComplexValue<sym> const& i_3) const {
         // result object
-        Branch3ShortCircuitOutput<sym> output{};
+        Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.i_1 = base_i_1() * cabs(i_1);
-        output.i_2 = base_i_2() * cabs(i_2);
-        output.i_3 = base_i_3() * cabs(i_3);
-        output.i_1_angle = arg(i_1);
-        output.i_2_angle = arg(i_2);
-        output.i_3_angle = arg(i_3);
+        // TODO(NITISH) always output both
+        if constexpr (sym) {
+            output.i1_1 = base_i_1() * cabs(i_1);
+            output.i1_2 = base_i_2() * cabs(i_2);
+            output.i1_3 = base_i_3() * cabs(i_3);
+            output.i1_1_angle = arg(i_1);
+            output.i1_2_angle = arg(i_2);
+            output.i1_3_angle = arg(i_3);
+        }
+        else {
+            output.i_1 = base_i_1() * cabs(i_1);
+            output.i_2 = base_i_2() * cabs(i_2);
+            output.i_3 = base_i_3() * cabs(i_3);
+            output.i_1_angle = arg(i_1);
+            output.i_2_angle = arg(i_2);
+            output.i_3_angle = arg(i_3);
+        }
         return output;
     }
 
@@ -137,9 +147,8 @@ class Branch3 : public Base {
         return output;
     }
 
-    template <bool sym>
-    Branch3ShortCircuitOutput<sym> get_null_sc_output() const {
-        Branch3ShortCircuitOutput<sym> output{};
+    Branch3ShortCircuitOutput get_null_sc_output() const {
+        Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

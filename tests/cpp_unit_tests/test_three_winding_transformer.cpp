@@ -375,22 +375,22 @@ TEST_CASE("Test three winding transformer") {
         ComplexValue<true> i_2{1.0 - 2.2i};
         ComplexValue<true> i_3{1.3 - 2.1i};
 
-        Branch3ShortCircuitOutput<true> sym_sc_output = vec[0].get_sc_output<true>(i_1, i_2, i_3);
+        Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output<true>(i_1, i_2, i_3);
 
         CHECK(sym_sc_output.id == 1);
         CHECK(sym_sc_output.energized);
-        CHECK(sym_sc_output.i_1 == doctest::Approx(cabs(i_1) * base_i_1));
-        CHECK(sym_sc_output.i_2 == doctest::Approx(cabs(i_2) * base_i_2));
-        CHECK(sym_sc_output.i_3 == doctest::Approx(cabs(i_3) * base_i_3));
-        CHECK(sym_sc_output.i_1_angle == doctest::Approx(arg(i_1)));
-        CHECK(sym_sc_output.i_2_angle == doctest::Approx(arg(i_2)));
-        CHECK(sym_sc_output.i_3_angle == doctest::Approx(arg(i_3)));
+        CHECK(sym_sc_output.i1_1 == doctest::Approx(cabs(i_1) * base_i_1));
+        CHECK(sym_sc_output.i1_2 == doctest::Approx(cabs(i_2) * base_i_2));
+        CHECK(sym_sc_output.i1_3 == doctest::Approx(cabs(i_3) * base_i_3));
+        CHECK(sym_sc_output.i1_1_angle == doctest::Approx(arg(i_1)));
+        CHECK(sym_sc_output.i1_2_angle == doctest::Approx(arg(i_2)));
+        CHECK(sym_sc_output.i1_3_angle == doctest::Approx(arg(i_3)));
 
         ComplexValue<false> i_1_asym{1.5 - 2.5i};
         ComplexValue<false> i_2_asym{1.0 - 2.2i};
         ComplexValue<false> i_3_asym{1.3 - 2.1i};
 
-        Branch3ShortCircuitOutput<false> asym_sc_output = vec[0].get_sc_output<false>(i_1_asym, i_2_asym, i_3_asym);
+        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output<false>(i_1_asym, i_2_asym, i_3_asym);
 
         CHECK(asym_sc_output.id == 1);
         CHECK(asym_sc_output.energized);
@@ -422,7 +422,7 @@ TEST_CASE("Test three winding transformer") {
     }
 
     SUBCASE("No source short circuit results") {
-        Branch3ShortCircuitOutput<false> output = vec[0].get_null_sc_output<false>();
+        Branch3ShortCircuitOutput output = vec[0].get_null_sc_output();
         CHECK(output.id == 1);
         CHECK(!output.energized);
         CHECK(output.i_1(2) == 0);
@@ -431,6 +431,12 @@ TEST_CASE("Test three winding transformer") {
         CHECK(output.i_1_angle(2) == 0);
         CHECK(output.i_2_angle(0) == 0);
         CHECK(output.i_3_angle(1) == 0);
+        CHECK(output.i1_1 == 0);
+        CHECK(output.i1_2 == 0);
+        CHECK(output.i1_3 == 0);
+        CHECK(output.i1_1_angle == 0);
+        CHECK(output.i1_2_angle == 0);
+        CHECK(output.i1_3_angle == 0);
     }
 
     SUBCASE("invalid input") {

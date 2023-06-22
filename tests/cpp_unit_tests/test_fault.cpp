@@ -55,11 +55,11 @@ TEST_CASE("Test fault") {
         ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
         ComplexValue<true> const i_f = i_f_pu * base_i;
 
-        FaultShortCircuitOutput<true> output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
+        FaultShortCircuitOutput output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.i_f == doctest::Approx(cabs(i_f)));
-        CHECK(output.i_f_angle == doctest::Approx(0.25 * pi));
+        CHECK(output.i1_f == doctest::Approx(cabs(i_f)));
+        CHECK(output.i1_f_angle == doctest::Approx(0.25 * pi));
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
@@ -67,7 +67,7 @@ TEST_CASE("Test fault") {
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
         ComplexValue<false> i_f = i_f_pu * base_i;
 
-        FaultShortCircuitOutput<false> output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
+        FaultShortCircuitOutput output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK((output.i_f - cabs(i_f) < numerical_tolerance).all());

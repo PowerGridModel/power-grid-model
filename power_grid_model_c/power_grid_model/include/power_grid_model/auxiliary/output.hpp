@@ -96,59 +96,62 @@ using AsymPowerSensorOutput = PowerSensorOutput<false>;
 struct FaultOutput : BaseOutput {
 };
 
-template <bool sym>
 struct FaultShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_f;  // short circuit current magnitude
-    RealValue<sym> i_f_angle;  // short circuit current angle
-};
-using SymFaultShortCircuitOutput = FaultShortCircuitOutput<true>;
-using AsymFaultShortCircuitOutput = FaultShortCircuitOutput<false>;
+    RealValue<false> i_f;  // Three phase short circuit current magnitude
+    RealValue<false> i_f_angle;  // Three phase short circuit current angle
 
-template <bool sym>
+    RealValue<true> i1_f;  // Positive sequence short circuit current magnitude
+    RealValue<true> i1_f_angle;  // Positive sequence short circuit current angle
+};
+
 struct NodeShortCircuitOutput : BaseOutput {
-    RealValue<sym> u_pu;  // Initial short circuit voltage magnitude and angle
-    RealValue<sym> u;  // Initial short circuit voltage magnitude and angle
-    RealValue<sym> u_angle;  // Initial short circuit voltage magnitude and angle
-};
-using SymNodeShortCircuitOutput = NodeShortCircuitOutput<true>;
-using AsymNodeShortCircuitOutput = NodeShortCircuitOutput<false>;
+    RealValue<false> u_pu;  // Initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<false> u;  // Initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<false> u_angle;  // Initial three phase line-to-ground short circuit voltage magnitude and angle
 
-template <bool sym>
+    RealValue<true> u1ll_pu;  // Initial positive sequence line-line short circuit voltage magnitude and angle
+    RealValue<true> u1ll;  // Initial positive sequence line-line short circuit voltage magnitude and angle
+    RealValue<true> u1ll_angle;  // Initial positive sequence line-line short circuit voltage magnitude and angle
+};
+
 struct BranchShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_from;  // Initial short circuit current flow at from-side
-    RealValue<sym> i_from_angle;  // Initial short circuit current flow at from-side
-    RealValue<sym> i_to;  // Initial short circuit current flow at to-side
-    RealValue<sym> i_to_angle;  // Initial short circuit current flow at to-side
-};
-using SymBranchShortCircuitOutput = BranchShortCircuitOutput<true>;
-using AsymBranchShortCircuitOutput = BranchShortCircuitOutput<false>;
+    RealValue<false> i_from;  // Initial three phase short circuit current flow at from-side
+    RealValue<false> i_from_angle;  // Initial three phase short circuit current flow at from-side
+    RealValue<false> i_to;  // Initial three phase short circuit current flow at to-side
+    RealValue<false> i_to_angle;  // Initial three phase short circuit current flow at to-side
 
-template <bool sym>
+    RealValue<true> i1_from;  // Initial positive sequence short circuit current flow at from-side
+    RealValue<true> i1_from_angle;  // Initial positive sequence short circuit current flow at from-side
+    RealValue<true> i1_to;  // Initial positive sequence short circuit current flow at to-side
+    RealValue<true> i1_to_angle;  // Initial positive sequence short circuit current flow at to-side
+};
+
 struct Branch3ShortCircuitOutput : BaseOutput {
-    RealValue<sym> i_1;  // Initial short circuit current flow at side 1
-    RealValue<sym> i_1_angle;  // Initial short circuit current flow at side 1
-    RealValue<sym> i_2;  // Initial short circuit current flow at side 2
-    RealValue<sym> i_2_angle;  // Initial short circuit current flow at side 2
-    RealValue<sym> i_3;  // Initial short circuit current flow at side 3
-    RealValue<sym> i_3_angle;  // Initial short circuit current flow at side 3
-};
-using SymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<true>;
-using AsymBranch3ShortCircuitOutput = Branch3ShortCircuitOutput<false>;
+    RealValue<false> i_1;  // Initial three phase short circuit current flow at side 1
+    RealValue<false> i_1_angle;  // Initial three phase short circuit current flow at side 1
+    RealValue<false> i_2;  // Initial three phase short circuit current flow at side 2
+    RealValue<false> i_2_angle;  // Initial three phase short circuit current flow at side 2
+    RealValue<false> i_3;  // Initial three phase short circuit current flow at side 3
+    RealValue<false> i_3_angle;  // Initial three phase short circuit current flow at side 3
 
-template <bool sym>
+    RealValue<true> i1_1;  // Initial positive sequence short circuit current flow at side 1
+    RealValue<true> i1_1_angle;  // Initial positive sequence short circuit current flow at side 1
+    RealValue<true> i1_2;  // Initial positive sequence short circuit current flow at side 2
+    RealValue<true> i1_2_angle;  // Initial positive sequence short circuit current flow at side 2
+    RealValue<true> i1_3;  // Initial positive sequence short circuit current flow at side 3
+    RealValue<true> i1_3_angle;  // Initial positive sequence short circuit current flow at side 3
+};
+
 struct ApplianceShortCircuitOutput : BaseOutput {
-    RealValue<sym> i;  // Initial short circuit current flow of the appliance
-    RealValue<sym> i_angle;  // Initial short circuit current flow of the appliance
+    RealValue<false> i;  // Initial three phase short circuit current flow of the appliance
+    RealValue<false> i_angle;  // Initial three phase short circuit current flow of the appliance
+    
+    RealValue<true> i1;  // Initial positive sequence short circuit current flow of the appliance
+    RealValue<true> i1_angle;  // Initial positive sequence short circuit current flow of the appliance
 };
-using SymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<true>;
-using AsymApplianceShortCircuitOutput = ApplianceShortCircuitOutput<false>;
 
-template <bool sym>
 struct SensorShortCircuitOutput : BaseOutput {
 };
-using SymSensorShortCircuitOutput = SensorShortCircuitOutput<true>;
-using AsymSensorShortCircuitOutput = SensorShortCircuitOutput<false>;
-
 
 
 // template specialization functors to get meta data
@@ -288,90 +291,122 @@ struct get_meta<FaultOutput> {
     }
 };
 
-template <bool sym>
-struct get_meta<FaultShortCircuitOutput<sym>> {
+template<>
+struct get_meta<FaultShortCircuitOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "FaultShortCircuitOutput";      
-        meta.size = sizeof(FaultShortCircuitOutput<sym>);  
-        meta.alignment = alignof(FaultShortCircuitOutput<sym>);
+        meta.size = sizeof(FaultShortCircuitOutput);  
+        meta.alignment = alignof(FaultShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput<sym>, &FaultShortCircuitOutput<sym>::i_f>("i_f"));
-        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput<sym>, &FaultShortCircuitOutput<sym>::i_f_angle>("i_f_angle"));
+
+        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f>("i_f"));
+        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f_angle>("i_f_angle"));
+
+        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i1_f>("i1_f"));
+        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i1_f_angle>("i1_f_angle"));
+
         return meta;
     }
 };
 
-template <bool sym>
-struct get_meta<NodeShortCircuitOutput<sym>> {
+template<>
+struct get_meta<NodeShortCircuitOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "NodeShortCircuitOutput";      
-        meta.size = sizeof(NodeShortCircuitOutput<sym>);  
-        meta.alignment = alignof(NodeShortCircuitOutput<sym>);
+        meta.size = sizeof(NodeShortCircuitOutput);  
+        meta.alignment = alignof(NodeShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput<sym>, &NodeShortCircuitOutput<sym>::u_pu>("u_pu"));
-        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput<sym>, &NodeShortCircuitOutput<sym>::u>("u"));
-        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput<sym>, &NodeShortCircuitOutput<sym>::u_angle>("u_angle"));
+
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_pu>("u_pu"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u>("u"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_angle>("u_angle"));
+
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll_pu>("u1ll_pu"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll>("u1ll"));
+        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll_angle>("u1ll_angle"));
+
         return meta;
     }
 };
 
-template <bool sym>
-struct get_meta<BranchShortCircuitOutput<sym>> {
+template<>
+struct get_meta<BranchShortCircuitOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "BranchShortCircuitOutput";      
-        meta.size = sizeof(BranchShortCircuitOutput<sym>);  
-        meta.alignment = alignof(BranchShortCircuitOutput<sym>);
+        meta.size = sizeof(BranchShortCircuitOutput);  
+        meta.alignment = alignof(BranchShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_from>("i_from"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_from_angle>("i_from_angle"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_to>("i_to"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput<sym>, &BranchShortCircuitOutput<sym>::i_to_angle>("i_to_angle"));
+
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from>("i_from"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from_angle>("i_from_angle"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to>("i_to"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to_angle>("i_to_angle"));
+
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_from>("i1_from"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_from_angle>("i1_from_angle"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_to>("i1_to"));
+        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_to_angle>("i1_to_angle"));
+
         return meta;
     }
 };
 
-template <bool sym>
-struct get_meta<Branch3ShortCircuitOutput<sym>> {
+template<>
+struct get_meta<Branch3ShortCircuitOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "Branch3ShortCircuitOutput";      
-        meta.size = sizeof(Branch3ShortCircuitOutput<sym>);  
-        meta.alignment = alignof(Branch3ShortCircuitOutput<sym>);
+        meta.size = sizeof(Branch3ShortCircuitOutput);  
+        meta.alignment = alignof(Branch3ShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_1>("i_1"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_1_angle>("i_1_angle"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_2>("i_2"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_2_angle>("i_2_angle"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_3>("i_3"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput<sym>, &Branch3ShortCircuitOutput<sym>::i_3_angle>("i_3_angle"));
+
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1>("i_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1_angle>("i_1_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2>("i_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2_angle>("i_2_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3>("i_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3_angle>("i_3_angle"));
+
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_1>("i1_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_1_angle>("i1_1_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_2>("i1_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_2_angle>("i1_2_angle"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_3>("i1_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_3_angle>("i1_3_angle"));
+
         return meta;
     }
 };
 
-template <bool sym>
-struct get_meta<ApplianceShortCircuitOutput<sym>> {
+template <>
+struct get_meta<ApplianceShortCircuitOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "ApplianceShortCircuitOutput";      
-        meta.size = sizeof(ApplianceShortCircuitOutput<sym>);  
-        meta.alignment = alignof(ApplianceShortCircuitOutput<sym>);
+        meta.size = sizeof(ApplianceShortCircuitOutput);  
+        meta.alignment = alignof(ApplianceShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput<sym>, &ApplianceShortCircuitOutput<sym>::i>("i"));
-        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput<sym>, &ApplianceShortCircuitOutput<sym>::i_angle>("i_angle"));
+
+        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i>("i"));
+        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i_angle>("i_angle"));
+
+        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i1>("i1"));
+        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i1_angle>("i1_angle"));
+
         return meta;
     }
 };
 
-template <bool sym>
-struct get_meta<SensorShortCircuitOutput<sym>> {
+template <>
+struct get_meta<SensorShortCircuitOutput> {
     MetaData operator() () {
         MetaData meta{};
         meta.name = "SensorShortCircuitOutput";      
-        meta.size = sizeof(SensorShortCircuitOutput<sym>);  
-        meta.alignment = alignof(SensorShortCircuitOutput<sym>);
+        meta.size = sizeof(SensorShortCircuitOutput);  
+        meta.alignment = alignof(SensorShortCircuitOutput);
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         return meta;
     }

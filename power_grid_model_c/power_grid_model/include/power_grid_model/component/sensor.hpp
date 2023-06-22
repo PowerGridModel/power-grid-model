@@ -20,8 +20,7 @@ class Sensor : public Base {
    public:
     static constexpr char const* name = "sensor";
     using InputType = SensorInput;
-    template <bool sym>
-    using ShortCircuitOutputType = SensorShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = SensorShortCircuitOutput;
 
     // constructor
     Sensor(SensorInput const& sensor_input) : Base{sensor_input}, measured_object_{sensor_input.measured_object} {

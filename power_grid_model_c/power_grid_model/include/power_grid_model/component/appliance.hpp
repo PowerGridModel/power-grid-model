@@ -22,8 +22,7 @@ class Appliance : public Base {
     using UpdateType = ApplianceUpdate;
     template <bool sym>
     using OutputType = ApplianceOutput<sym>;
-    template <bool sym>
-    using ShortCircuitOutputType = ApplianceShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = ApplianceShortCircuitOutput;
     static constexpr char const* name = "appliance";
 
     Appliance(ApplianceInput const& appliance_input, double u)
@@ -64,9 +63,8 @@ class Appliance : public Base {
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
-    template <bool sym>
-    ApplianceShortCircuitOutput<sym> get_null_sc_output() const {
-        ApplianceShortCircuitOutput<sym> output{};
+    ApplianceShortCircuitOutput get_null_sc_output() const {
+        ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -97,11 +95,18 @@ class Appliance : public Base {
         return output;
     }
     template <bool sym>
-    ApplianceShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i) const {
-        ApplianceShortCircuitOutput<sym> output{};
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<sym> const& i) const {
+        ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        output.i = base_i_ * cabs(i);
-        output.i_angle = arg(i * injection_direction());
+        // TODO(NITISH) always output both
+        if constexpr (sym) {
+            output.i1 = base_i_ * cabs(i);
+            output.i1_angle = arg(i * injection_direction());
+        }
+        else {
+            output.i = base_i_ * cabs(i);
+            output.i_angle = arg(i * injection_direction());
+        }
         return output;
     }
     template <bool sym>
