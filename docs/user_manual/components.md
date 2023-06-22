@@ -117,7 +117,8 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 * type name: 'line'
 
 `line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance. A cable is
-also modeled as `line`. A `line` can only connect two nodes with the same rated voltage.
+also modeled as `line`. A `line` can only connect two nodes with the same rated voltage. 
+If `i_n` is not provided, `loading` of line will be a `nan` value.
 
 #### Input
 
@@ -131,7 +132,7 @@ also modeled as `line`. A `line` can only connect two nodes with the same rated 
 | `x0`   | `double`  | ohm (Ω)    | zero-sequence serial reactance             | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both zero |
 | `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance            | &#10024; only for asymmetric calculations | &#10060; |                                   |
 | `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan𝛿)     | &#10024; only for asymmetric calculations | &#10060; |                                   |
-| `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10004;                  | &#10060; |               `> 0`               |
+| `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10060;                  | &#10060; |               `> 0`               |
 
 ### Link
 
@@ -177,7 +178,7 @@ levels.
 | `x_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding reactance at to-side, if relevant                                                                                                                                                                                           |     &#10060; default zero     | &#10060; |                                                                        |
 
 ```{note} 
-it can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
+It can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
 increased.
 ```
 
