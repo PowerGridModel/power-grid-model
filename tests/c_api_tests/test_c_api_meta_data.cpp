@@ -59,7 +59,7 @@ TEST_CASE("C API Meta Data") {
     }
 
     SUBCASE("Endian") {
-        CHECK((bool)PGM_is_little_endian(hl) == is_little_endian());
+        CHECK(static_cast<bool>(PGM_is_little_endian(hl)) == is_little_endian());
     }
 
     SUBCASE("Check error handling for unknown name") {

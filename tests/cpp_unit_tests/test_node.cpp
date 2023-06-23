@@ -20,12 +20,6 @@ TEST_CASE("Test node") {
     CHECK(sym_res.q == 0.0);
     CHECK(sym_res.id == 1);
 
-    auto sym_sc_res = node.get_sc_output<true>(1.0);
-    CHECK(sym_sc_res.u == 10.0e3);
-    CHECK(sym_sc_res.u_angle == 0.0);
-    CHECK(sym_sc_res.u_pu == 1.0);
-    CHECK(sym_sc_res.id == 1);
-
     ComplexValue<false> u, s;
     u << 1.0, a2, a;
     s << 0.0, DoubleComplex(2.1, 2.2), DoubleComplex(3.1, 3.2);
@@ -35,6 +29,8 @@ TEST_CASE("Test node") {
     CHECK(asym_res.u_pu(0) == doctest::Approx(1.0));
     CHECK(asym_res.p(1) == doctest::Approx(2.1e6 / 3.0));
     CHECK(asym_res.q(2) == doctest::Approx(3.2e6 / 3.0));
+
+    // TODO(NITISH) sym sc output case
 
     auto asym_sc_res = node.get_sc_output<false>(u);
     CHECK(asym_sc_res.u(1) == doctest::Approx(10.0e3 / sqrt3));
@@ -48,11 +44,11 @@ TEST_CASE("Test node") {
     CHECK(asym_res.q(2) == 0.0);
     CHECK(!asym_res.energized);
 
-    asym_sc_res = node.get_null_sc_output<false>();
-    CHECK(asym_res.u(0) == 0.0);
-    CHECK(asym_res.p(1) == 0.0);
-    CHECK(asym_res.q(2) == 0.0);
-    CHECK(!asym_res.energized);
+    asym_sc_res = node.get_null_sc_output();
+    CHECK(asym_sc_res.u(1) == 0.0);
+    CHECK(asym_sc_res.u_pu(2) == 0.0);
+    CHECK(asym_sc_res.u_angle(0) == 0.0);
+    CHECK(!asym_sc_res.energized);
 
     SUBCASE("Test energized function") {
         CHECK(node.energized(true));
