@@ -21,23 +21,23 @@ struct BaseInput {
 };
 
 struct NodeInput : BaseInput {
-    double u_rated;  // Rated line-line voltage
+    double u_rated;  // rated line-line voltage
 };
 
 struct BranchInput : BaseInput {
-    ID from_node;  // Node IDs to which this branch is connected at both sides
-    ID to_node;  // Node IDs to which this branch is connected at both sides
-    IntS from_status;  // If the branch is connected at each side
-    IntS to_status;  // If the branch is connected at each side
+    ID from_node;  // node IDs to which this branch is connected at both sides
+    ID to_node;  // node IDs to which this branch is connected at both sides
+    IntS from_status;  // whether the branch is connected at each side
+    IntS to_status;  // whether the branch is connected at each side
 };
 
 struct Branch3Input : BaseInput {
-    ID node_1;  // Node IDs to which this branch3 is connected at three sides
-    ID node_2;  // Node IDs to which this branch3 is connected at three sides
-    ID node_3;  // Node IDs to which this branch3 is connected at three sides
-    IntS status_1;  // If the branch is connected at each side
-    IntS status_2;  // If the branch is connected at each side
-    IntS status_3;  // If the branch is connected at each side
+    ID node_1;  // node IDs to which this branch3 is connected at three sides
+    ID node_2;  // node IDs to which this branch3 is connected at three sides
+    ID node_3;  // node IDs to which this branch3 is connected at three sides
+    IntS status_1;  // whether the branch is connected at each side
+    IntS status_2;  // whether the branch is connected at each side
+    IntS status_3;  // whether the branch is connected at each side
 };
 
 struct SensorInput : BaseInput {
@@ -45,8 +45,8 @@ struct SensorInput : BaseInput {
 };
 
 struct ApplianceInput : BaseInput {
-    ID node;  // Node ID to which this appliance is connected
-    IntS status;  // If the appliance is connected
+    ID node;  // node ID to which this appliance is connected
+    IntS status;  // whether the appliance is connected
 };
 
 struct LineInput : BranchInput {
@@ -138,13 +138,13 @@ struct ThreeWindingTransformerInput : Branch3Input {
 };
 
 struct GenericLoadGenInput : ApplianceInput {
-    LoadGenType type;  // Type of the load_gen
+    LoadGenType type;  // type of the load_gen
 };
 
 template <bool sym>
 struct LoadGenInput : GenericLoadGenInput {
-    RealValue<sym> p_specified;  // Specified active/reactive power
-    RealValue<sym> q_specified;  // Specified active/reactive power
+    RealValue<sym> p_specified;  // specified active/reactive power
+    RealValue<sym> q_specified;  // specified active/reactive power
 };
 using SymLoadGenInput = LoadGenInput<true>;
 using AsymLoadGenInput = LoadGenInput<false>;
@@ -190,6 +190,9 @@ using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
 
 struct FaultInput : BaseInput {
+    IntS status;  // whether the appliance is connected
+    FaultType fault_type;  // type of the fault
+    FaultPhase fault_phase;  // phase(s) of the fault
     ID fault_object;  // ID of the faulted object
     double r_f;  // short circuit impedance
     double x_f;  // short circuit impedance
@@ -202,7 +205,7 @@ namespace meta_data {
 
 template<>
 struct get_meta<BaseInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BaseInput";      
         meta.size = sizeof(BaseInput);  
@@ -215,7 +218,7 @@ struct get_meta<BaseInput> {
 
 template<>
 struct get_meta<NodeInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "NodeInput";      
         meta.size = sizeof(NodeInput);  
@@ -228,7 +231,7 @@ struct get_meta<NodeInput> {
 
 template<>
 struct get_meta<BranchInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "BranchInput";      
         meta.size = sizeof(BranchInput);  
@@ -244,7 +247,7 @@ struct get_meta<BranchInput> {
 
 template<>
 struct get_meta<Branch3Input> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "Branch3Input";      
         meta.size = sizeof(Branch3Input);  
@@ -262,7 +265,7 @@ struct get_meta<Branch3Input> {
 
 template<>
 struct get_meta<SensorInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "SensorInput";      
         meta.size = sizeof(SensorInput);  
@@ -275,7 +278,7 @@ struct get_meta<SensorInput> {
 
 template<>
 struct get_meta<ApplianceInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ApplianceInput";      
         meta.size = sizeof(ApplianceInput);  
@@ -289,7 +292,7 @@ struct get_meta<ApplianceInput> {
 
 template<>
 struct get_meta<LineInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LineInput";      
         meta.size = sizeof(LineInput);  
@@ -310,7 +313,7 @@ struct get_meta<LineInput> {
 
 template<>
 struct get_meta<LinkInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LinkInput";      
         meta.size = sizeof(LinkInput);  
@@ -322,7 +325,7 @@ struct get_meta<LinkInput> {
 
 template<>
 struct get_meta<TransformerInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "TransformerInput";      
         meta.size = sizeof(TransformerInput);  
@@ -358,7 +361,7 @@ struct get_meta<TransformerInput> {
 
 template<>
 struct get_meta<ThreeWindingTransformerInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ThreeWindingTransformerInput";      
         meta.size = sizeof(ThreeWindingTransformerInput);  
@@ -413,7 +416,7 @@ struct get_meta<ThreeWindingTransformerInput> {
 
 template<>
 struct get_meta<GenericLoadGenInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "GenericLoadGenInput";      
         meta.size = sizeof(GenericLoadGenInput);  
@@ -426,7 +429,7 @@ struct get_meta<GenericLoadGenInput> {
 
 template <bool sym>
 struct get_meta<LoadGenInput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "LoadGenInput";      
         meta.size = sizeof(LoadGenInput<sym>);  
@@ -440,7 +443,7 @@ struct get_meta<LoadGenInput<sym>> {
 
 template<>
 struct get_meta<ShuntInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "ShuntInput";      
         meta.size = sizeof(ShuntInput);  
@@ -456,7 +459,7 @@ struct get_meta<ShuntInput> {
 
 template<>
 struct get_meta<SourceInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "SourceInput";      
         meta.size = sizeof(SourceInput);  
@@ -473,7 +476,7 @@ struct get_meta<SourceInput> {
 
 template<>
 struct get_meta<GenericVoltageSensorInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "GenericVoltageSensorInput";      
         meta.size = sizeof(GenericVoltageSensorInput);  
@@ -486,7 +489,7 @@ struct get_meta<GenericVoltageSensorInput> {
 
 template <bool sym>
 struct get_meta<VoltageSensorInput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "VoltageSensorInput";      
         meta.size = sizeof(VoltageSensorInput<sym>);  
@@ -500,7 +503,7 @@ struct get_meta<VoltageSensorInput<sym>> {
 
 template<>
 struct get_meta<GenericPowerSensorInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "GenericPowerSensorInput";      
         meta.size = sizeof(GenericPowerSensorInput);  
@@ -514,7 +517,7 @@ struct get_meta<GenericPowerSensorInput> {
 
 template <bool sym>
 struct get_meta<PowerSensorInput<sym>> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "PowerSensorInput";      
         meta.size = sizeof(PowerSensorInput<sym>);  
@@ -528,12 +531,15 @@ struct get_meta<PowerSensorInput<sym>> {
 
 template<>
 struct get_meta<FaultInput> {
-    MetaData operator() () {
+    MetaData operator() () const {
         MetaData meta{};
         meta.name = "FaultInput";      
         meta.size = sizeof(FaultInput);  
         meta.alignment = alignof(FaultInput);
         meta.attributes = get_meta<BaseInput>{}().attributes;
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::status>("status"));
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_type>("fault_type"));
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_phase>("fault_phase"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_object>("fault_object"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::r_f>("r_f"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::x_f>("x_f"));

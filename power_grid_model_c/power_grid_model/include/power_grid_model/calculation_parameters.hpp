@@ -63,6 +63,8 @@ struct BranchMathOutput {
 struct FaultCalcParam {
     Idx math_fault_object{-1};
     DoubleComplex y_fault;
+    FaultType fault_type;
+    FaultPhase fault_phase;
 };
 
 // appliance math output, always injection direction
