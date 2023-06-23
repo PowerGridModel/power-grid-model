@@ -404,16 +404,6 @@
                     "description": "ID of the faulty object"
                 },
                 {
-                    "data_type": "IntS",
-                    "names": "status",
-                    "description": "Whether the fault is active (object is faulty)"
-                },
-                {
-                    "data_type": "FaultType",
-                    "names": "fault_type",
-                    "description": "type of fault"
-                },
-                {
                     "data_type": "double",
                     "names": [
                         "r_f",

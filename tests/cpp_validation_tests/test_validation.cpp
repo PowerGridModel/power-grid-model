@@ -287,7 +287,6 @@ std::map<std::pair<std::string, bool>, CalculationFunc> const calculation_type_m
     {{"power_flow", false}, &MainModel::calculate_power_flow<false>},
     {{"state_estimation", true}, &MainModel::calculate_state_estimation<true>},
     {{"state_estimation", false}, &MainModel::calculate_state_estimation<false>},
-    // {{"short_circuit", true}, &MainModel::calculate_short_circuit<true>},
     // {{"short_circuit", false}, &MainModel::calculate_short_circuit<false>},
 };
 
@@ -315,10 +314,15 @@ struct CaseParam {
 std::string get_output_type(std::string const& calculation_type, bool sym) {
     using namespace std::string_literals;
 
-    auto const sym_prefix = sym ? "sym_"s : "asym_"s;
-    auto const sc_prefix = calculation_type == "short_circuit"s ? "sc_"s : ""s;
-
-    return sym_prefix + sc_prefix + "output"s;
+    if (calculation_type == "short_circuit"s) {
+        return "sc_output"s;
+    }
+    else if (sym) {
+        return "sym_output"s;
+    }
+    else {
+        return "asym_output"s;
+    }
 }
 
 void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,

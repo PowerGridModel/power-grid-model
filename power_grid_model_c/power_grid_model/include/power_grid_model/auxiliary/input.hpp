@@ -193,7 +193,7 @@ struct FaultInput : BaseInput {
     IntS status;  // whether the appliance is connected
     FaultType fault_type;  // type of the fault
     FaultPhase fault_phase;  // phase(s) of the fault
-    ID fault_object;  // ID of the faulted object
+    ID fault_object;  // ID of the faulty object
     double r_f;  // short circuit impedance
     double x_f;  // short circuit impedance
 };
