@@ -210,8 +210,8 @@ class ShortCircuitSolver {
             phase_2 = 2;
         }
         else if (short_circuit_phases == ShortCircuitPhases::bc) {
-            phase_1 = 2;
-            phase_2 = 3;
+            phase_1 = 1;
+            phase_2 = 2;
         }
     }
 };
