@@ -20,8 +20,7 @@ class Fault final : public Base {
     using UpdateType = FaultUpdate;
     template <bool sym>
     using OutputType = FaultOutput;
-    template <bool sym>
-    using ShortCircuitOutputType = FaultShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
     ComponentType math_model_type() const final {
         return ComponentType::fault;
@@ -29,9 +28,12 @@ class Fault final : public Base {
 
     Fault(FaultInput const& fault_input)
         : Base{fault_input},
+          status_{static_cast<bool>(fault_input.status)},
+          fault_type_{fault_input.fault_type},
+          fault_phase_{fault_input.fault_phase},
           fault_object_{fault_input.fault_object},
-          r_f_{is_nan(fault_input.r_f) ? (double)0.0 : fault_input.r_f},
-          x_f_{is_nan(fault_input.x_f) ? (double)0.0 : fault_input.x_f} {
+          r_f_{is_nan(fault_input.r_f) ? double{} : fault_input.r_f},
+          x_f_{is_nan(fault_input.x_f) ? double{} : fault_input.x_f} {
     }
 
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
@@ -64,22 +66,32 @@ class Fault final : public Base {
 
     // energized
     template <bool sym>
-    FaultShortCircuitOutput<sym> get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) const {
+    FaultShortCircuitOutput get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
         // result object
-        FaultShortCircuitOutput<sym> output{};
+        FaultShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate current magnitude and angle
-        output.i_f = cabs(i_f);
-        output.i_f_angle = arg(i_f);
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
+            output.i_f = cabs(i_f);
+            output.i_f_angle = arg(i_f);
+        }
         return output;
     }
 
     // update faulted object
     UpdateChange update(FaultUpdate const& update) {
         assert(update.id == id());
+        set_status(update.status);
+        if (update.fault_type != FaultType::default_value) {
+            fault_type_ = update.fault_type;
+        }
+        if (update.fault_phase != FaultPhase::default_value) {
+            fault_phase_ = update.fault_phase;
+        }
         if (update.fault_object != na_IntID) {
             fault_object_ = update.fault_object;
         }
@@ -90,13 +102,36 @@ class Fault final : public Base {
         return is_connected_to_source;
     }
 
-    // getter
+    bool status() const {
+        return status_;
+    }
+
+    // setter
+    bool set_status(IntS new_status) {
+        if (new_status == na_IntS)
+            return false;
+        if (static_cast<bool>(new_status) == status_)
+            return false;
+        status_ = static_cast<bool>(new_status);
+        return true;
+    }
+
+    // getters
+    FaultType get_fault_type() const {
+        return fault_type_;
+    }
+    FaultPhase get_fault_phase() const {
+        return fault_phase_;
+    }
     ID get_fault_object() const {
         return fault_object_;
     }
 
    private:
     // short circuit parameters
+    bool status_;
+    FaultType fault_type_;
+    FaultPhase fault_phase_;
     ID fault_object_;
     double r_f_;
     double x_f_;

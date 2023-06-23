@@ -21,8 +21,7 @@ class Node final : public Base {
     using InputType = NodeInput;
     template <bool sym>
     using OutputType = NodeOutput<sym>;
-    template <bool sym>
-    using ShortCircuitOutputType = NodeShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = NodeShortCircuitOutput;
     static constexpr char const* name = "node";
     ComponentType math_model_type() const final {
         return ComponentType::node;
@@ -55,6 +54,7 @@ class Node final : public Base {
         output.u_pu = cabs(u_pu);
         output.u = u_scale<false> * u_rated_ * output.u_pu;
         output.u_angle = arg(u_pu);
+
         return output;
     }
     NodeShortCircuitOutput get_sc_output(ComplexValue<true> const& u_pu) const {
@@ -68,7 +68,7 @@ class Node final : public Base {
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
-    template <bool sym>
+
     NodeShortCircuitOutput get_null_sc_output() const {
         NodeShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);

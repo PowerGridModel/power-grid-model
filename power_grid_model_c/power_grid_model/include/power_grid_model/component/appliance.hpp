@@ -22,14 +22,13 @@ class Appliance : public Base {
     using UpdateType = ApplianceUpdate;
     template <bool sym>
     using OutputType = ApplianceOutput<sym>;
-    template <bool sym>
-    using ShortCircuitOutputType = ApplianceShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = ApplianceShortCircuitOutput;
     static constexpr char const* name = "appliance";
 
     Appliance(ApplianceInput const& appliance_input, double u)
         : Base{appliance_input},
           node_{appliance_input.node},
-          status_{(bool)appliance_input.status},
+          status_{appliance_input.status != 0},
           base_i_{base_power_3p / u / sqrt3} {
     }
 
@@ -51,9 +50,9 @@ class Appliance : public Base {
     bool set_status(IntS new_status) {
         if (new_status == na_IntS)
             return false;
-        if ((bool)new_status == status_)
+        if (static_cast<bool>(new_status) == status_)
             return false;
-        status_ = (bool)new_status;
+        status_ = static_cast<bool>(new_status);
         return true;
     }
 
@@ -96,10 +95,13 @@ class Appliance : public Base {
         return output;
     }
     ApplianceShortCircuitOutput get_sc_output(ComplexValue<false> const& i) const {
-        ApplianceShortCircuitOutput output{};
+       ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        output.i = base_i_ * cabs(i);
-        output.i_angle = arg(i * injection_direction());
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
+            output.i = base_i_ * cabs(i);
+            output.i_angle = arg(i * injection_direction());
+        }
         return output;
     }
     ApplianceShortCircuitOutput get_sc_output(ComplexValue<true> const& i) const {

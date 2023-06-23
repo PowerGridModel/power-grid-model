@@ -19,7 +19,7 @@
                 {
                     "data_type": "double",
                     "names": "u_rated",
-                    "description": "Rated line-line voltage"
+                    "description": "rated line-line voltage"
                 }
             ]
         },
@@ -33,7 +33,7 @@
                         "from_node",
                         "to_node"
                     ],
-                    "description": "Node IDs to which this branch is connected at both sides"
+                    "description": "node IDs to which this branch is connected at both sides"
                 },
                 {
                     "data_type": "IntS",
@@ -41,7 +41,7 @@
                         "from_status",
                         "to_status"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "whether the branch is connected at each side"
                 }
             ]
         },
@@ -56,7 +56,7 @@
                         "node_2",
                         "node_3"
                     ],
-                    "description": "Node IDs to which this branch3 is connected at three sides"
+                    "description": "node IDs to which this branch3 is connected at three sides"
                 },
                 {
                     "data_type": "IntS",
@@ -65,7 +65,7 @@
                         "status_2",
                         "status_3"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "whether the branch is connected at each side"
                 }
             ]
         },
@@ -87,12 +87,12 @@
                 {
                     "data_type": "ID",
                     "names": "node",
-                    "description": "Node ID to which this appliance is connected"
+                    "description": "node ID to which this appliance is connected"
                 },
                 {
                     "data_type": "IntS",
                     "names": "status",
-                    "description": "If the appliance is connected"
+                    "description": "whether the appliance is connected"
                 }
             ]
         },
@@ -258,7 +258,7 @@
                 {
                     "data_type": "LoadGenType",
                     "names": "type",
-                    "description": "Type of the load_gen"
+                    "description": "type of the load_gen"
                 }
             ]
         },
@@ -273,7 +273,7 @@
                         "p_specified",
                         "q_specified"
                     ],
-                    "description": "Specified active/reactive power"
+                    "description": "specified active/reactive power"
                 }
             ]
         },
@@ -383,6 +383,21 @@
             "name": "FaultInput",
             "base": "BaseInput",
             "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "whether the appliance is connected"
+                },
+                {
+                    "data_type": "FaultType",
+                    "names": "fault_type",
+                    "description": "type of the fault"
+                },
+                {
+                    "data_type": "FaultPhase",
+                    "names": "fault_phase",
+                    "description": "phase(s) of the fault"
+                },
                 {
                     "data_type": "ID",
                     "names": "fault_object",
