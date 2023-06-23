@@ -23,8 +23,7 @@ class Branch : public Base {
     using UpdateType = BranchUpdate;
     template <bool sym>
     using OutputType = BranchOutput<sym>;
-    template <bool sym>
-    using ShortCircuitOutputType = BranchShortCircuitOutput<sym>;
+    using ShortCircuitOutputType = BranchShortCircuitOutput;
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final {
         return ComponentType::branch;
@@ -34,8 +33,8 @@ class Branch : public Base {
         : Base{branch_input},
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},
-          from_status_{(bool)branch_input.from_status},
-          to_status_{(bool)branch_input.to_status} {
+          from_status_{static_cast<bool>(branch_input.from_status)},
+          to_status_{static_cast<bool>(branch_input.to_status)} {
         if (from_node_ == to_node_) {
             throw InvalidBranch{id(), from_node_};
         }
@@ -114,15 +113,18 @@ class Branch : public Base {
     }
 
     template <bool sym>
-    BranchShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
+    BranchShortCircuitOutput get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
         // result object
-        BranchShortCircuitOutput<sym> output{};
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.i_from = base_i_from() * cabs(i_f);
-        output.i_to = base_i_to() * cabs(i_t);
-        output.i_from_angle = arg(i_f);
-        output.i_to_angle = arg(i_t);
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
+            output.i_from = base_i_from() * cabs(i_f);
+            output.i_to = base_i_to() * cabs(i_t);
+            output.i_from_angle = arg(i_f);
+            output.i_to_angle = arg(i_t);
+        }
         return output;
     }
 
@@ -133,9 +135,8 @@ class Branch : public Base {
         return output;
     }
 
-    template <bool sym>
-    BranchShortCircuitOutput<sym> get_null_sc_output() const {
-        BranchShortCircuitOutput<sym> output{};
+    BranchShortCircuitOutput get_null_sc_output() const {
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -146,12 +147,12 @@ class Branch : public Base {
         bool const set_to = new_to_status != na_IntS;
         bool changed = false;
         if (set_from) {
-            changed = changed || (from_status_ != (bool)new_from_status);
-            from_status_ = (bool)new_from_status;
+            changed = changed || (from_status_ != static_cast<bool>(new_from_status));
+            from_status_ = static_cast<bool>(new_from_status);
         }
         if (set_to) {
-            changed = changed || (to_status_ != (bool)new_to_status);
-            to_status_ = (bool)new_to_status;
+            changed = changed || (to_status_ != static_cast<bool>(new_to_status));
+            to_status_ = static_cast<bool>(new_to_status);
         }
         return changed;
     }

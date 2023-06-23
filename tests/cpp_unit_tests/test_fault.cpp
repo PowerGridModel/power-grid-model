@@ -8,9 +8,12 @@
 namespace power_grid_model {
 
 TEST_CASE("Test fault") {
-    Fault fault{{{1}, 2, 3.0, 4.0}};
+    Fault fault{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, 3.0, 4.0}};
     CHECK(fault.math_model_type() == ComponentType::fault);
-    CHECK(fault.get_fault_object() == 2);
+    CHECK(fault.status());
+    CHECK(fault.get_fault_type() == FaultType::two_phase_to_ground);
+    CHECK(fault.get_fault_phase() == FaultPhase::ab);
+    CHECK(fault.get_fault_object() == 4);
 
     double const u_rated = 400.0;
     double const base_i = base_power_3p / (u_rated * sqrt3);
@@ -30,7 +33,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with nan impedance input") {
-        Fault fault_nan_imp{{{1}, 2, nan, nan}};
+        Fault fault_nan_imp{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, nan, nan}};
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
@@ -50,13 +53,12 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test get_short_circuit_output sym") {
         ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
-        ComplexValue<true> const i_f = i_f_pu * base_i;
 
-        FaultShortCircuitOutput<true> output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
+        FaultShortCircuitOutput output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.i_f == doctest::Approx(cabs(i_f)));
-        CHECK(output.i_f_angle == doctest::Approx(0.25 * pi));
+
+        // TODO add fault output test post implementation
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
@@ -64,7 +66,7 @@ TEST_CASE("Test fault") {
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
         ComplexValue<false> i_f = i_f_pu * base_i;
 
-        FaultShortCircuitOutput<false> output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
+        FaultShortCircuitOutput output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK((output.i_f - cabs(i_f) < numerical_tolerance).all());
@@ -77,16 +79,23 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test update") {
-        FaultUpdate const fault_update{{1}, 10};
+        FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::c, 10};
         UpdateChange updated = fault.update(fault_update);
 
         CHECK(!updated.param);
         CHECK(!updated.topo);
+
+        CHECK_FALSE(fault.status());
+        CHECK(fault.get_fault_type() == FaultType::two_phase);
+        CHECK(fault.get_fault_phase() == FaultPhase::c);
         CHECK(fault.get_fault_object() == 10);
 
         // update without updating
-        FaultUpdate const fault_update_nan{{1}, na_IntID};
+        FaultUpdate const fault_update_nan{{1}, na_IntS, FaultType::default_value, FaultPhase::default_value, na_IntID};
         fault.update(fault_update_nan);
+        CHECK_FALSE(fault.status());
+        CHECK(fault.get_fault_type() == FaultType::two_phase);
+        CHECK(fault.get_fault_phase() == FaultPhase::c);
         CHECK(fault.get_fault_object() == 10);
     }
 }
