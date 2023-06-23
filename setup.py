@@ -5,7 +5,6 @@
 import os
 import platform
 import shutil
-import sys
 from itertools import chain
 from pathlib import Path
 from typing import List
@@ -166,16 +165,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     else:
         # flags for Linux and Mac
         cflags += [
+            "-std=c++20",
             "-O3",
             "-fvisibility=hidden",
         ]
-        # add c++20 or c++2a flag depending on gcc version
-        # TODO remove this if musllinux upgrade to newer gcc version
-        if "GCC 9." in sys.version:
-            cflags += ["-std=c++2a"]
-        else:
-            cflags += ["-std=c++20"]
-        lflags += ["-lpthread", "-O3"]
         # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version

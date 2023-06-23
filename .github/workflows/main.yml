@@ -224,8 +224,50 @@ jobs:
       - name: Test
         run: pytest
 
+  # TODO, remove this after official musllinux 1.2 image is there 
+  build-musllinux:
+    runs-on: ubuntu-latest
+    container: python:3.9-alpine3.17
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: version
+          path: .
+      
+      - name: Install dependency
+        run: |
+          apk update
+          apk add gcc g++
+          pip install build auditwheel patchelf
+          
+      - name: Build
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          python -m build --wheel .
+          auditwheel show dist/*
+          auditwheel repair dist/*
+          ls -al wheelhouse/
+          
+      - name: Test
+        run: |
+          pip install wheelhouse/*
+          pip install pytest pytest-cov
+          pytest
+      
+      - name: Keep wheel files
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheelhouse
+          path: ./wheelhouse/*.whl  
+
   publish-wheels:
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
+    # TODO remove build-musllinux after official musllinux 1.2 image is there 
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, build-musllinux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
