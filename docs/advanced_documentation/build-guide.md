@@ -53,6 +53,8 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 * MSVC >= 17.5
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
+* Clang CL >= 14.0
+  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
 **macOS**
 

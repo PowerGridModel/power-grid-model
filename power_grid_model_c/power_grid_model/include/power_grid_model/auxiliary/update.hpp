@@ -91,7 +91,7 @@ struct get_meta<BaseUpdate> {
         meta.size = sizeof(BaseUpdate);  
         meta.alignment = alignof(BaseUpdate);
         
-        meta.attributes.push_back(get_data_attribute<&BaseUpdate::id>("id"));
+        meta.attributes.push_back(get_data_attribute<BaseUpdate, &BaseUpdate::id>("id"));
         return meta;
     }
 };
@@ -104,8 +104,8 @@ struct get_meta<BranchUpdate> {
         meta.size = sizeof(BranchUpdate);  
         meta.alignment = alignof(BranchUpdate);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchUpdate::from_status>("from_status"));
-        meta.attributes.push_back(get_data_attribute<&BranchUpdate::to_status>("to_status"));
+        meta.attributes.push_back(get_data_attribute<BranchUpdate, &BranchUpdate::from_status>("from_status"));
+        meta.attributes.push_back(get_data_attribute<BranchUpdate, &BranchUpdate::to_status>("to_status"));
         return meta;
     }
 };
@@ -118,9 +118,9 @@ struct get_meta<Branch3Update> {
         meta.size = sizeof(Branch3Update);  
         meta.alignment = alignof(Branch3Update);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&Branch3Update::status_1>("status_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Update::status_2>("status_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Update::status_3>("status_3"));
+        meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::status_1>("status_1"));
+        meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::status_2>("status_2"));
+        meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::status_3>("status_3"));
         return meta;
     }
 };
@@ -133,7 +133,7 @@ struct get_meta<ApplianceUpdate> {
         meta.size = sizeof(ApplianceUpdate);  
         meta.alignment = alignof(ApplianceUpdate);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ApplianceUpdate::status>("status"));
+        meta.attributes.push_back(get_data_attribute<ApplianceUpdate, &ApplianceUpdate::status>("status"));
         return meta;
     }
 };
@@ -146,7 +146,7 @@ struct get_meta<TransformerUpdate> {
         meta.size = sizeof(TransformerUpdate);  
         meta.alignment = alignof(TransformerUpdate);
         meta.attributes = get_meta<BranchUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&TransformerUpdate::tap_pos>("tap_pos"));
+        meta.attributes.push_back(get_data_attribute<TransformerUpdate, &TransformerUpdate::tap_pos>("tap_pos"));
         return meta;
     }
 };
@@ -159,7 +159,7 @@ struct get_meta<ThreeWindingTransformerUpdate> {
         meta.size = sizeof(ThreeWindingTransformerUpdate);  
         meta.alignment = alignof(ThreeWindingTransformerUpdate);
         meta.attributes = get_meta<Branch3Update>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ThreeWindingTransformerUpdate::tap_pos>("tap_pos"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos>("tap_pos"));
         return meta;
     }
 };
@@ -172,8 +172,8 @@ struct get_meta<LoadGenUpdate<sym>> {
         meta.size = sizeof(LoadGenUpdate<sym>);  
         meta.alignment = alignof(LoadGenUpdate<sym>);
         meta.attributes = get_meta<ApplianceUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&LoadGenUpdate<sym>::p_specified>("p_specified"));
-        meta.attributes.push_back(get_data_attribute<&LoadGenUpdate<sym>::q_specified>("q_specified"));
+        meta.attributes.push_back(get_data_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified>("p_specified"));
+        meta.attributes.push_back(get_data_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified>("q_specified"));
         return meta;
     }
 };
@@ -186,8 +186,8 @@ struct get_meta<SourceUpdate> {
         meta.size = sizeof(SourceUpdate);  
         meta.alignment = alignof(SourceUpdate);
         meta.attributes = get_meta<ApplianceUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&SourceUpdate::u_ref>("u_ref"));
-        meta.attributes.push_back(get_data_attribute<&SourceUpdate::u_ref_angle>("u_ref_angle"));
+        meta.attributes.push_back(get_data_attribute<SourceUpdate, &SourceUpdate::u_ref>("u_ref"));
+        meta.attributes.push_back(get_data_attribute<SourceUpdate, &SourceUpdate::u_ref_angle>("u_ref_angle"));
         return meta;
     }
 };
@@ -200,9 +200,9 @@ struct get_meta<VoltageSensorUpdate<sym>> {
         meta.size = sizeof(VoltageSensorUpdate<sym>);  
         meta.alignment = alignof(VoltageSensorUpdate<sym>);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorUpdate<sym>::u_sigma>("u_sigma"));
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorUpdate<sym>::u_measured>("u_measured"));
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorUpdate<sym>::u_angle_measured>("u_angle_measured"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma>("u_sigma"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured>("u_measured"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured>("u_angle_measured"));
         return meta;
     }
 };
@@ -215,9 +215,9 @@ struct get_meta<PowerSensorUpdate<sym>> {
         meta.size = sizeof(PowerSensorUpdate<sym>);  
         meta.alignment = alignof(PowerSensorUpdate<sym>);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::power_sigma>("power_sigma"));
-        meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::p_measured>("p_measured"));
-        meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::q_measured>("q_measured"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>("power_sigma"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>("p_measured"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>("q_measured"));
         return meta;
     }
 };
@@ -230,7 +230,7 @@ struct get_meta<FaultUpdate> {
         meta.size = sizeof(FaultUpdate);  
         meta.alignment = alignof(FaultUpdate);
         meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&FaultUpdate::fault_object>("fault_object"));
+        meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::fault_object>("fault_object"));
         return meta;
     }
 };
