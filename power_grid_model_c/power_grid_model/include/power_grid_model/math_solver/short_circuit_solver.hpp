@@ -83,12 +83,12 @@ class ShortCircuitSolver {
         IdxVector const& fault_bus_indptr = *fault_bus_indptr_;
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            Idx const data_sequence = bus_entry[bus_number];  // rename to diagonal_position
+            Idx const diagonal_position = bus_entry[bus_number];
             // add all sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
-                mat_data_[data_sequence] += y_source;  // add y_source to the diagonal of Ybus
+                mat_data_[diagonal_position] += y_source;  // add y_source to the diagonal of Ybus
                 rhs[bus_number] +=
                     y_source * input.source[source_number] * source_voltage_ref;  // Y_source * U_source * c
             }
