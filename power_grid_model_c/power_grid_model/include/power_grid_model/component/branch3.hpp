@@ -114,11 +114,10 @@ class Branch3 : public Base {
         return output;
     }
 
-    template <bool sym>
-    Branch3ShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i_1, ComplexValue<sym> const& i_2,
-                                                 ComplexValue<sym> const& i_3) const {
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<false> const& i_1, ComplexValue<false> const& i_2,
+                                                 ComplexValue<false> const& i_3) const {
         // result object
-        Branch3ShortCircuitOutput<sym> output{};
+        Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
         output.i_1 = base_i_1() * cabs(i_1);
@@ -129,6 +128,13 @@ class Branch3 : public Base {
         output.i_3_angle = arg(i_3);
         return output;
     }
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<true> const& i_1, ComplexValue<true> const& i_2,
+                                                 ComplexValue<true> const& i_3) const {
+        ComplexValue<false> iabc_1{i_1, i_1 * a2, i_1 * a};
+        ComplexValue<false> iabc_2{i_2, i_2 * a2, i_2 * a};
+        ComplexValue<false> iabc_3{i_3, i_3 * a2, i_3 * a};
+        return get_sc_output(iabc_1, iabc_2, iabc_3);
+    }
 
     template <bool sym>
     Branch3Output<sym> get_null_output() const {
@@ -137,9 +143,8 @@ class Branch3 : public Base {
         return output;
     }
 
-    template <bool sym>
-    Branch3ShortCircuitOutput<sym> get_null_sc_output() const {
-        Branch3ShortCircuitOutput<sym> output{};
+    Branch3ShortCircuitOutput get_null_sc_output() const {
+        Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
