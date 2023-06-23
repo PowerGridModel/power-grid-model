@@ -118,14 +118,8 @@ class Branch : public Base {
         BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        // TODO(NITISH) always output both
-        if constexpr (sym) {
-            output.i1_from = base_i_from() * cabs(i_f);
-            output.i1_to = base_i_to() * cabs(i_t);
-            output.i1_from_angle = arg(i_f);
-            output.i1_to_angle = arg(i_t);
-        }
-        else {
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
             output.i_from = base_i_from() * cabs(i_f);
             output.i_to = base_i_to() * cabs(i_t);
             output.i_from_angle = arg(i_f);

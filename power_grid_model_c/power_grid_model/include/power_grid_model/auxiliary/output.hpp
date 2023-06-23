@@ -99,17 +99,12 @@ struct FaultOutput : BaseOutput {
 struct FaultShortCircuitOutput : BaseOutput {
     RealValue<false> i_f;  // three phase short circuit current magnitude
     RealValue<false> i_f_angle;  // three phase short circuit current angle
-    RealValue<true> i1_f;  // positive sequence short circuit current magnitude
-    RealValue<true> i1_f_angle;  // positive sequence short circuit current angle
 };
 
 struct NodeShortCircuitOutput : BaseOutput {
     RealValue<false> u_pu;  // initial three phase line-to-ground short circuit voltage magnitude and angle
     RealValue<false> u;  // initial three phase line-to-ground short circuit voltage magnitude and angle
     RealValue<false> u_angle;  // initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<true> u1ll_pu;  // initial positive line-to-line sequence short circuit voltage magnitude and angle
-    RealValue<true> u1ll;  // initial positive line-to-line sequence short circuit voltage magnitude and angle
-    RealValue<true> u1ll_angle;  // initial positive line-to-line sequence short circuit voltage magnitude and angle
 };
 
 struct BranchShortCircuitOutput : BaseOutput {
@@ -117,10 +112,6 @@ struct BranchShortCircuitOutput : BaseOutput {
     RealValue<false> i_from_angle;  // initial three phase short circuit current flow at from-side
     RealValue<false> i_to;  // initial three phase short circuit current flow at to-side
     RealValue<false> i_to_angle;  // initial three phase short circuit current flow at to-side
-    RealValue<true> i1_from;  // initial positive sequence short circuit current flow at from-side
-    RealValue<true> i1_from_angle;  // initial positive sequence short circuit current flow at from-side
-    RealValue<true> i1_to;  // initial positive sequence short circuit current flow at to-side
-    RealValue<true> i1_to_angle;  // initial positive sequence short circuit current flow at to-side
 };
 
 struct Branch3ShortCircuitOutput : BaseOutput {
@@ -130,19 +121,11 @@ struct Branch3ShortCircuitOutput : BaseOutput {
     RealValue<false> i_2_angle;  // initial three phase short circuit current flow at side 2
     RealValue<false> i_3;  // initial three phase short circuit current flow at side 3
     RealValue<false> i_3_angle;  // initial three phase short circuit current flow at side 3
-    RealValue<true> i1_1;  // initial positive sequence short circuit current flow at side 1
-    RealValue<true> i1_1_angle;  // initial positive sequence short circuit current flow at side 1
-    RealValue<true> i1_2;  // initial positive sequence short circuit current flow at side 2
-    RealValue<true> i1_2_angle;  // initial positive sequence short circuit current flow at side 2
-    RealValue<true> i1_3;  // initial positive sequence short circuit current flow at side 3
-    RealValue<true> i1_3_angle;  // initial positive sequence short circuit current flow at side 3
 };
 
 struct ApplianceShortCircuitOutput : BaseOutput {
     RealValue<false> i;  // initial three phase short circuit current flow of the appliance
     RealValue<false> i_angle;  // initial three phase short circuit current flow of the appliance
-    RealValue<true> i1;  // initial positive sequence short circuit current flow of the appliance
-    RealValue<true> i1_angle;  // initial positive sequence short circuit current flow of the appliance
 };
 
 struct SensorShortCircuitOutput : BaseOutput {
@@ -297,8 +280,6 @@ struct get_meta<FaultShortCircuitOutput> {
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f>("i_f"));
         meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f_angle>("i_f_angle"));
-        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i1_f>("i1_f"));
-        meta.attributes.push_back(get_data_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i1_f_angle>("i1_f_angle"));
         return meta;
     }
 };
@@ -314,9 +295,6 @@ struct get_meta<NodeShortCircuitOutput> {
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_pu>("u_pu"));
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u>("u"));
         meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_angle>("u_angle"));
-        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll_pu>("u1ll_pu"));
-        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll>("u1ll"));
-        meta.attributes.push_back(get_data_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u1ll_angle>("u1ll_angle"));
         return meta;
     }
 };
@@ -333,10 +311,6 @@ struct get_meta<BranchShortCircuitOutput> {
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from_angle>("i_from_angle"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to>("i_to"));
         meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to_angle>("i_to_angle"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_from>("i1_from"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_from_angle>("i1_from_angle"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_to>("i1_to"));
-        meta.attributes.push_back(get_data_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i1_to_angle>("i1_to_angle"));
         return meta;
     }
 };
@@ -355,12 +329,6 @@ struct get_meta<Branch3ShortCircuitOutput> {
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2_angle>("i_2_angle"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3>("i_3"));
         meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3_angle>("i_3_angle"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_1>("i1_1"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_1_angle>("i1_1_angle"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_2>("i1_2"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_2_angle>("i1_2_angle"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_3>("i1_3"));
-        meta.attributes.push_back(get_data_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i1_3_angle>("i1_3_angle"));
         return meta;
     }
 };
@@ -375,8 +343,6 @@ struct get_meta<ApplianceShortCircuitOutput> {
         meta.attributes = get_meta<BaseOutput>{}().attributes;
         meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i>("i"));
         meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i_angle>("i_angle"));
-        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i1>("i1"));
-        meta.attributes.push_back(get_data_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i1_angle>("i1_angle"));
         return meta;
     }
 };

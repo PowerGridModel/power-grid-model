@@ -51,13 +51,8 @@ class Node final : public Base {
     NodeShortCircuitOutput get_sc_output(ComplexValue<sym> const& u_pu) const {
         NodeShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        // TODO(NITISH) always output both
-        if constexpr (sym) {
-            output.u1ll_pu = cabs(u_pu);
-            output.u1ll = u_scale<sym> * u_rated_ * output.u1ll_pu;
-            output.u1ll_angle = arg(u_pu);
-        }
-        else {
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
             output.u_pu = cabs(u_pu);
             output.u = u_scale<sym> * u_rated_ * output.u_pu;
             output.u_angle = arg(u_pu);

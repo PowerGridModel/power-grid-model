@@ -58,8 +58,8 @@ TEST_CASE("Test fault") {
         FaultShortCircuitOutput output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.i1_f == doctest::Approx(cabs(i_f)));
-        CHECK(output.i1_f_angle == doctest::Approx(0.25 * pi));
+
+        // TODO(NITISH) sym sc output case
     }
 
     SUBCASE("Test get_short_circuit_output asym") {

@@ -379,12 +379,8 @@ TEST_CASE("Test three winding transformer") {
 
         CHECK(sym_sc_output.id == 1);
         CHECK(sym_sc_output.energized);
-        CHECK(sym_sc_output.i1_1 == doctest::Approx(cabs(i_1) * base_i_1));
-        CHECK(sym_sc_output.i1_2 == doctest::Approx(cabs(i_2) * base_i_2));
-        CHECK(sym_sc_output.i1_3 == doctest::Approx(cabs(i_3) * base_i_3));
-        CHECK(sym_sc_output.i1_1_angle == doctest::Approx(arg(i_1)));
-        CHECK(sym_sc_output.i1_2_angle == doctest::Approx(arg(i_2)));
-        CHECK(sym_sc_output.i1_3_angle == doctest::Approx(arg(i_3)));
+
+        // TODO(NITISH) sym sc output case
 
         ComplexValue<false> i_1_asym{1.5 - 2.5i};
         ComplexValue<false> i_2_asym{1.0 - 2.2i};
@@ -431,12 +427,6 @@ TEST_CASE("Test three winding transformer") {
         CHECK(output.i_1_angle(2) == 0);
         CHECK(output.i_2_angle(0) == 0);
         CHECK(output.i_3_angle(1) == 0);
-        CHECK(output.i1_1 == 0);
-        CHECK(output.i1_2 == 0);
-        CHECK(output.i1_3 == 0);
-        CHECK(output.i1_1_angle == 0);
-        CHECK(output.i1_2_angle == 0);
-        CHECK(output.i1_3_angle == 0);
     }
 
     SUBCASE("invalid input") {

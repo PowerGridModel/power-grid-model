@@ -138,10 +138,8 @@ TEST_CASE("Test line") {
         BranchShortCircuitOutput output = branch.get_sc_output<true>(if_sc, it_sc);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.i1_from == doctest::Approx(cabs(if_sc) * base_i));
-        CHECK(output.i1_to == doctest::Approx(cabs(it_sc) * base_i));
-        CHECK(output.i1_from_angle == doctest::Approx(arg(if_sc)));
-        CHECK(output.i1_to_angle == doctest::Approx(arg(it_sc)));
+
+        // TODO(NITISH) sym sc output case
     }
 
     SUBCASE("Symmetric results with direct power and current output") {
@@ -187,10 +185,6 @@ TEST_CASE("Test line") {
         CHECK(output.i_to(1) == 0.0);
         CHECK(output.i_from_angle(0) == 0.0);
         CHECK(output.i_to_angle(1) == 0.0);
-        CHECK(output.i1_from == 0.0);
-        CHECK(output.i1_to == 0.0);
-        CHECK(output.i1_from_angle == 0.0);
-        CHECK(output.i1_to_angle == 0.0);
     }
 
     SUBCASE("Asymmetric results") {

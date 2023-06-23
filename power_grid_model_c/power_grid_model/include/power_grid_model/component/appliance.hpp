@@ -98,12 +98,8 @@ class Appliance : public Base {
     ApplianceShortCircuitOutput get_sc_output(ComplexValue<sym> const& i) const {
         ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        // TODO(NITISH) always output both
-        if constexpr (sym) {
-            output.i1 = base_i_ * cabs(i);
-            output.i1_angle = arg(i * injection_direction());
-        }
-        else {
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
             output.i = base_i_ * cabs(i);
             output.i_angle = arg(i * injection_direction());
         }

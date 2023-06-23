@@ -182,16 +182,6 @@
                     "data_type": "RealValue<false>",
                     "names": "i_f_angle",
                     "description": "three phase short circuit current angle"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": "i1_f",
-                    "description": "positive sequence short circuit current magnitude"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": "i1_f_angle",
-                    "description": "positive sequence short circuit current angle"
                 }
             ]
         },
@@ -208,15 +198,6 @@
                         "u_angle"
                     ],
                     "description": "initial three phase line-to-ground short circuit voltage magnitude and angle"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "u1ll_pu",
-                        "u1ll",
-                        "u1ll_angle"
-                    ],
-                    "description": "initial positive line-to-line sequence short circuit voltage magnitude and angle"
                 }
             ]
         },
@@ -240,22 +221,6 @@
                         "i_to_angle"
                     ],
                     "description": "initial three phase short circuit current flow at to-side"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "i1_from",
-                        "i1_from_angle"
-                    ],
-                    "description": "initial positive sequence short circuit current flow at from-side"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "i1_to",
-                        "i1_to_angle"
-                    ],
-                    "description": "initial positive sequence short circuit current flow at to-side"
                 }
             ]
         },
@@ -287,30 +252,6 @@
                         "i_3_angle"
                     ],
                     "description": "initial three phase short circuit current flow at side 3"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "i1_1",
-                        "i1_1_angle"
-                    ],
-                    "description": "initial positive sequence short circuit current flow at side 1"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "i1_2",
-                        "i1_2_angle"
-                    ],
-                    "description": "initial positive sequence short circuit current flow at side 2"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "i1_3",
-                        "i1_3_angle"
-                    ],
-                    "description": "initial positive sequence short circuit current flow at side 3"
                 }
             ]
         },
@@ -326,14 +267,6 @@
                         "i_angle"
                     ],
                     "description": "initial three phase short circuit current flow of the appliance"
-                },
-                {
-                    "data_type": "RealValue<true>",
-                    "names": [
-                        "i1",
-                        "i1_angle"
-                    ],
-                    "description": "initial positive sequence short circuit current flow of the appliance"
                 }
             ]
         },

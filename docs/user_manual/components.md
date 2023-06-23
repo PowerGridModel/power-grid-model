@@ -58,14 +58,11 @@ The `p` and `q` output of injection follows the `generator` reference direction 
 
 #### Short circuit output
 
-| name         | data type   | unit     | description                                     |
-| ------------ | ----------- | -------- | ----------------------------------------------- |
-| `u_pu`       | `double[3]` | -        | three phase per-unit voltage magnitude          |
-| `u_angle`    | `double[3]` | rad      | three phase voltage angle                       |
-| `u`          | `double[3]` | volt (V) | three phase voltage magnitude (line-neutral)    |
-| `u1ll_pu`    | `double`    | -        | positive sequence per-unit voltage magnitude    |
-| `u1ll_angle` | `double`    | rad      | positive sequence voltage angle                 |
-| `u1ll`       | `double`    | volt (V) | positive sequence voltage magnitude (line-line) |
+| name      | data type         | unit     | description                      |
+| --------- | ----------------- | -------- | -------------------------------- |
+| `u_pu`    | `RealValueOutput` | -        | per-unit voltage magnitude       |
+| `u_angle` | `RealValueOutput` | rad      | voltage angle                    |
+| `u`       | `RealValueOutput` | volt (V) | voltage magnitude (line-neutral) |
 
 ## Branch
 
@@ -101,16 +98,12 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 
 #### Short circuit output
 
-| name            | data type   | unit       | description                                  |
-| --------------- | ----------- | ---------- | -------------------------------------------- |
-| `i_from`        | `double[3]` | ampere (A) | three phase current at from-side             |
-| `i_from_angle`  | `double[3]` | rad        | three phase current angle at from-side       |
-| `i_to`          | `double[3]` | ampere (A) | three phase current at to-side               |
-| `i_to_angle`    | `double[3]` | rad        | three phase current angle at to-side         |
-| `i1_from`       | `double`    | ampere (A) | positive sequence current at from-side       |
-| `i1_from_angle` | `double`    | rad        | positive sequence current angle at from-side |
-| `i1_to`         | `double`    | ampere (A) | positive sequence current at to-side         |
-| `i1_to_angle`   | `double`    | rad        | positive sequence current angle at to-side   |
+| name           | data type         | unit       | description                |
+| -------------- | ----------------- | ---------- | -------------------------- |
+| `i_from`       | `RealValueOutput` | ampere (A) | current at from-side       |
+| `i_from_angle` | `RealValueOutput` | rad        | current angle at from-side |
+| `i_to`         | `RealValueOutput` | ampere (A) | current at to-side         |
+| `i_to_angle`   | `RealValueOutput` | rad        | current angle at to-side   |
 
 ### Line
 
@@ -221,20 +214,14 @@ switches are always defined at side 1, 2, or 3 of the branch. In reality such sw
 
 #### Short circuit output
 
-| name         | data type   | unit       | description                               |
-| ------------ | ----------- | ---------- | ----------------------------------------- |
-| `i_1`        | `double[3]` | ampere (A) | three phase current at side 1             |
-| `i_1_angle`  | `double[3]` | rad        | three phase current angle at side 1       |
-| `i_2`        | `double[3]` | ampere (A) | three phase current at side 2             |
-| `i_2_angle`  | `double[3]` | rad        | three phase current angle at side 2       |
-| `i_3`        | `double[3]` | ampere (A) | three phase current at side 3             |
-| `i_3_angle`  | `double[3]` | rad        | three phase current angle at side 3       |
-| `i1_1`       | `double`    | ampere (A) | positive sequence current at side 1       |
-| `i1_1_angle` | `double`    | rad        | positive sequence current angle at side 1 |
-| `i1_2`       | `double`    | ampere (A) | positive sequence current at side 2       |
-| `i1_2_angle` | `double`    | rad        | positive sequence current angle at side 2 |
-| `i1_3`       | `double`    | ampere (A) | positive sequence current at side 3       |
-| `i1_3_angle` | `double`    | rad        | positive sequence current angle at side 3 |
+| name        | data type         | unit       | description             |
+| ----------- | ----------------- | ---------- | ----------------------- |
+| `i_1`       | `RealValueOutput` | ampere (A) | current at side 1       |
+| `i_1_angle` | `RealValueOutput` | rad        | current angle at side 1 |
+| `i_2`       | `RealValueOutput` | ampere (A) | current at side 2       |
+| `i_2_angle` | `RealValueOutput` | rad        | current angle at side 2 |
+| `i_3`       | `RealValueOutput` | ampere (A) | current at side 3       |
+| `i_3_angle` | `RealValueOutput` | rad        | current angle at side 3 |
 
 ### Three-Winding Transformer
 
@@ -322,12 +309,10 @@ the `appliance` and the `node`. The reference direction for power flows is menti
 
 #### Short circuit output
 
-| name       | data type   | unit       | description                     |
-| ---------- | ----------- | ---------- | ------------------------------- |
-| `i`        | `double[3]` | ampere (A) | three phase current             |
-| `i_angle`  | `double[3]` | rad        | three phase current angle       |
-| `i1`       | `double`    | ampere (A) | positive sequence current       |
-| `i1_angle` | `double`    | rad        | positive sequence current angle |
+| name      | data type         | unit       | description   |
+| --------- | ----------------- | ---------- | ------------- |
+| `i`       | `RealValueOutput` | ampere (A) | current       |
+| `i_angle` | `RealValueOutput` | rad        | current angle |
 
 ### Source
 
@@ -521,9 +506,7 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 A `fault` has no steady state output.
 
 #### Short circuit output
-| name         | data type   | unit       | description                     |
-| ------------ | ----------- | ---------- | ------------------------------- |
-| `i_f`        | `double[3]` | ampere (A) | three phase current             |
-| `i_f_angle`  | `double[3]` | rad        | three phase current angle       |
-| `i1_f`       | `double`    | ampere (A) | positive sequence current       |
-| `i1_f_angle` | `double`    | rad        | positive sequence current angle |
+| name        | data type         | unit       | description   |
+| ----------- | ----------------- | ---------- | ------------- |
+| `i_f`       | `RealValueOutput` | ampere (A) | current       |
+| `i_f_angle` | `RealValueOutput` | rad        | current angle |

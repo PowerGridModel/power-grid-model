@@ -90,8 +90,8 @@ TEST_CASE("Test source") {
         ApplianceShortCircuitOutput const sym_sc_result = source.get_sc_output<true>(i);
         CHECK(sym_sc_result.id == 1);
         CHECK(sym_sc_result.energized);
-        CHECK(sym_sc_result.i1 == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(sym_sc_result.i1_angle == doctest::Approx(arg(1.0 + 2.0i)));
+
+        // TODO(NITISH) sym sc output case
     }
 
     SUBCASE("test source asym results; u as input") {
@@ -147,8 +147,6 @@ TEST_CASE("Test source") {
         CHECK(asym_sc_result.i(2) == doctest::Approx(0.0));
         CHECK(asym_sc_result.i_angle(0) == doctest::Approx(0.0));
         CHECK(asym_sc_result.i_angle(1) == doctest::Approx(0.0));
-        CHECK(asym_sc_result.i1 == doctest::Approx(0.0));
-        CHECK(asym_sc_result.i1_angle == doctest::Approx(0.0));
     }
 
     SUBCASE("test update") {

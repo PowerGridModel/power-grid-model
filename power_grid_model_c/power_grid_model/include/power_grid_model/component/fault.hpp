@@ -74,12 +74,8 @@ class Fault final : public Base {
         FaultShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate current magnitude and angle
-        // TODO(NITISH) always output both
-        if constexpr (sym) {
-            output.i1_f = cabs(i_f);
-            output.i1_f_angle = arg(i_f);
-        }
-        else {
+        // TODO(NITISH) convert sym output
+        if constexpr (!sym) {
             output.i_f = cabs(i_f);
             output.i_f_angle = arg(i_f);
         }

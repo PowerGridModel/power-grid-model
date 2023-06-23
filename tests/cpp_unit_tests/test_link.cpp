@@ -79,10 +79,8 @@ TEST_CASE("Test link") {
         BranchShortCircuitOutput output = branch.get_sc_output<true>(if_sc, it_sc);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.i1_from == doctest::Approx(cabs(if_sc) * base_i_from));
-        CHECK(output.i1_to == doctest::Approx(cabs(it_sc) * base_i_to));
-        CHECK(output.i1_from_angle == doctest::Approx(arg(if_sc)));
-        CHECK(output.i1_to_angle == doctest::Approx(arg(it_sc)));
+
+        // TODO(NITISH) sym output case
     }
 
     SUBCASE("Asymmetric results") {
