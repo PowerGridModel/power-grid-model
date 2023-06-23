@@ -53,7 +53,6 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test get_short_circuit_output sym") {
         ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
-        ComplexValue<true> const i_f = i_f_pu * base_i;
 
         FaultShortCircuitOutput output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
         CHECK(output.id == 1);
