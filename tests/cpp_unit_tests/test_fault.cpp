@@ -58,7 +58,7 @@ TEST_CASE("Test fault") {
         CHECK(output.id == 1);
         CHECK(output.energized);
 
-        // TODO(NITISH) sym sc output case
+        // TODO add fault output test post implementation
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
