@@ -113,10 +113,9 @@ class Branch : public Base {
         return output;
     }
 
-    template <bool sym>
-    BranchShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
+    BranchShortCircuitOutput get_sc_output(ComplexValue<false> const& i_f, ComplexValue<false> const& i_t) const {
         // result object
-        BranchShortCircuitOutput<sym> output{};
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
         output.i_from = base_i_from() * cabs(i_f);
@@ -126,6 +125,13 @@ class Branch : public Base {
         return output;
     }
 
+    BranchShortCircuitOutput get_sc_output(ComplexValue<true> const& i_f, ComplexValue<true> const& i_t) const {
+        // Convert the input of only positive sequence to abc
+        ComplexValue<false> iabc_f{i_f, i_f * a2, i_f * a};
+        ComplexValue<false> iabc_t{i_t, i_t * a2, i_t * a};
+        return get_sc_output(iabc_f, iabc_t);
+    }
+
     template <bool sym>
     BranchOutput<sym> get_null_output() const {
         BranchOutput<sym> output{};
@@ -133,9 +139,8 @@ class Branch : public Base {
         return output;
     }
 
-    template <bool sym>
-    BranchShortCircuitOutput<sym> get_null_sc_output() const {
-        BranchShortCircuitOutput<sym> output{};
+    BranchShortCircuitOutput get_null_sc_output() const {
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

@@ -64,9 +64,8 @@ class Appliance : public Base {
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
-    template <bool sym>
-    ApplianceShortCircuitOutput<sym> get_null_sc_output() const {
-        ApplianceShortCircuitOutput<sym> output{};
+    ApplianceShortCircuitOutput get_null_sc_output() const {
+        ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -96,13 +95,16 @@ class Appliance : public Base {
         }
         return output;
     }
-    template <bool sym>
-    ApplianceShortCircuitOutput<sym> get_sc_output(ComplexValue<sym> const& i) const {
-        ApplianceShortCircuitOutput<sym> output{};
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<false> const& i) const {
+        ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         output.i = base_i_ * cabs(i);
         output.i_angle = arg(i * injection_direction());
         return output;
+    }
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<true> const& i) const {
+        ComplexValue<false> iabc{i, i * a2, i * a};
+        return get_sc_output(iabc);
     }
     template <bool sym>
     ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
