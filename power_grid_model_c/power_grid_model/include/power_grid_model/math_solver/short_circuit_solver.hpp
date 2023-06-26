@@ -28,32 +28,8 @@ class ShortCircuitSolver {
           mat_data_(y_bus.nnz_lu()) {
     }
 
-    ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitType short_circuit_type,
-                                                  ShortCircuitPhases short_circuit_phases, double source_voltage_ref,
-                                                  YBus<sym> const& y_bus, ShortCircuitInput const& input) {
-        // TODO: put the (a)sym checks below in separate (private) function
-        // calculation type (sym/asym) should match the short circuit type (sym/asym)
-        if constexpr (sym) {
-            if (short_circuit_type != ShortCircuitType::three_phase) {
-                throw InvalidShortCircuitType(sym, short_circuit_type)
-            }
-        }
-        else {
-            if (short_circuit_type == ShortCircuitType::three_phase) {
-                throw InvalidShortCircuitType(sym, short_circuit_type)
-            }
-        }
-        // the number of phases in short_circuit_type should match the phases specified in short_circuit_phases
-        if (short_circuit_type == ShortCircuitType::three_phase) {
-            if (short_circuit_phases != ShortCircuitPhases::abc)
-                throw InvalidShortCircuitPhases(short_circuit_type, short_circuit_phases);
-        }
-        else {
-            if (short_circuit_phases == ShortCircuitPhases::abc) {
-                throw InvalidShortCircuitPhases(short_circuit_type, short_circuit_phases);
-            }
-        }
-
+    ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
+                                                  ShortCircuitInput const& input) {
         // set phase 1 and 2 index for single and two phase faults
         int phase_1{-1};
         int phase_2{-1};

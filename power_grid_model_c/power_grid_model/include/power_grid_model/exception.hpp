@@ -9,6 +9,7 @@
 #include <exception>
 #include <string>
 
+#include "enum.hpp"
 #include "power_grid_model.hpp"
 
 namespace power_grid_model {
@@ -162,7 +163,7 @@ class UnknownAttributeName : public PowerGridError {
 
 class InvalidShortCircuitType : public PowerGridError {
    public:
-    InvalidShortCircuitType(bool sym, ShortCircuitType short_circuit_type) {
+    InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
         append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
                    ") does not match the calculation type (symmetric=" + std::to_string(sym) + ")\n");
     }
@@ -170,7 +171,7 @@ class InvalidShortCircuitType : public PowerGridError {
 
 class InvalidShortCircuitPhases : public PowerGridError {
    public:
-    InvalidShortCircuitPhases(ShortCircuitType short_circuit_type, ShortCircuitPhases short_circuit_phases) {
+    InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
         append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
                    ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
                    ")\n");
