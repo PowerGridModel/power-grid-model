@@ -30,6 +30,8 @@ class ShortCircuitSolver {
 
     ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
+        // For one calculation all faults should be of the same type and have the same phase
+        assert_all_fault_type_phase_equal_(input.faults);
         // set phase 1 and 2 index for single and two phase faults
         int phase_1{-1};
         int phase_2{-1};
@@ -188,6 +190,17 @@ class ShortCircuitSolver {
         else if (short_circuit_phases == ShortCircuitPhases::bc) {
             phase_1 = 1;
             phase_2 = 2;
+        }
+    }
+
+    void assert_all_fault_type_phase_equal_(const std::vector<FaultCalcParam>& vec) {
+        assert(!vec.empty());  // Assert that the vector is not empty
+
+        const FaultPhase phase = vec[0].fault_phase;
+        const FaultType type = vec[0].fault_type;
+        for (size_t i = 1; i < vec.size(); ++i) {
+            assert(vec[i].fault_phase == phase);  // Assert that each phase is equal to the first phase
+            assert(vec[i].fault_type == type);    // Assert that each type is equal to the first type
         }
     }
 };
