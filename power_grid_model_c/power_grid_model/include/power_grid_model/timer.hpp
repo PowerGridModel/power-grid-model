@@ -14,7 +14,7 @@
 namespace power_grid_model {
 
 class Timer {
-   protected:
+   private:
     CalculationInfo *info_;
     int code_;
     std::string name_;
