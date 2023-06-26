@@ -135,8 +135,8 @@ struct DataAttribute {
     CompareValueFunc compare_value;
 };
 
-template <class Base, auto member_ptr>
-requires std::is_same_v<Base, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
+template <class BaseType, auto member_ptr>
+requires std::is_same_v<BaseType, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
 inline size_t get_offset() {
     using struct_type = typename trait_pointer_to_member<decltype(member_ptr)>::struct_type;
     struct_type const obj{};
@@ -147,8 +147,8 @@ constexpr bool is_little_endian() {
     return std::endian::native == std::endian::little;
 }
 
-template <class Base, auto member_ptr>
-requires std::is_same_v<Base, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
+template <class BaseType, auto member_ptr>
+requires std::is_same_v<BaseType, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
 inline DataAttribute get_data_attribute(std::string const& name) {
     using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
     using single_data_type = data_type<value_type>;
@@ -156,7 +156,7 @@ inline DataAttribute get_data_attribute(std::string const& name) {
     attr.name = name;
     attr.numpy_type = single_data_type::numpy_type;
     attr.ctype = single_data_type::ctype;
-    attr.offset = get_offset<Base, member_ptr>();
+    attr.offset = get_offset<BaseType, member_ptr>();
     attr.size = sizeof(value_type);
     if constexpr (single_data_type::ndim > 0) {
         attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
