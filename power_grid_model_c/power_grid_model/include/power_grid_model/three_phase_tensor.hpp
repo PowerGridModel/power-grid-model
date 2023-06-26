@@ -125,7 +125,8 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime));
+concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
+                      static_cast<Idx>(T::ColsAtCompileTime));  // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
