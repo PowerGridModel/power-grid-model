@@ -139,11 +139,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     template <class CompType, class ForwardIterator>
-    std::enable_if_t<std::is_base_of_v<Base, CompType>> add_component(ForwardIterator begin, ForwardIterator end) {
+    requires std::derived_from<CompType, Base>
+    void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         // check forward iterator
-        static_assert(std::is_base_of_v<std::forward_iterator_tag,
-                                        typename std::iterator_traits<ForwardIterator>::iterator_category>);
+        static_assert(std::derived_from<typename std::iterator_traits<ForwardIterator>::iterator_category,
+                                        std::forward_iterator_tag>);
         size_t size = std::distance(begin, end);
         components_.template reserve<CompType>(size);
         // loop to add component
@@ -719,11 +720,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output node
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Node, Component>,
-        ResIt>
+    template <bool sym, std::same_as<Node> Component, class ResIt>
+    requires std::derived_from<typename std::iterator_traits<ResIt>::iterator_category, std::forward_iterator_tag> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
@@ -738,11 +736,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output branch
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<Branch, Component>,
-        ResIt>
+    template <bool sym, std::derived_from<Branch> Component, class ResIt>
+    requires std::derived_from<typename std::iterator_traits<ResIt>::iterator_category, std::forward_iterator_tag> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
@@ -757,11 +752,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output branch3
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<Branch3, Component>,
-        ResIt>
+    template <bool sym, std::derived_from<Branch3> Component, class ResIt>
+    requires std::derived_from<typename std::iterator_traits<ResIt>::iterator_category, std::forward_iterator_tag> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
@@ -779,11 +771,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output source, load_gen, shunt individually
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Appliance, Component>,
-        ResIt>
+    template <bool sym, std::same_as<Appliance> Component, class ResIt>
+    requires std::derived_from<typename std::iterator_traits<ResIt>::iterator_category, std::forward_iterator_tag> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         res_it = output_result<sym, Source>(math_output, res_it);
@@ -793,11 +782,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output source
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Source, Component>,
-        ResIt>
+    template <bool sym, std::same_as<Source> Component, class ResIt>
+    requires std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
@@ -811,11 +797,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output load gen
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<GenericLoadGen, Component>,
-        ResIt>
+    template <bool sym, std::derived_from<GenericLoadGen> Component, class ResIt>
+    requires std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(
@@ -830,11 +813,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output shunt
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Shunt, Component>,
-        ResIt>
+    template <bool sym, std::same_as<Shunt> Component, class ResIt>
+    requires std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
@@ -848,11 +828,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output voltage sensor
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<GenericVoltageSensor, Component>,
-        ResIt>
+    template <bool sym, std::derived_from<GenericVoltageSensor> Component, class ResIt>
+    requires std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(
@@ -869,11 +846,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output power sensor
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<GenericPowerSensor, Component>,
-        ResIt>
+    template <bool sym, std::derived_from<GenericPowerSensor> Component, class ResIt>
+    requires std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> ResIt
     output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(
