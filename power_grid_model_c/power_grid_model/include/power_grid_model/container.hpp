@@ -246,7 +246,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
     template <class GettableBaseType, class StorageableSubType>
-    requires std::is_base_of_v<GettableBaseType, StorageableSubType>
+    requires std::derived_from<StorageableSubType, GettableBaseType>
     struct select_get_item_func_ptr<GettableBaseType, StorageableSubType> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
             &Container::get_raw<GettableBaseType, StorageableSubType>;

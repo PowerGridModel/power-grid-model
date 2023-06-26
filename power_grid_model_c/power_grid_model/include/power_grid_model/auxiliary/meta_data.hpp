@@ -136,7 +136,7 @@ struct DataAttribute {
 };
 
 template <class BaseType, auto member_ptr>
-requires std::is_same_v<BaseType, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
+requires std::same_as<BaseType, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
 inline size_t get_offset() {
     using struct_type = typename trait_pointer_to_member<decltype(member_ptr)>::struct_type;
     struct_type const obj{};
@@ -148,8 +148,8 @@ constexpr bool is_little_endian() {
 }
 
 template <class BaseType, auto member_ptr>
-requires std::is_same_v<BaseType, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
-inline DataAttribute get_data_attribute(std::string const& name) {
+requires std::same_as<BaseType, typename trait_pointer_to_member<decltype(member_ptr)>::struct_type>
+inline DataAttribute get_data_attribute(std::string_view const& name) {
     using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
     using single_data_type = data_type<value_type>;
     DataAttribute attr{};
