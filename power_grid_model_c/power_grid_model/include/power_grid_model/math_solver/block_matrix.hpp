@@ -17,17 +17,17 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-template <is_scalar T, bool sym, bool is_tensor, int n_sub_block>
+template <is_scalar T, bool sym, bool rk2_tensor, int n_sub_block>
 struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
-    static constexpr int n_col = is_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;
+    static constexpr int n_col = rk2_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;
     using ArrayType = Eigen::Array<T, n_row, n_col, Eigen::ColMajor>;
 };
 
-template <class T, bool sym, bool is_tensor, int n_sub_block>
-class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
+template <class T, bool sym, bool rk2_tensor, int n_sub_block>
+class Block : public block_trait<T, sym, rk2_tensor, n_sub_block>::ArrayType {
    public:
-    using ArrayType = typename block_trait<T, sym, is_tensor, n_sub_block>::ArrayType;
+    using ArrayType = typename block_trait<T, sym, rk2_tensor, n_sub_block>::ArrayType;
     using ArrayType::operator();
 
     // default zero
@@ -48,7 +48,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     }
     template <int c>
     static auto get_asym_col_idx() {
-        if constexpr (is_tensor) {
+        if constexpr (rk2_tensor) {
             return Eigen::seqN(Eigen::fix<c * 3>, Eigen::fix<3>);
         }
         else {
