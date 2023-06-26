@@ -34,6 +34,16 @@ json read_json(std::filesystem::path const& json_file) {
     return j;
 }
 
+class UnsupportedValidationCase : public PowerGridError {
+   public:
+    UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
+        using namespace std::string_literals;
+
+        auto const sym_str = sym ? "sym"s : "asym"s;
+        append_msg("Unsupported validation case: "s + sym_str + " "s + calculation_type);
+    };
+};
+
 // memory buffer
 struct BufferDeleter {
     void operator()(void* ptr) {
@@ -316,11 +326,9 @@ std::string get_output_type(std::string const& calculation_type, bool sym) {
 
     if (calculation_type == "short_circuit"s) {
         if (sym) {
-            return ""s;
+            throw UnsupportedValidationCase{calculation_type, sym};
         }
-        else {
-            return "sc_output"s;
-        }
+        return "sc_output"s;
     }
     else if (sym) {
         return "sym_output"s;
@@ -330,11 +338,45 @@ std::string get_output_type(std::string const& calculation_type, bool sym) {
     }
 }
 
-void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
-               std::vector<CaseParam>& cases) {
+std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,
+                                        std::string const& calculation_type, bool is_batch,
+                                        std::string const& calculation_method, bool sym) {
     using namespace std::string_literals;
 
     auto const batch_suffix = is_batch ? "_batch"s : ""s;
+
+    // add a case if output file exists
+    std::filesystem::path const output_file =
+        case_dir / (get_output_type(calculation_method, sym) + batch_suffix + ".json"s);
+    if (!std::filesystem::exists(output_file)) {
+        return std::nullopt;
+    }
+
+    CaseParam param{};
+    param.case_dir = case_dir;
+    param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
+    param.calculation_type = calculation_type;
+    param.calculation_method = calculation_method;
+    param.sym = sym;
+    param.is_batch = is_batch;
+    j.at("rtol").get_to(param.rtol);
+    json const j_atol = j.at("atol");
+    if (j_atol.type() != json::value_t::object) {
+        param.atol = {{"default", j_atol.get<double>()}};
+    }
+    else {
+        j_atol.get_to(param.atol);
+    }
+    param.case_name += sym ? "-sym"s : "-asym"s;
+    param.case_name += "-"s + param.calculation_method;
+    param.case_name += is_batch ? "_batch"s : ""s;
+
+    return param;
+}
+
+void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
+               std::vector<CaseParam>& cases) {
+    using namespace std::string_literals;
 
     std::filesystem::path const param_file = case_dir / "params.json";
     json const j = read_json(param_file);
@@ -353,30 +395,11 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
                 continue;  // only asym short circuit calculations are supported
             }
 
-            // add a case if output file exists
-            std::filesystem::path const output_file =
-                case_dir / (get_output_type(calculation_method, sym) + batch_suffix + ".json"s);
-            if (std::filesystem::exists(output_file)) {
-                CaseParam param{};
-                param.case_dir = case_dir;
-                param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
-                param.calculation_type = calculation_type;
-                param.calculation_method = calculation_method;
-                param.sym = sym;
-                param.is_batch = is_batch;
-                j.at("rtol").get_to(param.rtol);
-                json const j_atol = j.at("atol");
-                if (j_atol.type() != json::value_t::object) {
-                    param.atol = {{"default", j_atol.get<double>()}};
+            CHECK_NOTHROW([&]() {
+                if (auto test_case = construct_case(case_dir, j, calculation_type, is_batch, calculation_method, sym)) {
+                    cases.push_back(*std::move(test_case));
                 }
-                else {
-                    j_atol.get_to(param.atol);
-                }
-                param.case_name += sym ? "-sym"s : "-asym"s;
-                param.case_name += "-"s + param.calculation_method;
-                param.case_name += is_batch ? "_batch"s : ""s;
-                cases.push_back(param);
-            }
+            }());
         }
     }
 }
@@ -419,6 +442,7 @@ std::vector<CaseParam> read_all_cases(bool is_batch) {
             if (!std::filesystem::exists(case_dir / "params.json")) {
                 continue;
             }
+
             // try to add cases
             add_cases(case_dir, calculation_type, is_batch, all_cases);
         }
