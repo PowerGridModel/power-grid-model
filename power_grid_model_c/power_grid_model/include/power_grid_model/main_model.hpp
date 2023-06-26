@@ -140,8 +140,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // different selection based on component type
     template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
-        using enum MeasuredTerminalType;
-
         assert(!construction_complete_);
         size_t size = std::distance(begin, end);
         components_.template reserve<CompType>(size);
@@ -187,6 +185,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 ID const measured_object = input.measured_object;
                 // check correctness of measured component type based on measured terminal type
                 switch (input.measured_terminal_type) {
+                    using enum MeasuredTerminalType;
+
                     case branch_from:
                     case branch_to:
                         components_.template get_item<Branch>(measured_object);
@@ -353,9 +353,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::transform(components_.template citer<GenericPowerSensor>().begin(),
                        components_.template citer<GenericPowerSensor>().end(),
                        comp_topo.power_sensor_object_idx.begin(), [this](GenericPowerSensor const& power_sensor) {
-                           using enum MeasuredTerminalType;
-
                            switch (power_sensor.get_terminal_type()) {
+                               using enum MeasuredTerminalType;
+
                                case branch_from:
                                case branch_to:
                                    return components_.template get_seq<Branch>(power_sensor.measured_object());
@@ -843,11 +843,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             comp_topo_->power_sensor_object_idx.cbegin() +
                 components_.template get_start_idx<GenericPowerSensor, Component>(),
             res_it, [this, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
-                using enum MeasuredTerminalType;
-
                 auto const terminal_type = power_sensor.get_terminal_type();
                 Idx2D const obj_math_id = [&]() {
                     switch (terminal_type) {
+                        using enum MeasuredTerminalType;
+
                         case branch_from:
                         case branch_to:
                             return comp_coup_->branch[obj_seq];
@@ -878,6 +878,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
 
                 switch (terminal_type) {
+                    using enum MeasuredTerminalType;
+
                     case branch_from:
                     // all power sensors in branch3 are at from side in the mathematical model
                     case branch3_1:
