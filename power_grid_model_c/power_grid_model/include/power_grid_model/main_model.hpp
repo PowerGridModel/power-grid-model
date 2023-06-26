@@ -140,6 +140,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // different selection based on component type
     template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
+        using enum MeasuredTerminalType;
+
         assert(!construction_complete_);
         size_t size = std::distance(begin, end);
         components_.template reserve<CompType>(size);
@@ -185,28 +187,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 ID const measured_object = input.measured_object;
                 // check correctness of measured component type based on measured terminal type
                 switch (input.measured_terminal_type) {
-                    case MeasuredTerminalType::branch_from:
-                    case MeasuredTerminalType::branch_to:
+                    case branch_from:
+                    case branch_to:
                         components_.template get_item<Branch>(measured_object);
                         break;
-                    case MeasuredTerminalType::branch3_1:
-                    case MeasuredTerminalType::branch3_2:
-                    case MeasuredTerminalType::branch3_3:
+                    case branch3_1:
+                    case branch3_2:
+                    case branch3_3:
                         components_.template get_item<Branch3>(measured_object);
                         break;
-                    case MeasuredTerminalType::shunt:
+                    case shunt:
                         components_.template get_item<Shunt>(measured_object);
                         break;
-                    case MeasuredTerminalType::source:
+                    case source:
                         components_.template get_item<Source>(measured_object);
                         break;
-                    case MeasuredTerminalType::load:
+                    case load:
                         components_.template get_item<GenericLoad>(measured_object);
                         break;
-                    case MeasuredTerminalType::generator:
+                    case generator:
                         components_.template get_item<GenericGenerator>(measured_object);
                         break;
-                    case MeasuredTerminalType::node:
+                    case node:
                         components_.template get_item<Node>(measured_object);
                         break;
                     default:
@@ -351,22 +353,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::transform(components_.template citer<GenericPowerSensor>().begin(),
                        components_.template citer<GenericPowerSensor>().end(),
                        comp_topo.power_sensor_object_idx.begin(), [this](GenericPowerSensor const& power_sensor) {
+                           using enum MeasuredTerminalType;
+
                            switch (power_sensor.get_terminal_type()) {
-                               case MeasuredTerminalType::branch_from:
-                               case MeasuredTerminalType::branch_to:
+                               case branch_from:
+                               case branch_to:
                                    return components_.template get_seq<Branch>(power_sensor.measured_object());
-                               case MeasuredTerminalType::source:
+                               case source:
                                    return components_.template get_seq<Source>(power_sensor.measured_object());
-                               case MeasuredTerminalType::shunt:
+                               case shunt:
                                    return components_.template get_seq<Shunt>(power_sensor.measured_object());
-                               case MeasuredTerminalType::load:
-                               case MeasuredTerminalType::generator:
+                               case load:
+                               case generator:
                                    return components_.template get_seq<GenericLoadGen>(power_sensor.measured_object());
-                               case MeasuredTerminalType::branch3_1:
-                               case MeasuredTerminalType::branch3_2:
-                               case MeasuredTerminalType::branch3_3:
+                               case branch3_1:
+                               case branch3_2:
+                               case branch3_3:
                                    return components_.template get_seq<Branch3>(power_sensor.measured_object());
-                               case MeasuredTerminalType::node:
+                               case node:
                                    return components_.template get_seq<Node>(power_sensor.measured_object());
                                default:
                                    throw MissingCaseForEnumError("Power sensor idx to seq transformation",
@@ -839,27 +843,29 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             comp_topo_->power_sensor_object_idx.cbegin() +
                 components_.template get_start_idx<GenericPowerSensor, Component>(),
             res_it, [this, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
+                using enum MeasuredTerminalType;
+
                 auto const terminal_type = power_sensor.get_terminal_type();
                 Idx2D const obj_math_id = [&]() {
                     switch (terminal_type) {
-                        case MeasuredTerminalType::branch_from:
-                        case MeasuredTerminalType::branch_to:
+                        case branch_from:
+                        case branch_to:
                             return comp_coup_->branch[obj_seq];
-                        case MeasuredTerminalType::source:
+                        case source:
                             return comp_coup_->source[obj_seq];
-                        case MeasuredTerminalType::shunt:
+                        case shunt:
                             return comp_coup_->shunt[obj_seq];
-                        case MeasuredTerminalType::load:
-                        case MeasuredTerminalType::generator:
+                        case load:
+                        case generator:
                             return comp_coup_->load_gen[obj_seq];
                         // from branch3, get relevant math object branch based on the measured side
-                        case MeasuredTerminalType::branch3_1:
+                        case branch3_1:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[0]};
-                        case MeasuredTerminalType::branch3_2:
+                        case branch3_2:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[1]};
-                        case MeasuredTerminalType::branch3_3:
+                        case branch3_3:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[2]};
-                        case MeasuredTerminalType::node:
+                        case node:
                             return comp_coup_->node[obj_seq];
                         default:
                             throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
@@ -872,22 +878,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
 
                 switch (terminal_type) {
-                    case MeasuredTerminalType::branch_from:
+                    case branch_from:
                     // all power sensors in branch3 are at from side in the mathematical model
-                    case MeasuredTerminalType::branch3_1:
-                    case MeasuredTerminalType::branch3_2:
-                    case MeasuredTerminalType::branch3_3:
+                    case branch3_1:
+                    case branch3_2:
+                    case branch3_3:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
-                    case MeasuredTerminalType::branch_to:
+                    case branch_to:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
-                    case MeasuredTerminalType::source:
+                    case source:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
-                    case MeasuredTerminalType::shunt:
+                    case shunt:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
-                    case MeasuredTerminalType::load:
-                    case MeasuredTerminalType::generator:
+                    case load:
+                    case generator:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
-                    case MeasuredTerminalType::node:
+                    case node:
                         return power_sensor.get_output<sym>(
                             math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
                     default:
