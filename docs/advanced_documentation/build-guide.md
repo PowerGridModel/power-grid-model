@@ -41,8 +41,8 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
 **Linux**
 
-* gcc >= 10.0
-  * Version 10.0 tested using the version in the `manylinux2014` container.
+* gcc >= 11.0
+  * Version 11.2 tested using the version in the `manylinux_2_28` container.
   * Version 11.x tested in CI
 * Clang >= 14.0
   * Version 14.x tested in CI
