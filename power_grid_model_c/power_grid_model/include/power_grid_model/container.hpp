@@ -75,7 +75,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         // template<class... Args> Args&&... args perfect forwarding
         assert(!construction_complete_);
         // throw if id already exists
-        if (map_.find(id) != map_.end()) {
+        if (map_.contains(id)) {
             throw ConflictID{id};
         }
         // find group and position

@@ -130,16 +130,18 @@ class IterativePFSolver {
                  ++load_gen) {
                 LoadGenType const type = (*load_gen_type_)[load_gen];
                 switch (type) {
-                    case LoadGenType::const_pq:
+                    using enum LoadGenType;
+
+                    case const_pq:
                         // always same power
                         output.load_gen[load_gen].s = input.s_injection[load_gen];
                         break;
-                    case LoadGenType::const_y:
+                    case const_y:
                         // power is quadratic relation to voltage
                         output.load_gen[load_gen].s =
                             input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
                         break;
-                    case LoadGenType::const_i:
+                    case const_i:
                         // power is linear relation to voltage
                         output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]);
                         break;

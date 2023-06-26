@@ -234,7 +234,7 @@ inline double mean_val(double z) {
 }
 
 template <bool sym, class T>
-inline auto process_mean_val(T&& m) {
+inline auto process_mean_val(const T& m) {
     if constexpr (sym) {
         return mean_val(m);
     }

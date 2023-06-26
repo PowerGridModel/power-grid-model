@@ -166,9 +166,8 @@ TEST_CASE("Test main model") {
         CHECK_THROWS_AS(main_model2.add_component<SymVoltageSensor>(state.sym_voltage_sensor_input), IDWrongType);
 
         // Test for all MeasuredTerminalType instances
-        std::vector<MeasuredTerminalType> const mt_types{
-            MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::generator,
-            MeasuredTerminalType::load,        MeasuredTerminalType::shunt,     MeasuredTerminalType::source};
+        using enum MeasuredTerminalType;
+        std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
 
         // power sensor with terminal branch, with a measured id which is not a branch (node)
         for (auto const& mt_type : mt_types) {

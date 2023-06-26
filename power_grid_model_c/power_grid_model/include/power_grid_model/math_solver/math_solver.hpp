@@ -38,19 +38,21 @@ class MathSolver {
 
     MathOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                    CalculationInfo& calculation_info, CalculationMethod calculation_method) {
+        using enum CalculationMethod;
+
         // set method to always linear if all load_gens have const_y
-        calculation_method = all_const_y_ ? CalculationMethod::linear : calculation_method;
+        calculation_method = all_const_y_ ? linear : calculation_method;
 
         switch (calculation_method) {
-            case CalculationMethod::default_method:
+            case default_method:
                 [[fallthrough]];  // use Newton-Raphson by default
-            case CalculationMethod::newton_raphson:
+            case newton_raphson:
                 return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
-            case CalculationMethod::linear:
+            case linear:
                 return run_power_flow_linear(input, err_tol, max_iter, calculation_info);
-            case CalculationMethod::linear_current:
+            case linear_current:
                 return run_power_flow_linear_current(input, err_tol, max_iter, calculation_info);
-            case CalculationMethod::iterative_current:
+            case iterative_current:
                 return run_power_flow_iterative_current(input, err_tol, max_iter, calculation_info);
             default:
                 throw InvalidCalculationMethod{};
