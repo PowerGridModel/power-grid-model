@@ -155,7 +155,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 double const u1 = components_.template get_item<Node>(input.from_node).u_rated();
                 double const u2 = components_.template get_item<Node>(input.to_node).u_rated();
                 // set system frequency for line
-                if constexpr (std::is_same_v<CompType, Line>) {
+                if constexpr (std::same_as<CompType, Line>) {
                     components_.template emplace<CompType>(id, input, system_frequency_, u1, u2);
                 }
                 else {

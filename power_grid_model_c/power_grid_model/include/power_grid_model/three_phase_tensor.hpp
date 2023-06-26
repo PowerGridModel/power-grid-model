@@ -47,7 +47,7 @@ class Vector : public Eigen3Vector<T> {
     // for complex number, rotate the single value by 120 and 240 degrees for 1st and 2nd entry
     // this will create a symmetric phasor based on one phasor
     explicit Vector(T const& x) {
-        if constexpr (std::is_same_v<T, double>) {
+        if constexpr (std::same_as<T, double>) {
             (*this) << x, x, x;
         }
         else {

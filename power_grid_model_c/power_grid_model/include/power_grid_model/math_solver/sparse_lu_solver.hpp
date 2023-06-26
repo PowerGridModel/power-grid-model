@@ -21,7 +21,7 @@ template <class Tensor, class RHSVector, class XVector, class = void>
 struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
-concept scalar_value_lu = scalar_value<Tensor> && std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector>;
+concept scalar_value_lu = scalar_value<Tensor> && std::same_as<Tensor, RHSVector> && std::same_as<Tensor, XVector>;
 
 template <class Derived>
 int check_array_base(Eigen::ArrayBase<Derived> const&) {
