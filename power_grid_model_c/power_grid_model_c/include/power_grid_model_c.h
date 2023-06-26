@@ -89,12 +89,13 @@ enum PGM_CalculationType {
  *
  */
 enum PGM_CalculationMethod {
+    PGM_default_method = -128, /**< the default method for each calculation type, e.g. Newton-Raphson for power flow */
     PGM_linear = 0,            /**< linear constant impedance method for power flow */
     PGM_newton_raphson = 1,    /**< Newton-Raphson method for power flow */
     PGM_iterative_linear = 2,  /**< iterative linear method for state estimation */
     PGM_iterative_current = 3, /**< linear current method for power flow */
     PGM_linear_current = 4,    /**< iterative constant impedance method for power flow */
-    PGM_iec60909 = 5           /**< sequential fault analysis for short circuits */
+    PGM_iec60909 = 5           /**< fault analysis for short circuits using the iec60909 standard*/
 };
 
 /**
@@ -404,7 +405,7 @@ PGM_API void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char 
  * The option is needed to run calculations.
  * This function create a new option instance with the following default values:
  *   - calculation_type: PGM_power_flow
- *   - calculation_method: PGM_newton_raphson
+ *   - calculation_method: PGM_default_method
  *   - symmetric: 1
  *   - err_tol: 1e-8
  *   - max_iter: 20
