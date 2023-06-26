@@ -23,11 +23,13 @@ enum class BranchSide : IntS { from = 0, to = 1 };
 enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
 enum class CalculationMethod : IntS {
+    default_method = -128,
     linear = 0,
     newton_raphson = 1,
     iterative_linear = 2,
     iterative_current = 3,
-    linear_current = 4
+    linear_current = 4,
+    iec60909 = 5,
 };
 
 enum class MeasuredTerminalType : IntS {
