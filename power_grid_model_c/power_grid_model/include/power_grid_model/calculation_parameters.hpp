@@ -260,6 +260,8 @@ struct Idx2DBranch3 {
     // 1: node 1 -> internal node
     // 2: node 2 -> internal node
     std::array<Idx, 3> pos;
+
+    friend constexpr bool operator==(Idx2DBranch3 x, Idx2DBranch3 y) = default;
 };
 
 // couple component to math model
