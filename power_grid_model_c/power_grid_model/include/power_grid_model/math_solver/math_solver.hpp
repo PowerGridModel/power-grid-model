@@ -42,6 +42,8 @@ class MathSolver {
         calculation_method = all_const_y_ ? CalculationMethod::linear : calculation_method;
 
         switch (calculation_method) {
+            case CalculationMethod::default_method:
+                [[fallthrough]];  // use Newton-Raphson by default
             case CalculationMethod::newton_raphson:
                 return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
             case CalculationMethod::linear:
@@ -57,7 +59,8 @@ class MathSolver {
 
     MathOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                          CalculationInfo& calculation_info, CalculationMethod calculation_method) {
-        if (calculation_method != CalculationMethod::iterative_linear) {
+        if (calculation_method != CalculationMethod::default_method &&
+            calculation_method != CalculationMethod::iterative_linear) {
             throw InvalidCalculationMethod{};
         }
 
