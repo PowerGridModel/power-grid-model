@@ -21,7 +21,7 @@ namespace power_grid_model {
 template <class T>
 constexpr bool check_scalar_v = std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>;
 template <class T>
-using enable_scalar_t = std::enable_if_t<check_scalar_v<T>>;
+concept is_scalar = check_scalar_v<T>;
 
 namespace three_phase_tensor {
 
@@ -30,7 +30,7 @@ using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T>
 using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
 
-template <class T, class = enable_scalar_t<T>>
+template <is_scalar T>
 class Vector : public Eigen3Vector<T> {
    public:
     Vector() {
@@ -67,7 +67,7 @@ class Vector : public Eigen3Vector<T> {
     }
 };
 
-template <class T, class = enable_scalar_t<T>>
+template <is_scalar T>
 class Tensor : public Eigen3Tensor<T> {
    public:
     Tensor() {
@@ -125,17 +125,11 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 
 // enabler
 template <class T>
-constexpr bool check_vector_v = T::ColsAtCompileTime == 1;
+concept is_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-constexpr bool check_tensor_v = (Idx)T::RowsAtCompileTime == (Idx)T::ColsAtCompileTime;
+concept is_tensor = (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime));
 template <class T>
-constexpr bool check_all_v = check_tensor_v<T> || check_vector_v<T>;
-template <class T>
-using enable_vector_t = std::enable_if_t<check_vector_v<T>>;
-template <class T>
-using enable_tensor_t = std::enable_if_t<check_tensor_v<T>>;
-template <class T>
-using enable_all_t = std::enable_if_t<check_all_v<T>>;
+concept is_vector_or_tensor = is_vector<T> || is_tensor<T>;
 
 // piecewise factory construction for complex vector
 template <bool sym = false>
@@ -148,7 +142,7 @@ inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
     }
 }
 
-template <class DerivedA, class = enable_vector_t<DerivedA>>
+template <is_vector DerivedA>
 inline ComplexValue<false> piecewise_complex_value(Eigen::ArrayBase<DerivedA> const& val) {
     return val;
 }
@@ -163,7 +157,7 @@ inline double cabs(DoubleComplex const& x) {
 inline double abs2(DoubleComplex const& x) {
     return std::norm(x);
 }
-template <class DerivedA, class = enable_all_t<DerivedA>>
+template <is_vector_or_tensor DerivedA>
 inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
     return sqrt(abs2(m));
 }
@@ -172,7 +166,7 @@ inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
 inline double vector_outer_product(double x, double y) {
     return x * y;
 }
-template <class DerivedA, class DerivedB, class = enable_vector_t<DerivedA>, class = enable_vector_t<DerivedB>>
+template <is_vector DerivedA, is_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
 }
@@ -185,12 +179,12 @@ inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) {
     return x * y;
 }
 
-template <class... T, class = std::enable_if_t<(check_scalar_v<T> && ...)>>
+template <is_scalar... T>
 inline auto dot(T const&... x) {
     return (... * x);
 }
 
-template <class... Derived, class = std::enable_if_t<(check_all_v<Derived> && ...)>>
+template <is_vector_or_tensor... Derived>
 inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
     auto res_mat = (... * x.matrix());
     return res_mat.array();
@@ -200,13 +194,13 @@ inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
 inline double max_val(double val) {
     return val;
 }
-template <class DerivedA, class = enable_vector_t<DerivedA>>
+template <is_vector DerivedA>
 inline double max_val(Eigen::ArrayBase<DerivedA> const& val) {
     return val.maxCoeff();
 }
 
 // function to sum rows of tensor
-template <class DerivedA, class = enable_tensor_t<DerivedA>>
+template <is_tensor DerivedA>
 inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) {
     return m.rowwise().sum();
 }
@@ -216,7 +210,7 @@ inline double sum_row(double d) {
 }
 
 // function to sum vector
-template <class DerivedA, class = enable_vector_t<DerivedA>>
+template <is_vector DerivedA>
 inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) {
     return m.sum();
 }
@@ -229,7 +223,7 @@ inline DoubleComplex sum_val(DoubleComplex const& z) {
 }
 
 // function to mean vector
-template <class DerivedA, class = enable_vector_t<DerivedA>>
+template <is_vector DerivedA>
 inline auto mean_val(Eigen::ArrayBase<DerivedA> const& m) {
     return m.mean();
 }
@@ -251,8 +245,7 @@ inline auto process_mean_val(T&& m) {
 }
 
 // diagonal multiply
-template <class DerivedA, class DerivedB, class DerivedC, class = enable_vector_t<DerivedA>,
-          class = enable_tensor_t<DerivedB>, class = enable_vector_t<DerivedC>>
+template <is_vector DerivedA, is_tensor DerivedB, is_vector DerivedC>
 inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y,
                       Eigen::ArrayBase<DerivedC> const& z) {
     return (x.matrix().asDiagonal() * y.matrix() * z.matrix().asDiagonal()).array();
@@ -263,7 +256,7 @@ inline double diag_mult(double x, double y, double z) {
 }
 
 // calculate positive sequence
-template <class Derived, class = enable_vector_t<Derived>>
+template <is_vector Derived>
 inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
@@ -287,11 +280,11 @@ inline void add_diag(double& x, double y) {
 inline void add_diag(DoubleComplex& x, DoubleComplex const& y) {
     x += y;
 }
-template <class DerivedA, class DerivedB, class = enable_tensor_t<DerivedA>, class = enable_vector_t<DerivedB>>
+template <is_tensor DerivedA, is_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
 }
-template <class DerivedA, class DerivedB, class = enable_tensor_t<DerivedA>, class = enable_vector_t<DerivedB>>
+template <is_tensor DerivedA, is_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
 }
@@ -368,7 +361,7 @@ inline DoubleComplex hermitian_transpose(DoubleComplex const& z) {
 inline double hermitian_transpose(double x) {
     return x;
 }
-template <class Derived, class = enable_tensor_t<Derived>>
+template <is_tensor Derived>
 inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().adjoint().array();
 }

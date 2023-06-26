@@ -21,7 +21,7 @@ template <class Tensor, class RHSVector, class XVector, class = void>
 struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
-concept is_scalar_lu = std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector> && check_scalar_v<Tensor>;
+concept is_scalar_lu = is_scalar<Tensor> && std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector>;
 
 template <class Derived>
 int check_array_base(Eigen::ArrayBase<Derived> const&) {
@@ -35,16 +35,9 @@ template <class LHSArrayLike, class RHSArrayLike>
 concept is_multiplicable = is_array_like<LHSArrayLike> && is_array_like<RHSArrayLike> &&
     (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
 
-template <class TVector>
-concept is_vector = is_array_like<TVector> &&(TVector::ColsAtCompileTime == 1);  // vector should be column vector
-
-template <class Tensor>
-concept is_tensor = is_array_like<Tensor> &&(static_cast<Idx>(Tensor::RowsAtCompileTime) ==
-                                             static_cast<Idx>(Tensor::ColsAtCompileTime));  // tensor should be square
-
 template <class Tensor, class RHSVector, class XVector>
-concept is_tensor_lu = is_tensor<Tensor> && is_multiplicable<Tensor, RHSVector> && is_multiplicable<Tensor, XVector> &&
-    is_vector<RHSVector> && is_vector<XVector> &&
+concept is_tensor_lu = is_tensor<Tensor> && is_vector<RHSVector> && is_vector<XVector> &&
+    is_multiplicable<Tensor, RHSVector> && is_multiplicable<Tensor, XVector> &&
     std::same_as<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
     std::same_as<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
     check_scalar_v<typename Tensor::Scalar>;                              // scalar can only be double or complex double

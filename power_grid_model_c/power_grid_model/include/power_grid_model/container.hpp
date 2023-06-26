@@ -248,8 +248,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
     template <class GettableBaseType, class StorageableSubType>
-    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType,
-                                    std::enable_if_t<std::is_base_of_v<GettableBaseType, StorageableSubType>>> {
+    requires std::is_base_of_v<GettableBaseType, StorageableSubType>
+    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
             &Container::get_raw<GettableBaseType, StorageableSubType>;
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const =
@@ -309,7 +309,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         // conversion to const iterator
         template <class ConstGettable = Gettable>
-        operator std::enable_if_t<!is_const, Iterator<ConstGettable const>>() const {
+        requires(!is_const) operator Iterator<ConstGettable const>() const {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 

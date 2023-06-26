@@ -17,8 +17,7 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-template <class T, bool sym, bool is_tensor, int n_sub_block>
-requires check_scalar_v<T>
+template <is_scalar T, bool sym, bool is_tensor, int n_sub_block>
 struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
     static constexpr int n_col = is_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;
