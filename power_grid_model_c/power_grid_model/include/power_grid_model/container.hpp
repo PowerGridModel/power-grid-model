@@ -307,7 +307,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         // conversion to const iterator
         template <class ConstGettable = Gettable>
-        requires(!is_const) operator Iterator<ConstGettable const>() const {
+        requires(!is_const) explicit operator Iterator<ConstGettable const>() const {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
