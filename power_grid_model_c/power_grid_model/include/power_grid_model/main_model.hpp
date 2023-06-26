@@ -138,8 +138,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <class CompType, std::forward_iterator ForwardIterator>
-    requires std::derived_from<CompType, Base>
+    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         size_t size = std::distance(begin, end);
