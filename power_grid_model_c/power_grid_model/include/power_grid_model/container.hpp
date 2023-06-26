@@ -227,13 +227,11 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // get item per type
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType& get_raw(Idx pos) {
-        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType& get_raw(Idx pos) {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType const& get_raw(Idx pos) const {
-        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType const& get_raw(Idx pos) const {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
 
