@@ -28,23 +28,26 @@ int check_array_base(Eigen::ArrayBase<Derived> const&) {
     return 0;
 }
 
+template <class ArrayLike>
+concept is_array_like = std::same_as<decltype(check_array_base(ArrayLike{})), int>;  // should be an eigen array
+
+template <class LHSArrayLike, class RHSArrayLike>
+concept is_multiplicable = is_array_like<LHSArrayLike> && is_array_like<RHSArrayLike> &&
+    (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
+
+template <class TVector>
+concept is_vector = is_array_like<TVector> &&(TVector::ColsAtCompileTime == 1);  // vector should be column vector
+
+template <class Tensor>
+concept is_tensor = is_array_like<Tensor> &&(static_cast<Idx>(Tensor::RowsAtCompileTime) ==
+                                             static_cast<Idx>(Tensor::ColsAtCompileTime));  // tensor should be square
+
 template <class Tensor, class RHSVector, class XVector>
-concept is_tensor_lu =
-    std::same_as<decltype(check_array_base(Tensor{})), int> &&     // tensor should be an eigen array
-    std::same_as<decltype(check_array_base(RHSVector{})), int> &&  // rhs vector should be an eigen array
-    std::same_as<decltype(check_array_base(XVector{})), int> &&    // x vector should be an eigen array
-    (static_cast<Idx>(Tensor::RowsAtCompileTime) ==
-     static_cast<Idx>(Tensor::ColsAtCompileTime)) &&  // tensor should be square
-    (RHSVector::ColsAtCompileTime == 1) &&            // rhs vector should be column vector
-    (static_cast<Idx>(RHSVector::RowsAtCompileTime) ==
-     static_cast<Idx>(Tensor::RowsAtCompileTime)) &&  // rhs vector should be column vector
-    (XVector::ColsAtCompileTime == 1) &&              // x vector should be column vector
-    (static_cast<Idx>(XVector::RowsAtCompileTime) ==
-     static_cast<Idx>(Tensor::RowsAtCompileTime)) &&  // x vector should be column vector
-    std::same_as<typename Tensor::Scalar,
-                 typename RHSVector::Scalar>&&                         // all entries should have same scalar type
-    std::same_as<typename Tensor::Scalar, typename XVector::Scalar>&&  // all entries should have same scalar type
-    check_scalar_v<typename Tensor::Scalar>;                           // scalar can only be double or complex double
+concept is_tensor_lu = is_tensor<Tensor> && is_multiplicable<Tensor, RHSVector> && is_multiplicable<Tensor, XVector> &&
+    is_vector<RHSVector> && is_vector<XVector> &&
+    std::same_as<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
+    std::same_as<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
+    check_scalar_v<typename Tensor::Scalar>;                              // scalar can only be double or complex double
 
 template <class Tensor, class RHSVector, class XVector>
 requires is_scalar_lu<Tensor, RHSVector, XVector>
