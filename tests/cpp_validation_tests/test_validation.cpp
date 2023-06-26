@@ -287,7 +287,7 @@ std::map<std::pair<std::string, bool>, CalculationFunc> const calculation_type_m
     {{"power_flow", false}, &MainModel::calculate_power_flow<false>},
     {{"state_estimation", true}, &MainModel::calculate_state_estimation<true>},
     {{"state_estimation", false}, &MainModel::calculate_state_estimation<false>},
-    // {{"short_circuit", false}, &MainModel::calculate_short_circuit<false>},
+    // {{"short_circuit", false}, &MainModel::calculate_short_circuit},
 };
 
 // case parameters
@@ -315,7 +315,12 @@ std::string get_output_type(std::string const& calculation_type, bool sym) {
     using namespace std::string_literals;
 
     if (calculation_type == "short_circuit"s) {
-        return "sc_output"s;
+        if (sym) {
+            return ""s;
+        }
+        else {
+            return "sc_output"s;
+        }
     }
     else if (sym) {
         return "sym_output"s;
@@ -344,6 +349,10 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
     // loop sym and batch
     for (bool const sym : {true, false}) {
         for (auto const& calculation_method : calculation_methods) {
+            if (calculation_method == "short_circuit"s && sym) {
+                continue;  // only asym short circuit calculations are supported
+            }
+
             // add a case if output file exists
             std::filesystem::path const output_file =
                 case_dir / (get_output_type(calculation_method, sym) + batch_suffix + ".json"s);
@@ -363,9 +372,9 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
                 else {
                     j_atol.get_to(param.atol);
                 }
-                param.case_name += sym ? "-sym" : "-asym";
-                param.case_name += "-" + param.calculation_method;
-                param.case_name += is_batch ? "-batch" : "";
+                param.case_name += sym ? "-sym"s : "-asym"s;
+                param.case_name += "-"s + param.calculation_method;
+                param.case_name += is_batch ? "_batch"s : ""s;
                 cases.push_back(param);
             }
         }
