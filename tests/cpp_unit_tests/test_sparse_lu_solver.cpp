@@ -23,7 +23,7 @@ template <class T>
 void check_result(std::vector<T> const& x, std::vector<T> const& x_solver) {
     CHECK(x.size() == x_solver.size());
     for (size_t i = 0; i < x.size(); i++) {
-        if constexpr (check_scalar_v<T>) {
+        if constexpr (scalar_value<T>) {
             CHECK(cabs(x[i] - x_solver[i]) < numerical_tolerance);
         }
         else {
