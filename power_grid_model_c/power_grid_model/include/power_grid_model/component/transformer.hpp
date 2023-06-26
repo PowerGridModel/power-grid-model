@@ -54,9 +54,11 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
+        using enum WindingType;
+
         // check on clock
-        bool const is_from_wye = winding_from_ == WindingType::wye || winding_from_ == WindingType::wye_n;
-        bool const is_to_wye = winding_to_ == WindingType::wye || winding_to_ == WindingType::wye_n;
+        bool const is_from_wye = winding_from_ == wye || winding_from_ == wye_n;
+        bool const is_to_wye = winding_to_ == wye || winding_to_ == wye_n;
         if (  // clock should be between 0 and 12
             clock_ < 0 || clock_ > 12 ||
             // even number is not possible if one side is wye winding and the other side is not wye winding.
@@ -201,6 +203,8 @@ class Transformer : public Branch {
         return calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
     }
     BranchCalcParam<false> asym_calc_param() const final {
+        using enum WindingType;
+
         auto const [y_series, y_shunt, k] = transformer_params();
         // positive sequence
         auto const param1 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
@@ -209,7 +213,7 @@ class Transformer : public Branch {
         // zero sequence, default zero
         BranchCalcParam<true> param0{};
         // YNyn
-        if (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) {
+        if (winding_from_ == wye_n && winding_to_ == wye_n) {
             double phase_shift_0 = 0.0;
             // flip sign for reverse connected
             if (clock_ == 2 || clock_ == 6 || clock_ == 10) {
@@ -220,25 +224,25 @@ class Transformer : public Branch {
             param0 = calc_param_y_sym(y0_series, y_shunt, k * std::exp(1.0i * phase_shift_0));
         }
         // YNd
-        if (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta && from_status()) {
+        if (winding_from_ == wye_n && winding_to_ == delta && from_status()) {
             DoubleComplex const z0_series = 1.0 / y_series + 3.0 * z_grounding_from_ / k / k;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.yff() = (y0_series + y_shunt) / k / k;
         }
         // Dyn
-        if (winding_from_ == WindingType::delta && winding_to_ == WindingType::wye_n && to_status()) {
+        if (winding_from_ == delta && winding_to_ == wye_n && to_status()) {
             DoubleComplex const z0_series = 1.0 / y_series + 3.0 * z_grounding_to_;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.ytt() = (y0_series + y_shunt);
         }
         // ZN*
-        if (winding_from_ == WindingType::zigzag_n && from_status()) {
+        if (winding_from_ == zigzag_n && from_status()) {
             DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_from_ / k / k;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.yff() = y0_series / k / k;
         }
         // *zn
-        if (winding_to_ == WindingType::zigzag_n && to_status()) {
+        if (winding_to_ == zigzag_n && to_status()) {
             DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_to_;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.ytt() = y0_series;
