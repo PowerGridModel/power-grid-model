@@ -21,7 +21,7 @@ template <class Tensor, class RHSVector, class XVector, class = void>
 struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
-concept is_scalar_lu = is_scalar<Tensor> && std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector>;
+concept scalar_value_lu = scalar_value<Tensor> && std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector>;
 
 template <class Derived>
 int check_array_base(Eigen::ArrayBase<Derived> const&) {
@@ -29,21 +29,21 @@ int check_array_base(Eigen::ArrayBase<Derived> const&) {
 }
 
 template <class ArrayLike>
-concept is_array_like = std::same_as<decltype(check_array_base(ArrayLike{})), int>;  // should be an eigen array
+concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>;  // should be an eigen array
 
 template <class LHSArrayLike, class RHSArrayLike>
-concept is_multiplicable = is_array_like<LHSArrayLike> && is_array_like<RHSArrayLike> &&
+concept matrix_multiplicable = eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
     (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
 
 template <class Tensor, class RHSVector, class XVector>
-concept rk2_tensor_lu = rk2_tensor<Tensor> && column_vector<RHSVector> && column_vector<XVector> &&
-    is_multiplicable<Tensor, RHSVector> && is_multiplicable<Tensor, XVector> &&
+concept tensor_lu = rk2_tensor<Tensor> && column_vector<RHSVector> && column_vector<XVector> &&
+    matrix_multiplicable<Tensor, RHSVector> && matrix_multiplicable<Tensor, XVector> &&
     std::same_as<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
     std::same_as<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
-    check_scalar_v<typename Tensor::Scalar>;                              // scalar can only be double or complex double
+    scalar_value<typename Tensor::Scalar>;                                // scalar can only be double or complex double
 
 template <class Tensor, class RHSVector, class XVector>
-requires is_scalar_lu<Tensor, RHSVector, XVector>
+requires scalar_value_lu<Tensor, RHSVector, XVector>
 struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = false;
     static constexpr Idx block_size = 1;
@@ -55,7 +55,7 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
 };
 
 template <class Tensor, class RHSVector, class XVector>
-requires rk2_tensor_lu<Tensor, RHSVector, XVector>
+requires tensor_lu<Tensor, RHSVector, XVector>
 struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = true;
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;

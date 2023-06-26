@@ -17,7 +17,7 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-template <is_scalar T, bool sym, bool rk2_tensor, int n_sub_block>
+template <scalar_value T, bool sym, bool rk2_tensor, int n_sub_block>
 struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
     static constexpr int n_col = rk2_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;

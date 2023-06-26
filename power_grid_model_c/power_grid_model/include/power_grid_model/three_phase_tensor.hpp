@@ -19,9 +19,7 @@ namespace power_grid_model {
 
 // enable scalar
 template <class T>
-constexpr bool check_scalar_v = std::is_same_v<T, double> || std::is_same_v<T, DoubleComplex>;
-template <class T>
-concept is_scalar = check_scalar_v<T>;
+concept scalar_value = std::same_as<T, double> || std::same_as<T, DoubleComplex>;
 
 namespace three_phase_tensor {
 
@@ -30,7 +28,7 @@ using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T>
 using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
 
-template <is_scalar T>
+template <scalar_value T>
 class Vector : public Eigen3Vector<T> {
    public:
     Vector() {
@@ -67,7 +65,7 @@ class Vector : public Eigen3Vector<T> {
     }
 };
 
-template <is_scalar T>
+template <scalar_value T>
 class Tensor : public Eigen3Tensor<T> {
    public:
     Tensor() {
@@ -179,7 +177,7 @@ inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) {
     return x * y;
 }
 
-template <is_scalar... T>
+template <scalar_value... T>
 inline auto dot(T const&... x) {
     return (... * x);
 }
