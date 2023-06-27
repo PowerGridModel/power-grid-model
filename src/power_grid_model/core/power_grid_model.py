@@ -283,15 +283,15 @@ class PowerGridModel:
         """
         Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
-    
+
         Args:
-            symmetric: Whether to perform a three-phase symmetric calculation.
-            - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-            - False: Three-phase asymmetric calculation.
+            symmetric (bool): Whether to perform a three-phase symmetric calculation.
+                - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+            - False: Three-phase asymmetric calculation.        
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
             calculation_method: The calculation method to use.
-                - Newton_raphson: Use Newton-Raphson iterative method (default).
+                -- Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
             update_data: Data for batch calculation with batch update.
                 None: Calculate power flow once with the current model attributes. A dictionary for batch calculation with batch update:
