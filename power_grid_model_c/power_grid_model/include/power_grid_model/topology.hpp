@@ -607,7 +607,7 @@ class Topology {
 
         // source
         couple_object_components<&MathModelTopology::source_bus_indptr, &MathModelTopology::n_bus>(
-            {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source, [&](Idx i) {
+            {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source, [this](Idx i) {
                 return comp_conn_.source_connected[i];
             });
     }
@@ -619,26 +619,26 @@ class Topology {
 
         // source power sensors
         couple_object_components<&MathModelTopology::source_power_sensor_indptr, &MathModelTopology::n_source>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor, [&](Idx i) {
+            {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor, [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source;
             });
 
         // shunt power sensors
         couple_object_components<&MathModelTopology::shunt_power_sensor_indptr, &MathModelTopology::n_shunt>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor, [&](Idx i) {
+            {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor, [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt;
             });
 
         // load + generator power sensors
         couple_object_components<&MathModelTopology::load_gen_power_sensor_indptr, &MathModelTopology::n_load_gen>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor, [&](Idx i) {
+            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor, [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });
 
         // branch 'from' power sensors
         // include all branch3 sensors
-        auto const predicate_from_sensor = [&](Idx i) {
+        auto const predicate_from_sensor = [this](Idx i) {
             using enum MeasuredTerminalType;
 
             return comp_topo_.power_sensor_terminal_type[i] == branch_from ||
@@ -655,13 +655,13 @@ class Topology {
 
         // branch 'to' power sensors
         couple_object_components<&MathModelTopology::branch_to_power_sensor_indptr, &MathModelTopology::n_branch>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor, [&](Idx i) {
+            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor, [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
             });
 
         // node injection power sensors
         couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor, [&](Idx i) {
+            {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor, [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node;
             });
     }
