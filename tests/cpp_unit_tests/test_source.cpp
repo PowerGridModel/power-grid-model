@@ -108,18 +108,23 @@ TEST_CASE("Test source") {
         CHECK(asym_result.pf(1) == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
-    SUBCASE("test source short circuit results") {
-        DoubleComplex i_sym = 1.0 + 2.0i;
-        ComplexValue<false> const i{1.0 + 2.0i};
-        ApplianceShortCircuitOutput const sym_sc_result = source.get_sc_output(i_sym);
-        ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i);
+    SUBCASE("test asym source short circuit results") {
+        ComplexValue<false> const i_asym{1.0 + 2.0i};
+        ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i_asym);
         CHECK(asym_sc_result.id == 1);
         CHECK(asym_sc_result.energized == 1);
         CHECK(asym_sc_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(asym_sc_result.i(2) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(asym_sc_result.i_angle(1) == doctest::Approx(arg(1.0 + 2.0i) - deg_120));
         CHECK(asym_sc_result.i_angle(2) == doctest::Approx(arg(1.0 + 2.0i) - deg_240));
+    }
 
+    SUBCASE("test sym source short circuit results") {
+        // Sym and asym results should be the same
+        DoubleComplex i_sym = 1.0 + 2.0i;
+        ComplexValue<false> const i_asym{1.0 + 2.0i};
+        ApplianceShortCircuitOutput const sym_sc_result = source.get_sc_output(i_sym);
+        ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i_asym);
         CHECK(sym_sc_result.id == asym_sc_result.id);
         CHECK(sym_sc_result.energized == asym_sc_result.energized);
         CHECK(sym_sc_result.i(0) == asym_sc_result.i(0));
