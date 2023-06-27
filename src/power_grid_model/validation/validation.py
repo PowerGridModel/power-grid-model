@@ -237,7 +237,7 @@ def validate_required_values(
     # Branches
     required["branch"] = required["base"] + ["from_node", "to_node", "from_status", "to_status"]
     required["link"] = required["branch"].copy()
-    required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1", "i_n"]
+    required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1"]
     required["transformer"] = required["branch"] + [
         "u1",
         "u2",
