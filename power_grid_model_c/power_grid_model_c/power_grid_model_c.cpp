@@ -103,7 +103,7 @@ char const* PGM_error_message(PGM_Handle const* handle) {
     return handle->err_msg.c_str();
 }
 PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) {
-    return (Idx)handle->failed_scenarios.size();
+    return static_cast<Idx>(handle->failed_scenarios.size());
 }
 PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) {
     return handle->failed_scenarios.data();
@@ -127,52 +127,52 @@ PGM_Idx PGM_meta_n_datasets(PGM_Handle*) {
 }
 char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx) {
     static auto const dataset_list = list_of_datasets();
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [idx]() -> decltype(auto) {
         return dataset_list.at(idx).c_str();
     });
 }
 // class
 PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
-        return (Idx)pgm_meta.at(dataset).size();
+    return call_with_bound(handle, [dataset]() -> decltype(auto) {
+        return static_cast<Idx>(pgm_meta.at(dataset).size());
     });
 }
 char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx) {
     static auto const class_list = list_of_classes();
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [dataset, idx]() -> decltype(auto) {
         return class_list.at(dataset).at(idx).c_str();
     });
 }
 size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component).size;
     });
 }
 size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component).alignment;
     });
 }
 // attributes
 PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
-        return (Idx)pgm_meta.at(dataset).at(component).attributes.size();
+    return call_with_bound(handle, [dataset, component]() -> decltype(auto) {
+        return static_cast<Idx>(pgm_meta.at(dataset).at(component).attributes.size());
     });
 }
 char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx idx) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [dataset, component, idx]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component).attributes.at(idx).name.c_str();
     });
 }
 char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
                                      char const* attribute) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [dataset, component, attribute]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component).get_attr(attribute).ctype.c_str();
     });
 }
 size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
                                  char const* attribute) {
-    return call_with_bound(handle, [&]() -> decltype(auto) {
+    return call_with_bound(handle, [dataset, component, attribute]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component).get_attr(attribute).offset;
     });
 }
@@ -182,7 +182,7 @@ int PGM_is_little_endian(PGM_Handle*) {
 
 // buffer control
 raw_data_ptr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
-    auto const& data_class = call_with_bound(handle, [&]() -> decltype(auto) {
+    auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
     if (data_class.name == "") {
@@ -203,7 +203,7 @@ void PGM_destroy_buffer(raw_data_ptr ptr) {
 }
 void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, raw_data_ptr ptr,
                         PGM_Idx size) {
-    auto const& data_class = call_with_bound(handle, [&]() -> decltype(auto) {
+    auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
     if (data_class.name == "") {
@@ -219,10 +219,10 @@ namespace {
 template <bool is_get, class BufferPtr, class ValuePtr>
 void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
                           BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size, PGM_Idx stride) {
-    auto const& data_class = call_with_bound(handle, [&]() -> decltype(auto) {
+    auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
-    auto const& attr = call_with_bound(handle, [&]() -> decltype(auto) {
+    auto const& attr = call_with_bound(handle, [&data_class, attribute]() -> decltype(auto) {
         return data_class.get_attr(attribute);
     });
     if (attr.name == "") {
@@ -349,7 +349,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     // prepare output dataset
     Dataset output_dataset{};
     // set n_output_batch to one for single calculation
-    Idx const n_output_scenarios = std::max((Idx)1, n_scenarios);
+    Idx const n_output_scenarios = std::max(Idx{1}, n_scenarios);
     for (Idx i = 0; i != n_output_components; ++i) {
         auto const found = n_component.find(output_components[i]);
         if (found != n_component.cend()) {
