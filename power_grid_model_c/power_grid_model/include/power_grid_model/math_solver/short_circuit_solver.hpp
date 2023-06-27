@@ -73,11 +73,11 @@ class ShortCircuitSolver {
                     y_source * input.source[source_number] * source_voltage_ref;  // Y_source * U_source * c
             }
             // add all faults
-            // TODO: do we need to loop through faults here? Or can there be only 1 fault per bus
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
                  ++fault_number) {
-                if (std::isinf(input.faults[fault_number].y_fault.real())) {
-                    assert(std::isinf(input.faults[fault_number].y_fault.imag());
+                DoubleComplex y_fault = input.faults[fault_number].y_fault;
+                if (std::isinf(y_fault.real())) {
+                    assert(std::isinf(y_fault.imag());
                     zero_fault_counter[bus_number] += 1;
                     if constexpr (sym) {  // three phase fault
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
@@ -150,6 +150,20 @@ class ShortCircuitSolver {
                     }
                     // If there is a fault with infinite admittance, there is no need to add other faults to that bus
                     break;
+                }
+                else {
+                    assert(!std::isinf(y_fault.imag());
+                    if constexpr (sym) {  // three phase fault
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            // mat_data[bus,bus] += y_fault
+                            if (row_number == bus_number) {
+                                mat_data[col_data_index] += y_fault;
+                            }
+                        }
+                    }
                 }
             }
         }
