@@ -114,8 +114,7 @@ class Branch3 : public Base {
     }
 
     Branch3ShortCircuitOutput get_sc_output(ComplexValue<false> const& i_1, ComplexValue<false> const& i_2,
-                                                 ComplexValue<false> const& i_3) const {
-
+                                            ComplexValue<false> const& i_3) const {
         // result object
         Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
@@ -129,7 +128,7 @@ class Branch3 : public Base {
         return output;
     }
     Branch3ShortCircuitOutput get_sc_output(ComplexValue<true> const& i_1, ComplexValue<true> const& i_2,
-                                                 ComplexValue<true> const& i_3) const {
+                                            ComplexValue<true> const& i_3) const {
         ComplexValue<false> iabc_1{i_1, i_1 * a2, i_1 * a};
         ComplexValue<false> iabc_2{i_2, i_2 * a2, i_2 * a};
         ComplexValue<false> iabc_3{i_3, i_3 * a2, i_3 * a};
