@@ -81,10 +81,12 @@ class ThreeWindingTransformer : public Branch3 {
           z_grounding_1_{three_winding_transformer_input.r_grounding_1, three_winding_transformer_input.x_grounding_1},
           z_grounding_2_{three_winding_transformer_input.r_grounding_2, three_winding_transformer_input.x_grounding_2},
           z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
+        using enum WindingType;
+
         // check clock number
-        bool const is_1_wye = winding_1_ == WindingType::wye || winding_1_ == WindingType::wye_n;
-        bool const is_2_wye = winding_2_ == WindingType::wye || winding_2_ == WindingType::wye_n;
-        bool const is_3_wye = winding_3_ == WindingType::wye || winding_3_ == WindingType::wye_n;
+        bool const is_1_wye = winding_1_ == wye || winding_1_ == wye_n;
+        bool const is_2_wye = winding_2_ == wye || winding_2_ == wye_n;
+        bool const is_3_wye = winding_3_ == wye || winding_3_ == wye_n;
 
         // check clock 12
         if (  // clock should be between 0 and 12

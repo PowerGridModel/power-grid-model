@@ -511,14 +511,16 @@ class Topology {
         Idx2D find_math_object(Idx component_i) const {
             Idx const obj_idx = sensor_obj_idx[component_i];
             switch (power_sensor_terminal_type[component_i]) {
-                case MeasuredTerminalType::branch_from:
+                using enum MeasuredTerminalType;
+
+                case branch_from:
                     return branch_coupling[obj_idx];
                 // return relevant branch mapped from branch3
-                case MeasuredTerminalType::branch3_1:
+                case branch3_1:
                     return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[0]};
-                case MeasuredTerminalType::branch3_2:
+                case branch3_2:
                     return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[1]};
-                case MeasuredTerminalType::branch3_3:
+                case branch3_3:
                     return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[2]};
                 default:
                     assert(false);
@@ -637,11 +639,13 @@ class Topology {
         // branch 'from' power sensors
         // include all branch3 sensors
         auto const predicate_from_sensor = [&](Idx i) {
-            return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
+            using enum MeasuredTerminalType;
+
+            return comp_topo_.power_sensor_terminal_type[i] == branch_from ||
                    // all branch3 sensors are at from side in the mathemtical model
-                   comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
-                   comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
-                   comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
+                   comp_topo_.power_sensor_terminal_type[i] == branch3_1 ||
+                   comp_topo_.power_sensor_terminal_type[i] == branch3_2 ||
+                   comp_topo_.power_sensor_terminal_type[i] == branch3_3;
         };
         SensorBranchObjectFinder const object_finder_from_sensor{comp_topo_.power_sensor_object_idx,
                                                                  comp_topo_.power_sensor_terminal_type,

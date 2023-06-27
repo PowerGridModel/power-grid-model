@@ -141,15 +141,17 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 // load type
                 LoadGenType const type = load_gen_type[load_number];
                 switch (type) {
-                    case LoadGenType::const_pq:
+                    using enum LoadGenType;
+
+                    case const_pq:
                         // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
                         rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
                         break;
-                    case LoadGenType::const_y:
+                    case const_y:
                         // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
                         rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
                         break;
-                    case LoadGenType::const_i:
+                    case const_i:
                         // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
                         rhs_u_[bus_number] +=
                             conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);

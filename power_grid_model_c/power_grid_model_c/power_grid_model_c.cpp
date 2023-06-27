@@ -35,7 +35,7 @@ struct PGM_Handle {
     IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
-    BatchParameter batch_parameter;
+    [[no_unique_address]] BatchParameter batch_parameter;
 };
 
 // options

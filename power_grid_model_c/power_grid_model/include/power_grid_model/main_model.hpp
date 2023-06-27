@@ -138,12 +138,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <class CompType, class ForwardIterator>
-    std::enable_if_t<std::is_base_of_v<Base, CompType>> add_component(ForwardIterator begin, ForwardIterator end) {
+    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
+    void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
-        // check forward iterator
-        static_assert(std::is_base_of_v<std::forward_iterator_tag,
-                                        typename std::iterator_traits<ForwardIterator>::iterator_category>);
         size_t size = std::distance(begin, end);
         components_.template reserve<CompType>(size);
         // loop to add component
@@ -158,7 +155,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 double const u1 = components_.template get_item<Node>(input.from_node).u_rated();
                 double const u2 = components_.template get_item<Node>(input.to_node).u_rated();
                 // set system frequency for line
-                if constexpr (std::is_same_v<CompType, Line>) {
+                if constexpr (std::same_as<CompType, Line>) {
                     components_.template emplace<CompType>(id, input, system_frequency_, u1, u2);
                 }
                 else {
@@ -188,28 +185,30 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 ID const measured_object = input.measured_object;
                 // check correctness of measured component type based on measured terminal type
                 switch (input.measured_terminal_type) {
-                    case MeasuredTerminalType::branch_from:
-                    case MeasuredTerminalType::branch_to:
+                    using enum MeasuredTerminalType;
+
+                    case branch_from:
+                    case branch_to:
                         components_.template get_item<Branch>(measured_object);
                         break;
-                    case MeasuredTerminalType::branch3_1:
-                    case MeasuredTerminalType::branch3_2:
-                    case MeasuredTerminalType::branch3_3:
+                    case branch3_1:
+                    case branch3_2:
+                    case branch3_3:
                         components_.template get_item<Branch3>(measured_object);
                         break;
-                    case MeasuredTerminalType::shunt:
+                    case shunt:
                         components_.template get_item<Shunt>(measured_object);
                         break;
-                    case MeasuredTerminalType::source:
+                    case source:
                         components_.template get_item<Source>(measured_object);
                         break;
-                    case MeasuredTerminalType::load:
+                    case load:
                         components_.template get_item<GenericLoad>(measured_object);
                         break;
-                    case MeasuredTerminalType::generator:
+                    case generator:
                         components_.template get_item<GenericGenerator>(measured_object);
                         break;
-                    case MeasuredTerminalType::node:
+                    case node:
                         components_.template get_item<Node>(measured_object);
                         break;
                     default:
@@ -226,12 +225,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, class CacheType, class ForwardIterator>
+    template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
-        // check forward iterator
-        static_assert(std::is_base_of_v<std::forward_iterator_tag,
-                                        typename std::iterator_traits<ForwardIterator>::iterator_category>);
         bool const has_sequence_id = !sequence_idx.empty();
         Idx seq = 0;
         // loop to to update component
@@ -358,21 +354,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        components_.template citer<GenericPowerSensor>().end(),
                        comp_topo.power_sensor_object_idx.begin(), [this](GenericPowerSensor const& power_sensor) {
                            switch (power_sensor.get_terminal_type()) {
-                               case MeasuredTerminalType::branch_from:
-                               case MeasuredTerminalType::branch_to:
+                               using enum MeasuredTerminalType;
+
+                               case branch_from:
+                               case branch_to:
                                    return components_.template get_seq<Branch>(power_sensor.measured_object());
-                               case MeasuredTerminalType::source:
+                               case source:
                                    return components_.template get_seq<Source>(power_sensor.measured_object());
-                               case MeasuredTerminalType::shunt:
+                               case shunt:
                                    return components_.template get_seq<Shunt>(power_sensor.measured_object());
-                               case MeasuredTerminalType::load:
-                               case MeasuredTerminalType::generator:
+                               case load:
+                               case generator:
                                    return components_.template get_seq<GenericLoadGen>(power_sensor.measured_object());
-                               case MeasuredTerminalType::branch3_1:
-                               case MeasuredTerminalType::branch3_2:
-                               case MeasuredTerminalType::branch3_3:
+                               case branch3_1:
+                               case branch3_2:
+                               case branch3_3:
                                    return components_.template get_seq<Branch3>(power_sensor.measured_object());
-                               case MeasuredTerminalType::node:
+                               case node:
                                    return components_.template get_seq<Node>(power_sensor.measured_object());
                                default:
                                    throw MissingCaseForEnumError("Power sensor idx to seq transformation",
@@ -719,12 +717,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output node
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Node, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::same_as<Node> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(), comp_coup_->node.cbegin(), res_it,
@@ -738,12 +732,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output branch
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<Branch, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::derived_from<Branch> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(),
@@ -757,12 +747,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output branch3
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<Branch3, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::derived_from<Branch3> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(),
@@ -779,12 +765,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output source, load_gen, shunt individually
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Appliance, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::same_as<Appliance> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         res_it = output_result<sym, Source>(math_output, res_it);
         res_it = output_result<sym, GenericLoadGen>(math_output, res_it);
@@ -793,12 +775,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output source
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Source, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::same_as<Source> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(), comp_coup_->source.cbegin(), res_it,
@@ -811,12 +789,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output load gen
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<GenericLoadGen, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::derived_from<GenericLoadGen> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(
             components_.template citer<Component>().begin(), components_.template citer<Component>().end(),
@@ -830,12 +804,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output shunt
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_same_v<Shunt, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::same_as<Shunt> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(components_.template citer<Component>().begin(),
                               components_.template citer<Component>().end(), comp_coup_->shunt.cbegin(), res_it,
@@ -848,12 +818,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output voltage sensor
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<GenericVoltageSensor, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::derived_from<GenericVoltageSensor> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(
             components_.template citer<Component>().begin(), components_.template citer<Component>().end(),
@@ -869,12 +835,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // output power sensor
-    template <bool sym, class Component, class ResIt>
-    std::enable_if_t<
-        std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<ResIt>::iterator_category> &&
-            std::is_base_of_v<GenericPowerSensor, Component>,
-        ResIt>
-    output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <bool sym, std::derived_from<GenericPowerSensor> Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
         return std::transform(
             components_.template citer<Component>().begin(), components_.template citer<Component>().end(),
@@ -884,24 +846,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const terminal_type = power_sensor.get_terminal_type();
                 Idx2D const obj_math_id = [&]() {
                     switch (terminal_type) {
-                        case MeasuredTerminalType::branch_from:
-                        case MeasuredTerminalType::branch_to:
+                        using enum MeasuredTerminalType;
+
+                        case branch_from:
+                        case branch_to:
                             return comp_coup_->branch[obj_seq];
-                        case MeasuredTerminalType::source:
+                        case source:
                             return comp_coup_->source[obj_seq];
-                        case MeasuredTerminalType::shunt:
+                        case shunt:
                             return comp_coup_->shunt[obj_seq];
-                        case MeasuredTerminalType::load:
-                        case MeasuredTerminalType::generator:
+                        case load:
+                        case generator:
                             return comp_coup_->load_gen[obj_seq];
                         // from branch3, get relevant math object branch based on the measured side
-                        case MeasuredTerminalType::branch3_1:
+                        case branch3_1:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[0]};
-                        case MeasuredTerminalType::branch3_2:
+                        case branch3_2:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[1]};
-                        case MeasuredTerminalType::branch3_3:
+                        case branch3_3:
                             return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[2]};
-                        case MeasuredTerminalType::node:
+                        case node:
                             return comp_coup_->node[obj_seq];
                         default:
                             throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
@@ -914,22 +878,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
 
                 switch (terminal_type) {
-                    case MeasuredTerminalType::branch_from:
+                    using enum MeasuredTerminalType;
+
+                    case branch_from:
                     // all power sensors in branch3 are at from side in the mathematical model
-                    case MeasuredTerminalType::branch3_1:
-                    case MeasuredTerminalType::branch3_2:
-                    case MeasuredTerminalType::branch3_3:
+                    case branch3_1:
+                    case branch3_2:
+                    case branch3_3:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
-                    case MeasuredTerminalType::branch_to:
+                    case branch_to:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
-                    case MeasuredTerminalType::source:
+                    case source:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
-                    case MeasuredTerminalType::shunt:
+                    case shunt:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
-                    case MeasuredTerminalType::load:
-                    case MeasuredTerminalType::generator:
+                    case load:
+                    case generator:
                         return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
-                    case MeasuredTerminalType::node:
+                    case node:
                         return power_sensor.get_output<sym>(
                             math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
                     default:

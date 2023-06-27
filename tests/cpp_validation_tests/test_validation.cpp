@@ -309,7 +309,7 @@ struct CaseParam {
     bool sym{};
     bool is_batch{};
     double rtol{};
-    BatchParameter batch_parameter{};
+    [[no_unique_address]] BatchParameter batch_parameter{};
     std::map<std::string, double> atol;
 
     static std::string replace_backslash(std::string const& str) {
