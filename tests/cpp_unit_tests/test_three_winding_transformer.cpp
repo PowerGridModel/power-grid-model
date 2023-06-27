@@ -375,27 +375,22 @@ TEST_CASE("Test three winding transformer") {
         ComplexValue<true> i_2{1.0 - 2.2i};
         ComplexValue<true> i_3{1.3 - 2.1i};
 
-        Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output<true>(i_1, i_2, i_3);
-
-        CHECK(sym_sc_output.id == 1);
-        CHECK(sym_sc_output.energized);
-
-        // TODO(NITISH) sym sc output case
+        Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output(i_1, i_2, i_3);
 
         ComplexValue<false> i_1_asym{1.5 - 2.5i};
         ComplexValue<false> i_2_asym{1.0 - 2.2i};
         ComplexValue<false> i_3_asym{1.3 - 2.1i};
 
-        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output<false>(i_1_asym, i_2_asym, i_3_asym);
+        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(i_1_asym, i_2_asym, i_3_asym);
 
-        CHECK(asym_sc_output.id == 1);
-        CHECK(asym_sc_output.energized);
-        CHECK(asym_sc_output.i_1(2) == doctest::Approx(cabs(i_1) * base_i_1));
-        CHECK(asym_sc_output.i_2(0) == doctest::Approx(cabs(i_2) * base_i_2));
-        CHECK(asym_sc_output.i_3(1) == doctest::Approx(cabs(i_3) * base_i_3));
-        CHECK(asym_sc_output.i_1_angle(2) == doctest::Approx(arg(i_1) + deg_120));
-        CHECK(asym_sc_output.i_2_angle(0) == doctest::Approx(arg(i_2)));
-        CHECK(asym_sc_output.i_3_angle(1) == doctest::Approx(arg(i_3) - deg_120));
+        CHECK(sym_sc_output.id == asym_sc_output.id == 1);
+        CHECK(sym_sc_output.energized == asym_sc_output.energized == 1);
+        CHECK(sym_sc_output.i_1(2) == asym_sc_output.i_1(2) == doctest::Approx(cabs(i_1) * base_i_1));
+        CHECK(sym_sc_output.i_2(0) == asym_sc_output.i_2(0) == doctest::Approx(cabs(i_2) * base_i_2));
+        CHECK(sym_sc_output.i_3(1) == asym_sc_output.i_3(1) == doctest::Approx(cabs(i_3) * base_i_3));
+        CHECK(sym_sc_output.i_1_angle(2) == asym_sc_output.i_1_angle(2) == doctest::Approx(arg(i_1) + deg_120));
+        CHECK(sym_sc_output.i_2_angle(0) == asym_sc_output.i_2_angle(0) == doctest::Approx(arg(i_2)));
+        CHECK(sym_sc_output.i_3_angle(1) == asym_sc_output.i_3_angle(1) == doctest::Approx(arg(i_3) - deg_120));
     }
 
     SUBCASE("No source results") {
