@@ -282,36 +282,32 @@ class PowerGridModel:
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
-        Or calculate in batch with the given update dataset in.
+        Or calculate in batch with the given update dataset in batch.
     
         Args:
             symmetric: Whether to perform a three-phase symmetric calculation.
-                - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-                - False: Three-phase asymmetric calculation.
+                True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                False: Three-phase asymmetric calculation.
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
             calculation_method: The calculation method to use.
-                - Newton_raphson: Use Newton-Raphson iterative method (default).
-                - Linear: Use linear method.
-						update_data: Data for batch calculation with batch update.
-						             None: Calculate power flow once with the current model attributes.
-						             A dictionary for batch calculation with batch update:
-                                        - key: Component type name to be updated in batch.
-						                - value:		            
-                                            - For homogeneous update batch:
-                                                - Dimension 0: Each batch.
-                                                - Dimension 1: Each updated element per batch for this component type.
-                                            - For inhomogeneous update batch:
-                                                - indptr: A 1D integer numpy array with length n_batch + 1.
-                                                    Given batch number k, the update array for this batch is
-                                                    data[indptr[k]:indptr[k + 1]].
-                                                    This is the concept of compressed sparse structure.
-                                                    [Link to scipy.sparse.csr_matrix documentation]
-                                                - data: 1D numpy structured array in flat.
+                Newton_raphson: Use Newton-Raphson iterative method (default).
+                Linear: Use linear method.
+            update_data: Data for batch calculation with batch update.
+                None: Calculate power flow once with the current model attributes. A dictionary for batch calculation with batch update:
+                    key: Component type name to be updated in batch.
+                    value:		            
+                        For homogeneous update batch:
+                            Dimension 0: Each batch.
+                            Dimension 1: Each updated element per batch for this component type.
+                        For inhomogeneous update batch:
+                            indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the update array for this batch is
+                                data[indptr[k]:indptr[k + 1]]. This is the concept of compressed sparse structure.                           [Link to scipy.sparse.csr_matrix documentation]
+                            data: 1D numpy structured array in flat.
             threading: Number of parallel threads to use for batch calculation.
-                - < 0: Sequential execution.
-                - = 0: Parallel execution using the number of hardware threads.
-                - > 0: Specify the number of parallel threads.
+                < 0: Sequential execution.
+                = 0: Parallel execution using the number of hardware threads.
+                > 0: Specify the number of parallel threads.
             output_component_types: List or set of component types to be included in the
                 output dictionary. By default, all component types will be included.
             continue_on_batch_error: If True, the program continues (instead of throwing
@@ -319,14 +315,12 @@ class PowerGridModel:
     
         Returns:
             Dictionary of results of all components:
-                - Key: Component type name to be updated in batch.
-                - Value:
-                    - For single calculation: 1D numpy structured array for the results
-                        of this component type.
-                    - For batch calculation: 2D numpy structured array for the results
-                        of this component type.
-                        - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.
+                Key: Component type name to be updated in batch.
+                Value:
+                    For single calculation: 1D numpy structured array for the results of this component type.
+                    For batch calculation: 2D numpy structured array for the results of this component type.
+                        Dimension 0: Each batch.
+                        Dimension 1: The result of each element for this component type.
     
         Raises:
             Exception: If an error occurs during the core calculation.
