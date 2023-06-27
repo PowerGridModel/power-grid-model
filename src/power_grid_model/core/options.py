@@ -17,6 +17,7 @@ class OptionSetter:
     setter for options
     """
 
+    _value: Any
     _setter: Callable
 
     def __init__(self, setter):
@@ -24,9 +25,13 @@ class OptionSetter:
 
     def __set__(self, instance: "Options", value: Any):
         self._setter(instance.opt, value)
+        self._value = value
 
-    def __get__(self, instance, owner):
-        raise NotImplementedError("Cannot get option value!")
+    def __get__(self, instance, owner) -> Any:
+        """Return the value that was most recently set.
+
+        No guarantees are given on whether the value was set correctly."""
+        return self._value
 
 
 class Options:

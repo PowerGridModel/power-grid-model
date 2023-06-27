@@ -149,8 +149,158 @@ class PowerGridModel:
         assert_no_error()
         return indexer
 
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
+    @staticmethod
+    def _output_type(symmetric: bool) -> str:
+        return "sym_output" if symmetric else "asym_output"
+
+    @staticmethod
+    def _is_batch_calculation(update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]]) -> bool:
+        # update data exists for batch calculation
+        return update_data is not None
+
+    @staticmethod
+    def _prepare_update(update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]]) -> CDataset:
+        if update_data is None:
+            # no update dataset, create one batch with empty set
+            update_data = {}
+        return prepare_cpp_array(data_type="update", array_dict=update_data)
+
+    def _construct_output(
+        self,
+        calculation_type: CalculationType,
+        symmetric: bool,
+        output_component_types: Optional[Union[Set[str], List[str]]],
+        batch_size: int,
+    ) -> Dict[str, np.ndarray]:
+        # prepare result dataset
+        all_component_count = self.all_component_count
+
+        # for power flow, there is no need for sensor output
+        if calculation_type == CalculationType.power_flow:
+            all_component_count = {k: v for k, v in all_component_count.items() if "sensor" not in k}
+
+        # limit all component count to user specified component types in output
+        if output_component_types is None:
+            output_component_types = set(all_component_count.keys())
+
+        # raise error if some specified components are unknown
+        unknown_components = [
+            x for x in output_component_types if x not in power_grid_meta_data[self._output_type(symmetric=symmetric)]
+        ]
+        if unknown_components:
+            raise KeyError(f"You have specified some unknown component types: {unknown_components}")
+
+        all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
+
+        # create result dataset
+        result_dict = {}
+        for name, count in all_component_count.items():
+            # intialize array
+            arr = initialize_array(self._output_type(symmetric=symmetric), name, (batch_size, count), empty=True)
+            result_dict[name] = arr
+
+        return result_dict
+
+    # pylint: disable=too-many-arguments
+    @staticmethod
+    def _options(
+        calculation_type: CalculationType,
+        symmetric: bool,
+        error_tolerance: float,
+        max_iterations: int,
+        calculation_method: Union[CalculationMethod, str],
+        threading: int,
+    ) -> Options:
+        if isinstance(calculation_method, str):
+            calculation_method = CalculationMethod[calculation_method]
+
+        opt: Options = Options()
+        opt.calculation_type = calculation_type.value
+        opt.calculation_method = calculation_method.value
+        opt.symmetric = symmetric
+        opt.error_tolerance = error_tolerance
+        opt.max_iteration = max_iterations
+        opt.threading = threading
+        return opt
+
+    def _handle_errors(self, continue_on_batch_error: bool, batch_size: int):
+        if not continue_on_batch_error:
+            assert_no_error(batch_size=batch_size)
+        else:
+            # continue on batch error
+            error: Optional[RuntimeError] = find_error(batch_size=batch_size)
+            if error is not None:
+                if isinstance(error, PowerGridBatchError):
+                    # continue on batch error
+                    self._batch_error = error
+                else:
+                    # raise normal error
+                    raise error
+
+    def _reduce_output(self, result_dict: Dict[str, np.ndarray], batch_calculation: bool) -> Dict[str, np.ndarray]:
+        # flatten array for normal calculation
+        if not batch_calculation:
+            result_dict = {k: v.ravel() for k, v in result_dict.items()}
+
+        return result_dict
+
+    def _calculate_impl(
+        self,
+        options: Options,
+        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
+        output_component_types: Optional[Union[Set[str], List[str]]],
+        continue_on_batch_error: bool,
+    ):
+        """
+        Core calculation routine
+
+        Args:
+            options:
+            update_data:
+            output_component_types:
+            continue_on_batch_error:
+
+        Returns:
+
+        """
+        self._batch_error = None
+        batch_calculation = self._is_batch_calculation(update_data=update_data)
+
+        prepared_update = self._prepare_update(update_data)
+        batch_size = prepared_update.batch_size
+
+        result_dict = self._construct_output(
+            calculation_type=options.calculation_type,
+            symmetric=options.symmetric,
+            output_component_types=output_component_types,
+            batch_size=batch_size,
+        )
+        prepared_result = prepare_cpp_array(
+            data_type=self._output_type(symmetric=options.symmetric), array_dict=result_dict
+        )
+
+        # run calculation
+        pgc.calculate(
+            # model and options
+            self._model,
+            options.opt,
+            # result dataset
+            prepared_result.n_components,
+            prepared_result.components,
+            prepared_result.data_ptrs_per_component,
+            # update dataset
+            batch_size,
+            prepared_update.n_components,
+            prepared_update.components,
+            prepared_update.n_component_elements_per_scenario,
+            prepared_update.indptrs_per_component,
+            prepared_update.data_ptrs_per_component,
+        )
+
+        self._handle_errors(continue_on_batch_error=continue_on_batch_error, batch_size=batch_size)
+
+        return self._reduce_output(result_dict=result_dict, batch_calculation=batch_calculation)
+
     # pylint: disable=too-many-arguments
     def _calculate(
         self,
@@ -181,92 +331,20 @@ class PowerGridModel:
         Returns:
 
         """
-        if isinstance(calculation_method, str):
-            calculation_method = CalculationMethod[calculation_method]
-        if symmetric:
-            output_type = "sym_output"
-        else:
-            output_type = "asym_output"
-        self._batch_error = None
-
-        # prepare update dataset
-        # update data exist for batch calculation
-        if update_data is not None:
-            batch_calculation = True
-        # no update dataset, create one batch with empty set
-        else:
-            batch_calculation = False
-            update_data = {}
-        prepared_update: CDataset = prepare_cpp_array(data_type="update", array_dict=update_data)
-        batch_size = prepared_update.batch_size
-
-        # prepare result dataset
-        all_component_count = self.all_component_count
-        # for power flow, there is no need for sensor output
-        if calculation_type == CalculationType.power_flow:
-            all_component_count = {k: v for k, v in all_component_count.items() if "sensor" not in k}
-        # limit all component count to user specified component types in output
-        if output_component_types is None:
-            output_component_types = set(all_component_count.keys())
-        # raise error is some specified components are unknown
-        unknown_components = [x for x in output_component_types if x not in power_grid_meta_data[output_type]]
-        if unknown_components:
-            raise KeyError(f"You have specified some unknown component types: {unknown_components}")
-        all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
-        # create result dataset
-        result_dict = {}
-        for name, count in all_component_count.items():
-            # intialize array
-            arr = initialize_array(output_type, name, (batch_size, count), empty=True)
-            result_dict[name] = arr
-        prepared_result: CDataset = prepare_cpp_array(data_type=output_type, array_dict=result_dict)
-
-        # prepare options
-        opt: Options = Options()
-        opt.calculation_type = calculation_type.value
-        opt.calculation_method = calculation_method.value
-        opt.symmetric = symmetric
-        opt.error_tolerance = error_tolerance
-        opt.max_iteration = max_iterations
-        opt.threading = threading
-
-        # run calculation
-        pgc.calculate(
-            # model and options
-            self._model,
-            opt.opt,
-            # result dataset
-            prepared_result.n_components,
-            prepared_result.components,
-            prepared_result.data_ptrs_per_component,
-            # update dataset
-            batch_size,
-            prepared_update.n_components,
-            prepared_update.components,
-            prepared_update.n_component_elements_per_scenario,
-            prepared_update.indptrs_per_component,
-            prepared_update.data_ptrs_per_component,
+        options = self._options(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            error_tolerance=error_tolerance,
+            max_iterations=max_iterations,
+            calculation_method=calculation_method,
+            threading=threading,
         )
-
-        # error handling
-        if not continue_on_batch_error:
-            assert_no_error(batch_size=batch_size)
-        else:
-            # continue on batch error
-            error: Optional[RuntimeError] = find_error(batch_size=batch_size)
-            if error is not None:
-                if isinstance(error, PowerGridBatchError):
-                    # continue on batch error
-                    self._batch_error = error
-                else:
-                    # raise normal error
-                    raise error
-
-        # flatten array for normal calculation
-        if not batch_calculation:
-            result_dict = {k: v.ravel() for k, v in result_dict.items()}
-
-        return result_dict
+        return self._calculate_impl(
+            options=options,
+            update_data=update_data,
+            output_component_types=output_component_types,
+            continue_on_batch_error=continue_on_batch_error,
+        )
 
     def calculate_power_flow(
         self,
@@ -332,7 +410,7 @@ class PowerGridModel:
                 in case an error in the core occurs, an exception will be thrown
         """
         return self._calculate(
-            CalculationType.power_flow,
+            calculation_type=CalculationType.power_flow,
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
@@ -407,7 +485,7 @@ class PowerGridModel:
                 in case an error in the core occurs, an exception will be thrown
         """
         return self._calculate(
-            CalculationType.state_estimation,
+            calculation_type=CalculationType.state_estimation,
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
