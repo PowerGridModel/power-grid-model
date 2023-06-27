@@ -164,6 +164,52 @@ class ShortCircuitSolver {
                             }
                         }
                     }
+                    else if (fault_type == FaultType::single_phase_to_ground) {
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                            if (row_number == bus_number) {
+                                mat_data_[col_data_index](phase_1, phase_1) += y_fault;
+                            }
+                        }
+                    }
+                    else if (fault_type == FaultType::two_phase) {
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                            // mat_data[bus,bus][phase_2, phase_2] += y_fault
+                            // mat_data[bus,bus][phase_1, phase_2] -= y_fault
+                            // mat_data[bus,bus][phase_2, phase_1] -= y_fault
+                            if (row_number == bus_number) {
+                                mat_data_[col_data_index](phase_1, phase_1) += y_fault;
+                                mat_data_[col_data_index](phase_2, phase_2) += y_fault;
+                                mat_data_[col_data_index](phase_1, phase_2) -= y_fault;
+                                mat_data_[col_data_index](phase_2, phase_1) -= y_fault;
+                            }
+                        }
+                    }
+                    else {
+                        assert((fault_type == FaultType::two_phase_to_ground));
+                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                            Idx row_number = y_bus.col_indices_lu()[data_index];
+                            Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
+                            // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
+                            // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
+                            // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
+                            // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
+                            if (row_number == bus_number) {
+                                mat_data_[col_data_index](phase_1, phase_1) += 2 * y_fault;
+                                mat_data_[col_data_index](phase_2, phase_2) += 2 * y_fault;
+                                mat_data_[col_data_index](phase_1, phase_2) -= y_fault;
+                                mat_data_[col_data_index](phase_2, phase_1) -= y_fault;
+                            }
+                        }
+                    }
                 }
             }
         }
