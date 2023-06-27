@@ -20,7 +20,7 @@ class GenericVoltageSensor : public Sensor {
    public:
     static constexpr char const* name = "generic_voltage_sensor";
 
-    GenericVoltageSensor(GenericVoltageSensorInput const& generic_voltage_sensor_input)
+    explicit GenericVoltageSensor(GenericVoltageSensorInput const& generic_voltage_sensor_input)
         : Sensor{generic_voltage_sensor_input} {};
 
     template <bool sym>
@@ -62,7 +62,7 @@ class VoltageSensor : public GenericVoltageSensor {
     template <bool sym_calc>
     using OutputType = VoltageSensorOutput<sym_calc>;
 
-    VoltageSensor(VoltageSensorInput<sym> const& voltage_sensor_input, double u_rated)
+    explicit VoltageSensor(VoltageSensorInput<sym> const& voltage_sensor_input, double u_rated)
         : GenericVoltageSensor{voltage_sensor_input},
           u_rated_{u_rated},
           u_sigma_{voltage_sensor_input.u_sigma / (u_rated_ * u_scale<sym>)},

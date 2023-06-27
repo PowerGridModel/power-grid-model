@@ -27,7 +27,7 @@ class Fault final : public Base {
         return ComponentType::fault;
     }
 
-    Fault(FaultInput const& fault_input)
+    explicit Fault(FaultInput const& fault_input)
         : Base{fault_input},
           status_{static_cast<bool>(fault_input.status)},
           fault_type_{fault_input.fault_type},

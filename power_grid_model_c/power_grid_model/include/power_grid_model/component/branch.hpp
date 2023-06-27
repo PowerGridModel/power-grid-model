@@ -29,7 +29,7 @@ class Branch : public Base {
         return ComponentType::branch;
     }
 
-    Branch(BranchInput const& branch_input)
+    explicit Branch(BranchInput const& branch_input)
         : Base{branch_input},
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},

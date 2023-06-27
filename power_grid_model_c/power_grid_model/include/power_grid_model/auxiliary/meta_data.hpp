@@ -26,13 +26,17 @@ struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
 
-using SetNaNFunc = std::add_pointer_t<void(void*)>;
-using CheckNaNFunc = std::add_pointer_t<bool(void const*)>;
-using SetValueFunc = std::add_pointer_t<void(void*, void const*)>;
-using CompareValueFunc = std::add_pointer_t<bool(void const* ptr_x, void const* ptr_y, double atol, double rtol)>;
+using RawDataPtr = void*;             // raw mutable data ptr
+using RawDataConstPtr = void const*;  // raw read-only data ptr
+
+using SetNaNFunc = std::add_pointer_t<void(RawDataPtr)>;
+using CheckNaNFunc = std::add_pointer_t<bool(RawDataConstPtr)>;
+using SetValueFunc = std::add_pointer_t<void(RawDataPtr, RawDataConstPtr)>;
+using CompareValueFunc =
+    std::add_pointer_t<bool(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol)>;
 
 template <class T>
-void set_value_template(void* dest, void const* src) {
+void set_value_template(RawDataPtr dest, RawDataConstPtr src) {
     *reinterpret_cast<T*>(dest) = *reinterpret_cast<T const*>(src);
 }
 
@@ -47,14 +51,14 @@ struct data_type<double, false> {
     static constexpr const char* ctype = "double";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
         *reinterpret_cast<double*>(ptr) = nan;
     };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
+    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
         return is_nan(*reinterpret_cast<double const*>(ptr));
     };
     static constexpr SetValueFunc set_value = set_value_template<double>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double atol,
+    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol,
                                                          double rtol) -> bool {
         double const x = *reinterpret_cast<double const*>(ptr_x);
         double const y = *reinterpret_cast<double const*>(ptr_y);
@@ -68,14 +72,15 @@ struct data_type<int32_t, false> {
     static constexpr const char* ctype = "int32_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
         *reinterpret_cast<int32_t*>(ptr) = na_IntID;
     };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
+    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
         return *reinterpret_cast<int32_t const*>(ptr) == na_IntID;
     };
     static constexpr SetValueFunc set_value = set_value_template<int32_t>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double, double) -> bool {
+    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double,
+                                                         double) -> bool {
         return *reinterpret_cast<int32_t const*>(ptr_x) == *reinterpret_cast<int32_t const*>(ptr_y);
     };
 };
@@ -86,14 +91,15 @@ struct data_type<int8_t, false> {
     static constexpr const char* ctype = "int8_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
         *reinterpret_cast<int8_t*>(ptr) = na_IntS;
     };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
+    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
         return *reinterpret_cast<int8_t const*>(ptr) == na_IntS;
     };
     static constexpr SetValueFunc set_value = set_value_template<int8_t>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double, double) -> bool {
+    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double,
+                                                         double) -> bool {
         return *reinterpret_cast<int8_t const*>(ptr_x) == *reinterpret_cast<int8_t const*>(ptr_y);
     };
 };
@@ -104,14 +110,14 @@ struct data_type<RealValue<false>, false> {
     static constexpr const char* ctype = "double[3]";
     static constexpr size_t ndim = 1;
     static constexpr size_t const* dims = three_phase_dimension.data();
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
         *reinterpret_cast<RealValue<false>*>(ptr) = RealValue<false>{nan, nan, nan};
     };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
+    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
         return is_nan(*reinterpret_cast<RealValue<false> const*>(ptr));
     };
     static constexpr SetValueFunc set_value = set_value_template<RealValue<false>>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double atol,
+    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol,
                                                          double rtol) -> bool {
         RealValue<false> const x = *reinterpret_cast<RealValue<false> const*>(ptr_x);
         RealValue<false> const y = *reinterpret_cast<RealValue<false> const*>(ptr_y);
@@ -196,15 +202,15 @@ struct MetaData {
         return find_attr(attr_name) >= 0;
     }
 
-    void* get_position(void* ptr, Idx position) const {
+    RawDataPtr get_position(RawDataPtr ptr, Idx position) const {
         return reinterpret_cast<char*>(ptr) + position * size;
     }
-    void const* get_position(void const* ptr, Idx position) const {
+    RawDataConstPtr get_position(RawDataConstPtr ptr, Idx position) const {
         return reinterpret_cast<char const*>(ptr) + position * size;
     }
 
     // set nan for all attributes
-    void set_nan(void* ptr, Idx position = 0) const {
+    void set_nan(RawDataPtr ptr, Idx position = 0) const {
         ptr = get_position(ptr, position);
         for (DataAttribute const& attr : attributes) {
             void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
@@ -212,30 +218,30 @@ struct MetaData {
         }
     }
     // check nan for a attribute
-    bool check_nan(void const* ptr, DataAttribute const& attr, Idx position = 0) const {
+    bool check_nan(RawDataConstPtr ptr, DataAttribute const& attr, Idx position = 0) const {
         ptr = get_position(ptr, position);
-        void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
+        RawDataConstPtr const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
         return attr.check_nan(offset_ptr);
     }
     // set value of one attribute
-    void set_attr(void* ptr, void const* value_ptr, DataAttribute const& attr, Idx position = 0) const {
+    void set_attr(RawDataPtr ptr, RawDataConstPtr value_ptr, DataAttribute const& attr, Idx position = 0) const {
         ptr = get_position(ptr, position);
         void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
         attr.set_value(offset_ptr, value_ptr);
     }
     // get value of one attribute
-    void get_attr(void const* ptr, void* value_ptr, DataAttribute const& attr, Idx position = 0) const {
+    void get_attr(RawDataConstPtr ptr, RawDataPtr value_ptr, DataAttribute const& attr, Idx position = 0) const {
         ptr = get_position(ptr, position);
-        void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
+        RawDataConstPtr const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
         attr.set_value(value_ptr, offset_ptr);
     }
     // compare value of one attribute
-    bool compare_attr(void const* ptr_x, void const* ptr_y, double atol, double rtol, DataAttribute const& attr,
+    bool compare_attr(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, DataAttribute const& attr,
                       Idx position = 0) const {
         ptr_x = get_position(ptr_x, position);
         ptr_y = get_position(ptr_y, position);
-        void const* const attr_ptr_x = reinterpret_cast<char const*>(ptr_x) + attr.offset;
-        void const* const attr_ptr_y = reinterpret_cast<char const*>(ptr_y) + attr.offset;
+        RawDataConstPtr const attr_ptr_x = reinterpret_cast<char const*>(ptr_x) + attr.offset;
+        RawDataConstPtr const attr_ptr_y = reinterpret_cast<char const*>(ptr_y) + attr.offset;
         return attr.compare_value(attr_ptr_x, attr_ptr_y, atol, rtol);
     }
 };

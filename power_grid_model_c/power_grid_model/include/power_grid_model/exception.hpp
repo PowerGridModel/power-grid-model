@@ -95,14 +95,14 @@ class IterationDiverge : public PowerGridError {
 
 class ConflictID : public PowerGridError {
    public:
-    ConflictID(ID id) {
+    explicit ConflictID(ID id) {
         append_msg("Conflicting id detected: " + std::to_string(id) + '\n');
     }
 };
 
 class IDNotFound : public PowerGridError {
    public:
-    IDNotFound(ID id) {
+    explicit IDNotFound(ID id) {
         append_msg("The id cannot be found: " + std::to_string(id) + '\n');
     }
 };
@@ -116,14 +116,14 @@ class InvalidMeasuredObject : public PowerGridError {
 
 class IDWrongType : public PowerGridError {
    public:
-    IDWrongType(ID id) {
+    explicit IDWrongType(ID id) {
         append_msg("Wrong type for object with id " + std::to_string(id) + '\n');
     }
 };
 
 class CalculationError : public PowerGridError {
    public:
-    CalculationError(std::string const &msg) {
+    explicit CalculationError(std::string const &msg) {
         append_msg(msg);
     }
 };
@@ -156,7 +156,7 @@ class InvalidCalculationMethod : public CalculationError {
 
 class UnknownAttributeName : public PowerGridError {
    public:
-    UnknownAttributeName(std::string const &attr_name) {
+    explicit UnknownAttributeName(std::string const &attr_name) {
         append_msg("Unknown attribute name!" + attr_name + "\n");
     }
 };
