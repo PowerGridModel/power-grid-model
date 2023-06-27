@@ -113,12 +113,19 @@ TEST_CASE("Test source") {
         ComplexValue<false> const i{1.0 + 2.0i};
         ApplianceShortCircuitOutput const sym_sc_result = source.get_sc_output(i_sym);
         ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i);
-        CHECK(sym_sc_result.id == asym_sc_result.id == 1);
-        CHECK(sym_sc_result.energized == asym_sc_result.energized == 1);
-        CHECK(sym_sc_result.i(0) == asym_sc_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(sym_sc_result.i(2) == asym_sc_result.i(2) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
-        CHECK(sym_sc_result.i_angle(1) == asym_sc_result.i_angle(1) == doctest::Approx(arg(1.0 + 2.0i) - deg_120));
-        CHECK(sym_sc_result.i_angle(2) == asym_sc_result.i_angle(2) == doctest::Approx(arg(1.0 + 2.0i) - deg_240));
+        CHECK(asym_sc_result.id == 1);
+        CHECK(asym_sc_result.energized == 1);
+        CHECK(asym_sc_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(asym_sc_result.i(2) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
+        CHECK(asym_sc_result.i_angle(1) == doctest::Approx(arg(1.0 + 2.0i) - deg_120));
+        CHECK(asym_sc_result.i_angle(2) == doctest::Approx(arg(1.0 + 2.0i) - deg_240));
+
+        CHECK(sym_sc_result.id == asym_sc_result.id);
+        CHECK(sym_sc_result.energized == asym_sc_result.energized);
+        CHECK(sym_sc_result.i(0) == asym_sc_result.i(0));
+        CHECK(sym_sc_result.i(2) == asym_sc_result.i(2));
+        CHECK(sym_sc_result.i_angle(1) == asym_sc_result.i_angle(1));
+        CHECK(sym_sc_result.i_angle(2) == asym_sc_result.i_angle(2));
     }
 
     SUBCASE("test no source") {

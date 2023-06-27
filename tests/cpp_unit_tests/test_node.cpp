@@ -23,6 +23,7 @@ TEST_CASE("Test node") {
     ComplexValue<false> u, s;
     u << 1.0, a2, a;
     s << 0.0, DoubleComplex(2.1, 2.2), DoubleComplex(3.1, 3.2);
+    DoubleComplex u_sym = 1.0; 
     auto asym_res = node.get_output<false>(u, s);
     CHECK(asym_res.u(1) == doctest::Approx(10.0e3 / sqrt3));
     CHECK(asym_res.u_angle(2) == doctest::Approx(-deg_240 + 2 * pi));
@@ -30,10 +31,14 @@ TEST_CASE("Test node") {
     CHECK(asym_res.p(1) == doctest::Approx(2.1e6 / 3.0));
     CHECK(asym_res.q(2) == doctest::Approx(3.2e6 / 3.0));
 
+    auto sym_sc_res = node.get_sc_output(u_sym);
     auto sc_res = node.get_sc_output(u);
     CHECK(sc_res.u(1) == doctest::Approx(10.0e3 / sqrt3));
     CHECK(sc_res.u_angle(2) == doctest::Approx(-deg_240 + 2 * pi));
     CHECK(sc_res.u_pu(0) == doctest::Approx(1.0));
+    CHECK(sym_sc_res.u(1) == sc_res.u(1));
+    CHECK(sym_sc_res.u_angle(2) == sc_res.u_angle(2));
+    CHECK(sym_sc_res.u_pu(0) == sc_res.u_pu(0));
 
     // not energized
     asym_res = node.get_null_output<false>();
@@ -42,11 +47,11 @@ TEST_CASE("Test node") {
     CHECK(asym_res.q(2) == 0.0);
     CHECK(!asym_res.energized);
 
-    auto sc_res = node.get_null_sc_output();
-    CHECK(sc_res.u(1) == 0.0);
-    CHECK(sc_res.u_pu(2) == 0.0);
-    CHECK(sc_res.u_angle(0) == 0.0);
-    CHECK(!sc_res.energized);
+    auto sc_res_null = node.get_null_sc_output();
+    CHECK(sc_res_null.u(1) == 0.0);
+    CHECK(sc_res_null.u_pu(2) == 0.0);
+    CHECK(sc_res_null.u_angle(0) == 0.0);
+    CHECK(!sc_res_null.energized);
 
     SUBCASE("Test energized function") {
         CHECK(node.energized(true));
