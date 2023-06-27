@@ -29,8 +29,9 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 
 namespace power_grid_model {
 namespace {
+using meta_data::raw_data_const_ptr;
 using meta_data::raw_data_ptr;
-}
+}  // namespace
 
 TEST_CASE("C API Model") {
     // get handle
@@ -56,7 +57,7 @@ TEST_CASE("C API Model") {
     PGM_buffer_set_value(hl, "input", "source", "u_ref", source_buffer, &source_input.u_ref, 1, -1);
     PGM_buffer_set_value(hl, "input", "source", "sk", source_buffer, &source_input.sk, 1, -1);
     PGM_buffer_set_value(hl, "input", "source", "rx_ratio", source_buffer, &source_input.rx_ratio, 1, -1);
-    std::array<void const*, 3> input_data{&node_input, source_buffer, &load_input};
+    std::array<raw_data_const_ptr, 3> input_data{&node_input, source_buffer, &load_input};
 
     // output data
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
@@ -70,7 +71,7 @@ TEST_CASE("C API Model") {
     std::array<SymLoadGenUpdate, 2> load_updates{{{{{2}, na_IntS}, nan, 100.0}, {{{2}, na_IntS}, nan, 300.0}}};
     std::array update_components{"source", "sym_load"};
     std::array<Idx, 2> update_component_sizes{1, 1};
-    std::array<void const*, 2> update_data{&source_update, load_updates.data()};
+    std::array<raw_data_const_ptr, 2> update_data{&source_update, load_updates.data()};
     std::array<Idx, 2> n_component_elements_per_scenario{-1, 1};
     std::array<Idx, 3> source_update_indptr{0, 1, 1};
     std::array<Idx const*, 2> indptrs_per_component{source_update_indptr.data(), nullptr};

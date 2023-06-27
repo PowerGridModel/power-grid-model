@@ -191,7 +191,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
                 continue;
             }
             Buffer const& single_buffer = found->second;
-            void const* const src_ptr = single_buffer.ptr.get();
+            raw_data_const_ptr const src_ptr = single_buffer.ptr.get();
             Idx const length = single_buffer.indptr.back();
             // copy memory, assign indptr
             std::memcpy(current_ptr, src_ptr, length * component_meta.size);
@@ -220,9 +220,9 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             MetaData const& component_meta = meta.at(type_name);
             Idx const length = reference_dataset.elements_per_scenario(batch);
             // offset batch
-            void const* const result_ptr =
+            raw_data_const_ptr const result_ptr =
                 reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * batch * component_meta.size;
-            void const* const reference_result_ptr =
+            raw_data_const_ptr const reference_result_ptr =
                 reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * batch * component_meta.size;
             // loop all attribute
             for (DataAttribute const& attr : component_meta.attributes) {
