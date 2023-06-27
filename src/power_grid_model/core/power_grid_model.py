@@ -281,7 +281,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
         """
-            Calculate power flow once with the current model attributes.
+        Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
     
         Args:
@@ -293,21 +293,21 @@ class PowerGridModel:
             calculation_method: The calculation method to use.
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
-                    update_data: Data for batch calculation with batch update.
-                                    None: Calculate power flow once with the current model attributes.
-                                    A dictionary for batch calculation with batch update:
-                                                    - key: Component type name to be updated in batch.
-                                    - value:		            
-                                                            - For homogeneous update batch:
-                                                    - Dimension 0: Each batch.
-                                                    - Dimension 1: Each updated element per batch for this component type.
-                                                - For inhomogeneous update batch:
-                                                    - indptr: A 1D integer numpy array with length n_batch + 1.
-                                                        Given batch number k, the update array for this batch is
-                                                        data[indptr[k]:indptr[k + 1]].
-                                                        This is the concept of compressed sparse structure.
-                                                        [Link to scipy.sparse.csr_matrix documentation]
-                                                    - data: 1D numpy structured array in flat.
+						update_data: Data for batch calculation with batch update.
+						             None: Calculate power flow once with the current model attributes.
+						             A dictionary for batch calculation with batch update:
+                                        - key: Component type name to be updated in batch.
+						                - value:		            
+                                            - For homogeneous update batch:
+                                                - Dimension 0: Each batch.
+                                                - Dimension 1: Each updated element per batch for this component type.
+                                            - For inhomogeneous update batch:
+                                                - indptr: A 1D integer numpy array with length n_batch + 1.
+                                                    Given batch number k, the update array for this batch is
+                                                    data[indptr[k]:indptr[k + 1]].
+                                                    This is the concept of compressed sparse structure.
+                                                    [Link to scipy.sparse.csr_matrix documentation]
+                                                - data: 1D numpy structured array in flat.
             threading: Number of parallel threads to use for batch calculation.
                 - < 0: Sequential execution.
                 - = 0: Parallel execution using the number of hardware threads.
