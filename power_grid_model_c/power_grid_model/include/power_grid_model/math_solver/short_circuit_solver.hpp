@@ -32,10 +32,12 @@ class ShortCircuitSolver {
                                                   ShortCircuitInput const& input) {
         // For one calculation all faults should be of the same type and have the same phase
         assert_all_fault_type_phase_equal_(input.faults);
+        const FaultPhase fault_phase = input.faults[0].fault_phase;
+        const FaultType fault_type = input.faults[0].fault_type;
         // set phase 1 and 2 index for single and two phase faults
         int phase_1{-1};
         int phase_2{-1};
-        set_phase_index_(phase_1, phase_2);
+        set_phase_index_(phase_1, phase_2, fault_phase);
 
         // getter
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
@@ -93,7 +95,7 @@ class ShortCircuitSolver {
                         }
                         rhs[bus_number] = 0;
                     }
-                    else if (short_circuit_type == ShortCircuitType::single_phase_to_ground) {
+                    else if (fault_type == FaultType::single_phase_to_ground) {
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                             Idx row_number = y_bus.col_indices_lu()[data_index];
@@ -107,7 +109,7 @@ class ShortCircuitSolver {
                         }
                         rhs[bus_number](phase_1) = 0;
                     }
-                    else if (short_circuit_type == ShortCircuitType::two_phase) {
+                    else if (fault_type == FaultType::two_phase) {
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                             Idx row_number = y_bus.col_indices_lu()[data_index];
@@ -127,7 +129,7 @@ class ShortCircuitSolver {
                         rhs[bus_number](phase_1) = 0;
                     }
                     else {
-                        assert((short_circuit_type == ShortCircuitType::two_phase_to_ground));
+                        assert((fault_type == FaultType::two_phase_to_ground));
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                             Idx row_number = y_bus.col_indices_lu()[data_index];
@@ -168,26 +170,26 @@ class ShortCircuitSolver {
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
 
-    void set_phase_index_(double& phase_1, double& phase_2) {
+    void set_phase_index_(double& phase_1, double& phase_2, FaultPhase fault_phase) {
         // This function updates the phase index for single and two phase faults
-        if (short_circuit_phases == ShortCircuitPhases::a) {
+        if (fault_phase == FaultPhase::a) {
             phase_1 = 0;
         }
-        else if (short_circuit_phases == ShortCircuitPhases::b) {
+        else if (fault_phase == FaultPhase::b) {
             phase_1 = 1;
         }
-        else if (short_circuit_phases == ShortCircuitPhases::c) {
+        else if (fault_phase == FaultPhase::c) {
             phase_1 = 2;
         }
-        else if (short_circuit_phases == ShortCircuitPhases::ab) {
+        else if (fault_phase == FaultPhase::ab) {
             phase_1 = 0;
             phase_2 = 1;
         }
-        else if (short_circuit_phases == ShortCircuitPhases::ac) {
+        else if (fault_phase == FaultPhase::ac) {
             phase_1 = 0;
             phase_2 = 2;
         }
-        else if (short_circuit_phases == ShortCircuitPhases::bc) {
+        else if (fault_phase == FaultPhase::bc) {
             phase_1 = 1;
             phase_2 = 2;
         }
