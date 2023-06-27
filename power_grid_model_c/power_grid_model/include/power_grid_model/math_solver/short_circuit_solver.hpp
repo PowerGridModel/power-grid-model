@@ -9,6 +9,7 @@
 #include "../calculation_parameters.hpp"
 #include "../enum.hpp"
 #include "../exception.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 namespace power_grid_model {
@@ -25,7 +26,9 @@ class ShortCircuitSolver {
           n_fault_{topo_ptr->n_fault()},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           fault_bus_indptr_{topo_ptr, &topo_ptr->fault_bus_indptr},
-          mat_data_(y_bus.nnz_lu()) {
+          mat_data_(y_bus.nnz_lu()),
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          perm_(n_bus_) {
     }
 
     ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
@@ -217,8 +220,6 @@ class ShortCircuitSolver {
         // solve matrix
 
         // post processing
-
-        // TODO use Timer class??
     }
 
    private:
@@ -229,6 +230,9 @@ class ShortCircuitSolver {
     std::shared_ptr<IdxVector const> fault_bus_indptr_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
+    // sparse solver
+    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
+    typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
     void set_phase_index_(double& phase_1, double& phase_2, FaultPhase fault_phase) {
         // This function updates the phase index for single and two phase faults
