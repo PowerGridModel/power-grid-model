@@ -60,7 +60,7 @@ class Vector : public Eigen3Vector<T> {
         (*this) << x, x, x;
     }
     // constructor of three values
-    Vector(T const& x1, T const& x2, T const& x3) {
+    explicit Vector(T const& x1, T const& x2, T const& x3) {
         (*this) << x1, x2, x3;
     }
 };
@@ -83,7 +83,7 @@ class Tensor : public Eigen3Tensor<T> {
     }
     // eigen expression
     template <typename OtherDerived>
-    Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {
+    explicit Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {
     }
     template <typename OtherDerived>
     Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {

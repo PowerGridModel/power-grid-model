@@ -95,7 +95,7 @@ struct YBusStructure {
     IdxVector lu_transpose_entry;
 
     // construct ybus structure
-    YBusStructure(MathModelTopology const& topo) {
+    explicit YBusStructure(MathModelTopology const& topo) {
         Idx const n_bus = topo.n_bus();
         Idx const n_branch = topo.n_branch();
         Idx const n_fill_in = (Idx)topo.fill_in.size();
