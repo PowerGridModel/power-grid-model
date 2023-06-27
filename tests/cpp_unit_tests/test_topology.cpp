@@ -88,12 +88,6 @@
  */
 
 namespace power_grid_model {
-
-// define operators
-inline bool operator==(Idx2DBranch3 x, Idx2DBranch3 y) {
-    return x.group == y.group && x.pos == y.pos;
-}
-
 std::ostream& operator<<(std::ostream& s, Idx2D const& idx) {
     s << "(" << idx.group << ", " << idx.pos << ")";
     return s;
