@@ -7,6 +7,7 @@ SPDX-License-Identifier: MPL-2.0
 # Calculations
 
 ## Calculation types
+
 With power-grid-model it is possible to perform two different types of calculation:
 - [Power flow](#power-flow-algorithms): a "what-if" scenario calculation. This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
@@ -14,6 +15,7 @@ With power-grid-model it is possible to perform two different types of calculati
 ### Calculation types explained
 
 #### Power flow
+
 Power flow is a "what-if" based grid calculation that will calculate the node voltages and the power flow through the branches, based on assumed load/generation profiles.
 Some typical use-cases are network planning and contingency analysis.
 
@@ -26,6 +28,7 @@ Output:
 - Power flow through branches
 
 #### State estimation
+
 State estimation is a statistical calculation method that determines the most probable state of the grid, based on
 network data and measurements. Measurements meaning power flow or voltage values with some kind of uncertainty, which were 
 either measured, estimated or forecasted.
@@ -71,9 +74,9 @@ state estimation algorithm assumes voltage angles to be zero when not given. Thi
 a faulty outcome instead of raising a singular matrix error. 
 
 ### Power flow algorithms
+
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
-Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, in tradeoff to accuracy. 
-They can be used where approximate solutions are acceptable. 
+Iterative methods are more accurate and should thus be selected when an accurate solution is required. Linear approximation methods are many times faster than the iterative methods, but are generally less accurate. They can be used where approximate solutions are acceptable.
 Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
 The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
@@ -84,8 +87,14 @@ The table below can be used to pick the right algorithm. Below the table a more 
 | [Linear](calculations.md#linear)                       | &#10004; |          | `CalculationMethod.linear`            |
 | [Linear current](calculations.md#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
-Note: When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
+```note
+By default, the Newton-Raphson method is used.
+```
+
+```note
+When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
 This is because this method will then be accurate and fastest.
+```
 
 The nodal equations of a power system network can be written as:
 
@@ -112,6 +121,7 @@ and then obtaining the real and reactive power flow through the branches. The fo
 - Voltage controlled bus: a bus with known $P$ and $U$. Note: this bus is not supported by power-grid-model yet.
 
 #### Newton-Raphson
+
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
 terms, to solve the nonlinear set of equations iteratively:
 
@@ -245,9 +255,9 @@ There is a correlation in voltage error of approximation with respect to the act
 When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage. When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
 
 ### State estimation algorithms
+
 Weighted least squares (WLS) state estimation can be performed with power-grid-model.
 Given a grid with $N_b$ buses the state variable column vector is defined as below.
-
 
 $$
    \begin{eqnarray}
@@ -309,7 +319,7 @@ Where $\underline{x}_i$ is the real value of the i-th measured quantity in compl
 $\sigma_i$ is the normalized standard deviation of the measurement error of the i-th measurement, $\Sigma$ is the normalized covariance matrix
 and $W$ is the weighting factor matrix.
 
-At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear).
+At the moment one state estimation algorithm is implemented: [iterative linear](#iterative-linear), which is also the one used by default.
 
 There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
 voltage sensors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:

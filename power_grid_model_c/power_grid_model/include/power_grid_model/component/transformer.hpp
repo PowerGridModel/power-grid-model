@@ -54,9 +54,11 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
+        using enum WindingType;
+
         // check on clock
-        bool const is_from_wye = winding_from_ == WindingType::wye || winding_from_ == WindingType::wye_n;
-        bool const is_to_wye = winding_to_ == WindingType::wye || winding_to_ == WindingType::wye_n;
+        bool const is_from_wye = winding_from_ == wye || winding_from_ == wye_n;
+        bool const is_to_wye = winding_to_ == wye || winding_to_ == wye_n;
         if (  // clock should be between 0 and 12
             clock_ < 0 || clock_ > 12 ||
             // even number is not possible if one side is wye winding and the other side is not wye winding.

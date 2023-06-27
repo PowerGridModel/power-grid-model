@@ -75,7 +75,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         // template<class... Args> Args&&... args perfect forwarding
         assert(!construction_complete_);
         // throw if id already exists
-        if (map_.find(id) != map_.end()) {
+        if (map_.contains(id)) {
             throw ConflictID{id};
         }
         // find group and position
@@ -227,13 +227,11 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // get item per type
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType& get_raw(Idx pos) {
-        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType& get_raw(Idx pos) {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType const& get_raw(Idx pos) const {
-        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType const& get_raw(Idx pos) const {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
 
@@ -248,8 +246,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
     template <class GettableBaseType, class StorageableSubType>
-    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType,
-                                    std::enable_if_t<std::is_base_of_v<GettableBaseType, StorageableSubType>>> {
+    requires std::derived_from<StorageableSubType, GettableBaseType>
+    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
             &Container::get_raw<GettableBaseType, StorageableSubType>;
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const =
@@ -309,7 +307,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         // conversion to const iterator
         template <class ConstGettable = Gettable>
-        operator std::enable_if_t<!is_const, Iterator<ConstGettable const>>() const {
+        requires(!is_const) explicit operator Iterator<ConstGettable const>() const {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
