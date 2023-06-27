@@ -33,7 +33,7 @@ json read_json(std::filesystem::path const& json_file) {
 
 // memory buffer
 struct BufferDeleter {
-    void operator()(void* ptr) {
+    void operator()(raw_data_ptr ptr) {
         std::free(ptr);
     }
 };
@@ -47,7 +47,7 @@ struct Buffer {
     MutableDataPointer data_ptr;
 };
 
-void parse_single_object(void* ptr, json const& j, MetaData const& meta, Idx position) {
+void parse_single_object(raw_data_ptr ptr, json const& j, MetaData const& meta, Idx position) {
     meta.set_nan(ptr, position);
     for (auto const& it : j.items()) {
         // Allow and skip unknown attributes
@@ -181,7 +181,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
         batch_buffer.ptr = create_buffer(component_meta.size, total_length);
         batch_buffer.indptr.resize(n_batch + 1, 0);
         batch_buffer.data_ptr = MutableDataPointer{batch_buffer.ptr.get(), batch_buffer.indptr.data(), n_batch};
-        void* current_ptr = batch_buffer.ptr.get();
+        raw_data_ptr current_ptr = batch_buffer.ptr.get();
         // copy buffer
         for (Idx batch = 0; batch != n_batch; ++batch) {
             SingleData const& single_data = batch_data.individual_batch[batch];

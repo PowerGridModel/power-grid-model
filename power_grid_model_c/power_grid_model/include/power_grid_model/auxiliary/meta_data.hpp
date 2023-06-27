@@ -26,13 +26,15 @@ struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
 
-using SetNaNFunc = std::add_pointer_t<void(void*)>;
+using raw_data_ptr = void*;
+
+using SetNaNFunc = std::add_pointer_t<void(raw_data_ptr)>;
 using CheckNaNFunc = std::add_pointer_t<bool(void const*)>;
-using SetValueFunc = std::add_pointer_t<void(void*, void const*)>;
+using SetValueFunc = std::add_pointer_t<void(raw_data_ptr, void const*)>;
 using CompareValueFunc = std::add_pointer_t<bool(void const* ptr_x, void const* ptr_y, double atol, double rtol)>;
 
 template <class T>
-void set_value_template(void* dest, void const* src) {
+void set_value_template(raw_data_ptr dest, void const* src) {
     *reinterpret_cast<T*>(dest) = *reinterpret_cast<T const*>(src);
 }
 
@@ -47,7 +49,7 @@ struct data_type<double, false> {
     static constexpr const char* ctype = "double";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](raw_data_ptr ptr) {
         *reinterpret_cast<double*>(ptr) = nan;
     };
     static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
@@ -68,7 +70,7 @@ struct data_type<int32_t, false> {
     static constexpr const char* ctype = "int32_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](raw_data_ptr ptr) {
         *reinterpret_cast<int32_t*>(ptr) = na_IntID;
     };
     static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
@@ -86,7 +88,7 @@ struct data_type<int8_t, false> {
     static constexpr const char* ctype = "int8_t";
     static constexpr size_t ndim = 0;
     static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](raw_data_ptr ptr) {
         *reinterpret_cast<int8_t*>(ptr) = na_IntS;
     };
     static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
@@ -104,7 +106,7 @@ struct data_type<RealValue<false>, false> {
     static constexpr const char* ctype = "double[3]";
     static constexpr size_t ndim = 1;
     static constexpr size_t const* dims = three_phase_dimension.data();
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
+    static constexpr SetNaNFunc set_nan = [](raw_data_ptr ptr) {
         *reinterpret_cast<RealValue<false>*>(ptr) = RealValue<false>{nan, nan, nan};
     };
     static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
@@ -196,7 +198,7 @@ struct MetaData {
         return find_attr(attr_name) >= 0;
     }
 
-    void* get_position(void* ptr, Idx position) const {
+    raw_data_ptr get_position(raw_data_ptr ptr, Idx position) const {
         return reinterpret_cast<char*>(ptr) + position * size;
     }
     void const* get_position(void const* ptr, Idx position) const {
@@ -204,10 +206,10 @@ struct MetaData {
     }
 
     // set nan for all attributes
-    void set_nan(void* ptr, Idx position = 0) const {
+    void set_nan(raw_data_ptr ptr, Idx position = 0) const {
         ptr = get_position(ptr, position);
         for (DataAttribute const& attr : attributes) {
-            void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
+            raw_data_ptr const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
             attr.set_nan(offset_ptr);
         }
     }
@@ -218,13 +220,13 @@ struct MetaData {
         return attr.check_nan(offset_ptr);
     }
     // set value of one attribute
-    void set_attr(void* ptr, void const* value_ptr, DataAttribute const& attr, Idx position = 0) const {
+    void set_attr(raw_data_ptr ptr, void const* value_ptr, DataAttribute const& attr, Idx position = 0) const {
         ptr = get_position(ptr, position);
-        void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
+        raw_data_ptr const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
         attr.set_value(offset_ptr, value_ptr);
     }
     // get value of one attribute
-    void get_attr(void const* ptr, void* value_ptr, DataAttribute const& attr, Idx position = 0) const {
+    void get_attr(void const* ptr, raw_data_ptr value_ptr, DataAttribute const& attr, Idx position = 0) const {
         ptr = get_position(ptr, position);
         void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
         attr.set_value(value_ptr, offset_ptr);

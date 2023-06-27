@@ -28,6 +28,9 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 */
 
 namespace power_grid_model {
+namespace {
+using meta_data::raw_data_ptr;
+}
 
 TEST_CASE("C API Model") {
     // get handle
@@ -45,7 +48,7 @@ TEST_CASE("C API Model") {
     std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, "input", "source", 1)};
-    void* source_buffer = unique_source_buffer.get();
+    raw_data_ptr source_buffer = unique_source_buffer.get();
     PGM_buffer_set_nan(hl, "input", "source", source_buffer, 1);
     PGM_buffer_set_value(hl, "input", "source", "id", source_buffer, &source_input.id, 1, -1);
     PGM_buffer_set_value(hl, "input", "source", "node", source_buffer, &source_input.node, 1, sizeof(ID));
@@ -60,7 +63,7 @@ TEST_CASE("C API Model") {
     NodeOutput<true>& node_result_0 = sym_node_outputs[0];
     NodeOutput<true>& node_result_1 = sym_node_outputs[1];
     std::array output_components{"node"};
-    std::array<void*, 1> sym_output_data{sym_node_outputs.data()};
+    std::array<raw_data_ptr, 1> sym_output_data{sym_node_outputs.data()};
 
     // update data
     SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};

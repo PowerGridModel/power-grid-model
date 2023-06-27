@@ -16,6 +16,8 @@
 using namespace power_grid_model;
 
 namespace {
+using meta_data::raw_data_ptr;
+
 meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
 }  // namespace
 
@@ -179,7 +181,7 @@ int PGM_is_little_endian(PGM_Handle*) {
 }
 
 // buffer control
-void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
+raw_data_ptr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [&]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
@@ -192,14 +194,15 @@ void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* com
     return std::aligned_alloc(data_class.alignment, data_class.size * size);
 #endif
 }
-void PGM_destroy_buffer(void* ptr) {
+void PGM_destroy_buffer(raw_data_ptr ptr) {
 #ifdef _WIN32
     _aligned_free(ptr);
 #else
     std::free(ptr);
 #endif
 }
-void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, void* ptr, PGM_Idx size) {
+void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, raw_data_ptr ptr,
+                        PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [&]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
@@ -242,11 +245,11 @@ void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* c
 }
 }  // namespace
 void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-                          void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+                          raw_data_ptr buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
     buffer_get_set_value<false>(handle, dataset, component, attribute, buffer_ptr, src_ptr, size, src_stride);
 }
 void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-                          void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
+                          void const* buffer_ptr, raw_data_ptr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
     buffer_get_set_value<true>(handle, dataset, component, attribute, buffer_ptr, dest_ptr, size, dest_stride);
 }
 
@@ -337,9 +340,10 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt, PGM_Idx n_output_components,
-                   char const** output_components, void** output_data, PGM_Idx n_scenarios, PGM_Idx n_update_components,
-                   char const** update_components, PGM_Idx const* n_component_elements_per_scenario,
-                   PGM_Idx const** indptrs_per_component, void const** update_data) {
+                   char const** output_components, raw_data_ptr* output_data, PGM_Idx n_scenarios,
+                   PGM_Idx n_update_components, char const** update_components,
+                   PGM_Idx const* n_component_elements_per_scenario, PGM_Idx const** indptrs_per_component,
+                   void const** update_data) {
     PGM_clear_error(handle);
     std::map<std::string, Idx> const n_component = model->all_component_count();
     // prepare output dataset
