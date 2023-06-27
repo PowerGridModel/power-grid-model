@@ -14,7 +14,7 @@
 namespace power_grid_model {
 
 class Timer {
-   protected:
+   private:
     CalculationInfo *info_;
     int code_;
     std::string name_;
@@ -27,10 +27,9 @@ class Timer {
         : info_(&info), code_(code), name_(std::move(name)), start_(Clock::now()) {
     }
 
-    ~Timer() {
-        if (info_)
-            stop();
-    }
+    Timer(const Timer &) = delete;
+    Timer(Timer &&) = default;
+    Timer &operator=(const Timer &) = delete;
 
     Timer &operator=(Timer &&timer) noexcept {
         // Stop the current timer
@@ -47,6 +46,11 @@ class Timer {
 
         // Return reference
         return *this;
+    }
+
+    ~Timer() {
+        if (info_)
+            stop();
     }
 
     void stop() {

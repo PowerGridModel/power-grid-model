@@ -15,7 +15,9 @@
 
 using namespace power_grid_model;
 
-static meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
+namespace {
+meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
+}  // namespace
 
 // assert index type
 static_assert(std::is_same_v<PGM_Idx, Idx>);
@@ -33,19 +35,20 @@ struct PGM_Handle {
     IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
-    BatchParameter batch_parameter;
+    [[no_unique_address]] BatchParameter batch_parameter;
 };
 
 // options
 struct PGM_Options {
     Idx calculation_type{PGM_power_flow};
-    Idx calculation_method{PGM_newton_raphson};
+    Idx calculation_method{PGM_default_method};
     Idx symmetric{1};
     double err_tol{1e-8};
     Idx max_iter{20};
     Idx threading{-1};
 };
 
+namespace {
 // helper functions
 std::vector<std::string> list_of_datasets() {
     std::vector<std::string> res;
@@ -55,6 +58,7 @@ std::vector<std::string> list_of_datasets() {
     });
     return res;
 }
+
 std::map<std::string, std::vector<std::string>> list_of_classes() {
     std::map<std::string, std::vector<std::string>> res;
     for (auto const& [key, val] : pgm_meta) {
@@ -66,6 +70,7 @@ std::map<std::string, std::vector<std::string>> list_of_classes() {
     }
     return res;
 }
+
 template <class Functor>
 auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
     static std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<Functor>>> const empty{};
@@ -78,6 +83,7 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
         return empty;
     }
 }
+}  // namespace
 
 // create and destroy handle
 PGM_Handle* PGM_create_handle() {
@@ -204,6 +210,8 @@ void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* com
         data_class.set_nan(ptr, i);
     }
 }
+
+namespace {
 // template for get and set attribute
 template <bool is_get, class BufferPtr, class ValuePtr>
 void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
@@ -232,6 +240,7 @@ void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* c
         }
     }
 }
+}  // namespace
 void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
                           void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride) {
     buffer_get_set_value<false>(handle, dataset, component, attribute, buffer_ptr, src_ptr, size, src_stride);
@@ -385,6 +394,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
                         update_dataset, opt->threading);
                 }
                 break;
+            case PGM_short_circuit:
+                [[fallthrough]];
             default:
                 throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
         }
