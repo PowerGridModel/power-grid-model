@@ -29,8 +29,8 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 
 namespace power_grid_model {
 namespace {
-using meta_data::raw_data_const_ptr;
-using meta_data::raw_data_ptr;
+using meta_data::RawDataConstPtr;
+using meta_data::RawDataPtr;
 }  // namespace
 
 TEST_CASE("C API Model") {
@@ -49,7 +49,7 @@ TEST_CASE("C API Model") {
     std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, "input", "source", 1)};
-    raw_data_ptr source_buffer = unique_source_buffer.get();
+    RawDataPtr source_buffer = unique_source_buffer.get();
     PGM_buffer_set_nan(hl, "input", "source", source_buffer, 1);
     PGM_buffer_set_value(hl, "input", "source", "id", source_buffer, &source_input.id, 1, -1);
     PGM_buffer_set_value(hl, "input", "source", "node", source_buffer, &source_input.node, 1, sizeof(ID));
@@ -57,21 +57,21 @@ TEST_CASE("C API Model") {
     PGM_buffer_set_value(hl, "input", "source", "u_ref", source_buffer, &source_input.u_ref, 1, -1);
     PGM_buffer_set_value(hl, "input", "source", "sk", source_buffer, &source_input.sk, 1, -1);
     PGM_buffer_set_value(hl, "input", "source", "rx_ratio", source_buffer, &source_input.rx_ratio, 1, -1);
-    std::array<raw_data_const_ptr, 3> input_data{&node_input, source_buffer, &load_input};
+    std::array<RawDataConstPtr, 3> input_data{&node_input, source_buffer, &load_input};
 
     // output data
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
     NodeOutput<true>& node_result_0 = sym_node_outputs[0];
     NodeOutput<true>& node_result_1 = sym_node_outputs[1];
     std::array output_components{"node"};
-    std::array<raw_data_ptr, 1> sym_output_data{sym_node_outputs.data()};
+    std::array<RawDataPtr, 1> sym_output_data{sym_node_outputs.data()};
 
     // update data
     SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};
     std::array<SymLoadGenUpdate, 2> load_updates{{{{{2}, na_IntS}, nan, 100.0}, {{{2}, na_IntS}, nan, 300.0}}};
     std::array update_components{"source", "sym_load"};
     std::array<Idx, 2> update_component_sizes{1, 1};
-    std::array<raw_data_const_ptr, 2> update_data{&source_update, load_updates.data()};
+    std::array<RawDataConstPtr, 2> update_data{&source_update, load_updates.data()};
     std::array<Idx, 2> n_component_elements_per_scenario{-1, 1};
     std::array<Idx, 3> source_update_indptr{0, 1, 1};
     std::array<Idx const*, 2> indptrs_per_component{source_update_indptr.data(), nullptr};

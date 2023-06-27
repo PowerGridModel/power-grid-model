@@ -16,8 +16,8 @@
 using namespace power_grid_model;
 
 namespace {
-using meta_data::raw_data_const_ptr;
-using meta_data::raw_data_ptr;
+using meta_data::RawDataConstPtr;
+using meta_data::RawDataPtr;
 
 meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
 }  // namespace
@@ -182,7 +182,7 @@ int PGM_is_little_endian(PGM_Handle*) {
 }
 
 // buffer control
-raw_data_ptr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
+RawDataPtr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
@@ -195,15 +195,14 @@ raw_data_ptr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char con
     return std::aligned_alloc(data_class.alignment, data_class.size * size);
 #endif
 }
-void PGM_destroy_buffer(raw_data_ptr ptr) {
+void PGM_destroy_buffer(RawDataPtr ptr) {
 #ifdef _WIN32
     _aligned_free(ptr);
 #else
     std::free(ptr);
 #endif
 }
-void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, raw_data_ptr ptr,
-                        PGM_Idx size) {
+void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, RawDataPtr ptr, PGM_Idx size) {
     auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
         return pgm_meta.at(dataset).at(component);
     });
@@ -246,11 +245,11 @@ void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* c
 }
 }  // namespace
 void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-                          raw_data_ptr buffer_ptr, raw_data_const_ptr src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+                          RawDataPtr buffer_ptr, RawDataConstPtr src_ptr, PGM_Idx size, PGM_Idx src_stride) {
     buffer_get_set_value<false>(handle, dataset, component, attribute, buffer_ptr, src_ptr, size, src_stride);
 }
 void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-                          raw_data_const_ptr buffer_ptr, raw_data_ptr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
+                          RawDataConstPtr buffer_ptr, RawDataPtr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
     buffer_get_set_value<true>(handle, dataset, component, attribute, buffer_ptr, dest_ptr, size, dest_stride);
 }
 
@@ -283,7 +282,7 @@ void PGM_set_threading(PGM_Handle*, PGM_Options* opt, PGM_Idx threading) {
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
                                      char const** components, PGM_Idx const* component_sizes,
-                                     raw_data_const_ptr* input_data) {
+                                     RawDataConstPtr* input_data) {
     PGM_clear_error(handle);
     ConstDataset dataset{};
     for (Idx i = 0; i != n_components; ++i) {
@@ -301,7 +300,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components, char const** components,
-                      PGM_Idx const* component_sizes, raw_data_const_ptr* update_data) {
+                      PGM_Idx const* component_sizes, RawDataConstPtr* update_data) {
     PGM_clear_error(handle);
     ConstDataset dataset{};
     for (Idx i = 0; i != n_components; ++i) {
@@ -342,10 +341,10 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt, PGM_Idx n_output_components,
-                   char const** output_components, raw_data_ptr* output_data, PGM_Idx n_scenarios,
+                   char const** output_components, RawDataPtr* output_data, PGM_Idx n_scenarios,
                    PGM_Idx n_update_components, char const** update_components,
                    PGM_Idx const* n_component_elements_per_scenario, PGM_Idx const** indptrs_per_component,
-                   raw_data_const_ptr* update_data) {
+                   RawDataConstPtr* update_data) {
     PGM_clear_error(handle);
     std::map<std::string, Idx> const n_component = model->all_component_count();
     // prepare output dataset

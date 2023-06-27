@@ -33,7 +33,7 @@ json read_json(std::filesystem::path const& json_file) {
 
 // memory buffer
 struct BufferDeleter {
-    void operator()(raw_data_ptr ptr) {
+    void operator()(RawDataPtr ptr) {
         std::free(ptr);
     }
 };
@@ -47,7 +47,7 @@ struct Buffer {
     MutableDataPointer data_ptr;
 };
 
-void parse_single_object(raw_data_ptr ptr, json const& j, MetaData const& meta, Idx position) {
+void parse_single_object(RawDataPtr ptr, json const& j, MetaData const& meta, Idx position) {
     meta.set_nan(ptr, position);
     for (auto const& it : j.items()) {
         // Allow and skip unknown attributes
@@ -181,7 +181,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
         batch_buffer.ptr = create_buffer(component_meta.size, total_length);
         batch_buffer.indptr.resize(n_batch + 1, 0);
         batch_buffer.data_ptr = MutableDataPointer{batch_buffer.ptr.get(), batch_buffer.indptr.data(), n_batch};
-        raw_data_ptr current_ptr = batch_buffer.ptr.get();
+        RawDataPtr current_ptr = batch_buffer.ptr.get();
         // copy buffer
         for (Idx batch = 0; batch != n_batch; ++batch) {
             SingleData const& single_data = batch_data.individual_batch[batch];
@@ -191,7 +191,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
                 continue;
             }
             Buffer const& single_buffer = found->second;
-            raw_data_const_ptr const src_ptr = single_buffer.ptr.get();
+            RawDataConstPtr const src_ptr = single_buffer.ptr.get();
             Idx const length = single_buffer.indptr.back();
             // copy memory, assign indptr
             std::memcpy(current_ptr, src_ptr, length * component_meta.size);
@@ -220,9 +220,9 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             MetaData const& component_meta = meta.at(type_name);
             Idx const length = reference_dataset.elements_per_scenario(batch);
             // offset batch
-            raw_data_const_ptr const result_ptr =
+            RawDataConstPtr const result_ptr =
                 reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * batch * component_meta.size;
-            raw_data_const_ptr const reference_result_ptr =
+            RawDataConstPtr const reference_result_ptr =
                 reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * batch * component_meta.size;
             // loop all attribute
             for (DataAttribute const& attr : component_meta.attributes) {
