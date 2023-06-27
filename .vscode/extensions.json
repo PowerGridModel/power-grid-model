@@ -26,6 +26,7 @@
 		"twxs.cmake",
 		"matepek.vscode-catch2-test-adapter",
 		"cschlosser.doxdocgen",
-		"fredericbonnet.cmake-test-adapter"
+		"fredericbonnet.cmake-test-adapter",
+		"sonarsource.sonarlint-vscode"
 	]
 }
