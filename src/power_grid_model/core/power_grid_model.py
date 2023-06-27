@@ -282,7 +282,7 @@ class PowerGridModel:
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
-        Or calculate in batch with the given update dataset in batch.
+        Or calculate in batch with the given update dataset in.
     
         Args:
             symmetric: Whether to perform a three-phase symmetric calculation.
