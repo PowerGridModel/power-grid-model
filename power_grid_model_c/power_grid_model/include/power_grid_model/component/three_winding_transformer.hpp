@@ -18,8 +18,8 @@ class ThreeWindingTransformer : public Branch3 {
     using UpdateType = ThreeWindingTransformerUpdate;
     static constexpr char const* name = "three_winding_transformer";
 
-    ThreeWindingTransformer(ThreeWindingTransformerInput const& three_winding_transformer_input, double u1_rated,
-                            double u2_rated, double u3_rated)
+    explicit ThreeWindingTransformer(ThreeWindingTransformerInput const& three_winding_transformer_input,
+                                     double u1_rated, double u2_rated, double u3_rated)
         : Branch3{three_winding_transformer_input},
           u1_{three_winding_transformer_input.u1},
           u2_{three_winding_transformer_input.u2},

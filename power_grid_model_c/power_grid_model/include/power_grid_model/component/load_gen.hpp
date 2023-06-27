@@ -26,7 +26,7 @@ class GenericLoadGen : public Appliance {
         return ComponentType::generic_load_gen;
     }
 
-    GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
+    explicit GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
         : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {
     }
 

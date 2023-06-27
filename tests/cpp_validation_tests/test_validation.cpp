@@ -108,7 +108,7 @@ template <bool is_const>
 std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
     std::map<std::string, DataPointer<is_const>> dataset;
     for (auto const& [name, buffer] : buffer_map) {
-        dataset[name] = buffer.data_ptr;
+        dataset[name] = static_cast<DataPointer<is_const>>(buffer.data_ptr);
     }
     return dataset;
 }

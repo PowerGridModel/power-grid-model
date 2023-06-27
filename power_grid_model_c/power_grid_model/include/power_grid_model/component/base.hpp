@@ -23,7 +23,7 @@ class Base {
     static constexpr char const* name = "base";
     virtual ComponentType math_model_type() const = 0;
 
-    Base(BaseInput const& base_input) : id_{base_input.id} {
+    explicit Base(BaseInput const& base_input) : id_{base_input.id} {
     }
     virtual ~Base() = default;
     ID id() const noexcept {

@@ -23,7 +23,7 @@ class Line final : public Branch {
     using UpdateType = BranchUpdate;
     static constexpr char const* name = "line";
 
-    Line(LineInput const& line_input, double system_frequency, double u1, double u2)
+    explicit Line(LineInput const& line_input, double system_frequency, double u1, double u2)
         : Branch{line_input}, i_n_{line_input.i_n}, base_i_{base_power_3p / u1 / sqrt3} {
         if (cabs(u1 - u2) > numerical_tolerance) {
             throw ConflictVoltage{id(), from_node(), to_node(), u1, u2};

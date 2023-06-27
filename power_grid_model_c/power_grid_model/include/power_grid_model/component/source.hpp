@@ -26,7 +26,7 @@ class Source : public Appliance {
         return ComponentType::source;
     }
 
-    Source(SourceInput const& source_input, double u)
+    explicit Source(SourceInput const& source_input, double u)
         : Appliance{source_input, u}, u_ref_{source_input.u_ref}, u_ref_angle_{}, y1_ref_{}, y0_ref_{} {
         u_ref_angle_ = is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle;
         double const sk{is_nan(source_input.sk) ? default_source_sk : source_input.sk};

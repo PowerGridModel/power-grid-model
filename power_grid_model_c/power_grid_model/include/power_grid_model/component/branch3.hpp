@@ -26,7 +26,7 @@ class Branch3 : public Base {
         return ComponentType::branch3;
     }
 
-    Branch3(Branch3Input const& branch3_input)
+    explicit Branch3(Branch3Input const& branch3_input)
         : Base{branch3_input},
           node_1_{branch3_input.node_1},
           node_2_{branch3_input.node_2},
