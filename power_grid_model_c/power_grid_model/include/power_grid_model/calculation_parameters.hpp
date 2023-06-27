@@ -279,6 +279,7 @@ struct ComponentToMathCoupling {
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
     std::vector<Idx2D> power_sensor;  // can be coupled to branch-from/to, source, load_gen, or shunt sensor
+    std::vector<Idx2D> fault;
 };
 
 // change of update cause topology and param change, or just param change
