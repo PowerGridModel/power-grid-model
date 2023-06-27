@@ -8,7 +8,7 @@
 namespace power_grid_model {
 
 struct C {
-    C(Idx a1) : a{a1} {
+    explicit C(Idx a1) : a{a1} {
     }
 
     Idx a;
