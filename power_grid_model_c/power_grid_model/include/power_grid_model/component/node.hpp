@@ -47,17 +47,20 @@ class Node final : public Base {
         output.q = base_power<sym> * imag(bus_injection);
         return output;
     }
-    template <bool sym>
-    NodeShortCircuitOutput get_sc_output(ComplexValue<sym> const& u_pu) const {
+
+    NodeShortCircuitOutput get_sc_output(ComplexValue<false> const& u_pu) const {
         NodeShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        // TODO(NITISH) convert sym output
-        if constexpr (!sym) {
-            output.u_pu = cabs(u_pu);
-            output.u = u_scale<sym> * u_rated_ * output.u_pu;
-            output.u_angle = arg(u_pu);
-        }
+        output.u_pu = cabs(u_pu);
+        output.u = u_scale<false> * u_rated_ * output.u_pu;
+        output.u_angle = arg(u_pu);
+
         return output;
+    }
+    NodeShortCircuitOutput get_sc_output(ComplexValue<true> const& u_pu) const {
+        // Convert the input positive sequence voltage to phase voltage
+        ComplexValue<false> const uabc_pu{u_pu};
+        return get_sc_output(uabc_pu);
     }
     template <bool sym>
     NodeOutput<sym> get_null_output() const {
@@ -65,6 +68,7 @@ class Node final : public Base {
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
+
     NodeShortCircuitOutput get_null_sc_output() const {
         NodeShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);

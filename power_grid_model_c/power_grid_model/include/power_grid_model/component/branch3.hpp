@@ -113,23 +113,26 @@ class Branch3 : public Base {
         return output;
     }
 
-    template <bool sym>
-    Branch3ShortCircuitOutput get_sc_output(ComplexValue<sym> const& i_1, ComplexValue<sym> const& i_2,
-                                            ComplexValue<sym> const& i_3) const {
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<false> const& i_1, ComplexValue<false> const& i_2,
+                                            ComplexValue<false> const& i_3) const {
         // result object
         Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        // TODO(NITISH) convert sym output
-        if constexpr (!sym) {
-            output.i_1 = base_i_1() * cabs(i_1);
-            output.i_2 = base_i_2() * cabs(i_2);
-            output.i_3 = base_i_3() * cabs(i_3);
-            output.i_1_angle = arg(i_1);
-            output.i_2_angle = arg(i_2);
-            output.i_3_angle = arg(i_3);
-        }
+        output.i_1 = base_i_1() * cabs(i_1);
+        output.i_2 = base_i_2() * cabs(i_2);
+        output.i_3 = base_i_3() * cabs(i_3);
+        output.i_1_angle = arg(i_1);
+        output.i_2_angle = arg(i_2);
+        output.i_3_angle = arg(i_3);
         return output;
+    }
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<true> const& i_1, ComplexValue<true> const& i_2,
+                                            ComplexValue<true> const& i_3) const {
+        ComplexValue<false> const iabc_1{i_1};
+        ComplexValue<false> const iabc_2{i_2};
+        ComplexValue<false> const iabc_3{i_3};
+        return get_sc_output(iabc_1, iabc_2, iabc_3);
     }
 
     template <bool sym>
