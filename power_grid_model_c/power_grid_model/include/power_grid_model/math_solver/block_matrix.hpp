@@ -34,7 +34,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     Block() : ArrayType{ArrayType::Zero()} {};
     // eigen expression
     template <typename OtherDerived>
-    Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {
+    explicit Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {
     }
     template <typename OtherDerived>
     Block& operator=(Eigen::ArrayBase<OtherDerived> const& other) {

@@ -26,7 +26,7 @@ class Shunt : public Appliance {
         return ComponentType::shunt;
     }
 
-    Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
+    explicit Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
         double const base_y = base_i() / (u / sqrt3);
         y1_ = (shunt_input.g1 + 1.0i * shunt_input.b1) / base_y;
         y0_ = (shunt_input.g0 + 1.0i * shunt_input.b0) / base_y;

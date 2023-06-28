@@ -27,7 +27,7 @@ class Node final : public Base {
         return ComponentType::node;
     }
 
-    Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {
+    explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {
     }
 
     // update node, nothing happens here

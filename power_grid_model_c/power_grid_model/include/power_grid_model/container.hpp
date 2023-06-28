@@ -349,7 +349,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         using container_type = std::conditional_t<is_const, Container const, Container>;
 
        public:
-        Proxy(container_type& container)
+        explicit Proxy(container_type& container)
             : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {
         }
         Iterator<Gettable> begin() {

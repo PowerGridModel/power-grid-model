@@ -23,7 +23,8 @@ class Sensor : public Base {
     using ShortCircuitOutputType = SensorShortCircuitOutput;
 
     // constructor
-    Sensor(SensorInput const& sensor_input) : Base{sensor_input}, measured_object_{sensor_input.measured_object} {
+    explicit Sensor(SensorInput const& sensor_input)
+        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {
     }
 
     ID measured_object() const {
