@@ -286,16 +286,17 @@ class PowerGridModel:
 
         Args:
             symmetric (bool): Whether to perform a three-phase symmetric calculation.
-              * True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-              ** False: Three-phase asymmetric calculation.        
+                value:
+                    True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                    False: Three-phase asymmetric calculation.        
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
             calculation_method: The calculation method to use.
-                -- Newton_raphson: Use Newton-Raphson iterative method (default).
+                - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
             update_data: Data for batch calculation with batch update.
-                None: Calculate power flow once with the current model attributes. A dictionary for batch calculation with batch update:
-                    key: Component type name to be updated in batch.
+              None: Calculate power flow once with the current model attributes. A dictionary for batch calculation with batch update:
+              key: Component type name to be updated in batch.
                     value:		            
                         For homogeneous update batch:
                             Dimension 0: Each batch.
@@ -305,9 +306,9 @@ class PowerGridModel:
                                 data[indptr[k]:indptr[k + 1]]. This is the concept of compressed sparse structure.                           [Link to scipy.sparse.csr_matrix documentation]
                             data: 1D numpy structured array in flat.
             threading: Number of parallel threads to use for batch calculation.
-                < 0: Sequential execution.
-                = 0: Parallel execution using the number of hardware threads.
-                > 0: Specify the number of parallel threads.
+                    - < 0: Sequential execution.
+                    - = 0: Parallel execution using the number of hardware threads.
+                    - > 0: Specify the number of parallel threads.
             output_component_types: List or set of component types to be included in the
                 output dictionary. By default, all component types will be included.
             continue_on_batch_error: If True, the program continues (instead of throwing
