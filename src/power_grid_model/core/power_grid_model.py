@@ -267,53 +267,6 @@ class PowerGridModel:
 
         return reduce_output_data(output_data=output_data, batch_calculation=batch_calculation)
 
-    # pylint: disable=too-many-arguments
-    def _calculate(
-        self,
-        calculation_type: CalculationType,
-        symmetric: bool,
-        error_tolerance: float,
-        max_iterations: int,
-        calculation_method: Union[CalculationMethod, str],
-        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
-        threading: int,
-        output_component_types: Optional[Union[Set[str], List[str]]],
-        continue_on_batch_error: bool,
-    ):
-        """
-        Core calculation routine
-
-        Args:
-            calculation_type:
-            symmetric:
-            error_tolerance:
-            max_iterations:
-            calculation_method:
-            update_data:
-            threading:
-            output_component_types:
-            continue_on_batch_error:
-
-        Returns:
-
-        """
-        options = self._options(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
-            error_tolerance=error_tolerance,
-            max_iterations=max_iterations,
-            calculation_method=calculation_method,
-            threading=threading,
-        )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
-            update_data=update_data,
-            output_component_types=output_component_types,
-            options=options,
-            continue_on_batch_error=continue_on_batch_error,
-        )
-
     def calculate_power_flow(
         self,
         *,
@@ -377,15 +330,21 @@ class PowerGridModel:
             Error handling:
                 in case an error in the core occurs, an exception will be thrown
         """
-        return self._calculate(
-            calculation_type=CalculationType.power_flow,
+        calculation_type = CalculationType.power_flow
+        options = self._options(
+            calculation_type=calculation_type,
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=update_data,
             threading=threading,
+        )
+        return self._calculate_impl(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            update_data=update_data,
             output_component_types=output_component_types,
+            options=options,
             continue_on_batch_error=continue_on_batch_error,
         )
 
@@ -452,15 +411,21 @@ class PowerGridModel:
             Error handling:
                 in case an error in the core occurs, an exception will be thrown
         """
-        return self._calculate(
-            calculation_type=CalculationType.state_estimation,
+        calculation_type = CalculationType.state_estimation
+        options = self._options(
+            calculation_type=calculation_type,
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=update_data,
             threading=threading,
+        )
+        return self._calculate_impl(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            update_data=update_data,
             output_component_types=output_component_types,
+            options=options,
             continue_on_batch_error=continue_on_batch_error,
         )
 
