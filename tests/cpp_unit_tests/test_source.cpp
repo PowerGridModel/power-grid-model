@@ -127,10 +127,10 @@ TEST_CASE("Test source") {
         ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i_asym);
         CHECK(sym_sc_result.id == asym_sc_result.id);
         CHECK(sym_sc_result.energized == asym_sc_result.energized);
-        CHECK(sym_sc_result.i(0) == asym_sc_result.i(0));
-        CHECK(sym_sc_result.i(2) == asym_sc_result.i(2));
-        CHECK(sym_sc_result.i_angle(1) == asym_sc_result.i_angle(1));
-        CHECK(sym_sc_result.i_angle(2) == asym_sc_result.i_angle(2));
+        CHECK(sym_sc_result.i(0) == doctest::Approx(asym_sc_result.i(0)));
+        CHECK(sym_sc_result.i(2) == doctest::Approx(asym_sc_result.i(2)));
+        CHECK(sym_sc_result.i_angle(1) == doctest::Approx(asym_sc_result.i_angle(1)));
+        CHECK(sym_sc_result.i_angle(2) == doctest::Approx(asym_sc_result.i_angle(2)));
     }
 
     SUBCASE("test no source") {

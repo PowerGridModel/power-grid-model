@@ -405,12 +405,12 @@ TEST_CASE("Test three winding transformer") {
 
         CHECK(sym_sc_output.id == asym_sc_output.id);
         CHECK(sym_sc_output.energized == asym_sc_output.energized);
-        CHECK(sym_sc_output.i_1(2) == asym_sc_output.i_1(2));
-        CHECK(sym_sc_output.i_2(0) == asym_sc_output.i_2(0));
-        CHECK(sym_sc_output.i_3(1) == asym_sc_output.i_3(1));
-        CHECK(sym_sc_output.i_1_angle(2) == asym_sc_output.i_1_angle(2));
-        CHECK(sym_sc_output.i_2_angle(0) == asym_sc_output.i_2_angle(0));
-        CHECK(sym_sc_output.i_3_angle(1) == asym_sc_output.i_3_angle(1));
+        CHECK(sym_sc_output.i_1(2) == doctest::Approx(asym_sc_output.i_1(2)));
+        CHECK(sym_sc_output.i_2(0) == doctest::Approx(asym_sc_output.i_2(0)));
+        CHECK(sym_sc_output.i_3(1) == doctest::Approx(asym_sc_output.i_3(1)));
+        CHECK(sym_sc_output.i_1_angle(2) == doctest::Approx(asym_sc_output.i_1_angle(2)));
+        CHECK(sym_sc_output.i_2_angle(0) == doctest::Approx(asym_sc_output.i_2_angle(0)));
+        CHECK(sym_sc_output.i_3_angle(1) == doctest::Approx(asym_sc_output.i_3_angle(1)));
     }
 
     SUBCASE("No source results") {

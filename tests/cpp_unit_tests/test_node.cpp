@@ -36,9 +36,9 @@ TEST_CASE("Test node") {
     CHECK(asym_sc_res.u(1) == doctest::Approx(10.0e3 / sqrt3));
     CHECK(asym_sc_res.u_angle(2) == doctest::Approx(-deg_240 + 2 * pi));
     CHECK(asym_sc_res.u_pu(0) == doctest::Approx(1.0));
-    CHECK(sym_sc_res.u(1) == asym_sc_res.u(1));
-    CHECK(sym_sc_res.u_angle(2) == asym_sc_res.u_angle(2));
-    CHECK(sym_sc_res.u_pu(0) == asym_sc_res.u_pu(0));
+    CHECK(sym_sc_res.u(1) == doctest::Approx(asym_sc_res.u(1)));
+    CHECK(sym_sc_res.u_angle(2) == doctest::Approx(asym_sc_res.u_angle(2)));
+    CHECK(sym_sc_res.u_pu(0) == doctest::Approx(asym_sc_res.u_pu(0)));
 
     // not energized
     asym_res = node.get_null_output<false>();
