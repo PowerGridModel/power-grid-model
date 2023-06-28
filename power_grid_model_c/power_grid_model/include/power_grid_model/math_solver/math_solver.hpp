@@ -6,8 +6,6 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
 
-#include <optional>
-
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
@@ -18,8 +16,11 @@
 #include "newton_raphson_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
 #include "iterative_current_pf_solver.hpp"
-// clang-format on
+
 #include "y_bus.hpp"
+
+// clang-format on
+#include <optional>
 
 namespace power_grid_model {
 

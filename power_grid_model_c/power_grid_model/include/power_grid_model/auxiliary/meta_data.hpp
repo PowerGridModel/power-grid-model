@@ -6,13 +6,13 @@
 #ifndef POWER_GRID_MODEL_META_DATA_HPP
 #define POWER_GRID_MODEL_META_DATA_HPP
 
-#include <bit>
-#include <string>
-
 #include "../enum.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+
+#include <bit>
+#include <string>
 
 namespace power_grid_model {
 

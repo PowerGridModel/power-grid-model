@@ -8,13 +8,13 @@
 
 // container for multiple components
 
-#include <functional>
-#include <memory>
-#include <unordered_map>
-
 #include "boost/iterator/iterator_facade.hpp"
 #include "exception.hpp"
 #include "power_grid_model.hpp"
+
+#include <functional>
+#include <memory>
+#include <unordered_map>
 
 namespace power_grid_model {
 
