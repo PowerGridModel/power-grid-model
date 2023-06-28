@@ -29,7 +29,7 @@ class Branch : public Base {
         return ComponentType::branch;
     }
 
-    Branch(BranchInput const& branch_input)
+    explicit Branch(BranchInput const& branch_input)
         : Base{branch_input},
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},
@@ -112,20 +112,23 @@ class Branch : public Base {
         return output;
     }
 
-    template <bool sym>
-    BranchShortCircuitOutput get_sc_output(ComplexValue<sym> const& i_f, ComplexValue<sym> const& i_t) const {
+    BranchShortCircuitOutput get_sc_output(ComplexValue<false> const& i_f, ComplexValue<false> const& i_t) const {
         // result object
         BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        // TODO(NITISH) convert sym output
-        if constexpr (!sym) {
-            output.i_from = base_i_from() * cabs(i_f);
-            output.i_to = base_i_to() * cabs(i_t);
-            output.i_from_angle = arg(i_f);
-            output.i_to_angle = arg(i_t);
-        }
+        output.i_from = base_i_from() * cabs(i_f);
+        output.i_to = base_i_to() * cabs(i_t);
+        output.i_from_angle = arg(i_f);
+        output.i_to_angle = arg(i_t);
         return output;
+    }
+
+    BranchShortCircuitOutput get_sc_output(ComplexValue<true> const& i_f, ComplexValue<true> const& i_t) const {
+        // Convert the input of only positive sequence to abc
+        ComplexValue<false> const iabc_f{i_f};
+        ComplexValue<false> const iabc_t{i_t};
+        return get_sc_output(iabc_f, iabc_t);
     }
 
     template <bool sym>

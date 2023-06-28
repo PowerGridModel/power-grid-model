@@ -26,7 +26,7 @@ class Fault final : public Base {
         return ComponentType::fault;
     }
 
-    Fault(FaultInput const& fault_input)
+    explicit Fault(FaultInput const& fault_input)
         : Base{fault_input},
           status_{static_cast<bool>(fault_input.status)},
           fault_type_{fault_input.fault_type},
@@ -65,21 +65,21 @@ class Fault final : public Base {
     }
 
     // energized
-    template <bool sym>
-    FaultShortCircuitOutput get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) const {
+    FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
         // result object
         FaultShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        // calculate current magnitude and angle
-        // TODO(NITISH) convert sym output
-        if constexpr (!sym) {
-            output.i_f = cabs(i_f);
-            output.i_f_angle = arg(i_f);
-        }
+        output.i_f = cabs(i_f);
+        output.i_f_angle = arg(i_f);
         return output;
+    }
+
+    FaultShortCircuitOutput get_sc_output(ComplexValue<true> i_f, double const u_rated) const {
+        ComplexValue<false> iabc_f{i_f};
+        return get_sc_output(iabc_f, u_rated);
     }
 
     // update faulted object

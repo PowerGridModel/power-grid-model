@@ -1093,7 +1093,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      *     list of component contains all power sensors, but the preparation should only be done for one type of power
      *     sensors at a time. Therefore, `included` will be a lambda function, such as:
      *
-     *       [&](Idx i) { return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::source; }
+     *       [this](Idx i) { return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::source; }
      *
      *  2. Find the original component in the topology and retrieve its calculation parameters.
      *
@@ -1210,23 +1210,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                                                           se_input);
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_source_power, GenericPowerSensor>(
-            comp_coup_->power_sensor, se_input, [&](Idx i) {
+            comp_coup_->power_sensor, se_input, [this](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::source;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_load_gen_power, GenericPowerSensor>(
-            comp_coup_->power_sensor, se_input, [&](Idx i) {
+            comp_coup_->power_sensor, se_input, [this](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_shunt_power, GenericPowerSensor>(
-            comp_coup_->power_sensor, se_input, [&](Idx i) {
+            comp_coup_->power_sensor, se_input, [this](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
-            comp_coup_->power_sensor, se_input, [&](Idx i) {
+            comp_coup_->power_sensor, se_input, [this](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
                        // all branch3 sensors are at from side in the mathematical model
                        comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
@@ -1235,12 +1235,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
-            comp_coup_->power_sensor, se_input, [&](Idx i) {
+            comp_coup_->power_sensor, se_input, [this](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
-            comp_coup_->power_sensor, se_input, [&](Idx i) {
+            comp_coup_->power_sensor, se_input, [this](Idx i) {
                 return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::node;
             });
 

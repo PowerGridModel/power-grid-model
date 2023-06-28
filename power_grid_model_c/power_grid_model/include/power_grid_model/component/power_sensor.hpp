@@ -18,7 +18,7 @@ class GenericPowerSensor : public Sensor {
    public:
     static constexpr char const* name = "generic_power_sensor";
 
-    GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
+    explicit GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
         : Sensor{generic_power_sensor_input}, terminal_type_{generic_power_sensor_input.measured_terminal_type} {
     }
 
@@ -68,7 +68,7 @@ class PowerSensor : public GenericPowerSensor {
     template <bool sym_calc>
     using OutputType = PowerSensorOutput<sym_calc>;
 
-    PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
+    explicit PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input}, power_sigma_{power_sensor_input.power_sigma / base_power<sym>} {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };

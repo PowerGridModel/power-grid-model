@@ -94,16 +94,16 @@ class Appliance : public Base {
         }
         return output;
     }
-    template <bool sym>
-    ApplianceShortCircuitOutput get_sc_output(ComplexValue<sym> const& i) const {
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<false> const& i) const {
         ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        // TODO(NITISH) convert sym output
-        if constexpr (!sym) {
-            output.i = base_i_ * cabs(i);
-            output.i_angle = arg(i * injection_direction());
-        }
+        output.i = base_i_ * cabs(i);
+        output.i_angle = arg(i * injection_direction());
         return output;
+    }
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<true> const& i) const {
+        ComplexValue<false> const iabc{i};
+        return get_sc_output(iabc);
     }
     template <bool sym>
     ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
