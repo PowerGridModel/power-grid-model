@@ -134,9 +134,6 @@ TEST_CASE("Test line") {
         CHECK(output.q_to == doctest::Approx(imag(s_t)));
     }
 
-    SUBCASE("Symmetric short circuit results") {
-    }
-
     SUBCASE("Symmetric results with direct power and current output") {
         BranchMathOutput<true> branch_math_output{};
         branch_math_output.i_f = 1.0 - 2.0i;
