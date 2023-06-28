@@ -287,8 +287,8 @@ class PowerGridModel:
         Args:
             symmetric (bool): Whether to perform a three-phase symmetric calculation.      
                     value:
-                            True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-                            False: Three-phase asymmetric calculation.        
+                        True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                        False: Three-phase asymmetric calculation.        
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
             calculation_method: The calculation method to use.
@@ -317,7 +317,7 @@ class PowerGridModel:
         Returns:
             Dictionary of results of all components:
                 Key: Component type name to be updated in batch.
-                Value:
+                
                     For single calculation: 1D numpy structured array for the results of this component type.
                     For batch calculation: 2D numpy structured array for the results of this component type.
                         Dimension 0: Each batch.
@@ -350,57 +350,53 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
-        """
-        Calculates the state estimation once with the current model attributes
-        or calculates it in batch with the given update dataset.
+        """This is an example of a module level function.
+
+        Function parameters should be documented in the ``Args`` section. The name
+        of each parameter is required. The type and description of each parameter
+        is optional, but should be included if not obvious.
+
+        If \*args or \*\*kwargs are accepted,
+        they should be listed as ``*args`` and ``**kwargs``.
+
+        The format for a parameter is::
+
+            name (type): description
+                The description may span multiple lines. Following
+                lines should be indented. The "(type)" is optional.
+
+                Multiple paragraphs are supported in parameter
+                descriptions.
 
         Args:
-            symmetric (bool):
-                True: Perform three-phase symmetric calculation, even for asymmetric loads/generations.
-                False: Perform three-phase asymmetric calculation.
-            error_tolerance (float):
-                Error tolerance for voltage in per unit (p.u.) when iterative=True.
-            max_iterations (int):
-                Maximum number of iterations, only applicable when iterative=True.
-            calculation_method (Union[CalculationMethod, str]):
-                Enumeration or string representing the calculation method:
-                - 'iterative_linear': Use the iterative linear method.
-            update_data (Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]]):
-                None: Calculate the state estimation once with the current model attributes.
-                Dictionary for batch calculation with batch update:
-                    key (str): Component type name to be updated in batch.
-                    value:
-                        - 2D numpy structured array for homogeneous update batch:
-                            - Dimension 0: Each batch.
-                            - Dimension 1: Each updated element per batch for this component type.
-                        - Dictionary containing two keys, for inhomogeneous update batch:
-                            - 'indptr': 1D integer numpy array with length n_batch + 1.
-                                Given batch number k, the update array for this batch is data[indptr[k]:indptr[k + 1]].
-                                This follows the concept of compressed sparse structure.
-                                See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
-                            - 'data': 1D numpy structured array in flat.
-            threading (int):
-                Only applicable for batch calculation:
-                - < 0: Sequential processing.
-                - = 0: Parallel processing using the number of hardware threads.
-                - > 0: Specify the number of parallel threads.
-            output_component_types (Optional[Union[Set[str], List[str]]]):
-                List or set of component types you want to be present in the output dictionary.
-                By default, all component types will be included in the output.
-            continue_on_batch_error (bool):
-                If True, the program continues (instead of throwing an error) if some scenarios fail.
+            param1 (int): The first parameter.
+            param2 (:obj:`str`, optional): The second parameter. Defaults to None.
+                Second line of description should be indented.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
 
         Returns:
-            dict: Results of all components.
-                Key: Component type name to be updated in batch.
-                Value:
-                    - For single calculation: 1D numpy structured array for the results of this component type.
-                    - For batch calculation: 2D numpy structured array for the results of this component type.
-                        - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.
+            bool: True if successful, False otherwise.
+
+            The return type is optional and may be specified at the beginning of
+            the ``Returns`` section followed by a colon.
+
+            The ``Returns`` section may span multiple lines and paragraphs.
+            Following lines should be indented to match the first line.
+
+            The ``Returns`` section supports any reStructuredText formatting,
+            including literal blocks::
+
+                {
+                    'param1': param1,
+                    'param2': param2
+                }
 
         Raises:
-            Exception: If an error occurs in the core.
+            AttributeError: The ``Raises`` section is a list of all exceptions
+                that are relevant to the interface.
+            ValueError: If `param2` is equal to `param1`.
+
         """
         return self._calculate(
             CalculationType.state_estimation,
