@@ -39,8 +39,13 @@
 // API_MACRO_BLOCK
 
 // integers
+#ifdef __cplusplus
+#include <cstddef>
+#include <cstdint>
+#else
 #include <stddef.h>
 #include <stdint.h>
+#endif
 
 // C linkage
 #ifdef __cplusplus
