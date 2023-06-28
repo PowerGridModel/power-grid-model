@@ -35,15 +35,7 @@ class Fault final : public Base {
           fault_object_{fault_input.fault_object},
           r_f_{is_nan(fault_input.r_f) ? double{} : fault_input.r_f},
           x_f_{is_nan(fault_input.x_f) ? double{} : fault_input.x_f} {
-        if (fault_type_ == FaultType::three_phase) {
-            if (fault_phase_ != FaultPhase::abc)
-                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
-        }
-        else {
-            if (fault_phase_ == FaultPhase::abc) {
-                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
-            }
-        }
+        check_sanity();
     }
 
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
@@ -105,6 +97,7 @@ class Fault final : public Base {
         if (update.fault_object != na_IntID) {
             fault_object_ = update.fault_object;
         }
+        check_sanity();
         return {false, false};  // topology and parameters do not change
     }
 
@@ -145,6 +138,18 @@ class Fault final : public Base {
     ID fault_object_;
     double r_f_;
     double x_f_;
+
+    void check_sanity() const {
+        if (fault_type_ == FaultType::three_phase) {
+            if (fault_phase_ != FaultPhase::abc)
+                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+        }
+        else {
+            if (fault_phase_ == FaultPhase::abc) {
+                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+            }
+        }
+    }
 };
 
 }  // namespace power_grid_model
