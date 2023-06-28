@@ -129,9 +129,9 @@ class Branch3 : public Base {
     }
     Branch3ShortCircuitOutput get_sc_output(ComplexValue<true> const& i_1, ComplexValue<true> const& i_2,
                                             ComplexValue<true> const& i_3) const {
-        ComplexValue<false> const iabc_1{i_1, i_1 * a2, i_1 * a};
-        ComplexValue<false> const iabc_2{i_2, i_2 * a2, i_2 * a};
-        ComplexValue<false> const iabc_3{i_3, i_3 * a2, i_3 * a};
+        ComplexValue<false> const iabc_1{i_1};
+        ComplexValue<false> const iabc_2{i_2};
+        ComplexValue<false> const iabc_3{i_3};
         return get_sc_output(iabc_1, iabc_2, iabc_3);
     }
 

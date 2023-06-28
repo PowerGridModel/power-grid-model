@@ -102,7 +102,7 @@ class Appliance : public Base {
         return output;
     }
     ApplianceShortCircuitOutput get_sc_output(ComplexValue<true> const& i) const {
-        ComplexValue<false> const iabc{i, i * a2, i * a};
+        ComplexValue<false> const iabc{i};
         return get_sc_output(iabc);
     }
     template <bool sym>

@@ -59,7 +59,7 @@ class Node final : public Base {
     }
     NodeShortCircuitOutput get_sc_output(ComplexValue<true> const& u_pu) const {
         // Convert the input positive sequence voltage to phase voltage
-        ComplexValue<false> const uabc_pu{u_pu, u_pu * a2, u_pu * a};
+        ComplexValue<false> const uabc_pu{u_pu};
         return get_sc_output(uabc_pu);
     }
     template <bool sym>
