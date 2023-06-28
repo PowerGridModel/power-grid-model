@@ -157,20 +157,18 @@ class PowerGridModel:
         assert_no_error()
         return indexer
 
-    def _output_type(self, options: Options):
-        return get_output_type(calculation_type=options.calculation_type, symmetric=options.symmetric)
-
     def _construct_output(
         self,
         output_component_types: Optional[Union[Set[str], List[str]]],
-        options: Options,
+        calculation_type: CalculationType,
+        symmetric: bool,
         batch_size: int,
     ) -> Dict[str, np.ndarray]:
         # prepare result dataset
         all_component_count = self.all_component_count
 
         # for power flow, there is no need for sensor output
-        if options.calculation_type == CalculationType.power_flow:
+        if calculation_type == CalculationType.power_flow:
             all_component_count = {k: v for k, v in all_component_count.items() if "sensor" not in k}
 
         # limit all component count to user specified component types in output
@@ -179,7 +177,7 @@ class PowerGridModel:
 
         return create_output_data(
             output_component_types=output_component_types,
-            output_type=self._output_type(options=options),
+            output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
             all_component_count=all_component_count,
             batch_size=batch_size,
         )
@@ -211,9 +209,11 @@ class PowerGridModel:
 
     def _calculate_impl(
         self,
-        options: Options,
+        calculation_type: CalculationType,
+        symmetric: bool,
         update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]],
         output_component_types: Optional[Union[Set[str], List[str]]],
+        options: Options,
         continue_on_batch_error: bool,
     ):
         """
@@ -236,10 +236,14 @@ class PowerGridModel:
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
-            options=options,
+            calculation_type=calculation_type,
+            symmetric=symmetric,
             batch_size=batch_size,
         )
-        prepared_result = prepare_output_view(output_data=output_data, output_type=self._output_type(options=options))
+        prepared_result = prepare_output_view(
+            output_data=output_data,
+            output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
+        )
 
         # run calculation
         pgc.calculate(
@@ -302,9 +306,11 @@ class PowerGridModel:
             threading=threading,
         )
         return self._calculate_impl(
-            options=options,
+            calculation_type=calculation_type,
+            symmetric=symmetric,
             update_data=update_data,
             output_component_types=output_component_types,
+            options=options,
             continue_on_batch_error=continue_on_batch_error,
         )
 
