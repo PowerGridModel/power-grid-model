@@ -53,24 +53,22 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test get_short_circuit_output sym") {
         ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
-
-        FaultShortCircuitOutput output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
+        ComplexValue<false> const i_f_res{i_f_pu};
+        FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-
-        // TODO add fault output test post implementation
+        CHECK((output.i_f - cabs(i_f_res) * base_i < numerical_tolerance).all());
+        CHECK((output.i_f_angle - arg(i_f_res) < numerical_tolerance).all());
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
         ComplexValue<false> i_f_pu{};
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
-        ComplexValue<false> i_f = i_f_pu * base_i;
-
-        FaultShortCircuitOutput output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
+        FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK((output.i_f - cabs(i_f) < numerical_tolerance).all());
-        CHECK((output.i_f_angle - arg(i_f) < numerical_tolerance).all());
+        CHECK((output.i_f - cabs(i_f_pu) * base_i < numerical_tolerance).all());
+        CHECK((output.i_f_angle - arg(i_f_pu) < numerical_tolerance).all());
     }
 
     SUBCASE("Test energized") {
