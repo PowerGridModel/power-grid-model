@@ -126,8 +126,8 @@ class Branch : public Base {
 
     BranchShortCircuitOutput get_sc_output(ComplexValue<true> const& i_f, ComplexValue<true> const& i_t) const {
         // Convert the input of only positive sequence to abc
-        ComplexValue<false> iabc_f{i_f, i_f * a2, i_f * a};
-        ComplexValue<false> iabc_t{i_t, i_t * a2, i_t * a};
+        ComplexValue<false> const  iabc_f{i_f, i_f * a2, i_f * a};
+        ComplexValue<false> const iabc_t{i_t, i_t * a2, i_t * a};
         return get_sc_output(iabc_f, iabc_t);
     }
 
