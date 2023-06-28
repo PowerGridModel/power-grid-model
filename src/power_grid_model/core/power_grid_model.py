@@ -285,8 +285,7 @@ class PowerGridModel:
         Or calculate in batch with the given update dataset in batch.
 
         Args:
-            symmetric (bool): Whether to perform a three-phase symmetric calculation.
-                value:
+            symmetric (bool): Whether to perform a three-phase symmetric calculation.      
                     True: Three-phase symmetric calculation, even for asymmetric loads/generations.
                     False: Three-phase asymmetric calculation.        
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
