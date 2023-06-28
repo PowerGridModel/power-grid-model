@@ -10,6 +10,7 @@
 #include "power_grid_model.hpp"
 // component include
 #include "component/appliance.hpp"
+#include "component/fault.hpp"
 #include "component/line.hpp"
 #include "component/link.hpp"
 #include "component/load_gen.hpp"
@@ -26,7 +27,7 @@ namespace power_grid_model {
 
 using AllComponents =
     ComponentList<Node, Line, Link, Transformer, ThreeWindingTransformer, Shunt, Source, SymGenerator, AsymGenerator,
-                  SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor>;
+                  SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor, Fault>;
 
 }  // namespace power_grid_model
 
