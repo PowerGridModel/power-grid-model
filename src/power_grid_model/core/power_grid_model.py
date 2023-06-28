@@ -6,6 +6,7 @@
 """
 Main power grid model class
 """
+from enum import IntEnum
 from typing import Dict, List, Optional, Set, Union
 
 import numpy as np
@@ -182,31 +183,22 @@ class PowerGridModel:
             batch_size=batch_size,
         )
 
-    # pylint: disable=too-many-arguments
     @staticmethod
-    def _options(
-        calculation_type: CalculationType,
-        symmetric: bool,
-        error_tolerance: float,
-        max_iterations: int,
-        calculation_method: Union[CalculationMethod, str],
-        threading: int,
-    ) -> Options:
-        if isinstance(calculation_method, str):
-            calculation_method = CalculationMethod[calculation_method]
+    def _options(**kwargs) -> Options:
+        if "calculation_method" in kwargs:
+            calculation_method = kwargs["calculation_method"]
+            if isinstance(calculation_method, str):
+                kwargs["calculation_method"] = CalculationMethod[calculation_method]
 
         opt = Options()
-        opt.calculation_type = calculation_type.value
-        opt.calculation_method = calculation_method.value
-        opt.symmetric = symmetric
-        opt.error_tolerance = error_tolerance
-        opt.max_iteration = max_iterations
-        opt.threading = threading
+        for key, value in kwargs.items():
+            setattr(opt, key, value.value if isinstance(value, IntEnum) else value)
         return opt
 
     def _handle_errors(self, continue_on_batch_error: bool, batch_size: int):
         self._batch_error = handle_errors(continue_on_batch_error=continue_on_batch_error, batch_size=batch_size)
 
+    # pylint: disable=too-many-arguments
     def _calculate_impl(
         self,
         calculation_type: CalculationType,
