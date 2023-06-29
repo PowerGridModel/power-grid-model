@@ -141,8 +141,9 @@ class Fault final : public Base {
 
     void check_sanity() const {
         if (fault_type_ == FaultType::three_phase) {
-            if (fault_phase_ != FaultPhase::abc)
+            if (fault_phase_ != FaultPhase::abc) {
                 throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+            }
         }
         else {
             if (fault_phase_ == FaultPhase::abc) {
