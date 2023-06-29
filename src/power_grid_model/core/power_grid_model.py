@@ -286,14 +286,19 @@ class PowerGridModel:
 
         Args:
             symmetric (bool): Whether to perform a three-phase symmetric calculation.      
-                    value:
-                        True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-                        False: Three-phase asymmetric calculation.        
+                
+                True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                False: Three-phase asymmetric calculation.        
+            
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
+            
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
+            
             calculation_method: The calculation method to use.
-                            Newton_raphson: Use Newton-Raphson iterative method (default).
-                            Linear: Use linear method.
+                
+                - Newton_raphson: Use Newton-Raphson iterative method (default).
+                - Linear: Use linear method.
+            
             update_data: Data for batch calculation with batch update.
               None: Calculate power flow once with the current model attributes. A dictionary for batch calculation with batch update:
               key: Component type name to be updated in batch.
@@ -305,12 +310,16 @@ class PowerGridModel:
                             indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the update array for this batch is
                                 data[indptr[k]:indptr[k + 1]]. This is the concept of compressed sparse structure.                           [Link to scipy.sparse.csr_matrix documentation]
                             data: 1D numpy structured array in flat.
+            
             threading: Number of parallel threads to use for batch calculation.
-                    - < 0: Sequential execution.
-                    - = 0: Parallel execution using the number of hardware threads.
-                    - > 0: Specify the number of parallel threads.
+                
+                - < 0: Sequential execution.
+                - = 0: Parallel execution using the number of hardware threads.
+                - > 0: Specify the number of parallel threads.
+            
             output_component_types: List or set of component types to be included in the
                 output dictionary. By default, all component types will be included.
+            
             continue_on_batch_error: If True, the program continues (instead of throwing
                 an error) if some scenarios fail during batch calculation.
     
@@ -370,7 +379,8 @@ class PowerGridModel:
 
         Args:
             param1 (int): The first parameter.
-            param2 (:obj:`str`, optional): The second parameter. Defaults to None.
+            param2 (:obj:`str`, optional): The second parameter. 
+                Defaults to None.
                 Second line of description should be indented.
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
@@ -392,6 +402,9 @@ class PowerGridModel:
                     'param2': param2
                 }
 
+            .. _PEP 484:
+                https://www.python.org/dev/peps/pep-0484/
+                
         Raises:
             AttributeError: The ``Raises`` section is a list of all exceptions
                 that are relevant to the interface.
