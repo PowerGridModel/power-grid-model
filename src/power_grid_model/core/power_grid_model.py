@@ -286,7 +286,6 @@ class PowerGridModel:
 
         Args:
             symmetric (bool): Whether to perform a three-phase symmetric calculation.      
-                
                 - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
                 - False: Three-phase asymmetric calculation.        
             
@@ -296,30 +295,25 @@ class PowerGridModel:
             
             calculation_method: 
              The calculation method to use. 
-
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
 
             calculation_method: 
               The calculation method to use. 
-   
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
 
             calculation_method: 
                The calculation method to use. 
-   
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
 
             calculation_method: The calculation method to use. 
-   
                  - Newton_raphson: Use Newton-Raphson iterative method (default).
                  - Linear: Use linear method. 
 
             calculation_method: 
               The calculation method to use. 
-   
                  - Newton_raphson: Use Newton-Raphson iterative method (default).
                  - Linear: Use linear method.                                   
 
@@ -337,7 +331,6 @@ class PowerGridModel:
             
             threading: 
                 Number of parallel threads to use for batch calculation.
-
                 - < 0: Sequential execution.
                 - = 0: Parallel execution using the number of hardware threads.
                 - > 0: Specify the number of parallel threads.
