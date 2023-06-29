@@ -115,21 +115,22 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
           # generate cmake cache
-          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           # build
-          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           # test
-          ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure
+          ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
           # install
-          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
 
           # build and run integration test
-          cd tests/package_tests
-          cmake --preset ${{ env.PRESET }}
-          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
-          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
-          install\${{ env.PRESET }}\bin\power_grid_model_package_test
+          cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
