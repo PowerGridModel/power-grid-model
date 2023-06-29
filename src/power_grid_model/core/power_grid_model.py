@@ -289,12 +289,16 @@ class PowerGridModel:
 
                 - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
                 - False: Three-phase asymmetric calculation.
+
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
+
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
+
             calculation_method (an enumeration or string): The calculation method to use.
 
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
-                - Linear: Use linear method.          
+                - Linear: Use linear method.
+           
             update_data:
               None: Calculate power flow once with the current model attributes.
               Or a dictionary for batch calculation with batch update.
@@ -307,16 +311,19 @@ class PowerGridModel:
                         - For inhomogeneous update batch (a dictionary containing two keys):
 
                             - indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the update array for this batch is
-                                data[indptr[k]:indptr[k + 1]]. This is the concept of compressed sparse structure.  
-                                https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
+                              data[indptr[k]:indptr[k + 1]]. This is the concept of compressed sparse structure.  
+                              https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
                             - data: 1D numpy structured array in flat.     
+
             threading: Applicable only for batch calculation.
 
                 - < 0: Sequential
                 - = 0: Parallel, use number of hardware threads
-                - > 0: Specify number of parallel threads            
+                - > 0: Specify number of parallel threads  
+            
             output_component_types: List or set of component types to be included in the
                 output dict. By default, all component types will be in the output.
+
             continue_on_batch_error: If the program continues (instead of throwing error) if some scenarios fails.
     
         Returns: Dictionary of results of all components.
