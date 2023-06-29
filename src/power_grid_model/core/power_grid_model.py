@@ -289,18 +289,21 @@ class PowerGridModel:
 
                 - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
                 - False: Three-phase asymmetric calculation.
+
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
+
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
+
             calculation_method (an enumeration or string): The calculation method to use.
 
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
-                - Linear: Use linear method.           
+                - Linear: Use linear method.
+           
             update_data: Data for batch calculation with batch update.
               None: Calculate power flow once with the current model attributes. 
               A dictionary for batch calculation with batch update:
                   
                   key: Component type name to be updated in batch.
-
                         - For homogeneous update batch:
 
                             - Dimension 0: Each batch.
@@ -316,18 +319,17 @@ class PowerGridModel:
                 - = 0: Parallel execution using the number of hardware threads.
                 - > 0: Specify the number of parallel threads.    
             output_component_types: List or set of component types to be included in the
-                output dictionary. By default, all component types will be included. 
+                output dictionary. By default, all component types will be included.
+
             continue_on_batch_error: If True, the program continues (instead of throwing
                 an error) if some scenarios fail during batch calculation.
     
-        Returns:
-            Dictionary of results of all components:
-                Key: Component type name to be updated in batch.
-                    For single calculation: 1D numpy structured array for the results of this component type.
-                    For batch calculation: 2D numpy structured array for the results of this component type.
-                        
-                        - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.
+        Returns: Dictionary of results of all components:
+            Key: Component type name to be updated in batch.
+                For single calculation: 1D numpy structured array for the results of this component type.
+                For batch calculation: 2D numpy structured array for the results of this component type.
+                    - Dimension 0: Each batch.
+                    - Dimension 1: The result of each element for this component type.
     
         Raises:
             Exception: If an error occurs during the core calculation.
