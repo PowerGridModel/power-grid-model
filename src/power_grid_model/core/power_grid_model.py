@@ -285,27 +285,44 @@ class PowerGridModel:
         Or calculate in batch with the given update dataset in batch.
 
         Args:
-            symmetric (bool): 
-                Whether to perform a three-phase symmetric calculation.      
+            symmetric (bool): Whether to perform a three-phase symmetric calculation.      
                 
-                 - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-                 - False: Three-phase asymmetric calculation.        
+                - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                - False: Three-phase asymmetric calculation.        
             
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
             
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
             
             calculation_method: 
-                The calculation method to use. 
+             The calculation method to use. 
 
-                   - Newton_raphson: Use Newton-Raphson iterative method (default).
-                   - Linear: Use linear method.
+                - Newton_raphson: Use Newton-Raphson iterative method (default).
+                - Linear: Use linear method.
 
             calculation_method: 
-                The calculation method to use. 
-                   - Newton_raphson: Use Newton-Raphson iterative method (default).
-                   - Linear: Use linear method.
-                                                  
+              The calculation method to use. 
+   
+                - Newton_raphson: Use Newton-Raphson iterative method (default).
+                - Linear: Use linear method.
+
+            calculation_method: 
+               The calculation method to use. 
+   
+                - Newton_raphson: Use Newton-Raphson iterative method (default).
+                - Linear: Use linear method.
+
+            calculation_method: The calculation method to use. 
+   
+                 - Newton_raphson: Use Newton-Raphson iterative method (default).
+                 - Linear: Use linear method. 
+
+            calculation_method: 
+              The calculation method to use. 
+   
+                 - Newton_raphson: Use Newton-Raphson iterative method (default).
+                 - Linear: Use linear method.                                   
+
             update_data: Data for batch calculation with batch update.
               None: Calculate power flow once with the current model attributes. A dictionary for batch calculation with batch update:
               key: Component type name to be updated in batch.
@@ -319,10 +336,11 @@ class PowerGridModel:
                             data: 1D numpy structured array in flat.
             
             threading: 
-              Number of parallel threads to use for batch calculation.
-                 - < 0: Sequential execution.
-                 - = 0: Parallel execution using the number of hardware threads.
-                 - > 0: Specify the number of parallel threads.
+                Number of parallel threads to use for batch calculation.
+
+                - < 0: Sequential execution.
+                - = 0: Parallel execution using the number of hardware threads.
+                - > 0: Specify the number of parallel threads.
             
             output_component_types: List or set of component types to be included in the
                 output dictionary. By default, all component types will be included.
