@@ -9,11 +9,13 @@
 #include "power_grid_model.hpp"
 
 // eigen properties
+// clang-format off
 #include <Eigen/Dense>
 #include <cmath>
 #include <complex>
 #include <tuple>
 #include <utility>
+// clang-format on
 
 namespace power_grid_model {
 

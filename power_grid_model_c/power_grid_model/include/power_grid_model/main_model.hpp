@@ -26,7 +26,9 @@
 #include "math_solver/math_solver.hpp"
 
 // threading
+// clang-format off
 #include <thread>
+// clang-format on
 
 namespace power_grid_model {
 

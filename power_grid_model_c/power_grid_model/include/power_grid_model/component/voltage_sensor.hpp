@@ -11,8 +11,9 @@
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "sensor.hpp"
-
+// clang-format off
 #include <limits>
+// clang-format on
 
 namespace power_grid_model {
 

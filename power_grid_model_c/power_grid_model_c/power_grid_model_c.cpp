@@ -8,8 +8,9 @@
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model/main_model.hpp"
 #include "power_grid_model/power_grid_model.hpp"
-
+// clang-format off
 #include <cstdlib>
+// clang-format on
 
 using namespace power_grid_model;
 

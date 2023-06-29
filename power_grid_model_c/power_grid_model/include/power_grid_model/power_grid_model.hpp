@@ -9,6 +9,7 @@
 #include "boost/iterator/counting_iterator.hpp"
 
 // main header for the model
+// clang-format off
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -28,6 +29,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+// clang-format on
 
 namespace power_grid_model {
 
