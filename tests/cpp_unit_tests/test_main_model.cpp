@@ -1133,8 +1133,4 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     }
 }
 
-TEST_CASE("always fail") {
-    CHECK(false);
-}
-
 }  // namespace power_grid_model
