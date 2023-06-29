@@ -75,14 +75,6 @@ TEST_CASE("Test link") {
         CHECK(output.q_to == doctest::Approx(imag(s_t)));
     }
 
-    SUBCASE("Symmetric short circuit results") {
-        BranchShortCircuitOutput output = branch.get_sc_output<true>(if_sc, it_sc);
-        CHECK(output.id == 1);
-        CHECK(output.energized);
-
-        // TODO(NITISH) sym output case
-    }
-
     SUBCASE("Asymmetric results") {
         BranchOutput<false> output = branch.get_output<false>(uaf, uat);
         CHECK(output.id == 1);
@@ -98,14 +90,25 @@ TEST_CASE("Test link") {
         CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
     }
 
-    SUBCASE("Asymmetric short circuit results") {
-        BranchShortCircuitOutput output = branch.get_sc_output<false>(if_sc_asym, it_sc_asym);
-        CHECK(output.id == 1);
-        CHECK(output.energized);
-        CHECK(output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i_from));
-        CHECK(output.i_to(1) == doctest::Approx(cabs(it_sc) * base_i_to));
-        CHECK(output.i_from_angle(1) == doctest::Approx(pi / 4 - 2 * pi / 3));
-        CHECK(output.i_to_angle(2) == doctest::Approx(pi));
+    SUBCASE("Short circuit asym results") {
+        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        CHECK(asym_output.id == 1);
+        CHECK(asym_output.energized);
+        CHECK(asym_output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i_from));
+        CHECK(asym_output.i_to(1) == doctest::Approx(cabs(it_sc) * base_i_to));
+        CHECK(asym_output.i_from_angle(1) == doctest::Approx(pi / 4 - 2 * pi / 3));
+        CHECK(asym_output.i_to_angle(2) == doctest::Approx(pi));
+    }
+
+    SUBCASE("Short circuit sym results") {
+        BranchShortCircuitOutput sym_output = branch.get_sc_output(if_sc, it_sc);
+        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        CHECK(sym_output.id == asym_output.id);
+        CHECK(sym_output.energized == asym_output.energized);
+        CHECK(sym_output.i_from(0) == doctest::Approx(asym_output.i_from(0)));
+        CHECK(sym_output.i_to(1) == doctest::Approx(asym_output.i_to(1)));
+        CHECK(sym_output.i_from_angle(1) == doctest::Approx(asym_output.i_from_angle(1)));
+        CHECK(sym_output.i_to_angle(2) == doctest::Approx(asym_output.i_to_angle(2)));
     }
 }
 

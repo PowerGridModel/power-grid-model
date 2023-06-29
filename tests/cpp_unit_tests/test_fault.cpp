@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "doctest/doctest.h"
-#include "power_grid_model//component/fault.hpp"
+#include "power_grid_model/component/fault.hpp"
 
 namespace power_grid_model {
 
@@ -53,24 +53,22 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test get_short_circuit_output sym") {
         ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
-
-        FaultShortCircuitOutput output = fault.get_short_circuit_output<true>(i_f_pu, u_rated);
+        ComplexValue<false> const i_f_res{i_f_pu};
+        FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-
-        // TODO add fault output test post implementation
+        CHECK((output.i_f - cabs(i_f_res) * base_i < numerical_tolerance).all());
+        CHECK((output.i_f_angle - arg(i_f_res) < numerical_tolerance).all());
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
         ComplexValue<false> i_f_pu{};
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
-        ComplexValue<false> i_f = i_f_pu * base_i;
-
-        FaultShortCircuitOutput output = fault.get_short_circuit_output<false>(i_f_pu, u_rated);
+        FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK((output.i_f - cabs(i_f) < numerical_tolerance).all());
-        CHECK((output.i_f_angle - arg(i_f) < numerical_tolerance).all());
+        CHECK((output.i_f - cabs(i_f_pu) * base_i < numerical_tolerance).all());
+        CHECK((output.i_f_angle - arg(i_f_pu) < numerical_tolerance).all());
     }
 
     SUBCASE("Test energized") {
@@ -97,6 +95,29 @@ TEST_CASE("Test fault") {
         CHECK(fault.get_fault_type() == FaultType::two_phase);
         CHECK(fault.get_fault_phase() == FaultPhase::c);
         CHECK(fault.get_fault_object() == 10);
+    }
+
+    SUBCASE("Three phase fault provided for other fault type not allowed") {
+        using enum FaultType;
+
+        for (auto fault_type : {two_phase, two_phase_to_ground, single_phase_to_ground}) {
+            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, FaultPhase::abc, 4, 3.0, 4.0}}), InvalidShortCircuitPhases);
+
+            FaultUpdate const fault_update{{1}, 0, fault_type, FaultPhase::abc, 10};
+            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
+        }
+    }
+
+    SUBCASE("Three phase fault type for other fault phases not allowed") {
+        using enum FaultPhase;
+
+        for (auto fault_phase : {a, b, c, ab, ac, bc}) {
+            CHECK_THROWS_AS((Fault{{{1}, 1, FaultType::three_phase, fault_phase, 4, 3.0, 4.0}}),
+                            InvalidShortCircuitPhases);
+
+            FaultUpdate const fault_update{{1}, 0, FaultType::three_phase, fault_phase, 10};
+            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
+        }
     }
 }
 

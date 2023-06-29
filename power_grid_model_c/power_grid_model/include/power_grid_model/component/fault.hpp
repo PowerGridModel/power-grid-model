@@ -10,6 +10,7 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
+#include "../enum.hpp"
 #include "base.hpp"
 
 namespace power_grid_model {
@@ -34,6 +35,7 @@ class Fault final : public Base {
           fault_object_{fault_input.fault_object},
           r_f_{is_nan(fault_input.r_f) ? double{} : fault_input.r_f},
           x_f_{is_nan(fault_input.x_f) ? double{} : fault_input.x_f} {
+        check_sanity();
     }
 
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
@@ -65,21 +67,21 @@ class Fault final : public Base {
     }
 
     // energized
-    template <bool sym>
-    FaultShortCircuitOutput get_short_circuit_output(ComplexValue<sym> i_f, double const u_rated) const {
+    FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
         // result object
         FaultShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
-        // calculate current magnitude and angle
-        // TODO(NITISH) convert sym output
-        if constexpr (!sym) {
-            output.i_f = cabs(i_f);
-            output.i_f_angle = arg(i_f);
-        }
+        output.i_f = cabs(i_f);
+        output.i_f_angle = arg(i_f);
         return output;
+    }
+
+    FaultShortCircuitOutput get_sc_output(ComplexValue<true> i_f, double const u_rated) const {
+        ComplexValue<false> iabc_f{i_f};
+        return get_sc_output(iabc_f, u_rated);
     }
 
     // update faulted object
@@ -95,6 +97,7 @@ class Fault final : public Base {
         if (update.fault_object != na_IntID) {
             fault_object_ = update.fault_object;
         }
+        check_sanity();
         return {false, false};  // topology and parameters do not change
     }
 
@@ -135,6 +138,19 @@ class Fault final : public Base {
     ID fault_object_;
     double r_f_;
     double x_f_;
+
+    void check_sanity() const {
+        if (fault_type_ == FaultType::three_phase) {
+            if (fault_phase_ != FaultPhase::abc) {
+                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+            }
+        }
+        else {
+            if (fault_phase_ == FaultPhase::abc) {
+                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+            }
+        }
+    }
 };
 
 }  // namespace power_grid_model
