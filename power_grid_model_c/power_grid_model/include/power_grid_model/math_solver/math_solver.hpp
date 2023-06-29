@@ -19,9 +19,9 @@
 
 #include "y_bus.hpp"
 
-// clang-format on
 #include <optional>
 
+// clang-format on
 namespace power_grid_model {
 
 template <bool sym>
