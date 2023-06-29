@@ -9,6 +9,7 @@
 #include <exception>
 #include <string>
 
+#include "enum.hpp"
 #include "power_grid_model.hpp"
 
 namespace power_grid_model {
@@ -157,6 +158,23 @@ class UnknownAttributeName : public PowerGridError {
    public:
     explicit UnknownAttributeName(std::string const &attr_name) {
         append_msg("Unknown attribute name!" + attr_name + "\n");
+    }
+};
+
+class InvalidShortCircuitType : public PowerGridError {
+   public:
+    InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") does not match the calculation type (symmetric=" + std::to_string(sym) + ")\n");
+    }
+};
+
+class InvalidShortCircuitPhases : public PowerGridError {
+   public:
+    InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
+        append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
+                   ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ")\n");
     }
 };
 

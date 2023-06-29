@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "doctest/doctest.h"
-#include "power_grid_model//component/fault.hpp"
+#include "power_grid_model/component/fault.hpp"
 
 namespace power_grid_model {
 
@@ -95,6 +95,29 @@ TEST_CASE("Test fault") {
         CHECK(fault.get_fault_type() == FaultType::two_phase);
         CHECK(fault.get_fault_phase() == FaultPhase::c);
         CHECK(fault.get_fault_object() == 10);
+    }
+
+    SUBCASE("Three phase fault provided for other fault type not allowed") {
+        using enum FaultType;
+
+        for (auto fault_type : {two_phase, two_phase_to_ground, single_phase_to_ground}) {
+            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, FaultPhase::abc, 4, 3.0, 4.0}}), InvalidShortCircuitPhases);
+
+            FaultUpdate const fault_update{{1}, 0, fault_type, FaultPhase::abc, 10};
+            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
+        }
+    }
+
+    SUBCASE("Three phase fault type for other fault phases not allowed") {
+        using enum FaultPhase;
+
+        for (auto fault_phase : {a, b, c, ab, ac, bc}) {
+            CHECK_THROWS_AS((Fault{{{1}, 1, FaultType::three_phase, fault_phase, 4, 3.0, 4.0}}),
+                            InvalidShortCircuitPhases);
+
+            FaultUpdate const fault_update{{1}, 0, FaultType::three_phase, fault_phase, 10};
+            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
+        }
     }
 }
 
