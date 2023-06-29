@@ -287,15 +287,14 @@ class PowerGridModel:
         Args:
             symmetric (bool): Whether to perform a three-phase symmetric calculation.      
                 
-                True: Three-phase symmetric calculation, even for asymmetric loads/generations.
-                False: Three-phase asymmetric calculation.        
+             - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+             - False: Three-phase asymmetric calculation.        
             
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
             
             max_iterations: Maximum number of iterations, applicable only when iterative=True.
             
-            calculation_method: The calculation method to use.
-                
+            calculation_method: The calculation method to use. 
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
             
