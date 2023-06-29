@@ -125,6 +125,10 @@ def test_single_calculation_error(model: PowerGridModel):
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
         model.calculate_state_estimation(calculation_method="iterative_current")
 
+    for calculation_method in ("linear", "newton_raphson", "iterative_current", "linear_current", "iterative_linear"):
+        with pytest.raises(NotImplementedError):
+            model.calculate_short_circuit(calculation_method=calculation_method)
+
 
 def test_batch_calculation_error(model: PowerGridModel, case_data):
     # wrong id

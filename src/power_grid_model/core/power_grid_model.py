@@ -280,9 +280,9 @@ class PowerGridModel:
                 True: three-phase symmetric calculation, even for asymmetric loads/generations
                 False: three-phase asymmetric calculation
             error_tolerance:
-                error tolerance for voltage in p.u., only applicable when iterative=True
+                error tolerance for voltage in p.u., only applicable when the calculation method is iterative
             max_iterations:
-                maximum number of iterations, only applicable when iterative=True
+                maximum number of iterations, only applicable when the calculation method is iterative
             calculation_method: an enumeration or string
                 newton_raphson: use Newton-Raphson iterative method (default)
                 linear: use linear method
@@ -309,7 +309,7 @@ class PowerGridModel:
                 > 0 specify number of parallel threads
             output_component_types: list or set of component types you want to be present in the output dict.
                 By default all component types will be in the output
-            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fails
+            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fail
 
         Returns:
             dictionary of results of all components
@@ -361,9 +361,9 @@ class PowerGridModel:
                 True: three-phase symmetric calculation, even for asymmetric loads/generations
                 False: three-phase asymmetric calculation
             error_tolerance:
-                error tolerance for voltage in p.u., only applicable when iterative=True
+                error tolerance for voltage in p.u., only applicable when the calculation method is iterative
             max_iterations:
-                maximum number of iterations, only applicable when iterative=True
+                maximum number of iterations, only applicable when the calculation method is iterative
             calculation_method: an enumeration
                 iterative_linear: use iterative linear method
             update_data:
@@ -389,7 +389,7 @@ class PowerGridModel:
                 > 0 specify number of parallel threads
             output_component_types: list or set of component types you want to be present in the output dict.
                 By default all component types will be in the output
-            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fails
+            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fail
 
 
         Returns:
@@ -409,6 +409,77 @@ class PowerGridModel:
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
+            calculation_method=calculation_method,
+            threading=threading,
+        )
+        return self._calculate_impl(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            update_data=update_data,
+            output_component_types=output_component_types,
+            options=options,
+            continue_on_batch_error=continue_on_batch_error,
+        )
+
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iec60909,
+        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        threading: int = -1,
+        output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
+    ) -> Dict[str, np.ndarray]:
+        """
+        Calculate a short circuit once with the current model attributes.
+        Or calculate in batch with the given update dataset in batch
+
+        Args:
+            calculation_method: an enumeration
+                iec60909: use the iec60909 standard
+            update_data:
+                None: calculate a short circuit once with the current model attributes
+                A dictionary for batch calculation with batch update
+                    key: component type name to be updated in batch
+                    value:
+                        a 2D numpy structured array for homogeneous update batch
+                            Dimension 0: each batch
+                            Dimension 1: each updated element per batch for this component type
+                        **or**
+                        a dictionary containing two keys, for inhomogeneous update batch
+                            indptr: a 1D integer numpy array with length n_batch + 1
+                                given batch number k, the update array for this batch is
+                                data[indptr[k]:indptr[k + 1]]
+                                This is the concept of compressed sparse structure
+                                https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
+                            data: 1D numpy structured array in flat
+            threading:
+                only applicable for batch calculation
+                < 0 sequential
+                = 0 parallel, use number of hardware threads
+                > 0 specify number of parallel threads
+            output_component_types: list or set of component types you want to be present in the output dict.
+                By default all component types will be in the output
+            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fail
+
+
+        Returns:
+            dictionary of results of all components
+                key: component type name to be updated in batch
+                value:
+                    for single calculation: 1D numpy structured array for the results of this component type
+                    for batch calculation: 2D numpy structured array for the results of this component type
+                        Dimension 0: each batch
+                        Dimension 1: the result of each element for this component type
+            Error handling:
+                in case an error in the core occurs, an exception will be thrown
+        """
+        calculation_type = CalculationType.short_circuit
+        symmetric = False
+
+        options = self._options(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
             calculation_method=calculation_method,
             threading=threading,
         )

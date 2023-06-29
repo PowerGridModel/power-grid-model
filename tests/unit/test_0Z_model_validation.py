@@ -4,6 +4,7 @@
 
 from copy import copy
 from pathlib import Path
+from typing import Callable, Dict
 
 import numpy as np
 import pytest
@@ -13,9 +14,10 @@ from power_grid_model.utils import convert_batch_dataset_to_batch_list
 
 from .utils import EXPORT_OUTPUT, compare_result, import_case_data, pytest_cases, save_json_data
 
-calculation_function_map = {
+calculation_function_map: Dict[str, Callable] = {
     "power_flow": PowerGridModel.calculate_power_flow,
     "state_estimation": PowerGridModel.calculate_state_estimation,
+    "short_circuit": PowerGridModel.calculate_short_circuit,
 }
 
 

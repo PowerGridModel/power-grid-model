@@ -22,55 +22,108 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 )
 
 
+def get_output_type(calculation_type: str, sym: bool) -> str:
+    if calculation_type == "short_circuit":
+        assert not sym, f"Unsupported validation case: calculation_type={calculation_type}, sym={sym}"
+        return "sc_output"
+
+    if sym:
+        return "sym_output"
+
+    return "asym_output"
+
+
+def get_test_case_paths(calculation_type: str, test_cases: Optional[List[str]] = None) -> Dict[str, Path]:
+    """get a list of all cases, directories in validation datasets"""
+    calculation_type_dir = DATA_PATH / calculation_type
+    test_case_paths = {
+        str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
+        for item in calculation_type_dir.glob("**/")
+        if (item.is_dir() and (item / "params.json").is_file())
+    }
+    if test_cases is not None:
+        test_case_paths = {key: value for key, value in test_case_paths.items() if key in test_cases}
+
+    return test_case_paths
+
+
+def add_case(
+    case_name: str,
+    case_dir: Path,
+    params: dict,
+    calculation_type: str,
+    is_batch: bool,
+    calculation_method: str,
+    sym: bool,
+):
+    output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
+    batch_suffix = "_batch" if is_batch else ""
+
+    # only generate a case if sym or asym output exists
+    if (case_dir / f"{output_prefix}{batch_suffix}.json").exists():
+        # Build a recognizable case ID
+        case_id = case_name
+        case_id += "-sym" if sym else "-asym"
+        case_id += "-" + calculation_method
+        if is_batch:
+            case_id += "-batch"
+        pytest_param = [
+            case_id,
+            case_dir,
+            sym,
+            calculation_type,
+            calculation_method,
+            params["rtol"],
+            params["atol"],
+        ]
+        kwargs = {}
+        if "fail" in params:
+            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
+        yield pytest.param(
+            *pytest_param,
+            **kwargs,
+            id=case_id,
+            marks=pytest.mark.skipif(calculation_type == "short_circuit", reason="Short circuit is not yet supported"),
+        )
+
+
+def _add_cases(case_dir: Path, **kwargs):
+    with open(case_dir / "params.json") as f:
+        params = json.load(f)
+
+    # retrieve calculation method, can be a string or list of strings
+    calculation_methods = params["calculation_method"]
+    if not isinstance(calculation_methods, list):
+        calculation_methods = [calculation_methods]
+
+    # loop for sym or asym scenario
+    for calculation_method in calculation_methods:
+        for sym in [True, False]:
+            if calculation_method == "short_circuit" and sym:
+                continue  # only asym short circuit calculations are supported
+
+            for calculation_method in calculation_methods:
+                yield from add_case(
+                    case_dir=case_dir, params=params, calculation_method=calculation_method, sym=sym, **kwargs
+                )
+
+
 def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[List[str]] = None):
     if data_dir is not None:
         relevant_calculations = [data_dir]
     else:
-        # default both calculation type
-        relevant_calculations = ["power_flow", "state_estimation"]
-    batch_suffix = "_batch" if get_batch_cases else ""
+        relevant_calculations = ["power_flow", "state_estimation", "short_circuit"]
+
     for calculation_type in relevant_calculations:
-        # list of all cases, directories in validation datasets
-        calculation_type_dir = DATA_PATH / calculation_type
-        test_cases_paths = {
-            str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
-            for item in calculation_type_dir.glob("**/")
-            if (item.is_dir() and (item / "params.json").is_file())
-        }
-        if test_cases is not None:
-            test_cases_paths = {key: value for key, value in test_cases_paths.items() if key in test_cases}
-        for case_name, case_dir in test_cases_paths.items():
-            with open(case_dir / "params.json") as f:
-                params = json.load(f)
-            # retrieve calculation method, can be a string or list of strings
-            calculation_methods = params["calculation_method"]
-            if not isinstance(calculation_methods, list):
-                calculation_methods = [calculation_methods]
-            # loop for sym or asym scenario
-            for sym in [True, False]:
-                output_prefix = "sym_output" if sym else "asym_output"
-                for calculation_method in calculation_methods:
-                    # only generate a case if sym or asym output exists
-                    if (case_dir / f"{output_prefix}{batch_suffix}.json").exists():
-                        # Build a recognizable case ID
-                        case_id = case_name
-                        case_id += "-sym" if sym else "-asym"
-                        case_id += "-" + calculation_method
-                        if get_batch_cases:
-                            case_id += "-batch"
-                        pytest_param = [
-                            case_id,
-                            case_dir,
-                            sym,
-                            calculation_type,
-                            calculation_method,
-                            params["rtol"],
-                            params["atol"],
-                        ]
-                        kwargs = {}
-                        if "fail" in params:
-                            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
-                        yield pytest.param(*pytest_param, **kwargs, id=case_id)
+        test_case_paths = get_test_case_paths(calculation_type=calculation_type, test_cases=test_cases)
+
+        for case_name, case_dir in test_case_paths.items():
+            yield from _add_cases(
+                case_name=case_name,
+                case_dir=case_dir,
+                calculation_type=calculation_type,
+                is_batch=get_batch_cases,
+            )
 
 
 def bool_params(true_id: str, false_id: Optional[str] = None, **kwargs):
