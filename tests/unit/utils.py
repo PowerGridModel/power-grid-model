@@ -24,7 +24,8 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 
 def get_output_type(calculation_type: str, sym: bool) -> str:
     if calculation_type == "short_circuit":
-        assert not sym, f"Unsupported validation case: calculation_type={calculation_type}, sym={sym}"
+        if sym:
+            raise AssertionError(f"Unsupported validation case: calculation_type={calculation_type}, sym={sym}")
         return "sc_output"
 
     if sym:
@@ -87,7 +88,7 @@ def add_case(
         )
 
 
-def _add_cases(case_dir: Path, **kwargs):
+def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
     with open(case_dir / "params.json") as f:
         params = json.load(f)
 
@@ -99,12 +100,17 @@ def _add_cases(case_dir: Path, **kwargs):
     # loop for sym or asym scenario
     for calculation_method in calculation_methods:
         for sym in [True, False]:
-            if calculation_method == "short_circuit" and sym:
+            if calculation_type == "short_circuit" and sym:
                 continue  # only asym short circuit calculations are supported
 
             for calculation_method in calculation_methods:
                 yield from add_case(
-                    case_dir=case_dir, params=params, calculation_method=calculation_method, sym=sym, **kwargs
+                    case_dir=case_dir,
+                    params=params,
+                    calculation_type=calculation_type,
+                    calculation_method=calculation_method,
+                    sym=sym,
+                    **kwargs,
                 )
 
 
@@ -138,8 +144,8 @@ def dict_params(params: Dict[Any, str], **kwargs):
         yield pytest.param(value, **kwargs, id=param_id)
 
 
-def import_case_data(data_path: Path, sym: bool):
-    output_prefix = "sym_output" if sym else "asym_output"
+def import_case_data(data_path: Path, calculation_type: str, sym: bool):
+    output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
     return_dict = {
         "input": import_json_data(data_path / "input.json", "input", ignore_extra=True),
     }
