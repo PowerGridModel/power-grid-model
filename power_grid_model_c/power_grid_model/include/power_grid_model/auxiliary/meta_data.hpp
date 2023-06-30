@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_META_DATA_HPP
 
 #include <bit>
+#include <memory>
 #include <string>
 
 #include "../enum.hpp"
@@ -24,9 +25,66 @@ template <class StructType, class ValueType>
 struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
+template <class StructType, auto member_ptr>
+inline size_t get_offset() {
+    StructType const obj{};
+    return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
+}
 
 using RawDataPtr = void*;             // raw mutable data ptr
 using RawDataConstPtr = void const*;  // raw read-only data ptr
+
+// meta attribute
+struct MetaAttribute {
+    std::string name;
+    std::string ctype;
+    size_t offset;
+    size_t size;
+    size_t component_size;
+
+    // virtual functions
+    virtual bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) = 0;
+    virtual void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) = 0;
+    virtual void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) = 0;
+    virtual bool compare_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, double atol, double rtol, Idx pos) = 0;
+    virtual ~MetaAttribute() = default;
+};
+
+template <class StructType, auto member_ptr>
+struct MetaAttributeImpl : MetaAttribute {
+    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+    MetaAttributeImpl(std::string attr_name) {
+        name = attr_name;
+        // todo ctype
+        offset = get_offset<StructType, member_ptr>();
+        size = sizeof(ValueType);
+        component_size = sizeof(StructType);
+    }
+
+    // virtual functions
+    bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) final {
+        return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
+    }
+    void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) final {
+        (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr = *reinterpret_cast<ValueType const*>(value_ptr);
+    }
+    void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) final {
+        *reinterpret_cast<ValueType*>(value_ptr) = (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
+    }
+    bool compare_value(RawDataConstPtr buffer_ptr, RawDataConstPtr value_ptr, double atol, double rtol, Idx pos) final {
+        ValueType const& x = (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr;
+        ValueType const& y = *reinterpret_cast<ValueType const*>(value_ptr);
+        if constexpr (std::is_same_v<ValueType, double>) {
+            return std::abs(y - x) < (std::abs(x) * rtol + atol);
+        }
+        else if constexpr (std::is_same_v<ValueType, RealValue<false>>) {
+            return (abs(y - x) < (abs(x) * rtol + atol)).all();
+        }
+        else {
+            return x == y;
+        }
+    }
+};
 
 using SetNaNFunc = std::add_pointer_t<void(RawDataPtr)>;
 using CheckNaNFunc = std::add_pointer_t<bool(RawDataConstPtr)>;
@@ -139,12 +197,6 @@ struct DataAttribute {
     SetValueFunc set_value;
     CompareValueFunc compare_value;
 };
-
-template <class BaseType, auto member_ptr>
-inline size_t get_offset() {
-    BaseType const obj{};
-    return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
-}
 
 constexpr bool is_little_endian() {
     return std::endian::native == std::endian::little;
