@@ -173,11 +173,11 @@ struct MetaComponentImpl : MetaComponent {
         return new StructType[size];
     }
     void destroy_buffer(RawDataConstPtr buffer_ptr) const final {
-        delete[] buffer_ptr;
+        delete[] reinterpret_cast<StructType const*>(buffer_ptr);
     }
     void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) const final {
         static StructType const nan_value = get_component_nan<StructType>{}();
-        StructType* = reinterpret_cast<StructType*> buffer_ptr;
+        StructType* ptr = reinterpret_cast<StructType*>(buffer_ptr);
         std::fill(ptr + pos, ptr + pos + size, nan_value);
     }
 };

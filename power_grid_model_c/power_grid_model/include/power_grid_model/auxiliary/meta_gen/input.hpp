@@ -18,8 +18,9 @@
 
 namespace power_grid_model {
 
-// template specialization functors to get meta data
 namespace meta_data {
+
+// template specialization functors to get attributes
 
 template<>
 struct get_attributes_list<BaseInput> {
@@ -376,6 +377,368 @@ struct get_attributes_list<FaultInput> {
         attributes.push_back(std::make_unique<MetaAttributeImpl<FaultInput, &FaultInput::r_f> const>("r_f"));
         attributes.push_back(std::make_unique<MetaAttributeImpl<FaultInput, &FaultInput::x_f> const>("x_f"));
         return attributes;
+    }
+};
+
+
+
+// template specialization functors to get nan
+
+template<>
+struct get_component_nan<BaseInput> {
+    BaseInput operator() () const {
+        BaseInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<NodeInput> {
+    NodeInput operator() () const {
+        NodeInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.u_rated);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<BranchInput> {
+    BranchInput operator() () const {
+        BranchInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.from_node);
+        set_nan(comp.to_node);
+        set_nan(comp.from_status);
+        set_nan(comp.to_status);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<Branch3Input> {
+    Branch3Input operator() () const {
+        Branch3Input comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node_1);
+        set_nan(comp.node_2);
+        set_nan(comp.node_3);
+        set_nan(comp.status_1);
+        set_nan(comp.status_2);
+        set_nan(comp.status_3);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<SensorInput> {
+    SensorInput operator() () const {
+        SensorInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.measured_object);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ApplianceInput> {
+    ApplianceInput operator() () const {
+        ApplianceInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node);
+        set_nan(comp.status);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<LineInput> {
+    LineInput operator() () const {
+        LineInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.from_node);
+        set_nan(comp.to_node);
+        set_nan(comp.from_status);
+        set_nan(comp.to_status);
+        set_nan(comp.r1);
+        set_nan(comp.x1);
+        set_nan(comp.c1);
+        set_nan(comp.tan1);
+        set_nan(comp.r0);
+        set_nan(comp.x0);
+        set_nan(comp.c0);
+        set_nan(comp.tan0);
+        set_nan(comp.i_n);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<LinkInput> {
+    LinkInput operator() () const {
+        LinkInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.from_node);
+        set_nan(comp.to_node);
+        set_nan(comp.from_status);
+        set_nan(comp.to_status);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<TransformerInput> {
+    TransformerInput operator() () const {
+        TransformerInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.from_node);
+        set_nan(comp.to_node);
+        set_nan(comp.from_status);
+        set_nan(comp.to_status);
+        set_nan(comp.u1);
+        set_nan(comp.u2);
+        set_nan(comp.sn);
+        set_nan(comp.uk);
+        set_nan(comp.pk);
+        set_nan(comp.i0);
+        set_nan(comp.p0);
+        set_nan(comp.winding_from);
+        set_nan(comp.winding_to);
+        set_nan(comp.clock);
+        set_nan(comp.tap_side);
+        set_nan(comp.tap_pos);
+        set_nan(comp.tap_min);
+        set_nan(comp.tap_max);
+        set_nan(comp.tap_nom);
+        set_nan(comp.tap_size);
+        set_nan(comp.uk_min);
+        set_nan(comp.uk_max);
+        set_nan(comp.pk_min);
+        set_nan(comp.pk_max);
+        set_nan(comp.r_grounding_from);
+        set_nan(comp.x_grounding_from);
+        set_nan(comp.r_grounding_to);
+        set_nan(comp.x_grounding_to);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ThreeWindingTransformerInput> {
+    ThreeWindingTransformerInput operator() () const {
+        ThreeWindingTransformerInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node_1);
+        set_nan(comp.node_2);
+        set_nan(comp.node_3);
+        set_nan(comp.status_1);
+        set_nan(comp.status_2);
+        set_nan(comp.status_3);
+        set_nan(comp.u1);
+        set_nan(comp.u2);
+        set_nan(comp.u3);
+        set_nan(comp.sn_1);
+        set_nan(comp.sn_2);
+        set_nan(comp.sn_3);
+        set_nan(comp.uk_12);
+        set_nan(comp.uk_13);
+        set_nan(comp.uk_23);
+        set_nan(comp.pk_12);
+        set_nan(comp.pk_13);
+        set_nan(comp.pk_23);
+        set_nan(comp.i0);
+        set_nan(comp.p0);
+        set_nan(comp.winding_1);
+        set_nan(comp.winding_2);
+        set_nan(comp.winding_3);
+        set_nan(comp.clock_12);
+        set_nan(comp.clock_13);
+        set_nan(comp.tap_side);
+        set_nan(comp.tap_pos);
+        set_nan(comp.tap_min);
+        set_nan(comp.tap_max);
+        set_nan(comp.tap_nom);
+        set_nan(comp.tap_size);
+        set_nan(comp.uk_12_min);
+        set_nan(comp.uk_12_max);
+        set_nan(comp.uk_13_min);
+        set_nan(comp.uk_13_max);
+        set_nan(comp.uk_23_min);
+        set_nan(comp.uk_23_max);
+        set_nan(comp.pk_12_min);
+        set_nan(comp.pk_12_max);
+        set_nan(comp.pk_13_min);
+        set_nan(comp.pk_13_max);
+        set_nan(comp.pk_23_min);
+        set_nan(comp.pk_23_max);
+        set_nan(comp.r_grounding_1);
+        set_nan(comp.x_grounding_1);
+        set_nan(comp.r_grounding_2);
+        set_nan(comp.x_grounding_2);
+        set_nan(comp.r_grounding_3);
+        set_nan(comp.x_grounding_3);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<GenericLoadGenInput> {
+    GenericLoadGenInput operator() () const {
+        GenericLoadGenInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node);
+        set_nan(comp.status);
+        set_nan(comp.type);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<LoadGenInput<sym>> {
+    LoadGenInput<sym> operator() () const {
+        LoadGenInput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node);
+        set_nan(comp.status);
+        set_nan(comp.type);
+        set_nan(comp.p_specified);
+        set_nan(comp.q_specified);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ShuntInput> {
+    ShuntInput operator() () const {
+        ShuntInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node);
+        set_nan(comp.status);
+        set_nan(comp.g1);
+        set_nan(comp.b1);
+        set_nan(comp.g0);
+        set_nan(comp.b0);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<SourceInput> {
+    SourceInput operator() () const {
+        SourceInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.node);
+        set_nan(comp.status);
+        set_nan(comp.u_ref);
+        set_nan(comp.u_ref_angle);
+        set_nan(comp.sk);
+        set_nan(comp.rx_ratio);
+        set_nan(comp.z01_ratio);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<GenericVoltageSensorInput> {
+    GenericVoltageSensorInput operator() () const {
+        GenericVoltageSensorInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.measured_object);
+        set_nan(comp.u_sigma);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<VoltageSensorInput<sym>> {
+    VoltageSensorInput<sym> operator() () const {
+        VoltageSensorInput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.measured_object);
+        set_nan(comp.u_sigma);
+        set_nan(comp.u_measured);
+        set_nan(comp.u_angle_measured);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<GenericPowerSensorInput> {
+    GenericPowerSensorInput operator() () const {
+        GenericPowerSensorInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.measured_object);
+        set_nan(comp.measured_terminal_type);
+        set_nan(comp.power_sigma);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<PowerSensorInput<sym>> {
+    PowerSensorInput<sym> operator() () const {
+        PowerSensorInput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.measured_object);
+        set_nan(comp.measured_terminal_type);
+        set_nan(comp.power_sigma);
+        set_nan(comp.p_measured);
+        set_nan(comp.q_measured);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<FaultInput> {
+    FaultInput operator() () const {
+        FaultInput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        set_nan(comp.fault_type);
+        set_nan(comp.fault_phase);
+        set_nan(comp.fault_object);
+        set_nan(comp.r_f);
+        set_nan(comp.x_f);
+        return comp;
     }
 };
 

@@ -18,8 +18,9 @@
 
 namespace power_grid_model {
 
-// template specialization functors to get meta data
 namespace meta_data {
+
+// template specialization functors to get attributes
 
 {% for attribute_class in classes -%}
 
@@ -37,6 +38,29 @@ struct get_attributes_list<{{ attribute_class.name }}> {
         attributes.push_back(std::make_unique<MetaAttributeImpl<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}> const>("{{ attribute.names }}"));
         {%- endfor %}
         return attributes;
+    }
+};
+
+{% endfor %}
+
+// template specialization functors to get nan
+
+{% for attribute_class in classes -%}
+
+{%- if attribute_class.is_template -%}
+template <bool sym>
+struct get_component_nan<{{ attribute_class.name }}<sym>> {
+{%- else -%}
+template<>
+struct get_component_nan<{{ attribute_class.name }}> {
+{%- endif %}
+    {{ attribute_class.full_name }} operator() () const {
+        {{ attribute_class.full_name }} comp;
+        // all attributes including base class
+        {% for attribute in attribute_class.full_attributes %}
+        set_nan(comp.{{ attribute.names }});
+        {%- endfor %}
+        return comp;
     }
 };
 

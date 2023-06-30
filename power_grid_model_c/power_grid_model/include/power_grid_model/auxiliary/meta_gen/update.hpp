@@ -18,8 +18,9 @@
 
 namespace power_grid_model {
 
-// template specialization functors to get meta data
 namespace meta_data {
+
+// template specialization functors to get attributes
 
 template<>
 struct get_attributes_list<BaseUpdate> {
@@ -168,6 +169,160 @@ struct get_attributes_list<FaultUpdate> {
         attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase> const>("fault_phase"));
         attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object> const>("fault_object"));
         return attributes;
+    }
+};
+
+
+
+// template specialization functors to get nan
+
+template<>
+struct get_component_nan<BaseUpdate> {
+    BaseUpdate operator() () const {
+        BaseUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<BranchUpdate> {
+    BranchUpdate operator() () const {
+        BranchUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.from_status);
+        set_nan(comp.to_status);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<Branch3Update> {
+    Branch3Update operator() () const {
+        Branch3Update comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status_1);
+        set_nan(comp.status_2);
+        set_nan(comp.status_3);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ApplianceUpdate> {
+    ApplianceUpdate operator() () const {
+        ApplianceUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<TransformerUpdate> {
+    TransformerUpdate operator() () const {
+        TransformerUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.from_status);
+        set_nan(comp.to_status);
+        set_nan(comp.tap_pos);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ThreeWindingTransformerUpdate> {
+    ThreeWindingTransformerUpdate operator() () const {
+        ThreeWindingTransformerUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status_1);
+        set_nan(comp.status_2);
+        set_nan(comp.status_3);
+        set_nan(comp.tap_pos);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<LoadGenUpdate<sym>> {
+    LoadGenUpdate<sym> operator() () const {
+        LoadGenUpdate<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        set_nan(comp.p_specified);
+        set_nan(comp.q_specified);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<SourceUpdate> {
+    SourceUpdate operator() () const {
+        SourceUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        set_nan(comp.u_ref);
+        set_nan(comp.u_ref_angle);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<VoltageSensorUpdate<sym>> {
+    VoltageSensorUpdate<sym> operator() () const {
+        VoltageSensorUpdate<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.u_sigma);
+        set_nan(comp.u_measured);
+        set_nan(comp.u_angle_measured);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<PowerSensorUpdate<sym>> {
+    PowerSensorUpdate<sym> operator() () const {
+        PowerSensorUpdate<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.power_sigma);
+        set_nan(comp.p_measured);
+        set_nan(comp.q_measured);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<FaultUpdate> {
+    FaultUpdate operator() () const {
+        FaultUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        set_nan(comp.fault_type);
+        set_nan(comp.fault_phase);
+        set_nan(comp.fault_object);
+        return comp;
     }
 };
 

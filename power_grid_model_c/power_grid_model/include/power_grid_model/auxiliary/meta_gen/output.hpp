@@ -18,8 +18,9 @@
 
 namespace power_grid_model {
 
-// template specialization functors to get meta data
 namespace meta_data {
+
+// template specialization functors to get attributes
 
 template<>
 struct get_attributes_list<BaseOutput> {
@@ -239,6 +240,231 @@ struct get_attributes_list<SensorShortCircuitOutput> {
         attributes.push_back(std::make_unique<MetaAttributeImpl<SensorShortCircuitOutput, &SensorShortCircuitOutput::id> const>("id"));
         attributes.push_back(std::make_unique<MetaAttributeImpl<SensorShortCircuitOutput, &SensorShortCircuitOutput::energized> const>("energized"));
         return attributes;
+    }
+};
+
+
+
+// template specialization functors to get nan
+
+template<>
+struct get_component_nan<BaseOutput> {
+    BaseOutput operator() () const {
+        BaseOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<NodeOutput<sym>> {
+    NodeOutput<sym> operator() () const {
+        NodeOutput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.u_pu);
+        set_nan(comp.u);
+        set_nan(comp.u_angle);
+        set_nan(comp.p);
+        set_nan(comp.q);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<BranchOutput<sym>> {
+    BranchOutput<sym> operator() () const {
+        BranchOutput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.loading);
+        set_nan(comp.p_from);
+        set_nan(comp.q_from);
+        set_nan(comp.i_from);
+        set_nan(comp.s_from);
+        set_nan(comp.p_to);
+        set_nan(comp.q_to);
+        set_nan(comp.i_to);
+        set_nan(comp.s_to);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<Branch3Output<sym>> {
+    Branch3Output<sym> operator() () const {
+        Branch3Output<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.loading);
+        set_nan(comp.p_1);
+        set_nan(comp.q_1);
+        set_nan(comp.i_1);
+        set_nan(comp.s_1);
+        set_nan(comp.p_2);
+        set_nan(comp.q_2);
+        set_nan(comp.i_2);
+        set_nan(comp.s_2);
+        set_nan(comp.p_3);
+        set_nan(comp.q_3);
+        set_nan(comp.i_3);
+        set_nan(comp.s_3);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<ApplianceOutput<sym>> {
+    ApplianceOutput<sym> operator() () const {
+        ApplianceOutput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.p);
+        set_nan(comp.q);
+        set_nan(comp.i);
+        set_nan(comp.s);
+        set_nan(comp.pf);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<VoltageSensorOutput<sym>> {
+    VoltageSensorOutput<sym> operator() () const {
+        VoltageSensorOutput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.u_residual);
+        set_nan(comp.u_angle_residual);
+        return comp;
+    }
+};
+
+template <bool sym>
+struct get_component_nan<PowerSensorOutput<sym>> {
+    PowerSensorOutput<sym> operator() () const {
+        PowerSensorOutput<sym> comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.p_residual);
+        set_nan(comp.q_residual);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<FaultOutput> {
+    FaultOutput operator() () const {
+        FaultOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<FaultShortCircuitOutput> {
+    FaultShortCircuitOutput operator() () const {
+        FaultShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.i_f);
+        set_nan(comp.i_f_angle);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<NodeShortCircuitOutput> {
+    NodeShortCircuitOutput operator() () const {
+        NodeShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.u_pu);
+        set_nan(comp.u);
+        set_nan(comp.u_angle);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<BranchShortCircuitOutput> {
+    BranchShortCircuitOutput operator() () const {
+        BranchShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.i_from);
+        set_nan(comp.i_from_angle);
+        set_nan(comp.i_to);
+        set_nan(comp.i_to_angle);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<Branch3ShortCircuitOutput> {
+    Branch3ShortCircuitOutput operator() () const {
+        Branch3ShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.i_1);
+        set_nan(comp.i_1_angle);
+        set_nan(comp.i_2);
+        set_nan(comp.i_2_angle);
+        set_nan(comp.i_3);
+        set_nan(comp.i_3_angle);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ApplianceShortCircuitOutput> {
+    ApplianceShortCircuitOutput operator() () const {
+        ApplianceShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.i);
+        set_nan(comp.i_angle);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<SensorShortCircuitOutput> {
+    SensorShortCircuitOutput operator() () const {
+        SensorShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        return comp;
     }
 };
 
