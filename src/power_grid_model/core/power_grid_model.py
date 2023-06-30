@@ -321,22 +321,22 @@ class PowerGridModel:
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads  
             
-            output_component_types: List or set of component types to be included in the
-                output dict. By default, all component types will be in the output.
+            output_component_types: List or set of component types you want to be present in the output dict. 
+                By default, all component types will be in the output.
 
             continue_on_batch_error: If the program continues (instead of throwing error) if some scenarios fails.
     
         Returns: 
             Dictionary of results of all components.
             
-                Key: Component type name to be updated in batch.      
-                    - For single calculation: 1D numpy structured array for the results of this component type.
-                    - For batch calculation: 2D numpy structured array for the results of this component type.              
-                        - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.
+                    Key: Component type name to be updated in batch.      
+                        - For single calculation: 1D numpy structured array for the results of this component type.
+                        - For batch calculation: 2D numpy structured array for the results of this component type.              
+                            - Dimension 0: Each batch.
+                            - Dimension 1: The result of each element for this component type.
     
         Raises: 
-            In case an error in the core occurs, an exception will be thrown.
+            Error: In case an error in the core occurs, an exception will be thrown.
         
         """		
         return self._calculate(
