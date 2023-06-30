@@ -25,22 +25,18 @@ namespace meta_data {
 
 {%- if attribute_class.is_template -%}
 template <bool sym>
-struct get_meta<{{ attribute_class.name }}<sym>> {
+struct get_attributes_list<{{ attribute_class.name }}<sym>> {
 {%- else -%}
 template<>
-struct get_meta<{{ attribute_class.name }}> {
+struct get_attributes_list<{{ attribute_class.name }}> {
 {%- endif %}
-    MetaData operator() () const {
-        MetaData meta{};
-        meta.name = "{{ attribute_class.name }}";      
-        meta.size = sizeof({{ attribute_class.full_name }});  
-        meta.alignment = alignof({{ attribute_class.full_name }});
-
+    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
+        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
         // all attributes including base class
         {% for attribute in attribute_class.full_attributes %}
-        meta.attributes.push_back(get_data_attribute<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}>("{{ attribute.names }}"));
+        attributes.push_back(std::make_unique<MetaAttributeImpl<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}> const>("{{ attribute.names }}"));
         {%- endfor %}
-        return meta;
+        return attributes;
     }
 };
 
