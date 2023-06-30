@@ -30,11 +30,12 @@ using AllDatasetMap = std::map<std::string, DatasetMap>;
 // template function to add meta data
 template <class CT>
 void add_meta_data(AllDatasetMap& meta) {
-    meta["input"][CT::name] = MetaComponent<typename CT::InputType>{CT::name};
-    meta["update"][CT::name] = MetaComponent<typename CT::UpdateType>{CT::name};
-    meta["sym_output"][CT::name] = MetaComponent<typename CT::template OutputType<true>>{CT::name};
-    meta["asym_output"][CT::name] = MetaComponent<typename CT::template OutputType<false>>{CT::name};
-    meta["sc_output"][CT::name] = MetaComponent<typename CT::ShortCircuitOutputType>{CT::name};
+    meta["input"][CT::name] = MetaComponent{MetaComponentImpl<typename CT::InputType>{}, CT::name};
+    meta["update"][CT::name] = MetaComponent{MetaComponentImpl<typename CT::UpdateType>{}, CT::name};
+    meta["sym_output"][CT::name] = MetaComponent{MetaComponentImpl<typename CT::template OutputType<true>>{}, CT::name};
+    meta["asym_output"][CT::name] =
+        MetaComponent{MetaComponentImpl<typename CT::template OutputType<false>>{}, CT::name};
+    meta["sc_output"][CT::name] = MetaComponent{MetaComponentImpl<typename CT::ShortCircuitOutputType>{}, CT::name};
 }
 
 template <class T>

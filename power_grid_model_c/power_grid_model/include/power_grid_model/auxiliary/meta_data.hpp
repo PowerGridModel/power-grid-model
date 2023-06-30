@@ -87,6 +87,7 @@ using RawDataConstPtr = void const*;  // raw read-only data ptr
 // meta attribute
 template <class StructType, auto member_ptr>
 struct MetaAttributeImpl {
+    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
     static bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) {
         return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
     }
@@ -98,7 +99,7 @@ struct MetaAttributeImpl {
     }
     static bool compare_value(RawDataConstPtr buffer_ptr, RawDataConstPtr value_ptr, double atol, double rtol,
                               Idx pos) {
-        ValueType const& x = (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr;
+        ValueType const& x = (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
         ValueType const& y = *reinterpret_cast<ValueType const*>(value_ptr);
         if constexpr (std::is_same_v<ValueType, double>) {
             return std::abs(y - x) < (std::abs(x) * rtol + atol);

@@ -315,7 +315,7 @@ inline bool is_nan(IntS x) {
 template <class Enum>
 requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline bool is_nan(Enum x) {
-    return static_cast<IntS>(x) == na_IntS
+    return static_cast<IntS>(x) == na_IntS;
 }
 
 /* update real values
