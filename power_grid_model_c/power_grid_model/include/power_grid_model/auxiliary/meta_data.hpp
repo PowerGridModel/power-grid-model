@@ -78,7 +78,7 @@ struct MetaAttribute {
     virtual bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) const = 0;
     virtual void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) const = 0;
     virtual void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) const = 0;
-    virtual bool compare_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, double atol, double rtol,
+    virtual bool compare_value(RawDataConstPtr buffer_ptr, RawDataConstPtr value_ptr, double atol, double rtol,
                                Idx pos) const = 0;
     virtual ~MetaAttribute() = default;
 };
