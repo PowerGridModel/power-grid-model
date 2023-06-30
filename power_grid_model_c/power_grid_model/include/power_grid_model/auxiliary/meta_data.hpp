@@ -63,6 +63,25 @@ struct ctype_t<T, true> : ctype_t<std::underlying_type_t<T>> {};
 template <class T>
 constexpr const char* ctype_v = ctype_t<T>::value;
 
+// set nan
+inline void set_nan(double& x){
+    x = nan;
+}
+inline void set_nan(IntS& x){
+    x = na_IntS;
+}
+inline void set_nan(ID& x){
+    x = na_IntID;
+}
+inline void set_nan(RealValue<false>& x){
+    x = RealValue<false>{nan};
+}
+template <class Enum>
+requires std::same_as<std::underlying_type_t<Enum>, IntS>
+inline void set_nan(Enum& x){
+    x = static_cast<Enum>(na_IntS);
+} 
+
 using RawDataPtr = void*;             // raw mutable data ptr
 using RawDataConstPtr = void const*;  // raw read-only data ptr
 
