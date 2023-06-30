@@ -186,20 +186,23 @@ struct MetaComponent {
 // meta dataset
 struct MetaDataset {
     std::string name;
-
-    std::vector<std::unique_ptr<MetaComponent const>> unique_components;
-    std::vector<MetaComponent const*> components;
+    std::vector<MetaComponent> components;
 
     Idx n_components() const {
-        return static_cast<Idx>(unique_components.size());
+        return static_cast<Idx>(components.size());
     }
 };
 
-// all dataset
+// meta data
+struct MetaData {
+    std::vector<MetaDataset> datasets;
 
-using PowerGridMetaData = std::map<std::string, MetaData>;
-using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
+    Idx n_datasets() const {
+        return static_cast<Idx>(datasets.size());
+    }
+};
 
+// little endian
 constexpr bool is_little_endian() {
     return std::endian::native == std::endian::little;
 }
