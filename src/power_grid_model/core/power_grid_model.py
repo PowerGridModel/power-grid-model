@@ -304,10 +304,12 @@ class PowerGridModel:
               Or a dictionary for batch calculation with batch update.
                   
                     key: Component type name to be updated in batch.
+
                         - For homogeneous update batch (a 2D numpy structured array):
 
                             - Dimension 0: Each batch.
                             - Dimension 1: Each updated element per batch for this component type.
+
                         - For inhomogeneous update batch (a dictionary containing two keys):
 
                             - indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the update array for this batch is
@@ -326,19 +328,20 @@ class PowerGridModel:
 
             continue_on_batch_error (bool): If the program continues (instead of throwing error) if some scenarios fails.
     
-        Returns: 
+        Returns:
+
             Dictionary of results of all components.
             
-                Key: Component type name to be updated in batch.      
+                Key: Component type name to be updated in batch.
+
                     - For single calculation: 1D numpy structured array for the results of this component type.
 
                     - For batch calculation: 2D numpy structured array for the results of this component type.
 
                         - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.
+                        - Dimension 1: The result of each element for this component type.    
 
-        Returns:
-
+        Returns: 
             Dictionary of results of all components.
             
                 Key: Component type name to be updated in batch.
@@ -348,7 +351,7 @@ class PowerGridModel:
                     - For batch calculation: 2D numpy structured array for the results of this component type.
 
                         - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.                                                       
+                        - Dimension 1: The result of each element for this component type.                                                                          
 
         Raises: 
             Error: In case an error in the core occurs, an exception will be thrown.
