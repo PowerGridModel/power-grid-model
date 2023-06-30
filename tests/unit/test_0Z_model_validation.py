@@ -54,6 +54,10 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
 }
 
 
+def supported_kwargs(kwargs, supported: List[str]):
+    return {key: value for key, value in kwargs.items() if key in supported}
+
+
 @pytest.mark.parametrize(
     ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol"],
     pytest_cases(get_batch_cases=False),
@@ -68,7 +72,7 @@ def test_single_validation(
     # Normal calculation
     calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
     kwargs = {"symmetric": sym, "calculation_method": calculation_method}
-    result = calculation_function(model, **{key: value for key, value in kwargs.items() if key in calculation_args})
+    result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
 
     # Compare the results
     reference_result = case_data["output"]
@@ -88,10 +92,10 @@ def test_single_validation(
 
     # test calculate with only node and source result
     kwargs = {"symmetric": sym, "calculation_method": calculation_method, "output_component_types": ["node", "source"]}
-    result = calculation_function(model, **{key: value for key, value in kwargs.items() if key in calculation_args})
+    result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
     assert set(result.keys()) == {"node", "source"}
     kwargs = {"symmetric": sym, "calculation_method": calculation_method, "output_component_types": {"node", "source"}}
-    result = calculation_function(model, **{key: value for key, value in kwargs.items() if key in calculation_args})
+    result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
     assert set(result.keys()) == {"node", "source"}
 
 
@@ -116,9 +120,7 @@ def test_batch_validation(
         model_copy.update(update_data=update_data)
         calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
         kwargs = {"symmetric": sym, "calculation_method": calculation_method}
-        result = calculation_function(
-            model_copy, **{key: value for key, value in kwargs.items() if key in calculation_args}
-        )
+        result = calculation_function(model_copy, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
         compare_result(result, reference_result, rtol, atol)
 
     # execute in batch one go
@@ -130,9 +132,7 @@ def test_batch_validation(
             "update_data": update_batch,
             "threading": threading,
         }
-        result_batch = calculation_function(
-            model, **{key: value for key, value in kwargs.items() if key in calculation_args}
-        )
+        result_batch = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
         result_list = convert_batch_dataset_to_batch_list(result_batch)
         for result, reference_result in zip(result_list, reference_output_list):
             compare_result(result, reference_result, rtol, atol)

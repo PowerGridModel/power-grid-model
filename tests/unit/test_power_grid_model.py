@@ -126,7 +126,7 @@ def test_single_calculation_error(model: PowerGridModel):
         model.calculate_state_estimation(calculation_method="iterative_current")
 
     for calculation_method in ("linear", "newton_raphson", "iterative_current", "linear_current", "iterative_linear"):
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(PowerGridError):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
