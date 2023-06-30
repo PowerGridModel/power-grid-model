@@ -64,23 +64,23 @@ template <class T>
 constexpr const char* ctype_v = ctype_t<T>::value;
 
 // set nan
-inline void set_nan(double& x){
+inline void set_nan(double& x) {
     x = nan;
 }
-inline void set_nan(IntS& x){
+inline void set_nan(IntS& x) {
     x = na_IntS;
 }
-inline void set_nan(ID& x){
+inline void set_nan(ID& x) {
     x = na_IntID;
 }
-inline void set_nan(RealValue<false>& x){
+inline void set_nan(RealValue<false>& x) {
     x = RealValue<false>{nan};
 }
 template <class Enum>
-requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline void set_nan(Enum& x){
+    requires std::same_as<std::underlying_type_t<Enum>, IntS>
+inline void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
-} 
+}
 
 using RawDataPtr = void*;             // raw mutable data ptr
 using RawDataConstPtr = void const*;  // raw read-only data ptr
@@ -181,6 +181,22 @@ struct MetaComponentImpl : MetaComponent {
         std::fill(ptr + pos, ptr + pos + size, nan_value);
     }
 };
+
+
+// meta dataset
+struct MetaDataset {
+    std::string name;
+
+    std::vector<std::unique_ptr<MetaComponent const>> unique_components;
+    std::vector<MetaComponent const*> components;
+
+    Idx n_components() const {
+        return static_cast<Idx>(unique_components.size());
+    }
+};
+
+// all dataset
+
 
 using PowerGridMetaData = std::map<std::string, MetaData>;
 using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
