@@ -301,8 +301,7 @@ class PowerGridModel:
            
             update_data:
               None: Calculate power flow once with the current model attributes.
-              Or a dictionary for batch calculation with batch update.
-                  
+              Or a dictionary for batch calculation with batch update. 
                     key: Component type name to be updated in batch.
 
                         - For homogeneous update batch (a 2D numpy structured array):
@@ -327,25 +326,12 @@ class PowerGridModel:
                 By default, all component types will be in the output.
 
             continue_on_batch_error (bool): If the program continues (instead of throwing error) if some scenarios fails.
-    
-        Returns:
-
-            Dictionary of results of all components.
-            
-                Key: Component type name to be updated in batch.
-
-                    - For single calculation: 1D numpy structured array for the results of this component type.
-
-                    - For batch calculation: 2D numpy structured array for the results of this component type.
-
-                        - Dimension 0: Each batch.
-                        - Dimension 1: The result of each element for this component type.    
 
         Returns: 
             Dictionary of results of all components.
-            
+
                 Key: Component type name to be updated in batch.
-                      
+
                     - For single calculation: 1D numpy structured array for the results of this component type.
 
                     - For batch calculation: 2D numpy structured array for the results of this component type.
