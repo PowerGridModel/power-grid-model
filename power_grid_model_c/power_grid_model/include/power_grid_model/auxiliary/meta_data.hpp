@@ -182,6 +182,15 @@ struct MetaComponent {
     Idx n_attributes() const {
         return static_cast<Idx>(attributes.size());
     }
+
+    MetaAttribute const& get_attribute(std::string const& attribute_name) const {
+        for (auto const& attribute : attributes) {
+            if (attribute.name == attribute_name) {
+                return attribute;
+            }
+        }
+        throw std::out_of_range{"Cannot find attribute with name: " + attribute_name + "!\n"};
+    }
 };
 
 // meta dataset
@@ -192,6 +201,15 @@ struct MetaDataset {
     Idx n_components() const {
         return static_cast<Idx>(components.size());
     }
+
+    MetaComponent const& get_component(std::string const& component_name) const {
+        for (auto const& component : components) {
+            if (component.name == component_name) {
+                return component;
+            }
+        }
+        throw std::out_of_range{"Cannot find component with name: " + component_name + "!\n"};
+    }
 };
 
 // meta data
@@ -200,6 +218,15 @@ struct MetaData {
 
     Idx n_datasets() const {
         return static_cast<Idx>(datasets.size());
+    }
+
+    MetaDataset const& get_dataset(std::string const& dataset_name) const {
+        for (auto const& dataset : datasets) {
+            if (dataset.name == dataset_name) {
+                return dataset;
+            }
+        }
+        throw std::out_of_range{"Cannot find dataset with name: " + dataset_name + "!\n"};
     }
 };
 
