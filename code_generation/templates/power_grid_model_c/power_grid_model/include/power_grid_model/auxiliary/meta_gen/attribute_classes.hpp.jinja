@@ -1,0 +1,55 @@
+// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+#pragma once
+#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_{{ include_guard }}_HPP
+#define POWER_GRID_MODEL_AUXILIARY_META_GEN_{{ include_guard }}_HPP
+
+#include "../../enum.hpp"
+#include "../../power_grid_model.hpp"
+#include "../../three_phase_tensor.hpp"
+#include "../meta_data.hpp"
+#include "../{{ name }}.hpp"
+
+
+namespace power_grid_model {
+
+// template specialization functors to get meta data
+namespace meta_data {
+
+{% for attribute_class in classes -%}
+
+{%- if attribute_class.is_template -%}
+template <bool sym>
+struct get_meta<{{ attribute_class.name }}<sym>> {
+{%- else -%}
+template<>
+struct get_meta<{{ attribute_class.name }}> {
+{%- endif %}
+    MetaData operator() () const {
+        MetaData meta{};
+        meta.name = "{{ attribute_class.name }}";      
+        meta.size = sizeof({{ attribute_class.full_name }});  
+        meta.alignment = alignof({{ attribute_class.full_name }});
+        {% if attribute_class.base -%}
+        meta.attributes = get_meta<{{ attribute_class.base }}>{}().attributes;
+        {%- endif -%}
+        {% for attribute in attribute_class.attributes %}
+        meta.attributes.push_back(get_data_attribute<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}>("{{ attribute.names }}"));
+        {%- endfor %}
+        return meta;
+    }
+};
+
+{% endfor %}
+
+} // namespace meta_data
+
+} // namespace power_grid_model
+
+#endif
+// clang-format on
