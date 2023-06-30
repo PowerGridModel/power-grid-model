@@ -87,7 +87,6 @@ struct MetaAttributeImpl : MetaAttribute {
             .size = sizeof(ValueType),
             .component_size = sizeof(StructType)
         }
-    
     {}
 
     // virtual functions
@@ -143,13 +142,6 @@ struct MetaData {
         return find_attr(attr_name) >= 0;
     }
 
-    RawDataPtr get_position(RawDataPtr ptr, Idx position) const {
-        return reinterpret_cast<char*>(ptr) + position * size;
-    }
-    RawDataConstPtr get_position(RawDataConstPtr ptr, Idx position) const {
-        return reinterpret_cast<char const*>(ptr) + position * size;
-    }
-
     // set nan for all attributes
     void set_nan(RawDataPtr ptr, Idx position = 0) const {
         ptr = get_position(ptr, position);
@@ -157,33 +149,6 @@ struct MetaData {
             void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
             attr.set_nan(offset_ptr);
         }
-    }
-    // check nan for a attribute
-    bool check_nan(RawDataConstPtr ptr, DataAttribute const& attr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        RawDataConstPtr const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
-        return attr.check_nan(offset_ptr);
-    }
-    // set value of one attribute
-    void set_attr(RawDataPtr ptr, RawDataConstPtr value_ptr, DataAttribute const& attr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
-        attr.set_value(offset_ptr, value_ptr);
-    }
-    // get value of one attribute
-    void get_attr(RawDataConstPtr ptr, RawDataPtr value_ptr, DataAttribute const& attr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        RawDataConstPtr const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
-        attr.set_value(value_ptr, offset_ptr);
-    }
-    // compare value of one attribute
-    bool compare_attr(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, DataAttribute const& attr,
-                      Idx position = 0) const {
-        ptr_x = get_position(ptr_x, position);
-        ptr_y = get_position(ptr_y, position);
-        RawDataConstPtr const attr_ptr_x = reinterpret_cast<char const*>(ptr_x) + attr.offset;
-        RawDataConstPtr const attr_ptr_y = reinterpret_cast<char const*>(ptr_y) + attr.offset;
-        return attr.compare_value(attr_ptr_x, attr_ptr_y, atol, rtol);
     }
 };
 
