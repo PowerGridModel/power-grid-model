@@ -29,7 +29,7 @@ def test_single_validation(
     case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float
 ):
     # Initialization
-    case_data = import_case_data(case_path, sym=sym)
+    case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
     model = PowerGridModel(case_data["input"], system_frequency=50.0)
 
     # Normal calculation
@@ -70,7 +70,7 @@ def test_batch_validation(
     case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float
 ):
     # Initialization
-    case_data = import_case_data(case_path, sym=sym)
+    case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
     model = PowerGridModel(case_data["input"], system_frequency=50.0)
     update_batch = case_data["update_batch"]
     update_list = convert_batch_dataset_to_batch_list(update_batch)

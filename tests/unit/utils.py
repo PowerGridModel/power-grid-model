@@ -138,8 +138,8 @@ def dict_params(params: Dict[Any, str], **kwargs):
         yield pytest.param(value, **kwargs, id=param_id)
 
 
-def import_case_data(data_path: Path, sym: bool):
-    output_prefix = "sym_output" if sym else "asym_output"
+def import_case_data(data_path: Path, calculation_type: str, sym: bool):
+    output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
     return_dict = {
         "input": import_json_data(data_path / "input.json", "input", ignore_extra=True),
     }
