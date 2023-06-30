@@ -7,7 +7,6 @@
 #define POWER_GRID_MODEL_META_DATA_HPP
 
 #include <bit>
-#include <memory>
 #include <string>
 
 #include "../enum.hpp"

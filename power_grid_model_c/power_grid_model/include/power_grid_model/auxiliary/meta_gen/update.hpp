@@ -24,150 +24,150 @@ namespace meta_data {
 
 template<>
 struct get_attributes_list<BaseUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<BaseUpdate, &BaseUpdate::id> const>("id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<BaseUpdate, &BaseUpdate::id>{}, "id"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<BranchUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<BranchUpdate, &BranchUpdate::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<BranchUpdate, &BranchUpdate::from_status> const>("from_status"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<BranchUpdate, &BranchUpdate::to_status> const>("to_status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchUpdate, &BranchUpdate::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchUpdate, &BranchUpdate::from_status>{}, "from_status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchUpdate, &BranchUpdate::to_status>{}, "to_status"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<Branch3Update> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<Branch3Update, &Branch3Update::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<Branch3Update, &Branch3Update::status_1> const>("status_1"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<Branch3Update, &Branch3Update::status_2> const>("status_2"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<Branch3Update, &Branch3Update::status_3> const>("status_3"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::status_1>{}, "status_1"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::status_2>{}, "status_2"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::status_3>{}, "status_3"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<ApplianceUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::status> const>("status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::status>{}, "status"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<TransformerUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::from_status> const>("from_status"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::to_status> const>("to_status"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::tap_pos> const>("tap_pos"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::from_status>{}, "from_status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::to_status>{}, "to_status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::tap_pos>{}, "tap_pos"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<ThreeWindingTransformerUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1> const>("status_1"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2> const>("status_2"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3> const>("status_3"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos> const>("tap_pos"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1>{}, "status_1"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2>{}, "status_2"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3>{}, "status_3"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos>{}, "tap_pos"));
         return attributes;
     }
 };
 
 template <bool sym>
 struct get_attributes_list<LoadGenUpdate<sym>> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status> const>("status"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified> const>("p_specified"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified> const>("q_specified"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status>{}, "status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified>{}, "p_specified"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified>{}, "q_specified"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<SourceUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<SourceUpdate, &SourceUpdate::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<SourceUpdate, &SourceUpdate::status> const>("status"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref> const>("u_ref"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref_angle> const>("u_ref_angle"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::status>{}, "status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref>{}, "u_ref"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref_angle>{}, "u_ref_angle"));
         return attributes;
     }
 };
 
 template <bool sym>
 struct get_attributes_list<VoltageSensorUpdate<sym>> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma> const>("u_sigma"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured> const>("u_measured"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured> const>("u_angle_measured"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma>{}, "u_sigma"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured>{}, "u_measured"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured>{}, "u_angle_measured"));
         return attributes;
     }
 };
 
 template <bool sym>
 struct get_attributes_list<PowerSensorUpdate<sym>> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma> const>("power_sigma"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured> const>("p_measured"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured> const>("q_measured"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>{}, "power_sigma"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>{}, "p_measured"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>{}, "q_measured"));
         return attributes;
     }
 };
 
 template<>
 struct get_attributes_list<FaultUpdate> {
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         
-        attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::id> const>("id"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::status> const>("status"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_type> const>("fault_type"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase> const>("fault_phase"));
-        attributes.push_back(std::make_unique<MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object> const>("fault_object"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::id>{}, "id"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::status>{}, "status"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_type>{}, "fault_type"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase>{}, "fault_phase"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object>{}, "fault_object"));
         return attributes;
     }
 };

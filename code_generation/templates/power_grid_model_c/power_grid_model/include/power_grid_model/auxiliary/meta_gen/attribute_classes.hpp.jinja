@@ -31,11 +31,11 @@ struct get_attributes_list<{{ attribute_class.name }}<sym>> {
 template<>
 struct get_attributes_list<{{ attribute_class.name }}> {
 {%- endif %}
-    std::vector<std::unique_ptr<MetaAttribute const>> operator() () const {
-        std::vector<std::unique_ptr<MetaAttribute const>> attributes{};
+    std::vector<MetaAttribute> operator() () const {
+        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
         {% for attribute in attribute_class.full_attributes %}
-        attributes.push_back(std::make_unique<MetaAttributeImpl<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}> const>("{{ attribute.names }}"));
+        attributes.push_back(MetaAttribute(MetaAttributeImpl<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}>{}, "{{ attribute.names }}"));
         {%- endfor %}
         return attributes;
     }
