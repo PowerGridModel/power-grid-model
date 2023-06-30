@@ -19,6 +19,7 @@ namespace power_grid_model {
 
 namespace meta_data {
 
+// pointer to member
 template <class T>
 struct trait_pointer_to_member;
 template <class StructType, class ValueType>
@@ -30,6 +31,31 @@ inline size_t get_offset() {
     StructType const obj{};
     return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
 }
+
+// ctype string
+template <class T, bool is_enum = std::is_enum_v<T>>
+struct ctype_t;
+template <>
+struct ctype_t<double, false> {
+    static constexpr const char* value = "double";
+};
+template <>
+struct ctype_t<int32_t, false> {
+    static constexpr const char* value = "int32_t";
+};
+template <>
+struct ctype_t<int8_t, false> {
+    static constexpr const char* value = "int8_t";
+};
+
+template <>
+struct ctype_t<RealValue<false>, false> {
+    static constexpr const char* value = "double[3]";
+};
+template <class T>
+struct ctype_t<T, true> : ctype_t<std::underlying_type_t<T>> {};
+template <class T>
+constexpr const char* ctype_v = ctype_t<T>::value;
 
 using RawDataPtr = void*;             // raw mutable data ptr
 using RawDataConstPtr = void const*;  // raw read-only data ptr
@@ -53,13 +79,16 @@ struct MetaAttribute {
 template <class StructType, auto member_ptr>
 struct MetaAttributeImpl : MetaAttribute {
     using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    MetaAttributeImpl(std::string attr_name) {
-        name = attr_name;
-        // todo ctype
-        offset = get_offset<StructType, member_ptr>();
-        size = sizeof(ValueType);
-        component_size = sizeof(StructType);
-    }
+    MetaAttributeImpl(std::string attr_name) :
+        MetaAttribute{
+            .name = attr_name,
+            .ctype = ctype,
+            .offset = get_offset<StructType, member_ptr>(),
+            .size = sizeof(ValueType),
+            .component_size = sizeof(StructType)
+        }
+    
+    {}
 
     // virtual functions
     bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) final {
@@ -85,142 +114,6 @@ struct MetaAttributeImpl : MetaAttribute {
         }
     }
 };
-
-using SetNaNFunc = std::add_pointer_t<void(RawDataPtr)>;
-using CheckNaNFunc = std::add_pointer_t<bool(RawDataConstPtr)>;
-using SetValueFunc = std::add_pointer_t<void(RawDataPtr, RawDataConstPtr)>;
-using CompareValueFunc =
-    std::add_pointer_t<bool(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol)>;
-
-template <class T>
-void set_value_template(RawDataPtr dest, RawDataConstPtr src) {
-    *reinterpret_cast<T*>(dest) = *reinterpret_cast<T const*>(src);
-}
-
-constexpr std::array<size_t, 1> three_phase_dimension{3};
-
-template <class T, bool is_enum = std::is_enum_v<T>>
-struct data_type;
-
-template <>
-struct data_type<double, false> {
-    static constexpr const char* numpy_type = "f8";
-    static constexpr const char* ctype = "double";
-    static constexpr size_t ndim = 0;
-    static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
-        *reinterpret_cast<double*>(ptr) = nan;
-    };
-    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
-        return is_nan(*reinterpret_cast<double const*>(ptr));
-    };
-    static constexpr SetValueFunc set_value = set_value_template<double>;
-    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol,
-                                                         double rtol) -> bool {
-        double const x = *reinterpret_cast<double const*>(ptr_x);
-        double const y = *reinterpret_cast<double const*>(ptr_y);
-        return std::abs(y - x) < (std::abs(x) * rtol + atol);
-    };
-};
-
-template <>
-struct data_type<int32_t, false> {
-    static constexpr const char* numpy_type = "i4";
-    static constexpr const char* ctype = "int32_t";
-    static constexpr size_t ndim = 0;
-    static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
-        *reinterpret_cast<int32_t*>(ptr) = na_IntID;
-    };
-    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
-        return *reinterpret_cast<int32_t const*>(ptr) == na_IntID;
-    };
-    static constexpr SetValueFunc set_value = set_value_template<int32_t>;
-    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double,
-                                                         double) -> bool {
-        return *reinterpret_cast<int32_t const*>(ptr_x) == *reinterpret_cast<int32_t const*>(ptr_y);
-    };
-};
-
-template <>
-struct data_type<int8_t, false> {
-    static constexpr const char* numpy_type = "i1";
-    static constexpr const char* ctype = "int8_t";
-    static constexpr size_t ndim = 0;
-    static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
-        *reinterpret_cast<int8_t*>(ptr) = na_IntS;
-    };
-    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
-        return *reinterpret_cast<int8_t const*>(ptr) == na_IntS;
-    };
-    static constexpr SetValueFunc set_value = set_value_template<int8_t>;
-    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double,
-                                                         double) -> bool {
-        return *reinterpret_cast<int8_t const*>(ptr_x) == *reinterpret_cast<int8_t const*>(ptr_y);
-    };
-};
-
-template <>
-struct data_type<RealValue<false>, false> {
-    static constexpr const char* numpy_type = "f8";
-    static constexpr const char* ctype = "double[3]";
-    static constexpr size_t ndim = 1;
-    static constexpr size_t const* dims = three_phase_dimension.data();
-    static constexpr SetNaNFunc set_nan = [](RawDataPtr ptr) {
-        *reinterpret_cast<RealValue<false>*>(ptr) = RealValue<false>{nan, nan, nan};
-    };
-    static constexpr CheckNaNFunc check_nan = [](RawDataConstPtr ptr) -> bool {
-        return is_nan(*reinterpret_cast<RealValue<false> const*>(ptr));
-    };
-    static constexpr SetValueFunc set_value = set_value_template<RealValue<false>>;
-    static constexpr CompareValueFunc compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol,
-                                                         double rtol) -> bool {
-        RealValue<false> const x = *reinterpret_cast<RealValue<false> const*>(ptr_x);
-        RealValue<false> const y = *reinterpret_cast<RealValue<false> const*>(ptr_y);
-        return (abs(y - x) < (abs(x) * rtol + atol)).all();
-    };
-};
-
-template <class T>
-struct data_type<T, true> : data_type<std::underlying_type_t<T>> {};
-
-struct DataAttribute {
-    std::string name;
-    std::string numpy_type;
-    std::string ctype;
-    std::vector<size_t> dims;
-    size_t offset;
-    size_t size;
-    SetNaNFunc set_nan;
-    CheckNaNFunc check_nan;
-    SetValueFunc set_value;
-    CompareValueFunc compare_value;
-};
-
-constexpr bool is_little_endian() {
-    return std::endian::native == std::endian::little;
-}
-
-template <class BaseType, auto member_ptr>
-inline DataAttribute get_data_attribute(std::string_view const& name) {
-    using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    using single_data_type = data_type<value_type>;
-    DataAttribute attr{};
-    attr.name = name;
-    attr.numpy_type = single_data_type::numpy_type;
-    attr.ctype = single_data_type::ctype;
-    attr.offset = get_offset<BaseType, member_ptr>();
-    attr.size = sizeof(value_type);
-    if constexpr (single_data_type::ndim > 0) {
-        attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
-    }
-    attr.set_nan = single_data_type::set_nan;
-    attr.check_nan = single_data_type::check_nan;
-    attr.set_value = single_data_type::set_value;
-    attr.compare_value = single_data_type::compare_value;
-    return attr;
-}
 
 // struct for meta data per type (input/update/output)
 struct MetaData {
@@ -296,6 +189,10 @@ struct MetaData {
 
 using PowerGridMetaData = std::map<std::string, MetaData>;
 using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
+
+constexpr bool is_little_endian() {
+    return std::endian::native == std::endian::little;
+}
 
 // empty template class for meta data generation functor
 template <class T>
