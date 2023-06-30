@@ -333,7 +333,6 @@ class PowerGridModel:
                     - For single calculation: 1D numpy structured array for the results of this component type.
 
                     - For batch calculation: 2D numpy structured array for the results of this component type.
-
                         - Dimension 0: Each batch.
                         - Dimension 1: The result of each element for this component type.                              
 
