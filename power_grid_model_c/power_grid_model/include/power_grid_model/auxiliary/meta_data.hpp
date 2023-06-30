@@ -32,6 +32,12 @@ inline size_t get_offset() {
     return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
 }
 
+// empty template functor classes to generate attributes list
+template <class T>
+struct get_attributes_list;
+template <class T>
+struct get_component_nan;
+
 // ctype string
 template <class T, bool is_enum = std::is_enum_v<T>>
 struct ctype_t;
@@ -69,37 +75,37 @@ struct MetaAttribute {
     size_t component_size;
 
     // virtual functions
-    virtual bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) = 0;
-    virtual void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) = 0;
-    virtual void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) = 0;
-    virtual bool compare_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, double atol, double rtol, Idx pos) = 0;
+    virtual bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) const = 0;
+    virtual void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) const = 0;
+    virtual void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) const = 0;
+    virtual bool compare_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, double atol, double rtol,
+                               Idx pos) const = 0;
     virtual ~MetaAttribute() = default;
 };
 
 template <class StructType, auto member_ptr>
 struct MetaAttributeImpl : MetaAttribute {
     using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    MetaAttributeImpl(std::string attr_name) :
-        MetaAttribute{
-            .name = attr_name,
-            .ctype = ctype,
-            .offset = get_offset<StructType, member_ptr>(),
-            .size = sizeof(ValueType),
-            .component_size = sizeof(StructType)
-        }
-    {}
+    MetaAttributeImpl(std::string const& attr_name)
+        : MetaAttribute{.name = attr_name,
+                        .ctype = ctype,
+                        .offset = get_offset<StructType, member_ptr>(),
+                        .size = sizeof(ValueType),
+                        .component_size = sizeof(StructType)} {
+    }
 
     // virtual functions
-    bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) final {
+    bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) const final {
         return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
     }
-    void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) final {
+    void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) const final {
         (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr = *reinterpret_cast<ValueType const*>(value_ptr);
     }
-    void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) final {
+    void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) const final {
         *reinterpret_cast<ValueType*>(value_ptr) = (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
     }
-    bool compare_value(RawDataConstPtr buffer_ptr, RawDataConstPtr value_ptr, double atol, double rtol, Idx pos) final {
+    bool compare_value(RawDataConstPtr buffer_ptr, RawDataConstPtr value_ptr, double atol, double rtol,
+                       Idx pos) const final {
         ValueType const& x = (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr;
         ValueType const& y = *reinterpret_cast<ValueType const*>(value_ptr);
         if constexpr (std::is_same_v<ValueType, double>) {
@@ -114,41 +120,46 @@ struct MetaAttributeImpl : MetaAttribute {
     }
 };
 
-// struct for meta data per type (input/update/output)
-struct MetaData {
+// meta component
+struct MetaComponent {
     std::string name;
     size_t size;
     size_t alignment;
-    std::vector<DataAttribute> attributes;
+    std::vector<std::unique_ptr<MetaAttribute const>> unique_attributes;
+    std::vector<MetaAttribute const*> attributes;
 
-    DataAttribute const& get_attr(std::string const& attr_name) const {
-        Idx const found = find_attr(attr_name);
-        if (found >= 0) {
-            return attributes[found];
-        }
-        throw std::out_of_range{std::string("Unknown attribute name: ") + attr_name + "!\n"};
+    virtual void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) const = 0;
+    virtual RawDataPtr create_buffer(Idx size) const = 0;
+    virtual void destroy_buffer(RawDataConstPtr buffer_ptr) const = 0;
+
+    Idx n_attributes() const {
+        return static_cast<Idx>(unique_attributes.size());
+    }
+};
+
+template <class StructType>
+struct MetaComponentImpl : MetaComponent {
+    MetaComponentImpl(std::string const& comp_name)
+        : MetaComponent{.name = comp_name,
+                        .size = sizeof(StructType),
+                        .alignment = alignof(StructType),
+                        .unique_attributes = get_attributes_list<T>{}()} {
+        attributes.resize(unique_attributes.size());
+        std::transform(unique_attributes.cbegin(), unique_attributes.cend(), attributes.begin(), [](auto const& x) {
+            return x.get();
+        });
     }
 
-    Idx find_attr(std::string const& attr_name) const {
-        for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
-            if (attributes[i].name == attr_name) {
-                return i;
-            }
-        }
-        return -1;
+    RawDataPtr create_buffer(Idx size) const final {
+        return new StructType[size];
     }
-
-    bool has_attr(std::string const& attr_name) const {
-        return find_attr(attr_name) >= 0;
+    void destroy_buffer(RawDataConstPtr buffer_ptr) const final {
+        delete[] buffer_ptr;
     }
-
-    // set nan for all attributes
-    void set_nan(RawDataPtr ptr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        for (DataAttribute const& attr : attributes) {
-            void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
-            attr.set_nan(offset_ptr);
-        }
+    void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) const final {
+        static StructType const nan_value = get_component_nan<StructType>{}();
+        StructType* = reinterpret_cast<StructType*> buffer_ptr;
+        std::fill(ptr + pos, ptr + pos + size, nan_value);
     }
 };
 
@@ -158,10 +169,6 @@ using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
 constexpr bool is_little_endian() {
     return std::endian::native == std::endian::little;
 }
-
-// empty template class for meta data generation functor
-template <class T>
-struct get_meta;
 
 }  // namespace meta_data
 
