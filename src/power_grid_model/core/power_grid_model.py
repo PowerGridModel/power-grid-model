@@ -286,9 +286,15 @@ class PowerGridModel:
 
         Args:
             symmetric (bool): Whether to perform a three-phase symmetric calculation.
-
+         
                 - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
                 - False: Three-phase asymmetric calculation.
+
+            symmetric (bool): Whether to perform a three-phase symmetric calculation.
+                ...
+                - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                - False: Three-phase asymmetric calculation.
+                ...             
 
             error_tolerance: Error tolerance for voltage in p.u., applicable only when iterative=True.
 
@@ -334,10 +340,36 @@ class PowerGridModel:
                         - For batch calculation: 2D numpy structured array for the results of this component type.              
                             - Dimension 0: Each batch.
                             - Dimension 1: The result of each element for this component type.
-    
+
+         Returns: 
+            Dictionary of results of all components.
+            
+                Key: Component type name to be updated in batch.      
+                    - For single calculation: 1D numpy structured array for the results of this component type.
+                    - For batch calculation: 2D numpy structured array for the results of this component type.              
+                        - Dimension 0: Each batch.
+                        - Dimension 1: The result of each element for this component type.                                 
+
+        Returns: 
+            Dictionary of results of all components.
+                    Key: Component type name to be updated in batch.      
+                        - For single calculation: 1D numpy structured array for the results of this component type.
+                        - For batch calculation: 2D numpy structured array for the results of this component type.              
+                            - Dimension 0: Each batch.
+                            - Dimension 1: The result of each element for this component type.
+
+        Returns: 
+            Dictionary of results of all components.
+                Key: Component type name to be updated in batch.      
+                    - For single calculation: 1D numpy structured array for the results of this component type.
+                    - For batch calculation: 2D numpy structured array for the results of this component type.              
+                        - Dimension 0: Each batch.
+                        - Dimension 1: The result of each element for this component type.
+                                                
+
         Raises: 
             Error: In case an error in the core occurs, an exception will be thrown.
-        
+                   
         """		
         return self._calculate(
             CalculationType.power_flow,
