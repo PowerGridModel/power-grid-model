@@ -13,7 +13,11 @@
 #include "../power_grid_model.hpp"
 #include "input.hpp"
 #include "meta_data.hpp"
+#include "meta_gen/input.hpp"
+#include "meta_gen/output.hpp"
+#include "meta_gen/update.hpp"
 #include "output.hpp"
+#include "update.hpp"
 
 // generate of meta data
 namespace power_grid_model {
