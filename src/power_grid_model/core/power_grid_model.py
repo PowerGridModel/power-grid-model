@@ -300,11 +300,11 @@ class PowerGridModel:
                 - Linear: Use linear method.
            
             update_data:
-              None: Calculate power flow once with the current model attributes.
-              Or a dictionary for batch calculation with batch update. 
+                None: Calculate power flow once with the current model attributes.
+                Or a dictionary for batch calculation with batch update. 
 
                     key: Component type name to be updated in batch.
-                    
+
                         - For homogeneous update batch (a 2D numpy structured array):
 
                             - Dimension 0: Each batch.
