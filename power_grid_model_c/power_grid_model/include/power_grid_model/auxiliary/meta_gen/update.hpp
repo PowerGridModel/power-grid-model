@@ -28,6 +28,8 @@ struct get_meta<BaseUpdate> {
         meta.name = "BaseUpdate";      
         meta.size = sizeof(BaseUpdate);  
         meta.alignment = alignof(BaseUpdate);
+
+        // all attributes including base class
         
         meta.attributes.push_back(get_data_attribute<BaseUpdate, &BaseUpdate::id>("id"));
         return meta;
@@ -41,7 +43,10 @@ struct get_meta<BranchUpdate> {
         meta.name = "BranchUpdate";      
         meta.size = sizeof(BranchUpdate);  
         meta.alignment = alignof(BranchUpdate);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<BranchUpdate, &BranchUpdate::id>("id"));
         meta.attributes.push_back(get_data_attribute<BranchUpdate, &BranchUpdate::from_status>("from_status"));
         meta.attributes.push_back(get_data_attribute<BranchUpdate, &BranchUpdate::to_status>("to_status"));
         return meta;
@@ -55,7 +60,10 @@ struct get_meta<Branch3Update> {
         meta.name = "Branch3Update";      
         meta.size = sizeof(Branch3Update);  
         meta.alignment = alignof(Branch3Update);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::id>("id"));
         meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::status_1>("status_1"));
         meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::status_2>("status_2"));
         meta.attributes.push_back(get_data_attribute<Branch3Update, &Branch3Update::status_3>("status_3"));
@@ -70,7 +78,10 @@ struct get_meta<ApplianceUpdate> {
         meta.name = "ApplianceUpdate";      
         meta.size = sizeof(ApplianceUpdate);  
         meta.alignment = alignof(ApplianceUpdate);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<ApplianceUpdate, &ApplianceUpdate::id>("id"));
         meta.attributes.push_back(get_data_attribute<ApplianceUpdate, &ApplianceUpdate::status>("status"));
         return meta;
     }
@@ -83,7 +94,12 @@ struct get_meta<TransformerUpdate> {
         meta.name = "TransformerUpdate";      
         meta.size = sizeof(TransformerUpdate);  
         meta.alignment = alignof(TransformerUpdate);
-        meta.attributes = get_meta<BranchUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<TransformerUpdate, &TransformerUpdate::id>("id"));
+        meta.attributes.push_back(get_data_attribute<TransformerUpdate, &TransformerUpdate::from_status>("from_status"));
+        meta.attributes.push_back(get_data_attribute<TransformerUpdate, &TransformerUpdate::to_status>("to_status"));
         meta.attributes.push_back(get_data_attribute<TransformerUpdate, &TransformerUpdate::tap_pos>("tap_pos"));
         return meta;
     }
@@ -96,7 +112,13 @@ struct get_meta<ThreeWindingTransformerUpdate> {
         meta.name = "ThreeWindingTransformerUpdate";      
         meta.size = sizeof(ThreeWindingTransformerUpdate);  
         meta.alignment = alignof(ThreeWindingTransformerUpdate);
-        meta.attributes = get_meta<Branch3Update>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id>("id"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1>("status_1"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2>("status_2"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3>("status_3"));
         meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos>("tap_pos"));
         return meta;
     }
@@ -109,7 +131,11 @@ struct get_meta<LoadGenUpdate<sym>> {
         meta.name = "LoadGenUpdate";      
         meta.size = sizeof(LoadGenUpdate<sym>);  
         meta.alignment = alignof(LoadGenUpdate<sym>);
-        meta.attributes = get_meta<ApplianceUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id>("id"));
+        meta.attributes.push_back(get_data_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status>("status"));
         meta.attributes.push_back(get_data_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified>("p_specified"));
         meta.attributes.push_back(get_data_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified>("q_specified"));
         return meta;
@@ -123,7 +149,11 @@ struct get_meta<SourceUpdate> {
         meta.name = "SourceUpdate";      
         meta.size = sizeof(SourceUpdate);  
         meta.alignment = alignof(SourceUpdate);
-        meta.attributes = get_meta<ApplianceUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<SourceUpdate, &SourceUpdate::id>("id"));
+        meta.attributes.push_back(get_data_attribute<SourceUpdate, &SourceUpdate::status>("status"));
         meta.attributes.push_back(get_data_attribute<SourceUpdate, &SourceUpdate::u_ref>("u_ref"));
         meta.attributes.push_back(get_data_attribute<SourceUpdate, &SourceUpdate::u_ref_angle>("u_ref_angle"));
         return meta;
@@ -137,7 +167,10 @@ struct get_meta<VoltageSensorUpdate<sym>> {
         meta.name = "VoltageSensorUpdate";      
         meta.size = sizeof(VoltageSensorUpdate<sym>);  
         meta.alignment = alignof(VoltageSensorUpdate<sym>);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id>("id"));
         meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma>("u_sigma"));
         meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured>("u_measured"));
         meta.attributes.push_back(get_data_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured>("u_angle_measured"));
@@ -152,7 +185,10 @@ struct get_meta<PowerSensorUpdate<sym>> {
         meta.name = "PowerSensorUpdate";      
         meta.size = sizeof(PowerSensorUpdate<sym>);  
         meta.alignment = alignof(PowerSensorUpdate<sym>);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id>("id"));
         meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>("power_sigma"));
         meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>("p_measured"));
         meta.attributes.push_back(get_data_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>("q_measured"));
@@ -167,7 +203,10 @@ struct get_meta<FaultUpdate> {
         meta.name = "FaultUpdate";      
         meta.size = sizeof(FaultUpdate);  
         meta.alignment = alignof(FaultUpdate);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::id>("id"));
         meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::status>("status"));
         meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::fault_type>("fault_type"));
         meta.attributes.push_back(get_data_attribute<FaultUpdate, &FaultUpdate::fault_phase>("fault_phase"));

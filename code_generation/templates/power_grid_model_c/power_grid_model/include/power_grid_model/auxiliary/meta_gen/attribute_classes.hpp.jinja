@@ -35,10 +35,9 @@ struct get_meta<{{ attribute_class.name }}> {
         meta.name = "{{ attribute_class.name }}";      
         meta.size = sizeof({{ attribute_class.full_name }});  
         meta.alignment = alignof({{ attribute_class.full_name }});
-        {% if attribute_class.base -%}
-        meta.attributes = get_meta<{{ attribute_class.base }}>{}().attributes;
-        {%- endif -%}
-        {% for attribute in attribute_class.attributes %}
+
+        // all attributes including base class
+        {% for attribute in attribute_class.full_attributes %}
         meta.attributes.push_back(get_data_attribute<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}>("{{ attribute.names }}"));
         {%- endfor %}
         return meta;

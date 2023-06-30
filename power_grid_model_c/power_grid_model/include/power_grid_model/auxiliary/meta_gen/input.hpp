@@ -28,6 +28,8 @@ struct get_meta<BaseInput> {
         meta.name = "BaseInput";      
         meta.size = sizeof(BaseInput);  
         meta.alignment = alignof(BaseInput);
+
+        // all attributes including base class
         
         meta.attributes.push_back(get_data_attribute<BaseInput, &BaseInput::id>("id"));
         return meta;
@@ -41,7 +43,10 @@ struct get_meta<NodeInput> {
         meta.name = "NodeInput";      
         meta.size = sizeof(NodeInput);  
         meta.alignment = alignof(NodeInput);
-        meta.attributes = get_meta<BaseInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<NodeInput, &NodeInput::id>("id"));
         meta.attributes.push_back(get_data_attribute<NodeInput, &NodeInput::u_rated>("u_rated"));
         return meta;
     }
@@ -54,7 +59,10 @@ struct get_meta<BranchInput> {
         meta.name = "BranchInput";      
         meta.size = sizeof(BranchInput);  
         meta.alignment = alignof(BranchInput);
-        meta.attributes = get_meta<BaseInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<BranchInput, &BranchInput::id>("id"));
         meta.attributes.push_back(get_data_attribute<BranchInput, &BranchInput::from_node>("from_node"));
         meta.attributes.push_back(get_data_attribute<BranchInput, &BranchInput::to_node>("to_node"));
         meta.attributes.push_back(get_data_attribute<BranchInput, &BranchInput::from_status>("from_status"));
@@ -70,7 +78,10 @@ struct get_meta<Branch3Input> {
         meta.name = "Branch3Input";      
         meta.size = sizeof(Branch3Input);  
         meta.alignment = alignof(Branch3Input);
-        meta.attributes = get_meta<BaseInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<Branch3Input, &Branch3Input::id>("id"));
         meta.attributes.push_back(get_data_attribute<Branch3Input, &Branch3Input::node_1>("node_1"));
         meta.attributes.push_back(get_data_attribute<Branch3Input, &Branch3Input::node_2>("node_2"));
         meta.attributes.push_back(get_data_attribute<Branch3Input, &Branch3Input::node_3>("node_3"));
@@ -88,7 +99,10 @@ struct get_meta<SensorInput> {
         meta.name = "SensorInput";      
         meta.size = sizeof(SensorInput);  
         meta.alignment = alignof(SensorInput);
-        meta.attributes = get_meta<BaseInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<SensorInput, &SensorInput::id>("id"));
         meta.attributes.push_back(get_data_attribute<SensorInput, &SensorInput::measured_object>("measured_object"));
         return meta;
     }
@@ -101,7 +115,10 @@ struct get_meta<ApplianceInput> {
         meta.name = "ApplianceInput";      
         meta.size = sizeof(ApplianceInput);  
         meta.alignment = alignof(ApplianceInput);
-        meta.attributes = get_meta<BaseInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<ApplianceInput, &ApplianceInput::id>("id"));
         meta.attributes.push_back(get_data_attribute<ApplianceInput, &ApplianceInput::node>("node"));
         meta.attributes.push_back(get_data_attribute<ApplianceInput, &ApplianceInput::status>("status"));
         return meta;
@@ -115,7 +132,14 @@ struct get_meta<LineInput> {
         meta.name = "LineInput";      
         meta.size = sizeof(LineInput);  
         meta.alignment = alignof(LineInput);
-        meta.attributes = get_meta<BranchInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::from_node>("from_node"));
+        meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::to_node>("to_node"));
+        meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::from_status>("from_status"));
+        meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::to_status>("to_status"));
         meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::r1>("r1"));
         meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::x1>("x1"));
         meta.attributes.push_back(get_data_attribute<LineInput, &LineInput::c1>("c1"));
@@ -136,7 +160,14 @@ struct get_meta<LinkInput> {
         meta.name = "LinkInput";      
         meta.size = sizeof(LinkInput);  
         meta.alignment = alignof(LinkInput);
-        meta.attributes = get_meta<BranchInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<LinkInput, &LinkInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<LinkInput, &LinkInput::from_node>("from_node"));
+        meta.attributes.push_back(get_data_attribute<LinkInput, &LinkInput::to_node>("to_node"));
+        meta.attributes.push_back(get_data_attribute<LinkInput, &LinkInput::from_status>("from_status"));
+        meta.attributes.push_back(get_data_attribute<LinkInput, &LinkInput::to_status>("to_status"));
         return meta;
     }
 };
@@ -148,7 +179,14 @@ struct get_meta<TransformerInput> {
         meta.name = "TransformerInput";      
         meta.size = sizeof(TransformerInput);  
         meta.alignment = alignof(TransformerInput);
-        meta.attributes = get_meta<BranchInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::from_node>("from_node"));
+        meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::to_node>("to_node"));
+        meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::from_status>("from_status"));
+        meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::to_status>("to_status"));
         meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::u1>("u1"));
         meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::u2>("u2"));
         meta.attributes.push_back(get_data_attribute<TransformerInput, &TransformerInput::sn>("sn"));
@@ -184,7 +222,16 @@ struct get_meta<ThreeWindingTransformerInput> {
         meta.name = "ThreeWindingTransformerInput";      
         meta.size = sizeof(ThreeWindingTransformerInput);  
         meta.alignment = alignof(ThreeWindingTransformerInput);
-        meta.attributes = get_meta<Branch3Input>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::node_1>("node_1"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::node_2>("node_2"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::node_3>("node_3"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::status_1>("status_1"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::status_2>("status_2"));
+        meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::status_3>("status_3"));
         meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::u1>("u1"));
         meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::u2>("u2"));
         meta.attributes.push_back(get_data_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::u3>("u3"));
@@ -239,7 +286,12 @@ struct get_meta<GenericLoadGenInput> {
         meta.name = "GenericLoadGenInput";      
         meta.size = sizeof(GenericLoadGenInput);  
         meta.alignment = alignof(GenericLoadGenInput);
-        meta.attributes = get_meta<ApplianceInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<GenericLoadGenInput, &GenericLoadGenInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<GenericLoadGenInput, &GenericLoadGenInput::node>("node"));
+        meta.attributes.push_back(get_data_attribute<GenericLoadGenInput, &GenericLoadGenInput::status>("status"));
         meta.attributes.push_back(get_data_attribute<GenericLoadGenInput, &GenericLoadGenInput::type>("type"));
         return meta;
     }
@@ -252,7 +304,13 @@ struct get_meta<LoadGenInput<sym>> {
         meta.name = "LoadGenInput";      
         meta.size = sizeof(LoadGenInput<sym>);  
         meta.alignment = alignof(LoadGenInput<sym>);
-        meta.attributes = get_meta<GenericLoadGenInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::id>("id"));
+        meta.attributes.push_back(get_data_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::node>("node"));
+        meta.attributes.push_back(get_data_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::status>("status"));
+        meta.attributes.push_back(get_data_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::type>("type"));
         meta.attributes.push_back(get_data_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::p_specified>("p_specified"));
         meta.attributes.push_back(get_data_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::q_specified>("q_specified"));
         return meta;
@@ -266,7 +324,12 @@ struct get_meta<ShuntInput> {
         meta.name = "ShuntInput";      
         meta.size = sizeof(ShuntInput);  
         meta.alignment = alignof(ShuntInput);
-        meta.attributes = get_meta<ApplianceInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<ShuntInput, &ShuntInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<ShuntInput, &ShuntInput::node>("node"));
+        meta.attributes.push_back(get_data_attribute<ShuntInput, &ShuntInput::status>("status"));
         meta.attributes.push_back(get_data_attribute<ShuntInput, &ShuntInput::g1>("g1"));
         meta.attributes.push_back(get_data_attribute<ShuntInput, &ShuntInput::b1>("b1"));
         meta.attributes.push_back(get_data_attribute<ShuntInput, &ShuntInput::g0>("g0"));
@@ -282,7 +345,12 @@ struct get_meta<SourceInput> {
         meta.name = "SourceInput";      
         meta.size = sizeof(SourceInput);  
         meta.alignment = alignof(SourceInput);
-        meta.attributes = get_meta<ApplianceInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<SourceInput, &SourceInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<SourceInput, &SourceInput::node>("node"));
+        meta.attributes.push_back(get_data_attribute<SourceInput, &SourceInput::status>("status"));
         meta.attributes.push_back(get_data_attribute<SourceInput, &SourceInput::u_ref>("u_ref"));
         meta.attributes.push_back(get_data_attribute<SourceInput, &SourceInput::u_ref_angle>("u_ref_angle"));
         meta.attributes.push_back(get_data_attribute<SourceInput, &SourceInput::sk>("sk"));
@@ -299,7 +367,11 @@ struct get_meta<GenericVoltageSensorInput> {
         meta.name = "GenericVoltageSensorInput";      
         meta.size = sizeof(GenericVoltageSensorInput);  
         meta.alignment = alignof(GenericVoltageSensorInput);
-        meta.attributes = get_meta<SensorInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<GenericVoltageSensorInput, &GenericVoltageSensorInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<GenericVoltageSensorInput, &GenericVoltageSensorInput::measured_object>("measured_object"));
         meta.attributes.push_back(get_data_attribute<GenericVoltageSensorInput, &GenericVoltageSensorInput::u_sigma>("u_sigma"));
         return meta;
     }
@@ -312,7 +384,12 @@ struct get_meta<VoltageSensorInput<sym>> {
         meta.name = "VoltageSensorInput";      
         meta.size = sizeof(VoltageSensorInput<sym>);  
         meta.alignment = alignof(VoltageSensorInput<sym>);
-        meta.attributes = get_meta<GenericVoltageSensorInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::id>("id"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::measured_object>("measured_object"));
+        meta.attributes.push_back(get_data_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::u_sigma>("u_sigma"));
         meta.attributes.push_back(get_data_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::u_measured>("u_measured"));
         meta.attributes.push_back(get_data_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::u_angle_measured>("u_angle_measured"));
         return meta;
@@ -326,7 +403,11 @@ struct get_meta<GenericPowerSensorInput> {
         meta.name = "GenericPowerSensorInput";      
         meta.size = sizeof(GenericPowerSensorInput);  
         meta.alignment = alignof(GenericPowerSensorInput);
-        meta.attributes = get_meta<SensorInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::id>("id"));
+        meta.attributes.push_back(get_data_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::measured_object>("measured_object"));
         meta.attributes.push_back(get_data_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::measured_terminal_type>("measured_terminal_type"));
         meta.attributes.push_back(get_data_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::power_sigma>("power_sigma"));
         return meta;
@@ -340,7 +421,13 @@ struct get_meta<PowerSensorInput<sym>> {
         meta.name = "PowerSensorInput";      
         meta.size = sizeof(PowerSensorInput<sym>);  
         meta.alignment = alignof(PowerSensorInput<sym>);
-        meta.attributes = get_meta<GenericPowerSensorInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::id>("id"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::measured_object>("measured_object"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::measured_terminal_type>("measured_terminal_type"));
+        meta.attributes.push_back(get_data_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::power_sigma>("power_sigma"));
         meta.attributes.push_back(get_data_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::p_measured>("p_measured"));
         meta.attributes.push_back(get_data_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::q_measured>("q_measured"));
         return meta;
@@ -354,7 +441,10 @@ struct get_meta<FaultInput> {
         meta.name = "FaultInput";      
         meta.size = sizeof(FaultInput);  
         meta.alignment = alignof(FaultInput);
-        meta.attributes = get_meta<BaseInput>{}().attributes;
+
+        // all attributes including base class
+        
+        meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::id>("id"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::status>("status"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_type>("fault_type"));
         meta.attributes.push_back(get_data_attribute<FaultInput, &FaultInput::fault_phase>("fault_phase"));

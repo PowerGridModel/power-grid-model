@@ -43,8 +43,16 @@ def render_template(template_path: Path, data_path: Path, output_path: Path):
                     new_attribute.names = name
                     new_attribute_list.append(new_attribute)
         attribute_class.attributes = new_attribute_list
+        # get full attribute
+        if attribute_class.base is not None:
+            base_class = list(filter(lambda x: x.name == attribute_class.base, dataset_meta_data.classes))[0]
+            attribute_class.full_attributes = base_class.full_attributes + attribute_class.attributes
+        else:
+            attribute_class.full_attributes = attribute_class.attributes
 
-    output = template.render(classes=dataset_meta_data.classes, include_guard=dataset_meta_data.include_guard, name=dataset_meta_data.name)
+    output = template.render(
+        classes=dataset_meta_data.classes, include_guard=dataset_meta_data.include_guard, name=dataset_meta_data.name
+    )
 
     with output_path.open(mode="w", encoding="utf-8") as output_file:
         output_file.write(output)
