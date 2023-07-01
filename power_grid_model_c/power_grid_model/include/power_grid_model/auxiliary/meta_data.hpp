@@ -97,10 +97,9 @@ struct MetaAttributeImpl {
     static void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) {
         *reinterpret_cast<ValueType*>(value_ptr) = (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
     }
-    static bool compare_value(RawDataConstPtr buffer_ptr, RawDataConstPtr value_ptr, double atol, double rtol,
-                              Idx pos) {
-        ValueType const& x = (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
-        ValueType const& y = *reinterpret_cast<ValueType const*>(value_ptr);
+    static bool compare_value(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, Idx pos) {
+        ValueType const& x = (reinterpret_cast<StructType const*>(ptr_x) + pos)->*member_ptr;
+        ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
         if constexpr (std::is_same_v<ValueType, double>) {
             return std::abs(y - x) < (std::abs(x) * rtol + atol);
         }
@@ -184,12 +183,24 @@ struct MetaComponent {
     }
 
     MetaAttribute const& get_attribute(std::string const& attribute_name) const {
-        for (auto const& attribute : attributes) {
-            if (attribute.name == attribute_name) {
-                return attribute;
+        Idx const found = find_attribute(attribute_name);
+        if (found < 0) {
+            throw std::out_of_range{"Cannot find attribute with name: " + attribute_name + "!\n"};
+        }
+        return attributes[found];
+    }
+
+    Idx find_attribute(std::string const& attribute_name) const {
+        for (Idx i = 0; i != n_attributes(); ++i) {
+            if (attributes[i].name == attribute_name) {
+                return i;
             }
         }
-        throw std::out_of_range{"Cannot find attribute with name: " + attribute_name + "!\n"};
+        return -1;
+    }
+
+    Idx has_attribute(std::string const& attribute_name) const {
+        return find_attribute(attribute_name) >= 0;
     }
 };
 

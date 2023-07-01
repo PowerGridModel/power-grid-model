@@ -62,10 +62,10 @@ struct Buffer {
 
 void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& meta, Idx position) {
     for (auto const& it : j.items()) {
-        // TODO Allow and skip unknown attributes
-        // if (!meta.has_attr(it.key())) {
-        //     continue;
-        // }
+        //  Allow and skip unknown attributes
+        if (!meta.has_attribute(it.key())) {
+            continue;
+        }
         MetaAttribute const& attr = meta.get_attribute(it.key());
         if (attr.ctype == "int8_t") {
             int8_t const value = it.value().get<int8_t>();
