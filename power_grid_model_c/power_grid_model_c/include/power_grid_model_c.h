@@ -57,7 +57,7 @@ typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
 // definition of opaque structs if the header is used as a library header
-// if the header is used to compile the C-API dynamic library, the structs are defined in the CPP file
+// if the header is used to compile the C-API dynamic library, the structs are aliased in the CPP file
 #ifndef PGM_DLL_EXPORTS
 
 /**
@@ -65,22 +65,6 @@ typedef int32_t PGM_ID;
  *
  */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
-
-/**
- * @brief Opaque struct for the handle class
- *
- * The handle class is used to store error and information
- *
- */
-typedef struct PGM_Handle PGM_Handle;
-
-/**
- * @brief Opaque struct for the option class
- *
- * The option class is used to set calculation options like calculation method.
- *
- */
-typedef struct PGM_Options PGM_Options;
 
 /**
  * @brief Opaque struct for the attribute meta class
@@ -107,6 +91,22 @@ typedef struct PGM_MetaComponent PGM_MetaComponent;
 typedef struct PGM_MetaDataset PGM_MetaDataset;
 
 #endif
+
+/**
+ * @brief Opaque struct for the handle class
+ *
+ * The handle class is used to store error and information
+ *
+ */
+typedef struct PGM_Handle PGM_Handle;
+
+/**
+ * @brief Opaque struct for the option class
+ *
+ * The option class is used to set calculation options like calculation method.
+ *
+ */
+typedef struct PGM_Options PGM_Options;
 
 // enums
 /**
@@ -227,24 +227,36 @@ PGM_API void PGM_clear_error(PGM_Handle* handle);
 PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
 
 /**
- * @brief Get name of idx-th dataset
+ * @brief Get pointer of idx-th dataset
  *
  * @param handle
  * @param idx the sequence number, should be between [0, PGM_meta_n_datasets())
- * @return  The name of idx-th dataset in a char const*. The pointer is permanantly valid.
+ * @return  The pointer to the idx-th dataset. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
-PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_Idx idx);
+PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx);
+
+/**
+ * @brief Get pointer of dataset by name
+ * 
+ * @param handle 
+ * @param name name of the dataset
+ * @return  The pointer to the dataset with that name. The pointer is permanantly valid.
+ * Or a NULL if your input is out of bound.
+ */
+PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* name);
+
+/**
+ * @brief Get name of the dataset
+ * 
+ * @param handle 
+ * @param dataset pointer to a dataset object
+ * @return The name of the dataset in a char const*. The pointer is permanantly valid.
+ */
+PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset const* dataset);
 
 /**
  * @brief Get the number of components for a dataset
- *
- * You will get one of the following depending on the idx
- *   - input
- *   - update
- *   - sym_output
- *   - asym_output
- *   - sc_output
  *
  * @param handle
  * @param dataset name of dataset
