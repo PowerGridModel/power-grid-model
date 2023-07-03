@@ -18,8 +18,8 @@ TEST_CASE("C API Meta Data") {
     auto const& meta = meta_data();
 
     SUBCASE("Datasets") {
-        CHECK(PGM_meta_n_datasets(hl) == (Idx)meta.size());
-        for (Idx i = 0; i != (Idx)meta.size(); ++i) {
+        CHECK(PGM_meta_n_datasets(hl) == (Idx)meta.n_datasets());
+        for (Idx i = 0; i != (Idx)meta.n_datasets(); ++i) {
             auto const found = meta.find(PGM_meta_dataset_name(hl, i));
             CHECK(found != meta.end());
         }
