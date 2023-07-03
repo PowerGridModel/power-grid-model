@@ -20,6 +20,8 @@ from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
     CalculationType,
+    FaultPhase,
+    FaultType,
     LoadGenType,
     MeasuredTerminalType,
     WindingType,
@@ -309,6 +311,11 @@ def validate_required_values(
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
 
+    # Faults
+    required["fault"] = required["base"]
+    if calculation_type is None or calculation_type == CalculationType.short_circuit:
+        required["fault"] += ["fault_type", "fault_phase", "fault_object"]
+
     if not symmetric:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
@@ -357,6 +364,8 @@ def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: di
         errors += validate_generic_power_sensor(data, "sym_power_sensor")
     if "asym_power_sensor" in data:
         errors += validate_generic_power_sensor(data, "asym_power_sensor")
+    if "fault" in data:
+        errors += validate_fault(data)
     return errors
 
 
@@ -671,4 +680,15 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         measured_terminal_type=MeasuredTerminalType.node,
     )
 
+    return errors
+
+
+def validate_fault(data: SingleDataset) -> List[ValidationError]:
+    errors = validate_base(data, "fault")
+    errors += all_boolean(data, "fault", "status")
+    errors += all_valid_enum_values(data, "fault", "fault_type", FaultType)
+    errors += all_valid_enum_values(data, "fault", "fault_phase", FaultPhase)
+    errors += all_valid_ids(data, "fault", field="fault_object", ref_components="node")
+    errors += all_greater_than_or_equal_to_zero(data, "fault", "r_f")
+    errors += all_greater_than_or_equal_to_zero(data, "fault", "x_f")
     return errors
