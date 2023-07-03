@@ -327,8 +327,8 @@ class PowerGridModel:
 
             continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some scenarios fails.
 
-        Returns : 
-            dict: Dictionary of results of all components.
+        Returns (dict): 
+            Dictionary of results of all components.
 
                 Key: Component type name to be updated in batch.
 
@@ -449,6 +449,91 @@ class PowerGridModel:
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
         )
+
+
+    def calculate_power_flow_reST(
+        self,
+        *,
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
+        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        threading: int = -1,
+        output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
+    ) -> Dict[str, np.ndarray]:
+        """
+        Calculate power flow once with the current model attributes.
+        Or calculate in batch with the given update dataset in batch.
+
+        :param symmetric: bool, optional
+            Whether to perform three-phase symmetric calculation, even for asymmetric loads/generations.
+            Default is True (three-phase symmetric calculation).
+        :param error_tolerance: float, optional
+            error tolerance for voltage in p.u., applicable only when iterative=True.
+            Default is 1e-8.
+        :param max_iterations: int, optional
+            Maximum number of iterations, applicable only when iterative=True.
+            Default is 20.
+        :param calculation_method: {enumeration, str}, optional
+            The method used for power flow calculation.
+            Supported methods:
+                - CalculationMethod.newton_raphson: Use Newton-Raphson iterative method.
+                - CalculationMethod.linear: Use linear method.
+            Default is CalculationMethod.newton_raphson.
+        :param update_data: dict, optional
+            Data for batch calculation with batch update.
+            None: Calculate power flow once with the current model attributes (default).
+            A dictionary for batch calculation with batch update:
+                - key: Component type name to be updated in batch.
+                - value:
+                    - For homogeneous update batch: A 2D numpy structured array.
+                        - Dimension 0: Each batch.
+                        - Dimension 1: Each updated element per batch for this component type.
+                    - For inhomogeneous update batch: A dictionary containing two keys:
+                        - indptr: A 1D integer numpy array with length n_batch + 1.
+                            Given batch number k, the update array for this batch is data[indptr[k]:indptr[k + 1]].
+                            This follows the concept of compressed sparse structure.
+                            Refer to https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html.
+                        - data: A 1D numpy structured array in flat.
+        :param threading: int, optional
+            The threading mode for batch calculation.
+            <0: Sequential execution.
+            0: Parallel execution using the number of hardware threads.
+            >0: Specify the number of parallel threads.
+            Default is -1.
+        :param output_component_types: {set, list}, optional
+            List or set of component types you want to be present in the output dictionary.
+            By default, all component types will be included in the output.
+        :param continue_on_batch_error: bool, optional
+            Whether the program continues (instead of throwing an error) if some scenarios fail.
+            Default is False.
+
+        :return: dict
+            Dictionary of results for all components.
+            - key: Component type name.
+            - value:
+                - For single calculation: 1D numpy structured array for the results of this component type.
+                - For batch calculation: 2D numpy structured array for the results of this component type.
+                    - Dimension 0: Each batch.
+                    - Dimension 1: The result of each element for this component type.
+
+        :raises:
+            Exception: If an error occurs in the core.
+        """		
+        return self._calculate(
+            CalculationType.power_flow,
+            symmetric=symmetric,
+            error_tolerance=error_tolerance,
+            max_iterations=max_iterations,
+            calculation_method=calculation_method,
+            update_data=update_data,
+            threading=threading,
+            output_component_types=output_component_types,
+            continue_on_batch_error=continue_on_batch_error,
+        )
+
 
     def __del__(self):
         pgc.destroy_model(self._model_ptr)
