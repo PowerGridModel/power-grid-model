@@ -20,6 +20,9 @@ using PGM_MetaDataset = meta_data::MetaDataset;
 #define PGM_DLL_EXPORTS
 #include "power_grid_model_c.h"
 
+// include private header
+#include <cstdlib>
+
 // context handle
 struct PGM_Handle {
     Idx err_code;
@@ -40,13 +43,11 @@ struct PGM_Options {
     Idx threading{-1};
 };
 
-// include private header
-#include <cstdlib>
-
 namespace {
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
 
+// global reference to meta data
 meta_data::MetaData const& pgm_meta = meta_data::meta_data();
 }  // namespace
 

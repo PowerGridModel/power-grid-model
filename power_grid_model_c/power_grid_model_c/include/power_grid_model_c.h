@@ -426,8 +426,7 @@ PGM_API void PGM_destroy_buffer(void* ptr);
  * @param ptr pointer to buffer, created either by PGM_create_buffer() or your own function.
  * @param size size of the buffer in terms of number of elements
  */
-PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr,
-                                PGM_Idx size);
+PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr, PGM_Idx size);
 
 /**
  * @brief Set value of a certain attribute from an array to the component buffer
