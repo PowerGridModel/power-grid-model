@@ -374,9 +374,10 @@ class PowerGridModel:
         Parameters
         ----------
         symmetric : bool, optional
-          Whether to perform a three-phase symmetric calculation.
-            - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default). 
-            - False: Three-phase asymmetric calculation.        
+            Whether to perform a three-phase symmetric calculation.
+
+              - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default). 
+              - False: Three-phase asymmetric calculation.        
         error_tolerance : float, optional
             Error tolerance for voltage in p.u., applicable only when iterative=True.
             Default is 1e-8.
@@ -419,7 +420,9 @@ class PowerGridModel:
         Returns
         -------
         dict
+        
             Dictionary of results for all components.
+                
                 key: Component type name to be updated in batch.
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
