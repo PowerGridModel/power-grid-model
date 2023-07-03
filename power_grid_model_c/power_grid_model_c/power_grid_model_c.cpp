@@ -2,12 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-// include the public header
-#define PGM_DLL_EXPORTS
-#include "power_grid_model_c.h"
-
-// include private header
-#include <cstdlib>
+// include PGM header
 
 #include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model/main_model.hpp"
@@ -15,21 +10,11 @@
 
 using namespace power_grid_model;
 
-namespace {
-using meta_data::RawDataConstPtr;
-using meta_data::RawDataPtr;
-
-meta_data::AllPowerGridMetaData const& pgm_meta = meta_data::meta_data();
-}  // namespace
-
-// assert index type
-static_assert(std::is_same_v<PGM_Idx, Idx>);
-static_assert(std::is_same_v<PGM_ID, ID>);
-
-// main model
-struct PGM_PowerGridModel : public MainModel {
-    using MainModel::MainModel;
-};
+// aliases for C++ classes
+using PGM_PowerGridModel = MainModel;
+using PGM_MetaAttribute = meta_data::MetaAttribute;
+using PGM_MetaComponent = meta_data::MetaComponent;
+using PGM_MetaDataset = meta_data::MetaDataset;
 
 // context handle
 struct PGM_Handle {
@@ -50,6 +35,24 @@ struct PGM_Options {
     Idx max_iter{20};
     Idx threading{-1};
 };
+
+// include the public header
+#define PGM_DLL_EXPORTS
+#include "power_grid_model_c.h"
+
+// include private header
+#include <cstdlib>
+
+namespace {
+using meta_data::RawDataConstPtr;
+using meta_data::RawDataPtr;
+
+meta_data::MetaData const& pgm_meta = meta_data::meta_data();
+}  // namespace
+
+// assert index type
+static_assert(std::is_same_v<PGM_Idx, Idx>);
+static_assert(std::is_same_v<PGM_ID, ID>);
 
 namespace {
 // helper functions

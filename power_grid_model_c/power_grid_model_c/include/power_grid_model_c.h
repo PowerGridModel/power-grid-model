@@ -56,6 +56,10 @@ extern "C" {
 typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
+// definition of opaque structs if the header is used as a library header
+// if the header is used to compile the C-API dynamic library, the structs are defined in the CPP file
+#ifndef PGM_DLL_EXPORTS
+
 /**
  * @brief Opaque struct for the PowerGridModel class
  *
@@ -77,6 +81,32 @@ typedef struct PGM_Handle PGM_Handle;
  *
  */
 typedef struct PGM_Options PGM_Options;
+
+/**
+ * @brief Opaque struct for the attribute meta class
+ *
+ * The attribute class contains all the meta information of a single attribute.
+ *
+ */
+typedef struct PGM_MetaAttribute PGM_MetaAttribute;
+
+/**
+ * @brief Opaque struct for the component meta class
+ *
+ * The component class contains all the meta information of a single component.
+ *
+ */
+typedef struct PGM_MetaComponent PGM_MetaComponent;
+
+/**
+ * @brief Opaque struct for the dataset meta class
+ *
+ * The dataset class contains all the meta information of a single dataset.
+ *
+ */
+typedef struct PGM_MetaDataset PGM_MetaDataset;
+
+#endif
 
 // enums
 /**
