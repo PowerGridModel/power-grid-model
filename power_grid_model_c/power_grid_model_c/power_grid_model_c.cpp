@@ -112,9 +112,9 @@ PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx i
         return &pgm_meta.datasets.at(idx);
     });
 }
-PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* name) {
-    return call_with_bound(handle, [name]() -> decltype(auto) {
-        return &pgm_meta.get_dataset(name);
+PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
+    return call_with_bound(handle, [dataset]() -> decltype(auto) {
+        return &pgm_meta.get_dataset(dataset);
     });
 }
 char const* PGM_meta_dataset_name(PGM_Handle*, PGM_MetaDataset const* dataset) {
@@ -130,28 +130,21 @@ PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_M
         return &dataset->components.at(idx);
     });
 }
-PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset, char const* name) {
-    return call_with_bound(handle, [name, dataset]() -> decltype(auto) {
-        return &pgm_meta.get_dataset(dataset).get_component(name);
+PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
+                                                        char const* component) {
+    return call_with_bound(handle, [component, dataset]() -> decltype(auto) {
+        return &pgm_meta.get_dataset(dataset).get_component(component);
     });
 }
-
-// char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx) {
-//     static auto const class_list = list_of_classes();
-//     return call_with_bound(handle, [dataset, idx]() -> decltype(auto) {
-//         return class_list.at(dataset).at(idx).c_str();
-//     });
-// }
-// size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component) {
-//     return call_with_bound(handle, [dataset, component]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component).size;
-//     });
-// }
-// size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component) {
-//     return call_with_bound(handle, [dataset, component]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component).alignment;
-//     });
-// }
+char const* PGM_meta_component_name(PGM_Handle*, PGM_MetaComponent const* component) {
+    return component->name.c_str();
+}
+size_t PGM_meta_component_size(PGM_Handle*, PGM_MetaComponent const* component) {
+    return component->size;
+}
+size_t PGM_meta_component_alignment(PGM_Handle*, PGM_MetaComponent const* component) {
+    return component->alignment;
+}
 // // attributes
 // PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component) {
 //     return call_with_bound(handle, [dataset, component]() -> decltype(auto) {

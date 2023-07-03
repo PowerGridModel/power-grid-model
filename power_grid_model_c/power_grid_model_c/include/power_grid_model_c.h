@@ -244,7 +244,7 @@ PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, P
  * @return  The pointer to the dataset with that name. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
-PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* name);
+PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset);
 
 /**
  * @brief Get name of the dataset
@@ -285,38 +285,34 @@ PGM_API PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handl
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
-                                                                char const* name);
+                                                                char const* component);
 
 /**
- * @brief Get name of idx-th component
+ * @brief Get name of component
  *
  * @param handle
- * @param dataset name of dataset
- * @param idx sequence number of component, should be between [0, PGM_meta_n_components())
- * @return  The name of idx-th component in a char const*. The pointer is permanantly valid.
- * Or a NULL if your input is out of bound.
+ * @param component pointer to the component
+ * @return  The name of the component in a char const*. The pointer is permanantly valid.
  */
-PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx);
+PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
  * @brief Get size of the component
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
- * @return  Size of the component. Or zero if your input is invalid.
+ * @param component pointer to the component
+ * @return  Size of the component.
  */
-PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
  * @brief Get alignment of the component
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
+ * @param component pointer to the component
  * @return  Alignment of the component. Or zero if your input is invalid.
  */
-PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, char const* dataset, char const* component);
+PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
  * @brief Get number of attributes of the component
