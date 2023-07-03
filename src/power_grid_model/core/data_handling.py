@@ -26,6 +26,7 @@ class OutputType(Enum):
 
     SYM_OUTPUT = "sym_output"
     ASYM_OUTPUT = "asym_output"
+    SC_OUTPUT = "sc_output"
 
 
 def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> OutputType:
@@ -44,6 +45,9 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Ou
     """
     if calculation_type in (CalculationType.power_flow, CalculationType.state_estimation):
         return OutputType.SYM_OUTPUT if symmetric else OutputType.ASYM_OUTPUT
+
+    if calculation_type == CalculationType.short_circuit:
+        return OutputType.SC_OUTPUT
 
     raise NotImplementedError()
 

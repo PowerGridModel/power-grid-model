@@ -54,6 +54,8 @@ struct State {
     std::vector<AsymVoltageSensorInput> asym_voltage_sensor_input{
         {{{{27}, 3}, 105.0}, {10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3}, {0.0, -deg_120, -deg_240}}};
 
+    std::vector<FaultInput> fault_input{{{30}, 1, FaultType::single_phase_to_ground, FaultPhase::a, 3, 0.1, 0.1}};
+
     double const z_bus_2 = 1.0 / (0.015 + 0.5e6 / 10e3 / 10e3 * 2);
     double const z_total = z_bus_2 + 10.0;
     double const u1 = 1.05 * z_bus_2 / (z_bus_2 + 10.0);
@@ -99,6 +101,7 @@ struct State {
     std::vector<ApplianceUpdate> shunt_update{{{9}, false}};
     std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, true, false}};
+    std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1}};
 };
 
 auto default_model(State const& state) -> MainModel {
@@ -114,6 +117,7 @@ auto default_model(State const& state) -> MainModel {
     main_model.add_component<AsymPowerSensor>(state.asym_power_sensor_input);
     main_model.add_component<SymVoltageSensor>(state.sym_voltage_sensor_input);
     main_model.add_component<AsymVoltageSensor>(state.asym_voltage_sensor_input);
+    main_model.add_component<Fault>(state.fault_input);
     main_model.set_construction_complete();
     return main_model;
 }
@@ -800,6 +804,8 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     main_model.update_component<Shunt, typename settings::update_type>(state.shunt_update);
     main_model.update_component<Source, typename settings::update_type>(state.source_update);
     main_model.update_component<Link, typename settings::update_type>(state.link_update);
+    main_model.update_component<Fault, typename settings::update_type>(state.fault_update);
+
     SUBCASE("Symmetrical") {
         auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
         main_model.output_result<true, Node>(math_output, state.sym_node.begin());
