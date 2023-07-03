@@ -174,39 +174,24 @@ int PGM_is_little_endian(PGM_Handle*) {
     return meta_data::is_little_endian();
 }
 
-// // buffer control
-// RawDataPtr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {
-//     auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component);
-//     });
-//     if (data_class.name == "") {
-//         return nullptr;
-//     }
-// #ifdef _WIN32
-//     return _aligned_malloc(data_class.size * size, data_class.alignment);
-// #else
-//     return std::aligned_alloc(data_class.alignment, data_class.size * size);
-// #endif
-// }
-// void PGM_destroy_buffer(RawDataPtr ptr) {
-// #ifdef _WIN32
-//     _aligned_free(ptr);
-// #else
-//     std::free(ptr);
-// #endif
-// }
-// void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, RawDataPtr ptr, PGM_Idx size)
-// {
-//     auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component);
-//     });
-//     if (data_class.name == "") {
-//         return;
-//     }
-//     for (Idx i = 0; i != size; ++i) {
-//         data_class.set_nan(ptr, i);
-//     }
-// }
+// buffer control
+RawDataPtr PGM_create_buffer(PGM_Handle*, PGM_MetaComponent const* component, PGM_Idx size) {
+#ifdef _WIN32
+    return _aligned_malloc(component->size * size, component->alignment);
+#else
+    return std::aligned_alloc(component->alignment, component->size * size);
+#endif
+}
+void PGM_destroy_buffer(RawDataPtr ptr) {
+#ifdef _WIN32
+    _aligned_free(ptr);
+#else
+    std::free(ptr);
+#endif
+}
+void PGM_buffer_set_nan(PGM_Handle*, PGM_MetaComponent const* component, void* ptr, PGM_Idx size) {
+    component->set_nan(ptr, 0, size);
+}
 
 // namespace {
 // // template for get and set attribute

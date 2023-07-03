@@ -403,12 +403,11 @@ PGM_API int PGM_is_little_endian(PGM_Handle* handle);
  * because that optional attribute will be set to NaN and the default value will be used.
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
+ * @param component component pointer
  * @param size size of the buffer in terms of number of elements
  * @return  Pointer to the buffer. Or NULL if your input is invalid.
  */
-PGM_API void* PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size);
+PGM_API void* PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size);
 
 /**
  * @brief Destroy the buffer you created using PGM_create_buffer().
@@ -423,12 +422,11 @@ PGM_API void PGM_destroy_buffer(void* ptr);
  * @brief Set all the attributes of a buffer to NaN
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
+ * @param component component pointer
  * @param ptr pointer to buffer, created either by PGM_create_buffer() or your own function.
  * @param size size of the buffer in terms of number of elements
  */
-PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, void* ptr,
+PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr,
                                 PGM_Idx size);
 
 /**
