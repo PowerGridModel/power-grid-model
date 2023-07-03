@@ -434,12 +434,9 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* com
  * You can use this function to set value.
  * You can also set value by proper pointer arithmetric and casting,
  * using the offset information returned by PGM_meta_attribute_offset().
- * If your input is invalid, the handle will contain the error message.
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
- * @param attribute attribute name
+ * @param attribute attribute pointer
  * @param buffer_ptr pointer to the buffer
  * @param src_ptr pointer to the source array you want to retrieve the value from
  * @param size size of the buffer in terms of number of elements
@@ -448,8 +445,8 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* com
  * If you set it to a positive number, the i-th set-value will retrieve the source data at
  * (void const*)((char const*)src_ptr + i * src_stride)
  */
-PGM_API void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-                                  void* buffer_ptr, void const* src_ptr, PGM_Idx size, PGM_Idx src_stride);
+PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void* buffer_ptr,
+                                  void const* src_ptr, PGM_Idx size, PGM_Idx src_stride);
 
 /**
  * @brief Get value of a certain attribute from the component buffer to an array
@@ -457,12 +454,9 @@ PGM_API void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char 
  * You can use this function to get value.
  * You can also get value by proper pointer arithmetric and casting,
  * using the offset information returned by PGM_meta_attribute_offset().
- * If your input is invalid, the handle will contain the error message.
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
- * @param attribute attribute name
+ * @param attribute attribute pointer
  * @param buffer_ptr pointer to the buffer
  * @param dest_ptr pointer to the destination array you want to save the value to
  * @param size size of the buffer in terms of number of elements
@@ -471,8 +465,8 @@ PGM_API void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char 
  * If you set it to a positive number, the i-th get-value will retrieve the source data at
  * (void*)((char*)dest_ptr + i * dest_stride)
  */
-PGM_API void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-                                  void const* buffer_ptr, void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride);
+PGM_API void PGM_buffer_get_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void const* buffer_ptr,
+                                  void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride);
 
 /**
  * @brief Create an option instance.

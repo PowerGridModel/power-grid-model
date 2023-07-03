@@ -194,44 +194,35 @@ void PGM_buffer_set_nan(PGM_Handle*, PGM_MetaComponent const* component, void* p
     component->set_nan(ptr, 0, size);
 }
 
-// namespace {
-// // template for get and set attribute
-// template <bool is_get, class BufferPtr, class ValuePtr>
-// void buffer_get_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-//                           BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size, PGM_Idx stride) {
-//     auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component);
-//     });
-//     auto const& attr = call_with_bound(handle, [&data_class, attribute]() -> decltype(auto) {
-//         return data_class.get_attr(attribute);
-//     });
-//     if (attr.name == "") {
-//         return;
-//     }
-//     // if stride is negative, use the size of the attributes as stride
-//     if (stride < 0) {
-//         stride = attr.size;
-//     }
-//     for (Idx i = 0; i != size; ++i) {
-//         ValuePtr const shifted_value_ptr =
-//             reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
-//         if constexpr (is_get) {
-//             data_class.get_attr(buffer_ptr, shifted_value_ptr, attr, i);
-//         }
-//         else {
-//             data_class.set_attr(buffer_ptr, shifted_value_ptr, attr, i);
-//         }
-//     }
-// }
-// }  // namespace
-// void PGM_buffer_set_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-//                           RawDataPtr buffer_ptr, RawDataConstPtr src_ptr, PGM_Idx size, PGM_Idx src_stride) {
-//     buffer_get_set_value<false>(handle, dataset, component, attribute, buffer_ptr, src_ptr, size, src_stride);
-// }
-// void PGM_buffer_get_value(PGM_Handle* handle, char const* dataset, char const* component, char const* attribute,
-//                           RawDataConstPtr buffer_ptr, RawDataPtr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
-//     buffer_get_set_value<true>(handle, dataset, component, attribute, buffer_ptr, dest_ptr, size, dest_stride);
-// }
+namespace {
+// template for get and set attribute
+template <bool is_get, class BufferPtr, class ValuePtr>
+void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size,
+                          PGM_Idx stride) {
+    // if stride is negative, use the size of the attributes as stride
+    if (stride < 0) {
+        stride = attribute->size;
+    }
+    for (Idx i = 0; i != size; ++i) {
+        ValuePtr const shifted_value_ptr =
+            reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
+        if constexpr (is_get) {
+            attribute->get_value(buffer_ptr, shifted_value_ptr, i);
+        }
+        else {
+            attribute->set_value(buffer_ptr, shifted_value_ptr, i);
+        }
+    }
+}
+}  // namespace
+void PGM_buffer_set_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
+                          RawDataConstPtr src_ptr, PGM_Idx size, PGM_Idx src_stride) {
+    buffer_get_set_value<false>(attribute, buffer_ptr, src_ptr, size, src_stride);
+}
+void PGM_buffer_get_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
+                          RawDataPtr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
+    buffer_get_set_value<true>(attribute, buffer_ptr, dest_ptr, size, dest_stride);
+}
 
 // options
 PGM_Options* PGM_create_options(PGM_Handle*) {
