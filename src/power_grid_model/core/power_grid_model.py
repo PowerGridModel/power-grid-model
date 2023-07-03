@@ -284,21 +284,21 @@ class PowerGridModel:
         Or calculate in batch with the given update dataset in batch.
 
         Args:
-            symmetric (bool): Whether to perform a three-phase symmetric calculation.
+            symmetric (bool, optional): Whether to perform a three-phase symmetric calculation.
          
                 - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
                 - False: Three-phase asymmetric calculation.        
 
-            error_tolerance (float): Error tolerance for voltage in p.u., applicable only when iterative=True.
+            error_tolerance (float, optional): Error tolerance for voltage in p.u., applicable only when iterative=True.
 
-            max_iterations (int): Maximum number of iterations, applicable only when iterative=True.
+            max_iterations (int, optional): Maximum number of iterations, applicable only when iterative=True.
 
             calculation_method (an enumeration or string): The calculation method to use.
 
                 - Newton_raphson: Use Newton-Raphson iterative method (default).
                 - Linear: Use linear method.
            
-            update_data:
+            update_data (dict, optional):
                 None: Calculate power flow once with the current model attributes.
                 Or a dictionary for batch calculation with batch update. 
 
@@ -316,19 +316,19 @@ class PowerGridModel:
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
                             - data: 1D numpy structured array in flat.     
 
-            threading (int): Applicable only for batch calculation.
+            threading (int, optional): Applicable only for batch calculation.
 
                 - < 0: Sequential
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads  
             
-            output_component_types: List or set of component types you want to be present in the output dict. 
+            output_component_types ({set, list}, optional): List or set of component types you want to be present in the output dict. 
                 By default, all component types will be in the output.
 
-            continue_on_batch_error (bool): If the program continues (instead of throwing error) if some scenarios fails.
+            continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some scenarios fails.
 
-        Returns: 
-            Dictionary of results of all components.
+        Returns : 
+            dict: Dictionary of results of all components.
 
                 Key: Component type name to be updated in batch.
 
@@ -420,7 +420,7 @@ class PowerGridModel:
         Returns
         -------
         dict
-        
+
             Dictionary of results for all components.
                 
                 key: Component type name to be updated in batch.
