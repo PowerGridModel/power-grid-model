@@ -116,9 +116,9 @@ class FaultType(IntEnum):
     """The type of fault represented by a fault component"""
 
     three_phase = 0
-    two_phase = 1
-    two_phase_to_ground = 2
-    single_phase_to_ground = 3
+    single_phase_to_ground = 1
+    two_phase = 2
+    two_phase_to_ground = 3
     default_value = -128
     """
     Unspecified fault phase. Like np.nan. Needs to be overloaded at the latest in the update_data
@@ -128,33 +128,33 @@ class FaultType(IntEnum):
 class FaultPhase(IntEnum):
     """The faulty phase(s) affected by the provided fault type"""
 
-    a = 0
+    abc = 0
+    """
+    All phases are faulty in a three-phase fault
+    """
+    a = 1
     """
     The first phase is faulty in a single-phase-to-ground fault
     """
-    b = 1
+    b = 2
     """
     The second phase is faulty in a single-phase-to-ground fault
     """
-    c = 2
+    c = 3
     """
     The third phase is faulty in a single-phase-to-ground fault
     """
-    ab = 3
+    ab = 4
     """
     The first and second phase are faulty in a two-phase or two-phase-to-ground fault
     """
-    ac = 4
+    ac = 5
     """
     The first and third phase are faulty in a two-phase or two-phase-to-ground fault
     """
-    bc = 5
+    bc = 6
     """
     The first and second phase are faulty in a two-phase or two-phase-to-ground fault
-    """
-    abc = 6
-    """
-    All phases are faulty in a three-phase fault
     """
     default_value = -128
     """

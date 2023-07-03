@@ -493,14 +493,14 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 `fault` defines a short circuit location in the grid. At this moment a fault can only happen at a `node`.
 
 #### Input
-| name           | data type                                                | unit    | description                                         |       required       |  update  |   valid values    |
-| -------------- | -------------------------------------------------------- | ------- | --------------------------------------------------- | :------------------: | :------: | :---------------: |
-| `status`       | `int8_t`                                                 | -       | whether the fault is active                         |       &#10004;       | &#10004; |    `0` or `1`     |
-| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>   | -       | the type of the fault                               |       &#10004;       | &#10004; |                   |
-| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase> | -       | the phase(s) of the fault                           |       &#10004;       | &#10004; |                   |
-| `fault_object` | `int32_t`                                                | -       | ID of the component where the short circuit happens |       &#10004;       | &#10004; | A valid `node` ID |
-| `r_f`          | `double`                                                 | ohm (Ω) | short circuit resistance                            | &#10060; default 0.0 | &#10060; |                   |
-| `x_f`          | `double`                                                 | ohm (Ω) | short circuit reactance                             | &#10060; default 0.0 | &#10060; |                   |
+| name           | data type                                                 | unit    | description                                         |       required       |  update  |   valid values    |
+| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :------------------: | :------: | :---------------: |
+| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |       &#10004;       | &#10004; |    `0` or `1`     |
+| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |       &#10004;       | &#10004; |                   |
+| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           |       &#10004;       | &#10004; |                   |
+| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |       &#10004;       | &#10004; | A valid `node` ID |
+| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            | &#10060; default 0.0 | &#10060; |                   |
+| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             | &#10060; default 0.0 | &#10060; |                   |
 
 #### Steady state output
 A `fault` has no steady state output.
