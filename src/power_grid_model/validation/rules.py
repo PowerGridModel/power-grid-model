@@ -40,9 +40,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Un
 import numpy as np
 
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.enum import WindingType
+from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
     ComparisonError,
+    FaultPhaseError,
     IdNotInDatasetError,
     InfinityError,
     InvalidEnumValueError,
@@ -671,6 +672,48 @@ def all_valid_clocks(
             TransformerClockError(
                 component=component,
                 fields=[clock_field, winding_from_field, winding_to_field],
+                ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
+
+
+def all_valid_fault_phases(
+    data: SingleDataset, component: str, fault_type_field: str, fault_phase_field: str
+) -> List[FaultPhaseError]:
+    """
+    Custom validation rule: Only a subset of fault_phases is supported for each fault type.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        fault_type_field: The fault type field
+        fault_phase_field: The fault phase field
+
+    Returns:
+        A list containing zero or more FaultPhaseErrors; listing all the ids of faults where the fault phase was
+        invalid, given the fault phase.
+    """
+    fault_types = data[component][fault_type_field]
+    fault_phases = data[component][fault_phase_field]
+
+    supported_combinations: Dict[FaultType, List[FaultPhase]] = {
+        FaultType.three_phase: [FaultPhase.abc],
+        FaultType.single_phase_to_ground: [FaultPhase.a, FaultPhase.b, FaultPhase.c],
+        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc],
+        FaultType.two_phase_to_ground: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc],
+        FaultType.default_value: [],
+    }
+
+    def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
+        return fault_phase in supported_combinations.get(fault_type, [])
+
+    err = np.vectorize(_fault_phase_supported)(fault_type=fault_types, fault_phase=fault_phases)
+    if err.any():
+        return [
+            FaultPhaseError(
+                component=component,
+                fields=[fault_type_field, fault_phase_field],
                 ids=data[component]["id"][err].flatten().tolist(),
             )
         ]

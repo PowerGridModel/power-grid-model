@@ -428,11 +428,24 @@ class InfinityError(SingleFieldValidationError):
 
 class TransformerClockError(MultiFieldValidationError):
     """
-    The value of a field is infinite.
+    Invalid clock number.
     """
 
     _message = (
         "Invalid clock number for {n} {objects}. "
         "If one side has wye winding and the other side has not, the clock number should be odd. "
         "If either both or none of the sides have wye winding, the clock number should be even."
+    )
+
+
+class FaultPhaseError(MultiFieldValidationError):
+    """
+    The fault phase does not match the fault type.
+    """
+
+    _message = (
+        "The fault phase does not match the fault type for {n} {objects}. "
+        "If the fault type is three_phase, the fault phase should be abc. "
+        "If the fault type is single_phase_to_ground, the fault phase should be either a, b or c. "
+        "If the fault type is either two_phase or two_phase_to_ground, the fault phase should be either ab, ac or bc."
     )
