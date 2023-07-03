@@ -145,12 +145,22 @@ size_t PGM_meta_component_size(PGM_Handle*, PGM_MetaComponent const* component) 
 size_t PGM_meta_component_alignment(PGM_Handle*, PGM_MetaComponent const* component) {
     return component->alignment;
 }
-// // attributes
-// PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, char const* dataset, char const* component) {
-//     return call_with_bound(handle, [dataset, component]() -> decltype(auto) {
-//         return static_cast<Idx>(pgm_meta.at(dataset).at(component).attributes.size());
-//     });
-// }
+// attributes
+PGM_Idx PGM_meta_n_attributes(PGM_Handle*, PGM_MetaComponent const* component) {
+    return component->n_attributes();
+}
+PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
+                                                       PGM_Idx idx) {
+    return call_with_bound(handle, [idx, component]() -> decltype(auto) {
+        return &component->attributes.at(idx);
+    });
+}
+PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset, char const* component,
+                                                        char const* attribute) {
+    return call_with_bound(handle, [component, dataset, attribute]() -> decltype(auto) {
+        return &pgm_meta.get_dataset(dataset).get_component(component).get_attribute(attribute);
+    });
+}
 // char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx idx) {
 //     return call_with_bound(handle, [dataset, component, idx]() -> decltype(auto) {
 //         return pgm_meta.at(dataset).at(component).attributes.at(idx).name.c_str();
