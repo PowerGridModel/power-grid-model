@@ -374,9 +374,10 @@ class PowerGridModel:
         Parameters
         ----------
         symmetric : bool, optional
-            Whether to perform a three-phase symmetric calculation.
-                - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default). 
-                - False: Three-phase asymmetric calculation.        
+          Whether to perform a three-phase symmetric calculation.
+
+            - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default). 
+            - False: Three-phase asymmetric calculation.        
         error_tolerance : float, optional
             Error tolerance for voltage in p.u., applicable only when iterative=True.
             Default is 1e-8.
@@ -389,18 +390,21 @@ class PowerGridModel:
             Data for batch calculation with batch update.
             None: Calculate state estimation once with the current model attributes (Default).
             Or a dictionary for batch calculation with batch update:
-                - key: Component type name to be updated in batch.
+                key: Component type name to be updated in batch.
                 - For homogeneous update batch: A 2D numpy structured array.
+
                     - Dimension 0: Each batch.
                     - Dimension 1: Each updated element per batch for this component type.
                 - For inhomogeneous update batch: A dictionary containing two keys:
+
                     - indptr: A 1D integer numpy array with length n_batch + 1.
-                        Given batch number k, the update array for this batch is data[indptr[k]:indptr[k + 1]].
-                        This follows the concept of compressed sparse structure.
-                        Refer to https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html.
+                      Given batch number k, the update array for this batch is data[indptr[k]:indptr[k + 1]].
+                      This follows the concept of compressed sparse structure.
+                      Refer to https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html.
                     - data: A 1D numpy structured array in flat.
         threading : int, optional
             Applicable only for batch calculation.
+
                 - < 0: Sequential (Default is -1)
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads
@@ -418,7 +422,9 @@ class PowerGridModel:
             Dictionary of results for all components.
                 key: Component type name to be updated in batch.
                     - For single calculation: 1D numpy structured array for the results of this component type.
+
                     - For batch calculation: 2D numpy structured array for the results of this component type.
+                    
                         - Dimension 0: Each batch.
                         - Dimension 1: The result of each element for this component type.
 
