@@ -374,10 +374,11 @@ class PowerGridModel:
         Parameters
         ----------
         symmetric : bool, optional
-            Whether to perform three-phase symmetric calculation, even for asymmetric loads/generations.
-            Default is True (three-phase symmetric calculation).
+            Whether to perform a three-phase symmetric calculation.
+                - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default). 
+                - False: Three-phase asymmetric calculation.        
         error_tolerance : float, optional
-            Error tolerance for voltage in per unit (p.u.), only applicable when `calculation_method` is iterative.
+            Error tolerance for voltage in p.u., applicable only when iterative=True.
             Default is 1e-8.
         max_iterations : int, optional
             Maximum number of iterations, only applicable when `calculation_method` is iterative.
@@ -386,26 +387,23 @@ class PowerGridModel:
             iterative_linear: use iterative linear method
         update_data : dict, optional
             Data for batch calculation with batch update.
-            None: Calculate state estimation once with the current model attributes.
-            A dictionary for batch calculation with batch update:
+            None: Calculate state estimation once with the current model attributes (Default).
+            Or a dictionary for batch calculation with batch update:
                 - key: Component type name to be updated in batch.
-                - value:
-                    - For homogeneous update batch: A 2D numpy structured array.
+                - For homogeneous update batch: A 2D numpy structured array.
                     - Dimension 0: Each batch.
                     - Dimension 1: Each updated element per batch for this component type.
-                    - For inhomogeneous update batch: A dictionary containing two keys:
+                - For inhomogeneous update batch: A dictionary containing two keys:
                     - indptr: A 1D integer numpy array with length n_batch + 1.
                         Given batch number k, the update array for this batch is data[indptr[k]:indptr[k + 1]].
                         This follows the concept of compressed sparse structure.
                         Refer to https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html.
                     - data: A 1D numpy structured array in flat.
-            Default is None.
         threading : int, optional
-            The threading mode for batch calculation.
-            -1: Sequential execution.
-            0: Parallel execution using the number of hardware threads.
-            >0: Specify the number of parallel threads.
-            Default is -1.
+            Applicable only for batch calculation.
+                - < 0: Sequential (Default is -1)
+                - = 0: Parallel, use number of hardware threads
+                - > 0: Specify number of parallel threads
         output_component_types : {set, list}, optional
             List or set of component types you want to be present in the output dictionary.
             By default, all component types will be included in the output.
@@ -418,27 +416,16 @@ class PowerGridModel:
         -------
         dict
             Dictionary of results for all components.
-            - key: Component type name.
-            - value:
-                - For single calculation: 1D numpy structured array for the results of this component type.
-                - For batch calculation: 2D numpy structured array for the results of this component type.
-                - Dimension 0: Each batch.
-                - Dimension 1: The result of each element for this component type.
+                key: Component type name to be updated in batch.
+                    - For single calculation: 1D numpy structured array for the results of this component type.
+                    - For batch calculation: 2D numpy structured array for the results of this component type.
+                        - Dimension 0: Each batch.
+                        - Dimension 1: The result of each element for this component type.
 
         Raises
         ------
         Exception
-            If an error occurs in the core.
-
-        See Also
-        --------
-        _calculate : Internal method for performing the power flow calculation.
-
-        Notes
-        -----
-        - The power flow calculation is performed using the specified method and parameters.
-        - If `update_data` is provided, a batch calculation is performed with the given update dataset.
-        - The output dictionary contains the results for all components.
+            In case an error in the core occurs, an exception will be thrown.
 
         """
         return self._calculate(
