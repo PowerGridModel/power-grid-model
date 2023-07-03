@@ -130,7 +130,7 @@ enum PGM_CalculationMethod {
     PGM_iterative_linear = 2,  /**< iterative linear method for state estimation */
     PGM_iterative_current = 3, /**< linear current method for power flow */
     PGM_linear_current = 4,    /**< iterative constant impedance method for power flow */
-    PGM_iec60909 = 5           /**< fault analysis for short circuits using the iec60909 standard*/
+    PGM_iec60909 = 5           /**< fault analysis for short circuits using the iec60909 standard */
 };
 
 /**
