@@ -161,26 +161,18 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char
         return &pgm_meta.get_dataset(dataset).get_component(component).get_attribute(attribute);
     });
 }
-// char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx idx) {
-//     return call_with_bound(handle, [dataset, component, idx]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component).attributes.at(idx).name.c_str();
-//     });
-// }
-// char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
-//                                      char const* attribute) {
-//     return call_with_bound(handle, [dataset, component, attribute]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component).get_attr(attribute).ctype.c_str();
-//     });
-// }
-// size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
-//                                  char const* attribute) {
-//     return call_with_bound(handle, [dataset, component, attribute]() -> decltype(auto) {
-//         return pgm_meta.at(dataset).at(component).get_attr(attribute).offset;
-//     });
-// }
-// int PGM_is_little_endian(PGM_Handle*) {
-//     return meta_data::is_little_endian();
-// }
+char const* PGM_meta_attribute_name(PGM_Handle*, PGM_MetaAttribute const* attribute) {
+    return attribute->name.c_str();
+}
+char const* PGM_meta_attribute_ctype(PGM_Handle*, PGM_MetaAttribute const* attribute) {
+    return attribute->ctype.c_str();
+}
+size_t PGM_meta_attribute_offset(PGM_Handle*, PGM_MetaAttribute const* attribute) {
+    return attribute->offset;
+}
+int PGM_is_little_endian(PGM_Handle*) {
+    return meta_data::is_little_endian();
+}
 
 // // buffer control
 // RawDataPtr PGM_create_buffer(PGM_Handle* handle, char const* dataset, char const* component, PGM_Idx size) {

@@ -348,27 +348,20 @@ PGM_API PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* hand
                                                                 char const* component, char const* attribute);
 
 /**
- * @brief Get idx-th of attribute name
+ * @brief Get attribute name
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
- * @param idx sequence number of attribute, should be between [0, PGM_meta_n_attributes())
+ * @param attribute pointer to attribute
  * @return  Name of the attribute in char const*. The pointer is permanantly valid.
- * Or NULL if your input is invalid.
  */
-PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* dataset, char const* component,
-                                            PGM_Idx idx);
+PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
  * @brief Get the type of an attribute
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
- * @param attribute attribute name
+ * @param attribute pointer to attribute
  * @return  Type of the attribute in char const*. The string is a valid C type name. The pointer is permanantly valid.
- * Or NULL if your input is invalid.
  *
  * Valid types are:
  *   - int32_t
@@ -376,20 +369,16 @@ PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, char const* data
  *   - double
  *   - double[3]
  */
-PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, char const* dataset, char const* component,
-                                             char const* attribute);
+PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
  * @brief Get the ofsset of an attribute in a component
  *
  * @param handle
- * @param dataset dataset name
- * @param component component name
- * @param attribute attribute name
- * @return  Offset of this attribute. Or zero if your input is invalid.
+ * @param attribute pointer to attribute
+ * @return  Offset of this attribute.
  */
-PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, char const* dataset, char const* component,
-                                         char const* attribute);
+PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
  * @brief Get if the system is little endian
