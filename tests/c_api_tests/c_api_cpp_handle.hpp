@@ -7,9 +7,8 @@
 #define POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
 
 #include "power_grid_model_c.h"
-// clang-format off
+
 #include <memory>
-// clang-format on
 
 namespace power_grid_model {
 

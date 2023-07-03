@@ -3,12 +3,13 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "c_api_cpp_handle.hpp"
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
 #include "power_grid_model_c.h"
-// clang-format off
+
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+
+#include <doctest/doctest.h>
+
 #include <memory>
-// clang-format off
 
 namespace power_grid_model::meta_data {
 

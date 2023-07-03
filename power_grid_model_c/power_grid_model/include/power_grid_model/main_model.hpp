@@ -9,10 +9,11 @@
 // main model class
 
 // main include
+#include "power_grid_model.hpp"
+
 #include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "exception.hpp"
-#include "power_grid_model.hpp"
 #include "timer.hpp"
 #include "topology.hpp"
 
@@ -26,9 +27,7 @@
 #include "math_solver/math_solver.hpp"
 
 // threading
-// clang-format off
 #include <thread>
-// clang-format on
 
 namespace power_grid_model {
 

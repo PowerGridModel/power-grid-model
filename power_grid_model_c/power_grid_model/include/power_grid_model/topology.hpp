@@ -6,16 +6,18 @@
 #ifndef POWER_GRID_MODEL_TOPOLOGY_HPP
 #define POWER_GRID_MODEL_TOPOLOGY_HPP
 
-#include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/compressed_sparse_row_graph.hpp"
-#include "boost/graph/depth_first_search.hpp"
-#include "boost/graph/iteration_macros.hpp"
-#include "boost/graph/minimum_degree_ordering.hpp"
+#include "power_grid_model.hpp"
+
 #include "calculation_parameters.hpp"
 #include "enum.hpp"
 #include "exception.hpp"
-#include "power_grid_model.hpp"
 #include "sparse_mapping.hpp"
+
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/compressed_sparse_row_graph.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/iteration_macros.hpp>
+#include <boost/graph/minimum_degree_ordering.hpp>
 
 // build topology of the grid
 // divide grid into several math models

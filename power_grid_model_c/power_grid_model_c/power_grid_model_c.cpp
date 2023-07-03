@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
 #include "power_grid_model_c.h"
 
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
-#include "power_grid_model/main_model.hpp"
-#include "power_grid_model/power_grid_model.hpp"
-// clang-format off
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/power_grid_model.hpp>
+
 #include <cstdlib>
-// clang-format on
 
 using namespace power_grid_model;
 

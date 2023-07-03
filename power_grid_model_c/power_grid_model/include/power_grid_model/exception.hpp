@@ -6,12 +6,12 @@
 #ifndef POWER_GRID_MODEL_EXCEPTION_HPP
 #define POWER_GRID_MODEL_EXCEPTION_HPP
 
-#include "enum.hpp"
 #include "power_grid_model.hpp"
-// clang-format off
+
+#include "enum.hpp"
+
 #include <exception>
 #include <string>
-// clang-format on
 
 namespace power_grid_model {
 

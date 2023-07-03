@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/meta_data.hpp"
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
-// clang-format off
+#include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
+
 #include <iostream>
-// clang-format on
 
 namespace power_grid_model {
 

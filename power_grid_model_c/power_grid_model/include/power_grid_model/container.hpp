@@ -8,14 +8,15 @@
 
 // container for multiple components
 
-#include "boost/iterator/iterator_facade.hpp"
-#include "exception.hpp"
 #include "power_grid_model.hpp"
-// clang-format off
+
+#include "exception.hpp"
+
+#include <boost/iterator/iterator_facade.hpp>
+
 #include <functional>
 #include <memory>
 #include <unordered_map>
-// clang-format on
 
 namespace power_grid_model {
 

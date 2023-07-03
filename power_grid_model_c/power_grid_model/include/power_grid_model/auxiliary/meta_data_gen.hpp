@@ -11,10 +11,9 @@
 #include "input.hpp"
 #include "meta_data.hpp"
 #include "output.hpp"
-// clang-format off
+
 #include <map>
 #include <string>
-// clang-format on
 
 // generate of meta data
 namespace power_grid_model {

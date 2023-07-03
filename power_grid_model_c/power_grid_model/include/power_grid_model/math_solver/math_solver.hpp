@@ -11,16 +11,13 @@
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "linear_pf_solver.hpp"
-// clang-format off
-#include "newton_raphson_pf_solver.hpp"
-#include "iterative_linear_se_solver.hpp"
 #include "iterative_current_pf_solver.hpp"
-
+#include "iterative_linear_se_solver.hpp"
+#include "linear_pf_solver.hpp"
+#include "newton_raphson_pf_solver.hpp"
 #include "y_bus.hpp"
 
 #include <optional>
-// clang-format on
 
 namespace power_grid_model {
 

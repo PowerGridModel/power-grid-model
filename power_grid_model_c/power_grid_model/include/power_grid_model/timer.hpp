@@ -7,10 +7,9 @@
 #define POWER_GRID_MODEL_TIMER_HPP
 
 #include "power_grid_model.hpp"
-// clang-format off
+
 #include <iomanip>
 #include <sstream>
-// clang-format on
 
 namespace power_grid_model {
 

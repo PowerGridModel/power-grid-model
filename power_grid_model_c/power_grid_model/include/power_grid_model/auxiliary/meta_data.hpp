@@ -10,10 +10,9 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-// clang-format off
+
 #include <bit>
 #include <string>
-// clang-format on
 
 namespace power_grid_model {
 

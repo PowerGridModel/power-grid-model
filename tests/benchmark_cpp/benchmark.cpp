@@ -2,12 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model/main_model.hpp"
-#include "power_grid_model/timer.hpp"
-// clang-format off
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/timer.hpp>
+
 #include <iostream>
 #include <random>
-// clang-format on
 
 namespace power_grid_model {
 

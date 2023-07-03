@@ -17,3 +17,24 @@ BraceWrapping:
   BeforeCatch: true
   BeforeElse: true
 
+IncludeBlocks: Regroup
+IncludeCategories:
+- Regex:           '^"power_grid_model\.hpp"$'
+  Priority:        0
+  SortPriority:    0
+- Regex:           '^".+(\.hpp|\.h)"$'
+  Priority:        1
+  SortPriority:    1
+- Regex:           '^<power_grid_model/.+(\.hpp|\.h)>$'
+  Priority:        2
+  SortPriority:    2
+- Regex:           '^<(boost|Eigen|doctest|nlohmann).+>$'
+  Priority:        3
+  SortPriority:    3
+- Regex:           '^<.+(\.h|\.hpp)>$'
+  Priority:        4
+  SortPriority:    4
+- Regex:           '^<.+>$'
+  Priority:        5
+  SortPriority:    5
+
