@@ -120,12 +120,22 @@ PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char con
 char const* PGM_meta_dataset_name(PGM_Handle*, PGM_MetaDataset const* dataset) {
     return dataset->name.c_str();
 }
-// // class
-// PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset) {
-//     return call_with_bound(handle, [dataset]() -> decltype(auto) {
-//         return static_cast<Idx>(pgm_meta.at(dataset).size());
-//     });
-// }
+// component
+PGM_Idx PGM_meta_n_components(PGM_Handle*, PGM_MetaDataset const* dataset) {
+    return dataset->n_components();
+}
+PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
+                                                       PGM_Idx idx) {
+    return call_with_bound(handle, [idx, dataset]() -> decltype(auto) {
+        return &dataset->components.at(idx);
+    });
+}
+PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset, char const* name) {
+    return call_with_bound(handle, [name, dataset]() -> decltype(auto) {
+        return &pgm_meta.get_dataset(dataset).get_component(name);
+    });
+}
+
 // char const* PGM_meta_component_name(PGM_Handle* handle, char const* dataset, PGM_Idx idx) {
 //     static auto const class_list = list_of_classes();
 //     return call_with_bound(handle, [dataset, idx]() -> decltype(auto) {
@@ -190,7 +200,8 @@ char const* PGM_meta_dataset_name(PGM_Handle*, PGM_MetaDataset const* dataset) {
 //     std::free(ptr);
 // #endif
 // }
-// void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, RawDataPtr ptr, PGM_Idx size) {
+// void PGM_buffer_set_nan(PGM_Handle* handle, char const* dataset, char const* component, RawDataPtr ptr, PGM_Idx size)
+// {
 //     auto const& data_class = call_with_bound(handle, [dataset, component]() -> decltype(auto) {
 //         return pgm_meta.at(dataset).at(component);
 //     });
@@ -413,5 +424,3 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 void PGM_destroy_model(PGM_PowerGridModel* model) {
     delete model;
 }
-
-

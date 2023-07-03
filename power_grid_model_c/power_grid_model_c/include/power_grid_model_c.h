@@ -238,8 +238,8 @@ PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, P
 
 /**
  * @brief Get pointer of dataset by name
- * 
- * @param handle 
+ *
+ * @param handle
  * @param name name of the dataset
  * @return  The pointer to the dataset with that name. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
@@ -248,8 +248,8 @@ PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, 
 
 /**
  * @brief Get name of the dataset
- * 
- * @param handle 
+ *
+ * @param handle
  * @param dataset pointer to a dataset object
  * @return The name of the dataset in a char const*. The pointer is permanantly valid.
  */
@@ -259,10 +259,33 @@ PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset co
  * @brief Get the number of components for a dataset
  *
  * @param handle
- * @param dataset name of dataset
- * @return  Number of components, or zero if your input is invalid
+ * @param dataset pointer to the dataset
+ * @return  Number of components
  */
-PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, char const* dataset);
+PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset);
+
+/**
+ * @brief Get pointer of idx-th component of a dataset
+ *
+ * @param handle
+ * @param dataset pointer to the dataset
+ * @param idx the sequence number, should be between [0, PGM_meta_n_components())
+ * @return  The pointer to the component with that name. The pointer is permanantly valid.
+ * Or a NULL if your input is out of bound.
+ */
+PGM_API PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
+                                                               PGM_Idx idx);
+/**
+ * @brief Get pointer of idx-th component of a dataset
+ *
+ * @param handle
+ * @param dataset name of the dataset
+ * @param name name of the component
+ * @return  The pointer to the component with that name. The pointer is permanantly valid.
+ * Or a NULL if your input is out of bound.
+ */
+PGM_API PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
+                                                                char const* name);
 
 /**
  * @brief Get name of idx-th component
