@@ -552,7 +552,6 @@ def test_fault(input_data):
     assert InvalidEnumValueError("fault", "fault_type", [50], FaultType) in validation_errors
     assert InvalidEnumValueError("fault", "fault_phase", [50], FaultPhase) in validation_errors
     assert FaultPhaseError("fault", ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
-    # TODO(mgovers): Required values => fail on nan type
     assert InvalidIdError("fault", "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
     assert NotGreaterOrEqualError("fault", "r_f", [1], 0) in validation_errors
     assert NotGreaterOrEqualError("fault", "x_f", [1], 0) in validation_errors

@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
-from power_grid_model.enum import CalculationType
+from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
@@ -160,6 +160,8 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     asym_power_sensor["p_measured"] = [[np.nan, 2.0, 1.0]]
     asym_power_sensor["q_measured"] = [[2.0, 1.0, np.nan]]
 
+    fault = initialize_array("input", "fault", 1)
+
     data = {
         "node": node,
         "line": line,
@@ -176,12 +178,14 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
         "asym_voltage_sensor": asym_voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
         "asym_power_sensor": asym_power_sensor,
+        "fault": fault,
     }
     required_values_errors = validate_required_values(data=data, calculation_type=calculation_type, symmetric=symmetric)
 
     pf_dependent = calculation_type == CalculationType.power_flow or calculation_type is None
     se_dependent = calculation_type == CalculationType.state_estimation or calculation_type is None
-    asym_dependent = not symmetric
+    sc_dependent = calculation_type == CalculationType.short_circuit or calculation_type is None
+    asym_dependent = (not symmetric) or calculation_type == CalculationType.short_circuit
 
     assert MissingValueError("node", "id", [NaN]) in required_values_errors
     assert MissingValueError("node", "u_rated", [NaN]) in required_values_errors
@@ -326,6 +330,12 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert (MissingValueError("asym_power_sensor", "power_sigma", [NaN]) in required_values_errors) == se_dependent
     assert (MissingValueError("asym_power_sensor", "p_measured", [NaN]) in required_values_errors) == se_dependent
     assert (MissingValueError("asym_power_sensor", "q_measured", [NaN]) in required_values_errors) == se_dependent
+
+    assert MissingValueError("fault", "id", [NaN]) in required_values_errors
+    assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
+    assert (MissingValueError("fault", "fault_type", [NaN]) in required_values_errors) == sc_dependent
+    assert (MissingValueError("fault", "fault_phase", [NaN]) in required_values_errors) == sc_dependent
+    assert (MissingValueError("fault", "fault_object", [NaN]) in required_values_errors) == sc_dependent
 
 
 def test_validate_required_values_asym_calculation():

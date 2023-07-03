@@ -315,7 +315,7 @@ def validate_required_values(
     # Faults
     required["fault"] = required["base"]
     if calculation_type is None or calculation_type == CalculationType.short_circuit:
-        required["fault"] += ["fault_type", "fault_phase", "fault_object"]
+        required["fault"] += ["status", "fault_type", "fault_phase", "fault_object"]
 
     if not symmetric:
         required["line"] += ["r0", "x0", "c0", "tan0"]
