@@ -158,6 +158,21 @@ class PowerGridModel:
         assert_no_error()
         return indexer
 
+    def _get_output_component_count(self, calculation_type: CalculationType):
+        exclude_types = {
+            CalculationType.power_flow: ["sensor", "fault"],
+            CalculationType.state_estimation: ["fault"],
+            CalculationType.short_circuit: ["sensor"],
+        }.get(calculation_type, [])
+
+        def include_type(component_type: str):
+            for exclude_type in exclude_types:
+                if exclude_type in component_type:
+                    return False
+            return True
+
+        return {k: v for k, v in self.all_component_count.items() if include_type(k)}
+
     def _construct_output(
         self,
         output_component_types: Optional[Union[Set[str], List[str]]],
@@ -165,12 +180,7 @@ class PowerGridModel:
         symmetric: bool,
         batch_size: int,
     ) -> Dict[str, np.ndarray]:
-        # prepare result dataset
-        all_component_count = self.all_component_count
-
-        # for power flow, there is no need for sensor output
-        if calculation_type == CalculationType.power_flow:
-            all_component_count = {k: v for k, v in all_component_count.items() if "sensor" not in k}
+        all_component_count = self._get_output_component_count(calculation_type=calculation_type)
 
         # limit all component count to user specified component types in output
         if output_component_types is None:
