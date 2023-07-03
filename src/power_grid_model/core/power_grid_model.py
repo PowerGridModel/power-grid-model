@@ -375,7 +375,6 @@ class PowerGridModel:
         ----------
         symmetric : bool, optional
           Whether to perform a three-phase symmetric calculation.
-
             - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default). 
             - False: Three-phase asymmetric calculation.        
         error_tolerance : float, optional
@@ -391,6 +390,7 @@ class PowerGridModel:
             None: Calculate state estimation once with the current model attributes (Default).
             Or a dictionary for batch calculation with batch update:
                 key: Component type name to be updated in batch.
+
                 - For homogeneous update batch: A 2D numpy structured array.
 
                     - Dimension 0: Each batch.
@@ -421,10 +421,11 @@ class PowerGridModel:
         dict
             Dictionary of results for all components.
                 key: Component type name to be updated in batch.
+
                     - For single calculation: 1D numpy structured array for the results of this component type.
 
                     - For batch calculation: 2D numpy structured array for the results of this component type.
-                    
+
                         - Dimension 0: Each batch.
                         - Dimension 1: The result of each element for this component type.
 
