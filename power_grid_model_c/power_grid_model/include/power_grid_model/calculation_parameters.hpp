@@ -213,13 +213,12 @@ struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> load_gen;
 };
 
-template <bool sym>
 struct ShortCircuitMathOutput {
-    std::vector<ComplexValue<sym>> i_fault;
-    std::vector<ComplexValue<sym>> u_bus;
-    std::vector<ComplexValue<sym>> i_branch_from;
-    std::vector<ComplexValue<sym>> i_branch_to;
-    std::vector<ComplexValue<sym>> i_source;
+    std::vector<ComplexValue<false>> i_fault;
+    std::vector<ComplexValue<false>> u_bus;
+    std::vector<ComplexValue<false>> i_branch_from;
+    std::vector<ComplexValue<false>> i_branch_to;
+    std::vector<ComplexValue<false>> i_source;
 };
 
 // component indices at physical model side
