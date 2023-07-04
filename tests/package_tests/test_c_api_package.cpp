@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model_c.h"
+
 #include <iostream>
 #include <memory>
-
-#include "power_grid_model_c.h"
 
 namespace {
 // custom deleter
