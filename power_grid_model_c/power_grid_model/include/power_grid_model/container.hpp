@@ -8,9 +8,8 @@
 
 // container for multiple components
 
-#include "power_grid_model.hpp"
-
 #include "exception.hpp"
+#include "power_grid_model.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
 

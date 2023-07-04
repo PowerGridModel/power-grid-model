@@ -6,11 +6,10 @@
 #ifndef POWER_GRID_MODEL_TOPOLOGY_HPP
 #define POWER_GRID_MODEL_TOPOLOGY_HPP
 
-#include "power_grid_model.hpp"
-
 #include "calculation_parameters.hpp"
 #include "enum.hpp"
 #include "exception.hpp"
+#include "power_grid_model.hpp"
 #include "sparse_mapping.hpp"
 
 #include <boost/graph/adjacency_list.hpp>

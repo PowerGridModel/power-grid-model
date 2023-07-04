@@ -6,11 +6,12 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_VOLTAGE_SENSOR_HPP
 #define POWER_GRID_MODEL_COMPONENT_VOLTAGE_SENSOR_HPP
 
+#include "sensor.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "sensor.hpp"
 
 #include <limits>
 

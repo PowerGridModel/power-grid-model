@@ -6,11 +6,12 @@
 #ifndef POWER_GRID_MODEL_META_DATA_GEN_HPP
 #define POWER_GRID_MODEL_META_DATA_GEN_HPP
 
-#include "../all_components.hpp"
-#include "../power_grid_model.hpp"
 #include "input.hpp"
 #include "meta_data.hpp"
 #include "output.hpp"
+
+#include "../all_components.hpp"
+#include "../power_grid_model.hpp"
 
 #include <map>
 #include <string>
