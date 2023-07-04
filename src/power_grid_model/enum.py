@@ -53,6 +53,7 @@ class CalculationType(IntEnum):
 
     power_flow = 0
     state_estimation = 1
+    short_circuit = 2
 
 
 class CalculationMethod(IntEnum):
@@ -63,6 +64,7 @@ class CalculationMethod(IntEnum):
     iterative_linear = 2
     iterative_current = 3
     linear_current = 4
+    iec60909 = 5
 
 
 class MeasuredTerminalType(IntEnum):
@@ -107,4 +109,54 @@ class MeasuredTerminalType(IntEnum):
     node = 9
     """
     Measuring the total power injection into a node
+    """
+
+
+class FaultType(IntEnum):
+    """The type of fault represented by a fault component"""
+
+    three_phase = 0
+    single_phase_to_ground = 1
+    two_phase = 2
+    two_phase_to_ground = 3
+    default_value = -128
+    """
+    Unspecified fault phase. Like np.nan. Needs to be overloaded at the latest in the update_data
+    """
+
+
+class FaultPhase(IntEnum):
+    """The faulty phase(s) affected by the provided fault type"""
+
+    abc = 0
+    """
+    All phases are faulty in a three-phase fault
+    """
+    a = 1
+    """
+    The first phase is faulty in a single-phase-to-ground fault
+    """
+    b = 2
+    """
+    The second phase is faulty in a single-phase-to-ground fault
+    """
+    c = 3
+    """
+    The third phase is faulty in a single-phase-to-ground fault
+    """
+    ab = 4
+    """
+    The first and second phase are faulty in a two-phase or two-phase-to-ground fault
+    """
+    ac = 5
+    """
+    The first and third phase are faulty in a two-phase or two-phase-to-ground fault
+    """
+    bc = 6
+    """
+    The first and second phase are faulty in a two-phase or two-phase-to-ground fault
+    """
+    default_value = -128
+    """
+    Unspecified fault phase. Like np.nan. Needs to be overloaded at the latest in the update_data
     """
