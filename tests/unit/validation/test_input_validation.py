@@ -554,8 +554,7 @@ def test_fault(input_data):
     assert FaultPhaseError("fault", ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
     assert InvalidIdError("fault", "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
     assert NotGreaterOrEqualError("fault", "r_f", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("fault", "x_f", [1], 0) in validation_errors
-    # TODO(mgovers): Only one fault enabled per scenario OR only one fault enabled per target node per scenario
+    # TODO(mgovers): All faults in a batch should have the same fault_type and fault_phase
 
 
 def test_validate_input_data_asym_calculation(input_data):

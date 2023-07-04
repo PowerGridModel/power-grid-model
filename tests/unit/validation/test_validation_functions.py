@@ -134,6 +134,7 @@ def test_validate_ids_exist():
         pytest.param(None, id="no calculation type specified"),
         pytest.param(CalculationType.power_flow, id="power_flow"),
         pytest.param(CalculationType.state_estimation, id="state_estimation"),
+        pytest.param(CalculationType.short_circuit, id="short_circuit"),
     ],
 )
 @pytest.mark.parametrize("symmetric", [pytest.param(True, id="symmetric"), pytest.param(False, id="asymmetric")])
@@ -185,7 +186,7 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     pf_dependent = calculation_type == CalculationType.power_flow or calculation_type is None
     se_dependent = calculation_type == CalculationType.state_estimation or calculation_type is None
     sc_dependent = calculation_type == CalculationType.short_circuit or calculation_type is None
-    asym_dependent = (not symmetric) or calculation_type == CalculationType.short_circuit
+    asym_dependent = not symmetric
 
     assert MissingValueError("node", "id", [NaN]) in required_values_errors
     assert MissingValueError("node", "u_rated", [NaN]) in required_values_errors
@@ -334,7 +335,6 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("fault", "id", [NaN]) in required_values_errors
     assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
     assert (MissingValueError("fault", "fault_type", [NaN]) in required_values_errors) == sc_dependent
-    assert (MissingValueError("fault", "fault_phase", [NaN]) in required_values_errors) == sc_dependent
     assert (MissingValueError("fault", "fault_object", [NaN]) in required_values_errors) == sc_dependent
 
 

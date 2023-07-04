@@ -224,6 +224,17 @@ def test_all_unique():
     # Note that each id occurs as often in the error as it occurred in the 'id' field.
     assert NotUniqueError("test", "id", [444, 444, 555, 555, 555]) in errors
 
+    invalid = {
+        "test": np.array(
+            [(1, 333), (2, 444), (3, 555), (4, 444), (5, 555), (6, 555)], dtype=[("id", "i4"), ("other", "i4")]
+        )
+    }
+    errors = all_unique(invalid, "test", "other")
+    assert len(errors) == 1
+
+    # Note that each id with duplicate values in the field is represented.
+    assert NotUniqueError("test", "other", [2, 3, 4, 5, 6]) in errors
+
 
 @pytest.mark.parametrize("cross_only", [pytest.param(True, id="cross_only"), pytest.param(False, id="not_cross_only")])
 def test_all_cross_unique(cross_only):

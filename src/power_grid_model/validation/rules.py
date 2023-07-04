@@ -371,14 +371,10 @@ def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqu
         not unique. If the field name was 'id' (a very common check), the id is added as many times as it occurred in
         the 'id' column, to maintain object counts.
     """
-    _, index, counts = np.unique(data[component][field], return_index=True, return_counts=True)
+    field_data = data[component][field]
+    _, inverse, counts = np.unique(field_data, return_inverse=True, return_counts=True)
     if any(counts != 1):
-        ids = data[component]["id"][index[counts != 1]].flatten().tolist()
-        if field == "id":  # Add ids multiple times
-            counts = counts[counts != 1]
-            for obj_id, count in zip(ids, counts):
-                ids += [obj_id] * (count - 1)
-            ids = sorted(ids)
+        ids = data[component]["id"][(counts != 1)[inverse]].flatten().tolist()
         return [NotUniqueError(component, field, ids)]
     return []
 
@@ -698,10 +694,10 @@ def all_valid_fault_phases(
     fault_phases = data[component][fault_phase_field]
 
     supported_combinations: Dict[FaultType, List[FaultPhase]] = {
-        FaultType.three_phase: [FaultPhase.abc],
-        FaultType.single_phase_to_ground: [FaultPhase.a, FaultPhase.b, FaultPhase.c],
-        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc],
-        FaultType.two_phase_to_ground: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc],
+        FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value],
+        FaultType.single_phase_to_ground: [FaultPhase.a, FaultPhase.b, FaultPhase.c, FaultPhase.default_value],
+        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value],
+        FaultType.two_phase_to_ground: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value],
         FaultType.default_value: [],
     }
 

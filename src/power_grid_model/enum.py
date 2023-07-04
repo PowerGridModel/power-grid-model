@@ -154,7 +154,8 @@ class FaultPhase(IntEnum):
     """
     bc = 6
     """
-    The first and second phase are faulty in a two-phase or two-phase-to-ground fault
+    The second and third phase are faulty in a two-phase or two-phase-to-ground fault
+    TODO(mgovers): defaults
     """
     default_value = -128
     """
