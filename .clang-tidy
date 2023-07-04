@@ -18,7 +18,7 @@ concurrency-*,
 cppcoreguidelines-*,
 -cppcoreguidelines-avoid-c-arrays,
 -cppcoreguidelines-avoid-magic-numbers,
--cppcoreguidelines-init-variables,F
+-cppcoreguidelines-init-variables
 -cppcoreguidelines-macro-usage,
 -cppcoreguidelines-no-malloc,
 -cppcoreguidelines-narrowing-conversions,
