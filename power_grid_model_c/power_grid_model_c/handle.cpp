@@ -4,6 +4,7 @@
 
 #define PGM_DLL_EXPORTS
 #include "power_grid_model_c/handle.h"
+
 #include "handle.hpp"
 
 using namespace power_grid_model;
