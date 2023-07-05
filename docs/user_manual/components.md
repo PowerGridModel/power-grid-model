@@ -506,14 +506,19 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 
 #### Input
 
-| name           | data type                                                 | unit    | description                                         |                                                       required                                                        |  update  |   valid values    |
-| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------: | :------: | :---------------: |
-| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                                       &#10004;                                                        | &#10004; |    `0` or `1`     |
-| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                                                       &#10004;                                                        | &#10004; |                   |
+| name           | data type                                                 | unit    | description                                         |                                                                         required                                                                         |  update  |   valid values    |
+| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------: | :------: | :---------------: |
+| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                                                         &#10004;                                                                         | &#10004; |    `0` or `1`     |
+| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                                                             &#10024; only for short circuit                                                              | &#10004; |                   |
 | `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default {py:enum:mem}`FaultPhase.default_value <power_grid_model.enum.FaultPhase.default_value>` (see [below](#default-values-for-fault_phase)) | &#10004; |                   |
-| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                       &#10004;                                                        | &#10004; | A valid `node` ID |
-| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                                 &#10060; default 0.0                                                  | &#10060; |                   |
-| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                                 &#10060; default 0.0                                                  | &#10060; |                   |
+| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                                         &#10004;                                                                         | &#10004; | A valid `node` ID |
+| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                                                   &#10060; default 0.0                                                                   | &#10060; |                   |
+| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                                                   &#10060; default 0.0                                                                   | &#10060; |                   |
+
+```{note}
+Multiple faults may exist within one calculation. Currently, all faults in one scenario are required to have the
+same `fault_type` and `fault_phase`. Across scenarios in a batch, the `fault_type` and `fault_phase` may differ.
+```
 
 ```{note}
 If any of the faults in any of the scenarios within a batch are not `three_phase`

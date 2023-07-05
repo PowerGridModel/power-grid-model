@@ -42,6 +42,7 @@ from power_grid_model.validation.rules import (
     all_greater_or_equal,
     all_greater_than_or_equal_to_zero,
     all_greater_than_zero,
+    all_identical,
     all_ids_exist_in_data_set,
     all_less_than,
     all_not_two_values_equal,
@@ -698,4 +699,6 @@ def validate_fault(data: SingleDataset) -> List[ValidationError]:
     errors += all_valid_fault_phases(data, "fault", "fault_type", "fault_phase")
     errors += all_valid_ids(data, "fault", field="fault_object", ref_components="node")
     errors += all_greater_than_or_equal_to_zero(data, "fault", "r_f")
+    errors += all_identical(data, "fault", "fault_type")
+    errors += all_identical(data, "fault", "fault_phase")
     return errors

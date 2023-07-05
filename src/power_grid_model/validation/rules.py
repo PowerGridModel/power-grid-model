@@ -55,6 +55,7 @@ from power_grid_model.validation.errors import (
     NotBooleanError,
     NotGreaterOrEqualError,
     NotGreaterThanError,
+    NotIdenticalError,
     NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
@@ -353,6 +354,29 @@ def none_match_comparison(
             matches = matches.any(axis=1)
         ids = component_data["id"][matches].flatten().tolist()
         return [error(component, field, ids, ref_value)]
+    return []
+
+
+def all_identical(data: SingleDataset, component: str, field: str) -> List[NotIdenticalError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are identical.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field: The field of interest
+
+    Returns:
+        A list containing zero or one NotIdenticalError, listing all ids of that component if the value in the field
+        of interest was not identical across all components, all values for those ids, the set of unique values in
+        that field and the number of unique values in that field.
+    """
+    field_data = data[component][field]
+    if len(field_data) > 0:
+        first = field_data[0]
+        if np.any(field_data != first):
+            return [NotIdenticalError(component, field, data[component]["id"], list(field_data))]
+
     return []
 
 

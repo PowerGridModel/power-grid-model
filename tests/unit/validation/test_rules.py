@@ -21,6 +21,7 @@ from power_grid_model.validation.errors import (
     NotBooleanError,
     NotGreaterOrEqualError,
     NotGreaterThanError,
+    NotIdenticalError,
     NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
@@ -37,6 +38,7 @@ from power_grid_model.validation.rules import (
     all_greater_than,
     all_greater_than_or_equal_to_zero,
     all_greater_than_zero,
+    all_identical,
     all_less_or_equal,
     all_less_than,
     all_not_two_values_equal,
@@ -213,6 +215,20 @@ def test_none_match_comparison():
     )
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
+
+
+def test_all_identical():
+    dtype = [("id", "i4"), ("foo", "i4")]
+    data = {
+        "bar": np.array([(0, 10), (1, 10), (2, 10)], dtype=dtype),
+        "baz": np.array([(3, 11), (4, 12), (5, 12)], dtype=dtype),
+    }
+    errors = all_identical(data, "bar", "foo")
+    assert not errors
+
+    errors = all_identical(data, "baz", "foo")
+    assert len(errors) == 1
+    assert NotIdenticalError("baz", "foo", ids=[3, 4, 5], values=[11, 12, 12])
 
 
 def test_all_unique():
@@ -408,7 +424,7 @@ def test_all_valid_clocks():
 
 
 def test_all_valid_fault_phases():
-    dtype = [("id", "i4"), ("fault_type", "i4"), ("fault_phase", "i4"), ("foo", "i4")]
+    dtype = [("id", "i4"), ("foo", "i4"), ("bar", "i4"), ("baz", "i4")]
     valid = {
         "fault": np.array(
             [
@@ -429,9 +445,9 @@ def test_all_valid_fault_phases():
             ],
             dtype=dtype,
         ),
-        "bar": np.array([(14, FaultType.three_phase, FaultPhase.a, 114)], dtype=dtype),
+        "bla": np.array([(14, FaultType.three_phase, FaultPhase.a, 114)], dtype=dtype),
     }
-    errors = all_valid_fault_phases(valid, "fault", "fault_type", "fault_phase")
+    errors = all_valid_fault_phases(valid, "fault", "foo", "bar")
     assert not errors
 
     invalid = {
@@ -468,6 +484,6 @@ def test_all_valid_fault_phases():
         ),
         "bar": np.array([(26, FaultType.three_phase, FaultPhase.abc, 26)], dtype=dtype),
     }
-    errors = all_valid_fault_phases(invalid, "fault", "fault_type", "fault_phase")
+    errors = all_valid_fault_phases(invalid, "fault", "foo", "bar")
     assert len(errors) == 1
-    assert FaultPhaseError("fault", fields=["fault_type", "fault_phase"], ids=list(range(26))) in errors
+    assert FaultPhaseError("fault", fields=["foo", "bar"], ids=list(range(26))) in errors
