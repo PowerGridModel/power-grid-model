@@ -14,9 +14,7 @@
 #include <bit>
 #include <string>
 
-namespace power_grid_model {
-
-namespace meta_data {
+namespace power_grid_model::meta_data {
 
 // pointer to member
 template <class T>
@@ -111,13 +109,27 @@ struct MetaAttributeImpl {
         }
     }
 };
-struct MetaAttribute {
+
+}  // namespace power_grid_model::meta_data
+
+// attribute in global namespace
+struct PGM_MetaAttribute {
+    using Idx = power_grid_model::Idx;
+    template <class T>
+    using trait_pointer_to_member = power_grid_model::meta_data::trait_pointer_to_member<T>;
+    template <class StructType, auto member_ptr>
+    using MetaAttributeImpl = power_grid_model::meta_data::MetaAttributeImpl<StructType, member_ptr>;
+    using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
+    using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
+    template <class T>
+    static constexpr const char* ctype_v = power_grid_model::meta_data::ctype_v<T>;
+
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    MetaAttribute(MetaAttributeImpl<StructType, member_ptr>, std::string const& attr_name)
+    PGM_MetaAttribute(MetaAttributeImpl<StructType, member_ptr>, std::string const& attr_name)
         : name{attr_name},
           ctype{ctype_v<ValueType>},
-          offset{get_offset<StructType, member_ptr>()},
+          offset{power_grid_model::meta_data::get_offset<StructType, member_ptr>()},
           size{sizeof(ValueType)},
           component_size{sizeof(StructType)},
           check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
@@ -140,6 +152,11 @@ struct MetaAttribute {
     std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value;
 };
 
+namespace power_grid_model::meta_data {
+
+// include inside meta data namespace
+using MetaAttribute = PGM_MetaAttribute;
+
 // meta component
 template <class StructType>
 struct MetaComponentImpl {
@@ -155,13 +172,24 @@ struct MetaComponentImpl {
         std::fill(ptr + pos, ptr + pos + size, nan_value);
     }
 };
-struct MetaComponent {
+
+}  // namespace power_grid_model::meta_data
+
+// component in global name space
+struct PGM_MetaComponent {
     template <class StructType>
-    MetaComponent(MetaComponentImpl<StructType>, std::string const& comp_name)
+    using MetaComponentImpl = power_grid_model::meta_data::MetaComponentImpl<StructType>;
+    using MetaAttribute = power_grid_model::meta_data::MetaAttribute;
+    using Idx = power_grid_model::Idx;
+    using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
+    using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
+
+    template <class StructType>
+    PGM_MetaComponent(MetaComponentImpl<StructType>, std::string const& comp_name)
         : name{comp_name},
           size{sizeof(StructType)},
           alignment{alignof(StructType)},
-          attributes{get_attributes_list<StructType>{}()},
+          attributes{power_grid_model::meta_data::get_attributes_list<StructType>{}()},
           set_nan{MetaComponentImpl<StructType>::set_nan},
           create_buffer{MetaComponentImpl<StructType>::create_buffer},
           destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {
@@ -204,8 +232,17 @@ struct MetaComponent {
     }
 };
 
-// meta dataset
-struct MetaDataset {
+namespace power_grid_model::meta_data {
+
+using MetaComponent = PGM_MetaComponent;
+
+}  // namespace power_grid_model::meta_data
+
+// meta dataset in global namespace
+struct PGM_MetaDataset {
+    using MetaComponent = power_grid_model::meta_data::MetaComponent;
+    using Idx = power_grid_model::Idx;
+
     std::string name;
     std::vector<MetaComponent> components;
 
@@ -222,6 +259,10 @@ struct MetaDataset {
         throw std::out_of_range{"Cannot find component with name: " + component_name + "!\n"};
     }
 };
+
+namespace power_grid_model::meta_data {
+
+using MetaDataset = PGM_MetaDataset;
 
 // meta data
 struct MetaData {
@@ -246,8 +287,6 @@ constexpr bool is_little_endian() {
     return std::endian::native == std::endian::little;
 }
 
-}  // namespace meta_data
-
-}  // namespace power_grid_model
+}  // namespace power_grid_model::meta_data
 
 #endif
