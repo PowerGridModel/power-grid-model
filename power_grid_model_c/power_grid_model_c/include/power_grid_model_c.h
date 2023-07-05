@@ -8,12 +8,12 @@
  * All the exported functions are included in power_grid_model_c.h
  * 
  * Users can also include individual headers for individual functions
- *     - basics.h: type and enum definition
- *     - buffer.h: functions with buffer creation, release, set and get value
- *     - handle.h: functions with error handling
- *     - meta_data.h: functions with meta data
- *     - model.h: functions with create, release, run calculation of model
- *     - options.h: functions with setting the calculation options
+ *     - power_grid_model_c/basics.h: type and enum definition
+ *     - power_grid_model_c/buffer.h: functions with buffer creation, release, set and get value
+ *     - power_grid_model_c/handle.h: functions with error handling
+ *     - power_grid_model_c/meta_data.h: functions with meta data
+ *     - power_grid_model_c/model.h: functions with create, release, run calculation of model
+ *     - power_grid_model_c/options.h: functions with setting the calculation options
  */
 
 #pragma once
