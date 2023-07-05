@@ -365,7 +365,7 @@ def test_validate_fault_sc_calculation(fault_types):
     required_values_errors = validate_required_values(data=data, calculation_type=CalculationType.short_circuit)
 
     asym_sc_calculation = np.any(
-        list(fault_type not in (FaultType.three_phase, FaultType.default_value) for fault_type in fault_types)
+        list(fault_type not in (FaultType.three_phase, FaultType.nan) for fault_type in fault_types)
     )
 
     assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_sc_calculation

@@ -320,7 +320,7 @@ def validate_required_values(
         required["fault"] += ["status", "fault_type"]
         if "fault" in data:
             for elem in data["fault"]["fault_type"]:
-                if elem not in (FaultType.three_phase, FaultType.default_value):
+                if elem not in (FaultType.three_phase, FaultType.nan):
                     asym_sc = True
                     break
 

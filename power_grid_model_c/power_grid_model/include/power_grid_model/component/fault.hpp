@@ -89,10 +89,10 @@ class Fault final : public Base {
     UpdateChange update(FaultUpdate const& update) {
         assert(update.id == id());
         set_status(update.status);
-        if (update.fault_type != FaultType::default_value) {
+        if (update.fault_type != FaultType::nan) {
             fault_type_ = update.fault_type;
         }
-        if (update.fault_phase != FaultPhase::default_value) {
+        if (update.fault_phase != FaultPhase::nan) {
             fault_phase_ = update.fault_phase;
         }
         if (update.fault_object != na_IntID) {
@@ -141,15 +141,28 @@ class Fault final : public Base {
     double x_f_;
 
     void check_sanity() const {
-        if (fault_type_ == FaultType::three_phase) {
-            if (fault_phase_ != FaultPhase::abc) {
-                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+        auto supported = [](FaultType fault_type) -> std::vector<FaultPhase> {
+            switch (fault_type) {
+                case FaultType::three_phase:
+                    return {FaultPhase::nan, FaultPhase::default_value, FaultPhase::abc};
+                case FaultType::single_phase_to_ground:
+                    return {FaultPhase::nan, FaultPhase::default_value, FaultPhase::a, FaultPhase::b, FaultPhase::c};
+                case FaultType::two_phase:
+                    [[fallthrough]];
+                case FaultType::two_phase_to_ground:
+                    return {FaultPhase::nan, FaultPhase::default_value, FaultPhase::ab, FaultPhase::ac, FaultPhase::bc};
+                case FaultType::nan:
+                    return {FaultPhase::nan, FaultPhase::default_value,
+                            FaultPhase::abc, FaultPhase::a,
+                            FaultPhase::b,   FaultPhase::c,
+                            FaultPhase::ab,  FaultPhase::ac,
+                            FaultPhase::bc};
+                default:
+                    return {};
             }
-        }
-        else {
-            if (fault_phase_ == FaultPhase::abc) {
-                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
-            }
+        }(fault_type_);
+        if (std::find(cbegin(supported), cend(supported), fault_phase_) == cend(supported)) {
+            throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
         }
     }
 };

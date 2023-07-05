@@ -119,9 +119,9 @@ class FaultType(IntEnum):
     single_phase_to_ground = 1
     two_phase = 2
     two_phase_to_ground = 3
-    default_value = -128
+    nan = -128
     """
-    Unspecified fault phase. Like np.nan. Needs to be overloaded at the latest in the update_data
+    Unspecified fault type. Needs to be overloaded at the latest in the update_data
     """
 
 
@@ -156,7 +156,11 @@ class FaultPhase(IntEnum):
     """
     The second and third phase are faulty in a two-phase or two-phase-to-ground fault
     """
-    default_value = -128
+    default_value = -1
     """
-    Unspecified fault phase. Like np.nan. Needs to be overloaded at the latest in the update_data
+    Use the default fault phase. Depends on the fault_type.
+    """
+    nan = -128
+    """
+    Unspecified fault phase. Needs to be overloaded at the latest in the update_data
     """
