@@ -31,8 +31,8 @@ class ShortCircuitSolver {
           perm_(n_bus_) {
     }
 
-    ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
-                                                  ShortCircuitInput const& input) {
+    ShortCircuitMathOutput run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
+                                             ShortCircuitInput const& input) {
         // For one calculation all faults should be of the same type and have the same phase
         assert_all_fault_type_phase_equal_(input.faults);
         const FaultPhase fault_phase = input.faults[0].fault_phase;
@@ -46,7 +46,7 @@ class ShortCircuitSolver {
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.lu_diag();
         // output
-        ShortCircuitMathOutput<sym> output;  // TODO: resize output values that are updated
+        ShortCircuitMathOutput output;  // TODO: resize output values that are updated
 
         // copy y_bus data
         std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus.cend(), mat_data_.begin(), [&](Idx k) {
