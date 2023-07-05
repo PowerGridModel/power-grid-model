@@ -551,16 +551,17 @@ def test_validate_three_winding_transformer_ukpkminmax(input_data):
 
 
 def test_fault(input_data):
-    all_ids = [1] + list(range(32, 51))
-
     validation_errors = validate_input_data(input_data, calculation_type=CalculationType.short_circuit)
     assert InvalidEnumValueError("fault", "fault_type", [50], FaultType) in validation_errors
     assert InvalidEnumValueError("fault", "fault_phase", [50], FaultPhase) in validation_errors
-    assert FaultPhaseError("fault", ("fault_type", "fault_phase"), all_ids)
+    assert FaultPhaseError("fault", ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
     assert NotGreaterOrEqualError("fault", "r_f", [1], 0) in validation_errors
     assert (
         NotIdenticalError(
-            "fault", "fault_type", all_ids, 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4]
+            "fault",
+            "fault_type",
+            list(range(32, 51)),
+            5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4],
         )
         in validation_errors
     )
@@ -568,8 +569,8 @@ def test_fault(input_data):
         NotIdenticalError(
             "fault",
             "fault_phase",
-            all_ids,
-            list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7],
+            list(range(32, 51)),
+            list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7],
         )
         in validation_errors
     )

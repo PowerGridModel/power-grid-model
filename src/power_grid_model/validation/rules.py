@@ -380,6 +380,34 @@ def all_identical(data: SingleDataset, component: str, field: str) -> List[NotId
     return []
 
 
+def all_enabled_identical(
+    data: SingleDataset, component: str, field: str, status_field: str
+) -> List[NotIdenticalError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are identical.
+    Only entries are checked where the 'status' field is not 0.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field: The field of interest
+        status_field: The status field based on which to decide whether a component is enabled
+
+    Returns:
+        A list containing zero or one NotIdenticalError, listing:
+            - all ids of enabled components if the value in the field of interest was not identical across all enabled
+              components
+            - all values of the 'field' column for enabled components (including duplications)
+            - the set of unique such values
+            - the amount of unique such values.
+    """
+    return all_identical(
+        {key: (value if key is not component else value[value[status_field] != 0]) for key, value in data.items()},
+        component,
+        field,
+    )
+
+
 def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within

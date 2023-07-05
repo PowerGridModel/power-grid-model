@@ -33,6 +33,7 @@ from power_grid_model.validation.rules import (
     all_between_or_at,
     all_boolean,
     all_cross_unique,
+    all_enabled_identical,
     all_finite,
     all_greater_or_equal,
     all_greater_than,
@@ -229,6 +230,20 @@ def test_all_identical():
     errors = all_identical(data, "baz", "foo")
     assert len(errors) == 1
     assert NotIdenticalError("baz", "foo", ids=[3, 4, 5], values=[11, 12, 12])
+
+
+def test_all_enabled_identical():
+    dtype = [("id", "i4"), ("status", "i4"), ("foo", "i4")]
+    data = {
+        "bar": np.array([(0, 1, 10), (1, 1, 10), (2, 0, 10), (3, 0, 11), (4, 0, 12)], dtype=dtype),
+        "baz": np.array([(5, 1, 14), (6, 1, 14), (7, 0, 14), (8, 1, 15), (9, 0, 16)], dtype=dtype),
+    }
+    errors = all_enabled_identical(data, "bar", "foo", "status")
+    assert not errors
+
+    errors = all_enabled_identical(data, "baz", "foo", "status")
+    assert len(errors) == 1
+    assert NotIdenticalError("baz", "foo", ids=[5, 6, 8], values=[14, 14, 15])
 
 
 def test_all_unique():
