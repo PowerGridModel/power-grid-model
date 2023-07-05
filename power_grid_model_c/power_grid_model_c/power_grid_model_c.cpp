@@ -2,25 +2,24 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+// include the public header
+#define PGM_DLL_EXPORTS
+#include "power_grid_model_c.h"
+
 // include PGM header
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/power_grid_model.hpp>
 
+// include private stl header
+#include <cstdlib>
+
 using namespace power_grid_model;
 
-// aliases for C++ classes
-using PGM_PowerGridModel = MainModel;
-using PGM_MetaAttribute = meta_data::MetaAttribute;
-using PGM_MetaComponent = meta_data::MetaComponent;
-using PGM_MetaDataset = meta_data::MetaDataset;
-
-// include the public header
-#define PGM_DLL_EXPORTS
-#include "power_grid_model_c.h"
-
-// include private header
-#include <cstdlib>
+// aliases main class
+struct PGM_PowerGridModel : public MainModel {
+    using MainModel::MainModel;
+};
 
 // context handle
 struct PGM_Handle {

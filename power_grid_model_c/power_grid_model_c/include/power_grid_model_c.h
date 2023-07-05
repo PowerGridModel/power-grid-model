@@ -56,10 +56,6 @@ extern "C" {
 typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
-// definition of opaque structs if the header is used as a library header
-// if the header is used to compile the C-API dynamic library, the structs are aliased in the CPP file
-#ifndef PGM_DLL_EXPORTS
-
 /**
  * @brief Opaque struct for the PowerGridModel class
  *
@@ -89,8 +85,6 @@ typedef struct PGM_MetaComponent PGM_MetaComponent;
  *
  */
 typedef struct PGM_MetaDataset PGM_MetaDataset;
-
-#endif
 
 /**
  * @brief Opaque struct for the handle class
