@@ -8,8 +8,10 @@ import numpy as np
 import pytest
 
 from power_grid_model import LoadGenType, initialize_array
+from power_grid_model.enum import FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     ComparisonError,
+    FaultPhaseError,
     InfinityError,
     InvalidEnumValueError,
     InvalidIdError,
@@ -42,6 +44,7 @@ from power_grid_model.validation.rules import (
     all_unique,
     all_valid_clocks,
     all_valid_enum_values,
+    all_valid_fault_phases,
     all_valid_ids,
     none_match_comparison,
     none_missing,
@@ -402,3 +405,69 @@ def test_none_missing():
 @pytest.mark.skip("No unit tests available for all_valid_clocks")
 def test_all_valid_clocks():
     raise NotImplementedError(f"Unit test for {all_valid_clocks}")
+
+
+def test_all_valid_fault_phases():
+    dtype = [("id", "i4"), ("fault_type", "i4"), ("fault_phase", "i4"), ("foo", "i4")]
+    valid = {
+        "fault": np.array(
+            [
+                (0, FaultType.three_phase, FaultPhase.abc, 100),
+                (1, FaultType.three_phase, FaultPhase.default_value, 101),
+                (2, FaultType.single_phase_to_ground, FaultPhase.a, 102),
+                (3, FaultType.single_phase_to_ground, FaultPhase.b, 103),
+                (4, FaultType.single_phase_to_ground, FaultPhase.c, 104),
+                (5, FaultType.single_phase_to_ground, FaultPhase.default_value, 105),
+                (6, FaultType.two_phase, FaultPhase.ab, 106),
+                (7, FaultType.two_phase, FaultPhase.ac, 107),
+                (8, FaultType.two_phase, FaultPhase.bc, 108),
+                (9, FaultType.two_phase, FaultPhase.default_value, 109),
+                (10, FaultType.two_phase_to_ground, FaultPhase.ab, 110),
+                (11, FaultType.two_phase_to_ground, FaultPhase.ac, 111),
+                (12, FaultType.two_phase_to_ground, FaultPhase.bc, 112),
+                (13, FaultType.two_phase_to_ground, FaultPhase.default_value, 113),
+            ],
+            dtype=dtype,
+        ),
+        "bar": np.array([(14, FaultType.three_phase, FaultPhase.a, 114)], dtype=dtype),
+    }
+    errors = all_valid_fault_phases(valid, "fault", "fault_type", "fault_phase")
+    assert not errors
+
+    invalid = {
+        "fault": np.array(
+            [
+                (0, FaultType.three_phase, FaultPhase.a, 100),
+                (1, FaultType.three_phase, FaultPhase.b, 101),
+                (2, FaultType.three_phase, FaultPhase.c, 102),
+                (3, FaultType.three_phase, FaultPhase.ab, 103),
+                (4, FaultType.three_phase, FaultPhase.ac, 104),
+                (5, FaultType.three_phase, FaultPhase.bc, 105),
+                (6, FaultType.single_phase_to_ground, FaultPhase.abc, 106),
+                (7, FaultType.single_phase_to_ground, FaultPhase.ab, 107),
+                (8, FaultType.single_phase_to_ground, FaultPhase.ac, 108),
+                (9, FaultType.single_phase_to_ground, FaultPhase.bc, 109),
+                (10, FaultType.two_phase, FaultPhase.abc, 110),
+                (11, FaultType.two_phase, FaultPhase.a, 111),
+                (12, FaultType.two_phase, FaultPhase.b, 112),
+                (13, FaultType.two_phase, FaultPhase.c, 113),
+                (14, FaultType.two_phase_to_ground, FaultPhase.abc, 114),
+                (15, FaultType.two_phase_to_ground, FaultPhase.a, 115),
+                (16, FaultType.two_phase_to_ground, FaultPhase.b, 116),
+                (17, FaultType.two_phase_to_ground, FaultPhase.c, 117),
+                (18, FaultType.default_value, FaultPhase.abc, 118),
+                (19, FaultType.default_value, FaultPhase.a, 119),
+                (20, FaultType.default_value, FaultPhase.b, 120),
+                (21, FaultType.default_value, FaultPhase.c, 121),
+                (22, FaultType.default_value, FaultPhase.ab, 122),
+                (23, FaultType.default_value, FaultPhase.ac, 123),
+                (24, FaultType.default_value, FaultPhase.bc, 124),
+                (25, FaultType.default_value, FaultPhase.default_value, 125),
+            ],
+            dtype=dtype,
+        ),
+        "bar": np.array([(26, FaultType.three_phase, FaultPhase.abc, 26)], dtype=dtype),
+    }
+    errors = all_valid_fault_phases(invalid, "fault", "fault_type", "fault_phase")
+    assert len(errors) == 1
+    assert FaultPhaseError("fault", fields=["fault_type", "fault_phase"], ids=list(range(26))) in errors

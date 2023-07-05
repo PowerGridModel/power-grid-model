@@ -702,7 +702,7 @@ def all_valid_fault_phases(
     }
 
     def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
-        return fault_phase in supported_combinations.get(fault_type, [])
+        return fault_phase not in supported_combinations.get(fault_type, [])
 
     err = np.vectorize(_fault_phase_supported)(fault_type=fault_types, fault_phase=fault_phases)
     if err.any():
