@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <ostream>
+#include <power_grid_model/topology.hpp>
 
-#include "doctest/doctest.h"
-#include "power_grid_model/topology.hpp"
+#include <doctest/doctest.h>
+
+#include <ostream>
 
 /*
  *  [0]   = Node / Bus

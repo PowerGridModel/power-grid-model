@@ -54,15 +54,16 @@ Nomenclature:
 
 */
 
+#include "block_matrix.hpp"
+#include "iterative_pf_solver.hpp"
+#include "sparse_lu_solver.hpp"
+#include "y_bus.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "block_matrix.hpp"
-#include "iterative_pf_solver.hpp"
-#include "sparse_lu_solver.hpp"
-#include "y_bus.hpp"
 
 namespace power_grid_model {
 

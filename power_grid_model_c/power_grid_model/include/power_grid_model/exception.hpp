@@ -6,11 +6,11 @@
 #ifndef POWER_GRID_MODEL_EXCEPTION_HPP
 #define POWER_GRID_MODEL_EXCEPTION_HPP
 
-#include <exception>
-#include <string>
-
 #include "enum.hpp"
 #include "power_grid_model.hpp"
+
+#include <exception>
+#include <string>
 
 namespace power_grid_model {
 

@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "c_api_cpp_handle.hpp"
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/auxiliary/output.hpp"
-#include "power_grid_model/auxiliary/update.hpp"
 #include "power_grid_model_c.h"
+
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/output.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
+
+#include <doctest/doctest.h>
 
 /*
 Testing network

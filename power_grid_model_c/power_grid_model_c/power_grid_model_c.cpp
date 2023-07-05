@@ -2,16 +2,15 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-// include the public header
 #define PGM_DLL_EXPORTS
+
 #include "power_grid_model_c.h"
 
-// include private header
-#include <cstdlib>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/power_grid_model.hpp>
 
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
-#include "power_grid_model/main_model.hpp"
-#include "power_grid_model/power_grid_model.hpp"
+#include <cstdlib>
 
 using namespace power_grid_model;
 

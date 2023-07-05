@@ -6,12 +6,13 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 #define POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../enum.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
