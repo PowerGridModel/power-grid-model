@@ -24,7 +24,7 @@ class Fault final : public Base {
     using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
-    ComponentType math_model_type() const {
+    ComponentType math_model_type() const final {
         return ComponentType::fault;
     }
 
@@ -102,7 +102,7 @@ class Fault final : public Base {
         return {false, false};  // topology and parameters do not change
     }
 
-    bool energized(bool is_connected_to_source) const {
+    bool energized(bool is_connected_to_source) const final {
         return is_connected_to_source;
     }
 
