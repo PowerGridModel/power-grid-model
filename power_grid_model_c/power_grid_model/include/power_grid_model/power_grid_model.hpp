@@ -7,6 +7,8 @@
 #define POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
 
 // main header for the model
+#include <boost/iterator/counting_iterator.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -27,8 +29,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include "boost/iterator/counting_iterator.hpp"
 
 namespace power_grid_model {
 

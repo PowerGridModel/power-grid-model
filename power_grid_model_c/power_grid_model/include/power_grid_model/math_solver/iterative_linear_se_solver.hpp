@@ -10,12 +10,13 @@
 iterative linear state estimation solver
 */
 
+#include "y_bus.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "y_bus.hpp"
 
 namespace power_grid_model {
 

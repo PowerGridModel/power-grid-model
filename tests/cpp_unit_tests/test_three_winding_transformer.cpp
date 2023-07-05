@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/three_winding_transformer.hpp"
-#include "power_grid_model/component/transformer.hpp"
+#include <power_grid_model/component/three_winding_transformer.hpp>
+#include <power_grid_model/component/transformer.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
