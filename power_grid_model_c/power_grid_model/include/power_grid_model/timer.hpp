@@ -6,10 +6,10 @@
 #ifndef POWER_GRID_MODEL_TIMER_HPP
 #define POWER_GRID_MODEL_TIMER_HPP
 
+#include "power_grid_model.hpp"
+
 #include <iomanip>
 #include <sstream>
-
-#include "power_grid_model.hpp"
 
 namespace power_grid_model {
 

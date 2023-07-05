@@ -6,6 +6,9 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_LOAD_GEN_HPP
 #define POWER_GRID_MODEL_COMPONENT_LOAD_GEN_HPP
 
+#include "appliance.hpp"
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -13,8 +16,6 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "appliance.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
