@@ -25,13 +25,13 @@ We do batch calculation with 3 scenarios, with the following mutation
 #2: source: u_ref = 1.10, sym_load_3: -200 kW
 */
 
+#include "power_grid_model_c.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "power_grid_model_c.h"
 
 int main(int argc, char** argv) {
     (void)(argc);

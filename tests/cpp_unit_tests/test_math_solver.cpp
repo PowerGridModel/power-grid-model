@@ -4,11 +4,12 @@
 
 // In this unit test the powerflow and state estimation solvers are tested
 
-#include "doctest/doctest.h"
-#include "power_grid_model/exception.hpp"
-#include "power_grid_model/math_solver/math_solver.hpp"
-#include "power_grid_model/math_solver/newton_raphson_pf_solver.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <power_grid_model/exception.hpp>
+#include <power_grid_model/math_solver/math_solver.hpp>
+#include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 namespace {

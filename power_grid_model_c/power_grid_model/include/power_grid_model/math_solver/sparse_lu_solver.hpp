@@ -6,11 +6,11 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
 
-#include <memory>
-
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+
+#include <memory>
 
 namespace power_grid_model {
 

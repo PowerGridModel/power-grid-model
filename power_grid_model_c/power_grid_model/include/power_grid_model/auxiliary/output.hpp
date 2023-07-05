@@ -9,10 +9,11 @@
 #ifndef POWER_GRID_MODEL_AUXILIARY_OUTPUT_HPP
 #define POWER_GRID_MODEL_AUXILIARY_OUTPUT_HPP
 
+#include "meta_data.hpp"
+
 #include "../enum.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "meta_data.hpp"
 
 namespace power_grid_model {
 

@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/calculation_parameters.hpp"
-#include "power_grid_model/component/sensor.hpp"
-#include "power_grid_model/component/voltage_sensor.hpp"
-#include "power_grid_model/power_grid_model.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/component/sensor.hpp>
+#include <power_grid_model/component/voltage_sensor.hpp>
+#include <power_grid_model/power_grid_model.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
