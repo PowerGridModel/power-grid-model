@@ -673,7 +673,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params") {
-        MathSolver<false> solver{topo_sc_ptr, param_sym_ptr};
+        MathSolver<true> solver{topo_sc_ptr, param_sym_ptr};
         auto sc_input = create_sc_test_input(FaultType::three_phase, z_fault, vref);
         auto sc_output_ref = create_sc_test_output(FaultType::three_phase, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
@@ -682,7 +682,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
-        MathSolver<false> solver{topo_sc_ptr, param_sym_ptr};
+        MathSolver<true> solver{topo_sc_ptr, param_sym_ptr};
         auto sc_input = create_sc_test_input(FaultType::three_phase, z_fault_solid, vref);
         auto sc_output_ref = create_sc_test_output(FaultType::three_phase, z_fault_solid, y0, y0_0, vref, yref);
         CalculationInfo info;
