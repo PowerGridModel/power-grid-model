@@ -10,6 +10,12 @@ add_library(power_grid_model_c SHARED
   "options.cpp"
 )
 
+set_property(TARGET power_grid_model_c
+  PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+
+set_property(TARGET power_grid_model_c
+  PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+
 target_include_directories(power_grid_model_c PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
