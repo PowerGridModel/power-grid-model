@@ -24,7 +24,7 @@ class Fault final : public Base {
     using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
-    ComponentType math_model_type() const final {
+    ComponentType math_model_type() const {
         return ComponentType::fault;
     }
 
@@ -102,7 +102,7 @@ class Fault final : public Base {
         return {false, false};  // topology and parameters do not change
     }
 
-    bool energized(bool is_connected_to_source) const final {
+    bool energized(bool is_connected_to_source) const {
         return is_connected_to_source;
     }
 
@@ -125,6 +125,22 @@ class Fault final : public Base {
         return fault_type_;
     }
     FaultPhase get_fault_phase() const {
+        using enum FaultPhase;
+
+        if (fault_phase_ == default_value || fault_phase_ == nan) {
+            switch (fault_type_) {
+                case FaultType::three_phase:
+                    return abc;
+                case FaultType::single_phase_to_ground:
+                    return a;
+                case FaultType::two_phase:
+                    [[fallthrough]];
+                case FaultType::two_phase_to_ground:
+                    return bc;
+                case FaultType::nan:
+                    return FaultPhase::nan;
+            }
+        }
         return fault_phase_;
     }
     ID get_fault_object() const {

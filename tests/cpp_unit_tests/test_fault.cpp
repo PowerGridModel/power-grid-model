@@ -77,8 +77,45 @@ TEST_CASE("Test fault") {
         CHECK(!fault.energized(false));
     }
 
+    SUBCASE("Check fault phase getter") {
+        using enum FaultPhase;
+
+        auto create_fault = [](FaultType fault_type, FaultPhase fault_phase) {
+            return Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}};
+        };
+
+        SUBCASE("Fault phase fully specified") {
+            CHECK(create_fault(FaultType::three_phase, abc).get_fault_phase() == abc);
+            CHECK(create_fault(FaultType::single_phase_to_ground, a).get_fault_phase() == a);
+            CHECK(create_fault(FaultType::single_phase_to_ground, b).get_fault_phase() == b);
+            CHECK(create_fault(FaultType::single_phase_to_ground, c).get_fault_phase() == c);
+            CHECK(create_fault(FaultType::two_phase, ab).get_fault_phase() == ab);
+            CHECK(create_fault(FaultType::two_phase, ac).get_fault_phase() == ac);
+            CHECK(create_fault(FaultType::two_phase, bc).get_fault_phase() == bc);
+            CHECK(create_fault(FaultType::two_phase_to_ground, ab).get_fault_phase() == ab);
+            CHECK(create_fault(FaultType::two_phase_to_ground, ac).get_fault_phase() == ac);
+            CHECK(create_fault(FaultType::two_phase_to_ground, bc).get_fault_phase() == bc);
+            CHECK(create_fault(FaultType::nan, abc).get_fault_phase() == abc);
+            CHECK(create_fault(FaultType::nan, a).get_fault_phase() == a);
+            CHECK(create_fault(FaultType::nan, b).get_fault_phase() == b);
+            CHECK(create_fault(FaultType::nan, c).get_fault_phase() == c);
+            CHECK(create_fault(FaultType::nan, ab).get_fault_phase() == ab);
+            CHECK(create_fault(FaultType::nan, ac).get_fault_phase() == ac);
+            CHECK(create_fault(FaultType::nan, bc).get_fault_phase() == bc);
+        }
+
+        SUBCASE("Fault phase not specified") {
+            for (auto fault_phase : {default_value, nan}) {
+                CHECK(create_fault(FaultType::three_phase, fault_phase).get_fault_phase() == abc);
+                CHECK(create_fault(FaultType::single_phase_to_ground, fault_phase).get_fault_phase() == a);
+                CHECK(create_fault(FaultType::two_phase, fault_phase).get_fault_phase() == bc);
+                CHECK(create_fault(FaultType::two_phase_to_ground, fault_phase).get_fault_phase() == bc);
+            }
+        }
+    }
+
     SUBCASE("Test update") {
-        FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::bc, 10};
+        FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::ac, 10};
         UpdateChange updated = fault.update(fault_update);
 
         CHECK(!updated.param);
@@ -86,7 +123,7 @@ TEST_CASE("Test fault") {
 
         CHECK_FALSE(fault.status());
         CHECK(fault.get_fault_type() == FaultType::two_phase);
-        CHECK(fault.get_fault_phase() == FaultPhase::bc);
+        CHECK(fault.get_fault_phase() == FaultPhase::ac);
         CHECK(fault.get_fault_object() == 10);
 
         // update without updating
@@ -94,7 +131,15 @@ TEST_CASE("Test fault") {
         fault.update(fault_update_nan);
         CHECK_FALSE(fault.status());
         CHECK(fault.get_fault_type() == FaultType::two_phase);
-        CHECK(fault.get_fault_phase() == FaultPhase::bc);
+        CHECK(fault.get_fault_phase() == FaultPhase::ac);
+        CHECK(fault.get_fault_object() == 10);
+
+        // default value does override
+        FaultUpdate const fault_update_default_value{{1}, na_IntS, FaultType::nan, FaultPhase::default_value, na_IntID};
+        fault.update(fault_update_default_value);
+        CHECK_FALSE(fault.status());
+        CHECK(fault.get_fault_type() == FaultType::two_phase);
+        CHECK(fault.get_fault_phase() == FaultPhase::bc);  // bc is the default value for two_phase fault type
         CHECK(fault.get_fault_object() == 10);
     }
 
