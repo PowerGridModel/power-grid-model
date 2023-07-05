@@ -6,6 +6,9 @@
 #define PGM_DLL_EXPORTS
 #include "power_grid_model_c.h"
 
+#include "handle.hpp"
+#include "options.hpp"
+
 // include PGM header
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/main_model.hpp>
@@ -19,26 +22,6 @@ using namespace power_grid_model;
 // aliases main class
 struct PGM_PowerGridModel : public MainModel {
     using MainModel::MainModel;
-};
-
-// context handle
-struct PGM_Handle {
-    Idx err_code;
-    std::string err_msg;
-    IdxVector failed_scenarios;
-    std::vector<std::string> batch_errs;
-    mutable std::vector<char const*> batch_errs_c_str;
-    [[no_unique_address]] BatchParameter batch_parameter;
-};
-
-// options
-struct PGM_Options {
-    Idx calculation_type{PGM_power_flow};
-    Idx calculation_method{PGM_default_method};
-    Idx symmetric{1};
-    double err_tol{1e-8};
-    Idx max_iter{20};
-    Idx threading{-1};
 };
 
 namespace {
@@ -67,39 +50,6 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
     }
 }
 }  // namespace
-
-// create and destroy handle
-PGM_Handle* PGM_create_handle() {
-    return new PGM_Handle{};
-}
-void PGM_destroy_handle(PGM_Handle* handle) {
-    delete handle;
-}
-
-// error handling
-PGM_Idx PGM_error_code(PGM_Handle const* handle) {
-    return handle->err_code;
-}
-char const* PGM_error_message(PGM_Handle const* handle) {
-    return handle->err_msg.c_str();
-}
-PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) {
-    return static_cast<Idx>(handle->failed_scenarios.size());
-}
-PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) {
-    return handle->failed_scenarios.data();
-}
-char const** PGM_batch_errors(PGM_Handle const* handle) {
-    handle->batch_errs_c_str.clear();
-    std::transform(handle->batch_errs.begin(), handle->batch_errs.end(), std::back_inserter(handle->batch_errs_c_str),
-                   [](auto const& x) {
-                       return x.c_str();
-                   });
-    return handle->batch_errs_c_str.data();
-}
-void PGM_clear_error(PGM_Handle* handle) {
-    *handle = PGM_Handle{};
-}
 
 // retrieve meta data
 // dataset
@@ -220,32 +170,6 @@ void PGM_buffer_set_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDa
 void PGM_buffer_get_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
                           RawDataPtr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
     buffer_get_set_value<true>(attribute, buffer_ptr, dest_ptr, size, dest_stride);
-}
-
-// options
-PGM_Options* PGM_create_options(PGM_Handle*) {
-    return new PGM_Options{};
-}
-void PGM_destroy_options(PGM_Options* opt) {
-    delete opt;
-}
-void PGM_set_calculation_type(PGM_Handle*, PGM_Options* opt, PGM_Idx type) {
-    opt->calculation_type = type;
-}
-void PGM_set_calculation_method(PGM_Handle*, PGM_Options* opt, PGM_Idx method) {
-    opt->calculation_method = method;
-}
-void PGM_set_symmetric(PGM_Handle*, PGM_Options* opt, PGM_Idx sym) {
-    opt->symmetric = sym;
-}
-void PGM_set_err_tol(PGM_Handle*, PGM_Options* opt, double err_tol) {
-    opt->err_tol = err_tol;
-}
-void PGM_set_max_iter(PGM_Handle*, PGM_Options* opt, PGM_Idx max_iter) {
-    opt->max_iter = max_iter;
-}
-void PGM_set_threading(PGM_Handle*, PGM_Options* opt, PGM_Idx threading) {
-    opt->threading = threading;
 }
 
 // create model
