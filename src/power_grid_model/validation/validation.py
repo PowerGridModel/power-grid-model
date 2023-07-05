@@ -313,11 +313,17 @@ def validate_required_values(
     required["asym_power_sensor"] = required["power_sensor"].copy()
 
     # Faults
-    required["fault"] = required["base"]
+    required["fault"] = required["base"] + ["fault_object"]
+    asym_sc = False
     if calculation_type is None or calculation_type == CalculationType.short_circuit:
-        required["fault"] += ["status", "fault_type", "fault_object"]
+        required["fault"] += ["status", "fault_type"]
+        if "fault" in data:
+            for elem in data["fault"]["fault_type"]:
+                if elem not in (FaultType.three_phase, FaultType.default_value):
+                    asym_sc = True
+                    break
 
-    if not symmetric:
+    if not symmetric or asym_sc:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from itertools import product
 from typing import List, Union
 from unittest.mock import ANY, MagicMock, patch
 
@@ -335,7 +336,6 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("fault", "id", [NaN]) in required_values_errors
     assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
     assert (MissingValueError("fault", "fault_type", [NaN]) in required_values_errors) == sc_dependent
-    assert (MissingValueError("fault", "fault_object", [NaN]) in required_values_errors) == sc_dependent
 
 
 def test_validate_required_values_asym_calculation():
@@ -352,6 +352,29 @@ def test_validate_required_values_asym_calculation():
 
     assert MissingValueError("shunt", "g0", [NaN]) in required_values_errors
     assert MissingValueError("shunt", "b0", [NaN]) in required_values_errors
+
+
+@pytest.mark.parametrize("fault_types", product(list(FaultType), list(FaultType)))
+def test_validate_fault_sc_calculation(fault_types):
+    line = initialize_array("input", "line", 1)
+    shunt = initialize_array("input", "shunt", 1)
+    fault = initialize_array("input", "fault", 2)
+    fault["fault_type"] = fault_types
+
+    data = {"line": line, "shunt": shunt, "fault": fault}
+    required_values_errors = validate_required_values(data=data, calculation_type=CalculationType.short_circuit)
+
+    asym_sc_calculation = np.any(
+        list(fault_type not in (FaultType.three_phase, FaultType.default_value) for fault_type in fault_types)
+    )
+
+    assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "x0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "c0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "tan0", [NaN]) in required_values_errors) == asym_sc_calculation
+
+    assert (MissingValueError("shunt", "g0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("shunt", "b0", [NaN]) in required_values_errors) == asym_sc_calculation
 
 
 def test_validate_values():

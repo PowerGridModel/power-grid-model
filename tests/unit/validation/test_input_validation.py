@@ -229,7 +229,7 @@ def input_data() -> Dict[str, np.ndarray]:
     fault["fault_phase"] = list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7]
     fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
     fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "r_f")]
-    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "r_f")]
+    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "x_f")]
 
     data = {
         "node": node,
@@ -457,6 +457,9 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
 
+    assert NotBooleanError("fault", "status", [32, 33]) in validation_errors
+    assert InvalidIdError("fault", "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
+
 
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
@@ -547,14 +550,11 @@ def test_validate_three_winding_transformer_ukpkminmax(input_data):
 
 
 def test_fault(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=False)
-    assert NotBooleanError("fault", "status", [32, 33]) in validation_errors
+    validation_errors = validate_input_data(input_data, calculation_type=CalculationType.short_circuit)
     assert InvalidEnumValueError("fault", "fault_type", [50], FaultType) in validation_errors
     assert InvalidEnumValueError("fault", "fault_phase", [50], FaultPhase) in validation_errors
     assert FaultPhaseError("fault", ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
-    assert InvalidIdError("fault", "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
     assert NotGreaterOrEqualError("fault", "r_f", [1], 0) in validation_errors
-    # TODO(mgovers): All faults in a batch should have the same fault_type and fault_phase
 
 
 def test_validate_input_data_asym_calculation(input_data):

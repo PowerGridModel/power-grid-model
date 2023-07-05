@@ -127,6 +127,12 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 | `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan𝛿)     | &#10024; only for asymmetric calculations | &#10060; |                                   |
 | `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10060;                  | &#10060; |               `> 0`               |
 
+```{note}
+In case of short circuit calculations, the zero-sequence parameters are required only
+if any of the faults in any of the scenarios within a batch are not three-phase faults
+(i.e. `fault_type` is not {py:enum:mem}`FaultType.three_phase <power_grid_model.enum.FaultType.three_phase>`).
+```
+
 ### Link
 
 * type name: `link`
@@ -380,6 +386,12 @@ load/generator with type `const_impedance`.
 | `g0` | `double`  | siemens (S) | zero-sequence shunt conductance     | &#10024; only for asymmetric calculation | &#10060; |
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10060; |
 
+```{note}
+In case of short circuit calculations, the zero-sequence parameters are required only
+if any of the faults in any of the scenarios within a batch are not three-phase faults
+(i.e. `fault_type` is not {py:enum:mem}`FaultType.three_phase <power_grid_model.enum.FaultType.three_phase>`).
+```
+
 ## Sensor
 
 * type name: `sensor`
@@ -502,6 +514,12 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 | `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                       &#10004;                                                        | &#10004; | A valid `node` ID |
 | `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                                 &#10060; default 0.0                                                  | &#10060; |                   |
 | `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                                 &#10060; default 0.0                                                  | &#10060; |                   |
+
+```{note}
+If any of the faults in any of the scenarios within a batch are not `three_phase`
+(i.e. `fault_type` is not {py:enum:mem}`FaultType.three_phase <power_grid_model.enum.FaultType.three_phase>),
+the calculation is treated as asymmetric.
+```
 
 ##### Default values for `fault_phase`
 
