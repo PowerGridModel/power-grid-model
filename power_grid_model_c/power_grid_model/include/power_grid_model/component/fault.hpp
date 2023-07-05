@@ -127,7 +127,7 @@ class Fault final : public Base {
     FaultPhase get_fault_phase() const {
         using enum FaultPhase;
 
-        if (fault_phase_ == default_value || fault_phase_ == nan) {
+        if (fault_phase_ == default_value || fault_phase_ == FaultPhase::nan) {
             switch (fault_type_) {
                 case FaultType::three_phase:
                     return abc;
@@ -158,21 +158,18 @@ class Fault final : public Base {
 
     void check_sanity() const {
         auto supported = [](FaultType fault_type) -> std::vector<FaultPhase> {
+            using enum FaultPhase;
             switch (fault_type) {
                 case FaultType::three_phase:
-                    return {FaultPhase::nan, FaultPhase::default_value, FaultPhase::abc};
+                    return {FaultPhase::nan, default_value, abc};
                 case FaultType::single_phase_to_ground:
-                    return {FaultPhase::nan, FaultPhase::default_value, FaultPhase::a, FaultPhase::b, FaultPhase::c};
+                    return {FaultPhase::nan, default_value, a, b, c};
                 case FaultType::two_phase:
                     [[fallthrough]];
                 case FaultType::two_phase_to_ground:
-                    return {FaultPhase::nan, FaultPhase::default_value, FaultPhase::ab, FaultPhase::ac, FaultPhase::bc};
+                    return {FaultPhase::nan, default_value, ab, ac, bc};
                 case FaultType::nan:
-                    return {FaultPhase::nan, FaultPhase::default_value,
-                            FaultPhase::abc, FaultPhase::a,
-                            FaultPhase::b,   FaultPhase::c,
-                            FaultPhase::ab,  FaultPhase::ac,
-                            FaultPhase::bc};
+                    return {FaultPhase::nan, default_value, abc, a, b, FaultPhase::c, ab, ac, bc};
                 default:
                     return {};
             }

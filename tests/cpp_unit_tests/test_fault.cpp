@@ -105,7 +105,7 @@ TEST_CASE("Test fault") {
         }
 
         SUBCASE("Fault phase not specified") {
-            for (auto fault_phase : {default_value, nan}) {
+            for (auto fault_phase : {default_value, FaultPhase::nan}) {
                 CHECK(create_fault(FaultType::three_phase, fault_phase).get_fault_phase() == abc);
                 CHECK(create_fault(FaultType::single_phase_to_ground, fault_phase).get_fault_phase() == a);
                 CHECK(create_fault(FaultType::two_phase, fault_phase).get_fault_phase() == bc);
