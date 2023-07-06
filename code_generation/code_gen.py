@@ -34,7 +34,7 @@ class CodeGenerator:
         with output_path.open(mode="w", encoding="utf-8") as output_file:
             output_file.write(output)
 
-    def render_data_class_template(self, template_path: Path, data_path: Path, output_path: Path):
+    def render_attribute_classes(self, template_path: Path, data_path: Path, output_path: Path):
         print(f"Generating file: {output_path}")
 
         with open(data_path) as data_file:
@@ -69,31 +69,30 @@ class CodeGenerator:
 
         self.render_template(
             template_path=template_path,
-            data_path=data_path,
+            output_path=output_path,
             classes=dataset_meta_data.classes,
             include_guard=dataset_meta_data.include_guard,
             name=dataset_meta_data.name,
         )
 
-    def render_data_class_map(self, template_path: Path, data_path: Path, output_path: Path):
+    def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
         pass
-    
+
     def code_gen(self):
+        render_funcs = {
+            "attribute_classes": self.render_attribute_classes,
+            "dataset_class_maps": self.render_dataset_class_maps,
+        }
+
         # render attribute classes
-        for template_path in TEMPLATE_DIR.rglob("attribute_classes.hpp.jinja"):
+        for template_path in TEMPLATE_DIR.rglob("*.jinja"):
             template_name = template_path.with_suffix("").stem
             output_suffix = template_path.with_suffix("").suffix
             output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
             for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
                 output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                self.render_data_class_template(
-                    template_path=template_path, data_path=data_path, output_path=output_path
-                )
-        
-        # render dataset_class_map
-        for template_path in TEMPLATE_DIR.rglob("attribute_classes.hpp.jinja"):
-            pass
+                render_funcs[template_name](template_path=template_path, data_path=data_path, output_path=output_path)
 
 
 if __name__ == "__main__":
