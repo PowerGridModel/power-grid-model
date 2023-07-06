@@ -277,7 +277,7 @@ class PowerGridModel:
         Args:
             symmetric (bool, optional): Whether to perform a three-phase symmetric calculation.
 
-                - True: Three-phase symmetric calculation, even for asymmetric loads/generations.
+                - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default).
                 - False: Three-phase asymmetric calculation.        
             error_tolerance (float, optional): Error tolerance for voltage in p.u., applicable only when iterative=True.
             max_iterations (int, optional): Maximum number of iterations, applicable only when iterative=True.
@@ -353,56 +353,54 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
-        """
-        Calculate state estimation once with the current model attributes.
-        Or calculate in batch with the given update dataset in batch
+        """Calculate state estimation once with the current model attributes. 
+                Or calculate in batch with the given update dataset in batch.
 
         Args:
-            symmetric:
-                True: three-phase symmetric calculation, even for asymmetric loads/generations
-                False: three-phase asymmetric calculation
-            error_tolerance:
-                error tolerance for voltage in p.u., only applicable when iterative=True
-            max_iterations:
-                maximum number of iterations, only applicable when iterative=True
-            calculation_method: an enumeration
-                iterative_linear: use iterative linear method
-            update_data:
-                None: calculate state estimation once with the current model attributes
-                A dictionary for batch calculation with batch update
-                    key: component type name to be updated in batch
-                    value:
-                        a 2D numpy structured array for homogeneous update batch
-                            Dimension 0: each batch
-                            Dimension 1: each updated element per batch for this component type
-                        **or**
-                        a dictionary containing two keys, for inhomogeneous update batch
-                            indptr: a 1D integer numpy array with length n_batch + 1
-                                given batch number k, the update array for this batch is
-                                data[indptr[k]:indptr[k + 1]]
-                                This is the concept of compressed sparse structure
-                                https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
-                            data: 1D numpy structured array in flat
-            threading:
-                only applicable for batch calculation
-                < 0 sequential
-                = 0 parallel, use number of hardware threads
-                > 0 specify number of parallel threads
-            output_component_types: list or set of component types you want to be present in the output dict.
-                By default all component types will be in the output
-            continue_on_batch_error: if the program continues (instead of throwing error) if some scenarios fails
+            symmetric (bool, optional): Whether to perform a three-phase symmetric calculation.
 
+                - True: Three-phase symmetric calculation, even for asymmetric loads/generations (Default).
+                - False: Three-phase asymmetric calculation.        
+            error_tolerance (float, optional): Error tolerance for voltage in p.u., applicable only when iterative=True.
+            max_iterations (int, optional): Maximum number of iterations, applicable only when iterative=True.
+            calculation_method (an enumeration): Use iterative linear method.     
+            update_data (dict, optional):
+                None: Calculate state estimation once with the current model attributes.
+                Or a dictionary for batch calculation with batch update. 
+                    key: Component type name to be updated in batch.
 
-        Returns:
-            dictionary of results of all components
-                key: component type name to be updated in batch
-                value:
-                    for single calculation: 1D numpy structured array for the results of this component type
-                    for batch calculation: 2D numpy structured array for the results of this component type
-                        Dimension 0: each batch
-                        Dimension 1: the result of each element for this component type
-            Error handling:
-                in case an error in the core occurs, an exception will be thrown
+                        - For homogeneous update batch (a 2D numpy structured array):
+
+                            - Dimension 0: Each batch.
+                            - Dimension 1: Each updated element per batch for this component type.
+                        - For inhomogeneous update batch (a dictionary containing two keys):
+
+                            - indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the update array for this batch is
+                              data[indptr[k]:indptr[k + 1]]. This is the concept of compressed sparse structure.  
+                              https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
+                            - data: 1D numpy structured array in flat.     
+            threading (int, optional): Applicable only for batch calculation.
+
+                - < 0: Sequential
+                - = 0: Parallel, use number of hardware threads
+                - > 0: Specify number of parallel threads  
+            output_component_types ({set, list}, optional): List or set of component types you want to be present in the output dict. 
+                By default, all component types will be in the output.
+            continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some scenarios fails.
+
+        Returns (dict):     
+            Dictionary of results of all components.
+                Key: Component type name to be updated in batch.
+
+                    - For single calculation: 1D numpy structured array for the results of this component type.
+                    - For batch calculation: 2D numpy structured array for the results of this component type.
+
+                        - Dimension 0: Each batch.
+                        - Dimension 1: The result of each element for this component type.                                                                          
+        
+        Raises: 
+            Error: In case an error in the core occurs, an exception will be thrown.
+                   
         """
         calculation_type = CalculationType.state_estimation
         options = self._options(
