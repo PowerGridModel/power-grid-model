@@ -44,7 +44,6 @@ class PowerGridModel:
 
         Returns: 
             Batch error object, or None
-
         """
         return self._batch_error
 
@@ -63,8 +62,8 @@ class PowerGridModel:
         Returns:
             A dictionary with
                 
-                - key: component type name
-                - value: integer count of elements of this type
+                - key: Component type name
+                - value: Integer count of elements of this type
         """
         if self._all_component_count is None:
             raise TypeError("You have an empty instance of PowerGridModel!")
@@ -75,7 +74,7 @@ class PowerGridModel:
         Copy the current model
 
         Returns:
-            a copy of PowerGridModel
+            A copy of PowerGridModel
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
         new_model._model_ptr = pgc.copy_model(self._model)  # pylint: disable=W0212
@@ -97,12 +96,12 @@ class PowerGridModel:
         Initialize the model from an input data set.
 
         Args:
-            input_data: input data dictionary
+            input_data: Input data dictionary
 
-                - key: component type name
+                - key: Component type name
                 - value: 1D numpy structured array for this component input
 
-            system_frequency: frequency of the power system, default 50 Hz
+            system_frequency: Frequency of the power system, default 50 Hz
         """
         # destroy old instance
         pgc.destroy_model(self._model_ptr)
@@ -126,9 +125,9 @@ class PowerGridModel:
         Update the model with changes.
         
         Args:
-            update_data: update data dictionary
+            update_data: Update data dictionary
 
-                - key: component type name
+                - key: Component type name
                 - value: 1D numpy structured array for this component update
 
         Returns:
@@ -149,12 +148,11 @@ class PowerGridModel:
         Get array of indexers given array of ids for component type
 
         Args:
-            component_type: type of component
-            ids: array of ids
+            component_type: Type of component
+            ids: Array of ids
 
         Returns:
             Array of inderxers, same shape as input array ids
-
         """
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
         indexer = np.empty_like(ids, dtype=IdxNp, order="C")
@@ -221,12 +219,11 @@ class PowerGridModel:
         Args:
             options:
 
-                - update_data
-                - output_component_types
-                - continue_on_batch_error
+                - Update_data
+                - Output_component_types
+                - Continue_on_batch_error
 
         Returns:
-
         """
         self._batch_error = None
         batch_calculation = is_batch_calculation(update_data=update_data)
@@ -330,8 +327,7 @@ class PowerGridModel:
                         - Dimension 1: The result of each element for this component type.                                                                          
         
         Raises: 
-            Error: In case an error in the core occurs, an exception will be thrown.
-                   
+            Error: In case an error in the core occurs, an exception will be thrown.           
         """
         calculation_type = CalculationType.power_flow
         options = self._options(
@@ -401,7 +397,7 @@ class PowerGridModel:
 
         Returns:     
             Dictionary of results of all components.
-            
+
                 Key: Component type name to be updated in batch.
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
@@ -411,8 +407,7 @@ class PowerGridModel:
                         - Dimension 1: The result of each element for this component type.                                                                          
         
         Raises: 
-            Error: In case an error in the core occurs, an exception will be thrown.
-                   
+            Error: In case an error in the core occurs, an exception will be thrown.           
         """
         calculation_type = CalculationType.state_estimation
         options = self._options(

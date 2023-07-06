@@ -68,12 +68,12 @@ def validate_input_data(
         input_data: A power-grid-model input dataset
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
-
-    Raises:
-        KeyError, TypeError or ValueError if the data structure is invalid.
-
+    
     Returns:
         None if the data is valid, or a list containing all validation errors.
+
+    Raises:
+        Error: KeyError, TypeError or ValueError if the data structure is invalid.
     """
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(input_data)
@@ -107,17 +107,17 @@ def validate_batch_data(
         6. Are the supplied values valid? (checking limits and other logic as described in "Graph Data Model")
 
     Args:
-        input_data: a power-grid-model input dataset
-        update_data: a power-grid-model update dataset (one or more batches)
+        input_data: A power-grid-model input dataset
+        update_data: A power-grid-model update dataset (one or more batches)
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
-
-    Raises:
-        KeyError, TypeError or ValueError if the data structure is invalid.
 
     Returns:
         None if the data is valid, or a dictionary containing all validation errors,
         where the key is the batch number (0-indexed).
+
+    Raises:
+        Error: KeyError, TypeError or ValueError if the data structure is invalid.
     """
     assert_valid_data_structure(input_data, "input")
 
@@ -149,10 +149,11 @@ def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
     structured array as defined in the Power Grid Model meta data.
 
     Args:
-        data: a power-grid-model input/update dataset
+        data: A power-grid-model input/update dataset
         data_type: 'input' or 'update'
 
-    Raises: KeyError, TypeError
+    Raises: 
+        Error: KeyError, TypeError
 
     """
     if data_type not in {"input", "update"}:
@@ -186,11 +187,11 @@ def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComp
     Checks if all ids in the input dataset are unique
 
     Args:
-        data: a power-grid-model input dataset
+        data: A power-grid-model input dataset
 
-    Returns: an empty list if all ids are unique, or a list of MultiComponentNotUniqueErrors for all components that
-             have non-unique ids
-
+    Returns: 
+        An empty list if all ids are unique, or a list of MultiComponentNotUniqueErrors for all components that
+        have non-unique ids
     """
     return all_cross_unique(data, [(component, "id") for component in data])
 
@@ -203,11 +204,12 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     This function should be called for every update dataset in a batch set
 
     Args:
-        update_data: a single update dataset
-        input_data: a power-grid-model input dataset
+        update_data: A single update dataset
+        input_data: A power-grid-model input dataset
 
-    Returns: an empty list if all update data ids exist in the input dataset, or a list of IdNotInDatasetErrors for
-             all update components of which the id does not exist in the input dataset
+    Returns: 
+        An empty list if all update data ids exist in the input dataset, or a list of IdNotInDatasetErrors for
+        all update components of which the id does not exist in the input dataset
 
     """
     errors = (all_ids_exist_in_data_set(update_data, input_data, component, "input_data") for component in update_data)
@@ -221,12 +223,12 @@ def validate_required_values(
     Checks if all required data is available.
 
     Args:
-        data: a power-grid-model input dataset
+        data: A power-grid-model input dataset
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
-    Returns: an empty list if all required data is available, or a list of MissingValueErrors.
-
+    Returns: 
+        An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
     required = {"base": ["id"]}
@@ -321,9 +323,10 @@ def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: di
     For each component supplied in the data, call the appropriate validation function
 
     Args:
-        data: a power-grid-model input dataset
+        data: A power-grid-model input dataset
 
-    Returns: an empty list if all required data is valid, or a list of ValidationErrors.
+    Returns: 
+        An empty list if all required data is valid, or a list of ValidationErrors.
 
     """
     errors: List[ValidationError] = list(all_finite(data))
