@@ -68,6 +68,7 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* com
  * @param attribute attribute pointer
  * @param buffer_ptr pointer to the buffer
  * @param src_ptr pointer to the source array you want to retrieve the value from
+ * @param buffer_offset offset in the buffer where you begin to set value, in terms of number of elements
  * @param size size of the buffer in terms of number of elements
  * @param src_stride  stride of the source array in bytes.
  * You can set it to -1, the default stride of the size of the attribute type (like sizeof(double)).
@@ -75,7 +76,7 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* com
  * (void const*)((char const*)src_ptr + i * src_stride)
  */
 PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void* buffer_ptr,
-                                  void const* src_ptr, PGM_Idx size, PGM_Idx src_stride);
+                                  void const* src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride);
 
 /**
  * @brief Get value of a certain attribute from the component buffer to an array
@@ -88,6 +89,7 @@ PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* a
  * @param attribute attribute pointer
  * @param buffer_ptr pointer to the buffer
  * @param dest_ptr pointer to the destination array you want to save the value to
+ * @param buffer_offset offset in the buffer where you begin to get value, in terms of number of elements
  * @param size size of the buffer in terms of number of elements
  * @param dest_stride stride of the destination array in bytes.
  * You can set it to -1, the default stride of the size of the attribute type (like sizeof(double)).
@@ -95,7 +97,7 @@ PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* a
  * (void*)((char*)dest_ptr + i * dest_stride)
  */
 PGM_API void PGM_buffer_get_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void const* buffer_ptr,
-                                  void* dest_ptr, PGM_Idx size, PGM_Idx dest_stride);
+                                  void* dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride);
 
 #ifdef __cplusplus
 }

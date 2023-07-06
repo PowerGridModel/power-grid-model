@@ -38,13 +38,13 @@ void PGM_buffer_set_nan(PGM_Handle*, PGM_MetaComponent const* component, void* p
 namespace {
 // template for get and set attribute
 template <bool is_get, class BufferPtr, class ValuePtr>
-void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_ptr, ValuePtr value_ptr, PGM_Idx size,
-                          PGM_Idx stride) {
+void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_ptr, ValuePtr value_ptr,
+                          PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx stride) {
     // if stride is negative, use the size of the attributes as stride
     if (stride < 0) {
         stride = attribute->size;
     }
-    for (Idx i = 0; i != size; ++i) {
+    for (Idx i = buffer_offset; i != size + buffer_offset; ++i) {
         ValuePtr const shifted_value_ptr =
             reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
         if constexpr (is_get) {
@@ -57,10 +57,10 @@ void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_p
 }
 }  // namespace
 void PGM_buffer_set_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
-                          RawDataConstPtr src_ptr, PGM_Idx size, PGM_Idx src_stride) {
-    buffer_get_set_value<false>(attribute, buffer_ptr, src_ptr, size, src_stride);
+                          RawDataConstPtr src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride) {
+    buffer_get_set_value<false>(attribute, buffer_ptr, src_ptr, buffer_offset, size, src_stride);
 }
 void PGM_buffer_get_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
-                          RawDataPtr dest_ptr, PGM_Idx size, PGM_Idx dest_stride) {
-    buffer_get_set_value<true>(attribute, buffer_ptr, dest_ptr, size, dest_stride);
+                          RawDataPtr dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride) {
+    buffer_get_set_value<true>(attribute, buffer_ptr, dest_ptr, buffer_offset, size, dest_stride);
 }
