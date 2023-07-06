@@ -8,6 +8,7 @@ add_library(power_grid_model_c SHARED
   "meta_data.cpp"
   "model.cpp"
   "options.cpp"
+  "dataset_definitions.cpp"
 )
 
 set_property(TARGET power_grid_model_c

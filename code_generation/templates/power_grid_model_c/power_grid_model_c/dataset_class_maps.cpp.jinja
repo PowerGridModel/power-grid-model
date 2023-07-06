@@ -1,0 +1,38 @@
+// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+#define PGM_DLL_EXPORTS
+#include "power_grid_model_c/dataset_definitions.h"
+#include "power_grid_model_c/meta_data.h"
+
+{% for dataset, components in all_map.items() -%}
+// dataset {{ dataset }}
+PGM_MetaDataset const* PGM_zdef_{{ dataset }}() {
+    static PGM_MetaDataset const* const ptr = PGM_meta_get_dataset_by_name(nullptr, "{{ dataset }}");
+    return ptr;
+}
+// components of {{ dataset }}
+{% for component, attributes in components.items() -%}
+// component {{ component }}
+PGM_MetaComponent const* PGM_zdef_{{ dataset }}_{{ component }}() {
+    static PGM_MetaComponent const* const ptr = PGM_meta_get_component_by_name(nullptr, "{{ dataset }}", "{{ component }}");
+    return ptr;
+}
+// attributes of {{ dataset }} {{ component }}
+{% for attribute in attributes -%}
+PGM_MetaAttribute const* PGM_zdef_{{ dataset }}_{{ component }}_{{ attribute }}() {
+    static PGM_MetaAttribute const* const ptr = PGM_meta_get_attribute_by_name(nullptr, "{{ dataset }}", "{{ component }}", "{{ attribute }}");
+    return ptr;
+}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+
+//
+
+// clang-format on
