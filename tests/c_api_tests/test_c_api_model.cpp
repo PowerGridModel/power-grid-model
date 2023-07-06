@@ -11,6 +11,8 @@
 
 #include <doctest/doctest.h>
 
+#include <power_grid_model_c/dataset_definitions.h>
+
 /*
 Testing network
 
@@ -50,22 +52,15 @@ TEST_CASE("C API Model") {
     std::array input_components{"node", "source", "sym_load"};
     std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
-    auto const meta_source = PGM_meta_get_component_by_name(hl, "input", "source");
-    BufferPtr const unique_source_buffer{PGM_create_buffer(hl, meta_source, 1)};
+    BufferPtr const unique_source_buffer{PGM_create_buffer(hl, PGM_zdef_input_source(), 1)};
     RawDataPtr source_buffer = unique_source_buffer.get();
-    PGM_buffer_set_nan(hl, meta_source, source_buffer, 0, 1);
-    PGM_buffer_set_value(hl, PGM_meta_get_attribute_by_name(hl, "input", "source", "id"), source_buffer,
-                         &source_input.id, 0, 1, -1);
-    PGM_buffer_set_value(hl, PGM_meta_get_attribute_by_name(hl, "input", "source", "node"), source_buffer,
-                         &source_input.node, 0, 1, sizeof(ID));
-    PGM_buffer_set_value(hl, PGM_meta_get_attribute_by_name(hl, "input", "source", "status"), source_buffer,
-                         &source_input.status, 0, 1, -1);
-    PGM_buffer_set_value(hl, PGM_meta_get_attribute_by_name(hl, "input", "source", "u_ref"), source_buffer,
-                         &source_input.u_ref, 0, 1, -1);
-    PGM_buffer_set_value(hl, PGM_meta_get_attribute_by_name(hl, "input", "source", "sk"), source_buffer,
-                         &source_input.sk, 0, 1, -1);
-    PGM_buffer_set_value(hl, PGM_meta_get_attribute_by_name(hl, "input", "source", "rx_ratio"), source_buffer,
-                         &source_input.rx_ratio, 0, 1, -1);
+    PGM_buffer_set_nan(hl, PGM_zdef_input_source(), source_buffer, 0, 1);
+    PGM_buffer_set_value(hl, PGM_zdef_input_source_id(), source_buffer, &source_input.id, 0, 1, -1);
+    PGM_buffer_set_value(hl, PGM_zdef_input_source_node(), source_buffer, &source_input.node, 0, 1, sizeof(ID));
+    PGM_buffer_set_value(hl, PGM_zdef_input_source_status(), source_buffer, &source_input.status, 0, 1, -1);
+    PGM_buffer_set_value(hl, PGM_zdef_input_source_u_ref(), source_buffer, &source_input.u_ref, 0, 1, -1);
+    PGM_buffer_set_value(hl, PGM_zdef_input_source_sk(), source_buffer, &source_input.sk, 0, 1, -1);
+    PGM_buffer_set_value(hl, PGM_zdef_input_source_rx_ratio(), source_buffer, &source_input.rx_ratio, 0, 1, -1);
     std::array<RawDataConstPtr, 3> input_data{&node_input, source_buffer, &load_input};
 
     // output data
@@ -158,13 +153,11 @@ TEST_CASE("C API Model") {
         CHECK(node_result_1.u_angle == doctest::Approx(0.0));
         // check via get attribute for u_pu and u
         std::array<double, 2> u_pu{};
-        PGM_buffer_get_value(hl, PGM_meta_get_attribute_by_name(hl, "sym_output", "node", "u_pu"),
-                             sym_node_outputs.data(), u_pu.data(), 0, 2, -1);
+        PGM_buffer_get_value(hl, PGM_zdef_sym_output_node_u_pu(), sym_node_outputs.data(), u_pu.data(), 0, 2, -1);
         CHECK(u_pu[0] == doctest::Approx(0.4));
         CHECK(u_pu[1] == doctest::Approx(0.7));
         std::array<double, 4> u{};
-        PGM_buffer_get_value(hl, PGM_meta_get_attribute_by_name(hl, "sym_output", "node", "u"), sym_node_outputs.data(),
-                             u.data(), 0, 2,
+        PGM_buffer_get_value(hl, PGM_zdef_sym_output_node_u(), sym_node_outputs.data(), u.data(), 0, 2,
                              2 * sizeof(double));  // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
