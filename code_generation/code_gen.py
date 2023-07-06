@@ -87,8 +87,6 @@ class CodeGenerator:
                     template_path=template_path, data_path=data_path, output_path=output_path
                 )
 
-        # render mapping of dataset and component input/output/update
-
 
 if __name__ == "__main__":
     CodeGenerator(OUTPUT_PATH).code_gen()
