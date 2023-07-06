@@ -31,8 +31,9 @@ void PGM_destroy_buffer(RawDataPtr ptr) {
     std::free(ptr);
 #endif
 }
-void PGM_buffer_set_nan(PGM_Handle*, PGM_MetaComponent const* component, void* ptr, PGM_Idx size) {
-    component->set_nan(ptr, 0, size);
+void PGM_buffer_set_nan(PGM_Handle*, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
+                        PGM_Idx size) {
+    component->set_nan(ptr, buffer_offset, size);
 }
 
 namespace {
