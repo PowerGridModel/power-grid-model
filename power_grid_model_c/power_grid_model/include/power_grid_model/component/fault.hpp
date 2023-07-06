@@ -156,25 +156,30 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
+    static constexpr bool is_supported_fault(FaultType fault_type, FaultPhase fault_phase) {
+        using enum FaultPhase;
+
+        auto const is_supported = [&](auto const& iterable) {
+            return std::find(cbegin(iterable), cend(iterable), fault_phase) != cend(iterable);
+        };
+        switch (fault_type) {
+            case FaultType::three_phase:
+                return is_supported(std::array{FaultPhase::nan, default_value, abc});
+            case FaultType::single_phase_to_ground:
+                return is_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+            case FaultType::two_phase:
+                [[fallthrough]];
+            case FaultType::two_phase_to_ground:
+                return is_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+            case FaultType::nan:
+                return is_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+            default:
+                return false;
+        }
+    }
+
     void check_sanity() const {
-        auto supported = [](FaultType fault_type) -> std::vector<FaultPhase> {
-            using enum FaultPhase;
-            switch (fault_type) {
-                case FaultType::three_phase:
-                    return {FaultPhase::nan, default_value, abc};
-                case FaultType::single_phase_to_ground:
-                    return {FaultPhase::nan, default_value, a, b, c};
-                case FaultType::two_phase:
-                    [[fallthrough]];
-                case FaultType::two_phase_to_ground:
-                    return {FaultPhase::nan, default_value, ab, ac, bc};
-                case FaultType::nan:
-                    return {FaultPhase::nan, default_value, abc, a, b, FaultPhase::c, ab, ac, bc};
-                default:
-                    return {};
-            }
-        }(fault_type_);
-        if (std::find(cbegin(supported), cend(supported), fault_phase_) == cend(supported)) {
+        if (!is_supported_fault(fault_type_, fault_phase_)) {
             throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
         }
     }
