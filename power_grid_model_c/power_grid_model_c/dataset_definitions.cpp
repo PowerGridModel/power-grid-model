@@ -564,9 +564,231 @@ PGM_MetaAttribute const* const PGM_zdef_asym_output_fault_energized = PGM_meta_g
 // dataset update
 PGM_MetaDataset const* const PGM_zdef_update = PGM_meta_get_dataset_by_name(nullptr, "update");
 // components of update
+// component node
+PGM_MetaComponent const* const PGM_zdef_update_node = PGM_meta_get_component_by_name(nullptr, "update", "node");
+// attributes of update node
+PGM_MetaAttribute const* const PGM_zdef_update_node_id = PGM_meta_get_attribute_by_name(nullptr, "update", "node", "id");
+// component line
+PGM_MetaComponent const* const PGM_zdef_update_line = PGM_meta_get_component_by_name(nullptr, "update", "line");
+// attributes of update line
+PGM_MetaAttribute const* const PGM_zdef_update_line_id = PGM_meta_get_attribute_by_name(nullptr, "update", "line", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_line_from_status = PGM_meta_get_attribute_by_name(nullptr, "update", "line", "from_status");
+PGM_MetaAttribute const* const PGM_zdef_update_line_to_status = PGM_meta_get_attribute_by_name(nullptr, "update", "line", "to_status");
+// component link
+PGM_MetaComponent const* const PGM_zdef_update_link = PGM_meta_get_component_by_name(nullptr, "update", "link");
+// attributes of update link
+PGM_MetaAttribute const* const PGM_zdef_update_link_id = PGM_meta_get_attribute_by_name(nullptr, "update", "link", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_link_from_status = PGM_meta_get_attribute_by_name(nullptr, "update", "link", "from_status");
+PGM_MetaAttribute const* const PGM_zdef_update_link_to_status = PGM_meta_get_attribute_by_name(nullptr, "update", "link", "to_status");
+// component transformer
+PGM_MetaComponent const* const PGM_zdef_update_transformer = PGM_meta_get_component_by_name(nullptr, "update", "transformer");
+// attributes of update transformer
+PGM_MetaAttribute const* const PGM_zdef_update_transformer_id = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_transformer_from_status = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "from_status");
+PGM_MetaAttribute const* const PGM_zdef_update_transformer_to_status = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "to_status");
+PGM_MetaAttribute const* const PGM_zdef_update_transformer_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "tap_pos");
+// component three_winding_transformer
+PGM_MetaComponent const* const PGM_zdef_update_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "update", "three_winding_transformer");
+// attributes of update three_winding_transformer
+PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_id = PGM_meta_get_attribute_by_name(nullptr, "update", "three_winding_transformer", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_status_1 = PGM_meta_get_attribute_by_name(nullptr, "update", "three_winding_transformer", "status_1");
+PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_status_2 = PGM_meta_get_attribute_by_name(nullptr, "update", "three_winding_transformer", "status_2");
+PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_status_3 = PGM_meta_get_attribute_by_name(nullptr, "update", "three_winding_transformer", "status_3");
+PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "update", "three_winding_transformer", "tap_pos");
+// component sym_load
+PGM_MetaComponent const* const PGM_zdef_update_sym_load = PGM_meta_get_component_by_name(nullptr, "update", "sym_load");
+// attributes of update sym_load
+PGM_MetaAttribute const* const PGM_zdef_update_sym_load_id = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_load", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_load_status = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_load", "status");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_load_p_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_load", "p_specified");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_load_q_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_load", "q_specified");
+// component sym_gen
+PGM_MetaComponent const* const PGM_zdef_update_sym_gen = PGM_meta_get_component_by_name(nullptr, "update", "sym_gen");
+// attributes of update sym_gen
+PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_id = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_gen", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_status = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_gen", "status");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_p_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_gen", "p_specified");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_q_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_gen", "q_specified");
+// component asym_load
+PGM_MetaComponent const* const PGM_zdef_update_asym_load = PGM_meta_get_component_by_name(nullptr, "update", "asym_load");
+// attributes of update asym_load
+PGM_MetaAttribute const* const PGM_zdef_update_asym_load_id = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_load", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_load_status = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_load", "status");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_load_p_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_load", "p_specified");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_load_q_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_load", "q_specified");
+// component asym_gen
+PGM_MetaComponent const* const PGM_zdef_update_asym_gen = PGM_meta_get_component_by_name(nullptr, "update", "asym_gen");
+// attributes of update asym_gen
+PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_id = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_status = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "status");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_p_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "p_specified");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_q_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "q_specified");
+// component shunt
+PGM_MetaComponent const* const PGM_zdef_update_shunt = PGM_meta_get_component_by_name(nullptr, "update", "shunt");
+// attributes of update shunt
+PGM_MetaAttribute const* const PGM_zdef_update_shunt_id = PGM_meta_get_attribute_by_name(nullptr, "update", "shunt", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_shunt_status = PGM_meta_get_attribute_by_name(nullptr, "update", "shunt", "status");
+// component source
+PGM_MetaComponent const* const PGM_zdef_update_source = PGM_meta_get_component_by_name(nullptr, "update", "source");
+// attributes of update source
+PGM_MetaAttribute const* const PGM_zdef_update_source_id = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_source_status = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "status");
+PGM_MetaAttribute const* const PGM_zdef_update_source_u_ref = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "u_ref");
+PGM_MetaAttribute const* const PGM_zdef_update_source_u_ref_angle = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "u_ref_angle");
+// component sym_voltage_sensor
+PGM_MetaComponent const* const PGM_zdef_update_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "update", "sym_voltage_sensor");
+// attributes of update sym_voltage_sensor
+PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_voltage_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_u_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_voltage_sensor", "u_sigma");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_u_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_voltage_sensor", "u_measured");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_u_angle_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_voltage_sensor", "u_angle_measured");
+// component asym_voltage_sensor
+PGM_MetaComponent const* const PGM_zdef_update_asym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "update", "asym_voltage_sensor");
+// attributes of update asym_voltage_sensor
+PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_voltage_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_u_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_voltage_sensor", "u_sigma");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_u_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_voltage_sensor", "u_measured");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_u_angle_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_voltage_sensor", "u_angle_measured");
+// component sym_power_sensor
+PGM_MetaComponent const* const PGM_zdef_update_sym_power_sensor = PGM_meta_get_component_by_name(nullptr, "update", "sym_power_sensor");
+// attributes of update sym_power_sensor
+PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_power_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_power_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_power_sensor", "power_sigma");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_p_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_power_sensor", "p_measured");
+PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_q_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_power_sensor", "q_measured");
+// component asym_power_sensor
+PGM_MetaComponent const* const PGM_zdef_update_asym_power_sensor = PGM_meta_get_component_by_name(nullptr, "update", "asym_power_sensor");
+// attributes of update asym_power_sensor
+PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_power_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "power_sigma");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_p_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "p_measured");
+PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_q_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "q_measured");
+// component fault
+PGM_MetaComponent const* const PGM_zdef_update_fault = PGM_meta_get_component_by_name(nullptr, "update", "fault");
+// attributes of update fault
+PGM_MetaAttribute const* const PGM_zdef_update_fault_id = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "id");
+PGM_MetaAttribute const* const PGM_zdef_update_fault_status = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "status");
+PGM_MetaAttribute const* const PGM_zdef_update_fault_fault_type = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "fault_type");
+PGM_MetaAttribute const* const PGM_zdef_update_fault_fault_phase = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "fault_phase");
+PGM_MetaAttribute const* const PGM_zdef_update_fault_fault_object = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "fault_object");
 // dataset sc_output
 PGM_MetaDataset const* const PGM_zdef_sc_output = PGM_meta_get_dataset_by_name(nullptr, "sc_output");
 // components of sc_output
+// component node
+PGM_MetaComponent const* const PGM_zdef_sc_output_node = PGM_meta_get_component_by_name(nullptr, "sc_output", "node");
+// attributes of sc_output node
+PGM_MetaAttribute const* const PGM_zdef_sc_output_node_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "node", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_node_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "node", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_node_u_pu = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "node", "u_pu");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_node_u = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "node", "u");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_node_u_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "node", "u_angle");
+// component line
+PGM_MetaComponent const* const PGM_zdef_sc_output_line = PGM_meta_get_component_by_name(nullptr, "sc_output", "line");
+// attributes of sc_output line
+PGM_MetaAttribute const* const PGM_zdef_sc_output_line_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "line", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_line_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "line", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_from = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "line", "i_from");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_from_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "line", "i_from_angle");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_to = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "line", "i_to");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_to_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "line", "i_to_angle");
+// component link
+PGM_MetaComponent const* const PGM_zdef_sc_output_link = PGM_meta_get_component_by_name(nullptr, "sc_output", "link");
+// attributes of sc_output link
+PGM_MetaAttribute const* const PGM_zdef_sc_output_link_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "link", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_link_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "link", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_from = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "link", "i_from");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_from_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "link", "i_from_angle");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_to = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "link", "i_to");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_to_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "link", "i_to_angle");
+// component transformer
+PGM_MetaComponent const* const PGM_zdef_sc_output_transformer = PGM_meta_get_component_by_name(nullptr, "sc_output", "transformer");
+// attributes of sc_output transformer
+PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "transformer", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "transformer", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_from = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "transformer", "i_from");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_from_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "transformer", "i_from_angle");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_to = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "transformer", "i_to");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_to_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "transformer", "i_to_angle");
+// component three_winding_transformer
+PGM_MetaComponent const* const PGM_zdef_sc_output_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "sc_output", "three_winding_transformer");
+// attributes of sc_output three_winding_transformer
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_1 = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "i_1");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_1_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "i_1_angle");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_2 = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "i_2");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_2_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "i_2_angle");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_3 = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "i_3");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_3_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "three_winding_transformer", "i_3_angle");
+// component sym_load
+PGM_MetaComponent const* const PGM_zdef_sc_output_sym_load = PGM_meta_get_component_by_name(nullptr, "sc_output", "sym_load");
+// attributes of sc_output sym_load
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_load", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_load", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_i = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_load", "i");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_i_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_load", "i_angle");
+// component sym_gen
+PGM_MetaComponent const* const PGM_zdef_sc_output_sym_gen = PGM_meta_get_component_by_name(nullptr, "sc_output", "sym_gen");
+// attributes of sc_output sym_gen
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_gen", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_gen", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_i = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_gen", "i");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_i_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_gen", "i_angle");
+// component asym_load
+PGM_MetaComponent const* const PGM_zdef_sc_output_asym_load = PGM_meta_get_component_by_name(nullptr, "sc_output", "asym_load");
+// attributes of sc_output asym_load
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_load", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_load", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_i = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_load", "i");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_i_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_load", "i_angle");
+// component asym_gen
+PGM_MetaComponent const* const PGM_zdef_sc_output_asym_gen = PGM_meta_get_component_by_name(nullptr, "sc_output", "asym_gen");
+// attributes of sc_output asym_gen
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_gen", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_gen", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_i = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_gen", "i");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_i_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_gen", "i_angle");
+// component shunt
+PGM_MetaComponent const* const PGM_zdef_sc_output_shunt = PGM_meta_get_component_by_name(nullptr, "sc_output", "shunt");
+// attributes of sc_output shunt
+PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "shunt", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "shunt", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_i = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "shunt", "i");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_i_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "shunt", "i_angle");
+// component source
+PGM_MetaComponent const* const PGM_zdef_sc_output_source = PGM_meta_get_component_by_name(nullptr, "sc_output", "source");
+// attributes of sc_output source
+PGM_MetaAttribute const* const PGM_zdef_sc_output_source_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "source", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_source_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "source", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_source_i = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "source", "i");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_source_i_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "source", "i_angle");
+// component sym_voltage_sensor
+PGM_MetaComponent const* const PGM_zdef_sc_output_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "sc_output", "sym_voltage_sensor");
+// attributes of sc_output sym_voltage_sensor
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_voltage_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_voltage_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_voltage_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_voltage_sensor", "energized");
+// component asym_voltage_sensor
+PGM_MetaComponent const* const PGM_zdef_sc_output_asym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "sc_output", "asym_voltage_sensor");
+// attributes of sc_output asym_voltage_sensor
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_voltage_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_voltage_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_voltage_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_voltage_sensor", "energized");
+// component sym_power_sensor
+PGM_MetaComponent const* const PGM_zdef_sc_output_sym_power_sensor = PGM_meta_get_component_by_name(nullptr, "sc_output", "sym_power_sensor");
+// attributes of sc_output sym_power_sensor
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_power_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_power_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_power_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_power_sensor", "energized");
+// component asym_power_sensor
+PGM_MetaComponent const* const PGM_zdef_sc_output_asym_power_sensor = PGM_meta_get_component_by_name(nullptr, "sc_output", "asym_power_sensor");
+// attributes of sc_output asym_power_sensor
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_power_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_power_sensor", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_power_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_power_sensor", "energized");
+// component fault
+PGM_MetaComponent const* const PGM_zdef_sc_output_fault = PGM_meta_get_component_by_name(nullptr, "sc_output", "fault");
+// attributes of sc_output fault
+PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "fault", "id");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "fault", "energized");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_i_f = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "fault", "i_f");
+PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_i_f_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "fault", "i_f_angle");
 //
 
 // clang-format on

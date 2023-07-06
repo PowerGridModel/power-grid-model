@@ -576,9 +576,231 @@ PGM_API extern PGM_MetaAttribute const* const PGM_zdef_asym_output_fault_energiz
 // dataset update
 PGM_API extern PGM_MetaDataset const* const PGM_zdef_update;
 // components of update
+// component node
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_node;
+// attributes of update node
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_node_id;
+// component line
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_line;
+// attributes of update line
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_line_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_line_from_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_line_to_status;
+// component link
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_link;
+// attributes of update link
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_link_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_link_from_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_link_to_status;
+// component transformer
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_transformer;
+// attributes of update transformer
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_transformer_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_transformer_from_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_transformer_to_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_transformer_tap_pos;
+// component three_winding_transformer
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_three_winding_transformer;
+// attributes of update three_winding_transformer
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_status_1;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_status_2;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_status_3;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_three_winding_transformer_tap_pos;
+// component sym_load
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_sym_load;
+// attributes of update sym_load
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_load_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_load_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_load_p_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_load_q_specified;
+// component sym_gen
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_sym_gen;
+// attributes of update sym_gen
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_p_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_gen_q_specified;
+// component asym_load
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_asym_load;
+// attributes of update asym_load
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_load_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_load_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_load_p_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_load_q_specified;
+// component asym_gen
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_asym_gen;
+// attributes of update asym_gen
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_p_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_gen_q_specified;
+// component shunt
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_shunt;
+// attributes of update shunt
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_shunt_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_shunt_status;
+// component source
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_source;
+// attributes of update source
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_source_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_source_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_source_u_ref;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_source_u_ref_angle;
+// component sym_voltage_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_sym_voltage_sensor;
+// attributes of update sym_voltage_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_u_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_u_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_voltage_sensor_u_angle_measured;
+// component asym_voltage_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_asym_voltage_sensor;
+// attributes of update asym_voltage_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_u_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_u_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_voltage_sensor_u_angle_measured;
+// component sym_power_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_sym_power_sensor;
+// attributes of update sym_power_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_power_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_p_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_sym_power_sensor_q_measured;
+// component asym_power_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_asym_power_sensor;
+// attributes of update asym_power_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_power_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_p_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_asym_power_sensor_q_measured;
+// component fault
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_update_fault;
+// attributes of update fault
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_fault_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_fault_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_fault_fault_type;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_fault_fault_phase;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_update_fault_fault_object;
 // dataset sc_output
 PGM_API extern PGM_MetaDataset const* const PGM_zdef_sc_output;
 // components of sc_output
+// component node
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_node;
+// attributes of sc_output node
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_node_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_node_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_node_u_pu;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_node_u;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_node_u_angle;
+// component line
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_line;
+// attributes of sc_output line
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_line_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_line_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_from_angle;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_line_i_to_angle;
+// component link
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_link;
+// attributes of sc_output link
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_link_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_link_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_from_angle;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_link_i_to_angle;
+// component transformer
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_transformer;
+// attributes of sc_output transformer
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_from_angle;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_transformer_i_to_angle;
+// component three_winding_transformer
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_three_winding_transformer;
+// attributes of sc_output three_winding_transformer
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_1;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_1_angle;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_2;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_2_angle;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_3;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_three_winding_transformer_i_3_angle;
+// component sym_load
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_sym_load;
+// attributes of sc_output sym_load
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_i;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_load_i_angle;
+// component sym_gen
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_sym_gen;
+// attributes of sc_output sym_gen
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_i;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_gen_i_angle;
+// component asym_load
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_asym_load;
+// attributes of sc_output asym_load
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_i;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_load_i_angle;
+// component asym_gen
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_asym_gen;
+// attributes of sc_output asym_gen
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_i;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_gen_i_angle;
+// component shunt
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_shunt;
+// attributes of sc_output shunt
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_i;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_shunt_i_angle;
+// component source
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_source;
+// attributes of sc_output source
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_source_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_source_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_source_i;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_source_i_angle;
+// component sym_voltage_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_sym_voltage_sensor;
+// attributes of sc_output sym_voltage_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_voltage_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_voltage_sensor_energized;
+// component asym_voltage_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_asym_voltage_sensor;
+// attributes of sc_output asym_voltage_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_voltage_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_voltage_sensor_energized;
+// component sym_power_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_sym_power_sensor;
+// attributes of sc_output sym_power_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_power_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_sym_power_sensor_energized;
+// component asym_power_sensor
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_asym_power_sensor;
+// attributes of sc_output asym_power_sensor
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_power_sensor_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_asym_power_sensor_energized;
+// component fault
+PGM_API extern PGM_MetaComponent const* const PGM_zdef_sc_output_fault;
+// attributes of sc_output fault
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_i_f;
+PGM_API extern PGM_MetaAttribute const* const PGM_zdef_sc_output_fault_i_f_angle;
 //
 
 #ifdef __cplusplus
