@@ -39,9 +39,11 @@ class Fault final : public Base {
         check_sanity();
     }
 
-    constexpr FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
+    FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
         // param object
         FaultCalcParam param{};
+        param.fault_type = get_fault_type();
+        param.fault_phase = get_fault_phase();
         if (!energized(is_connected_to_source)) {
             return param;
         }
@@ -121,7 +123,22 @@ class Fault final : public Base {
     }
 
     // getters
-    constexpr FaultType get_fault_type() const {
+    FaultType get_fault_type() const {
+        using enum FaultType;
+
+        switch (fault_type_) {
+            case three_phase:
+                break;
+            case single_phase_to_ground:
+                break;
+            case two_phase:
+                break;
+            case two_phase_to_ground:
+                break;
+            default:
+                throw InvalidShortCircuitType(fault_type_);
+        }
+
         return fault_type_;
     }
     FaultPhase get_fault_phase() const {

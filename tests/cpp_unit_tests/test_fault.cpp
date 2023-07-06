@@ -31,6 +31,8 @@ TEST_CASE("Test fault") {
         DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
         CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
+        CHECK(param.fault_type == FaultType::two_phase_to_ground);
+        CHECK(param.fault_phase == FaultPhase::ab);
     }
 
     SUBCASE("Test calc param with nan impedance input") {
@@ -38,6 +40,22 @@ TEST_CASE("Test fault") {
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
+        CHECK(param.fault_type == FaultType::two_phase_to_ground);
+        CHECK(param.fault_phase == FaultPhase::ab);
+    }
+
+    SUBCASE("Test calc param with other fault type") {
+        Fault fault_nan_imp{{{1}, 1, FaultType::three_phase, FaultPhase::abc, 4, nan, nan}};
+        FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
+        CHECK(std::isinf(param.y_fault.real()));
+        CHECK(std::isinf(param.y_fault.imag()));
+        CHECK(param.fault_type == FaultType::three_phase);
+        CHECK(param.fault_phase == FaultPhase::abc);
+    }
+
+    SUBCASE("Test calc param with nan fault type") {
+        Fault fault_nan_imp{{{1}, 1, FaultType::nan, FaultPhase::nan, 4, nan, nan}};
+        CHECK_THROWS_AS((fault_nan_imp.calc_param(u_rated)), InvalidShortCircuitType);
     }
 
     SUBCASE("Test get_null_output") {
@@ -75,6 +93,20 @@ TEST_CASE("Test fault") {
     SUBCASE("Test energized") {
         CHECK(fault.energized(true));
         CHECK(!fault.energized(false));
+    }
+
+    SUBCASE("Check fault type getter") {
+        using enum FaultType;
+
+        auto create_fault = [](FaultType fault_type) {
+            return Fault{{{1}, 1, fault_type, FaultPhase::nan, 4, 3.0, 4.0}};
+        };
+
+        CHECK((create_fault(three_phase).get_fault_type()) == three_phase);
+        CHECK((create_fault(single_phase_to_ground).get_fault_type()) == single_phase_to_ground);
+        CHECK((create_fault(two_phase).get_fault_type()) == two_phase);
+        CHECK((create_fault(two_phase_to_ground).get_fault_type()) == two_phase_to_ground);
+        CHECK_THROWS_AS((create_fault(FaultType::nan).get_fault_type()), InvalidShortCircuitType);
     }
 
     SUBCASE("Check fault phase getter") {
