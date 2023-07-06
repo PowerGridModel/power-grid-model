@@ -6,7 +6,7 @@
  * @mainpage Power Grid Model C API Documentation
  * This gives an overview of C API.
  * All the exported functions are included in power_grid_model_c.h, except the dataset definitions
- * 
+ *
  * Users can also include individual headers for individual functions
  *     - power_grid_model_c/basics.h: type and enum definition
  *     - power_grid_model_c/buffer.h: functions with buffer creation, release, set and get value
@@ -14,7 +14,8 @@
  *     - power_grid_model_c/meta_data.h: functions with meta data
  *     - power_grid_model_c/model.h: functions with create, release, run calculation of model
  *     - power_grid_model_c/options.h: functions with setting the calculation options
- *     - power_grid_model_c/dataset_definitions.h: external pointer variables to all datasets, components, and attributes
+ *     - power_grid_model_c/dataset_definitions.h: external pointer variables to all datasets, components, and
+ * attributes
  */
 
 #pragma once

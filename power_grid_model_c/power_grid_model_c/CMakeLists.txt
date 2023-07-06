@@ -24,10 +24,7 @@ target_include_directories(power_grid_model_c PUBLIC
 
 target_link_libraries(power_grid_model_c PRIVATE power_grid_model)
 
-set_target_properties(power_grid_model_c PROPERTIES
-  VERSION ${PGM_VERSION}
-  SOVERSION ${PGM_VERSION}
-  PUBLIC_HEADER 
+set(PGM_PUBLIC_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/basics.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/buffer.h"
@@ -35,6 +32,12 @@ set_target_properties(power_grid_model_c PROPERTIES
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/meta_data.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/model.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/options.h"
+)
+
+set_target_properties(power_grid_model_c PROPERTIES
+  VERSION ${PGM_VERSION}
+  SOVERSION ${PGM_VERSION}
+  PUBLIC_HEADER "${RST_PUBLIC_HEADERS}"
 )
 
 install(TARGETS power_grid_model_c
