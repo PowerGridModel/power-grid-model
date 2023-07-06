@@ -4,10 +4,10 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 from jinja2 import Environment, FileSystemLoader
-from meta_data import AttributeClass, DatasetMetaData
+from meta_data import AttributeClass, DatasetMetaData, DatasetMapData
 
 DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -35,8 +35,6 @@ class CodeGenerator:
             output_file.write(output)
 
     def render_attribute_classes(self, template_path: Path, data_path: Path, output_path: Path):
-        print(f"Generating file: {output_path}")
-
         with open(data_path) as data_file:
             json_data = data_file.read()
         dataset_meta_data: DatasetMetaData = DatasetMetaData.schema().loads(json_data)
@@ -76,10 +74,26 @@ class CodeGenerator:
         )
 
     def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
-        self.render_template(
-            template_path=template_path,
-            output_path=output_path
-        )
+        with open(data_path) as data_file:
+            json_data = data_file.read()
+        dataset_meta_data: List[DatasetMapData] = DatasetMetaData.schema().loads(json_data, many=True)
+
+        # create list
+        all_map = {}
+        for dataset in dataset_meta_data:
+            if dataset.is_template:
+                prefixes = ["sym_", "asym_"]
+            else:
+                prefixes = [""]
+            for prefix in prefixes:
+                all_components = {}
+                for component in dataset.components:
+                    class_def: AttributeClass = self.all_classes[component.class_name]
+                    for component_name in component.names:
+                        all_components[component_name] = [x.names for x in class_def.full_attributes]
+                all_map[f"{prefix}{dataset.name}"] = all_components
+
+        self.render_template(template_path=template_path, output_path=output_path)
 
     def code_gen(self):
         render_funcs = {
@@ -95,6 +109,7 @@ class CodeGenerator:
             for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
                 output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
                 output_path.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Generating file: {output_path}")
                 render_funcs[template_name](template_path=template_path, data_path=data_path, output_path=output_path)
 
 
