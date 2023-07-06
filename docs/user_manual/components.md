@@ -522,7 +522,7 @@ same `fault_type` and `fault_phase`. Across scenarios in a batch, the `fault_typ
 
 ```{note}
 If any of the faults in any of the scenarios within a batch are not `three_phase`
-(i.e. `fault_type` is not `FaultType.three_phase),
+(i.e. `fault_type` is not `FaultType.three_phase`),
 the calculation is treated as asymmetric.
 ```
 

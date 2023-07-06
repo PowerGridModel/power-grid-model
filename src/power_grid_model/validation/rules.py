@@ -746,11 +746,23 @@ def all_valid_fault_phases(
     fault_phases = data[component][fault_phase_field]
 
     supported_combinations: Dict[FaultType, List[FaultPhase]] = {
-        FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value],
-        FaultType.single_phase_to_ground: [FaultPhase.a, FaultPhase.b, FaultPhase.c, FaultPhase.default_value],
-        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value],
-        FaultType.two_phase_to_ground: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value],
-        FaultType.default_value: [],
+        FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value, FaultPhase.nan],
+        FaultType.single_phase_to_ground: [
+            FaultPhase.a,
+            FaultPhase.b,
+            FaultPhase.c,
+            FaultPhase.default_value,
+            FaultPhase.nan,
+        ],
+        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value, FaultPhase.nan],
+        FaultType.two_phase_to_ground: [
+            FaultPhase.ab,
+            FaultPhase.ac,
+            FaultPhase.bc,
+            FaultPhase.default_value,
+            FaultPhase.nan,
+        ],
+        FaultType.nan: [],
     }
 
     def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
