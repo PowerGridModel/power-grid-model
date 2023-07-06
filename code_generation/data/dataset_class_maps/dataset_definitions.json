@@ -52,7 +52,7 @@
         },
         {
             "name": "output",
-            "is_template": false,
+            "is_template": true,
             "components": [
                 {
                     "names": ["node"],

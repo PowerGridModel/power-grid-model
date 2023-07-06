@@ -93,7 +93,7 @@ class CodeGenerator:
                         all_components[component_name] = [x.names for x in class_def.full_attributes]
                 all_map[f"{prefix}{dataset.name}"] = all_components
 
-        self.render_template(template_path=template_path, output_path=output_path)
+        self.render_template(template_path=template_path, output_path=output_path, all_map=all_map)
 
     def code_gen(self):
         render_funcs = {
