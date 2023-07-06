@@ -14,7 +14,7 @@ import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import IdxPtr, DatasetPtr, ComponentPtr, AttributePtr
+from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 _CTYPE_NUMPY_MAP = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
@@ -124,7 +124,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
     nans = []
     n_attrs = pgc.meta_n_attributes(component)
     for i in range(n_attrs):
-        attribute = pgc.meta_get_attribute_by_idx(component, i)
+        attribute: AttributePtr = pgc.meta_get_attribute_by_idx(component, i)
         attr_name: str = pgc.meta_attribute_name(attribute)
         attr_ctype: str = pgc.meta_attribute_ctype(attribute)
         attr_offset: int = pgc.meta_attribute_offset(attribute)
