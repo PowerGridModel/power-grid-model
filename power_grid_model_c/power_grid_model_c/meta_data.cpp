@@ -16,9 +16,6 @@ static_assert(std::is_same_v<PGM_ID, ID>);
 
 namespace {
 
-// global reference to meta data
-meta_data::MetaData const& pgm_meta = meta_data::meta_data();
-
 template <class Functor>
 auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
     static std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<Functor>>> const empty{};
@@ -36,16 +33,16 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
 // retrieve meta data
 // dataset
 PGM_Idx PGM_meta_n_datasets(PGM_Handle*) {
-    return pgm_meta.n_datasets();
+    return meta_data::meta_data().n_datasets();
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
     return call_with_bound(handle, [idx]() -> decltype(auto) {
-        return &pgm_meta.datasets.at(idx);
+        return &meta_data::meta_data().datasets.at(idx);
     });
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
     return call_with_bound(handle, [dataset]() -> decltype(auto) {
-        return &pgm_meta.get_dataset(dataset);
+        return &meta_data::meta_data().get_dataset(dataset);
     });
 }
 char const* PGM_meta_dataset_name(PGM_Handle*, PGM_MetaDataset const* dataset) {
@@ -64,7 +61,7 @@ PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_M
 PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
                                                         char const* component) {
     return call_with_bound(handle, [component, dataset]() -> decltype(auto) {
-        return &pgm_meta.get_dataset(dataset).get_component(component);
+        return &meta_data::meta_data().get_dataset(dataset).get_component(component);
     });
 }
 char const* PGM_meta_component_name(PGM_Handle*, PGM_MetaComponent const* component) {
@@ -89,7 +86,7 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_M
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset, char const* component,
                                                         char const* attribute) {
     return call_with_bound(handle, [component, dataset, attribute]() -> decltype(auto) {
-        return &pgm_meta.get_dataset(dataset).get_component(component).get_attribute(attribute);
+        return &meta_data::meta_data().get_dataset(dataset).get_component(component).get_attribute(attribute);
     });
 }
 char const* PGM_meta_attribute_name(PGM_Handle*, PGM_MetaAttribute const* attribute) {
