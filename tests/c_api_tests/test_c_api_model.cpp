@@ -50,7 +50,8 @@ TEST_CASE("C API Model") {
     std::array input_components{"node", "source", "sym_load"};
     std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
-    BufferPtr const unique_source_buffer{PGM_create_buffer(hl, "input", "source", 1)};
+    BufferPtr const unique_source_buffer{
+        PGM_create_buffer(hl, PGM_meta_get_component_by_name(hl, "input", "source"), 1)};
     RawDataPtr source_buffer = unique_source_buffer.get();
     PGM_buffer_set_nan(hl, "input", "source", source_buffer, 1);
     PGM_buffer_set_value(hl, "input", "source", "id", source_buffer, &source_input.id, 1, -1);

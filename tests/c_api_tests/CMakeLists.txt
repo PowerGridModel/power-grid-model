@@ -4,7 +4,7 @@
 
 set(PROJECT_SOURCES
     "test_c_api_meta_data.cpp"
-    # "test_c_api_model.cpp"
+    "test_c_api_model.cpp"
     "test_entry_point.cpp"
 )
 
