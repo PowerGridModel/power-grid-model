@@ -76,7 +76,7 @@ class CodeGenerator:
 
     def code_gen(self):
         # render attribute classes
-        for template_path in TEMPLATE_DIR.rglob("*.jinja"):
+        for template_path in TEMPLATE_DIR.rglob("attribute_classes.hpp.jinja"):
             template_name = template_path.with_suffix("").stem
             output_suffix = template_path.with_suffix("").suffix
             output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
