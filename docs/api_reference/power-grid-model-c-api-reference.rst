@@ -5,4 +5,4 @@
 power_grid_model_c
 =====
 
-.. doxygenfile:: power_grid_model_c.h
+.. doxygenindex::
