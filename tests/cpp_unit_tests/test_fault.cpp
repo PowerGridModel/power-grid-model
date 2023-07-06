@@ -127,13 +127,13 @@ TEST_CASE("Test fault") {
             CHECK(create_fault(FaultType::two_phase_to_ground, ab).get_fault_phase() == ab);
             CHECK(create_fault(FaultType::two_phase_to_ground, ac).get_fault_phase() == ac);
             CHECK(create_fault(FaultType::two_phase_to_ground, bc).get_fault_phase() == bc);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, abc).get_fault_phase()), InvalidShortCircuitType);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, a).get_fault_phase()), InvalidShortCircuitType);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, b).get_fault_phase()), InvalidShortCircuitType);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, c).get_fault_phase()), InvalidShortCircuitType);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, ab).get_fault_phase()), InvalidShortCircuitType);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, ac).get_fault_phase()), InvalidShortCircuitType);
-            CHECK_THROWS_AS((create_fault(FaultType::nan, bc).get_fault_phase()), InvalidShortCircuitType);
+            CHECK((create_fault(FaultType::nan, abc).get_fault_phase()) == abc);
+            CHECK((create_fault(FaultType::nan, a).get_fault_phase()) == a);
+            CHECK((create_fault(FaultType::nan, b).get_fault_phase()) == b);
+            CHECK((create_fault(FaultType::nan, c).get_fault_phase()) == c);
+            CHECK((create_fault(FaultType::nan, ab).get_fault_phase()) == ab);
+            CHECK((create_fault(FaultType::nan, ac).get_fault_phase()) == ac);
+            CHECK((create_fault(FaultType::nan, bc).get_fault_phase()) == bc);
         }
 
         SUBCASE("Fault phase not specified") {
