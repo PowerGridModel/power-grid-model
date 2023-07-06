@@ -32,7 +32,8 @@ class Fault final : public Base {
         : Base{fault_input},
           status_{static_cast<bool>(fault_input.status)},
           fault_type_{fault_input.fault_type},
-          fault_phase_{fault_input.fault_phase},
+          fault_phase_{fault_input.fault_phase == FaultPhase::nan ? FaultPhase::default_value
+                                                                  : fault_input.fault_phase},
           fault_object_{fault_input.fault_object},
           r_f_{is_nan(fault_input.r_f) ? double{} : fault_input.r_f},
           x_f_{is_nan(fault_input.x_f) ? double{} : fault_input.x_f} {
@@ -128,37 +129,35 @@ class Fault final : public Base {
 
         switch (fault_type_) {
             case three_phase:
-                break;
+                return fault_type_;
             case single_phase_to_ground:
-                break;
+                return fault_type_;
             case two_phase:
-                break;
+                return fault_type_;
             case two_phase_to_ground:
-                break;
+                return fault_type_;
             default:
                 throw InvalidShortCircuitType(fault_type_);
         }
-
-        return fault_type_;
     }
     FaultPhase get_fault_phase() const {
         using enum FaultType;
 
-        auto const default_phase = [](FaultType fault_type) {
-            switch (fault_type) {
-                case three_phase:
-                    return FaultPhase::abc;
-                case single_phase_to_ground:
-                    return FaultPhase::a;
-                case two_phase:
-                    [[fallthrough]];
-                case two_phase_to_ground:
-                    return FaultPhase::bc;
-                default:
-                    throw InvalidShortCircuitType(fault_type);
-            }
-        }(fault_type_);
-        if (fault_phase_ == FaultPhase::default_value || fault_phase_ == FaultPhase::nan) {
+        if (fault_phase_ == FaultPhase::default_value) {
+            auto const default_phase = [](FaultType fault_type) {
+                switch (fault_type) {
+                    case three_phase:
+                        return FaultPhase::abc;
+                    case single_phase_to_ground:
+                        return FaultPhase::a;
+                    case two_phase:
+                        [[fallthrough]];
+                    case two_phase_to_ground:
+                        return FaultPhase::bc;
+                    default:
+                        throw InvalidShortCircuitType(fault_type);
+                }
+            }(fault_type_);
             return default_phase;
         }
         return fault_phase_;
