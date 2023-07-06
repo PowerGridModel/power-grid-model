@@ -45,3 +45,8 @@ class DatasetMapData(DataClassJsonMixin):
     name: str
     is_template: bool
     components: List[ObjectMapData]
+
+
+@dataclass
+class AllDatasetMapData(DataClassJsonMixin):
+    all_datasets: List[DatasetMapData]

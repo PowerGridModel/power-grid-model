@@ -16,6 +16,8 @@
 #ifndef POWER_GRID_MODEL_C_DATASET_DEFINITIONS_H
 #define POWER_GRID_MODEL_C_DATASET_DEFINITIONS_H
 
+#include "basics.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

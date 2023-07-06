@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from jinja2 import Environment, FileSystemLoader
-from meta_data import AttributeClass, DatasetMetaData, DatasetMapData
+from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData
 
 DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -76,7 +76,7 @@ class CodeGenerator:
     def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
         with open(data_path) as data_file:
             json_data = data_file.read()
-        dataset_meta_data: List[DatasetMapData] = DatasetMetaData.schema().loads(json_data, many=True)
+        dataset_meta_data: List[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
 
         # create list
         all_map = {}
@@ -102,15 +102,17 @@ class CodeGenerator:
         }
 
         # render attribute classes
-        for template_path in TEMPLATE_DIR.rglob("*.jinja"):
-            template_name = template_path.with_suffix("").stem
-            output_suffix = template_path.with_suffix("").suffix
-            output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
-            for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
-                output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                print(f"Generating file: {output_path}")
-                render_funcs[template_name](template_path=template_path, data_path=data_path, output_path=output_path)
+        for template_name in render_funcs.keys():
+            for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
+                output_suffix = template_path.with_suffix("").suffix
+                output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
+                for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
+                    output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
+                    print(f"Generating file: {output_path}")
+                    render_funcs[template_name](
+                        template_path=template_path, data_path=data_path, output_path=output_path
+                    )
 
 
 if __name__ == "__main__":
