@@ -61,7 +61,7 @@ class PowerGridModel:
         If the count for a component type is zero, it will not be in the returned dictionary.
         
         Returns:
-            a dictionary with
+            A dictionary with
                 
                 - key: component type name
                 - value: integer count of elements of this type
@@ -124,11 +124,13 @@ class PowerGridModel:
     def update(self, *, update_data: Dict[str, np.ndarray]):
         """
         Update the model with changes.
+        
         Args:
             update_data: update data dictionary
 
                 - key: component type name
                 - value: 1D numpy structured array for this component update
+
         Returns:
             None
         """
@@ -277,8 +279,9 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
-        """Calculate power flow once with the current model attributes. 
-                Or calculate in batch with the given update dataset in batch.
+        """
+        Calculate power flow once with the current model attributes. 
+        Or calculate in batch with the given update dataset in batch.
 
         Args:
             symmetric (bool, optional): Whether to perform a three-phase symmetric calculation.
@@ -315,8 +318,9 @@ class PowerGridModel:
                 By default, all component types will be in the output.
             continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some scenarios fails.
 
-        Returns (dict):     
+        Returns:     
             Dictionary of results of all components.
+
                 Key: Component type name to be updated in batch.
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
@@ -359,8 +363,9 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
-        """Calculate state estimation once with the current model attributes. 
-                Or calculate in batch with the given update dataset in batch.
+        """
+        Calculate state estimation once with the current model attributes. 
+        Or calculate in batch with the given update dataset in batch.
 
         Args:
             symmetric (bool, optional): Whether to perform a three-phase symmetric calculation.
@@ -394,8 +399,9 @@ class PowerGridModel:
                 By default, all component types will be in the output.
             continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some scenarios fails.
 
-        Returns (dict):     
+        Returns:     
             Dictionary of results of all components.
+            
                 Key: Component type name to be updated in batch.
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
