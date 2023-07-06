@@ -129,11 +129,11 @@ class Fault final : public Base {
 
         switch (fault_type_) {
             case three_phase:
-                return fault_type_;
+                [[fallthrough]];
             case single_phase_to_ground:
-                return fault_type_;
+                [[fallthrough]];
             case two_phase:
-                return fault_type_;
+                [[fallthrough]];
             case two_phase_to_ground:
                 return fault_type_;
             default:
