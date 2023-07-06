@@ -1,6 +1,7 @@
 [
     {
         "name": "input",
+        "is_template": false,
         "components": [
             {
                 "names": ["node"],
