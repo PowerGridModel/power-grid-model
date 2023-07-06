@@ -76,7 +76,10 @@ class CodeGenerator:
         )
 
     def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
-        pass
+        self.render_template(
+            template_path=template_path,
+            output_path=output_path
+        )
 
     def code_gen(self):
         render_funcs = {
