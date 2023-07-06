@@ -32,3 +32,16 @@ class DatasetMetaData(DataClassJsonMixin):
     name: str
     include_guard: str
     classes: List[AttributeClass]
+
+
+@dataclass
+class ObjectMapData(DataClassJsonMixin):
+    names: List[str]
+    class_name: str
+
+
+@dataclass
+class DatasetMapData(DataClassJsonMixin):
+    name: str
+    is_template: bool
+    components: List[ObjectMapData]
