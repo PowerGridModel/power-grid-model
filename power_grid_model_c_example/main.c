@@ -158,22 +158,22 @@ int main(int argc, char** argv) {
     /**** prepare batch update dataset ****/
 
     // 1 source update per scenario
-    void* source_update = PGM_create_buffer(handle, "update", "source", 3);
+    void* source_update = PGM_create_buffer(handle, PGM_zdef_update_source, 3);
     assert(PGM_error_code(handle) == PGM_no_error);
     // set to NaN for all values, it is recommended for input and update buffers
-    PGM_buffer_set_nan(handle, "update", "source", source_update, 3);
+    PGM_buffer_set_nan(handle, PGM_zdef_update_source, source_update, 0, 3);
     double u_ref_update[] = {0.95, 1.05, 1.1};
     // set all source id to the same id, stride is zero
-    PGM_buffer_set_value(handle, "update", "source", "id", source_update, &source_id, 3, 0);
-    PGM_buffer_set_value(handle, "update", "source", "u_ref", source_update, u_ref_update, 3, -1);
+    PGM_buffer_set_value(handle, PGM_zdef_update_source_id, source_update, &source_id, 0, 3, 0);
+    PGM_buffer_set_value(handle, PGM_zdef_update_source_u_ref, source_update, u_ref_update, 0, 3, -1);
 
     // 2 load update in scenario 0, 1 load update in scenario 1, 1 load update in scenario 2
-    void* load_update = PGM_create_buffer(handle, "update", "sym_load", 4);
-    PGM_buffer_set_nan(handle, "update", "sym_load", load_update, 4);
+    void* load_update = PGM_create_buffer(handle, PGM_zdef_update_sym_load, 4);
+    PGM_buffer_set_nan(handle, PGM_zdef_update_sym_load, load_update, 0, 4);
     PGM_ID load_update_id[] = {2, 3, 2, 3};  // 2, 3 for #0, 2 for #1, 3 for #2
     double p_update[] = {100e3, 200e3, 0.0, -200e3};
-    PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
-    PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
+    PGM_buffer_set_value(handle, PGM_zdef_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
+    PGM_buffer_set_value(handle, PGM_zdef_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     PGM_Idx indptr_load[] = {0, 2, 3, 4};  // 2 updates for #0, 1 update for #1, 2 update for #2
 
     // update meta data
@@ -189,8 +189,8 @@ int main(int argc, char** argv) {
         3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
     assert(PGM_error_code(handle) == PGM_no_error);
     // get node result and print
-    PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 3, -1);
-    PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 3, -1);
+    PGM_buffer_get_value(handle, PGM_zdef_sym_output_node_u_pu, node_output, u_pu, 0, 3, -1);
+    PGM_buffer_get_value(handle, PGM_zdef_sym_output_node_u_angle, node_output, u_angle, 0, 3, -1);
     printf("\nBatch Calculation\n");
     int i;
     for (i = 0; i != 3; ++i) {
@@ -204,8 +204,8 @@ int main(int argc, char** argv) {
     // scenario 2 has a unknown id
     p_update[2] = 100e12;     // very high load for scenario 1
     load_update_id[3] = 100;  // unknown id for scenario 2
-    PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
-    PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
+    PGM_buffer_set_value(handle, PGM_zdef_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
+    PGM_buffer_set_value(handle, PGM_zdef_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     // calculate
     PGM_calculate(
         // one time calculation parameter
