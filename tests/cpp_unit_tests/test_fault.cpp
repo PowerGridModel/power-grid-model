@@ -254,11 +254,10 @@ TEST_CASE("Test fault") {
         }
 
         SUBCASE("Invalid fault type") {
-            FaultType fault_type = static_cast<FaultType>(-127);
-            CAPTURE(fault_type);
-            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, FaultPhase::nan, 4, 3.0, 4.0}}), InvalidShortCircuitType);
+            CHECK_THROWS_AS((Fault{{{1}, 1, static_cast<FaultType>(-127), FaultPhase::nan, 4, 3.0, 4.0}}),
+                            InvalidShortCircuitType);
 
-            FaultUpdate const fault_update{{1}, 0, fault_type, FaultPhase::nan, 10};
+            FaultUpdate const fault_update{{1}, 0, static_cast<FaultType>(-127), FaultPhase::nan, 10};
             CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitType);
         }
     }

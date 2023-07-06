@@ -146,14 +146,16 @@ class Fault final : public Base {
         if (fault_phase_ == FaultPhase::default_value) {
             auto const default_phase = [](FaultType fault_type) {
                 switch (fault_type) {
+                    using enum FaultPhase;
+
                     case three_phase:
-                        return FaultPhase::abc;
+                        return abc;
                     case single_phase_to_ground:
-                        return FaultPhase::a;
+                        return a;
                     case two_phase:
                         [[fallthrough]];
                     case two_phase_to_ground:
-                        return FaultPhase::bc;
+                        return bc;
                     default:
                         throw InvalidShortCircuitType(fault_type);
                 }
