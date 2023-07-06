@@ -127,18 +127,13 @@ class Fault final : public Base {
     FaultType get_fault_type() const {
         using enum FaultType;
 
-        switch (fault_type_) {
-            case three_phase:
-                [[fallthrough]];
-            case single_phase_to_ground:
-                [[fallthrough]];
-            case two_phase:
-                [[fallthrough]];
-            case two_phase_to_ground:
-                return fault_type_;
-            default:
-                throw InvalidShortCircuitType(fault_type_);
+        constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
+
+        if (std::find(cbegin(supported), cend(supported), fault_type_) == cend(supported)) {
+            throw InvalidShortCircuitType(fault_type_);
         }
+
+        return fault_type_;
     }
     FaultPhase get_fault_phase() const {
         using enum FaultType;
