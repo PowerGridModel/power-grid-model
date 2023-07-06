@@ -11,6 +11,7 @@ SPDX-License-Identifier: MPL-2.0
 With power-grid-model it is possible to perform two different types of calculation:
 - [Power flow](#power-flow-algorithms): a "what-if" scenario calculation. This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
+- [Short circuit](#short-circuit-algorithms): a "what-if" scenario calculation with short circuit entries. This calculation can be performed by using the {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
 
 ### Calculation types explained
 
@@ -408,6 +409,16 @@ NOTE: Since the algorithm will assume angles to be zero if not given, this might
 crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
 
 Algorithm call: `CalculationMethod.iterative_linear`
+
+### Short circuit algorithms
+
+**TODO**
+
+```{note}
+In case of short circuit calculations, the zero-sequence parameters are required only
+if any of the faults in any of the scenarios within a batch are not three-phase faults
+(i.e. `fault_type` is not `FaultType.three_phase`).
+```
 
 ## Batch Calculations
 

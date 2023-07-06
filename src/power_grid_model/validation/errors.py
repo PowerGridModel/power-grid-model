@@ -461,9 +461,4 @@ class FaultPhaseError(MultiFieldValidationError):
     The fault phase does not match the fault type.
     """
 
-    _message = (
-        "The fault phase does not match the fault type for {n} {objects}. "
-        "If the fault type is three_phase, the fault phase should be abc. "
-        "If the fault type is single_phase_to_ground, the fault phase should be either a, b or c. "
-        "If the fault type is either two_phase or two_phase_to_ground, the fault phase should be either ab, ac or bc."
-    )
+    _message = "The fault phase is not applicable to the corresponding fault type for {n} {objects}."
