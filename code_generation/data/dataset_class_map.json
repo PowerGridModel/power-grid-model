@@ -1,0 +1,79 @@
+[
+    {
+        "name": "input",
+        "components": [
+            {
+                "names": ["node"],
+                "class_name": "NodeInput"
+            },
+            {
+                "names": ["line"],
+                "class_name": "LineInput"
+            },
+            {
+                "names": ["link"],
+                "class_name": "LinkInput"
+            },
+            {
+                "names": ["transformer"],
+                "class_name": "TransformerInput"
+            },
+            {
+                "names": ["three_winding_transformer"],
+                "class_name": "ThreeWindingTransformerInput"
+            },
+            {
+                "names": ["sym_load", "sym_gen"],
+                "class_name": "LoadGenInput<true>"
+            },
+            {
+                "names": ["asym_load", "asym_gen"],
+                "class_name": "LoadGenInput<false>"
+            },
+            {
+                "names": ["shunt"],
+                "class_name": "ShuntInput"
+            },
+            {
+                "names": ["source"],
+                "class_name": "SourceInput"
+            },
+            {
+                "names": ["sym_voltage_sensor"],
+                "class_name": "VoltageSensorInput<true>"
+            },
+            {
+                "names": ["asym_voltage_sensor"],
+                "class_name": "VoltageSensorInput<false>"
+            },
+            {
+                "names": ["sym_power_sensor"],
+                "class_name": "PowerSensorInput<true>"
+            },
+            {
+                "names": ["asym_power_sensor"],
+                "class_name": "PowerSensorInput<false>"
+            },
+            {
+                "names": ["fault"],
+                "class_name": "FaultInput"
+            }
+        ]
+    },
+    {
+        "name": "sym_output",
+        "components": []
+    },
+    {
+        "name": "asym_output",
+        "components": []
+    },
+    {
+        "name": "update",
+        "components": []
+    },
+    {
+        "name": "sc_output",
+        "components": []
+    }
+]
