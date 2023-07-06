@@ -32,12 +32,13 @@ set(PGM_PUBLIC_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/meta_data.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/model.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/options.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/dataset_definitions.h"
 )
 
 set_target_properties(power_grid_model_c PROPERTIES
   VERSION ${PGM_VERSION}
   SOVERSION ${PGM_VERSION}
-  PUBLIC_HEADER "${RST_PUBLIC_HEADERS}"
+  PUBLIC_HEADER "${PGM_PUBLIC_HEADERS}"
 )
 
 install(TARGETS power_grid_model_c
