@@ -39,7 +39,7 @@ class Fault final : public Base {
         check_sanity();
     }
 
-    FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
+    constexpr FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
         // param object
         FaultCalcParam param{};
         if (!energized(is_connected_to_source)) {
@@ -102,16 +102,16 @@ class Fault final : public Base {
         return {false, false};  // topology and parameters do not change
     }
 
-    bool energized(bool is_connected_to_source) const final {
+    constexpr bool energized(bool is_connected_to_source) const final {
         return is_connected_to_source;
     }
 
-    bool status() const {
+    constexpr bool status() const {
         return status_;
     }
 
     // setter
-    bool set_status(IntS new_status) {
+    constexpr bool set_status(IntS new_status) {
         if (new_status == na_IntS)
             return false;
         if (static_cast<bool>(new_status) == status_)
@@ -121,29 +121,32 @@ class Fault final : public Base {
     }
 
     // getters
-    FaultType get_fault_type() const {
+    constexpr FaultType get_fault_type() const {
         return fault_type_;
     }
     FaultPhase get_fault_phase() const {
-        using enum FaultPhase;
+        using enum FaultType;
 
-        if (fault_phase_ == default_value || fault_phase_ == FaultPhase::nan) {
-            switch (fault_type_) {
-                case FaultType::three_phase:
-                    return abc;
-                case FaultType::single_phase_to_ground:
-                    return a;
-                case FaultType::two_phase:
+        auto const default_phase = [](FaultType fault_type) {
+            switch (fault_type) {
+                case three_phase:
+                    return FaultPhase::abc;
+                case single_phase_to_ground:
+                    return FaultPhase::a;
+                case two_phase:
                     [[fallthrough]];
-                case FaultType::two_phase_to_ground:
-                    return bc;
-                case FaultType::nan:
-                    return FaultPhase::nan;
+                case two_phase_to_ground:
+                    return FaultPhase::bc;
+                default:
+                    throw InvalidShortCircuitType(fault_type);
             }
+        }(fault_type_);
+        if (fault_phase_ == FaultPhase::default_value || fault_phase_ == FaultPhase::nan) {
+            return default_phase;
         }
         return fault_phase_;
     }
-    ID get_fault_object() const {
+    constexpr ID get_fault_object() const {
         return fault_object_;
     }
 
@@ -156,31 +159,27 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    static constexpr bool is_supported_fault(FaultType fault_type, FaultPhase fault_phase) {
+    void check_sanity() {
         using enum FaultPhase;
 
-        auto const is_supported = [&](auto const& iterable) {
-            return std::find(cbegin(iterable), cend(iterable), fault_phase) != cend(iterable);
+        auto const check_supported = [&](auto const& iterable) {
+            if (std::find(cbegin(iterable), cend(iterable), fault_phase_) == cend(iterable)) {
+                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+            }
         };
-        switch (fault_type) {
+        switch (fault_type_) {
             case FaultType::three_phase:
-                return is_supported(std::array{FaultPhase::nan, default_value, abc});
+                return check_supported(std::array{FaultPhase::nan, default_value, abc});
             case FaultType::single_phase_to_ground:
-                return is_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+                return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
             case FaultType::two_phase:
                 [[fallthrough]];
             case FaultType::two_phase_to_ground:
-                return is_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+                return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
             case FaultType::nan:
-                return is_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+                return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
             default:
-                return false;
-        }
-    }
-
-    void check_sanity() const {
-        if (!is_supported_fault(fault_type_, fault_phase_)) {
-            throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
+                throw InvalidShortCircuitType(fault_type_);
         }
     }
 };

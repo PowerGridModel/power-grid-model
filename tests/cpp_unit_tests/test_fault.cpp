@@ -95,13 +95,13 @@ TEST_CASE("Test fault") {
             CHECK(create_fault(FaultType::two_phase_to_ground, ab).get_fault_phase() == ab);
             CHECK(create_fault(FaultType::two_phase_to_ground, ac).get_fault_phase() == ac);
             CHECK(create_fault(FaultType::two_phase_to_ground, bc).get_fault_phase() == bc);
-            CHECK(create_fault(FaultType::nan, abc).get_fault_phase() == abc);
-            CHECK(create_fault(FaultType::nan, a).get_fault_phase() == a);
-            CHECK(create_fault(FaultType::nan, b).get_fault_phase() == b);
-            CHECK(create_fault(FaultType::nan, c).get_fault_phase() == c);
-            CHECK(create_fault(FaultType::nan, ab).get_fault_phase() == ab);
-            CHECK(create_fault(FaultType::nan, ac).get_fault_phase() == ac);
-            CHECK(create_fault(FaultType::nan, bc).get_fault_phase() == bc);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, abc).get_fault_phase()), InvalidShortCircuitType);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, a).get_fault_phase()), InvalidShortCircuitType);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, b).get_fault_phase()), InvalidShortCircuitType);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, c).get_fault_phase()), InvalidShortCircuitType);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, ab).get_fault_phase()), InvalidShortCircuitType);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, ac).get_fault_phase()), InvalidShortCircuitType);
+            CHECK_THROWS_AS((create_fault(FaultType::nan, bc).get_fault_phase()), InvalidShortCircuitType);
         }
 
         SUBCASE("Fault phase not specified") {
@@ -110,6 +110,7 @@ TEST_CASE("Test fault") {
                 CHECK(create_fault(FaultType::single_phase_to_ground, fault_phase).get_fault_phase() == a);
                 CHECK(create_fault(FaultType::two_phase, fault_phase).get_fault_phase() == bc);
                 CHECK(create_fault(FaultType::two_phase_to_ground, fault_phase).get_fault_phase() == bc);
+                CHECK_THROWS_AS((create_fault(FaultType::nan, fault_phase).get_fault_phase()), InvalidShortCircuitType);
             }
         }
     }
@@ -218,6 +219,15 @@ TEST_CASE("Test fault") {
             check_not_allowed(fault_type, a);
             check_not_allowed(fault_type, b);
             check_not_allowed(fault_type, c);
+        }
+
+        SUBCASE("Invalid fault type") {
+            FaultType fault_type = static_cast<FaultType>(-127);
+            CAPTURE(fault_type);
+            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, FaultPhase::nan, 4, 3.0, 4.0}}), InvalidShortCircuitType);
+
+            FaultUpdate const fault_update{{1}, 0, fault_type, FaultPhase::nan, 10};
+            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitType);
         }
     }
 }
