@@ -42,7 +42,8 @@ class PowerGridModel:
         """
         Get the batch error object, if present
 
-        Returns: Batch error object, or None
+        Returns: 
+            Batch error object, or None
 
         """
         return self._batch_error
@@ -58,10 +59,12 @@ class PowerGridModel:
         """
         Get count of number of elements per component type.
         If the count for a component type is zero, it will not be in the returned dictionary.
+        
         Returns:
             a dictionary with
-                key: component type name
-                value: integer count of elements of this type
+                
+                - key: component type name
+                - value: integer count of elements of this type
         """
         if self._all_component_count is None:
             raise TypeError("You have an empty instance of PowerGridModel!")
@@ -69,7 +72,6 @@ class PowerGridModel:
 
     def copy(self) -> "PowerGridModel":
         """
-
         Copy the current model
 
         Returns:
@@ -96,8 +98,10 @@ class PowerGridModel:
 
         Args:
             input_data: input data dictionary
-                key: component type name
-                value: 1D numpy structured array for this component input
+
+                - key: component type name
+                - value: 1D numpy structured array for this component input
+
             system_frequency: frequency of the power system, default 50 Hz
         """
         # destroy old instance
@@ -122,8 +126,9 @@ class PowerGridModel:
         Update the model with changes.
         Args:
             update_data: update data dictionary
-                key: component type name
-                value: 1D numpy structured array for this component update
+
+                - key: component type name
+                - value: 1D numpy structured array for this component update
         Returns:
             None
         """
@@ -146,7 +151,7 @@ class PowerGridModel:
             ids: array of ids
 
         Returns:
-            array of inderxers, same shape as input array ids
+            Array of inderxers, same shape as input array ids
 
         """
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
@@ -213,9 +218,10 @@ class PowerGridModel:
 
         Args:
             options:
-            update_data:
-            output_component_types:
-            continue_on_batch_error:
+
+                - update_data
+                - output_component_types
+                - continue_on_batch_error
 
         Returns:
 
