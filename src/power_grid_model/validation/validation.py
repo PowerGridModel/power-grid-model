@@ -20,6 +20,8 @@ from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
     CalculationType,
+    FaultPhase,
+    FaultType,
     LoadGenType,
     MeasuredTerminalType,
     WindingType,
@@ -36,6 +38,7 @@ from power_grid_model.validation.rules import (
     all_between_or_at,
     all_boolean,
     all_cross_unique,
+    all_enabled_identical,
     all_finite,
     all_greater_or_equal,
     all_greater_than_or_equal_to_zero,
@@ -47,6 +50,7 @@ from power_grid_model.validation.rules import (
     all_unique,
     all_valid_clocks,
     all_valid_enum_values,
+    all_valid_fault_phases,
     all_valid_ids,
     none_missing,
 )
@@ -309,7 +313,18 @@ def validate_required_values(
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
 
-    if not symmetric:
+    # Faults
+    required["fault"] = required["base"] + ["fault_object"]
+    asym_sc = False
+    if calculation_type is None or calculation_type == CalculationType.short_circuit:
+        required["fault"] += ["status", "fault_type"]
+        if "fault" in data:
+            for elem in data["fault"]["fault_type"]:
+                if elem not in (FaultType.three_phase, FaultType.nan):
+                    asym_sc = True
+                    break
+
+    if not symmetric or asym_sc:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
@@ -357,6 +372,8 @@ def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: di
         errors += validate_generic_power_sensor(data, "sym_power_sensor")
     if "asym_power_sensor" in data:
         errors += validate_generic_power_sensor(data, "asym_power_sensor")
+    if "fault" in data:
+        errors += validate_fault(data)
     return errors
 
 
@@ -671,4 +688,17 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         measured_terminal_type=MeasuredTerminalType.node,
     )
 
+    return errors
+
+
+def validate_fault(data: SingleDataset) -> List[ValidationError]:
+    errors = validate_base(data, "fault")
+    errors += all_boolean(data, "fault", "status")
+    errors += all_valid_enum_values(data, "fault", "fault_type", FaultType)
+    errors += all_valid_enum_values(data, "fault", "fault_phase", FaultPhase)
+    errors += all_valid_fault_phases(data, "fault", "fault_type", "fault_phase")
+    errors += all_valid_ids(data, "fault", field="fault_object", ref_components="node")
+    errors += all_greater_than_or_equal_to_zero(data, "fault", "r_f")
+    errors += all_enabled_identical(data, "fault", "fault_type", "status")
+    errors += all_enabled_identical(data, "fault", "fault_phase", "status")
     return errors
