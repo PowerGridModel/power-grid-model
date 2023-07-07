@@ -55,7 +55,7 @@ struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
 
         // create meta data set
         MetaData meta{};
-        for (auto const dataset_name : {"input", "update", "sym_output", "asym_output", "sc_output"}) {
+        for (auto const* const dataset_name : {"input", "update", "sym_output", "asym_output", "sc_output"}) {
             DatasetMap const& single_map = all_map.at(dataset_name);
             MetaDataset meta_dataset{};
             meta_dataset.name = dataset_name;

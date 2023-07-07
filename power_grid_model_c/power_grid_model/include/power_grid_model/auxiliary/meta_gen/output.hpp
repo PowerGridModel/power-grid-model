@@ -9,11 +9,11 @@
 #ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_OUTPUT_HPP
 #define POWER_GRID_MODEL_AUXILIARY_META_GEN_OUTPUT_HPP
 
-#include "../../enum.hpp"
-#include "../../power_grid_model.hpp"
-#include "../../three_phase_tensor.hpp"
-#include "../meta_data.hpp"
-#include "../output.hpp"
+#include "../../enum.hpp" // NOLINT
+#include "../../power_grid_model.hpp" // NOLINT
+#include "../../three_phase_tensor.hpp" // NOLINT
+#include "../meta_data.hpp" // NOLINT
+#include "../output.hpp" // NOLINT
 
 
 namespace power_grid_model {
