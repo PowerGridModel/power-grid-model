@@ -744,6 +744,21 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         ShortCircuitMathOutput output = solver.run_short_circuit(sc_input, info);
         assert_sc_output(output, sc_output_ref);
     }
+
+    SUBCASE("Test short circuit solver no faults") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        ShortCircuitInput sc_input;
+        sc_input.source = {vref};
+        ShortCircuitMathOutput sc_output_ref;
+        sc_output_ref.u_bus = {ComplexValue<false>(vref), ComplexValue<false>(vref)};
+        sc_output_ref.i_branch_from = {ComplexValue<false>{}};
+        sc_output_ref.i_branch_to = {ComplexValue<false>{}};
+        sc_output_ref.i_fault = {ComplexValue<false>{}};
+        sc_output_ref.i_source = {ComplexValue<false>{}};
+        CalculationInfo info;
+        ShortCircuitMathOutput output = solver.run_short_circuit(sc_input, info);
+        assert_sc_output(output, sc_output_ref);
+    }
 }
 
 #define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance);
