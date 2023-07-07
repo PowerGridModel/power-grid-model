@@ -25,221 +25,221 @@ namespace meta_data {
 template<>
 struct get_attributes_list<BaseOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BaseOutput, &BaseOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BaseOutput, &BaseOutput::energized>{}, "energized"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<BaseOutput, &BaseOutput::id>{}, "id"},
+            {MetaAttributeImpl<BaseOutput, &BaseOutput::energized>{}, "energized"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<NodeOutput<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::u_pu>{}, "u_pu"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::u>{}, "u"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::u_angle>{}, "u_angle"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::p>{}, "p"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::q>{}, "q"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::id>{}, "id"},
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::energized>{}, "energized"},
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::u_pu>{}, "u_pu"},
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::u>{}, "u"},
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::u_angle>{}, "u_angle"},
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::p>{}, "p"},
+            {MetaAttributeImpl<NodeOutput<sym>, &NodeOutput<sym>::q>{}, "q"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<BranchOutput<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::loading>{}, "loading"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::p_from>{}, "p_from"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::q_from>{}, "q_from"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::i_from>{}, "i_from"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::s_from>{}, "s_from"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::p_to>{}, "p_to"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::q_to>{}, "q_to"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::i_to>{}, "i_to"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::s_to>{}, "s_to"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::id>{}, "id"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::energized>{}, "energized"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::loading>{}, "loading"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::p_from>{}, "p_from"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::q_from>{}, "q_from"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::i_from>{}, "i_from"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::s_from>{}, "s_from"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::p_to>{}, "p_to"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::q_to>{}, "q_to"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::i_to>{}, "i_to"},
+            {MetaAttributeImpl<BranchOutput<sym>, &BranchOutput<sym>::s_to>{}, "s_to"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<Branch3Output<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::loading>{}, "loading"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::p_1>{}, "p_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::q_1>{}, "q_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::i_1>{}, "i_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::s_1>{}, "s_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::p_2>{}, "p_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::q_2>{}, "q_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::i_2>{}, "i_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::s_2>{}, "s_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::p_3>{}, "p_3"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::q_3>{}, "q_3"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::i_3>{}, "i_3"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::s_3>{}, "s_3"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::id>{}, "id"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::energized>{}, "energized"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::loading>{}, "loading"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::p_1>{}, "p_1"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::q_1>{}, "q_1"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::i_1>{}, "i_1"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::s_1>{}, "s_1"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::p_2>{}, "p_2"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::q_2>{}, "q_2"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::i_2>{}, "i_2"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::s_2>{}, "s_2"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::p_3>{}, "p_3"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::q_3>{}, "q_3"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::i_3>{}, "i_3"},
+            {MetaAttributeImpl<Branch3Output<sym>, &Branch3Output<sym>::s_3>{}, "s_3"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<ApplianceOutput<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::p>{}, "p"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::q>{}, "q"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::i>{}, "i"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::s>{}, "s"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::pf>{}, "pf"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::id>{}, "id"},
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::energized>{}, "energized"},
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::p>{}, "p"},
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::q>{}, "q"},
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::i>{}, "i"},
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::s>{}, "s"},
+            {MetaAttributeImpl<ApplianceOutput<sym>, &ApplianceOutput<sym>::pf>{}, "pf"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<VoltageSensorOutput<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_residual>{}, "u_residual"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_angle_residual>{}, "u_angle_residual"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::id>{}, "id"},
+            {MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::energized>{}, "energized"},
+            {MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_residual>{}, "u_residual"},
+            {MetaAttributeImpl<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_angle_residual>{}, "u_angle_residual"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<PowerSensorOutput<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::p_residual>{}, "p_residual"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::q_residual>{}, "q_residual"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::id>{}, "id"},
+            {MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::energized>{}, "energized"},
+            {MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::p_residual>{}, "p_residual"},
+            {MetaAttributeImpl<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::q_residual>{}, "q_residual"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<FaultOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultOutput, &FaultOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultOutput, &FaultOutput::energized>{}, "energized"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<FaultOutput, &FaultOutput::id>{}, "id"},
+            {MetaAttributeImpl<FaultOutput, &FaultOutput::energized>{}, "energized"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<FaultShortCircuitOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f>{}, "i_f"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f_angle>{}, "i_f_angle"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::id>{}, "id"},
+            {MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::energized>{}, "energized"},
+            {MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f>{}, "i_f"},
+            {MetaAttributeImpl<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f_angle>{}, "i_f_angle"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<NodeShortCircuitOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_pu>{}, "u_pu"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::u>{}, "u"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_angle>{}, "u_angle"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::id>{}, "id"},
+            {MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::energized>{}, "energized"},
+            {MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_pu>{}, "u_pu"},
+            {MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::u>{}, "u"},
+            {MetaAttributeImpl<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_angle>{}, "u_angle"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<BranchShortCircuitOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from>{}, "i_from"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from_angle>{}, "i_from_angle"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to>{}, "i_to"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to_angle>{}, "i_to_angle"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::id>{}, "id"},
+            {MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::energized>{}, "energized"},
+            {MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from>{}, "i_from"},
+            {MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from_angle>{}, "i_from_angle"},
+            {MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to>{}, "i_to"},
+            {MetaAttributeImpl<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to_angle>{}, "i_to_angle"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<Branch3ShortCircuitOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1>{}, "i_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1_angle>{}, "i_1_angle"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2>{}, "i_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2_angle>{}, "i_2_angle"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3>{}, "i_3"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3_angle>{}, "i_3_angle"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::id>{}, "id"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::energized>{}, "energized"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1>{}, "i_1"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1_angle>{}, "i_1_angle"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2>{}, "i_2"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2_angle>{}, "i_2_angle"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3>{}, "i_3"},
+            {MetaAttributeImpl<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3_angle>{}, "i_3_angle"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<ApplianceShortCircuitOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::energized>{}, "energized"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i>{}, "i"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i_angle>{}, "i_angle"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::id>{}, "id"},
+            {MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::energized>{}, "energized"},
+            {MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i>{}, "i"},
+            {MetaAttributeImpl<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i_angle>{}, "i_angle"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<SensorShortCircuitOutput> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<SensorShortCircuitOutput, &SensorShortCircuitOutput::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<SensorShortCircuitOutput, &SensorShortCircuitOutput::energized>{}, "energized"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<SensorShortCircuitOutput, &SensorShortCircuitOutput::id>{}, "id"},
+            {MetaAttributeImpl<SensorShortCircuitOutput, &SensorShortCircuitOutput::energized>{}, "energized"},
+        };
     }
 };
 

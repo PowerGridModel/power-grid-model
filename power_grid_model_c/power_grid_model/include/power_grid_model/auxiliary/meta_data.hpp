@@ -74,7 +74,7 @@ inline void set_nan(RealValue<false>& x) {
     x = RealValue<false>{nan};
 }
 template <class Enum>
-    requires std::same_as<std::underlying_type_t<Enum>, IntS>
+requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }

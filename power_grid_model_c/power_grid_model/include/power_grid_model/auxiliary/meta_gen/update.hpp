@@ -25,150 +25,150 @@ namespace meta_data {
 template<>
 struct get_attributes_list<BaseUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BaseUpdate, &BaseUpdate::id>{}, "id"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<BaseUpdate, &BaseUpdate::id>{}, "id"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<BranchUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchUpdate, &BranchUpdate::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchUpdate, &BranchUpdate::from_status>{}, "from_status"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<BranchUpdate, &BranchUpdate::to_status>{}, "to_status"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<BranchUpdate, &BranchUpdate::id>{}, "id"},
+            {MetaAttributeImpl<BranchUpdate, &BranchUpdate::from_status>{}, "from_status"},
+            {MetaAttributeImpl<BranchUpdate, &BranchUpdate::to_status>{}, "to_status"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<Branch3Update> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::status_1>{}, "status_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::status_2>{}, "status_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<Branch3Update, &Branch3Update::status_3>{}, "status_3"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<Branch3Update, &Branch3Update::id>{}, "id"},
+            {MetaAttributeImpl<Branch3Update, &Branch3Update::status_1>{}, "status_1"},
+            {MetaAttributeImpl<Branch3Update, &Branch3Update::status_2>{}, "status_2"},
+            {MetaAttributeImpl<Branch3Update, &Branch3Update::status_3>{}, "status_3"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<ApplianceUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::status>{}, "status"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::id>{}, "id"},
+            {MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::status>{}, "status"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<TransformerUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::from_status>{}, "from_status"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::to_status>{}, "to_status"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::tap_pos>{}, "tap_pos"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::id>{}, "id"},
+            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::from_status>{}, "from_status"},
+            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::to_status>{}, "to_status"},
+            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::tap_pos>{}, "tap_pos"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<ThreeWindingTransformerUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1>{}, "status_1"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2>{}, "status_2"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3>{}, "status_3"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos>{}, "tap_pos"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id>{}, "id"},
+            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1>{}, "status_1"},
+            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2>{}, "status_2"},
+            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3>{}, "status_3"},
+            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos>{}, "tap_pos"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<LoadGenUpdate<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status>{}, "status"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified>{}, "p_specified"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified>{}, "q_specified"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id>{}, "id"},
+            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status>{}, "status"},
+            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified>{}, "p_specified"},
+            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified>{}, "q_specified"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<SourceUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::status>{}, "status"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref>{}, "u_ref"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref_angle>{}, "u_ref_angle"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::id>{}, "id"},
+            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::status>{}, "status"},
+            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref>{}, "u_ref"},
+            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref_angle>{}, "u_ref_angle"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<VoltageSensorUpdate<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma>{}, "u_sigma"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured>{}, "u_measured"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured>{}, "u_angle_measured"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id>{}, "id"},
+            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma>{}, "u_sigma"},
+            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured>{}, "u_measured"},
+            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured>{}, "u_angle_measured"},
+        };
     }
 };
 
 template <bool sym>
 struct get_attributes_list<PowerSensorUpdate<sym>> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>{}, "power_sigma"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>{}, "p_measured"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>{}, "q_measured"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id>{}, "id"},
+            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>{}, "power_sigma"},
+            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>{}, "p_measured"},
+            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>{}, "q_measured"},
+        };
     }
 };
 
 template<>
 struct get_attributes_list<FaultUpdate> {
     std::vector<MetaAttribute> operator() () const {
-        std::vector<MetaAttribute> attributes{};
         // all attributes including base class
-        
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::id>{}, "id"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::status>{}, "status"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_type>{}, "fault_type"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase>{}, "fault_phase"));
-        attributes.push_back(MetaAttribute(MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object>{}, "fault_object"));
-        return attributes;
+        return {
+            
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::id>{}, "id"},
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::status>{}, "status"},
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_type>{}, "fault_type"},
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase>{}, "fault_phase"},
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object>{}, "fault_object"},
+        };
     }
 };
 
