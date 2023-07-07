@@ -8,7 +8,7 @@ Error classes
 import re
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 
 
 class ValidationError(ABC):
@@ -190,6 +190,24 @@ class MultiComponentValidationError(ValidationError):
     @property
     def field_str(self) -> str:
         return " and ".join(f"{component}.{field}" for component, field in self.field)
+
+
+class NotIdenticalError(SingleFieldValidationError):
+    """
+    The value is not unique within a single column in a dataset
+    E.g. When two nodes share the same id.
+    """
+
+    _message = "Field {field} is not unique for {n} {objects}: {num_unique} different values."
+    values: List[Any]
+    unique: Set[Any]
+    num_unique: int
+
+    def __init__(self, component: str, field: str, ids: List[int], values: List[Any]):
+        super().__init__(component, field, ids)
+        self.values = values
+        self.unique = set(self.values)
+        self.num_unique = len(self.unique)
 
 
 class NotUniqueError(SingleFieldValidationError):
@@ -428,7 +446,7 @@ class InfinityError(SingleFieldValidationError):
 
 class TransformerClockError(MultiFieldValidationError):
     """
-    The value of a field is infinite.
+    Invalid clock number.
     """
 
     _message = (
@@ -436,3 +454,11 @@ class TransformerClockError(MultiFieldValidationError):
         "If one side has wye winding and the other side has not, the clock number should be odd. "
         "If either both or none of the sides have wye winding, the clock number should be even."
     )
+
+
+class FaultPhaseError(MultiFieldValidationError):
+    """
+    The fault phase does not match the fault type.
+    """
+
+    _message = "The fault phase is not applicable to the corresponding fault type for {n} {objects}."
