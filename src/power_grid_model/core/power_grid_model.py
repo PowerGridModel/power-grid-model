@@ -152,7 +152,7 @@ class PowerGridModel:
             ids: Array of ids
 
         Returns:
-            Array of inderxers, same shape as input array ids
+            Array of indexers, same shape as input array ids
         """
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
         indexer = np.empty_like(ids, dtype=IdxNp, order="C")
