@@ -74,7 +74,7 @@ inline void set_nan(RealValue<false>& x) {
     x = RealValue<false>{nan};
 }
 template <class Enum>
-requires std::same_as<std::underlying_type_t<Enum>, IntS>
+    requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }
@@ -98,10 +98,10 @@ struct MetaAttributeImpl {
     static bool compare_value(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, Idx pos) {
         ValueType const& x = (reinterpret_cast<StructType const*>(ptr_x) + pos)->*member_ptr;
         ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
-        if constexpr (std::is_same_v<ValueType, double>) {
+        if constexpr (std::same_as<ValueType, double>) {
             return std::abs(y - x) < (std::abs(x) * rtol + atol);
         }
-        else if constexpr (std::is_same_v<ValueType, RealValue<false>>) {
+        else if constexpr (std::same_as<ValueType, RealValue<false>>) {
             return (abs(y - x) < (abs(x) * rtol + atol)).all();
         }
         else {
