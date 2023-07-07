@@ -7,7 +7,7 @@
 // clang-format off
 
 /**
- * @brief header file which includes helper functions to return meta data pointers 
+ * @brief header file which includes extern global variables as the meta data pointers 
  *    to all datasets, compoments, and attributes
  *
  */

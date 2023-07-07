@@ -11,57 +11,75 @@ You can include `power_grid_model_c.h` use all the symbols except the global def
 
 
 -----
-power_grid_model_c.h
+Main Header
 -----
+
+The main header is `power_grid_model_c.h` with all the functions.
 
 .. doxygenfile:: power_grid_model_c.h
 
 
 -----
-power_grid_model_c/basics.h
+Basics
 -----
+
+The header `power_grid_model_c/basics.h` contains definitions of opaque structs and enumerations.
 
 .. doxygenfile:: power_grid_model_c/basics.h
 
 
 -----
-power_grid_model_c/handle.h
+Handle
 -----
+
+The header `power_grid_model_c/handle.h` contains error handling functions.
 
 .. doxygenfile:: power_grid_model_c/handle.h
 
 
 -----
-power_grid_model_c/meta_data.h
+Meta Data
 -----
+
+The header `power_grid_model_c/meta_data.h` contains functions to retrieve meta data.
+
 
 .. doxygenfile:: power_grid_model_c/meta_data.h
 
 
 -----
-power_grid_model_c/buffer.h
+Buffer
 -----
+
+The header `power_grid_model_c/buffer.h` contains functions of buffer control.
+
 
 .. doxygenfile:: power_grid_model_c/buffer.h
 
 
 -----
-power_grid_model_c/options.h
+Options
 -----
+
+The header `power_grid_model_c/options.h` contains functions of creating and setting calculation options.
 
 .. doxygenfile:: power_grid_model_c/options.h
 
 
 -----
-power_grid_model_c/model.h
+Model
 -----
+
+The header `power_grid_model_c/model.h` contains functions to create and calculate the main model: Power Grid Model.
 
 .. doxygenfile:: power_grid_model_c/model.h
 
 
 -----
-power_grid_model_c/dataset_definitions.h
+Dataset Definitions
 -----
+
+The header `power_grid_model_c/dataset_definitions.h` contains extern global pointer variables of all datasets, compoments, and attributes. This header is not included in `power_grid_model_c.h`, you need to include it separately.
 
 .. doxygenfile:: power_grid_model_c/dataset_definitions.h
 
