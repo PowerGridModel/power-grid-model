@@ -414,12 +414,6 @@ Algorithm call: `CalculationMethod.iterative_linear`
 
 **TODO**
 
-```{note}
-In case of short circuit calculations, the zero-sequence parameters are required only
-if any of the faults in any of the scenarios within a batch are not three-phase faults
-(i.e. `fault_type` is not `FaultType.three_phase`).
-```
-
 ## Batch Calculations
 
 Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
