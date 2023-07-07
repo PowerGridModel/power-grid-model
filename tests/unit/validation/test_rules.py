@@ -229,7 +229,7 @@ def test_all_identical():
 
     errors = all_identical(data, "baz", "foo")
     assert len(errors) == 1
-    assert NotIdenticalError("baz", "foo", ids=[3, 4, 5], values=[11, 12, 12])
+    assert NotIdenticalError("baz", "foo", ids=[3, 4, 5], values=[11, 12, 12]) in errors
 
 
 def test_all_enabled_identical():
@@ -243,7 +243,7 @@ def test_all_enabled_identical():
 
     errors = all_enabled_identical(data, "baz", "foo", "status")
     assert len(errors) == 1
-    assert NotIdenticalError("baz", "foo", ids=[5, 6, 8], values=[14, 14, 15])
+    assert NotIdenticalError("baz", "foo", ids=[5, 6, 8], values=[14, 14, 15]) in errors
 
 
 def test_all_unique():
