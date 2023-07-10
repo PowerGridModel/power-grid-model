@@ -40,9 +40,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Un
 import numpy as np
 
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.enum import WindingType
+from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
     ComparisonError,
+    FaultPhaseError,
     IdNotInDatasetError,
     InfinityError,
     InvalidEnumValueError,
@@ -54,6 +55,7 @@ from power_grid_model.validation.errors import (
     NotBooleanError,
     NotGreaterOrEqualError,
     NotGreaterThanError,
+    NotIdenticalError,
     NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
@@ -355,6 +357,57 @@ def none_match_comparison(
     return []
 
 
+def all_identical(data: SingleDataset, component: str, field: str) -> List[NotIdenticalError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are identical.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field: The field of interest
+
+    Returns:
+        A list containing zero or one NotIdenticalError, listing all ids of that component if the value in the field
+        of interest was not identical across all components, all values for those ids, the set of unique values in
+        that field and the number of unique values in that field.
+    """
+    field_data = data[component][field]
+    if len(field_data) > 0:
+        first = field_data[0]
+        if np.any(field_data != first):
+            return [NotIdenticalError(component, field, data[component]["id"], list(field_data))]
+
+    return []
+
+
+def all_enabled_identical(
+    data: SingleDataset, component: str, field: str, status_field: str
+) -> List[NotIdenticalError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are identical.
+    Only entries are checked where the 'status' field is not 0.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field: The field of interest
+        status_field: The status field based on which to decide whether a component is enabled
+
+    Returns:
+        A list containing zero or one NotIdenticalError, listing:
+            - all ids of enabled components if the value in the field of interest was not identical across all enabled
+              components
+            - all values of the 'field' column for enabled components (including duplications)
+            - the set of unique such values
+            - the amount of unique such values.
+    """
+    return all_identical(
+        {key: (value if key is not component else value[value[status_field] != 0]) for key, value in data.items()},
+        component,
+        field,
+    )
+
+
 def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
@@ -370,14 +423,10 @@ def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqu
         not unique. If the field name was 'id' (a very common check), the id is added as many times as it occurred in
         the 'id' column, to maintain object counts.
     """
-    _, index, counts = np.unique(data[component][field], return_index=True, return_counts=True)
+    field_data = data[component][field]
+    _, inverse, counts = np.unique(field_data, return_inverse=True, return_counts=True)
     if any(counts != 1):
-        ids = data[component]["id"][index[counts != 1]].flatten().tolist()
-        if field == "id":  # Add ids multiple times
-            counts = counts[counts != 1]
-            for obj_id, count in zip(ids, counts):
-                ids += [obj_id] * (count - 1)
-            ids = sorted(ids)
+        ids = data[component]["id"][(counts != 1)[inverse]].flatten().tolist()
         return [NotUniqueError(component, field, ids)]
     return []
 
@@ -671,6 +720,60 @@ def all_valid_clocks(
             TransformerClockError(
                 component=component,
                 fields=[clock_field, winding_from_field, winding_to_field],
+                ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
+
+
+def all_valid_fault_phases(
+    data: SingleDataset, component: str, fault_type_field: str, fault_phase_field: str
+) -> List[FaultPhaseError]:
+    """
+    Custom validation rule: Only a subset of fault_phases is supported for each fault type.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        fault_type_field: The fault type field
+        fault_phase_field: The fault phase field
+
+    Returns:
+        A list containing zero or more FaultPhaseErrors; listing all the ids of faults where the fault phase was
+        invalid, given the fault phase.
+    """
+    fault_types = data[component][fault_type_field]
+    fault_phases = data[component][fault_phase_field]
+
+    supported_combinations: Dict[FaultType, List[FaultPhase]] = {
+        FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value, FaultPhase.nan],
+        FaultType.single_phase_to_ground: [
+            FaultPhase.a,
+            FaultPhase.b,
+            FaultPhase.c,
+            FaultPhase.default_value,
+            FaultPhase.nan,
+        ],
+        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value, FaultPhase.nan],
+        FaultType.two_phase_to_ground: [
+            FaultPhase.ab,
+            FaultPhase.ac,
+            FaultPhase.bc,
+            FaultPhase.default_value,
+            FaultPhase.nan,
+        ],
+        FaultType.nan: [],
+    }
+
+    def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
+        return fault_phase not in supported_combinations.get(fault_type, [])
+
+    err = np.vectorize(_fault_phase_supported)(fault_type=fault_types, fault_phase=fault_phases)
+    if err.any():
+        return [
+            FaultPhaseError(
+                component=component,
+                fields=[fault_type_field, fault_phase_field],
                 ids=data[component]["id"][err].flatten().tolist(),
             )
         ]
