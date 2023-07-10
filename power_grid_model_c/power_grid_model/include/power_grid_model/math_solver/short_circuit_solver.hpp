@@ -219,6 +219,7 @@ class ShortCircuitSolver {
         }
 
         // solve matrix
+        sparse_solver_.prefactorize_and_solve(mat_data_, perm_, rhs, rhs)
 
         // post processing
     }
