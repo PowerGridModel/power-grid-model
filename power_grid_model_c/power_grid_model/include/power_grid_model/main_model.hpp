@@ -431,16 +431,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
     }
 
-    template <bool sym, typename InputType, std::vector<InputType> (MainModelImpl::*PrepareInputFn)(),
+    template <bool sym, typename InputType,
               MathOutput<sym> (MathSolver<sym>::*SolveFn)(InputType const&, double, Idx, CalculationInfo&,
-                                                          CalculationMethod)>
-    std::vector<MathOutput<sym>> calculate_(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
+                                                          CalculationMethod),
+              std::invocable PrepareInputFn>
+    requires std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>> std::vector<MathOutput<sym>>
+    calculate_(PrepareInputFn prepare_input, double err_tol, Idx max_iter, CalculationMethod calculation_method) {
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
         Timer timer(calculation_info_, 2100, "Prepare");
         prepare_solvers<sym>();
-        auto const& input = (this->*PrepareInputFn)();
+        auto const& input = prepare_input();
         // calculate
         timer = Timer(calculation_info_, 2200, "Math Calculation");
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
@@ -455,15 +457,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     std::vector<MathOutput<sym>> calculate_power_flow_(double err_tol, Idx max_iter,
                                                        CalculationMethod calculation_method) {
-        return calculate_<sym, PowerFlowInput<sym>, &MainModelImpl::prepare_power_flow_input,
-                          &MathSolver<sym>::run_power_flow>(err_tol, max_iter, calculation_method);
+        return calculate_<sym, PowerFlowInput<sym>, &MathSolver<sym>::run_power_flow>(
+            [this] {
+                return prepare_power_flow_input<sym>();
+            },
+            err_tol, max_iter, calculation_method);
     }
 
     template <bool sym>
     std::vector<MathOutput<sym>> calculate_state_estimation_(double err_tol, Idx max_iter,
                                                              CalculationMethod calculation_method) {
-        return calculate_<sym, StateEstimationInput<sym>, &MainModelImpl::prepare_state_estimation_input,
-                          &MathSolver<sym>::run_state_estimation>(err_tol, max_iter, calculation_method);
+        return calculate_<sym, StateEstimationInput<sym>, &MathSolver<sym>::run_state_estimation>(
+            [this] {
+                return prepare_state_estimation_input<sym>();
+            },
+            err_tol, max_iter, calculation_method);
     }
 
     // get sequence idx map for fast caching of component sequences
