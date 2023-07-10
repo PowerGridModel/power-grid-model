@@ -12,14 +12,14 @@
 
 {% for dataset, components in all_map.items() -%}
 // dataset {{ dataset }}
-PGM_MetaDataset const* const PGM_zdef_{{ dataset }} = PGM_meta_get_dataset_by_name(nullptr, "{{ dataset }}");
+PGM_MetaDataset const* const PGM_def_{{ dataset }} = PGM_meta_get_dataset_by_name(nullptr, "{{ dataset }}");
 // components of {{ dataset }}
 {% for component, attributes in components.items() -%}
 // component {{ component }}
-PGM_MetaComponent const* const PGM_zdef_{{ dataset }}_{{ component }} = PGM_meta_get_component_by_name(nullptr, "{{ dataset }}", "{{ component }}");
+PGM_MetaComponent const* const PGM_def_{{ dataset }}_{{ component }} = PGM_meta_get_component_by_name(nullptr, "{{ dataset }}", "{{ component }}");
 // attributes of {{ dataset }} {{ component }}
 {% for attribute in attributes -%}
-PGM_MetaAttribute const* const PGM_zdef_{{ dataset }}_{{ component }}_{{ attribute }} = PGM_meta_get_attribute_by_name(nullptr, "{{ dataset }}", "{{ component }}", "{{ attribute }}");
+PGM_MetaAttribute const* const PGM_def_{{ dataset }}_{{ component }}_{{ attribute }} = PGM_meta_get_attribute_by_name(nullptr, "{{ dataset }}", "{{ component }}", "{{ attribute }}");
 {% endfor -%}
 {% endfor -%}
 {% endfor -%}

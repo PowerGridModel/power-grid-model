@@ -24,14 +24,14 @@ extern "C" {
 
 {% for dataset, components in all_map.items() -%}
 // dataset {{ dataset }}
-PGM_API extern PGM_MetaDataset const* const PGM_zdef_{{ dataset }};
+PGM_API extern PGM_MetaDataset const* const PGM_def_{{ dataset }};
 // components of {{ dataset }}
 {% for component, attributes in components.items() -%}
 // component {{ component }}
-PGM_API extern PGM_MetaComponent const* const PGM_zdef_{{ dataset }}_{{ component }};
+PGM_API extern PGM_MetaComponent const* const PGM_def_{{ dataset }}_{{ component }};
 // attributes of {{ dataset }} {{ component }}
 {% for attribute in attributes -%}
-PGM_API extern PGM_MetaAttribute const* const PGM_zdef_{{ dataset }}_{{ component }}_{{ attribute }};
+PGM_API extern PGM_MetaAttribute const* const PGM_def_{{ dataset }}_{{ component }}_{{ attribute }};
 {% endfor -%}
 {% endfor -%}
 {% endfor -%}
