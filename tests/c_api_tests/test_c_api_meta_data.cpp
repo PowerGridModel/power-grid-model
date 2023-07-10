@@ -27,34 +27,27 @@ TEST_CASE("C API Meta Data") {
             char const* const dataset_name = PGM_meta_dataset_name(hl, dataset);
             CHECK(PGM_meta_get_dataset_by_name(hl, dataset_name) == dataset);
             CHECK(dataset_name == meta.datasets[idx_dataset].name);
-            std::string const component_case = "Component for dataset " + dataset->name;
 
             // check component
-            SUBCASE(component_case.c_str()) {
-                CHECK(PGM_meta_n_components(hl, dataset) == dataset->n_components());
-                for (Idx idx_component = 0; idx_component != dataset->n_components(); ++idx_component) {
-                    MetaComponent const* const component = PGM_meta_get_component_by_idx(hl, dataset, idx_component);
-                    char const* const component_name = PGM_meta_component_name(hl, component);
-                    CHECK(PGM_meta_get_component_by_name(hl, dataset_name, component_name) == component);
-                    CHECK(component_name == dataset->components[idx_component].name);
-                    CHECK(PGM_meta_component_size(hl, component) == component->size);
-                    CHECK(PGM_meta_component_alignment(hl, component) == component->alignment);
+            CHECK(PGM_meta_n_components(hl, dataset) == dataset->n_components());
+            for (Idx idx_component = 0; idx_component != dataset->n_components(); ++idx_component) {
+                MetaComponent const* const component = PGM_meta_get_component_by_idx(hl, dataset, idx_component);
+                char const* const component_name = PGM_meta_component_name(hl, component);
+                CHECK(PGM_meta_get_component_by_name(hl, dataset_name, component_name) == component);
+                CHECK(component_name == dataset->components[idx_component].name);
+                CHECK(PGM_meta_component_size(hl, component) == component->size);
+                CHECK(PGM_meta_component_alignment(hl, component) == component->alignment);
 
-                    // check attribute
-                    std::string const attribute_case = "Attribute for component " + component->name;
-                    SUBCASE(attribute_case.c_str()) {
-                        CHECK(PGM_meta_n_attributes(hl, component) == component->n_attributes());
-                        for (Idx idx_attribute = 0; idx_attribute != component->n_attributes(); ++idx_attribute) {
-                            MetaAttribute const* const attribute =
-                                PGM_meta_get_attribute_by_idx(hl, component, idx_attribute);
-                            char const* const attribute_name = PGM_meta_attribute_name(hl, attribute);
-                            CHECK(PGM_meta_get_attribute_by_name(hl, dataset_name, component_name, attribute_name) ==
-                                  attribute);
-                            CHECK(attribute_name == component->attributes[idx_attribute].name);
-                            CHECK(PGM_meta_attribute_ctype(hl, attribute) == attribute->ctype);
-                            CHECK(PGM_meta_attribute_offset(hl, attribute) == attribute->offset);
-                        }
-                    }
+                // check attribute
+                CHECK(PGM_meta_n_attributes(hl, component) == component->n_attributes());
+                for (Idx idx_attribute = 0; idx_attribute != component->n_attributes(); ++idx_attribute) {
+                    MetaAttribute const* const attribute = PGM_meta_get_attribute_by_idx(hl, component, idx_attribute);
+                    char const* const attribute_name = PGM_meta_attribute_name(hl, attribute);
+                    CHECK(PGM_meta_get_attribute_by_name(hl, dataset_name, component_name, attribute_name) ==
+                          attribute);
+                    CHECK(attribute_name == component->attributes[idx_attribute].name);
+                    CHECK(PGM_meta_attribute_ctype(hl, attribute) == attribute->ctype);
+                    CHECK(PGM_meta_attribute_offset(hl, attribute) == attribute->offset);
                 }
             }
         }
