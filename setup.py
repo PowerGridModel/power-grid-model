@@ -139,10 +139,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     library_dirs: List[str] = []
     libraries: List[str] = []
     sources = [
-        str(pgm_c / pgm_c / "handle.cpp"),
-        str(pgm_c / pgm_c / "meta_data.cpp"),
-        str(pgm_c / pgm_c / "model.cpp"),
-        str(pgm_c / pgm_c / "options.cpp"),
+        str(pgm_c / pgm_c / "src" / "handle.cpp"),
+        str(pgm_c / pgm_c / "src" / "meta_data.cpp"),
+        str(pgm_c / pgm_c / "src" / "model.cpp"),
+        str(pgm_c / pgm_c / "src" / "options.cpp"),
     ]
     # macro
     define_macros = [

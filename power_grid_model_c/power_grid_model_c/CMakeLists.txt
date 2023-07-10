@@ -36,12 +36,12 @@ install(TARGETS power_grid_model_c_headers
 
 # The actual implementation
 add_library(power_grid_model_c SHARED 
-  "buffer.cpp"
-  "handle.cpp"
-  "meta_data.cpp"
-  "model.cpp"
-  "options.cpp"
-  "dataset_definitions.cpp"
+  "src/buffer.cpp"
+  "src/handle.cpp"
+  "src/meta_data.cpp"
+  "src/model.cpp"
+  "src/options.cpp"
+  "src/dataset_definitions.cpp"
 )
 
 target_include_directories(power_grid_model_c PUBLIC
