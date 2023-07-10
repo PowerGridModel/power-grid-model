@@ -7,8 +7,9 @@ power_grid_model_c
 
 This is a C-API reference. In the following sections the content of all the headers are shown.
 
-You can include `power_grid_model_c.h` use all the symbols except the global definition pointers of all datasets, compoments, attributes.
+You can include `power_grid_model_c.h` if you want to use all the symbols (except for the global definition pointers of all datasets, components, attributes).
 
+You can also include one or more of the individual headers to use a subset of the functionality.
 
 -----
 Main Header
