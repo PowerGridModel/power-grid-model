@@ -277,7 +277,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
         """
-        Calculate power flow once with the current model attributes. 
+        Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
 
         Args:
@@ -360,7 +360,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
     ) -> Dict[str, np.ndarray]:
         """
-        Calculate state estimation once with the current model attributes. 
+        Calculate state estimation once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
 
         Args:
