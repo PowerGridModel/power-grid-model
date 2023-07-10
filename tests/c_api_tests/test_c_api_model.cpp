@@ -72,7 +72,15 @@ TEST_CASE("C API Model") {
 
     // update data
     SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};
-    std::array<SymLoadGenUpdate, 2> load_updates{{{{{2}, na_IntS}, nan, 100.0}, {{{2}, na_IntS}, nan, 300.0}}};
+    std::array<SymLoadGenUpdate, 2> load_updates{};
+    // set nan twice with offset
+    PGM_buffer_set_nan(hl, PGM_def_update_sym_load, load_updates.data(), 0, 1);
+    PGM_buffer_set_nan(hl, PGM_def_update_sym_load, load_updates.data(), 1, 1);
+    // set value
+    load_updates[0].id = 2;
+    load_updates[0].q_specified = 100.0;
+    load_updates[1].id = 2;
+    load_updates[1].q_specified = 300.0;
     std::array update_components{"source", "sym_load"};
     std::array<Idx, 2> update_component_sizes{1, 1};
     std::array<RawDataConstPtr, 2> update_data{&source_update, load_updates.data()};
