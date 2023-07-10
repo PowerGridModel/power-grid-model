@@ -6,10 +6,11 @@
 
 #include <doctest/doctest.h>
 
-#define s3 (1.7320508075688773433)  // sqrt(3)
-#define ph (2.0943951023931952219)  // 2/3 * pi
-
 namespace power_grid_model {
+namespace {
+constexpr double s3 = sqrt3;
+constexpr double ph = 2.0 / 3.0 * pi;
+}  // namespace
 
 TEST_CASE("Test Main Model") {
     MainModel main_model{50.0};
