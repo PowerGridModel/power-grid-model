@@ -69,7 +69,7 @@ class Transformer : public Branch {
             throw InvalidTransformerClock{id(), clock_};
         }
         // set clock to zero if it is 12
-        clock_ = clock_ % 12;
+        clock_ = static_cast<IntS>(clock_ % 12);
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
