@@ -1,5 +1,0 @@
-{
-  "calculation_method": "iec60909",
-  "rtol": 1e-08,
-  "atol": 1e-08
-}
