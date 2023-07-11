@@ -43,7 +43,7 @@ void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_p
                           PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx stride) {
     // if stride is negative, use the size of the attributes as stride
     if (stride < 0) {
-        stride = static_cast<PGM_Index>(attribute->size);
+        stride = static_cast<PGM_Idx>(attribute->size);
     }
     for (Idx i = buffer_offset; i != size + buffer_offset; ++i) {
         ValuePtr const shifted_value_ptr =

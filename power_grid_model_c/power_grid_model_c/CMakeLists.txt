@@ -6,8 +6,8 @@
 add_library(power_grid_model_c_headers INTERFACE)
 
 target_include_directories(power_grid_model_c_headers INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c>
-  $<INSTALL_INTERFACE:include/power_grid_model_c>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
 set(PGM_PUBLIC_HEADERS
