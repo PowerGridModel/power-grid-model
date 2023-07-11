@@ -2,6 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/container.hpp>
+#include <power_grid_model/main_model.hpp>
+
+#include <doctest/doctest.h>
+#include <nlohmann/json.hpp>
+
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
@@ -10,13 +18,6 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
-
-#include "doctest/doctest.h"
-#include "nlohmann/json.hpp"
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
-#include "power_grid_model/container.hpp"
-#include "power_grid_model/main_model.hpp"
 
 namespace power_grid_model {
 

@@ -127,6 +127,12 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 | `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan𝛿)     | &#10024; only for asymmetric calculations | &#10060; |                                   |
 | `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10060;                  | &#10060; |               `> 0`               |
 
+```{note}
+In case of short circuit calculations, the zero-sequence parameters are required only
+if any of the faults in any of the scenarios within a batch are not three-phase faults
+(i.e. `fault_type` is not `FaultType.three_phase`).
+```
+
 ### Link
 
 * type name: `link`
@@ -380,6 +386,12 @@ load/generator with type `const_impedance`.
 | `g0` | `double`  | siemens (S) | zero-sequence shunt conductance     | &#10024; only for asymmetric calculation | &#10060; |
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10060; |
 
+```{note}
+In case of short circuit calculations, the zero-sequence parameters are required only
+if any of the faults in any of the scenarios within a batch are not three-phase faults
+(i.e. `fault_type` is not `FaultType.three_phase`).
+```
+
 ## Sensor
 
 * type name: `sensor`
@@ -493,19 +505,44 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 `fault` defines a short circuit location in the grid. At this moment a fault can only happen at a `node`.
 
 #### Input
-| name           | data type                                                | unit    | description                                         |       required       |  update  |   valid values    |
-| -------------- | -------------------------------------------------------- | ------- | --------------------------------------------------- | :------------------: | :------: | :---------------: |
-| `status`       | `int8_t`                                                 | -       | whether the fault is active                         |       &#10004;       | &#10004; |    `0` or `1`     |
-| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>   | -       | the type of the fault                               |       &#10004;       | &#10004; |                   |
-| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase> | -       | the phase(s) of the fault                           |       &#10004;       | &#10004; |                   |
-| `fault_object` | `int32_t`                                                | -       | ID of the component where the short circuit happens |       &#10004;       | &#10004; | A valid `node` ID |
-| `r_f`          | `double`                                                 | ohm (Ω) | short circuit resistance                            | &#10060; default 0.0 | &#10060; |                   |
-| `x_f`          | `double`                                                 | ohm (Ω) | short circuit reactance                             | &#10060; default 0.0 | &#10060; |                   |
+
+| name           | data type                                                 | unit    | description                                         |                                          required                                          |  update  |   valid values    |
+| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :----------------------------------------------------------------------------------------: | :------: | :---------------: |
+| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                          &#10004;                                          | &#10004; |    `0` or `1`     |
+| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                              &#10024; only for short circuit                               | &#10004; |                   |
+| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default `FaultPhase.default_value` (see [below](#default-values-for-fault_phase)) | &#10004; |                   |
+| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                          &#10004;                                          | &#10004; | A valid `node` ID |
+| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                    &#10060; default 0.0                                    | &#10060; |                   |
+| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                    &#10060; default 0.0                                    | &#10060; |                   |
+
+```{note}
+Multiple faults may exist within one calculation. Currently, all faults in one scenario are required to have the
+same `fault_type` and `fault_phase`. Across scenarios in a batch, the `fault_type` and `fault_phase` may differ.
+```
+
+```{note}
+If any of the faults in any of the scenarios within a batch are not `three_phase`
+(i.e. `fault_type` is not `FaultType.three_phase`),
+the calculation is treated as asymmetric.
+```
+
+##### Default values for `fault_phase`
+
+In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
+
+| `fault_type`                       | `fault_phase`    |
+| ---------------------------------- | ---------------- |
+| `FaultType.three_phase`            | `FaultPhase.abc` |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   |
+| `FaultType.two_phase`              | `FaultPhase.bc`  |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  |
 
 #### Steady state output
+
 A `fault` has no steady state output.
 
 #### Short circuit output
+
 | name        | data type         | unit       | description   |
 | ----------- | ----------------- | ---------- | ------------- |
 | `i_f`       | `RealValueOutput` | ampere (A) | current       |

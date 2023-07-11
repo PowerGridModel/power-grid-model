@@ -6,11 +6,11 @@
 #ifndef POWER_GRID_MODEL_EXCEPTION_HPP
 #define POWER_GRID_MODEL_EXCEPTION_HPP
 
-#include <exception>
-#include <string>
-
 #include "enum.hpp"
 #include "power_grid_model.hpp"
+
+#include <exception>
+#include <string>
 
 namespace power_grid_model {
 
@@ -163,6 +163,10 @@ class UnknownAttributeName : public PowerGridError {
 
 class InvalidShortCircuitType : public PowerGridError {
    public:
+    explicit InvalidShortCircuitType(FaultType short_circuit_type) {
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") is invalid!\n");
+    }
     InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
         append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
                    ") does not match the calculation type (symmetric=" + std::to_string(sym) + ")\n");

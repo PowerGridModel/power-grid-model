@@ -148,10 +148,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto const& input = *it;
             ID const id = input.id;
             // construct based on type of component
-            if constexpr (std::is_base_of_v<Node, CompType>) {
+            if constexpr (std::derived_from<CompType, Node>) {
                 components_.template emplace<CompType>(id, input);
             }
-            else if constexpr (std::is_base_of_v<Branch, CompType>) {
+            else if constexpr (std::derived_from<CompType, Branch>) {
                 double const u1 = components_.template get_item<Node>(input.from_node).u_rated();
                 double const u2 = components_.template get_item<Node>(input.to_node).u_rated();
                 // set system frequency for line
@@ -162,21 +162,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     components_.template emplace<CompType>(id, input, u1, u2);
                 }
             }
-            else if constexpr (std::is_base_of_v<Branch3, CompType>) {
+            else if constexpr (std::derived_from<CompType, Branch3>) {
                 double const u1 = components_.template get_item<Node>(input.node_1).u_rated();
                 double const u2 = components_.template get_item<Node>(input.node_2).u_rated();
                 double const u3 = components_.template get_item<Node>(input.node_3).u_rated();
                 components_.template emplace<CompType>(id, input, u1, u2, u3);
             }
-            else if constexpr (std::is_base_of_v<Appliance, CompType>) {
+            else if constexpr (std::derived_from<CompType, Appliance>) {
                 double const u = components_.template get_item<Node>(input.node).u_rated();
                 components_.template emplace<CompType>(id, input, u);
             }
-            else if constexpr (std::is_base_of_v<GenericVoltageSensor, CompType>) {
+            else if constexpr (std::derived_from<CompType, GenericVoltageSensor>) {
                 double const u = components_.template get_item<Node>(input.measured_object).u_rated();
                 components_.template emplace<CompType>(id, input, u);
             }
-            else if constexpr (std::is_base_of_v<GenericPowerSensor, CompType>) {
+            else if constexpr (std::derived_from<CompType, GenericPowerSensor>) {
                 // it is not allowed to place a sensor at a link
                 if (components_.get_idx_by_id(input.measured_object).group ==
                     components_.template get_type_idx<Link>()) {
@@ -216,6 +216,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                       input.measured_terminal_type);
                 }
 
+                components_.template emplace<CompType>(id, input);
+            }
+            else if constexpr (std::derived_from<CompType, Fault>) {
+                // check that fault object exists (currently, only faults at nodes are supported)
+                components_.template get_item<Node>(input.fault_object);
                 components_.template emplace<CompType>(id, input);
             }
         }

@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/main_model.hpp"
+#include <power_grid_model/main_model.hpp>
+
+#include <doctest/doctest.h>
 
 #define s3 (1.7320508075688773433)  // sqrt(3)
 #define ph (2.0943951023931952219)  // 2/3 * pi

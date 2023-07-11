@@ -6,11 +6,12 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_POWER_SENSOR_HPP
 #define POWER_GRID_MODEL_COMPONENT_POWER_SENSOR_HPP
 
+#include "sensor.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../enum.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
-#include "sensor.hpp"
 
 namespace power_grid_model {
 

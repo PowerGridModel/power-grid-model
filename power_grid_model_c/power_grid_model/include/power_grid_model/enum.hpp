@@ -76,13 +76,23 @@ enum class YBusElementType : IntS {
 
 enum class FaultType : IntS {
     three_phase = 0,
-    two_phase = 1,
-    two_phase_to_ground = 2,
-    single_phase_to_ground = 3,
-    default_value = na_IntS
+    single_phase_to_ground = 1,
+    two_phase = 2,
+    two_phase_to_ground = 3,
+    nan = na_IntS
 };
 
-enum class FaultPhase : IntS { a = 0, b = 1, c = 2, ab = 3, ac = 4, bc = 5, abc = 6, default_value = na_IntS };
+enum class FaultPhase : IntS {
+    abc = 0,
+    a = 1,
+    b = 2,
+    c = 3,
+    ab = 4,
+    ac = 5,
+    bc = 6,
+    default_value = -1,
+    nan = na_IntS
+};
 
 }  // namespace power_grid_model
 

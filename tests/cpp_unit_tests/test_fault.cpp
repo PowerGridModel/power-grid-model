@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/fault.hpp"
+#include <power_grid_model/component/fault.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
@@ -30,6 +31,8 @@ TEST_CASE("Test fault") {
         DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
         CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
+        CHECK(param.fault_type == FaultType::two_phase_to_ground);
+        CHECK(param.fault_phase == FaultPhase::ab);
     }
 
     SUBCASE("Test calc param with nan impedance input") {
@@ -37,6 +40,22 @@ TEST_CASE("Test fault") {
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
+        CHECK(param.fault_type == FaultType::two_phase_to_ground);
+        CHECK(param.fault_phase == FaultPhase::ab);
+    }
+
+    SUBCASE("Test calc param with other fault type") {
+        Fault fault_nan_imp{{{1}, 1, FaultType::three_phase, FaultPhase::abc, 4, nan, nan}};
+        FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
+        CHECK(std::isinf(param.y_fault.real()));
+        CHECK(std::isinf(param.y_fault.imag()));
+        CHECK(param.fault_type == FaultType::three_phase);
+        CHECK(param.fault_phase == FaultPhase::abc);
+    }
+
+    SUBCASE("Test calc param with nan fault type") {
+        Fault fault_nan_imp{{{1}, 1, FaultType::nan, FaultPhase::nan, 4, nan, nan}};
+        CHECK_THROWS_AS((fault_nan_imp.calc_param(u_rated)), InvalidShortCircuitType);
     }
 
     SUBCASE("Test get_null_output") {
@@ -76,8 +95,60 @@ TEST_CASE("Test fault") {
         CHECK(!fault.energized(false));
     }
 
+    SUBCASE("Check fault type getter") {
+        using enum FaultType;
+
+        auto create_fault = [](FaultType fault_type) {
+            return Fault{{{1}, 1, fault_type, FaultPhase::nan, 4, 3.0, 4.0}};
+        };
+
+        CHECK((create_fault(three_phase).get_fault_type()) == three_phase);
+        CHECK((create_fault(single_phase_to_ground).get_fault_type()) == single_phase_to_ground);
+        CHECK((create_fault(two_phase).get_fault_type()) == two_phase);
+        CHECK((create_fault(two_phase_to_ground).get_fault_type()) == two_phase_to_ground);
+        CHECK_THROWS_AS((create_fault(FaultType::nan).get_fault_type()), InvalidShortCircuitType);
+    }
+
+    SUBCASE("Check fault phase getter") {
+        using enum FaultPhase;
+
+        auto create_fault = [](FaultType fault_type, FaultPhase fault_phase) {
+            return Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}};
+        };
+
+        SUBCASE("Fault phase fully specified") {
+            CHECK(create_fault(FaultType::three_phase, abc).get_fault_phase() == abc);
+            CHECK(create_fault(FaultType::single_phase_to_ground, a).get_fault_phase() == a);
+            CHECK(create_fault(FaultType::single_phase_to_ground, b).get_fault_phase() == b);
+            CHECK(create_fault(FaultType::single_phase_to_ground, c).get_fault_phase() == c);
+            CHECK(create_fault(FaultType::two_phase, ab).get_fault_phase() == ab);
+            CHECK(create_fault(FaultType::two_phase, ac).get_fault_phase() == ac);
+            CHECK(create_fault(FaultType::two_phase, bc).get_fault_phase() == bc);
+            CHECK(create_fault(FaultType::two_phase_to_ground, ab).get_fault_phase() == ab);
+            CHECK(create_fault(FaultType::two_phase_to_ground, ac).get_fault_phase() == ac);
+            CHECK(create_fault(FaultType::two_phase_to_ground, bc).get_fault_phase() == bc);
+            CHECK((create_fault(FaultType::nan, abc).get_fault_phase()) == abc);
+            CHECK((create_fault(FaultType::nan, a).get_fault_phase()) == a);
+            CHECK((create_fault(FaultType::nan, b).get_fault_phase()) == b);
+            CHECK((create_fault(FaultType::nan, c).get_fault_phase()) == c);
+            CHECK((create_fault(FaultType::nan, ab).get_fault_phase()) == ab);
+            CHECK((create_fault(FaultType::nan, ac).get_fault_phase()) == ac);
+            CHECK((create_fault(FaultType::nan, bc).get_fault_phase()) == bc);
+        }
+
+        SUBCASE("Fault phase not specified") {
+            for (auto fault_phase : {default_value, FaultPhase::nan}) {
+                CHECK(create_fault(FaultType::three_phase, fault_phase).get_fault_phase() == abc);
+                CHECK(create_fault(FaultType::single_phase_to_ground, fault_phase).get_fault_phase() == a);
+                CHECK(create_fault(FaultType::two_phase, fault_phase).get_fault_phase() == bc);
+                CHECK(create_fault(FaultType::two_phase_to_ground, fault_phase).get_fault_phase() == bc);
+                CHECK_THROWS_AS((create_fault(FaultType::nan, fault_phase).get_fault_phase()), InvalidShortCircuitType);
+            }
+        }
+    }
+
     SUBCASE("Test update") {
-        FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::c, 10};
+        FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::ac, 10};
         UpdateChange updated = fault.update(fault_update);
 
         CHECK(!updated.param);
@@ -85,38 +156,109 @@ TEST_CASE("Test fault") {
 
         CHECK_FALSE(fault.status());
         CHECK(fault.get_fault_type() == FaultType::two_phase);
-        CHECK(fault.get_fault_phase() == FaultPhase::c);
+        CHECK(fault.get_fault_phase() == FaultPhase::ac);
         CHECK(fault.get_fault_object() == 10);
 
         // update without updating
-        FaultUpdate const fault_update_nan{{1}, na_IntS, FaultType::default_value, FaultPhase::default_value, na_IntID};
+        FaultUpdate const fault_update_nan{{1}, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID};
         fault.update(fault_update_nan);
         CHECK_FALSE(fault.status());
         CHECK(fault.get_fault_type() == FaultType::two_phase);
-        CHECK(fault.get_fault_phase() == FaultPhase::c);
+        CHECK(fault.get_fault_phase() == FaultPhase::ac);
+        CHECK(fault.get_fault_object() == 10);
+
+        // default value does override
+        FaultUpdate const fault_update_default_value{{1}, na_IntS, FaultType::nan, FaultPhase::default_value, na_IntID};
+        fault.update(fault_update_default_value);
+        CHECK_FALSE(fault.status());
+        CHECK(fault.get_fault_type() == FaultType::two_phase);
+        CHECK(fault.get_fault_phase() == FaultPhase::bc);  // bc is the default value for two_phase fault type
         CHECK(fault.get_fault_object() == 10);
     }
 
-    SUBCASE("Three phase fault provided for other fault type not allowed") {
-        using enum FaultType;
-
-        for (auto fault_type : {two_phase, two_phase_to_ground, single_phase_to_ground}) {
-            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, FaultPhase::abc, 4, 3.0, 4.0}}), InvalidShortCircuitPhases);
-
-            FaultUpdate const fault_update{{1}, 0, fault_type, FaultPhase::abc, 10};
-            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
-        }
-    }
-
-    SUBCASE("Three phase fault type for other fault phases not allowed") {
+    SUBCASE("Check fault type/phase combination") {
         using enum FaultPhase;
 
-        for (auto fault_phase : {a, b, c, ab, ac, bc}) {
-            CHECK_THROWS_AS((Fault{{{1}, 1, FaultType::three_phase, fault_phase, 4, 3.0, 4.0}}),
-                            InvalidShortCircuitPhases);
+        auto check_allowed = [&fault](FaultType fault_type, FaultPhase fault_phase) {
+            CAPTURE(fault_type);
+            CAPTURE(fault_phase);
+            CHECK_NOTHROW((Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}}));
 
-            FaultUpdate const fault_update{{1}, 0, FaultType::three_phase, fault_phase, 10};
+            FaultUpdate const fault_update{{1}, 0, fault_type, fault_phase, 10};
+            CHECK_NOTHROW(fault.update(fault_update));
+        };
+
+        auto check_not_allowed = [&fault](FaultType fault_type, FaultPhase fault_phase) {
+            CAPTURE(fault_type);
+            CAPTURE(fault_phase);
+            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}}), InvalidShortCircuitPhases);
+
+            FaultUpdate const fault_update{{1}, 0, fault_type, fault_phase, 10};
             CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
+        };
+
+        SUBCASE("Three phase fault type") {
+            FaultType const fault_type = FaultType::three_phase;
+            check_allowed(fault_type, default_value);
+            check_allowed(fault_type, FaultPhase::nan);
+            check_allowed(fault_type, abc);
+
+            check_not_allowed(fault_type, a);
+            check_not_allowed(fault_type, b);
+            check_not_allowed(fault_type, c);
+            check_not_allowed(fault_type, ab);
+            check_not_allowed(fault_type, ac);
+            check_not_allowed(fault_type, bc);
+        }
+
+        SUBCASE("Single phase to ground fault type") {
+            FaultType const fault_type = FaultType::single_phase_to_ground;
+            check_allowed(fault_type, default_value);
+            check_allowed(fault_type, FaultPhase::nan);
+            check_allowed(fault_type, a);
+            check_allowed(fault_type, b);
+            check_allowed(fault_type, c);
+
+            check_not_allowed(fault_type, abc);
+            check_not_allowed(fault_type, ab);
+            check_not_allowed(fault_type, ac);
+            check_not_allowed(fault_type, bc);
+        }
+
+        SUBCASE("Two phase fault type") {
+            FaultType const fault_type = FaultType::two_phase;
+            check_allowed(fault_type, default_value);
+            check_allowed(fault_type, FaultPhase::nan);
+            check_allowed(fault_type, ab);
+            check_allowed(fault_type, ac);
+            check_allowed(fault_type, bc);
+
+            check_not_allowed(fault_type, abc);
+            check_not_allowed(fault_type, a);
+            check_not_allowed(fault_type, b);
+            check_not_allowed(fault_type, c);
+        }
+
+        SUBCASE("Two phase to ground fault type") {
+            FaultType const fault_type = FaultType::two_phase_to_ground;
+            check_allowed(fault_type, default_value);
+            check_allowed(fault_type, FaultPhase::nan);
+            check_allowed(fault_type, ab);
+            check_allowed(fault_type, ac);
+            check_allowed(fault_type, bc);
+
+            check_not_allowed(fault_type, abc);
+            check_not_allowed(fault_type, a);
+            check_not_allowed(fault_type, b);
+            check_not_allowed(fault_type, c);
+        }
+
+        SUBCASE("Invalid fault type") {
+            CHECK_THROWS_AS((Fault{{{1}, 1, static_cast<FaultType>(-127), FaultPhase::nan, 4, 3.0, 4.0}}),
+                            InvalidShortCircuitType);
+
+            FaultUpdate const fault_update{{1}, 0, static_cast<FaultType>(-127), FaultPhase::nan, 10};
+            CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitType);
         }
     }
 }

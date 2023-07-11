@@ -6,9 +6,9 @@
 #ifndef POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
 #define POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
 
-#include <memory>
-
 #include "power_grid_model_c.h"
+
+#include <memory>
 
 namespace power_grid_model {
 

@@ -6,12 +6,13 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 #define POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../enum.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
@@ -31,7 +32,8 @@ class Fault final : public Base {
         : Base{fault_input},
           status_{static_cast<bool>(fault_input.status)},
           fault_type_{fault_input.fault_type},
-          fault_phase_{fault_input.fault_phase},
+          fault_phase_{fault_input.fault_phase == FaultPhase::nan ? FaultPhase::default_value
+                                                                  : fault_input.fault_phase},
           fault_object_{fault_input.fault_object},
           r_f_{is_nan(fault_input.r_f) ? double{} : fault_input.r_f},
           x_f_{is_nan(fault_input.x_f) ? double{} : fault_input.x_f} {
@@ -41,6 +43,8 @@ class Fault final : public Base {
     FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
         // param object
         FaultCalcParam param{};
+        param.fault_type = get_fault_type();
+        param.fault_phase = get_fault_phase();
         if (!energized(is_connected_to_source)) {
             return param;
         }
@@ -88,10 +92,10 @@ class Fault final : public Base {
     UpdateChange update(FaultUpdate const& update) {
         assert(update.id == id());
         set_status(update.status);
-        if (update.fault_type != FaultType::default_value) {
+        if (update.fault_type != FaultType::nan) {
             fault_type_ = update.fault_type;
         }
-        if (update.fault_phase != FaultPhase::default_value) {
+        if (update.fault_phase != FaultPhase::nan) {
             fault_phase_ = update.fault_phase;
         }
         if (update.fault_object != na_IntID) {
@@ -101,16 +105,16 @@ class Fault final : public Base {
         return {false, false};  // topology and parameters do not change
     }
 
-    bool energized(bool is_connected_to_source) const final {
+    constexpr bool energized(bool is_connected_to_source) const final {
         return is_connected_to_source;
     }
 
-    bool status() const {
+    constexpr bool status() const {
         return status_;
     }
 
     // setter
-    bool set_status(IntS new_status) {
+    constexpr bool set_status(IntS new_status) {
         if (new_status == na_IntS)
             return false;
         if (static_cast<bool>(new_status) == status_)
@@ -121,12 +125,41 @@ class Fault final : public Base {
 
     // getters
     FaultType get_fault_type() const {
+        using enum FaultType;
+
+        constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
+
+        if (std::find(cbegin(supported), cend(supported), fault_type_) == cend(supported)) {
+            throw InvalidShortCircuitType(fault_type_);
+        }
+
         return fault_type_;
     }
     FaultPhase get_fault_phase() const {
+        using enum FaultType;
+
+        if (fault_phase_ == FaultPhase::default_value) {
+            auto const default_phase = [](FaultType fault_type) {
+                switch (fault_type) {
+                    using enum FaultPhase;
+
+                    case three_phase:
+                        return abc;
+                    case single_phase_to_ground:
+                        return a;
+                    case two_phase:
+                        [[fallthrough]];
+                    case two_phase_to_ground:
+                        return bc;
+                    default:
+                        throw InvalidShortCircuitType(fault_type);
+                }
+            }(fault_type_);
+            return default_phase;
+        }
         return fault_phase_;
     }
-    ID get_fault_object() const {
+    constexpr ID get_fault_object() const {
         return fault_object_;
     }
 
@@ -139,16 +172,27 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    void check_sanity() const {
-        if (fault_type_ == FaultType::three_phase) {
-            if (fault_phase_ != FaultPhase::abc) {
+    void check_sanity() {
+        using enum FaultPhase;
+
+        auto const check_supported = [&](auto const& iterable) {
+            if (std::find(cbegin(iterable), cend(iterable), fault_phase_) == cend(iterable)) {
                 throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
             }
-        }
-        else {
-            if (fault_phase_ == FaultPhase::abc) {
-                throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
-            }
+        };
+        switch (fault_type_) {
+            case FaultType::three_phase:
+                return check_supported(std::array{FaultPhase::nan, default_value, abc});
+            case FaultType::single_phase_to_ground:
+                return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+            case FaultType::two_phase:
+                [[fallthrough]];
+            case FaultType::two_phase_to_ground:
+                return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+            case FaultType::nan:
+                return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+            default:
+                throw InvalidShortCircuitType(fault_type_);
         }
     }
 };
