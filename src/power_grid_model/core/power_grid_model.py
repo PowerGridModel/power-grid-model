@@ -227,11 +227,12 @@ class PowerGridModel:
         Core calculation routine
 
         Args:
+            calculation_type:
+            symmetric:
+            Update_data:
+            output_component_types:
             options:
-
-                - Update_data
-                - Output_component_types
-                - Continue_on_batch_error
+            Continue_on_batch_error:
 
         Returns:
         """
@@ -307,6 +308,7 @@ class PowerGridModel:
                 None: Calculate power flow once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
                     key: Component type name to be updated in batch.
+                    value:
 
                         - For homogeneous update batch (a 2D numpy structured array):
 
@@ -333,6 +335,7 @@ class PowerGridModel:
             Dictionary of results of all components.
 
                 Key: Component type name to be updated in batch.
+                value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
                     - For batch calculation: 2D numpy structured array for the results of this component type.
@@ -341,7 +344,7 @@ class PowerGridModel:
                         - Dimension 1: The result of each element for this component type.
 
         Raises:
-            Error: In case an error in the core occurs, an exception will be thrown.
+            Exception: In case an error in the core occurs, an exception will be thrown.
         """
         calculation_type = CalculationType.power_flow
         options = self._options(
@@ -391,6 +394,7 @@ class PowerGridModel:
                 None: Calculate state estimation once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
                     key: Component type name to be updated in batch.
+                    value:
 
                         - For homogeneous update batch (a 2D numpy structured array):
 
@@ -416,7 +420,8 @@ class PowerGridModel:
         Returns:
             Dictionary of results of all components.
 
-                Key: Component type name to be updated in batch.
+                key: Component type name to be updated in batch.
+                value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
                     - For batch calculation: 2D numpy structured array for the results of this component type.
@@ -425,7 +430,7 @@ class PowerGridModel:
                         - Dimension 1: The result of each element for this component type.
 
         Raises:
-            Error: In case an error in the core occurs, an exception will be thrown.
+            Exception: In case an error in the core occurs, an exception will be thrown.
         """
         calculation_type = CalculationType.state_estimation
         options = self._options(
@@ -464,6 +469,7 @@ class PowerGridModel:
                 None: calculate a short circuit once with the current model attributes.
                 Or a dictionary for batch calculation with batch update
                     key: Component type name to be updated in batch
+                    value:
 
                         - For homogeneous update batch (a 2D numpy structured array):
 
@@ -490,6 +496,7 @@ class PowerGridModel:
             Dictionary of results of all components.
 
                 key: Component type name to be updated in batch.
+                value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
                     - For batch calculation: 2D numpy structured array for the results of this component type.
@@ -497,7 +504,7 @@ class PowerGridModel:
                         - Dimension 0: Each batch.
                         - Dimension 1: The result of each element for this component type.
         Raises:
-            Error: In case an error in the core occurs, an exception will be thrown.
+            Exception: In case an error in the core occurs, an exception will be thrown.
         """
         calculation_type = CalculationType.short_circuit
         symmetric = False
