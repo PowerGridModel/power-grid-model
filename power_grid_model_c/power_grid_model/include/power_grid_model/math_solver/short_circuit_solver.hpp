@@ -32,7 +32,7 @@ class ShortCircuitSolver {
           perm_(n_bus_) {
     }
 
-    ShortCircuitMathOutput run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
+    ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
                                              ShortCircuitInput const& input) {
         // For one calculation all faults should be of the same type and have the same phase
         assert_all_fault_type_phase_equal_(input.faults);
