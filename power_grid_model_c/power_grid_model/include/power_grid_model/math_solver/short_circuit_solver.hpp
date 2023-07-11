@@ -61,7 +61,6 @@ class ShortCircuitSolver {
         });
 
         // prepare matrix + rhs
-        ComplexValueVector<sym> rhs(n_bus_){};
         IdxVector zero_fault_counter(n_bus_){};
         ComplexValueVector<sym> i_fault(n_fault_){};
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
@@ -74,8 +73,8 @@ class ShortCircuitSolver {
                  ++source_number) {
                 ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
                 mat_data_[diagonal_position] += y_source;  // add y_source to the diagonal of Ybus
-                rhs[bus_number] +=
-                    y_source * input.source[source_number] * source_voltage_ref;  // Y_source * U_source * c
+                output.u_bus[bus_number] +=
+                    y_source * input.source[source_number] * source_voltage_ref;  // rhs += Y_source * U_source * c
             }
             // add all faults
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
@@ -98,7 +97,7 @@ class ShortCircuitSolver {
                                 mat_data_[col_data_index] = -1;
                             }
                         }
-                        rhs[bus_number] = 0;
+                        output.u_bus[bus_number] = 0;  // update rhs
                     }
                     else if (fault_type == FaultType::single_phase_to_ground) {
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
@@ -112,7 +111,7 @@ class ShortCircuitSolver {
                                 mat_data_[col_data_index](phase_1, phase_1) = -1;
                             }
                         }
-                        rhs[bus_number](phase_1) = 0;
+                        output.u_bus[bus_number](phase_1) = 0;  // update rhs
                     }
                     else if (fault_type == FaultType::two_phase) {
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
@@ -130,8 +129,9 @@ class ShortCircuitSolver {
                                 mat_data_[col_data_index](phase_2, phase_2) = 1;
                             }
                         }
-                        rhs[bus_number](phase_2) += rhs[bus_number](phase_1);
-                        rhs[bus_number](phase_1) = 0;
+                        // update rhs
+                        output.u_bus[bus_number](phase_2) += output.u_bus[bus_number](phase_1);
+                        output.u_bus[bus_number](phase_1) = 0;
                     }
                     else {
                         assert((fault_type == FaultType::two_phase_to_ground));
@@ -150,8 +150,9 @@ class ShortCircuitSolver {
                                 mat_data_[col_data_index](phase_2, phase_2) = -1;
                             }
                         }
-                        rhs[bus_number](phase_1) = 0;
-                        rhs[bus_number](phase_2) = 0;
+                        // update rhs
+                        output.u_bus[bus_number](phase_1) = 0;
+                        output.u_bus[bus_number](phase_2) = 0;
                     }
                     // If there is a fault with infinite admittance, there is no need to add other faults to that bus
                     break;
@@ -220,7 +221,7 @@ class ShortCircuitSolver {
         }
 
         // solve matrix
-        sparse_solver_.prefactorize_and_solve(mat_data_, perm_, rhs, rhs)
+        sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus)
 
         // post processing
     }
