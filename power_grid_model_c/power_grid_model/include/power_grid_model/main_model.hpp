@@ -432,11 +432,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <bool sym, typename InputType, typename PrepareInputFn, typename SolveFn>
-        requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
-                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolver<sym>&, InputType const&> &&
-                 std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>> &&
-                 std::same_as<std::invoke_result_t<SolveFn, MathSolver<sym>&, InputType const&>, MathOutput<sym>>
-    std::vector<MathOutput<sym>> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+    requires std::invocable<std::remove_cvref_t<PrepareInputFn>> && std::invocable < std::remove_cvref_t<SolveFn>,
+        MathSolver<sym>
+    &, InputType const& >
+           &&std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>>&&
+               std::same_as<std::invoke_result_t<SolveFn, MathSolver<sym>&, InputType const&>, MathOutput<sym>>
+                   std::vector<MathOutput<sym>> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
