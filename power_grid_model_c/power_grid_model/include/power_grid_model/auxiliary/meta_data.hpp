@@ -140,16 +140,16 @@ struct PGM_MetaAttribute {
 
     // meta data
     std::string name;
-    std::string ctype;
-    size_t offset;
-    size_t size;
-    size_t component_size;
+    std::string ctype{};
+    size_t offset{};
+    size_t size{};
+    size_t component_size{};
 
     // function pointers
-    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_nan;
-    std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value;
-    std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value;
-    std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value;
+    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_nan{};
+    std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value{};
+    std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value{};
+    std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value{};
 };
 
 namespace power_grid_model::meta_data {
