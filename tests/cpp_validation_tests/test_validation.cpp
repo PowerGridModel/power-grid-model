@@ -61,42 +61,39 @@ struct Buffer {
     MutableDataPointer data_ptr;
 };
 
-void parse_single_object(RawDataPtr ptr, json const& j, MetaData const& meta, Idx position) {
-    meta.set_nan(ptr, position);
+void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& meta, Idx position) {
     for (auto const& it : j.items()) {
         // Allow and skip unknown attributes
-        if (!meta.has_attr(it.key())) {
+        if (!meta.has_attribute(it.key())) {
             continue;
         }
-        DataAttribute attr = meta.get_attr(it.key());
-        if (attr.numpy_type == "i1") {
+        MetaAttribute const& attr = meta.get_attribute(it.key());
+        if (attr.ctype == "int8_t") {
             int8_t const value = it.value().get<int8_t>();
-            meta.set_attr(ptr, &value, attr, position);
+            attr.set_value(ptr, &value, position);
         }
-        else if (attr.numpy_type == "i4") {
+        else if (attr.ctype == "int32_t") {
             int32_t const value = it.value().get<int32_t>();
-            meta.set_attr(ptr, &value, attr, position);
+            attr.set_value(ptr, &value, position);
         }
-        else if (attr.numpy_type == "f8") {
-            if (attr.dims.empty()) {
-                // single double
-                double const value = it.value().get<double>();
-                meta.set_attr(ptr, &value, attr, position);
-            }
-            else {
-                // double[3]
-                std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
-                meta.set_attr(ptr, &value, attr, position);
-            }
+        else if (attr.ctype == "double") {
+            // single double
+            double const value = it.value().get<double>();
+            attr.set_value(ptr, &value, position);
+        }
+        else if (attr.ctype == "double[3]") {
+            std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
+            attr.set_value(ptr, &value, position);
         }
     }
 }
 
-Buffer parse_single_type(json const& j, MetaData const& meta) {
+Buffer parse_single_type(json const& j, MetaComponent const& meta) {
     Buffer buffer;
     size_t const length = j.size();
     size_t const obj_size = meta.size;
     buffer.ptr = create_buffer(obj_size, length);
+    meta.set_nan(buffer.ptr.get(), 0, length);
     for (Idx position = 0; position != static_cast<Idx>(length); ++position) {
         parse_single_object(buffer.ptr.get(), j[position], meta, position);
     }
@@ -106,14 +103,14 @@ Buffer parse_single_type(json const& j, MetaData const& meta) {
 }
 
 std::map<std::string, Buffer> parse_single_dict(json const& j, std::string const& data_type) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     std::map<std::string, Buffer> buffer_map;
     for (auto const& it : j.items()) {
         // skip empty list
         if (it.value().size() == 0) {
             continue;
         }
-        buffer_map[it.key()] = parse_single_type(it.value(), meta.at(it.key()));
+        buffer_map[it.key()] = parse_single_type(it.value(), meta.get_component(it.key()));
     }
     return buffer_map;
 }
@@ -145,10 +142,10 @@ SingleData convert_json_single(json const& j, std::string const& data_type) {
 
 // create single result set
 SingleData create_result_dataset(SingleData const& input, std::string const& data_type, Idx n_batch = 1) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     SingleData result;
     for (auto const& [name, buffer] : input.buffer_map) {
-        MetaData const& component_meta = meta.at(name);
+        MetaComponent const& component_meta = meta.get_component(name);
         Buffer result_buffer;
         Idx const length = buffer.indptr.back();
         result_buffer.ptr = create_buffer(component_meta.size, length * n_batch);
@@ -174,7 +171,7 @@ struct BatchData {
 
 // parse batch json data
 BatchData convert_json_batch(json const& j, std::string const& data_type) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     BatchData batch_data;
     for (auto const& j_single : j) {
         batch_data.individual_batch.push_back(convert_json_single(j_single, data_type));
@@ -189,7 +186,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
     }
     // allocate and copy object into batch dataset
     for (auto const& [name, total_length] : obj_count) {
-        MetaData const& component_meta = meta.at(name);
+        MetaComponent const& component_meta = meta.get_component(name);
         // allocate
         Buffer batch_buffer;
         batch_buffer.ptr = create_buffer(component_meta.size, total_length);
@@ -225,13 +222,13 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
     // loop all batch
     for (Idx batch = 0; batch != batch_size; ++batch) {
         // loop all component type name
         for (auto const& [type_name, reference_dataset] : reference_result) {
-            MetaData const& component_meta = meta.at(type_name);
+            MetaComponent const& component_meta = meta.get_component(type_name);
             Idx const length = reference_dataset.elements_per_scenario(batch);
             // offset batch
             RawDataConstPtr const result_ptr =
@@ -239,7 +236,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             RawDataConstPtr const reference_result_ptr =
                 reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * batch * component_meta.size;
             // loop all attribute
-            for (DataAttribute const& attr : component_meta.attributes) {
+            for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
                 if (attr.name == "u_angle") {
                     continue;
@@ -256,11 +253,10 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 // loop all object
                 for (Idx obj = 0; obj != length; ++obj) {
                     // only check if reference result is not nan
-                    if (component_meta.check_nan(reference_result_ptr, attr, obj)) {
+                    if (attr.check_nan(reference_result_ptr, obj)) {
                         continue;
                     }
-                    bool const match =
-                        component_meta.compare_attr(result_ptr, reference_result_ptr, dynamic_atol, rtol, attr, obj);
+                    bool const match = attr.compare_value(result_ptr, reference_result_ptr, dynamic_atol, rtol, obj);
                     if (match) {
                         CHECK(match);
                     }

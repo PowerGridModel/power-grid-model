@@ -20,58 +20,51 @@ TEST_CASE("C API Meta Data") {
     auto const& meta = meta_data();
 
     SUBCASE("Datasets") {
-        CHECK(PGM_meta_n_datasets(hl) == (Idx)meta.size());
-        for (Idx i = 0; i != (Idx)meta.size(); ++i) {
-            auto const found = meta.find(PGM_meta_dataset_name(hl, i));
-            CHECK(found != meta.end());
-        }
-    }
+        // check dataset
+        CHECK(PGM_meta_n_datasets(hl) == meta.n_datasets());
+        for (Idx idx_dataset = 0; idx_dataset != meta.n_datasets(); ++idx_dataset) {
+            MetaDataset const* const dataset = PGM_meta_get_dataset_by_idx(hl, idx_dataset);
+            char const* const dataset_name = PGM_meta_dataset_name(hl, dataset);
+            CHECK(PGM_meta_get_dataset_by_name(hl, dataset_name) == dataset);
+            CHECK(dataset_name == meta.datasets[idx_dataset].name);
 
-    SUBCASE("Component meta data") {
-        for (auto const& [dataset_name, dataset] : meta) {
-            CHECK(PGM_meta_n_components(hl, dataset_name.c_str()) == (Idx)dataset.size());
-            for (Idx i = 0; i != (Idx)dataset.size(); ++i) {
-                auto const found = dataset.find(PGM_meta_component_name(hl, dataset_name.c_str(), i));
-                CHECK(found != dataset.end());
-                auto const& component_name = found->first;
-                auto const& component_meta = found->second;
-                CHECK(PGM_meta_component_size(hl, dataset_name.c_str(), component_name.c_str()) == component_meta.size);
-                CHECK(PGM_meta_component_alignment(hl, dataset_name.c_str(), component_name.c_str()) ==
-                      component_meta.alignment);
-            }
-        }
-    }
+            // check component
+            CHECK(PGM_meta_n_components(hl, dataset) == dataset->n_components());
+            for (Idx idx_component = 0; idx_component != dataset->n_components(); ++idx_component) {
+                MetaComponent const* const component = PGM_meta_get_component_by_idx(hl, dataset, idx_component);
+                char const* const component_name = PGM_meta_component_name(hl, component);
+                CHECK(PGM_meta_get_component_by_name(hl, dataset_name, component_name) == component);
+                CHECK(component_name == dataset->components[idx_component].name);
+                CHECK(PGM_meta_component_size(hl, component) == component->size);
+                CHECK(PGM_meta_component_alignment(hl, component) == component->alignment);
 
-    SUBCASE("Attributes") {
-        for (auto const& [dataset_name, dataset] : meta) {
-            for (auto const& [component_name, component_meta] : dataset) {
-                auto const& attributes = component_meta.attributes;
-                CHECK(PGM_meta_n_attributes(hl, dataset_name.c_str(), component_name.c_str()) ==
-                      (Idx)attributes.size());
-                for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
-                    auto const& attr = attributes[i];
-                    CHECK(PGM_meta_attribute_name(hl, dataset_name.c_str(), component_name.c_str(), i) == attr.name);
-                    CHECK(PGM_meta_attribute_ctype(hl, dataset_name.c_str(), component_name.c_str(),
-                                                   attr.name.c_str()) == attributes[i].ctype);
-                    CHECK(PGM_meta_attribute_offset(hl, dataset_name.c_str(), component_name.c_str(),
-                                                    attr.name.c_str()) == attributes[i].offset);
+                // check attribute
+                CHECK(PGM_meta_n_attributes(hl, component) == component->n_attributes());
+                for (Idx idx_attribute = 0; idx_attribute != component->n_attributes(); ++idx_attribute) {
+                    MetaAttribute const* const attribute = PGM_meta_get_attribute_by_idx(hl, component, idx_attribute);
+                    char const* const attribute_name = PGM_meta_attribute_name(hl, attribute);
+                    CHECK(PGM_meta_get_attribute_by_name(hl, dataset_name, component_name, attribute_name) ==
+                          attribute);
+                    CHECK(attribute_name == component->attributes[idx_attribute].name);
+                    CHECK(PGM_meta_attribute_ctype(hl, attribute) == attribute->ctype);
+                    CHECK(PGM_meta_attribute_offset(hl, attribute) == attribute->offset);
                 }
             }
         }
-    }
 
-    SUBCASE("Endian") {
-        CHECK(static_cast<bool>(PGM_is_little_endian(hl)) == is_little_endian());
-    }
+        SUBCASE("Endian") {
+            CHECK(static_cast<bool>(PGM_is_little_endian(hl)) == is_little_endian());
+        }
 
-    SUBCASE("Check error handling for unknown name") {
-        CHECK(PGM_meta_attribute_name(hl, "No_dataset", "no_name", 0) == nullptr);
-        CHECK(PGM_error_code(hl) == PGM_regular_error);
-        std::string const err_msg{PGM_error_message(hl)};
-        CHECK(err_msg.find("You supplied wrong name and/or index!") != std::string::npos);
-        // clear error
-        PGM_clear_error(hl);
-        CHECK(PGM_error_code(hl) == PGM_no_error);
+        SUBCASE("Check error handling for unknown name") {
+            CHECK(PGM_meta_get_attribute_by_name(hl, "No_dataset", "no_name", "no attribute") == nullptr);
+            CHECK(PGM_error_code(hl) == PGM_regular_error);
+            std::string const err_msg{PGM_error_message(hl)};
+            CHECK(err_msg.find("You supplied wrong name and/or index!") != std::string::npos);
+            // clear error
+            PGM_clear_error(hl);
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+        }
     }
 }
 
