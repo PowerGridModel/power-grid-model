@@ -47,7 +47,8 @@ class ShortCircuitSolver {
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.lu_diag();
         // output
-        ShortCircuitMathOutput<sym> output;  // TODO: resize output values that are updated
+        ShortCircuitMathOutput<sym> output;
+        output.u_bus.resize(n_bus_);
 
         // copy y_bus data
         std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus.cend(), mat_data_.begin(), [&](Idx k) {
