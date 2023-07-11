@@ -16,9 +16,7 @@
 #include "../input.hpp" // NOLINT
 
 
-namespace power_grid_model {
-
-namespace meta_data {
+namespace power_grid_model::meta_data {
 
 // template specialization functors to get attributes
 
@@ -744,9 +742,7 @@ struct get_component_nan<FaultInput> {
 
 
 
-} // namespace meta_data
-
-} // namespace power_grid_model
+} // namespace power_grid_model::meta_data
 
 #endif
 // clang-format on
