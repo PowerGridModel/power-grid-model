@@ -41,7 +41,6 @@ class PowerGridModel:
     def batch_error(self) -> Optional[PowerGridBatchError]:
         """
         Get the batch error object, if present
-        bla
 
         Returns:
             Batch error object, or None
