@@ -101,9 +101,10 @@ def all_greater_than_or_equal_to_zero(
         data (SingleDataset): The input/update data set for all components
         component (str) The component of interest
         field (str): The field of interest
-        default_value (Optional[Union[np.ndarray, int, float]], optional): Some values are not required, but will receive a default value in the C++ core. To do a proper
-        input validation, these default values should be included in the validation. It can be a fixed value for the
-        entire column (int/float) or be different for each element (np.ndarray).
+        default_value (Optional[Union[np.ndarray, int, float]], optional): Some values are not required, but will
+            receive a default value in the C++ core. To do a proper input validation, these default values should be
+            included in the validation. It can be a fixed value for the entire column (int/float) or be different for
+            each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
@@ -395,7 +396,7 @@ def all_enabled_identical(
 
     Returns:
         A list containing zero or one NotIdenticalError, listing:
-            
+
             - all ids of enabled components if the value in the field of interest was not identical across all enabled
               components
             - all values of the 'field' column for enabled components (including duplications)
@@ -441,9 +442,10 @@ def all_cross_unique(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        fields (List[Tuple[str, str]]): The fields of interest, formatted as [(component_1, field_1), (component_2, field_2)]
-        cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use all_unique() to
-          explicitly check uniqueness within a single field.
+        fields (List[Tuple[str, str]]): The fields of interest, formatted as
+            [(component_1, field_1), (component_2, field_2)]
+        cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use
+            all_unique() to explicitly check uniqueness within a single field.
 
     Returns:
         A list containing zero or one MultiComponentNotUniqueError, listing all fields and ids where the value was not
