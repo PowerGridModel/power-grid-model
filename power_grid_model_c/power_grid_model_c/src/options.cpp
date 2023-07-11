@@ -7,7 +7,9 @@
 
 #include "options.hpp"
 
+namespace {
 using namespace power_grid_model;
+}  // namespace
 
 // options
 PGM_Options* PGM_create_options(PGM_Handle*) {

@@ -9,9 +9,9 @@
 
 #include <cstdlib>
 
+namespace {
 using namespace power_grid_model;
 
-namespace {
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
 }  // namespace

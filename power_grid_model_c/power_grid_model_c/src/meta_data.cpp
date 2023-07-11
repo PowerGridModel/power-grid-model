@@ -8,13 +8,13 @@
 #include "handle.hpp"
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+
+namespace {
 using namespace power_grid_model;
 
 // assert index type
 static_assert(std::is_same_v<PGM_Idx, Idx>);
 static_assert(std::is_same_v<PGM_ID, ID>);
-
-namespace {
 
 template <class Functor>
 auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {

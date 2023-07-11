@@ -12,9 +12,9 @@
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/power_grid_model.hpp>
 
+namespace {
 using namespace power_grid_model;
 
-namespace {
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
 }  // namespace

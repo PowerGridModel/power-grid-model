@@ -7,7 +7,9 @@
 
 #include "handle.hpp"
 
+namespace {
 using namespace power_grid_model;
+}  // namespace
 
 // create and destroy handle
 PGM_Handle* PGM_create_handle() {
