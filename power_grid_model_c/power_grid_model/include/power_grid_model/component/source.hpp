@@ -28,8 +28,11 @@ class Source : public Appliance {
     }
 
     explicit Source(SourceInput const& source_input, double u)
-        : Appliance{source_input, u}, u_ref_{source_input.u_ref}, u_ref_angle_{}, y1_ref_{}, y0_ref_{} {
-        u_ref_angle_ = is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle;
+        : Appliance{source_input, u},
+          u_ref_{source_input.u_ref},
+          u_ref_angle_{is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle},
+          y1_ref_{},
+          y0_ref_{} {
         double const sk{is_nan(source_input.sk) ? default_source_sk : source_input.sk};
         double const rx_ratio{is_nan(source_input.rx_ratio) ? default_source_rx_ratio : source_input.rx_ratio};
         double const z01_ratio{is_nan(source_input.z01_ratio) ? default_source_z01_ratio : source_input.z01_ratio};
