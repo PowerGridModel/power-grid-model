@@ -432,12 +432,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <bool sym, typename InputType, typename PrepareInputFn, typename SolveFn>
-    requires std::invocable<std::remove_cvref_t<PrepareInputFn>> && std::invocable < std::remove_cvref_t<SolveFn>,
-        MathSolver<sym>
-    &, InputType const& >
-           &&std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>>&&
-               std::same_as<std::invoke_result_t<SolveFn, MathSolver<sym>&, InputType const&>, MathOutput<sym>>
-                   std::vector<MathOutput<sym>> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+        requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
+                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolver<sym>&, InputType const&> &&
+                 std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>> &&
+                 std::same_as<std::invoke_result_t<SolveFn, MathSolver<sym>&, InputType const&>, MathOutput<sym>>
+    std::vector<MathOutput<sym>> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
@@ -1012,17 +1011,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         comp_conn.branch3_connected.resize(comp_topo_->branch3_node_idx.size());
         comp_conn.branch3_phase_shift.resize(comp_topo_->branch3_node_idx.size());
         comp_conn.source_connected.resize(comp_topo_->source_node_idx.size());
-        std::transform(components_.template citer<Branch>().begin(), components_.template citer<Branch>().end(),
-                       comp_conn.branch_connected.begin(), [](Branch const& branch) {
-                           return BranchConnected{branch.from_status(), branch.to_status()};
-                       });
+        std::transform(
+            components_.template citer<Branch>().begin(), components_.template citer<Branch>().end(),
+            comp_conn.branch_connected.begin(), [](Branch const& branch) {
+                return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
+            });
         std::transform(components_.template citer<Branch>().begin(), components_.template citer<Branch>().end(),
                        comp_conn.branch_phase_shift.begin(), [](Branch const& branch) {
                            return branch.phase_shift();
                        });
         std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
                        comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
-                           return Branch3Connected{branch3.status_1(), branch3.status_2(), branch3.status_3()};
+                           return Branch3Connected{static_cast<IntS>(branch3.status_1()),
+                                                   static_cast<IntS>(branch3.status_2()),
+                                                   static_cast<IntS>(branch3.status_3())};
                        });
         std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
                        comp_conn.branch3_phase_shift.begin(), [](Branch3 const& branch3) {
