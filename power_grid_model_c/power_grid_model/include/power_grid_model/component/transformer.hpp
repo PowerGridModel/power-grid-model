@@ -55,19 +55,8 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
-        using enum WindingType;
+        check_on_clock();
 
-        // check on clock
-        bool const is_from_wye = winding_from_ == wye || winding_from_ == wye_n;
-        bool const is_to_wye = winding_to_ == wye || winding_to_ == wye_n;
-        if (  // clock should be between 0 and 12
-            clock_ < 0 || clock_ > 12 ||
-            // even number is not possible if one side is wye winding and the other side is not wye winding.
-            ((clock_ % 2) == 0 && (is_from_wye != is_to_wye)) ||
-            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
-            ((clock_ % 2) == 1 && (is_from_wye == is_to_wye))) {
-            throw InvalidTransformerClock{id(), clock_};
-        }
         // set clock to zero if it is 12
         clock_ = static_cast<IntS>(clock_ % 12);
         // check tap bounds
@@ -114,22 +103,34 @@ class Transformer : public Branch {
 
    private:
     // transformer parameter
-    double u1_, u2_;
+    double u1_;
+    double u2_;
     double sn_;
     double tap_size_;
-    double uk_, pk_, i0_, p0_;
-    WindingType winding_from_, winding_to_;
+    double uk_;
+    double pk_;
+    double i0_;
+    double p0_;
+    WindingType winding_from_;
+    WindingType winding_to_;
     IntS clock_;
     BranchSide tap_side_;
-    IntS tap_pos_, tap_min_, tap_max_, tap_nom_;
+    IntS tap_pos_;
+    IntS tap_min_;
+    IntS tap_max_;
+    IntS tap_nom_;
     IntS tap_direction_;
-    double uk_min_, uk_max_, pk_min_, pk_max_;
+    double uk_min_;
+    double uk_max_;
+    double pk_min_;
+    double pk_max_;
 
     // calculation parameter
     double base_i_from_;
     double base_i_to_;
     double nominal_ratio_;
-    DoubleComplex z_grounding_from_, z_grounding_to_;
+    DoubleComplex z_grounding_from_;
+    DoubleComplex z_grounding_to_;
 
     // calculate z in per unit with NaN detection
     DoubleComplex calculate_z_pu(double r, double x, double u) {
@@ -137,6 +138,24 @@ class Transformer : public Branch {
         x = is_nan(x) ? 0 : x;
         double const base_z = u * u / base_power_3p;
         return {r / base_z, x / base_z};
+    }
+
+    void check_on_clock() const {
+        using enum WindingType;
+
+        bool const clock_in_range = 0 <= clock_ && clock_ <= 12;
+        bool const clock_is_even = (clock_ % 2) == 0;
+
+        bool const is_from_wye = winding_from_ == wye || winding_from_ == wye_n;
+        bool const is_to_wye = winding_to_ == wye || winding_to_ == wye_n;
+
+        // even clock number is only possible when both sides are wye winding or both sides aren't
+        // and conversely for odd clock number
+        bool const correct_clock_winding = (clock_is_even != (is_from_wye == is_to_wye));
+
+        if (!clock_in_range || !correct_clock_winding) {
+            throw InvalidTransformerClock{id(), clock_};
+        }
     }
 
     IntS tap_limit(IntS new_tap) const {
@@ -150,14 +169,15 @@ class Transformer : public Branch {
         double const base_y_to = base_i_to_ * base_i_to_ / base_power_1p;
         // off nominal tap ratio
         auto const [u1, u2] = [this]() {
-            double u1 = u1_, u2 = u2_;
+            double result_u1 = u1_;
+            double result_u2 = u2_;
             if (tap_side_ == BranchSide::from) {
-                u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
             else {
-                u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            return std::pair{u1, u2};
+            return std::pair{result_u1, result_u2};
         }();
         double const k = (u1 / u2) / nominal_ratio_;
         // pk and uk
@@ -165,7 +185,8 @@ class Transformer : public Branch {
         double const pk = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_, pk_min_, pk_max_);
 
         // series
-        DoubleComplex z_series, y_series;
+        DoubleComplex z_series{};
+        DoubleComplex y_series{};
         // sign of uk
         // uk can be negative for artificial transformer from 3-winding
         // in this case, the imaginary part of z_series should be negative
