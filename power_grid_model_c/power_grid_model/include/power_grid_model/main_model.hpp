@@ -483,7 +483,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             [this] {
                 return prepare_short_circuit_input<sym>();
             },
-            [this, source_voltage_ref, calculation_method](MathSolver<sym>& solver, ShortCicuitInput<sym> const& y) {
+            [this, source_voltage_ref, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
                 return solver.run_short_circuit(y, source_voltage_ref, calculation_info_, calculation_method);
             });
     }
