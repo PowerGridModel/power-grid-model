@@ -28,9 +28,6 @@ ComplexTensor<false> get_a_inv() {
 }  // namespace
 
 TEST_CASE("Test transformer") {
-    ComplexTensor<false> A = get_a();
-    ComplexTensor<false> A_inv = get_a_inv();
-
     TransformerInput input{
         {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
         155e3,                    // u1
