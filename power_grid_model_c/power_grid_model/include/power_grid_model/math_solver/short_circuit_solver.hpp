@@ -225,7 +225,7 @@ class ShortCircuitSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
-        calculate_result(output);
+        calculate_result(input, output, zero_fault_counter, fault_bus_indptr);
 
         return output;
     }
@@ -242,10 +242,25 @@ class ShortCircuitSolver {
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
-    void calculate_result(ShortCircuitMathOutput<sym>& output) {
+    void calculate_result(ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
+                          IdxVector zero_fault_counter, IdxVector const& fault_bus_indptr) {
         // loop through all buses
-        for (Idx bus = 0; bus != n_bus_; ++bus) {
-            ComplexValue<sym> x_tmp = output.u_bus[bus];
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+            ComplexValue<sym> x_tmp = output.u_bus[bus_number];  // save x to temp variable
+
+            // TODO: do we need to change this loop? for (Idx fault_number = (*fault_bus_indptr_)[bus_number]...
+            for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
+                 ++fault_number) {
+                DoubleComplex y_fault = input.faults[fault_number].y_fault;
+                if (std::isinf(y_fault.real())) {
+                    assert(std::isinf(y_fault.imag()));
+                    if constexpr (sym) {  // three phase fault
+                        output.i_fault[fault_number] =
+                            -1.0 * x_tmp / zero_fault_counter[bus_number];  // injection is negative to fault
+                        output.u_bus[bus_number] = 0;
+                    }
+                }
+            }
         }
     }
 
