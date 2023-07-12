@@ -307,8 +307,9 @@ class PowerGridModel:
             update_data (dict, optional):
                 None: Calculate power flow once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
-                    key: Component type name to be updated in batch.
-                    value:
+                    
+                    - key: Component type name to be updated in batch.
+                    - value:
 
                         - For homogeneous update batch (a 2D numpy structured array):
 
@@ -334,8 +335,8 @@ class PowerGridModel:
         Returns:
             Dictionary of results of all components.
 
-                Key: Component type name to be updated in batch.
-                value:
+                - Key: Component type name to be updated in batch.
+                - value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
                     - For batch calculation: 2D numpy structured array for the results of this component type.
@@ -393,8 +394,9 @@ class PowerGridModel:
             update_data (dict, optional):
                 None: Calculate state estimation once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
-                    key: Component type name to be updated in batch.
-                    value:
+                    
+                    - key: Component type name to be updated in batch.
+                    - value:
 
                         - For homogeneous update batch (a 2D numpy structured array):
 
@@ -420,8 +422,8 @@ class PowerGridModel:
         Returns:
             Dictionary of results of all components.
 
-                key: Component type name to be updated in batch.
-                value:
+                - key: Component type name to be updated in batch.
+                - value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
                     - For batch calculation: 2D numpy structured array for the results of this component type.
@@ -468,8 +470,9 @@ class PowerGridModel:
             update_data:
                 None: calculate a short circuit once with the current model attributes.
                 Or a dictionary for batch calculation with batch update
-                    key: Component type name to be updated in batch
-                    value:
+                    -
+                    - key: Component type name to be updated in batch
+                    - value:
 
                         - For homogeneous update batch (a 2D numpy structured array):
 
@@ -495,8 +498,8 @@ class PowerGridModel:
         Returns:
             Dictionary of results of all components.
 
-                key: Component type name to be updated in batch.
-                value:
+                - key: Component type name to be updated in batch.
+                - value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
                     - For batch calculation: 2D numpy structured array for the results of this component type.

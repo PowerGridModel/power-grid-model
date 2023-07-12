@@ -77,7 +77,7 @@ def validate_input_data(
         None if the data is valid, or a list containing all validation errors.
 
     Raises:
-        Error: KeyError, TypeError or ValueError if the data structure is invalid.
+        Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(input_data)
@@ -121,7 +121,7 @@ def validate_batch_data(
         where the key is the batch number (0-indexed).
 
     Raises:
-        Error: KeyError, TypeError or ValueError if the data structure is invalid.
+        Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
     assert_valid_data_structure(input_data, "input")
 
