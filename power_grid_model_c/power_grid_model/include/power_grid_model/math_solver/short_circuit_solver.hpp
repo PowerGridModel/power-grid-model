@@ -81,7 +81,7 @@ class ShortCircuitSolver {
                  ++fault_number) {
                 DoubleComplex y_fault = input.faults[fault_number].y_fault;
                 if (std::isinf(y_fault.real())) {
-                    assert(std::isinf(y_fault.imag());
+                    assert(std::isinf(y_fault.imag()));
                     zero_fault_counter[bus_number] += 1;
                     if constexpr (sym) {  // three phase fault
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
@@ -91,7 +91,7 @@ class ShortCircuitSolver {
                             // mat_data[:,bus] = 0
                             // mat_data[bus,bus] = -1
                             if (row_number != bus_number) {
-                                mat_data[col_data_index] = 0;
+                                mat_data_[col_data_index] = 0;
                             }
                             else {
                                 mat_data_[col_data_index] = -1;
@@ -106,7 +106,7 @@ class ShortCircuitSolver {
                             Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus][:, phase_1] = 0
                             // mat_data[bus,bus][phase_1, phase_1] = -1
-                            mat_data[col_data_index].col(phase_1) = 0;
+                            mat_data_[col_data_index].col(phase_1) = 0;
                             if (row_number == bus_number) {
                                 mat_data_[col_data_index](phase_1, phase_1) = -1;
                             }
@@ -122,8 +122,8 @@ class ShortCircuitSolver {
                             // mat_data[:,bus][:, phase_2] = 0
                             // mat_data[bus,bus][phase_1, phase_2] = -1
                             // mat_data[bus,bus][phase_2, phase_2] = 1
-                            mat_data[col_data_index].col(phase_1) += mat_data[col_data_index].col(phase_1);
-                            mat_data[col_data_index].col(phase_2) = 0;
+                            mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_1);
+                            mat_data_[col_data_index].col(phase_2) = 0;
                             if (row_number == bus_number) {
                                 mat_data_[col_data_index](phase_1, phase_2) = -1;
                                 mat_data_[col_data_index](phase_2, phase_2) = 1;
@@ -143,8 +143,8 @@ class ShortCircuitSolver {
                             // mat_data[:,bus][:, phase_2] = 0
                             // mat_data[bus,bus][phase_1, phase_1] = -1
                             // mat_data[bus,bus][phase_2, phase_2] = -1
-                            mat_data[col_data_index].col(phase_1) = 0;
-                            mat_data[col_data_index].col(phase_2) = 0;
+                            mat_data_[col_data_index].col(phase_1) = 0;
+                            mat_data_[col_data_index].col(phase_2) = 0;
                             if (row_number == bus_number) {
                                 mat_data_[col_data_index](phase_1, phase_1) = -1;
                                 mat_data_[col_data_index](phase_2, phase_2) = -1;
@@ -158,7 +158,7 @@ class ShortCircuitSolver {
                     break;
                 }
                 else {
-                    assert(!std::isinf(y_fault.imag());
+                    assert(!std::isinf(y_fault.imag()));
                     if constexpr (sym) {  // three phase fault
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
@@ -166,7 +166,7 @@ class ShortCircuitSolver {
                             Idx col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[bus,bus] += y_fault
                             if (row_number == bus_number) {
-                                mat_data[col_data_index] += y_fault;
+                                mat_data_[col_data_index] += y_fault;
                             }
                         }
                     }
@@ -275,7 +275,13 @@ class ShortCircuitSolver {
     }
 };
 
+template class ShortCircuitSolver<true>;
+template class ShortCircuitSolver<false>;
+
 }  // namespace math_model_impl
+
+template <bool sym>
+using ShortCircuitSolver = math_model_impl::ShortCircuitSolver<sym>;
 
 }  // namespace power_grid_model
 

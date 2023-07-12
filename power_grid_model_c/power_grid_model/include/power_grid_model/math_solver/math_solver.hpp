@@ -10,6 +10,7 @@
 #include "iterative_linear_se_solver.hpp"
 #include "linear_pf_solver.hpp"
 #include "newton_raphson_pf_solver.hpp"
+#include "short_circuit_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
