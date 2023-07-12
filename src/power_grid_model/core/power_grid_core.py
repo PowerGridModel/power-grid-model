@@ -50,6 +50,24 @@ class ModelPtr(c_void_p):
     """
 
 
+class DatasetPtr(c_void_p):
+    """
+    Pointer to dataset
+    """
+
+
+class ComponentPtr(c_void_p):
+    """
+    Pointer to component
+    """
+
+
+class AttributePtr(c_void_p):
+    """
+    Pointer to attribute
+    """
+
+
 def _load_core() -> CDLL:
     """
 
@@ -185,39 +203,51 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_dataset_name(self, idx: int) -> str:  # type: ignore[empty-body]
+    def meta_get_dataset_by_idx(self, idx: int) -> DatasetPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_n_components(self, dataset: str) -> int:  # type: ignore[empty-body]
+    def meta_dataset_name(self, dataset: DatasetPtr) -> str:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_component_name(self, dataset: str, idx: int) -> str:  # type: ignore[empty-body]
+    def meta_n_components(self, dataset: DatasetPtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_component_alignment(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
+    def meta_get_component_by_idx(self, dataset: DatasetPtr, idx: int) -> ComponentPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_component_size(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
+    def meta_component_name(self, component: ComponentPtr) -> str:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_n_attributes(self, dataset: str, component: str) -> int:  # type: ignore[empty-body]
+    def meta_component_alignment(self, component: ComponentPtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_attribute_name(self, dataset: str, component: str, idx: int) -> str:  # type: ignore[empty-body]
+    def meta_component_size(self, component: ComponentPtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_attribute_ctype(self, dataset: str, component: str, attribute: str) -> str:  # type: ignore[empty-body]
+    def meta_n_attributes(self, component: ComponentPtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_attribute_offset(self, dataset: str, component: str, attribute: str) -> int:  # type: ignore[empty-body]
+    def meta_get_attribute_by_idx(self, component: ComponentPtr, idx: int) -> AttributePtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def meta_attribute_name(self, attribute: AttributePtr) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def meta_attribute_ctype(self, attribute: AttributePtr) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def meta_attribute_offset(self, attribute: AttributePtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

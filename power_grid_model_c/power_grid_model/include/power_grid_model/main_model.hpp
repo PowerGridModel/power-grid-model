@@ -409,8 +409,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         // static function array
         static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
-            [](MainModelImpl const& model, ID const* id_begin, Idx size, Idx* indexer_begin) {
-                std::transform(id_begin, id_begin + size, indexer_begin, [&model](ID id) {
+            [](MainModelImpl const& model, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
+                std::transform(id_begin_, id_begin_ + size_, indexer_begin_, [&model](ID id) {
                     return model.components_.template get_idx_by_id<ComponentType>(id).pos;
                 });
             }...};
@@ -939,11 +939,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     void output_result(std::vector<MathOutput<sym>> const& math_output, Dataset const& result_data, Idx pos = 0) {
         static constexpr std::array<OutputFunc<sym>, n_types> get_result{
-            [](MainModelImpl& model, std::vector<MathOutput<sym>> const& math_output,
+            [](MainModelImpl& model, std::vector<MathOutput<sym>> const& math_output_,
                DataPointer<false> const& data_ptr, Idx position) {
                 auto const begin =
                     data_ptr.get_iterators<typename ComponentType::template OutputType<sym>>(position).first;
-                model.output_result<sym, ComponentType>(math_output, begin);
+                model.output_result<sym, ComponentType>(math_output_, begin);
             }...};
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = result_data.find(entry.name);
@@ -1012,17 +1012,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         comp_conn.branch3_connected.resize(comp_topo_->branch3_node_idx.size());
         comp_conn.branch3_phase_shift.resize(comp_topo_->branch3_node_idx.size());
         comp_conn.source_connected.resize(comp_topo_->source_node_idx.size());
-        std::transform(components_.template citer<Branch>().begin(), components_.template citer<Branch>().end(),
-                       comp_conn.branch_connected.begin(), [](Branch const& branch) {
-                           return BranchConnected{branch.from_status(), branch.to_status()};
-                       });
+        std::transform(
+            components_.template citer<Branch>().begin(), components_.template citer<Branch>().end(),
+            comp_conn.branch_connected.begin(), [](Branch const& branch) {
+                return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
+            });
         std::transform(components_.template citer<Branch>().begin(), components_.template citer<Branch>().end(),
                        comp_conn.branch_phase_shift.begin(), [](Branch const& branch) {
                            return branch.phase_shift();
                        });
         std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
                        comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
-                           return Branch3Connected{branch3.status_1(), branch3.status_2(), branch3.status_3()};
+                           return Branch3Connected{static_cast<IntS>(branch3.status_1()),
+                                                   static_cast<IntS>(branch3.status_2()),
+                                                   static_cast<IntS>(branch3.status_3())};
                        });
         std::transform(components_.template citer<Branch3>().begin(), components_.template citer<Branch3>().end(),
                        comp_conn.branch3_phase_shift.begin(), [](Branch3 const& branch3) {

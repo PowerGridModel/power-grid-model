@@ -12,6 +12,7 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
+#include "../exception.hpp"
 
 namespace power_grid_model {
 
