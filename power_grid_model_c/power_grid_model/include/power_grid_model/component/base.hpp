@@ -30,7 +30,7 @@ class Base {
         return id_;
     }
     BaseOutput base_output(bool is_energized) const {
-        return BaseOutput{id_, is_energized};
+        return BaseOutput{id_, static_cast<IntS>(is_energized)};
     }
     virtual bool energized(bool is_connected_to_source) const = 0;
 
