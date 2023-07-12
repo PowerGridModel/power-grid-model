@@ -88,14 +88,13 @@ class MyBuildExt(build_ext):
             self.compiler.compiler_so[0] = cxx
             self.compiler.linker_so[0] = cxx
             self.compiler.compiler_cxx = [cxx]
-            # add optional link time optimization
-            if os.environ.get("POWER_GRID_MODEL_ENABLE_LTO", "OFF") == "ON":
-                if "clang" in cxx:
-                    lto_flag = "-flto=thin"
-                else:
-                    lto_flag = "-flto"
-                self.compiler.compiler_so += [lto_flag]
-                self.compiler.linker_so += [lto_flag]
+            # add link time optimization
+            if "clang" in cxx:
+                lto_flag = "-flto=thin"
+            else:
+                lto_flag = "-flto"
+            self.compiler.compiler_so += [lto_flag]
+            self.compiler.linker_so += [lto_flag]
             # remove -g and -O2
             self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
             self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
@@ -139,7 +138,12 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     lflags: List[str] = []
     library_dirs: List[str] = []
     libraries: List[str] = []
-    sources = [str(pgm_c / pgm_c / pgm_c.with_suffix(".cpp"))]
+    sources = [
+        str(pgm_c / pgm_c / "src" / "handle.cpp"),
+        str(pgm_c / pgm_c / "src" / "meta_data.cpp"),
+        str(pgm_c / pgm_c / "src" / "model.cpp"),
+        str(pgm_c / pgm_c / "src" / "options.cpp"),
+    ]
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
@@ -164,11 +168,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         cflags += ["/std:c++20"]
     else:
         # flags for Linux and Mac
-        cflags += [
-            "-std=c++20",
-            "-O3",
-            "-fvisibility=hidden",
-        ]
+        cflags += ["-std=c++20", "-O3", "-fvisibility=hidden"]
         lflags += ["-lpthread", "-O3"]
         # extra flag for Mac
         if platform.system() == "Darwin":

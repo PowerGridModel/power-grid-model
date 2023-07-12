@@ -1,0 +1,70 @@
+// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+#pragma once
+#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_{{ include_guard }}_HPP
+#define POWER_GRID_MODEL_AUXILIARY_META_GEN_{{ include_guard }}_HPP
+
+#include "../../enum.hpp" // NOLINT
+#include "../../power_grid_model.hpp" // NOLINT
+#include "../../three_phase_tensor.hpp" // NOLINT
+#include "../meta_data.hpp" // NOLINT
+#include "../{{ name }}.hpp" // NOLINT
+
+
+namespace power_grid_model::meta_data {
+
+// template specialization functors to get attributes
+
+{% for attribute_class in classes -%}
+
+{%- if attribute_class.is_template -%}
+template <bool sym>
+struct get_attributes_list<{{ attribute_class.name }}<sym>> {
+{%- else -%}
+template<>
+struct get_attributes_list<{{ attribute_class.name }}> {
+{%- endif %}
+    std::vector<MetaAttribute> operator() () const {
+        // all attributes including base class
+        return {
+            {% for attribute in attribute_class.full_attributes %}
+            {MetaAttributeImpl<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}>{}, "{{ attribute.names }}"},
+            {%- endfor %}
+        };
+    }
+};
+
+{% endfor %}
+
+// template specialization functors to get nan
+
+{% for attribute_class in classes -%}
+
+{%- if attribute_class.is_template -%}
+template <bool sym>
+struct get_component_nan<{{ attribute_class.name }}<sym>> {
+{%- else -%}
+template<>
+struct get_component_nan<{{ attribute_class.name }}> {
+{%- endif %}
+    {{ attribute_class.full_name }} operator() () const {
+        {{ attribute_class.full_name }} comp;
+        // all attributes including base class
+        {% for attribute in attribute_class.full_attributes %}
+        set_nan(comp.{{ attribute.names }});
+        {%- endfor %}
+        return comp;
+    }
+};
+
+{% endfor %}
+
+} // namespace power_grid_model::meta_data
+
+#endif
+// clang-format on
