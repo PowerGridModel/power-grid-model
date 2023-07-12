@@ -566,18 +566,18 @@ ShortCircuitInput create_sc_test_input(FaultType const& fault_type, FaultPhase c
 
 template <bool sym>
 ShortCircuitMathOutput<sym> create_sc_test_output(FaultType const& fault_type, DoubleComplex const& z_fault,
-                                             DoubleComplex const& y0, DoubleComplex const& y0_0, double const& vref,
-                                             DoubleComplex const& yref) {
+                                                  DoubleComplex const& y0, DoubleComplex const& y0_0,
+                                                  double const& vref, DoubleComplex const& yref) {
     // make function: input - fault type, zf, zs, z0 output - i_fault_abc
     // i_fault_abc = t_mat @ i_fault_012
     // i_fault_012 = [0, if, 0] for 3ph, [if, if, if] for 1phg, [0, if, -if] for 2ph
     DoubleComplex z0_0 = 1.0 / y0_0, z0 = 1.0 / y0;
     DoubleComplex zs = 1.0 / yref + 1.0 / y0;
 
-    if constexpr(sym) {
+    if constexpr (sym) {
         DoubleComplex if_abc = vref / (zs + z_fault);
         DoubleComplex u0 = vref - if_abc / yref;
-        DoubleComplex u1 = u0 - if_abc * z0; 
+        DoubleComplex u1 = u0 - if_abc * z0;
         ShortCircuitMathOutput<true> sc_output_sym;
         sc_output_sym.u_bus = {u0, u1};
         sc_output_sym.i_branch_from = {if_abc};
@@ -629,7 +629,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType const& fault_type, D
 }
 
 template <bool sym>
-ShortCircuitMathOutput<sym> blank_sc_output() {
+ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
     ShortCircuitMathOutput<sym> sc_output_ref;
     sc_output_ref.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
     sc_output_ref.i_branch_from = {ComplexValue<sym>{}};
@@ -692,7 +692,7 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
 
         auto sc_input_default = create_sc_test_input(FaultType::three_phase, FaultPhase::default_value, z_fault, vref);
         auto default_output = solver.run_short_circuit(sc_input_default, info);
-        assert_sc_output<false>(output, default_output);        
+        assert_sc_output<false>(output, default_output);
     }
 
     SUBCASE("Test short circuit solver 3ph solid fault") {
@@ -729,12 +729,14 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
     SUBCASE("Test short circuit solver 1phg") {
         MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
         auto sc_input = create_sc_test_input(FaultType::single_phase_to_ground, FaultPhase::a, z_fault, vref);
-        auto sc_output_ref = create_sc_test_output<false>(FaultType::single_phase_to_ground, z_fault, y0, y0_0, vref, yref);
+        auto sc_output_ref =
+            create_sc_test_output<false>(FaultType::single_phase_to_ground, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info);
         assert_sc_output<false>(output, sc_output_ref);
 
-        auto sc_input_default = create_sc_test_input(FaultType::single_phase_to_ground, FaultPhase::default_value, z_fault, vref);
+        auto sc_input_default =
+            create_sc_test_input(FaultType::single_phase_to_ground, FaultPhase::default_value, z_fault, vref);
         auto default_output = solver.run_short_circuit(sc_input_default, info);
         assert_sc_output<false>(output, default_output);
     }
@@ -758,7 +760,6 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(FaultType::two_phase, FaultPhase::default_value, z_fault, vref);
-        CalculationInfo info;
         auto default_output = solver.run_short_circuit(sc_input_default, info);
         assert_sc_output<false>(output, default_output);
     }
@@ -781,7 +782,8 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto output = solver.run_short_circuit(sc_input, info);
         assert_sc_output<false>(output, sc_output_ref);
 
-        auto sc_input_default = create_sc_test_input(FaultType::two_phase_to_ground, FaultPhase::default_value, z_fault, vref);
+        auto sc_input_default =
+            create_sc_test_input(FaultType::two_phase_to_ground, FaultPhase::default_value, z_fault, vref);
         auto default_output = solver.run_short_circuit(sc_input_default, info);
         assert_sc_output<false>(output, default_output);
     }
@@ -800,13 +802,13 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         MathSolver<false> solver_asym{topo_sc_ptr, param_asym_ptr};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
-        auto asym_sc_output_ref = blank_sc_output<false>();
+        auto asym_sc_output_ref = blank_sc_output<false>(vref);
         CalculationInfo info;
         auto asym_output = solver_asym.run_short_circuit(sc_input, info);
         assert_sc_output<false>(asym_output, asym_sc_output_ref);
 
         MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
-        auto sym_sc_output_ref = blank_sc_output<true>();
+        auto sym_sc_output_ref = blank_sc_output<true>(vref);
         auto sym_output = solver_sym.run_short_circuit(sc_input, info);
         assert_sc_output<true>(sym_output, sym_sc_output_ref);
     }
