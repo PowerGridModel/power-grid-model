@@ -77,8 +77,9 @@ class MathSolver {
                                                                         calculation_info);
     }
 
-    ShortCircuitMathOutput run_short_circuit(ShortCircuitInput const& input, double /* err_tol */, Idx /* max_iter */,
-                                             CalculationInfo& calculation_info, CalculationMethod calculation_method) {
+    ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitInput const& input, double source_voltage_ref,
+                                                  CalculationInfo& calculation_info,
+                                                  CalculationMethod calculation_method) {
         if (calculation_method != CalculationMethod::default_method &&
             calculation_method != CalculationMethod::iec60909) {
             throw InvalidCalculationMethod{};
@@ -91,7 +92,6 @@ class MathSolver {
         }
 
         // call calculation
-        constexpr double source_voltage_ref{0.0};
         return iec60909_sc_solver_.value().run_short_circuit(source_voltage_ref, y_bus_, input);
     }
 
