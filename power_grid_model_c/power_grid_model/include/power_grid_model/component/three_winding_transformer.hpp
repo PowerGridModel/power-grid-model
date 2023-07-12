@@ -81,31 +81,12 @@ class ThreeWindingTransformer : public Branch3 {
           z_grounding_1_{three_winding_transformer_input.r_grounding_1, three_winding_transformer_input.x_grounding_1},
           z_grounding_2_{three_winding_transformer_input.r_grounding_2, three_winding_transformer_input.x_grounding_2},
           z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
-        using enum WindingType;
-
-        // check clock number
-        bool const is_1_wye = winding_1_ == wye || winding_1_ == wye_n;
-        bool const is_2_wye = winding_2_ == wye || winding_2_ == wye_n;
-        bool const is_3_wye = winding_3_ == wye || winding_3_ == wye_n;
-
-        // check clock 12
-        if (  // clock should be between 0 and 12
-            clock_12_ < 0 || clock_12_ > 12 ||
-            // even number is not possible if one side is wye winding and the other side is not wye winding.
-            ((clock_12_ % 2) == 0 && (is_1_wye != is_2_wye)) ||
-            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
-            ((clock_12_ % 2) == 1 && (is_1_wye == is_2_wye))) {
+        if (!is_valid_clock(clock_12_, winding_1_, winding_2_)) {
             throw InvalidTransformerClock{id(), clock_12_};
-        }
-        // check clock 13
-        if (  // clock should be between 0 and 12
-            clock_13_ < 0 || clock_13_ > 12 ||
-            // even number is not possible if one side is wye winding and the other side is not wye winding.
-            ((clock_13_ % 2) == 0 && (is_1_wye != is_3_wye)) ||
-            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
-            ((clock_13_ % 2) == 1 && (is_1_wye == is_3_wye))) {
+        };
+        if (!is_valid_clock(clock_13_, winding_1_, winding_3_)) {
             throw InvalidTransformerClock{id(), clock_13_};
-        }
+        };
 
         // set clock to zero if it is 12
         clock_12_ = static_cast<IntS>(clock_12_ % 12);
@@ -153,17 +134,47 @@ class ThreeWindingTransformer : public Branch3 {
 
    private:
     // three winding transformer parameters
-    double u1_, u2_, u3_;
-    double u1_rated_, u2_rated_, u3_rated_;
-    double sn_1_, sn_2_, sn_3_;
-    double uk_12_, uk_13_, uk_23_, pk_12_, pk_13_, pk_23_, i0_, p0_;
-    WindingType winding_1_, winding_2_, winding_3_;
-    IntS clock_12_, clock_13_;
+    double u1_;
+    double u2_;
+    double u3_;
+    double u1_rated_;
+    double u2_rated_;
+    double u3_rated_;
+    double sn_1_;
+    double sn_2_;
+    double sn_3_;
+    double uk_12_;
+    double uk_13_;
+    double uk_23_;
+    double pk_12_;
+    double pk_13_;
+    double pk_23_;
+    double i0_;
+    double p0_;
+    WindingType winding_1_;
+    WindingType winding_2_;
+    WindingType winding_3_;
+    IntS clock_12_;
+    IntS clock_13_;
     Branch3Side tap_side_;
-    IntS tap_pos_, tap_min_, tap_max_, tap_nom_, tap_direction_;
+    IntS tap_pos_;
+    IntS tap_min_;
+    IntS tap_max_;
+    IntS tap_nom_;
+    IntS tap_direction_;
     double tap_size_;
-    double uk_12_min_, uk_12_max_, uk_13_min_, uk_13_max_, uk_23_min_, uk_23_max_;
-    double pk_12_min_, pk_12_max_, pk_13_min_, pk_13_max_, pk_23_min_, pk_23_max_;
+    double uk_12_min_;
+    double uk_12_max_;
+    double uk_13_min_;
+    double uk_13_max_;
+    double uk_23_min_;
+    double uk_23_max_;
+    double pk_12_min_;
+    double pk_12_max_;
+    double pk_13_min_;
+    double pk_13_max_;
+    double pk_23_min_;
+    double pk_23_max_;
 
     // calculation parameters
     double base_i_1_;
@@ -262,17 +273,19 @@ class ThreeWindingTransformer : public Branch3 {
     std::array<Transformer, 3> convert_to_two_winding_transformers() const {
         // off nominal tap ratio
         auto const [u1, u2, u3] = [this]() {
-            double u1 = u1_, u2 = u2_, u3 = u3_;
+            double result_u1 = u1_;
+            double result_u2 = u2_;
+            double result_u3 = u3_;
             if (tap_side_ == Branch3Side::side_1) {
-                u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
             else if (tap_side_ == Branch3Side::side_2) {
-                u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
             else {
-                u3 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u3 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            return std::make_tuple(u1, u2, u3);
+            return std::make_tuple(result_u1, result_u2, result_u3);
         }();
 
         auto const [uk_T1, uk_T2, uk_T3] = calculate_uk();

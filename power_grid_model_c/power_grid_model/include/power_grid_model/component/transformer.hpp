@@ -55,7 +55,9 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
-        check_on_clock();
+        if (!is_valid_clock(clock_, winding_from_, winding_to_)) {
+            throw InvalidTransformerClock{id(), clock_};
+        };
 
         // set clock to zero if it is 12
         clock_ = static_cast<IntS>(clock_ % 12);
@@ -138,24 +140,6 @@ class Transformer : public Branch {
         x = is_nan(x) ? 0 : x;
         double const base_z = u * u / base_power_3p;
         return {r / base_z, x / base_z};
-    }
-
-    void check_on_clock() const {
-        using enum WindingType;
-
-        bool const clock_in_range = 0 <= clock_ && clock_ <= 12;
-        bool const clock_is_even = (clock_ % 2) == 0;
-
-        bool const is_from_wye = winding_from_ == wye || winding_from_ == wye_n;
-        bool const is_to_wye = winding_to_ == wye || winding_to_ == wye_n;
-
-        // even clock number is only possible when both sides are wye winding or both sides aren't
-        // and conversely for odd clock number
-        bool const correct_clock_winding = (clock_is_even != (is_from_wye == is_to_wye));
-
-        if (!clock_in_range || !correct_clock_winding) {
-            throw InvalidTransformerClock{id(), clock_};
-        }
     }
 
     IntS tap_limit(IntS new_tap) const {
