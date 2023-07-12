@@ -51,7 +51,7 @@ class ShortCircuitSolver {
         output.u_bus.resize(n_bus_);
 
         // copy y_bus data
-        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus.cend(), mat_data_.begin(), [&](Idx k) {
+        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
             if (k == -1) {
                 return ComplexTensor<sym>{};
             }
@@ -61,8 +61,8 @@ class ShortCircuitSolver {
         });
 
         // prepare matrix + rhs
-        IdxVector zero_fault_counter(n_bus_){};
-        ComplexValueVector<sym> i_fault(n_fault_){};
+        IdxVector zero_fault_counter(n_bus_);
+        ComplexValueVector<sym> i_fault(n_fault_);
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         IdxVector const& fault_bus_indptr = *fault_bus_indptr_;
         // loop through all buses
@@ -74,7 +74,8 @@ class ShortCircuitSolver {
                 ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
                 mat_data_[diagonal_position] += y_source;  // add y_source to the diagonal of Ybus
                 output.u_bus[bus_number] +=
-                    y_source * input.source[source_number] * source_voltage_ref;  // rhs += Y_source * U_source * c
+                    dot(y_source, ComplexValue<sym>{input.source[source_number] *
+                                                    source_voltage_ref});  // rhs += Y_source * U_source * c
             }
             // add all faults
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
@@ -209,8 +210,8 @@ class ShortCircuitSolver {
                             // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
                             // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
                             if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_1) += 2 * y_fault;
-                                mat_data_[col_data_index](phase_2, phase_2) += 2 * y_fault;
+                                mat_data_[col_data_index](phase_1, phase_1) += 2.0 * y_fault;
+                                mat_data_[col_data_index](phase_2, phase_2) += 2.0 * y_fault;
                                 mat_data_[col_data_index](phase_1, phase_2) -= y_fault;
                                 mat_data_[col_data_index](phase_2, phase_1) -= y_fault;
                             }
@@ -221,9 +222,11 @@ class ShortCircuitSolver {
         }
 
         // solve matrix
-        sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus)
+        sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
+
+        return output;
     }
 
    private:
@@ -238,7 +241,7 @@ class ShortCircuitSolver {
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
-    void set_phase_index_(double& phase_1, double& phase_2, FaultPhase fault_phase) {
+    void set_phase_index_(int& phase_1, int& phase_2, FaultPhase fault_phase) {
         // This function updates the phase index for single and two phase faults
         if (fault_phase == FaultPhase::a) {
             phase_1 = 0;
