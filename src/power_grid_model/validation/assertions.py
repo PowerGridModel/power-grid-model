@@ -66,6 +66,8 @@ def assert_valid_batch_data(
     """
     The input dataset is validated:
 
+    bla...
+
         1. Is the data structure correct? (checking data types and numpy array shapes)
         2. Are all input data ID's unique? (checking object identifiers across all components)
 
