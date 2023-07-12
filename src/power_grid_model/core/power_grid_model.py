@@ -229,10 +229,10 @@ class PowerGridModel:
         Args:
             calculation_type:
             symmetric:
-            Update_data:
+            update_data:
             output_component_types:
             options:
-            Continue_on_batch_error:
+            continue_on_batch_error:
 
         Returns:
         """
@@ -302,8 +302,8 @@ class PowerGridModel:
                 is iterative.
             calculation_method (an enumeration or string): The calculation method to use.
 
-                - Newton_raphson: Use Newton-Raphson iterative method (default).
-                - Linear: Use linear method.
+                - newton_raphson: Use Newton-Raphson iterative method (default).
+                - linear: Use linear method.
             update_data (dict, optional):
                 None: Calculate power flow once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
@@ -335,7 +335,7 @@ class PowerGridModel:
         Returns:
             Dictionary of results of all components.
 
-                - Key: Component type name to be updated in batch.
+                - key: Component type name to be updated in batch.
                 - value:
 
                     - For single calculation: 1D numpy structured array for the results of this component type.
@@ -470,7 +470,7 @@ class PowerGridModel:
             update_data:
                 None: calculate a short circuit once with the current model attributes.
                 Or a dictionary for batch calculation with batch update
-                    -
+
                     - key: Component type name to be updated in batch
                     - value:
 
