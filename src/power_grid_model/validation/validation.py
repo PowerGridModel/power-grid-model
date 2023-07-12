@@ -72,7 +72,7 @@ def validate_input_data(
         input_data: A power-grid-model input dataset
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
-    
+
     Returns:
         None if the data is valid, or a list containing all validation errors.
 
@@ -156,7 +156,7 @@ def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
         data: A power-grid-model input/update dataset
         data_type: 'input' or 'update'
 
-    Raises: 
+    Raises:
         Error: KeyError, TypeError
 
     """
@@ -193,7 +193,7 @@ def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComp
     Args:
         data: A power-grid-model input dataset
 
-    Returns: 
+    Returns:
         An empty list if all ids are unique, or a list of MultiComponentNotUniqueErrors for all components that
         have non-unique ids
     """
@@ -211,7 +211,7 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
         update_data: A single update dataset
         input_data: A power-grid-model input dataset
 
-    Returns: 
+    Returns:
         An empty list if all update data ids exist in the input dataset, or a list of IdNotInDatasetErrors for
         all update components of which the id does not exist in the input dataset
 
@@ -231,7 +231,7 @@ def validate_required_values(
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
-    Returns: 
+    Returns:
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
@@ -340,7 +340,7 @@ def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: di
     Args:
         data: A power-grid-model input dataset
 
-    Returns: 
+    Returns:
         An empty list if all required data is valid, or a list of ValidationErrors.
 
     """

@@ -307,7 +307,7 @@ class PowerGridModel:
             update_data (dict, optional):
                 None: Calculate power flow once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
-                    
+
                     - key: Component type name to be updated in batch.
                     - value:
 
@@ -394,7 +394,7 @@ class PowerGridModel:
             update_data (dict, optional):
                 None: Calculate state estimation once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
-                    
+
                     - key: Component type name to be updated in batch.
                     - value:
 

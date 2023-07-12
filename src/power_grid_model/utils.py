@@ -198,7 +198,7 @@ def convert_component_list_to_numpy(
 def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     """
     Convert batch datasets to a list of individual batches
-    
+
     Args:
         batch_data: a batch dataset for power-grid-model
 
@@ -237,7 +237,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
 def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     """
     Determine the number of batches for each component and verify that each component has the same number of batches
-    
+
     Args:
         batch_data: a batch dataset for power-grid-model
 
@@ -267,7 +267,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
 def get_batch_size(batch_data: BatchArray) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it.
-    
+
     Args:
         batch_data: a batch array for power-grid-model
 
@@ -371,7 +371,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     """
     Convert internal numpy arrays to native python data
       If an attribute is not available (NaN value), it will not be exported.
-    
+
     Args:
         data: A single or batch dataset for power-grid-model
     Returns:
@@ -409,7 +409,7 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     """
     Convert internal numpy arrays to native python data
     If an attribute is not available (NaN value), it will not be exported.
-    
+
     Args:
         data: A single dataset for power-grid-model
 
@@ -436,7 +436,7 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
 def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False) -> Dataset:
     """
     import json data
-    
+
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output

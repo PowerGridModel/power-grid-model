@@ -47,7 +47,7 @@ def assert_valid_input_data(
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
     Raises:
-        KeyError | TypeError | ValueError: if the data structure is invalid. 
+        KeyError | TypeError | ValueError: if the data structure is invalid.
         ValidationException: if the contents are invalid.
     """
     validation_errors = validate_input_data(
@@ -64,7 +64,7 @@ def assert_valid_batch_data(
     symmetric: bool = True,
 ):
     """
-    Ihe input dataset is validated:
+    The input dataset is validated:
 
         1. Is the data structure correct? (checking data types and numpy array shapes)
         2. Are all input data ID's unique? (checking object identifiers across all components)
@@ -84,7 +84,7 @@ def assert_valid_batch_data(
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
     Raises:
-        KeyError | TypeError | ValueError: if the data structure is invalid. 
+        KeyError | TypeError | ValueError: if the data structure is invalid.
         ValidationException: if the contents are invalid.
     """
     validation_errors = validate_batch_data(

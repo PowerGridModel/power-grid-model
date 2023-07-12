@@ -132,14 +132,14 @@ def errors_to_string(
 ) -> str:
     """
     Convert a set of errors (list or dict) to a human readable string representation.
-    
+
     Args:
         errors: The error objects. List for input_data only, dict for batch data.
         name: Human understandable name of the dataset, e.g. input_data, or update_data.
         details: Display object ids and error specific information.
         id_lookup: A list or dict (int->str) containing textual object ids
 
-    Returns: 
+    Returns:
         A human readable string representation of a set of errors.
     """
     if errors is None or len(errors) == 0:
