@@ -225,6 +225,7 @@ class ShortCircuitSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
+        calculate_result(output);
 
         return output;
     }
@@ -240,6 +241,13 @@ class ShortCircuitSolver {
     // sparse solver
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
+
+    void calculate_result(ShortCircuitMathOutput<sym>& output) {
+        // loop through all buses
+        for (Idx bus = 0; bus != n_bus_; ++bus) {
+            ComplexValue<sym> x_tmp = output.u_bus[bus];
+        }
+    }
 
     void set_phase_index_(int& phase_1, int& phase_2, FaultPhase fault_phase) {
         // This function updates the phase index for single and two phase faults
