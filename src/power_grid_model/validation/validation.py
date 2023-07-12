@@ -97,7 +97,7 @@ def validate_batch_data(
     symmetric: bool = True,
 ) -> Optional[Dict[int, List[ValidationError]]]:
     """
-    Ihe input dataset is validated:
+    The input dataset is validated:
 
         1. Is the data structure correct? (checking data types and numpy array shapes)
         2. Are all input data ID's unique? (checking object identifiers across all components)
