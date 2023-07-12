@@ -32,7 +32,7 @@ constexpr double tap_adjust_impedance(double tap_pos, double tap_min, double tap
     }
 }
 
-constexpr double is_valid_clock(IntS clock, WindingType winding_from, WindingType winding_to) {
+constexpr bool is_valid_clock(IntS clock, WindingType winding_from, WindingType winding_to) {
     using enum WindingType;
 
     bool const clock_in_range = 0 <= clock && clock <= 12;

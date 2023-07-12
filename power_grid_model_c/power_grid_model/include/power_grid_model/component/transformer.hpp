@@ -57,7 +57,7 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
         if (!is_valid_clock(clock_, winding_from_, winding_to_)) {
             throw InvalidTransformerClock{id(), clock_};
-        };
+        }
 
         // set clock to zero if it is 12
         clock_ = static_cast<IntS>(clock_ % 12);

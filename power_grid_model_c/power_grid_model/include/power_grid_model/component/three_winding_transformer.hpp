@@ -83,10 +83,10 @@ class ThreeWindingTransformer : public Branch3 {
           z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
         if (!is_valid_clock(clock_12_, winding_1_, winding_2_)) {
             throw InvalidTransformerClock{id(), clock_12_};
-        };
+        }
         if (!is_valid_clock(clock_13_, winding_1_, winding_3_)) {
             throw InvalidTransformerClock{id(), clock_13_};
-        };
+        }
 
         // set clock to zero if it is 12
         clock_12_ = static_cast<IntS>(clock_12_ % 12);
