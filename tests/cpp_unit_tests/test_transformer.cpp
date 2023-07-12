@@ -113,6 +113,7 @@ TEST_CASE("Test transformer") {
 
     // YNyn12
     vec_asym.push_back({{y1, -y1, -y1, y1}});
+    bla;
     // Dyn11
     vec_asym.push_back({{y2, y3t, y3, y1}});
     // Yd1
