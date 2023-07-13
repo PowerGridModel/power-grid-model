@@ -133,7 +133,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
     for i in range(n_attrs):
         attribute: AttributePtr = pgc.meta_get_attribute_by_idx(component, i)
         attr_name: str = pgc.meta_attribute_name(attribute)
-        attr_ctype: str = pgc.meta_attribute_ctype(attribute)
+        attr_ctype: int = pgc.meta_attribute_ctype(attribute)
         attr_offset: int = pgc.meta_attribute_offset(attribute)
         attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[attr_ctype]}"
         attr_nan = _NAN_VALUE_MAP[attr_np_type]
