@@ -8,6 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Any, Dict, Mapping, Optional, Union
 
 import numpy as np
@@ -17,14 +18,16 @@ from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
+
 # constant enum for ctype
-PGM_INT32 = 0
-PGM_INT8 = 1
-PGM_DOUBLE = 2
-PGM_DOUBLE3 = 3
+class PGMCType(IntEnum):
+    int32 = 0
+    int8 = 1
+    double = 2
+    double3 = 3
 
 
-_CTYPE_NUMPY_MAP = {PGM_DOUBLE: "f8", PGM_INT32: "i4", PGM_INT8: "i1", PGM_DOUBLE3: "(3,)f8"}
+_CTYPE_NUMPY_MAP = {PGMCType.double: "f8", PGMCType.int32: "i4", PGMCType.int8: "i1", PGMCType.double3: "(3,)f8"}
 _ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
 _NAN_VALUE_MAP = {
     f"{_ENDIANNESS}f8": np.nan,
