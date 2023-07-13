@@ -225,7 +225,7 @@ class ShortCircuitSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
-        calculate_result(input, output, zero_fault_counter, fault_bus_indptr, fault_type, phase_1, phase_2);
+        calculate_result(input, output, zero_fault_counter, fault_type, phase_1, phase_2);
 
         return output;
     }
@@ -243,14 +243,14 @@ class ShortCircuitSolver {
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
     void calculate_result(ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
-                          IdxVector const& zero_fault_counter, IdxVector const& fault_bus_indptr,
-                          FaultType const fault_type, int const& phase_1, int const& phase_2) {
+                          IdxVector const& zero_fault_counter, FaultType const fault_type, int const& phase_1,
+                          int const& phase_2) {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             const ComplexValue<sym> x_tmp = output.u_bus[bus_number];  // save x to temp variable
             const double zero_fault_counter_bus = static_cast<double>(zero_fault_counter[bus_number]);
-            for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
-                 ++fault_number) {
+            for (Idx fault_number = (*fault_bus_indptr_)[bus_number];
+                 fault_number != (*fault_bus_indptr_)[bus_number + 1]; ++fault_number) {
                 DoubleComplex y_fault = input.faults[fault_number].y_fault;
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
@@ -300,6 +300,10 @@ class ShortCircuitSolver {
                             2.0 * y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
                     }
                 }
+            }
+            for (Idx source_number = (*source_bus_indptr_)[bus_number];
+                 source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
+                break;
             }
         }
     }
