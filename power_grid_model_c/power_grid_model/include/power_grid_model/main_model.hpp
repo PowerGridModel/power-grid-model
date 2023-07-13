@@ -28,6 +28,7 @@
 // main model implementation
 #include "main_core/input.hpp"
 #include "main_core/output.hpp"
+#include "main_core/update.hpp"
 
 // threading
 #include <thread>
@@ -156,27 +157,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
-        bool const has_sequence_id = !sequence_idx.empty();
-        Idx seq = 0;
-        // loop to to update component
-        for (auto it = begin; it != end; ++it, ++seq) {
-            // get component
-            // either using ID via hash map
-            // either directly using sequence id
-            Idx2D const sequence_single =
-                has_sequence_id ? sequence_idx[seq] : state_.components.template get_idx_by_id<CompType>(it->id);
 
-            if constexpr (CacheType::value) {
-                state_.components.template cache_item<CompType>(sequence_single.pos);
-            }
+        UpdateChange changed = main_core::update_component<CompType, CacheType>(state_, begin, end, sequence_idx);
 
-            CompType& comp = state_.components.template get_item<CompType>(sequence_single);
-            // update, get changed variable
-            UpdateChange changed = comp.update(*it);
-            update_state(changed);
-            if constexpr (CacheType::value) {
-                cached_state_changes_ = cached_state_changes_ || changed;
-            }
+        // update, get changed variable
+        update_state(changed);
+        if constexpr (CacheType::value) {
+            cached_state_changes_ = cached_state_changes_ || changed;
         }
     }
 
