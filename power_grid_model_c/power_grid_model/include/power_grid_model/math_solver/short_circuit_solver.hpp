@@ -71,7 +71,7 @@ class ShortCircuitSolver {
             // add all sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
-                ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
+                const ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
                 mat_data_[diagonal_position] += y_source;  // add y_source to the diagonal of Ybus
                 output.u_bus[bus_number] +=
                     dot(y_source, ComplexValue<sym>{input.source[source_number] *
@@ -225,7 +225,7 @@ class ShortCircuitSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
-        calculate_result(input, output, zero_fault_counter, fault_type, phase_1, phase_2);
+        calculate_result(y_bus, input, output, zero_fault_counter, fault_type, phase_1, phase_2, source_voltage_ref);
 
         return output;
     }
@@ -242,9 +242,9 @@ class ShortCircuitSolver {
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
-    void calculate_result(ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
+    void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& zero_fault_counter, FaultType const fault_type, int const& phase_1,
-                          int const& phase_2) {
+                          int const& phase_2, double const& source_voltage_ref) {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             const ComplexValue<sym> x_tmp = output.u_bus[bus_number];  // save x to temp variable
@@ -303,7 +303,13 @@ class ShortCircuitSolver {
             }
             for (Idx source_number = (*source_bus_indptr_)[bus_number];
                  source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
-                break;
+                const ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
+                ComplexValue<sym> i_source_bus{};  // if asym, already initialized to zero
+                // TODO:
+                // output.i_source[source_number] =
+                //     y_source * (ComplexValue<sym>{input.source[source_number] * source_voltage_ref} -
+                //     output.u_bus[bus_number]);
+                i_source_bus += output.i_source[source_number];
             }
         }
     }
