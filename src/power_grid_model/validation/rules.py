@@ -76,9 +76,9 @@ def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> Li
     zero. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
 
     Returns:
         A list containing zero or one NotGreaterThanErrors, listing all ids where the value in the field of interest
@@ -98,12 +98,13 @@ def all_greater_than_or_equal_to_zero(
     or equal to zero. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
-        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
-        input validation, these default values should be included in the validation. It can be a fixed value for the
-        entire column (int/float) or be different for each element (np.ndarray).
+        data (SingleDataset): The input/update data set for all components
+        component (str) The component of interest
+        field (str): The field of interest
+        default_value (Optional[Union[np.ndarray, int, float]], optional): Some values are not required, but will
+            receive a default value in the C++ core. To do a proper input validation, these default values should be
+            included in the validation. It can be a fixed value for the entire column (int/float) or be different for
+            each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
@@ -362,9 +363,9 @@ def all_identical(data: SingleDataset, component: str, field: str) -> List[NotId
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
 
     Returns:
         A list containing zero or one NotIdenticalError, listing all ids of that component if the value in the field
@@ -388,13 +389,14 @@ def all_enabled_identical(
     Only entries are checked where the 'status' field is not 0.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
-        status_field: The status field based on which to decide whether a component is enabled
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
+        status_field (str): The status field based on which to decide whether a component is enabled
 
     Returns:
         A list containing zero or one NotIdenticalError, listing:
+
             - all ids of enabled components if the value in the field of interest was not identical across all enabled
               components
             - all values of the 'field' column for enabled components (including duplications)
@@ -414,9 +416,9 @@ def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqu
     the 'field' column of that component.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
 
     Returns:
         A list containing zero or one NotUniqueError, listing all ids where the value in the field of interest was
@@ -439,10 +441,11 @@ def all_cross_unique(
     the 'field' column of that component.
 
     Args:
-        data: The input/update data set for all components
-        fields: The fields of interest, formatted as [(component_1, field_1), (component_2, field_2)]
-        cross_only: Do not include duplicates within a single field. It is advised that you use all_unique() to
-        explicitly check uniqueness within a single field.
+        data (SingleDataset): The input/update data set for all components
+        fields (List[Tuple[str, str]]): The fields of interest, formatted as
+            [(component_1, field_1), (component_2, field_2)]
+        cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use
+            all_unique() to explicitly check uniqueness within a single field.
 
     Returns:
         A list containing zero or one MultiComponentNotUniqueError, listing all fields and ids where the value was not
@@ -474,10 +477,10 @@ def all_valid_enum_values(
     the supplied enum class. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
-        enum: The enum type to validate against
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
+        enum (Type[Enum]): The enum type to validate against
 
     Returns:
         A list containing zero or one InvalidEnumValueError, listing all ids where the value in the field of interest
@@ -733,10 +736,10 @@ def all_valid_fault_phases(
     Custom validation rule: Only a subset of fault_phases is supported for each fault type.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        fault_type_field: The fault type field
-        fault_phase_field: The fault phase field
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        fault_type_field (str): The fault type field
+        fault_phase_field (str): The fault phase field
 
     Returns:
         A list containing zero or more FaultPhaseErrors; listing all the ids of faults where the fault phase was

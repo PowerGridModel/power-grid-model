@@ -99,6 +99,7 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
 def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: bool = False) -> Dataset:
     """
     Convert native python data to internal numpy
+
     Args:
         data: data in dict or list
         data_type: type of data: input, update, sym_output, or asym_output
@@ -131,6 +132,7 @@ def convert_python_single_dataset_to_single_dataset(
 ) -> SingleDataset:
     """
     Convert native python data to internal numpy
+
     Args:
         data: data in dict
         data_type: type of data: input, update, sym_output, or asym_output
@@ -155,6 +157,7 @@ def convert_component_list_to_numpy(
 ) -> np.ndarray:
     """
     Convert native python data to internal numpy
+
     Args:
         objects: data in dict
         component: the name of the component
@@ -195,8 +198,10 @@ def convert_component_list_to_numpy(
 def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     """
     Convert batch datasets to a list of individual batches
+
     Args:
         batch_data: a batch dataset for power-grid-model
+
     Returns:
         A list of individual batches
     """
@@ -232,6 +237,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
 def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     """
     Determine the number of batches for each component and verify that each component has the same number of batches
+
     Args:
         batch_data: a batch dataset for power-grid-model
 
@@ -261,6 +267,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
 def get_batch_size(batch_data: BatchArray) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it.
+
     Args:
         batch_data: a batch array for power-grid-model
 
@@ -363,7 +370,8 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: str
 def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     """
     Convert internal numpy arrays to native python data
-    If an attribute is not available (NaN value), it will not be exported.
+      If an attribute is not available (NaN value), it will not be exported.
+
     Args:
         data: A single or batch dataset for power-grid-model
     Returns:
@@ -401,8 +409,10 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     """
     Convert internal numpy arrays to native python data
     If an attribute is not available (NaN value), it will not be exported.
+
     Args:
         data: A single dataset for power-grid-model
+
     Returns:
         A python dict for single dataset
     """
@@ -426,13 +436,14 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
 def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False) -> Dataset:
     """
     import json data
+
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output
         ignore_extra: Allow (and ignore) extra attributes in the json file
 
     Returns:
-         A single or batch dataset for power-grid-model
+        A single or batch dataset for power-grid-model
     """
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
@@ -442,6 +453,7 @@ def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False
 def import_input_data(json_file: Path) -> SingleDataset:
     """
     import input json data
+
     Args:
         json_file: path to the json file
 
@@ -457,6 +469,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
 def import_update_data(json_file: Path) -> BatchDataset:
     """
     import update json data
+
     Args:
         json_file: path to the json file
 
@@ -469,6 +482,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
 def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False):
     """
     export json data
+
     Args:
         json_file: path to json file
         data: a single or batch dataset for power-grid-model
@@ -492,7 +506,7 @@ def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, 
 def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):
     """Custom compact JSON writer that is intended to put data belonging to a single object on a single line.
 
-    For example:
+    For example::
     {
         "node": [
             {"id": 0, "u_rated": 10500.0},

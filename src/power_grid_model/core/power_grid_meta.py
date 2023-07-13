@@ -8,6 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Any, Dict, Mapping, Optional, Union
 
 import numpy as np
@@ -17,7 +18,19 @@ from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
-_CTYPE_NUMPY_MAP = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
+
+# constant enum for ctype
+# pylint: disable=invalid-name
+class PGMCType(IntEnum):
+    """enumeration for ctype"""
+
+    int32 = 0
+    int8 = 1
+    double = 2
+    double3 = 3
+
+
+_CTYPE_NUMPY_MAP = {PGMCType.double: "f8", PGMCType.int32: "i4", PGMCType.int8: "i1", PGMCType.double3: "(3,)f8"}
 _ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
 _NAN_VALUE_MAP = {
     f"{_ENDIANNESS}f8": np.nan,
@@ -126,9 +139,9 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
     for i in range(n_attrs):
         attribute: AttributePtr = pgc.meta_get_attribute_by_idx(component, i)
         attr_name: str = pgc.meta_attribute_name(attribute)
-        attr_ctype: str = pgc.meta_attribute_ctype(attribute)
+        attr_ctype: int = pgc.meta_attribute_ctype(attribute)
         attr_offset: int = pgc.meta_attribute_offset(attribute)
-        attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[attr_ctype]}"
+        attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[PGMCType(attr_ctype)]}"
         attr_nan = _NAN_VALUE_MAP[attr_np_type]
         names.append(attr_name)
         formats.append(attr_np_type)
