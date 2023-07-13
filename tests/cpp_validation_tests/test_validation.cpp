@@ -68,22 +68,30 @@ void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& met
             continue;
         }
         MetaAttribute const& attr = meta.get_attribute(it.key());
-        if (attr.ctype == "int8_t") {
-            int8_t const value = it.value().get<int8_t>();
-            attr.set_value(ptr, &value, position);
-        }
-        else if (attr.ctype == "int32_t") {
-            int32_t const value = it.value().get<int32_t>();
-            attr.set_value(ptr, &value, position);
-        }
-        else if (attr.ctype == "double") {
-            // single double
-            double const value = it.value().get<double>();
-            attr.set_value(ptr, &value, position);
-        }
-        else if (attr.ctype == "double[3]") {
-            std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
-            attr.set_value(ptr, &value, position);
+        using enum CType;
+        switch (attr.ctype) {
+            case c_int8: {
+                int8_t const value = it.value().get<int8_t>();
+                attr.set_value(ptr, &value, position);
+                break;
+            }
+            case c_int32: {
+                int32_t const value = it.value().get<int32_t>();
+                attr.set_value(ptr, &value, position);
+                break;
+            }
+            case c_double: {
+                double const value = it.value().get<double>();
+                attr.set_value(ptr, &value, position);
+                break;
+            }
+            case c_double3: {
+                std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
+                attr.set_value(ptr, &value, position);
+                break;
+            }
+            default:
+                throw MissingCaseForEnumError("CType for attribute", attr.ctype);
         }
     }
 }
