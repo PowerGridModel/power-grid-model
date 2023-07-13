@@ -243,7 +243,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def meta_attribute_ctype(self, attribute: AttributePtr) -> str:  # type: ignore[empty-body]
+    def meta_attribute_ctype(self, attribute: AttributePtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

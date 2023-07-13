@@ -17,7 +17,14 @@ from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
-_CTYPE_NUMPY_MAP = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
+# constant enum for ctype
+PGM_INT32 = 0
+PGM_INT8 = 1
+PGM_DOUBLE = 2
+PGM_DOUBLE3 = 3
+
+
+_CTYPE_NUMPY_MAP = {PGM_DOUBLE: "f8", PGM_INT32: "i4", PGM_INT8: "i1", PGM_DOUBLE3: "(3,)f8"}
 _ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
 _NAN_VALUE_MAP = {
     f"{_ENDIANNESS}f8": np.nan,
