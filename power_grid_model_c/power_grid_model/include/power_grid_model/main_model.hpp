@@ -20,6 +20,7 @@
 #include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/input.hpp"
+#include "auxiliary/math_output_converter.hpp"
 #include "auxiliary/output.hpp"
 
 // math model include
@@ -40,6 +41,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // internal type traits
     // container class
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
+    using MathOutputConverter = auxiliary::MathOutputConverter<ComponentContainer>;
 
     // trait on type list
     // struct of entry
@@ -732,204 +734,36 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             err_tol, max_iter, calculation_method, result_data, update_data, threading);
     }
 
-    // output node
-    template <bool sym, std::same_as<Node> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(components_.template citer<Component>().begin(),
-                              components_.template citer<Component>().end(), comp_coup_->node.cbegin(), res_it,
-                              [&math_output](Node const& node, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return node.get_null_output<sym>();
-                                  }
-                                  return node.get_output<sym>(math_output[math_id.group].u[math_id.pos],
-                                                              math_output[math_id.group].bus_injection[math_id.pos]);
-                              });
+    // Single short circuit calculation, returning short circuit math output results
+    template <bool sym>
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double err_tol, Idx max_iter,
+                                                                     CalculationMethod calculation_method) {
+        return calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
     }
 
-    // output branch
-    template <bool sym, std::derived_from<Branch> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    // Single short circuit calculation, propagating the results to result_data
+    template <bool sym>
+    void calculate_short_circuit(double err_tol, Idx max_iter, CalculationMethod calculation_method,
+                                 Dataset const& /* result_data */, Idx pos = 0) {
         assert(construction_complete_);
-        return std::transform(components_.template citer<Component>().begin(),
-                              components_.template citer<Component>().end(),
-                              comp_coup_->branch.cbegin() + components_.template get_start_idx<Branch, Component>(),
-                              res_it, [&math_output](Branch const& branch, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return branch.get_null_output<sym>();
-                                  }
-                                  return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
-                              });
+        auto const math_output = calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
+        // output_result(math_output, result_data, pos);  // TODO remove this commented out code
     }
 
-    // output branch3
-    template <bool sym, std::derived_from<Branch3> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(components_.template citer<Component>().begin(),
-                              components_.template citer<Component>().end(),
-                              comp_coup_->branch3.cbegin() + components_.template get_start_idx<Branch3, Component>(),
-                              res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
-                                  if (math_id.group == -1) {
-                                      return branch3.get_null_output<sym>();
-                                  }
-
-                                  return branch3.get_output<sym>(math_output[math_id.group].branch[math_id.pos[0]],
-                                                                 math_output[math_id.group].branch[math_id.pos[1]],
-                                                                 math_output[math_id.group].branch[math_id.pos[2]]);
-                              });
+    // Batch short circuit calculation, propagating the results to result_data
+    template <bool sym>
+    BatchParameter calculate_short_circuit(double err_tol, Idx max_iter, CalculationMethod calculation_method,
+                                           Dataset const& result_data, ConstDataset const& update_data,
+                                           Idx threading = -1) {
+        return batch_calculation_<sym, &MainModelImpl::calculate_short_circuit_<sym>>(
+            err_tol, max_iter, calculation_method, result_data, update_data, threading);
     }
 
-    // output source, load_gen, shunt individually
-    template <bool sym, std::same_as<Appliance> Component, std::forward_iterator ResIt>
+    template <bool sym, typename Component, std::forward_iterator ResIt>
     ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
-        res_it = output_result<sym, Source>(math_output, res_it);
-        res_it = output_result<sym, GenericLoadGen>(math_output, res_it);
-        res_it = output_result<sym, Shunt>(math_output, res_it);
-        return res_it;
-    }
-
-    // output source
-    template <bool sym, std::same_as<Source> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(components_.template citer<Component>().begin(),
-                              components_.template citer<Component>().end(), comp_coup_->source.cbegin(), res_it,
-                              [&math_output](Source const& source, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return source.get_null_output<sym>();
-                                  }
-                                  return source.get_output<sym>(math_output[math_id.group].source[math_id.pos]);
-                              });
-    }
-
-    // output load gen
-    template <bool sym, std::derived_from<GenericLoadGen> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(
-            components_.template citer<Component>().begin(), components_.template citer<Component>().end(),
-            comp_coup_->load_gen.cbegin() + components_.template get_start_idx<GenericLoadGen, Component>(), res_it,
-            [&math_output](GenericLoadGen const& load_gen, Idx2D math_id) {
-                if (math_id.group == -1) {
-                    return load_gen.get_null_output<sym>();
-                }
-                return load_gen.get_output<sym>(math_output[math_id.group].load_gen[math_id.pos]);
-            });
-    }
-
-    // output shunt
-    template <bool sym, std::same_as<Shunt> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(components_.template citer<Component>().begin(),
-                              components_.template citer<Component>().end(), comp_coup_->shunt.cbegin(), res_it,
-                              [&math_output](Shunt const& shunt, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return shunt.get_null_output<sym>();
-                                  }
-                                  return shunt.get_output<sym>(math_output[math_id.group].shunt[math_id.pos]);
-                              });
-    }
-
-    // output voltage sensor
-    template <bool sym, std::derived_from<GenericVoltageSensor> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(
-            components_.template citer<Component>().begin(), components_.template citer<Component>().end(),
-            comp_topo_->voltage_sensor_node_idx.cbegin() +
-                components_.template get_start_idx<GenericVoltageSensor, Component>(),
-            res_it, [this, &math_output](GenericVoltageSensor const& voltage_sensor, Idx const node_seq) {
-                Idx2D const node_math_id = comp_coup_->node[node_seq];
-                if (node_math_id.group == -1) {
-                    return voltage_sensor.get_null_output<sym>();
-                }
-                return voltage_sensor.get_output<sym>(math_output[node_math_id.group].u[node_math_id.pos]);
-            });
-    }
-
-    // output power sensor
-    template <bool sym, std::derived_from<GenericPowerSensor> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(
-            components_.template citer<Component>().begin(), components_.template citer<Component>().end(),
-            comp_topo_->power_sensor_object_idx.cbegin() +
-                components_.template get_start_idx<GenericPowerSensor, Component>(),
-            res_it, [this, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
-                auto const terminal_type = power_sensor.get_terminal_type();
-                Idx2D const obj_math_id = [&]() {
-                    switch (terminal_type) {
-                        using enum MeasuredTerminalType;
-
-                        case branch_from:
-                        case branch_to:
-                            return comp_coup_->branch[obj_seq];
-                        case source:
-                            return comp_coup_->source[obj_seq];
-                        case shunt:
-                            return comp_coup_->shunt[obj_seq];
-                        case load:
-                        case generator:
-                            return comp_coup_->load_gen[obj_seq];
-                        // from branch3, get relevant math object branch based on the measured side
-                        case branch3_1:
-                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[0]};
-                        case branch3_2:
-                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[1]};
-                        case branch3_3:
-                            return Idx2D{comp_coup_->branch3[obj_seq].group, comp_coup_->branch3[obj_seq].pos[2]};
-                        case node:
-                            return comp_coup_->node[obj_seq];
-                        default:
-                            throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
-                                                          terminal_type);
-                    }
-                }();
-
-                if (obj_math_id.group == -1) {
-                    return power_sensor.get_null_output<sym>();
-                }
-
-                switch (terminal_type) {
-                    using enum MeasuredTerminalType;
-
-                    case branch_from:
-                    // all power sensors in branch3 are at from side in the mathematical model
-                    case branch3_1:
-                    case branch3_2:
-                    case branch3_3:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
-                    case branch_to:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
-                    case source:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
-                    case shunt:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
-                    case load:
-                    case generator:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
-                    case node:
-                        return power_sensor.get_output<sym>(
-                            math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
-                    default:
-                        throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
-                                                      terminal_type);
-                }
-            });
-    }
-
-    // output power sensor
-    template <bool sym, std::same_as<Fault> Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& /* math_output */, ResIt res_it) {
-        assert(construction_complete_);
-        return std::transform(components_.template citer<Component>().begin(),
-                              components_.template citer<Component>().end(), comp_coup_->fault.cbegin(), res_it,
-                              [](Fault const& fault, Idx2D /* math_id */) {
-                                  return fault.get_output();
-                              });
+        return MathOutputConverter::template output_result<sym, Component, ResIt>(components_, *comp_coup_, *comp_topo_,
+                                                                                  math_output, res_it);
     }
 
     template <bool sym>
