@@ -20,7 +20,10 @@ from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 
 # constant enum for ctype
+# pylint: disable=invalid-name
 class PGMCType(IntEnum):
+    """enumeration for ctype"""
+
     int32 = 0
     int8 = 1
     double = 2
