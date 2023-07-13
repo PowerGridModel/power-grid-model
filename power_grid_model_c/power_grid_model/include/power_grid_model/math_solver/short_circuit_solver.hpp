@@ -225,7 +225,7 @@ class ShortCircuitSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
-        calculate_result(input, output, zero_fault_counter, fault_bus_indptr);
+        calculate_result(input, output, zero_fault_counter, fault_bus_indptr, fault_type, phase_1, phase_2);
 
         return output;
     }
@@ -243,12 +243,12 @@ class ShortCircuitSolver {
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
     void calculate_result(ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
-                          IdxVector zero_fault_counter, IdxVector const& fault_bus_indptr) {
+                          IdxVector const& zero_fault_counter, IdxVector const& fault_bus_indptr,
+                          FaultType const fault_type, int const& phase_1, int const& phase_2) {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            ComplexValue<sym> x_tmp = output.u_bus[bus_number];  // save x to temp variable
-
-            // TODO: do we need to change this loop? for (Idx fault_number = (*fault_bus_indptr_)[bus_number]...
+            const ComplexValue<sym> x_tmp = output.u_bus[bus_number];  // save x to temp variable
+            const double zero_fault_counter_bus = static_cast<double>(zero_fault_counter[bus_number]);
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
                  ++fault_number) {
                 DoubleComplex y_fault = input.faults[fault_number].y_fault;
@@ -256,9 +256,18 @@ class ShortCircuitSolver {
                     assert(std::isinf(y_fault.imag()));
                     if constexpr (sym) {  // three phase fault
                         output.i_fault[fault_number] =
-                            -1.0 * x_tmp /
-                            static_cast<double>(zero_fault_counter[bus_number]);  // injection is negative to fault
-                        output.u_bus[bus_number] = 0;
+                            -1.0 * x_tmp / zero_fault_counter_bus;  // injection is negative to fault
+                        output.u_bus[bus_number] = 0.0;
+                    }
+                    else if (fault_type == FaultType::single_phase_to_ground) {
+                        output.i_fault[fault_number](phase_1) = -1.0 * x_tmp[phase_1] / zero_fault_counter_bus;
+                        output.u_bus[bus_number](phase_1) = 0.0;
+                    }
+                    else if (fault_type == FaultType::two_phase) {
+                        break;
+                    }
+                    else {
+                        assert((fault_type == FaultType::two_phase_to_ground));
                     }
                 }
             }
