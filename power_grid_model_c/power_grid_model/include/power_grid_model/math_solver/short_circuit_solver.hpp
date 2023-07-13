@@ -256,7 +256,8 @@ class ShortCircuitSolver {
                     assert(std::isinf(y_fault.imag()));
                     if constexpr (sym) {  // three phase fault
                         output.i_fault[fault_number] =
-                            -1.0 * x_tmp / zero_fault_counter[bus_number];  // injection is negative to fault
+                            -1.0 * x_tmp /
+                            static_cast<double>(zero_fault_counter[bus_number]);  // injection is negative to fault
                         output.u_bus[bus_number] = 0;
                     }
                 }
