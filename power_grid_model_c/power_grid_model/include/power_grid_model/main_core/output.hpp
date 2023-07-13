@@ -26,7 +26,7 @@ concept component_container = requires(T const& c) {
 
 }  // namespace detail
 
-// mat output converter template
+// math output converter template
 template <class T>
 struct MathOutputConverter;
 
