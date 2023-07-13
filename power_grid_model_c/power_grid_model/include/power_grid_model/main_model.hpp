@@ -20,11 +20,13 @@
 #include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/input.hpp"
-#include "auxiliary/math_output_converter.hpp"
 #include "auxiliary/output.hpp"
 
 // math model include
 #include "math_solver/math_solver.hpp"
+
+// main model implementation
+#include "main_core/output.hpp"
 
 // threading
 #include <thread>
