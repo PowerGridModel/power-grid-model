@@ -56,8 +56,8 @@ struct ctype_t<RealValue<false>> {
     static constexpr CType value = CType::c_double3;
 };
 template <class T>
-    requires(std::is_enum_v<T>)
-struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
+requires(std::is_enum_v<T>) struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {
+};
 template <class T>
 constexpr CType ctype_v = ctype_t<T>::value;
 
@@ -75,7 +75,7 @@ inline void set_nan(RealValue<false>& x) {
     x = RealValue<false>{nan};
 }
 template <class Enum>
-    requires std::same_as<std::underlying_type_t<Enum>, IntS>
+requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }
