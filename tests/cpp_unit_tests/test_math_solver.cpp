@@ -87,19 +87,19 @@ template <bool sym>
 void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
                       double tolerance = numerical_tolerance) {
     for (size_t i = 0; i != output.u_bus.size(); ++i) {
-        CHECK((cabs(output.u_bus[i] - output_ref.u_bus[i]) < tolerance).all());
+        CHECK_CLOSE(output.u_bus[i], output_ref.u_bus[i], tolerance);
     }
     for (size_t i = 0; i != output.i_branch_from.size(); ++i) {
-        CHECK((cabs(output.i_branch_from[i] - output_ref.i_branch_from[i]) < tolerance).all());
+        CHECK_CLOSE(output.i_branch_from[i], output_ref.i_branch_from[i], tolerance);
     }
     for (size_t i = 0; i != output.i_branch_to.size(); ++i) {
-        CHECK((cabs(output.i_branch_to[i] - output_ref.i_branch_to[i]) < tolerance).all());
+        CHECK_CLOSE(output.i_branch_to[i], output_ref.i_branch_to[i], tolerance);
     }
     for (size_t i = 0; i != output.i_fault.size(); ++i) {
-        CHECK((cabs(output.i_fault[i] - output_ref.i_fault[i]) < tolerance).all());
+        CHECK_CLOSE(output.i_fault[i], output_ref.i_fault[i], tolerance);
     }
     for (size_t i = 0; i != output.i_source.size(); ++i) {
-        CHECK((cabs(output.i_source[i] - output_ref.i_source[i]) < tolerance).all());
+        CHECK_CLOSE(output.i_source[i], output_ref.i_source[i], tolerance);
     }
 }
 
@@ -687,11 +687,11 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_input = create_sc_test_input(FaultType::three_phase, FaultPhase::abc, z_fault, vref);
         auto sc_output_ref = create_sc_test_output<false>(FaultType::three_phase, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(FaultType::three_phase, FaultPhase::default_value, z_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, info);
+        auto default_output = solver.run_short_circuit(sc_input_default, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, default_output);
     }
 
@@ -700,7 +700,7 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_input = create_sc_test_input(FaultType::three_phase, FaultPhase::abc, z_fault_solid, vref);
         auto sc_output_ref = create_sc_test_output<false>(FaultType::three_phase, z_fault_solid, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -709,11 +709,11 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_input = create_sc_test_input(FaultType::three_phase, FaultPhase::abc, z_fault, vref);
         auto sc_output_ref = create_sc_test_output<true>(FaultType::three_phase, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<true>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(FaultType::three_phase, FaultPhase::default_value, z_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, info);
+        auto default_output = solver.run_short_circuit(sc_input_default, vref, info, CalculationMethod::iec60909);
         assert_sc_output<true>(output, default_output);
     }
 
@@ -722,7 +722,7 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_input = create_sc_test_input(FaultType::three_phase, FaultPhase::abc, z_fault_solid, vref);
         auto sc_output_ref = create_sc_test_output<true>(FaultType::three_phase, z_fault_solid, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<true>(output, sc_output_ref);
     }
 
@@ -732,12 +732,12 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_output_ref =
             create_sc_test_output<false>(FaultType::single_phase_to_ground, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(FaultType::single_phase_to_ground, FaultPhase::default_value, z_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, info);
+        auto default_output = solver.run_short_circuit(sc_input_default, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, default_output);
     }
 
@@ -747,7 +747,7 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_output_ref =
             create_sc_test_output<false>(FaultType::single_phase_to_ground, z_fault_solid, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -756,11 +756,11 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_input = create_sc_test_input(FaultType::two_phase, FaultPhase::bc, z_fault, vref);
         auto sc_output_ref = create_sc_test_output<false>(FaultType::two_phase, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(FaultType::two_phase, FaultPhase::default_value, z_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, info);
+        auto default_output = solver.run_short_circuit(sc_input_default, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, default_output);
     }
 
@@ -769,7 +769,7 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_input = create_sc_test_input(FaultType::two_phase, FaultPhase::bc, z_fault_solid, vref);
         auto sc_output_ref = create_sc_test_output<false>(FaultType::two_phase, z_fault_solid, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -779,12 +779,12 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_output_ref =
             create_sc_test_output<false>(FaultType::two_phase_to_ground, z_fault, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(FaultType::two_phase_to_ground, FaultPhase::default_value, z_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, info);
+        auto default_output = solver.run_short_circuit(sc_input_default, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, default_output);
     }
 
@@ -794,7 +794,7 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         auto sc_output_ref =
             create_sc_test_output<false>(FaultType::two_phase_to_ground, z_fault_solid, y0, y0_0, vref, yref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info);
+        auto output = solver.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -804,12 +804,12 @@ TEST_CASE("Short circuit solver" * doctest::skip(true)) {
         sc_input.source = {vref};
         auto asym_sc_output_ref = blank_sc_output<false>(vref);
         CalculationInfo info;
-        auto asym_output = solver_asym.run_short_circuit(sc_input, info);
+        auto asym_output = solver_asym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<false>(asym_output, asym_sc_output_ref);
 
         MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
         auto sym_sc_output_ref = blank_sc_output<true>(vref);
-        auto sym_output = solver_sym.run_short_circuit(sc_input, info);
+        auto sym_output = solver_sym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
         assert_sc_output<true>(sym_output, sym_sc_output_ref);
     }
 }
