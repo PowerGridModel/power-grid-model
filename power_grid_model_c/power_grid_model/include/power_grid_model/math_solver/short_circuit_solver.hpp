@@ -279,8 +279,25 @@ class ShortCircuitSolver {
                 else {
                     assert(!std::isinf(y_fault.imag()));
                     if (zero_fault_counter[bus_number] > 0) {
-                        continue;  // ignore fault objects with impedance, when there is a fault with infinite impedance
-                                   // on bus
+                        // ignore fault objects with impedance, when there is a fault with infinite impedance on bus
+                        continue;
+                    }
+                    if constexpr (sym) {  // three phase fault
+                        output.i_fault[fault_number] = y_fault * x_tmp;
+                    }
+                    else if (fault_type == FaultType::single_phase_to_ground) {
+                        output.i_fault[fault_number](phase_1) = y_fault * x_tmp[phase_1];
+                    }
+                    else if (fault_type == FaultType::two_phase) {
+                        output.i_fault[fault_number](phase_1) = y_fault * x_tmp[phase_1] - y_fault * x_tmp[phase_2];
+                        output.i_fault[fault_number](phase_2) = y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
+                    }
+                    else {
+                        assert((fault_type == FaultType::two_phase_to_ground));
+                        output.i_fault[fault_number](phase_1) =
+                            2.0 * y_fault * x_tmp[phase_1] - y_fault * x_tmp[phase_2];
+                        output.i_fault[fault_number](phase_2) =
+                            2.0 * y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
                     }
                 }
             }
