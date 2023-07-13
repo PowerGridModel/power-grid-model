@@ -56,7 +56,7 @@ struct ctype_t<RealValue<false>> {
     static constexpr CType value = CType::c_double3;
 };
 template <class T>
-requires(std::is_enum_v<T>) struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {
+requires std::is_enum_v<T> struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {
 };
 template <class T>
 constexpr CType ctype_v = ctype_t<T>::value;
