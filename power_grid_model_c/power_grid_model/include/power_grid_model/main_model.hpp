@@ -43,9 +43,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // internal type traits
     // container class
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
-
     using MainModelState = main_core::MainModelState<ComponentContainer>;
-    using MathOutputConverter = main_core::MathOutputConverter<ComponentContainer>;
 
     // trait on type list
     // struct of entry
@@ -771,8 +769,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, typename Component, std::forward_iterator ResIt>
     ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
-        return MathOutputConverter::template output_result<sym, Component, ComponentContainer, ResIt>(
-            state_, math_output, res_it);
+        return main_core::output_result<sym, Component, ComponentContainer, ResIt>(state_, math_output, res_it);
     }
 
     template <bool sym>

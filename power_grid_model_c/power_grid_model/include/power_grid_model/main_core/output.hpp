@@ -8,250 +8,220 @@
 
 #include "state.hpp"
 
-#include <concepts>
-#include <vector>
+#include "../all_components.hpp"
 
 namespace power_grid_model::main_core {
 
-namespace detail {
+// output node
+template <bool sym, std::same_as<Node> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(state.components.template citer<Component>().begin(),
+                          state.components.template citer<Component>().end(), state.comp_coup->node.cbegin(), res_it,
+                          [&math_output](Node const& node, Idx2D math_id) {
+                              if (math_id.group == -1) {
+                                  return node.get_null_output<sym>();
+                              }
+                              return node.get_output<sym>(math_output[math_id.group].u[math_id.pos],
+                                                          math_output[math_id.group].bus_injection[math_id.pos]);
+                          });
+}
 
-template <typename ContainerType, typename ComponentType>
-concept component_container = requires(ContainerType const& c) {
-    { c.template citer<ComponentType>().begin() } -> std::forward_iterator;
-    { c.template citer<ComponentType>().end() } -> std::forward_iterator;
-    { *(c.template citer<ComponentType>().begin()) } -> std::same_as<ComponentType const&>;
-    { *(c.template citer<ComponentType>().end()) } -> std::same_as<ComponentType const&>;
-};
+// output branch
+template <bool sym, std::derived_from<Branch> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(
+        state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
+        state.comp_coup->branch.cbegin() + state.components.template get_start_idx<Branch, Component>(), res_it,
+        [&math_output](Branch const& branch, Idx2D math_id) {
+            if (math_id.group == -1) {
+                return branch.get_null_output<sym>();
+            }
+            return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
+        });
+}
 
-template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
-concept model_component_state =
-    detail::component_container<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
-    std::same_as<StateType<ContainerType>, MainModelState<ContainerType>>;
+// output branch3
+template <bool sym, std::derived_from<Branch3> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(
+        state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
+        state.comp_coup->branch3.cbegin() + state.components.template get_start_idx<Branch3, Component>(), res_it,
+        [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
+            if (math_id.group == -1) {
+                return branch3.get_null_output<sym>();
+            }
 
-}  // namespace detail
+            return branch3.get_output<sym>(math_output[math_id.group].branch[math_id.pos[0]],
+                                           math_output[math_id.group].branch[math_id.pos[1]],
+                                           math_output[math_id.group].branch[math_id.pos[2]]);
+        });
+}
 
-// math output converter template
-template <class T>
-struct MathOutputConverter;
+// output source, load_gen, shunt individually
+template <bool sym, std::same_as<Appliance> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    res_it = output_result<sym, Source>(state, math_output, res_it);
+    res_it = output_result<sym, GenericLoadGen>(state, math_output, res_it);
+    res_it = output_result<sym, Shunt>(state, math_output, res_it);
+    return res_it;
+}
 
-template <typename CompContainer>
-struct MathOutputConverter {
-    // output node
-    template <bool sym, std::same_as<Node> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(state.components.template citer<Component>().begin(),
-                              state.components.template citer<Component>().end(), state.comp_coup->node.cbegin(),
-                              res_it, [&math_output](Node const& node, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return node.get_null_output<sym>();
-                                  }
-                                  return node.get_output<sym>(math_output[math_id.group].u[math_id.pos],
-                                                              math_output[math_id.group].bus_injection[math_id.pos]);
-                              });
-    }
+// output source
+template <bool sym, std::same_as<Source> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(state.components.template citer<Component>().begin(),
+                          state.components.template citer<Component>().end(), state.comp_coup->source.cbegin(), res_it,
+                          [&math_output](Source const& source, Idx2D math_id) {
+                              if (math_id.group == -1) {
+                                  return source.get_null_output<sym>();
+                              }
+                              return source.get_output<sym>(math_output[math_id.group].source[math_id.pos]);
+                          });
+}
 
-    // output branch
-    template <bool sym, std::derived_from<Branch> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(
-            state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
-            state.comp_coup->branch.cbegin() + state.components.template get_start_idx<Branch, Component>(), res_it,
-            [&math_output](Branch const& branch, Idx2D math_id) {
-                if (math_id.group == -1) {
-                    return branch.get_null_output<sym>();
-                }
-                return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
-            });
-    }
+// output load gen
+template <bool sym, std::derived_from<GenericLoadGen> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(
+        state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
+        state.comp_coup->load_gen.cbegin() + state.components.template get_start_idx<GenericLoadGen, Component>(),
+        res_it, [&math_output](GenericLoadGen const& load_gen, Idx2D math_id) {
+            if (math_id.group == -1) {
+                return load_gen.get_null_output<sym>();
+            }
+            return load_gen.get_output<sym>(math_output[math_id.group].load_gen[math_id.pos]);
+        });
+}
 
-    // output branch3
-    template <bool sym, std::derived_from<Branch3> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(
-            state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
-            state.comp_coup->branch3.cbegin() + state.components.template get_start_idx<Branch3, Component>(), res_it,
-            [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
-                if (math_id.group == -1) {
-                    return branch3.get_null_output<sym>();
-                }
+// output load gen
+template <bool sym, std::same_as<Shunt> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(state.components.template citer<Component>().begin(),
+                          state.components.template citer<Component>().end(), state.comp_coup->shunt.cbegin(), res_it,
+                          [&math_output](Shunt const& shunt, Idx2D math_id) {
+                              if (math_id.group == -1) {
+                                  return shunt.get_null_output<sym>();
+                              }
+                              return shunt.get_output<sym>(math_output[math_id.group].shunt[math_id.pos]);
+                          });
+}
 
-                return branch3.get_output<sym>(math_output[math_id.group].branch[math_id.pos[0]],
-                                               math_output[math_id.group].branch[math_id.pos[1]],
-                                               math_output[math_id.group].branch[math_id.pos[2]]);
-            });
-    }
+// output voltage sensor
+template <bool sym, std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(
+        state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
+        state.comp_topo->voltage_sensor_node_idx.cbegin() +
+            state.components.template get_start_idx<GenericVoltageSensor, Component>(),
+        res_it, [&state, &math_output](GenericVoltageSensor const& voltage_sensor, Idx const node_seq) {
+            Idx2D const node_math_id = state.comp_coup->node[node_seq];
+            if (node_math_id.group == -1) {
+                return voltage_sensor.get_null_output<sym>();
+            }
+            return voltage_sensor.get_output<sym>(math_output[node_math_id.group].u[node_math_id.pos]);
+        });
+}
 
-    // output source, load_gen, shunt individually
-    template <bool sym, std::same_as<Appliance> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        res_it = output_result<sym, Source>(state, math_output, res_it);
-        res_it = output_result<sym, GenericLoadGen>(state, math_output, res_it);
-        res_it = output_result<sym, Shunt>(state, math_output, res_it);
-        return res_it;
-    }
-
-    // output source
-    template <bool sym, std::same_as<Source> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(state.components.template citer<Component>().begin(),
-                              state.components.template citer<Component>().end(), state.comp_coup->source.cbegin(),
-                              res_it, [&math_output](Source const& source, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return source.get_null_output<sym>();
-                                  }
-                                  return source.get_output<sym>(math_output[math_id.group].source[math_id.pos]);
-                              });
-    }
-
-    // output load gen
-    template <bool sym, std::derived_from<GenericLoadGen> Component, class ComponentContainer,
-              std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(
-            state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
-            state.comp_coup->load_gen.cbegin() + state.components.template get_start_idx<GenericLoadGen, Component>(),
-            res_it, [&math_output](GenericLoadGen const& load_gen, Idx2D math_id) {
-                if (math_id.group == -1) {
-                    return load_gen.get_null_output<sym>();
-                }
-                return load_gen.get_output<sym>(math_output[math_id.group].load_gen[math_id.pos]);
-            });
-    }
-
-    // output load gen
-    template <bool sym, std::same_as<Shunt> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(state.components.template citer<Component>().begin(),
-                              state.components.template citer<Component>().end(), state.comp_coup->shunt.cbegin(),
-                              res_it, [&math_output](Shunt const& shunt, Idx2D math_id) {
-                                  if (math_id.group == -1) {
-                                      return shunt.get_null_output<sym>();
-                                  }
-                                  return shunt.get_output<sym>(math_output[math_id.group].shunt[math_id.pos]);
-                              });
-    }
-
-    // output voltage sensor
-    template <bool sym, std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
-              std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(
-            state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
-            state.comp_topo->voltage_sensor_node_idx.cbegin() +
-                state.components.template get_start_idx<GenericVoltageSensor, Component>(),
-            res_it, [&state, &math_output](GenericVoltageSensor const& voltage_sensor, Idx const node_seq) {
-                Idx2D const node_math_id = state.comp_coup->node[node_seq];
-                if (node_math_id.group == -1) {
-                    return voltage_sensor.get_null_output<sym>();
-                }
-                return voltage_sensor.get_output<sym>(math_output[node_math_id.group].u[node_math_id.pos]);
-            });
-    }
-
-    // output power sensor
-    template <bool sym, std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
-              std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(
-            state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
-            state.comp_topo->power_sensor_object_idx.cbegin() +
-                state.components.template get_start_idx<GenericPowerSensor, Component>(),
-            res_it, [&state, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
-                auto const terminal_type = power_sensor.get_terminal_type();
-                Idx2D const obj_math_id = [&]() {
-                    switch (terminal_type) {
-                        using enum MeasuredTerminalType;
-
-                        case branch_from:
-                        case branch_to:
-                            return state.comp_coup->branch[obj_seq];
-                        case source:
-                            return state.comp_coup->source[obj_seq];
-                        case shunt:
-                            return state.comp_coup->shunt[obj_seq];
-                        case load:
-                        case generator:
-                            return state.comp_coup->load_gen[obj_seq];
-                        // from branch3, get relevant math object branch based on the measured side
-                        case branch3_1:
-                            return Idx2D{state.comp_coup->branch3[obj_seq].group,
-                                         state.comp_coup->branch3[obj_seq].pos[0]};
-                        case branch3_2:
-                            return Idx2D{state.comp_coup->branch3[obj_seq].group,
-                                         state.comp_coup->branch3[obj_seq].pos[1]};
-                        case branch3_3:
-                            return Idx2D{state.comp_coup->branch3[obj_seq].group,
-                                         state.comp_coup->branch3[obj_seq].pos[2]};
-                        case node:
-                            return state.comp_coup->node[obj_seq];
-                        default:
-                            throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
-                                                          terminal_type);
-                    }
-                }();
-
-                if (obj_math_id.group == -1) {
-                    return power_sensor.get_null_output<sym>();
-                }
-
+// output power sensor
+template <bool sym, std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(
+        state.components.template citer<Component>().begin(), state.components.template citer<Component>().end(),
+        state.comp_topo->power_sensor_object_idx.cbegin() +
+            state.components.template get_start_idx<GenericPowerSensor, Component>(),
+        res_it, [&state, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
+            auto const terminal_type = power_sensor.get_terminal_type();
+            Idx2D const obj_math_id = [&]() {
                 switch (terminal_type) {
                     using enum MeasuredTerminalType;
 
                     case branch_from:
-                    // all power sensors in branch3 are at from side in the mathematical model
-                    case branch3_1:
-                    case branch3_2:
-                    case branch3_3:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
                     case branch_to:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
+                        return state.comp_coup->branch[obj_seq];
                     case source:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
+                        return state.comp_coup->source[obj_seq];
                     case shunt:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
+                        return state.comp_coup->shunt[obj_seq];
                     case load:
                     case generator:
-                        return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
+                        return state.comp_coup->load_gen[obj_seq];
+                    // from branch3, get relevant math object branch based on the measured side
+                    case branch3_1:
+                        return Idx2D{state.comp_coup->branch3[obj_seq].group, state.comp_coup->branch3[obj_seq].pos[0]};
+                    case branch3_2:
+                        return Idx2D{state.comp_coup->branch3[obj_seq].group, state.comp_coup->branch3[obj_seq].pos[1]};
+                    case branch3_3:
+                        return Idx2D{state.comp_coup->branch3[obj_seq].group, state.comp_coup->branch3[obj_seq].pos[2]};
                     case node:
-                        return power_sensor.get_output<sym>(
-                            math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
+                        return state.comp_coup->node[obj_seq];
                     default:
                         throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
                                                       terminal_type);
                 }
-            });
-    }
+            }();
 
-    // output power sensor
-    template <bool sym, std::same_as<Fault> Component, class ComponentContainer, std::forward_iterator ResIt>
-    requires detail::model_component_state<MainModelState, ComponentContainer, Component>
-    static ResIt output_result(MainModelState<ComponentContainer> const& state,
-                               std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return std::transform(state.components.template citer<Component>().begin(),
-                              state.components.template citer<Component>().end(), state.comp_coup->fault.cbegin(),
-                              res_it, [](Fault const& fault, Idx2D /* math_id */) {
-                                  return fault.get_output();
-                              });
-    }
-};
+            if (obj_math_id.group == -1) {
+                return power_sensor.get_null_output<sym>();
+            }
+
+            switch (terminal_type) {
+                using enum MeasuredTerminalType;
+
+                case branch_from:
+                // all power sensors in branch3 are at from side in the mathematical model
+                case branch3_1:
+                case branch3_2:
+                case branch3_3:
+                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
+                case branch_to:
+                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
+                case source:
+                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
+                case shunt:
+                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
+                case load:
+                case generator:
+                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
+                case node:
+                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
+                default:
+                    throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
+                                                  terminal_type);
+            }
+        });
+}
+
+// output power sensor
+template <bool sym, std::same_as<Fault> Component, class ComponentContainer, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    return std::transform(state.components.template citer<Component>().begin(),
+                          state.components.template citer<Component>().end(), state.comp_coup->fault.cbegin(), res_it,
+                          [](Fault const& fault, Idx2D /* math_id */) {
+                              return fault.get_output();
+                          });
+}
 
 }  // namespace power_grid_model::main_core
 
