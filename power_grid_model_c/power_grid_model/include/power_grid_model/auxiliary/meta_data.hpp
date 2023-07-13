@@ -36,29 +36,30 @@ template <class T>
 struct get_component_nan;
 
 // ctype string
-template <class T, bool is_enum = std::is_enum_v<T>>
+template <class T>
 struct ctype_t;
 template <>
-struct ctype_t<double, false> {
-    static constexpr const char* value = "double";
+struct ctype_t<double> {
+    static constexpr CType value = CType::c_double;
 };
 template <>
-struct ctype_t<int32_t, false> {
-    static constexpr const char* value = "int32_t";
+struct ctype_t<int32_t> {
+    static constexpr CType value = CType::c_int32;
 };
 template <>
-struct ctype_t<int8_t, false> {
-    static constexpr const char* value = "int8_t";
+struct ctype_t<int8_t> {
+    static constexpr CType value = CType::c_int8;
 };
 
 template <>
-struct ctype_t<RealValue<false>, false> {
-    static constexpr const char* value = "double[3]";
+struct ctype_t<RealValue<false>> {
+    static constexpr CType value = CType::c_double3;
 };
 template <class T>
-struct ctype_t<T, true> : ctype_t<std::underlying_type_t<T>> {};
+    requires(std::is_enum_v<T>)
+struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
 template <class T>
-constexpr const char* ctype_v = ctype_t<T>::value;
+constexpr CType ctype_v = ctype_t<T>::value;
 
 // set nan
 inline void set_nan(double& x) {
@@ -74,7 +75,7 @@ inline void set_nan(RealValue<false>& x) {
     x = RealValue<false>{nan};
 }
 template <class Enum>
-requires std::same_as<std::underlying_type_t<Enum>, IntS>
+    requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }
@@ -115,6 +116,7 @@ struct MetaAttributeImpl {
 // attribute in global namespace
 struct PGM_MetaAttribute {
     using Idx = power_grid_model::Idx;
+    using CType = power_grid_model::CType;
     template <class T>
     using trait_pointer_to_member = power_grid_model::meta_data::trait_pointer_to_member<T>;
     template <class StructType, auto member_ptr>
@@ -122,7 +124,7 @@ struct PGM_MetaAttribute {
     using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
     using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
     template <class T>
-    static constexpr const char* ctype_v = power_grid_model::meta_data::ctype_v<T>;
+    static constexpr CType ctype_v = power_grid_model::meta_data::ctype_v<T>;
 
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
@@ -140,7 +142,7 @@ struct PGM_MetaAttribute {
 
     // meta data
     std::string name;
-    std::string ctype{};
+    CType ctype{};
     size_t offset{};
     size_t size{};
     size_t component_size{};

@@ -92,8 +92,8 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char
 char const* PGM_meta_attribute_name(PGM_Handle*, PGM_MetaAttribute const* attribute) {
     return attribute->name.c_str();
 }
-char const* PGM_meta_attribute_ctype(PGM_Handle*, PGM_MetaAttribute const* attribute) {
-    return attribute->ctype.c_str();
+PGM_Idx PGM_meta_attribute_ctype(PGM_Handle*, PGM_MetaAttribute const* attribute) {
+    return static_cast<PGM_Idx>(attribute->ctype);
 }
 size_t PGM_meta_attribute_offset(PGM_Handle*, PGM_MetaAttribute const* attribute) {
     return attribute->offset;

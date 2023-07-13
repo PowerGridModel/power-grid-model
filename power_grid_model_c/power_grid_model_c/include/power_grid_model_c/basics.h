@@ -136,6 +136,17 @@ enum PGM_ErrorCode {
     PGM_batch_error = 2    /**< some error occurred which is in the batch calculation */
 };
 
+/**
+ * @brief Enumeration of C basic data types
+ *
+ */
+enum PGM_CType {
+    PGM_int32 = 0,   /**< int32_t */
+    PGM_int8 = 1,    /**< int8_t */
+    PGM_double = 2,  /**< double */
+    PGM_double3 = 3, /**< double[3] */
+};
+
 #ifdef __cplusplus
 }
 #endif
