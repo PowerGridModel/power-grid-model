@@ -215,7 +215,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 template <bool sym, std::same_as<Fault> Component, class ComponentContainer, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutput<sym>> const& /* math_output */, ResIt res_it) {
+                              std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
     return std::transform(state.components.template citer<Component>().begin(),
                           state.components.template citer<Component>().end(), state.comp_coup->fault.cbegin(), res_it,
                           [](Fault const& fault, Idx2D /* math_id */) {
