@@ -562,8 +562,8 @@ TEST_CASE("Test math solver") {
 
 namespace sc_unit_test {
 
-constexpr ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_phase,
-                                                 DoubleComplex const& z_fault, double const& vref) {
+ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_phase, DoubleComplex const& z_fault,
+                                       double const& vref) {
     ShortCircuitInput sc_input;
     sc_input.source = {vref};
     sc_input.faults = {{1, 1.0 / z_fault, fault_type, fault_phase}};
