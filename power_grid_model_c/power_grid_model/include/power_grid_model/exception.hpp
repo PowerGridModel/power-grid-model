@@ -182,6 +182,13 @@ class InvalidShortCircuitPhases : public PowerGridError {
     }
 };
 
+class InvalidShortCircuitPhaseOrType : public PowerGridError {
+   public:
+    InvalidShortCircuitPhaseOrType() {
+        append_msg("During one calculation the short circuit types phases should be similar for all faults \n");
+    }
+};
+
 }  // namespace power_grid_model
 
 #endif

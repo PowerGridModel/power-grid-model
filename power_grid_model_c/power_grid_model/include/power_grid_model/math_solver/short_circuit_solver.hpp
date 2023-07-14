@@ -35,7 +35,9 @@ class ShortCircuitSolver {
     ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
         // For one calculation all faults should be of the same type and have the same phase
-        assert(all_fault_type_phase_equal(input.faults));
+        if (!all_fault_type_phase_equal(input.faults)) {
+            throw InvalidShortCircuitPhaseOrType{};
+        }
         FaultPhase const fault_phase = input.faults[0].fault_phase;
         FaultType const fault_type = input.faults[0].fault_type;
         // set phase 1 and 2 index for single and two phase faults
