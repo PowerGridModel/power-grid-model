@@ -35,13 +35,13 @@ class ShortCircuitSolver {
     ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
         // For one calculation all faults should be of the same type and have the same phase
-        assert(all_fault_type_phase_equal_(input.faults));
+        assert(all_fault_type_phase_equal(input.faults));
         FaultPhase const fault_phase = input.faults[0].fault_phase;
         FaultType const fault_type = input.faults[0].fault_type;
         // set phase 1 and 2 index for single and two phase faults
         int phase_1{-1};
         int phase_2{-1};
-        set_phase_index_(phase_1, phase_2, fault_phase);
+        set_phase_index(phase_1, phase_2, fault_phase);
 
         // getter
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
@@ -337,7 +337,7 @@ class ShortCircuitSolver {
         }
     }
 
-    void set_phase_index_(int& phase_1, int& phase_2, FaultPhase fault_phase) {
+    void set_phase_index(int& phase_1, int& phase_2, FaultPhase fault_phase) {
         // This function updates the phase index for single and two phase faults
         if (fault_phase == FaultPhase::a) {
             phase_1 = 0;
@@ -362,7 +362,7 @@ class ShortCircuitSolver {
         }
     }
 
-    bool all_fault_type_phase_equal_(std::vector<FaultCalcParam> const& vec) {
+    bool all_fault_type_phase_equal(std::vector<FaultCalcParam> const& vec) {
         if (vec.empty()) {
             return false;
         }
