@@ -46,7 +46,7 @@ TEST_CASE("C API Meta Data") {
                     CHECK(PGM_meta_get_attribute_by_name(hl, dataset_name, component_name, attribute_name) ==
                           attribute);
                     CHECK(attribute_name == component->attributes[idx_attribute].name);
-                    CHECK(PGM_meta_attribute_ctype(hl, attribute) == attribute->ctype);
+                    CHECK(PGM_meta_attribute_ctype(hl, attribute) == static_cast<Idx>(attribute->ctype));
                     CHECK(PGM_meta_attribute_offset(hl, attribute) == attribute->offset);
                 }
             }

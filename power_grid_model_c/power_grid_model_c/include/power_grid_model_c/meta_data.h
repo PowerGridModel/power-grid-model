@@ -160,15 +160,10 @@ PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribut
  *
  * @param handle
  * @param attribute pointer to attribute
- * @return  Type of the attribute in char const*. The string is a valid C type name. The pointer is permanantly valid.
+ * @return  Type of the attribute as in enum PGM_CType.
  *
- * Valid types are:
- *   - int32_t
- *   - int8_t
- *   - double
- *   - double[3]
  */
-PGM_API char const* PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
+PGM_API PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
  * @brief Get the ofsset of an attribute in a component
