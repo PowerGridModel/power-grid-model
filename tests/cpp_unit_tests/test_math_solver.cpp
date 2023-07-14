@@ -616,20 +616,24 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
             case three_phase: {
                 DoubleComplex const if_3ph = vref / (zs + z_fault);
                 if_abc = ComplexValue<false>(if_3ph);
-            } break;
+                break;
+            }
             case single_phase_to_ground: {
                 DoubleComplex const if_1phg = vref / (2.0 * zs + z0_0 + 3.0 * z_fault);
                 if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
-            } break;
+                break;
+            }
             case two_phase: {
                 DoubleComplex const if_2ph = vref / (2.0 * zs + z_fault);
                 if_abc = ComplexValue<false>(0.0, -if_2ph, if_2ph);
-            } break;
+                break;
+            }
             case two_phase_to_ground: {
                 DoubleComplex const z_02_2phg = 1.0 / (1.0 / (z0_0 + 3.0 * z_fault) + 1.0 / zs);
                 DoubleComplex const if_2phg = vref / (zs + z_02_2phg);
                 if_abc = ComplexValue<false>(0.0, if_2phg * 0.5, if_2phg * 0.5);
-            } break;
+                break;
+            }
             default:
                 throw InvalidShortCircuitType{false, fault_type};
         }
