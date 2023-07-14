@@ -18,16 +18,16 @@ TEST_CASE("Test column row conversion") {
         auto const node = meta_map.get_component("node");
         auto const node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
-        CHECK(node_attr[0].ctype == "int32_t");
+        CHECK(node_attr[0].ctype == CType::c_int32);
         CHECK(node_attr[1].name == "u_rated");
-        CHECK(node_attr[1].ctype == "double");
+        CHECK(node_attr[1].ctype == CType::c_double);
 
         auto const sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
         auto const sensor_attr = sym_voltage_sensor.attributes;
         CHECK(sensor_attr[0].name == "id");
-        CHECK(sensor_attr[0].ctype == "int32_t");
+        CHECK(sensor_attr[0].ctype == CType::c_int32);
         CHECK(sensor_attr[1].name == "measured_object");
-        CHECK(sensor_attr[1].ctype == "int32_t");
+        CHECK(sensor_attr[1].ctype == CType::c_int32);
     }
 
     SUBCASE("Test meta ouput data generation") {
@@ -35,16 +35,16 @@ TEST_CASE("Test column row conversion") {
         auto const node = meta_map.get_component("node");
         auto const node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
-        CHECK(node_attr[0].ctype == "int32_t");
+        CHECK(node_attr[0].ctype == CType::c_int32);
         CHECK(node_attr[2].name == "u_pu");
-        CHECK(node_attr[2].ctype == "double[3]");
+        CHECK(node_attr[2].ctype == CType::c_double3);
 
         auto const sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
         auto const sensor_attr = sym_voltage_sensor.attributes;
         CHECK(sensor_attr[0].name == "id");
-        CHECK(sensor_attr[0].ctype == "int32_t");
+        CHECK(sensor_attr[0].ctype == CType::c_int32);
         CHECK(sensor_attr[2].name == "u_residual");
-        CHECK(sensor_attr[2].ctype == "double[3]");
+        CHECK(sensor_attr[2].ctype == CType::c_double3);
     }
 
     SUBCASE("Test meta update data generation") {
@@ -52,16 +52,16 @@ TEST_CASE("Test column row conversion") {
         auto const load = meta_map.get_component("asym_load");
         auto const load_attr = load.attributes;
         CHECK(load_attr[0].name == "id");
-        CHECK(load_attr[0].ctype == "int32_t");
+        CHECK(load_attr[0].ctype == CType::c_int32);
         CHECK(load_attr[2].name == "p_specified");
-        CHECK(load_attr[2].ctype == "double[3]");
+        CHECK(load_attr[2].ctype == CType::c_double3);
 
         auto const sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
         auto const sensor_attr = sym_voltage_sensor.attributes;
         CHECK(sensor_attr[0].name == "id");
-        CHECK(sensor_attr[0].ctype == "int32_t");
+        CHECK(sensor_attr[0].ctype == CType::c_int32);
         CHECK(sensor_attr[1].name == "u_sigma");
-        CHECK(sensor_attr[1].ctype == "double");
+        CHECK(sensor_attr[1].ctype == CType::c_double);
     }
 }
 
