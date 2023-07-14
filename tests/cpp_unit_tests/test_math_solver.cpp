@@ -653,8 +653,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
 
 }  // namespace
 
-// TODO Un-skip unit test later
-TEST_CASE("Short circuit solver" * doctest::skip(true)) {
+TEST_CASE("Short circuit solver") {
     // Test case grid
     // source -- bus --- line -- bus -- fault(type varying as per subcase)
 
