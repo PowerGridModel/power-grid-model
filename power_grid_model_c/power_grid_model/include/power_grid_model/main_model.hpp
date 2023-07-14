@@ -79,8 +79,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using InputFunc = void (*)(MainModelImpl& x, DataPointer<true> const& data_ptr, Idx position);
     using UpdateFunc = void (*)(MainModelImpl& x, DataPointer<true> const& data_ptr, Idx position,
                                 std::vector<Idx2D> const& sequence_idx);
-    template <bool sym>
-    using OutputFunc = void (*)(MainModelImpl& x, std::vector<MathOutput<sym>> const& math_output,
+    template <math_output_type MathOutputType>
+    using OutputFunc = void (*)(MainModelImpl& x, std::vector<MathOutputType> const& math_output,
                                 DataPointer<false> const& data_ptr, Idx position);
     using CheckUpdateFunc = bool (*)(ConstDataPointer const& component_update);
     using GetSeqIdxFunc = std::vector<Idx2D> (*)(MainModelImpl const& x, ConstDataPointer const& component_update);
@@ -647,20 +647,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             err_tol, max_iter, calculation_method, result_data, update_data, threading);
     }
 
-    template <bool sym, typename Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+    template <typename Component, math_output_type MathOutputType, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutputType> const& math_output, ResIt res_it) {
         assert(construction_complete_);
-        return main_core::output_result<sym, Component, ComponentContainer, ResIt>(state_, math_output, res_it);
+        return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
     }
 
-    template <bool sym>
-    void output_result(std::vector<MathOutput<sym>> const& math_output, Dataset const& result_data, Idx pos = 0) {
-        static constexpr std::array<OutputFunc<sym>, n_types> get_result{
-            [](MainModelImpl& model, std::vector<MathOutput<sym>> const& math_output_,
+    template <math_output_type MathOutputType>
+    void output_result(std::vector<MathOutputType> const& math_output, Dataset const& result_data, Idx pos = 0) {
+        constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+
+        static constexpr std::array<OutputFunc<MathOutputType>, n_types> get_result{
+            [](MainModelImpl& model, std::vector<MathOutputType> const& math_output_,
                DataPointer<false> const& data_ptr, Idx position) {
                 auto const begin =
                     data_ptr.get_iterators<typename ComponentType::template OutputType<sym>>(position).first;
-                model.output_result<sym, ComponentType>(math_output_, begin);
+                model.output_result<ComponentType>(math_output_, begin);
             }...};
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = result_data.find(entry.name);
@@ -671,6 +673,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // update
             get_result[entry.index](*this, math_output, found->second, pos);
         }
+    }
+
+    template <bool sym, typename Component, std::forward_iterator ResIt>
+    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
+        return output_result<Component, MathOutput<sym>, ResIt>(math_output, res_it);
+    }
+
+    template <bool sym>
+    void output_result(std::vector<MathOutput<sym>> const& math_output, Dataset const& result_data, Idx pos = 0) {
+        return output_result<MathOutput<sym>>(math_output, result_data, pos);
     }
 
     CalculationInfo calculation_info() {
