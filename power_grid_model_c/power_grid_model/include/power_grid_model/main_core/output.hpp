@@ -272,7 +272,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 
-// output power sensor
+// output fault
 template <bool sym, std::same_as<Fault> Component, class ComponentContainer, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
