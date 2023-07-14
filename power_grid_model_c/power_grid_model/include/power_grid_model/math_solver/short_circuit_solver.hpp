@@ -305,10 +305,9 @@ class ShortCircuitSolver {
                  source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
                 const ComplexTensor<sym> y_source = y_bus.math_model_param().source_param[source_number];
                 ComplexValue<sym> i_source_bus{};  // if asym, already initialized to zero
-                // TODO:
-                // output.i_source[source_number] =
-                //     y_source * (ComplexValue<sym>{input.source[source_number] * source_voltage_ref} -
-                //     output.u_bus[bus_number]);
+                output.i_source[source_number] = dot(
+                    y_source,
+                    (ComplexValue<sym>{input.source[source_number] * source_voltage_ref} - output.u_bus[bus_number]));
                 i_source_bus += output.i_source[source_number];
             }
         }
