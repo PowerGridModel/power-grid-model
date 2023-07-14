@@ -49,6 +49,7 @@ class ShortCircuitSolver {
         // output
         ShortCircuitMathOutput<sym> output;
         output.u_bus.resize(n_bus_);
+        output.i_fault.resize(n_fault_);
 
         // copy y_bus data
         std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
@@ -62,7 +63,6 @@ class ShortCircuitSolver {
 
         // prepare matrix + rhs
         IdxVector zero_fault_counter(n_bus_);
-        ComplexValueVector<sym> i_fault(n_fault_);
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         IdxVector const& fault_bus_indptr = *fault_bus_indptr_;
         // loop through all buses
