@@ -571,80 +571,80 @@ constexpr ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhas
 }
 
 template <bool sym>
-constexpr ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
-                                                            DoubleComplex const& y0, DoubleComplex const& y0_0,
-                                                            double const& vref, DoubleComplex const& yref) {
+constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
+    ShortCircuitMathOutput<sym> sc_output;
+    sc_output.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
+    sc_output.i_branch_from = {ComplexValue<sym>{}};
+    sc_output.i_branch_to = {ComplexValue<sym>{}};
+    sc_output.i_fault = {ComplexValue<sym>{}};
+    sc_output.i_source = {ComplexValue<sym>{}};
+    return sc_output;
+}
+
+template <bool sym>
+constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
+                                                            ComplexValue<sym> if_abc) {
+    ShortCircuitMathOutput<sym> sc_output;
+    sc_output.u_bus = {u0, u1};
+    sc_output.i_branch_from = {if_abc};
+    sc_output.i_branch_to = {-if_abc};
+    sc_output.i_fault = {if_abc};
+    sc_output.i_source = {if_abc};
+    return sc_output;
+}
+
+template <bool sym>
+ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
+                                                  DoubleComplex const& y0, DoubleComplex const& y0_0,
+                                                  double const& vref, DoubleComplex const& yref) {
     // make function: input - fault type, zf, zs, z0 output - i_fault_abc
     // i_fault_abc = t_mat @ i_fault_012
     // i_fault_012 = [0, if, 0] for 3ph, [if, if, if] for 1phg, [0, if, -if] for 2ph
-    DoubleComplex z0_0 = 1.0 / y0_0;
-    DoubleComplex z0 = 1.0 / y0;
-    DoubleComplex zs = 1.0 / yref + 1.0 / y0;
+    DoubleComplex const z0_0 = 1.0 / y0_0;
+    DoubleComplex const z0 = 1.0 / y0;
+    DoubleComplex const zs = 1.0 / yref + 1.0 / y0;
 
     if constexpr (sym) {
-        DoubleComplex if_abc = vref / (zs + z_fault);
-        DoubleComplex u0 = vref - if_abc / yref;
-        DoubleComplex u1 = u0 - if_abc * z0;
-        ShortCircuitMathOutput<true> sc_output_sym;
-        sc_output_sym.u_bus = {u0, u1};
-        sc_output_sym.i_branch_from = {if_abc};
-        sc_output_sym.i_branch_to = {-if_abc};
-        sc_output_sym.i_fault = {if_abc};
-        sc_output_sym.i_source = {if_abc};
-        return sc_output_sym;
+        DoubleComplex const if_abc = vref / (zs + z_fault);
+        DoubleComplex const u0 = vref - if_abc / yref;
+        DoubleComplex const u1 = u0 - if_abc * z0;
+        return create_math_sc_output<true>(u0, u1, if_abc);
     }
     else {
         ComplexValue<false> if_abc{};
         switch (fault_type) {
             case three_phase: {
-                DoubleComplex if_3ph = vref / (zs + z_fault);
+                DoubleComplex const if_3ph = vref / (zs + z_fault);
                 if_abc = ComplexValue<false>(if_3ph);
             } break;
             case single_phase_to_ground: {
-                DoubleComplex if_1phg = vref / (2.0 * zs + z0_0 + 3.0 * z_fault);
+                DoubleComplex const if_1phg = vref / (2.0 * zs + z0_0 + 3.0 * z_fault);
                 if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
             } break;
             case two_phase: {
-                DoubleComplex if_2ph = vref / (2.0 * zs + z_fault);
+                DoubleComplex const if_2ph = vref / (2.0 * zs + z_fault);
                 if_abc = ComplexValue<false>(0.0, -if_2ph, if_2ph);
             } break;
             case two_phase_to_ground: {
-                DoubleComplex z_02_2phg = 1.0 / (1.0 / (z0_0 + 3.0 * z_fault) + 1.0 / zs);
-                DoubleComplex if_2phg = vref / (zs + z_02_2phg);
+                DoubleComplex const z_02_2phg = 1.0 / (1.0 / (z0_0 + 3.0 * z_fault) + 1.0 / zs);
+                DoubleComplex const if_2phg = vref / (zs + z_02_2phg);
                 if_abc = ComplexValue<false>(0.0, if_2phg * 0.5, if_2phg * 0.5);
             } break;
             default:
                 throw InvalidShortCircuitType{false, fault_type};
         }
-        ComplexValue<false> vref_asym{vref};
-        ComplexValue<false> u0 = vref_asym - if_abc / yref;
-        DoubleComplex z_self{(2.0 * z0 + z0_0) / 3.0};
-        DoubleComplex z_mutual{(z0_0 - z0) / 3.0};
-        ComplexValue<false> u_drop{
+        ComplexValue<false> const vref_asym{vref};
+        ComplexValue<false> const u0 = vref_asym - if_abc / yref;
+        DoubleComplex const z_self{(2.0 * z0 + z0_0) / 3.0};
+        DoubleComplex const z_mutual{(z0_0 - z0) / 3.0};
+        ComplexValue<false> const u_drop{
             if_abc(0) * z_self + (if_abc(1) + if_abc(2)) * z_mutual,
             if_abc(1) * z_self + (if_abc(0) + if_abc(2)) * z_mutual,
             if_abc(2) * z_self + (if_abc(0) + if_abc(1)) * z_mutual,
         };
-        ComplexValue<false> u1 = u0 - u_drop;
-        ShortCircuitMathOutput<false> sc_output_asym;
-        sc_output_asym.u_bus = {u0, u1};
-        sc_output_asym.i_branch_from = {if_abc};
-        sc_output_asym.i_branch_to = {-if_abc};
-        sc_output_asym.i_fault = {if_abc};
-        sc_output_asym.i_source = {if_abc};
-        return sc_output_asym;
+        ComplexValue<false> const u1 = u0 - u_drop;
+        return create_math_sc_output<false>(u0, u1, if_abc);
     }
-}
-
-template <bool sym>
-constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
-    ShortCircuitMathOutput<sym> sc_output_ref;
-    sc_output_ref.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
-    sc_output_ref.i_branch_from = {ComplexValue<sym>{}};
-    sc_output_ref.i_branch_to = {ComplexValue<sym>{}};
-    sc_output_ref.i_fault = {ComplexValue<sym>{}};
-    sc_output_ref.i_source = {ComplexValue<sym>{}};
-    return sc_output_ref;
 }
 
 }  // namespace sc_unit_test
