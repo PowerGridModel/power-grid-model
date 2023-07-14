@@ -655,13 +655,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <math_output_type MathOutputType>
     void output_result(std::vector<MathOutputType> const& math_output, Dataset const& result_data, Idx pos = 0) {
-        constexpr auto sym = symmetric_math_output_type<MathOutputType>;
-
         static constexpr std::array<OutputFunc<MathOutputType>, n_types> get_result{
             [](MainModelImpl& model, std::vector<MathOutputType> const& math_output_,
                DataPointer<false> const& data_ptr, Idx position) {
                 auto const begin =
-                    data_ptr.get_iterators<typename ComponentType::template OutputType<sym>>(position).first;
+                    data_ptr
+                        .get_iterators<std::conditional_t<
+                            steady_state_math_output_type<MathOutputType>,
+                            typename ComponentType::template OutputType<symmetric_math_output_type<MathOutputType>>,
+                            typename ComponentType::ShortCircuitOutputType>>(position)
+                        .first;
                 model.output_result<ComponentType>(math_output_, begin);
             }...};
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
