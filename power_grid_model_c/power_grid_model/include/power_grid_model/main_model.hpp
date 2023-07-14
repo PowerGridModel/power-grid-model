@@ -671,7 +671,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                  Dataset const& /* result_data */, Idx pos = 0) {
         assert(construction_complete_);
         auto const math_output = calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
-        // output_result(math_output, result_data, pos);  // TODO remove this commented out code
+        // output_sc_result(math_output, result_data, pos);  // TODO readd this commented out code
     }
 
     // Batch short circuit calculation, propagating the results to result_data
