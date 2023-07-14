@@ -647,31 +647,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             err_tol, max_iter, calculation_method, result_data, update_data, threading);
     }
 
-    // Single short circuit calculation, returning short circuit math output results
-    template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double err_tol, Idx max_iter,
-                                                                     CalculationMethod calculation_method) {
-        return calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
-    }
-
-    // Single short circuit calculation, propagating the results to result_data
-    template <bool sym>
-    void calculate_short_circuit(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                 Dataset const& /* result_data */, Idx pos = 0) {
-        assert(construction_complete_);
-        auto const math_output = calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
-        // output_result(math_output, result_data, pos);  // TODO remove this commented out code
-    }
-
-    // Batch short circuit calculation, propagating the results to result_data
-    template <bool sym>
-    BatchParameter calculate_short_circuit(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                           Dataset const& result_data, ConstDataset const& update_data,
-                                           Idx threading = -1) {
-        return batch_calculation_<sym, &MainModelImpl::calculate_short_circuit_<sym>>(
-            err_tol, max_iter, calculation_method, result_data, update_data, threading);
-    }
-
     template <bool sym, typename Component, std::forward_iterator ResIt>
     ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         assert(construction_complete_);
