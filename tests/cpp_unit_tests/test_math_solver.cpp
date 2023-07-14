@@ -560,7 +560,7 @@ TEST_CASE("Test math solver") {
     }
 }
 
-namespace sc_unit_test {
+namespace {
 
 ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_phase, DoubleComplex const& z_fault,
                                        double const& vref) {
@@ -651,14 +651,12 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
     }
 }
 
-}  // namespace sc_unit_test
+}  // namespace
 
 // TODO Un-skip unit test later
 TEST_CASE("Short circuit solver" * doctest::skip(true)) {
     // Test case grid
     // source -- bus --- line -- bus -- fault(type varying as per subcase)
-
-    using namespace sc_unit_test;
 
     // Grid for short circuit
     MathModelTopology topo_sc;
