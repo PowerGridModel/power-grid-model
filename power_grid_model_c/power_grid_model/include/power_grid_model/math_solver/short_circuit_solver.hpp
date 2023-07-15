@@ -123,12 +123,12 @@ class ShortCircuitSolver {
                             // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
                             // mat_data[:,bus][:, phase_2] = 0
                             // mat_data[bus,bus][phase_1, phase_2] = -1
-                            // mat_data[bus,bus][phase_2, phase_2] = 1
-                            mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_1);
+                            // mat_data[bus,bus][phase_2, phase_1] = 1
+                            mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
                             mat_data_[col_data_index].col(phase_2) = 0;
                             if (row_number == bus_number) {
                                 mat_data_[col_data_index](phase_1, phase_2) = -1;
-                                mat_data_[col_data_index](phase_2, phase_2) = 1;
+                                mat_data_[col_data_index](phase_2, phase_1) = 1;
                             }
                         }
                         // update rhs
@@ -162,61 +162,33 @@ class ShortCircuitSolver {
                 else {
                     assert(!std::isinf(y_fault.imag()));
                     if constexpr (sym) {  // three phase fault
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[bus,bus] += y_fault
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index] += y_fault;
-                            }
-                        }
+                        // mat_data[bus,bus] += y_fault
+                        mat_data_[diagonal_position] += y_fault;
                     }
                     else if (fault_type == FaultType::single_phase_to_ground) {
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_1) += y_fault;
-                            }
-                        }
+                        // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                        mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
                     }
                     else if (fault_type == FaultType::two_phase) {
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                            // mat_data[bus,bus][phase_2, phase_2] += y_fault
-                            // mat_data[bus,bus][phase_1, phase_2] -= y_fault
-                            // mat_data[bus,bus][phase_2, phase_1] -= y_fault
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_1) += y_fault;
-                                mat_data_[col_data_index](phase_2, phase_2) += y_fault;
-                                mat_data_[col_data_index](phase_1, phase_2) -= y_fault;
-                                mat_data_[col_data_index](phase_2, phase_1) -= y_fault;
-                            }
-                        }
+                        // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                        // mat_data[bus,bus][phase_2, phase_2] += y_fault
+                        // mat_data[bus,bus][phase_1, phase_2] -= y_fault
+                        // mat_data[bus,bus][phase_2, phase_1] -= y_fault
+                        mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
+                        mat_data_[diagonal_position](phase_2, phase_2) += y_fault;
+                        mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
+                        mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
                     }
                     else {
                         assert((fault_type == FaultType::two_phase_to_ground));
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
-                            // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
-                            // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
-                            // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_1) += 2.0 * y_fault;
-                                mat_data_[col_data_index](phase_2, phase_2) += 2.0 * y_fault;
-                                mat_data_[col_data_index](phase_1, phase_2) -= y_fault;
-                                mat_data_[col_data_index](phase_2, phase_1) -= y_fault;
-                            }
-                        }
+                        // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
+                        // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
+                        // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
+                        // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
+                        mat_data_[diagonal_position](phase_1, phase_1) += 2.0 * y_fault;
+                        mat_data_[diagonal_position](phase_2, phase_2) += 2.0 * y_fault;
+                        mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
+                        mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
                     }
                 }
             }
