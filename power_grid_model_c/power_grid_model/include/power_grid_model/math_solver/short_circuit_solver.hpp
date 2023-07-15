@@ -88,49 +88,38 @@ class ShortCircuitSolver {
                     if constexpr (sym) {  // three phase fault
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
                             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus] = 0
-                            // mat_data[bus,bus] = -1
-                            if (row_number != bus_number) {
-                                mat_data_[col_data_index] = 0;
-                            }
-                            else {
-                                mat_data_[col_data_index] = -1;
-                            }
+                            mat_data_[col_data_index] = 0;
                         }
+                        // mat_data[bus,bus] = -1
+                        mat_data_[diagonal_position] = -1;
                         output.u_bus[bus_number] = 0;  // update rhs
                     }
                     else if (fault_type == FaultType::single_phase_to_ground) {
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
                             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus][:, phase_1] = 0
-                            // mat_data[bus,bus][phase_1, phase_1] = -1
                             mat_data_[col_data_index].col(phase_1) = 0;
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_1) = -1;
-                            }
                         }
+                        // mat_data[bus,bus][phase_1, phase_1] = -1
+                        mat_data_[diagonal_position](phase_1, phase_1) = -1;
                         output.u_bus[bus_number](phase_1) = 0;  // update rhs
                     }
                     else if (fault_type == FaultType::two_phase) {
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
                             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
                             // mat_data[:,bus][:, phase_2] = 0
-                            // mat_data[bus,bus][phase_1, phase_2] = -1
-                            // mat_data[bus,bus][phase_2, phase_1] = 1
                             mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
                             mat_data_[col_data_index].col(phase_2) = 0;
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_2) = -1;
-                                mat_data_[col_data_index](phase_2, phase_1) = 1;
-                            }
                         }
+                        // mat_data[bus,bus][phase_1, phase_2] = -1
+                        // mat_data[bus,bus][phase_2, phase_1] = 1
+                        mat_data_[diagonal_position](phase_1, phase_2) = -1;
+                        mat_data_[diagonal_position](phase_2, phase_1) = 1;
                         // update rhs
                         output.u_bus[bus_number](phase_2) += output.u_bus[bus_number](phase_1);
                         output.u_bus[bus_number](phase_1) = 0;
@@ -139,19 +128,16 @@ class ShortCircuitSolver {
                         assert((fault_type == FaultType::two_phase_to_ground));
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const row_number = y_bus.col_indices_lu()[data_index];
                             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus][:, phase_1] = 0
                             // mat_data[:,bus][:, phase_2] = 0
-                            // mat_data[bus,bus][phase_1, phase_1] = -1
-                            // mat_data[bus,bus][phase_2, phase_2] = -1
                             mat_data_[col_data_index].col(phase_1) = 0;
                             mat_data_[col_data_index].col(phase_2) = 0;
-                            if (row_number == bus_number) {
-                                mat_data_[col_data_index](phase_1, phase_1) = -1;
-                                mat_data_[col_data_index](phase_2, phase_2) = -1;
-                            }
                         }
+                        // mat_data[bus,bus][phase_1, phase_1] = -1
+                        // mat_data[bus,bus][phase_2, phase_2] = -1
+                        mat_data_[diagonal_position](phase_1, phase_1) = -1;
+                        mat_data_[diagonal_position](phase_2, phase_2) = -1;
                         // update rhs
                         output.u_bus[bus_number](phase_1) = 0;
                         output.u_bus[bus_number](phase_2) = 0;
