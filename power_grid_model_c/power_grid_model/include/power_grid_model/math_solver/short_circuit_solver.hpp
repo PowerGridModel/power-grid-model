@@ -301,6 +301,8 @@ class ShortCircuitSolver {
                 }
             }
         }
+
+        // TODO calculate i_branch_from, i_branch_to, i_shunt
     }
 
     auto set_phase_index(FaultPhase fault_phase) {
