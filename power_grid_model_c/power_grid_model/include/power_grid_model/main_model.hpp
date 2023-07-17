@@ -459,7 +459,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             [this] {
                 return prepare_power_flow_input<sym>();
             },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& y) {
+            [this, err_tol, max_iter, &calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& y) {
                 return solver.run_power_flow(y, err_tol, max_iter, calculation_info_, calculation_method);
             });
     }
@@ -471,20 +471,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             [this] {
                 return prepare_state_estimation_input<sym>();
             },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, StateEstimationInput<sym> const& y) {
+            [this, err_tol, max_iter, &calculation_method](MathSolver<sym>& solver,
+                                                           StateEstimationInput<sym> const& y) {
                 return solver.run_state_estimation(y, err_tol, max_iter, calculation_info_, calculation_method);
-            });
-    }
-
-    template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double source_voltage_ref,
-                                                                      CalculationMethod calculation_method) {
-        return calculate_<sym, ShortCircuitInput>(
-            [this] {
-                return prepare_short_circuit_input<sym>();
-            },
-            [this, source_voltage_ref, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
-                return solver.run_short_circuit(y, source_voltage_ref, calculation_info_, calculation_method);
             });
     }
 
@@ -1275,23 +1264,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
 
         return se_input;
-    }
-
-    template <bool sym>
-    std::vector<ShortCircuitInput> prepare_short_circuit_input() {
-        assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-        std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            sc_input[i].faults.resize(math_topology_[i]->n_fault());
-            sc_input[i].source.resize(math_topology_[i]->n_source());
-        }
-
-        prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(comp_coup_->fault,
-                                                                                                 sc_input);
-        prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(comp_coup_->source,
-                                                                                                 sc_input);
-
-        return sc_input;
     }
 
     template <bool sym>
