@@ -93,17 +93,17 @@ void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMat
     for (size_t i = 0; i != output.u_bus.size(); ++i) {
         CHECK_CLOSE(output.u_bus[i], output_ref.u_bus[i], tolerance);
     }
-    for (size_t i = 0; i != output.i_branch_from.size(); ++i) {
-        CHECK_CLOSE(output.i_branch_from[i], output_ref.i_branch_from[i], tolerance);
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f, tolerance);
     }
-    for (size_t i = 0; i != output.i_branch_to.size(); ++i) {
-        CHECK_CLOSE(output.i_branch_to[i], output_ref.i_branch_to[i], tolerance);
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t, tolerance);
     }
-    for (size_t i = 0; i != output.i_fault.size(); ++i) {
-        CHECK_CLOSE(output.i_fault[i], output_ref.i_fault[i], tolerance);
+    for (size_t i = 0; i != output.fault.size(); ++i) {
+        CHECK_CLOSE(output.fault[i].i_fault, output_ref.fault[i].i_fault, tolerance);
     }
-    for (size_t i = 0; i != output.i_source.size(); ++i) {
-        CHECK_CLOSE(output.i_source[i], output_ref.i_source[i], tolerance);
+    for (size_t i = 0; i != output.source.size(); ++i) {
+        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i, tolerance);
     }
 }
 
@@ -574,10 +574,9 @@ template <bool sym>
 constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
     ShortCircuitMathOutput<sym> sc_output;
     sc_output.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
-    sc_output.i_branch_from = {ComplexValue<sym>{}};
-    sc_output.i_branch_to = {ComplexValue<sym>{}};
-    sc_output.i_fault = {ComplexValue<sym>{}};
-    sc_output.i_source = {ComplexValue<sym>{}};
+    sc_output.fault = {{ComplexValue<sym>{}}};
+    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = {ComplexValue<sym>{}}, .i_t = {ComplexValue<sym>{}}}};
+    sc_output.source = {{ComplexValue<sym>{}}};
     return sc_output;
 }
 
@@ -586,10 +585,9 @@ constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0
                                                             ComplexValue<sym> if_abc) {
     ShortCircuitMathOutput<sym> sc_output;
     sc_output.u_bus = {u0, u1};
-    sc_output.i_branch_from = {if_abc};
-    sc_output.i_branch_to = {-if_abc};
-    sc_output.i_fault = {if_abc};
-    sc_output.i_source = {if_abc};
+    sc_output.fault = {{if_abc}};
+    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = if_abc, .i_t = -if_abc}};
+    sc_output.source = {{if_abc}};
     return sc_output;
 }
 
