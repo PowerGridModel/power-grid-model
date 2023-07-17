@@ -222,6 +222,50 @@ struct ShortCircuitMathOutput {
     std::vector<ComplexValue<sym>> i_source;
 };
 
+template <typename T>
+concept symmetric_math_output_type = std::same_as<T, MathOutput<true>> || std::same_as<T, ShortCircuitMathOutput<true>>;
+
+static_assert(symmetric_math_output_type<MathOutput<true>>);
+static_assert(!symmetric_math_output_type<MathOutput<false>>);
+static_assert(symmetric_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(!symmetric_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept asymmetric_math_output_type =
+    std::same_as<T, MathOutput<false>> || std::same_as<T, ShortCircuitMathOutput<false>>;
+
+static_assert(!asymmetric_math_output_type<MathOutput<true>>);
+static_assert(asymmetric_math_output_type<MathOutput<false>>);
+static_assert(!asymmetric_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(asymmetric_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept steady_state_math_output_type = std::same_as<T, MathOutput<true>> || std::same_as<T, MathOutput<false>>;
+
+static_assert(steady_state_math_output_type<MathOutput<true>>);
+static_assert(steady_state_math_output_type<MathOutput<false>>);
+static_assert(!steady_state_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(!steady_state_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept short_circuit_math_output_type =
+    std::same_as<T, ShortCircuitMathOutput<true>> || std::same_as<T, ShortCircuitMathOutput<false>>;
+
+static_assert(!short_circuit_math_output_type<MathOutput<true>>);
+static_assert(!short_circuit_math_output_type<MathOutput<false>>);
+static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept math_output_type = (symmetric_math_output_type<T> ||
+                            asymmetric_math_output_type<T>)&&(steady_state_math_output_type<T> ||
+                                                              short_circuit_math_output_type<T>);
+
+static_assert(math_output_type<MathOutput<true>>);
+static_assert(math_output_type<MathOutput<false>>);
+static_assert(math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(math_output_type<ShortCircuitMathOutput<false>>);
+
 // component indices at physical model side
 // from, to node indices for branches
 // node1, node2, node3 indices for 3-way branches
