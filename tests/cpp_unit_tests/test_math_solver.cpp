@@ -660,9 +660,12 @@ TEST_CASE("Short circuit solver") {
     // Grid for short circuit
     MathModelTopology topo_sc;
     topo_sc.slack_bus_ = 0;
-    topo_sc.phase_shift = {0.0};
+    topo_sc.phase_shift = {0.0, 0.0};
     topo_sc.branch_bus_idx = {{0, 1}};
-    topo_sc.source_bus_indptr = {0, 1};
+    topo_sc.source_bus_indptr = {0, 1, 1};
+    topo_sc.shunt_bus_indptr = {0, 0, 0};
+    topo_sc.load_gen_bus_indptr = {0, 0, 0};
+    topo_sc.fault_bus_indptr = {0, 0, 1};
 
     // Impedance / admittances
     // source
