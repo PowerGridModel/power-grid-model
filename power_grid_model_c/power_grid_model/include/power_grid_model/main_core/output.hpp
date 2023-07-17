@@ -296,7 +296,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 // output fault
-template <std::same_as<Fault> Component, class ComponentContainer, math_output_type MathOutputType,
+template <std::same_as<Fault> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -304,6 +304,21 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
     return detail::produce_output<Component, Idx2D>(state, res_it, [](Fault const& fault, Idx2D /* math_id */) {
         return fault.get_output();
     });
+}
+template <std::same_as<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component> &&
+    model_component_state<MainModelState, ComponentContainer, Node>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [&state, &math_output](Fault const& fault, Idx2D math_id) {
+            if (math_id.group == -1) {
+                return fault.get_null_output<sym>();
+            }
+            auto const& fault_object = state.components.template get_item<Node>(fault.get_fault_object());
+            return fault.get_sc_output(math_output[math_id.group].i_f[math_id.pos], fault_object.u_rated());
+        });
 }
 
 }  // namespace power_grid_model::main_core
