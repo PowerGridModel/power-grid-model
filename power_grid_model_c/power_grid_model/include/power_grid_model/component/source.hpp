@@ -58,7 +58,7 @@ class Source : public Appliance {
             ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
             ComplexTensor<false> y012;
             y012 << y1_ref_, 0.0, 0.0, 0.0, y1_ref_, 0.0, 0.0, 0.0, y0_ref_;
-            ComplexTensor<false> const yabc = dot(sym_matrix, y012, sym_matrix_inv);
+            ComplexTensor<false> yabc = dot(sym_matrix, y012, sym_matrix_inv);
             return yabc;
         }
     }
