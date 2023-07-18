@@ -25,6 +25,7 @@ class ShortCircuitSolver {
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           n_fault_{topo_ptr->n_fault()},
+          n_source_{topo_ptr->n_source()},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           fault_bus_indptr_{topo_ptr, &topo_ptr->fault_bus_indptr},
           mat_data_(y_bus.nnz_lu()),
@@ -51,6 +52,7 @@ class ShortCircuitSolver {
         ShortCircuitMathOutput<sym> output;
         output.u_bus.resize(n_bus_);
         output.fault.resize(n_fault_);
+        output.source.resize(n_source_);
 
         // copy y_bus data
         std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
