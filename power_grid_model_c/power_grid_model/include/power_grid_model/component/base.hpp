@@ -34,6 +34,13 @@ class Base {
     }
     virtual bool energized(bool is_connected_to_source) const = 0;
 
+    Base(Base&&) = default;
+    Base& operator=(Base&&) = default;
+
+   protected:
+    Base(const Base&) = default;
+    Base& operator=(const Base&) = default;
+
    private:
     ID id_;
 };

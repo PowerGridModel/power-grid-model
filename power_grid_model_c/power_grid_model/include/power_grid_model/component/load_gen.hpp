@@ -132,7 +132,7 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
         using enum LoadGenType;
 
-        ComplexValue<sym_calc> const s = this->template calc_param<sym_calc>();
+        ComplexValue<sym_calc> s = this->template calc_param<sym_calc>();
         switch (this->type()) {
             case const_pq:
                 return s;
