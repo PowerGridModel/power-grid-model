@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 set(PROJECT_SOURCES
+    "test_all_components.cpp"
     "test_entry_point.cpp"
     "test_main_model_se.cpp"
     "test_main_model.cpp"
