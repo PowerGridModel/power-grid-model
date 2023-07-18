@@ -235,10 +235,9 @@ class ShortCircuitSolver {
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
                     if (fault_type == FaultType::three_phase) {  // three phase fault
-                        i_fault =
-                            -1.0 * x_bus_subtotal /
-                            static_cast<ComplexValue<sym>>(infinite_admittance_fault_counter_bus);  // injection is
-                                                                                                    // negative to fault
+                        i_fault = -1.0 * static_cast<ComplexValue<sym>>(x_bus_subtotal) /
+                                  infinite_admittance_fault_counter_bus;  // injection is
+                                                                          // negative to fault
                         u_bus = ComplexValue<sym>{0.0};
                     }
                     if constexpr (!sym) {
