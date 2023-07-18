@@ -55,7 +55,7 @@ class ShortCircuitSolver {
         output.i_source.resize(n_source_);
 
         // copy y_bus data
-        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
+        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&ydata](Idx k) {
             if (k == -1) {
                 return ComplexTensor<sym>{};
             }
@@ -92,11 +92,11 @@ class ShortCircuitSolver {
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus] = 0
-                            mat_data_[col_data_index] = (ComplexTensor<sym>)(0);
+                            mat_data_[col_data_index] = ComplexTensor<sym>{0};
                         }
                         // mat_data[bus,bus] = -1
-                        mat_data_[diagonal_position] = (ComplexTensor<sym>)(-1);
-                        output.u_bus[bus_number] = (ComplexValue<sym>)(0);  // update rhs
+                        mat_data_[diagonal_position] = ComplexTensor<sym>{-1};
+                        output.u_bus[bus_number] = ComplexValue<sym>{0};  // update rhs
                     }
                     if constexpr (!sym) {
                         if (fault_type == FaultType::single_phase_to_ground) {
@@ -156,7 +156,7 @@ class ShortCircuitSolver {
                     assert(!std::isinf(y_fault.imag()));
                     if (fault_type == FaultType::three_phase) {  // three phase fault
                         // mat_data[bus,bus] += y_fault
-                        mat_data_[diagonal_position] += (ComplexTensor<sym>)(y_fault);
+                        mat_data_[diagonal_position] += static_cast<ComplexTensor<sym>>(y_fault);
                     }
                     if constexpr (!sym) {
                         if (fault_type == FaultType::single_phase_to_ground) {
