@@ -116,7 +116,6 @@ class Appliance : public Base {
         }
     }
 
-   protected:
    private:
     ID node_;
     bool status_;
