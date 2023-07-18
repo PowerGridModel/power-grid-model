@@ -87,96 +87,106 @@ class ShortCircuitSolver {
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
                     infinite_admittance_fault_counter[bus_number] += 1;
-                    if constexpr (sym) {  // three phase fault
+                    if (fault_type == FaultType::three_phase) {  // three phase fault
                         for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                              data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
                             // mat_data[:,bus] = 0
-                            mat_data_[col_data_index] = 0;
+                            mat_data_[col_data_index] = (ComplexTensor<sym>)(0);
                         }
                         // mat_data[bus,bus] = -1
-                        mat_data_[diagonal_position] = -1;
-                        output.u_bus[bus_number] = 0;  // update rhs
+                        mat_data_[diagonal_position] = (ComplexTensor<sym>)(-1);
+                        output.u_bus[bus_number] = (ComplexValue<sym>)(0);  // update rhs
                     }
-                    else if (fault_type == FaultType::single_phase_to_ground) {
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[:,bus][:, phase_1] = 0
-                            mat_data_[col_data_index].col(phase_1) = 0;
+                    if constexpr (!sym) {
+                        if (fault_type == FaultType::single_phase_to_ground) {
+                            for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                                 data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                                Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+                                // mat_data[:,bus][:, phase_1] = 0
+                                mat_data_[col_data_index].col(phase_1) = 0;
+                            }
+                            // mat_data[bus,bus][phase_1, phase_1] = -1
+                            mat_data_[diagonal_position](phase_1, phase_1) = -1;
+                            output.u_bus[bus_number](phase_1) = 0;  // update rhs
                         }
-                        // mat_data[bus,bus][phase_1, phase_1] = -1
-                        mat_data_[diagonal_position](phase_1, phase_1) = -1;
-                        output.u_bus[bus_number](phase_1) = 0;  // update rhs
-                    }
-                    else if (fault_type == FaultType::two_phase) {
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
-                            // mat_data[:,bus][:, phase_2] = 0
-                            mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
-                            mat_data_[col_data_index].col(phase_2) = 0;
+                        else if (fault_type == FaultType::two_phase) {
+                            for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                                 data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                                Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+                                // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
+                                // mat_data[:,bus][:, phase_2] = 0
+                                mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
+                                mat_data_[col_data_index].col(phase_2) = 0;
+                            }
+                            // mat_data[bus,bus][phase_1, phase_2] = -1
+                            // mat_data[bus,bus][phase_2, phase_2] = 1
+                            mat_data_[diagonal_position](phase_1, phase_2) = -1;
+                            mat_data_[diagonal_position](phase_2, phase_2) = 1;
+                            // update rhs
+                            output.u_bus[bus_number](phase_2) += output.u_bus[bus_number](phase_1);
+                            output.u_bus[bus_number](phase_1) = 0;
                         }
-                        // mat_data[bus,bus][phase_1, phase_2] = -1
-                        // mat_data[bus,bus][phase_2, phase_1] = 1
-                        mat_data_[diagonal_position](phase_1, phase_2) = -1;
-                        mat_data_[diagonal_position](phase_2, phase_1) = 1;
-                        // update rhs
-                        output.u_bus[bus_number](phase_2) += output.u_bus[bus_number](phase_1);
-                        output.u_bus[bus_number](phase_1) = 0;
-                    }
-                    else {
-                        assert((fault_type == FaultType::two_phase_to_ground));
-                        for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                             data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                            // mat_data[:,bus][:, phase_1] = 0
-                            // mat_data[:,bus][:, phase_2] = 0
-                            mat_data_[col_data_index].col(phase_1) = 0;
-                            mat_data_[col_data_index].col(phase_2) = 0;
+                        else if (fault_type == FaultType::two_phase_to_ground) {
+                            for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                                 data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                                Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+                                // mat_data[:,bus][:, phase_1] = 0
+                                // mat_data[:,bus][:, phase_2] = 0
+                                mat_data_[col_data_index].col(phase_1) = 0;
+                                mat_data_[col_data_index].col(phase_2) = 0;
+                            }
+                            // mat_data[bus,bus][phase_1, phase_1] = -1
+                            // mat_data[bus,bus][phase_2, phase_2] = -1
+                            mat_data_[diagonal_position](phase_1, phase_1) = -1;
+                            mat_data_[diagonal_position](phase_2, phase_2) = -1;
+                            // update rhs
+                            output.u_bus[bus_number](phase_1) = 0;
+                            output.u_bus[bus_number](phase_2) = 0;
                         }
-                        // mat_data[bus,bus][phase_1, phase_1] = -1
-                        // mat_data[bus,bus][phase_2, phase_2] = -1
-                        mat_data_[diagonal_position](phase_1, phase_1) = -1;
-                        mat_data_[diagonal_position](phase_2, phase_2) = -1;
-                        // update rhs
-                        output.u_bus[bus_number](phase_1) = 0;
-                        output.u_bus[bus_number](phase_2) = 0;
+                        else {
+                            assert((fault_type == FaultType::three_phase));
+                            continue;
+                        }
                     }
                     // If there is a fault with infinite admittance, there is no need to add other faults to that bus
                     break;
                 }
                 else {
                     assert(!std::isinf(y_fault.imag()));
-                    if constexpr (sym) {  // three phase fault
+                    if (fault_type == FaultType::three_phase) {  // three phase fault
                         // mat_data[bus,bus] += y_fault
-                        mat_data_[diagonal_position] += y_fault;
+                        mat_data_[diagonal_position] += (ComplexTensor<sym>)(y_fault);
                     }
-                    else if (fault_type == FaultType::single_phase_to_ground) {
-                        // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                        mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
-                    }
-                    else if (fault_type == FaultType::two_phase) {
-                        // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                        // mat_data[bus,bus][phase_2, phase_2] += y_fault
-                        // mat_data[bus,bus][phase_1, phase_2] -= y_fault
-                        // mat_data[bus,bus][phase_2, phase_1] -= y_fault
-                        mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
-                        mat_data_[diagonal_position](phase_2, phase_2) += y_fault;
-                        mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
-                        mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
-                    }
-                    else {
-                        assert((fault_type == FaultType::two_phase_to_ground));
-                        // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
-                        // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
-                        // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
-                        // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
-                        mat_data_[diagonal_position](phase_1, phase_1) += 2.0 * y_fault;
-                        mat_data_[diagonal_position](phase_2, phase_2) += 2.0 * y_fault;
-                        mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
-                        mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
+                    if constexpr (!sym) {
+                        if (fault_type == FaultType::single_phase_to_ground) {
+                            // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                            mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
+                        }
+                        else if (fault_type == FaultType::two_phase) {
+                            // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                            // mat_data[bus,bus][phase_2, phase_2] += y_fault
+                            // mat_data[bus,bus][phase_1, phase_2] -= y_fault
+                            // mat_data[bus,bus][phase_2, phase_1] -= y_fault
+                            mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
+                            mat_data_[diagonal_position](phase_2, phase_2) += y_fault;
+                            mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
+                            mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
+                        }
+                        else if (fault_type == FaultType::two_phase_to_ground) {
+                            // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
+                            // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
+                            // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
+                            // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
+                            mat_data_[diagonal_position](phase_1, phase_1) += 2.0 * y_fault;
+                            mat_data_[diagonal_position](phase_2, phase_2) += 2.0 * y_fault;
+                            mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
+                            mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
+                        }
+                        else {
+                            assert((fault_type == FaultType::three_phase));
+                            continue;
+                        }
                     }
                 }
             }
@@ -218,30 +228,37 @@ class ShortCircuitSolver {
                 DoubleComplex const y_fault = input.faults[fault_number].y_fault;
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
-                    if constexpr (sym) {  // three phase fault
+                    if (fault_type == FaultType::three_phase) {  // three phase fault
                         output.i_fault[fault_number] =
-                            -1.0 * x_tmp / infinite_admittance_fault_counter_bus;  // injection is negative to fault
-                        output.u_bus[bus_number] = 0.0;
+                            (ComplexValue<sym>)(-1.0 * x_tmp /
+                                                infinite_admittance_fault_counter_bus);  // injection is negative to
+                                                                                         // fault
+                        output.u_bus[bus_number] = (ComplexValue<sym>)(0.0);
                     }
-                    else if (fault_type == FaultType::single_phase_to_ground) {
-                        output.i_fault[fault_number](phase_1) =
-                            -1.0 * x_tmp[phase_1] / infinite_admittance_fault_counter_bus;
-                        output.u_bus[bus_number](phase_1) = 0.0;
-                    }
-                    else if (fault_type == FaultType::two_phase) {
-                        output.i_fault[fault_number](phase_1) =
-                            -1.0 * x_tmp[phase_2] / infinite_admittance_fault_counter_bus;
-                        output.i_fault[fault_number](phase_2) = -1.0 * output.i_fault[fault_number](phase_1);
-                        output.u_bus[bus_number](phase_2) = output.u_bus[bus_number](phase_1);
-                    }
-                    else {
-                        assert((fault_type == FaultType::two_phase_to_ground));
-                        output.i_fault[fault_number](phase_1) =
-                            -1.0 * x_tmp[phase_1] / infinite_admittance_fault_counter_bus;
-                        output.i_fault[fault_number](phase_2) =
-                            -1.0 * x_tmp[phase_2] / infinite_admittance_fault_counter_bus;
-                        output.u_bus[bus_number](phase_1) = 0.0;
-                        output.u_bus[bus_number](phase_2) = 0.0;
+                    if constexpr (!sym) {
+                        if (fault_type == FaultType::single_phase_to_ground) {
+                            output.i_fault[fault_number](phase_1) =
+                                -1.0 * x_tmp[phase_1] / infinite_admittance_fault_counter_bus;
+                            output.u_bus[bus_number](phase_1) = 0.0;
+                        }
+                        else if (fault_type == FaultType::two_phase) {
+                            output.i_fault[fault_number](phase_1) =
+                                -1.0 * x_tmp[phase_2] / infinite_admittance_fault_counter_bus;
+                            output.i_fault[fault_number](phase_2) = -1.0 * output.i_fault[fault_number](phase_1);
+                            output.u_bus[bus_number](phase_2) = output.u_bus[bus_number](phase_1);
+                        }
+                        else if (fault_type == FaultType::two_phase_to_ground) {
+                            output.i_fault[fault_number](phase_1) =
+                                -1.0 * x_tmp[phase_1] / infinite_admittance_fault_counter_bus;
+                            output.i_fault[fault_number](phase_2) =
+                                -1.0 * x_tmp[phase_2] / infinite_admittance_fault_counter_bus;
+                            output.u_bus[bus_number](phase_1) = 0.0;
+                            output.u_bus[bus_number](phase_2) = 0.0;
+                        }
+                        else {
+                            assert((fault_type == FaultType::three_phase));
+                            continue;
+                        }
                     }
                 }
                 else {
@@ -250,22 +267,27 @@ class ShortCircuitSolver {
                         // ignore fault objects with impedance, when there is a fault with infinite admittance on bus
                         continue;
                     }
-                    if constexpr (sym) {  // three phase fault
-                        output.i_fault[fault_number] = y_fault * x_tmp;
+                    if (fault_type == FaultType::three_phase) {  // three phase fault
+                        output.i_fault[fault_number] = (ComplexValue<sym>)(y_fault * x_tmp);
                     }
-                    else if (fault_type == FaultType::single_phase_to_ground) {
-                        output.i_fault[fault_number](phase_1) = y_fault * x_tmp[phase_1];
-                    }
-                    else if (fault_type == FaultType::two_phase) {
-                        output.i_fault[fault_number](phase_1) = y_fault * x_tmp[phase_1] - y_fault * x_tmp[phase_2];
-                        output.i_fault[fault_number](phase_2) = y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
-                    }
-                    else {
-                        assert((fault_type == FaultType::two_phase_to_ground));
-                        output.i_fault[fault_number](phase_1) =
-                            2.0 * y_fault * x_tmp[phase_1] - y_fault * x_tmp[phase_2];
-                        output.i_fault[fault_number](phase_2) =
-                            2.0 * y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
+                    if constexpr (!sym) {
+                        if (fault_type == FaultType::single_phase_to_ground) {
+                            output.i_fault[fault_number](phase_1) = y_fault * x_tmp[phase_1];
+                        }
+                        else if (fault_type == FaultType::two_phase) {
+                            output.i_fault[fault_number](phase_1) = y_fault * x_tmp[phase_1] - y_fault * x_tmp[phase_2];
+                            output.i_fault[fault_number](phase_2) = y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
+                        }
+                        else if (fault_type == FaultType::two_phase_to_ground) {
+                            output.i_fault[fault_number](phase_1) =
+                                2.0 * y_fault * x_tmp[phase_1] - y_fault * x_tmp[phase_2];
+                            output.i_fault[fault_number](phase_2) =
+                                2.0 * y_fault * x_tmp[phase_2] - y_fault * x_tmp[phase_1];
+                        }
+                        else {
+                            assert((fault_type == FaultType::three_phase));
+                            continue;
+                        }
                     }
                 }
             }
@@ -285,21 +307,27 @@ class ShortCircuitSolver {
                 DoubleComplex const y_fault = input.faults[fault_number].y_fault;
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
-                    if constexpr (sym) {
-                        output.i_fault[fault_number] += i_source_bus / infinite_admittance_fault_counter_bus;
+                    if (fault_type == FaultType::three_phase) {
+                        output.i_fault[fault_number] +=
+                            (ComplexValue<sym>)(i_source_bus / infinite_admittance_fault_counter_bus);
                     }
-                    else if (fault_type == FaultType::single_phase_to_ground) {
-                        output.i_fault[fault_number](phase_1) +=
-                            i_source_bus[phase_1] / infinite_admittance_fault_counter_bus;
-                    }
-                    else if (fault_type == FaultType::two_phase) {
-                        output.i_fault[fault_number](phase_1) -= i_source_bus[phase_1];
-                        output.i_fault[fault_number](phase_2) -= i_source_bus[phase_2];
-                    }
-                    else {
-                        assert((fault_type == FaultType::two_phase_to_ground));
-                        output.i_fault[fault_number](phase_1) += i_source_bus[phase_1];
-                        output.i_fault[fault_number](phase_2) += i_source_bus[phase_2];
+                    if constexpr (!sym) {
+                        if (fault_type == FaultType::single_phase_to_ground) {
+                            output.i_fault[fault_number](phase_1) +=
+                                i_source_bus[phase_1] / infinite_admittance_fault_counter_bus;
+                        }
+                        else if (fault_type == FaultType::two_phase) {
+                            output.i_fault[fault_number](phase_1) -= i_source_bus[phase_1];
+                            output.i_fault[fault_number](phase_2) -= i_source_bus[phase_2];
+                        }
+                        else if (fault_type == FaultType::two_phase_to_ground) {
+                            output.i_fault[fault_number](phase_1) += i_source_bus[phase_1];
+                            output.i_fault[fault_number](phase_2) += i_source_bus[phase_2];
+                        }
+                        else {
+                            assert((fault_type == FaultType::three_phase));
+                            continue;
+                        }
                     }
                 }
             }
