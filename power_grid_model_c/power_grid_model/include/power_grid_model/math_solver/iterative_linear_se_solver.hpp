@@ -869,7 +869,7 @@ class IterativeLinearSESolver {
 
     void calculate_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, MathOutput<sym>& output) {
         // call y bus
-        output.branch = y_bus.calculate_branch_flow(output.u);
+        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
         output.bus_injection = y_bus.calculate_injection(output.u);
         std::tie(output.load_gen, output.source) =

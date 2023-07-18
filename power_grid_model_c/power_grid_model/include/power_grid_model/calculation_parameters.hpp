@@ -59,6 +59,12 @@ struct BranchMathOutput {
     ComplexValue<sym> i_t;
 };
 
+template <bool sym>
+struct BranchShortCircuitMathOutput {
+    ComplexValue<sym> i_f;
+    ComplexValue<sym> i_t;
+};
+
 // fault math calculation parameters and math output
 struct FaultCalcParam {
     Idx math_fault_object{-1};
@@ -67,11 +73,20 @@ struct FaultCalcParam {
     FaultPhase fault_phase;
 };
 
+template <bool sym>
+struct FaultShortCircuitMathOutput {
+    ComplexValue<sym> i_fault;
+};
+
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>
 struct ApplianceMathOutput {
     ComplexValue<sym> s;
+    ComplexValue<sym> i;
+};
+template <bool sym>
+struct ApplianceShortCircuitMathOutput {
     ComplexValue<sym> i;
 };
 
@@ -215,11 +230,10 @@ struct MathOutput {
 
 template <bool sym>
 struct ShortCircuitMathOutput {
-    std::vector<ComplexValue<sym>> i_fault;
     std::vector<ComplexValue<sym>> u_bus;
-    std::vector<ComplexValue<sym>> i_branch_from;
-    std::vector<ComplexValue<sym>> i_branch_to;
-    std::vector<ComplexValue<sym>> i_source;
+    std::vector<FaultShortCircuitMathOutput<sym>> fault;
+    std::vector<BranchShortCircuitMathOutput<sym>> branch;
+    std::vector<ApplianceShortCircuitMathOutput<sym>> source;
 };
 
 template <typename T>
