@@ -129,7 +129,7 @@ class LinearPFSolver {
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // call y bus
-        output.branch = y_bus.calculate_branch_flow(output.u);
+        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
         output.shunt = y_bus.calculate_shunt_flow(output.u);
 
         // prepare source, load gen and node injection
