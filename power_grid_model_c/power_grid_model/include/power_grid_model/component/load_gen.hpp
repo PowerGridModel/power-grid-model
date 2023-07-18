@@ -56,11 +56,11 @@ class GenericLoadGen : public Appliance {
 };
 
 // abstraction of load/generation
-class GenericLoad : public GenericLoadGen {  // generic load private if errors then prot
+class GenericLoad : public GenericLoadGen {
    public:
     using GenericLoadGen::GenericLoadGen;
 };
-class GenericGenerator : public GenericLoadGen {  // add genload and gengen to asserts
+class GenericGenerator : public GenericLoadGen {
    public:
     using GenericLoadGen::GenericLoadGen;
 };
