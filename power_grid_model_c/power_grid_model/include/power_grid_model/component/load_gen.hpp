@@ -60,7 +60,7 @@ class GenericLoad : public GenericLoadGen {  // generic load private if errors t
    public:
     using GenericLoadGen::GenericLoadGen;
 };
-class GenericGenerator : public GenericLoadGen {  // add genload and gengen to asserts
+class GenericGenerator : public GenericLoadGen {
    public:
     using GenericLoadGen::GenericLoadGen;
 };
