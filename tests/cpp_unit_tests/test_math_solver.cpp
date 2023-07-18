@@ -707,8 +707,8 @@ TEST_CASE("Short circuit solver") {
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909);
-        assert_sc_output<false>(output, default_output);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
     }
 
     SUBCASE("Test short circuit solver 3ph solid fault") {
@@ -729,8 +729,8 @@ TEST_CASE("Short circuit solver") {
         assert_sc_output<true>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909);
-        assert_sc_output<true>(output, default_output);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
     }
 
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
@@ -752,8 +752,8 @@ TEST_CASE("Short circuit solver") {
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909);
-        assert_sc_output<false>(output, default_output);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
     }
 
     SUBCASE("Test short circuit solver 1phg solid fault") {
@@ -775,8 +775,8 @@ TEST_CASE("Short circuit solver") {
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909);
-        assert_sc_output<false>(output, default_output);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
     }
 
     SUBCASE("Test short circuit solver 2ph solid fault") {
@@ -797,8 +797,8 @@ TEST_CASE("Short circuit solver") {
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref);
-        auto default_output = solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909);
-        assert_sc_output<false>(output, default_output);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
     }
 
     SUBCASE("Test short circuit solver 2phg solid") {
