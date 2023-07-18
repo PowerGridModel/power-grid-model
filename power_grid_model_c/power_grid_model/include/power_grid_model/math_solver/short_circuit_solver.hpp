@@ -301,7 +301,7 @@ class ShortCircuitSolver {
             }
         }
 
-        // TODO calculate i_branch_from, i_branch_to, i_shunt
+        output.branch = y_bus.template calculate_branch_flow<BranchShortCircuitMathOutput<sym>>(output.u_bus);
     }
 
     constexpr auto set_phase_index(FaultPhase fault_phase) {
@@ -352,9 +352,7 @@ class ShortCircuitSolver {
             return false;
         }
 
-        FaultCalcParam const first = vec.front();
-
-        return std::all_of(cbegin(vec), cend(vec), [first](FaultCalcParam const& param) {
+        return std::all_of(cbegin(vec), cend(vec), [first = vec.front()](FaultCalcParam const& param) {
             return (param.fault_type == first.fault_type) && (param.fault_phase == first.fault_phase);
         });
     }

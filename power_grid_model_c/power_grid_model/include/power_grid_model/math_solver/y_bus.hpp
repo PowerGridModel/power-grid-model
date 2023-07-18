@@ -415,8 +415,11 @@ class YBus {
     }
 
     // calculate branch flow based on voltage
-    std::vector<BranchMathOutput<sym>> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<BranchMathOutput<sym>> branch_flow(math_topology_->branch_bus_idx.size());
+    template <typename T>
+    requires std::same_as<T, BranchMathOutput<sym>> || std::same_as<T, BranchShortCircuitMathOutput<sym>> std::vector<T>
+    calculate_branch_flow(ComplexValueVector<sym> const& u)
+    const {
+        std::vector<T> branch_flow(math_topology_->branch_bus_idx.size());
         std::transform(math_topology_->branch_bus_idx.cbegin(), math_topology_->branch_bus_idx.cend(),
                        math_model_param_->branch_param.cbegin(), branch_flow.begin(),
                        [&u](BranchIdx branch_idx, BranchCalcParam<sym> const& param) {
@@ -424,15 +427,18 @@ class YBus {
                            // if one side is disconnected, use zero voltage at that side
                            ComplexValue<sym> const uf = f != -1 ? u[f] : ComplexValue<sym>{0.0};
                            ComplexValue<sym> const ut = t != -1 ? u[t] : ComplexValue<sym>{0.0};
-                           BranchMathOutput<sym> output;
+                           T output;
 
                            // See "Branch Flow Calculation" in "State Estimation Alliander"
                            output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                            output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
-                           // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
-                           output.s_f = uf * conj(output.i_f);
-                           output.s_t = ut * conj(output.i_t);
+                           if constexpr (std::same_as<T, BranchMathOutput<sym>>) {
+                               // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
+                               output.s_f = uf * conj(output.i_f);
+                               output.s_t = ut * conj(output.i_t);
+                           }
+
                            return output;
                        });
         return branch_flow;
