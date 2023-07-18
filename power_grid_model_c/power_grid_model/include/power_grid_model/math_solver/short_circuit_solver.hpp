@@ -195,6 +195,7 @@ class ShortCircuitSolver {
    private:
     Idx n_bus_;
     Idx n_fault_;
+    Idx n_source_;
     // shared topo data
     std::shared_ptr<IdxVector const> source_bus_indptr_;
     std::shared_ptr<IdxVector const> fault_bus_indptr_;
