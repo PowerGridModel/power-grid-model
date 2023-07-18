@@ -38,13 +38,10 @@ class ShortCircuitSolver {
 
     ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
-        // For one calculation all faults should be of the same type and have the same phase
-        if (!all_fault_type_phase_equal(input.faults)) {
-            throw InvalidShortCircuitPhaseOrType{};
-        }
-        FaultPhase const fault_phase =
-            input.faults.empty() ? FaultPhase::default_value : input.faults.front().fault_phase;
-        FaultType const fault_type = input.faults.empty() ? FaultType::nan : input.faults.front().fault_type;
+        check_input_valid(input);
+
+        auto [fault_type, fault_phase] = extract_fault_type_phase(input.faults);
+
         // set phase 1 and 2 index for single and two phase faults
         auto const [phase_1, phase_2] = set_phase_index(fault_phase);
 
@@ -74,14 +71,16 @@ class ShortCircuitSolver {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
+            auto& diagonal_element = mat_data_[diagonal_position];
+            auto& u_bus = output.u_bus[bus_number];
+
             // add all sources
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-                mat_data_[diagonal_position] += y_source;  // add y_source to the diagonal of Ybus
-                output.u_bus[bus_number] +=
-                    dot(y_source, ComplexValue<sym>{input.source[source_number] *
-                                                    source_voltage_ref});  // rhs += Y_source * U_source * c
+                diagonal_element += y_source;  // add y_source to the diagonal of Ybus
+                u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number] *
+                                                         source_voltage_ref});  // rhs += Y_source * U_source * c
             }
             // add all faults
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
@@ -98,8 +97,8 @@ class ShortCircuitSolver {
                             mat_data_[col_data_index] = ComplexTensor<sym>{0};
                         }
                         // mat_data[bus,bus] = -1
-                        mat_data_[diagonal_position] = ComplexTensor<sym>{-1};
-                        output.u_bus[bus_number] = ComplexValue<sym>{0};  // update rhs
+                        diagonal_element = ComplexTensor<sym>{-1};
+                        u_bus = ComplexValue<sym>{0};  // update rhs
                     }
                     if constexpr (!sym) {
                         if (fault_type == FaultType::single_phase_to_ground) {
@@ -110,8 +109,8 @@ class ShortCircuitSolver {
                                 mat_data_[col_data_index].col(phase_1) = 0;
                             }
                             // mat_data[bus,bus][phase_1, phase_1] = -1
-                            mat_data_[diagonal_position](phase_1, phase_1) = -1;
-                            output.u_bus[bus_number](phase_1) = 0;  // update rhs
+                            diagonal_element(phase_1, phase_1) = -1;
+                            u_bus(phase_1) = 0;  // update rhs
                         }
                         else if (fault_type == FaultType::two_phase) {
                             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
@@ -124,11 +123,11 @@ class ShortCircuitSolver {
                             }
                             // mat_data[bus,bus][phase_1, phase_2] = -1
                             // mat_data[bus,bus][phase_2, phase_2] = 1
-                            mat_data_[diagonal_position](phase_1, phase_2) = -1;
-                            mat_data_[diagonal_position](phase_2, phase_2) = 1;
+                            diagonal_element(phase_1, phase_2) = -1;
+                            diagonal_element(phase_2, phase_2) = 1;
                             // update rhs
-                            output.u_bus[bus_number](phase_2) += output.u_bus[bus_number](phase_1);
-                            output.u_bus[bus_number](phase_1) = 0;
+                            u_bus(phase_2) += u_bus(phase_1);
+                            u_bus(phase_1) = 0;
                         }
                         else if (fault_type == FaultType::two_phase_to_ground) {
                             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
@@ -141,11 +140,11 @@ class ShortCircuitSolver {
                             }
                             // mat_data[bus,bus][phase_1, phase_1] = -1
                             // mat_data[bus,bus][phase_2, phase_2] = -1
-                            mat_data_[diagonal_position](phase_1, phase_1) = -1;
-                            mat_data_[diagonal_position](phase_2, phase_2) = -1;
+                            diagonal_element(phase_1, phase_1) = -1;
+                            diagonal_element(phase_2, phase_2) = -1;
                             // update rhs
-                            output.u_bus[bus_number](phase_1) = 0;
-                            output.u_bus[bus_number](phase_2) = 0;
+                            u_bus(phase_1) = 0;
+                            u_bus(phase_2) = 0;
                         }
                         else {
                             assert((fault_type == FaultType::three_phase));
@@ -159,32 +158,32 @@ class ShortCircuitSolver {
                     assert(!std::isinf(y_fault.imag()));
                     if (fault_type == FaultType::three_phase) {  // three phase fault
                         // mat_data[bus,bus] += y_fault
-                        mat_data_[diagonal_position] += static_cast<ComplexTensor<sym>>(y_fault);
+                        diagonal_element += static_cast<ComplexTensor<sym>>(y_fault);
                     }
                     if constexpr (!sym) {
                         if (fault_type == FaultType::single_phase_to_ground) {
                             // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                            mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
+                            diagonal_element(phase_1, phase_1) += y_fault;
                         }
                         else if (fault_type == FaultType::two_phase) {
                             // mat_data[bus,bus][phase_1, phase_1] += y_fault
                             // mat_data[bus,bus][phase_2, phase_2] += y_fault
                             // mat_data[bus,bus][phase_1, phase_2] -= y_fault
                             // mat_data[bus,bus][phase_2, phase_1] -= y_fault
-                            mat_data_[diagonal_position](phase_1, phase_1) += y_fault;
-                            mat_data_[diagonal_position](phase_2, phase_2) += y_fault;
-                            mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
-                            mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
+                            diagonal_element(phase_1, phase_1) += y_fault;
+                            diagonal_element(phase_2, phase_2) += y_fault;
+                            diagonal_element(phase_1, phase_2) -= y_fault;
+                            diagonal_element(phase_2, phase_1) -= y_fault;
                         }
                         else if (fault_type == FaultType::two_phase_to_ground) {
                             // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
                             // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
                             // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
                             // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
-                            mat_data_[diagonal_position](phase_1, phase_1) += 2.0 * y_fault;
-                            mat_data_[diagonal_position](phase_2, phase_2) += 2.0 * y_fault;
-                            mat_data_[diagonal_position](phase_1, phase_2) -= y_fault;
-                            mat_data_[diagonal_position](phase_2, phase_1) -= y_fault;
+                            diagonal_element(phase_1, phase_1) += 2.0 * y_fault;
+                            diagonal_element(phase_2, phase_2) += 2.0 * y_fault;
+                            diagonal_element(phase_1, phase_2) -= y_fault;
+                            diagonal_element(phase_2, phase_1) -= y_fault;
                         }
                         else {
                             assert((fault_type == FaultType::three_phase));
@@ -340,7 +339,7 @@ class ShortCircuitSolver {
         output.branch = y_bus.template calculate_branch_flow<BranchShortCircuitMathOutput<sym>>(output.u_bus);
     }
 
-    constexpr auto set_phase_index(FaultPhase fault_phase) {
+    static constexpr auto set_phase_index(FaultPhase fault_phase) {
         IntS phase_1{-1};
         IntS phase_2{-1};
 
@@ -383,9 +382,35 @@ class ShortCircuitSolver {
         return std::make_pair(phase_1, phase_2);
     }
 
-    bool all_fault_type_phase_equal(std::vector<FaultCalcParam> const& vec) {
+    static constexpr auto extract_fault_type_phase(std::vector<FaultCalcParam> const& faults) {
+        if (faults.empty()) {
+            return std::pair{FaultType::nan, FaultPhase::nan};
+        }
+
+        const auto& first = faults.front();
+        return std::pair{first.fault_type, first.fault_phase};
+    }
+
+    static void check_input_valid(ShortCircuitInput const& input) {
+        if (input.faults.empty()) {
+            return;
+        }
+
+        // For one calculation all faults should be of the same type and have the same phase
+        if (!all_fault_type_phase_equal(input.faults)) {
+            throw InvalidShortCircuitPhaseOrType{};
+        }
+
+        auto const& first = input.faults.front();
+        if (first.fault_type == FaultType::nan || first.fault_phase == FaultPhase::default_value ||
+            first.fault_phase == FaultPhase::nan) {
+            throw InvalidShortCircuitPhaseOrType{};
+        }
+    }
+
+    static constexpr bool all_fault_type_phase_equal(std::vector<FaultCalcParam> const& vec) {
         if (vec.empty()) {
-            return false;
+            return true;
         }
 
         return std::all_of(cbegin(vec), cend(vec), [first = vec.front()](FaultCalcParam const& param) {
