@@ -45,7 +45,7 @@ class IterativePFSolver {
 
         // initialize
         {
-            Timer sub_timer{calculation_info, 2221, "Initialize calculation"};
+            Timer const sub_timer{calculation_info, 2221, "Initialize calculation"};
             // average u_ref of all sources
             DoubleComplex const u_ref = [&]() {
                 DoubleComplex sum_u_ref = 0.0;
@@ -76,24 +76,24 @@ class IterativePFSolver {
             }
             {
                 // Prepare the matrices of linear equations to be solved
-                Timer sub_timer{calculation_info, 2222, "Prepare the matrices"};
+                Timer const sub_timer{calculation_info, 2222, "Prepare the matrices"};
                 derived_solver.prepare_matrix_and_rhs(y_bus, input, output.u);
             }
             {
                 // Solve the linear equations
-                Timer sub_timer{calculation_info, 2223, "Solve sparse linear equation"};
+                Timer const sub_timer{calculation_info, 2223, "Solve sparse linear equation"};
                 derived_solver.solve_matrix();
             }
             {
                 // Calculate maximum deviation of voltage at any bus
-                Timer sub_timer{calculation_info, 2224, "Iterate unknown"};
+                Timer const sub_timer{calculation_info, 2224, "Iterate unknown"};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
         } while (max_dev > err_tol);
 
         // calculate math result
         {
-            Timer sub_timer{calculation_info, 2225, "Calculate Math Result"};
+            Timer const sub_timer{calculation_info, 2225, "Calculate Math Result"};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.

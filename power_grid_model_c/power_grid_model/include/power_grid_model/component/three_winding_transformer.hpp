@@ -127,8 +127,8 @@ class ThreeWindingTransformer : public Branch3 {
 
     UpdateChange update(ThreeWindingTransformerUpdate const& update) {
         assert(update.id == id());
-        bool topo_changed = set_status(update.status_1, update.status_2, update.status_3);
-        bool param_changed = set_tap(update.tap_pos) || topo_changed;
+        bool const topo_changed = set_status(update.status_1, update.status_2, update.status_3);
+        bool const param_changed = set_tap(update.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
     }
 
