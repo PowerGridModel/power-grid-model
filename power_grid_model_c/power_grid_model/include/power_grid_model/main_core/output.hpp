@@ -271,10 +271,12 @@ template <std::same_as<Shunt> Component, class ComponentContainer, short_circuit
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(state, res_it,
-                                                    [&math_output](Shunt const& shunt, Idx2D /* math_id */) {
-                                                        return shunt.get_null_sc_output();
-                                                    });
+    return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Shunt const& shunt, Idx2D math_id) {
+        if (math_id.group == -1) {
+            return shunt.get_null_sc_output();
+        }
+        return shunt.get_sc_output(math_output[math_id.group].shunt[math_id.pos]);
+    });
 }
 
 // output voltage sensor
