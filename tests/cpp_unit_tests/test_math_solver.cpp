@@ -636,7 +636,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
                 DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
                 DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
                 DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
-                if_abc = ComplexValue<false>(i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a);
+                if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
                 break;
             }
             default:
