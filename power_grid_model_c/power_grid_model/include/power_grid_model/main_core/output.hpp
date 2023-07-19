@@ -93,7 +93,7 @@ requires model_component_state<MainModelState, ComponentContainer, Component> &&
 }  // namespace detail
 
 // output node
-template <std::same_as<Node> Component, class ComponentContainer, math_output_type MathOutputType,
+template <std::same_as<Node> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -108,9 +108,21 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                                     math_output[math_id.group].bus_injection[math_id.pos]);
     });
 }
+template <std::same_as<Node> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Node, Idx2D>(state, res_it, [&math_output](Node const& node, Idx2D math_id) {
+        if (math_id.group == -1) {
+            return node.get_null_sc_output();
+        }
+        return node.get_sc_output(math_output[math_id.group].u_bus[math_id.pos]);
+    });
+}
 
 // output branch
-template <std::derived_from<Branch> Component, class ComponentContainer, math_output_type MathOutputType,
+template <std::derived_from<Branch> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -122,6 +134,18 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
             return branch.get_null_output<sym>();
         }
         return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
+    });
+}
+template <std::derived_from<Branch> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Branch const& branch, Idx2D math_id) {
+        if (math_id.group == -1) {
+            return branch.get_null_sc_output();
+        }
+        return branch.get_sc_output(math_output[math_id.group].branch[math_id.pos]);
     });
 }
 
@@ -314,10 +338,10 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
     return detail::produce_output<Component, Idx2D>(
         state, res_it, [&state, &math_output](Fault const& fault, Idx2D math_id) {
             if (math_id.group == -1) {
-                return fault.get_null_output<sym>();
+                return fault.get_null_output();
             }
-            auto const& fault_object = state.components.template get_item<Node>(fault.get_fault_object());
-            return fault.get_sc_output(math_output[math_id.group].i_f[math_id.pos], fault_object.u_rated());
+            auto const group_output = math_output[math_id.group];
+            return fault.get_sc_output(group_output.fault[math_id.pos], group_output.u_bus[math_id.pos]);
         });
 }
 
