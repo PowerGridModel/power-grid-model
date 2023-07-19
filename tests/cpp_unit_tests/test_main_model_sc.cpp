@@ -15,7 +15,7 @@ TEST_CASE("Test Main Model - short circuit") {
         main_model.add_component<Source>({{{{2}, 1, true}, 1.0, nan, nan, nan, nan}});
 
         SUBCASE("three phase fault") {
-            main_model.add_component<Fault>({{{1}, 1, FaultType::three_phase, FaultPhase::default_value, 1, nan, nan}});
+            main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, nan, nan}});
             main_model.set_construction_complete();
 
             SUBCASE("Symmetric Calculation") {
