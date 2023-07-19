@@ -158,7 +158,7 @@ class ShortCircuitSolver {
                     assert(!std::isinf(y_fault.imag()));
                     if (fault_type == FaultType::three_phase) {  // three phase fault
                         // mat_data[bus,bus] += y_fault
-                        diagonal_element += static_cast<ComplexTensor<sym>>(y_fault);
+                        diagonal_element += ComplexTensor<sym>{y_fault};
                     }
                     if constexpr (!sym) {
                         if (fault_type == FaultType::single_phase_to_ground) {
@@ -176,14 +176,23 @@ class ShortCircuitSolver {
                             diagonal_element(phase_2, phase_1) -= y_fault;
                         }
                         else if (fault_type == FaultType::two_phase_to_ground) {
-                            // mat_data[bus,bus][phase_1, phase_1] += 2 * y_fault
-                            // mat_data[bus,bus][phase_2, phase_2] += 2 * y_fault
-                            // mat_data[bus,bus][phase_1, phase_2] = -= y_fault
-                            // mat_data[bus,bus][phase_2, phase_1] = -= y_fault
-                            diagonal_element(phase_1, phase_1) += 2.0 * y_fault;
-                            diagonal_element(phase_2, phase_2) += 2.0 * y_fault;
-                            diagonal_element(phase_1, phase_2) -= y_fault;
-                            diagonal_element(phase_2, phase_1) -= y_fault;
+                            for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                                 data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                                Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+                                // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
+                                // mat_data[:,bus][:, phase_2] = 0
+                                mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
+                                mat_data_[col_data_index].col(phase_2) = 0;
+                            }
+                            // mat_data[bus,bus][phase_1, phase_2] = -1
+                            // mat_data[bus,bus][phase_2, phase_1] += y_fault
+                            // mat_data[bus,bus][phase_2, phase_2] = 1
+                            diagonal_element(phase_1, phase_2) = -1;
+                            diagonal_element(phase_2, phase_2) = 1;
+                            diagonal_element(phase_2, phase_1) += y_fault;
+                            // update rhs
+                            u_bus(phase_2) += u_bus(phase_1);
+                            u_bus(phase_1) = 0;
                         }
                         else {
                             assert((fault_type == FaultType::three_phase));
