@@ -602,11 +602,11 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
     // i_fault_012 = [0, if, 0] for 3ph, [if, if, if] for 1phg, [0, if, -if] for 2ph
     DoubleComplex const z0_0 = 1.0 / y0_0;
     DoubleComplex const z0 = 1.0 / y0;
-    DoubleComplex const zs = 1.0 / yref + 1.0 / y0;
     DoubleComplex const cvref = c_factor * vref;
+    DoubleComplex const zref = 1.0 / yref;
 
     if constexpr (sym) {
-        DoubleComplex const if_abc = cvref / (zs + z_fault);
+        DoubleComplex const if_abc = cvref / (z0 + zref + z_fault);
         DoubleComplex const u0 = cvref - if_abc / yref;
         DoubleComplex const u1 = u0 - if_abc * z0;
         return create_math_sc_output<true>(u0, u1, if_abc);
@@ -615,24 +615,28 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
         ComplexValue<false> if_abc{};
         switch (fault_type) {
             case three_phase: {
-                DoubleComplex const if_3ph = cvref / (zs + z_fault);
+                DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
                 if_abc = ComplexValue<false>(if_3ph);
                 break;
             }
             case single_phase_to_ground: {
-                DoubleComplex const if_1phg = cvref / (2.0 * zs + z0_0 + 1.0 / yref + 3.0 * z_fault);
+                DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
                 if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
                 break;
             }
             case two_phase: {
-                DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * zs + z_fault);
+                DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
                 if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
                 break;
             }
             case two_phase_to_ground: {
-                DoubleComplex const z_02_2phg = 1.0 / (1.0 / (z0_0 + 3.0 * z_fault) + 1.0 / zs);
-                DoubleComplex const if_2phg = cvref / (zs + z_02_2phg);
-                if_abc = ComplexValue<false>(0.0, if_2phg * 0.5, if_2phg * 0.5);
+                DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
+                DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
+                DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
+                DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
+                DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
+                DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
+                if_abc = ComplexValue<false>(i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a);
                 break;
             }
             default:
@@ -789,7 +793,7 @@ TEST_CASE("Short circuit solver") {
         auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
         assert_sc_output<false>(output, sc_output_ref);
     }
-
+    
     SUBCASE("Test short circuit solver 2phg") {
         MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref);
