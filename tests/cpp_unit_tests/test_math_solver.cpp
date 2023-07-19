@@ -51,11 +51,13 @@ TEST_CASE("Test block") {
     }
 }
 
-#define CHECK_CLOSE(x, y, tolerance)        \
-    if constexpr (sym)                      \
-        CHECK(cabs((x) - (y)) < tolerance); \
-    else                                    \
-        CHECK((cabs((x) - (y)) < tolerance).all());
+#define CHECK_CLOSE(x, y, tolerance)                    \
+    do {                                                \
+        if constexpr (sym)                              \
+            CHECK(cabs((x) - (y)) < tolerance);         \
+        else                                            \
+            CHECK((cabs((x) - (y)) < tolerance).all()); \
+    } while (false)
 
 template <bool sym>
 void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
@@ -817,17 +819,17 @@ TEST_CASE("Short circuit solver") {
         sc_input.source = {vref};
         auto asym_sc_output_ref = blank_sc_output<false>(vref);
         CalculationInfo info;
-        auto asym_output = solver_asym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
-        assert_sc_output<false>(asym_output, asym_sc_output_ref);
+        CHECK_THROWS_AS(solver_asym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909),
+                        NoShortCircuit);
 
         MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
         auto sym_sc_output_ref = blank_sc_output<true>(vref);
-        auto sym_output = solver_sym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909);
-        assert_sc_output<true>(sym_output, sym_sc_output_ref);
+        CHECK_THROWS_AS(solver_sym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909),
+                        NoShortCircuit);
     }
 }
 
-#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance);
+#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance)
 
 TEST_CASE("Math solver, zero variance test") {
     /*
@@ -1102,4 +1104,5 @@ TEST_CASE("Math solver, measurements") {
     CHECK(output.bus_injection[1] == output.branch[0].s_t);
     CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
 }
+
 }  // namespace power_grid_model

@@ -365,7 +365,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     param.sym = sym;
     param.is_batch = is_batch;
     j.at("rtol").get_to(param.rtol);
-    json const j_atol = j.at("atol");
+    json const& j_atol = j.at("atol");
     if (j_atol.type() != json::value_t::object) {
         param.atol = {{"default", j_atol.get<double>()}};
     }
@@ -443,7 +443,7 @@ std::vector<CaseParam> read_all_cases(bool is_batch) {
     for (std::string calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
         // loop all sub-directories
         for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_path / calculation_type)) {
-            std::filesystem::path const case_dir = dir_entry.path();
+            std::filesystem::path const& case_dir = dir_entry.path();
             if (!std::filesystem::exists(case_dir / "params.json")) {
                 continue;
             }
