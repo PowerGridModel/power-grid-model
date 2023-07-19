@@ -41,7 +41,7 @@ class Fault final : public Base {
         check_sanity();
     }
 
-    FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
+    FaultCalcParam calc_param(bool const& is_connected_to_source = true) const {
         // param object
         FaultCalcParam param{};
         param.fault_type = get_fault_type();
@@ -49,15 +49,15 @@ class Fault final : public Base {
         if (!energized(is_connected_to_source)) {
             return param;
         }
+        param.math_fault_object = get_fault_object();
         // set the fault admittance to inf if the impedance is zero
         if (r_f_ == 0.0 && x_f_ == 0.0) {
-            param.y_fault.real(std::numeric_limits<double>::infinity());
-            param.y_fault.imag(std::numeric_limits<double>::infinity());
+            param.y_fault_abs.real(std::numeric_limits<double>::infinity());
+            param.y_fault_abs.imag(std::numeric_limits<double>::infinity());
             return param;
         }
-        // calculate the fault admittance in p.u.
-        double const base_z = u_rated * u_rated / base_power_3p;
-        param.y_fault = base_z / (r_f_ + 1.0i * x_f_);
+        // calculate the fault admittance in susceptance
+        param.y_fault_abs = 1.0 / (r_f_ + 1.0i * x_f_);
         return param;
     }
 
@@ -69,7 +69,7 @@ class Fault final : public Base {
         return get_null_output();
     }
 
-    FaultShortCircuitOutput get_sc_null_output() const {
+    FaultShortCircuitOutput get_null_sc_output() const {
         return get_null_output_impl<FaultShortCircuitOutput>();
     }
     FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
@@ -87,6 +87,12 @@ class Fault final : public Base {
     FaultShortCircuitOutput get_sc_output(ComplexValue<true> i_f, double const u_rated) const {
         ComplexValue<false> iabc_f{i_f};
         return get_sc_output(iabc_f, u_rated);
+    }
+
+    template <bool sym>
+    FaultShortCircuitOutput get_sc_output(FaultShortCircuitMathOutput<sym> const& math_output,
+                                          double const u_rated) const {
+        return get_sc_output(math_output.i_fault, u_rated);
     }
 
     // update faulted object

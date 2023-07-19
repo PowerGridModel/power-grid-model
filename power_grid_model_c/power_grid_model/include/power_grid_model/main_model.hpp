@@ -346,13 +346,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
     }
 
-    template <bool sym, typename InputType, typename PrepareInputFn, typename SolveFn>
-    requires std::invocable<std::remove_cvref_t<PrepareInputFn>> && std::invocable < std::remove_cvref_t<SolveFn>,
-        MathSolver<sym>
-    &, InputType const& >
-           &&std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>>&&
-               std::same_as<std::invoke_result_t<SolveFn, MathSolver<sym>&, InputType const&>, MathOutput<sym>>
-                   std::vector<MathOutput<sym>> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+    template <math_output_type MathOutputType, typename MathSolverType, typename InputType, typename PrepareInputFn,
+              typename SolveFn>
+    requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
+        std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, InputType const&>&&
+            std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>>&&
+                std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, InputType const&>, MathOutputType>
+                    std::vector<MathOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+        constexpr bool sym = symmetric_math_output_type<MathOutputType>;
+
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
@@ -362,7 +364,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // calculate
         timer = Timer(calculation_info_, 2200, "Math Calculation");
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
-        std::vector<MathOutput<sym>> math_output(n_math_solvers_);
+        std::vector<MathOutputType> math_output(n_math_solvers_);
         std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(), solve);
         return math_output;
     }
@@ -370,7 +372,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     std::vector<MathOutput<sym>> calculate_power_flow_(double err_tol, Idx max_iter,
                                                        CalculationMethod calculation_method) {
-        return calculate_<sym, PowerFlowInput<sym>>(
+        return calculate_<MathOutput<sym>, MathSolver<sym>, PowerFlowInput<sym>>(
             [this] {
                 return prepare_power_flow_input<sym>();
             },
@@ -382,7 +384,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     std::vector<MathOutput<sym>> calculate_state_estimation_(double err_tol, Idx max_iter,
                                                              CalculationMethod calculation_method) {
-        return calculate_<sym, StateEstimationInput<sym>>(
+        return calculate_<MathOutput<sym>, MathSolver<sym>, StateEstimationInput<sym>>(
             [this] {
                 return prepare_state_estimation_input<sym>();
             },
@@ -394,7 +396,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double subtransient_voltage_factor,
                                                                       CalculationMethod calculation_method) {
-        return calculate_<sym, ShortCircuitInput>(
+        return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, ShortCircuitInput>(
             [this] {
                 return prepare_short_circuit_input<sym>();
             },
@@ -672,7 +674,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         auto const run = [&]<bool sym> {
             auto const math_output = calculate_short_circuit_<sym>(subtransient_voltage_factor, calculation_method);
-            output_sc_result<sym>(math_output, result_data, pos);
+            output_result<sym>(math_output, result_data, pos);
         };
         if (std::all_of(state.components.template citer<Fault>().begin(),
                         state.components.template citer<Fault>().end(), [](Fault const& fault) {
@@ -942,13 +944,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (include(i)) {
                 Idx2D const math_idx = components[i];
                 if (math_idx.group != -1) {
-                    CalcParamOut const calc_param =
-                        state_.components.template get_item_by_seq<ComponentIn>(i).template calc_param<sym>();
+                    auto const& component = state_.components.template get_item_by_seq<ComponentIn>(i);
+                    CalcParamOut const calc_param = calculate_param<sym>(component);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
                     math_model_input_vect[math_idx.pos] = calc_param;
                 }
             }
+        }
+    }
+
+    template <bool sym>
+    auto calculate_param(auto const& c) {
+        if constexpr (requires { {c.calc_param()}; }) {
+            return c.calc_param();
+        }
+        else if constexpr (requires { {c.template calc_param<sym>()}; }) {
+            return c.template calc_param<sym>();
+        }
+        else {
+            return;
         }
     }
 
@@ -1061,6 +1076,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_.comp_coup->fault, sc_input);
         prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
             state_.comp_coup->source, sc_input);
+
+        // y_fault to p.u.
+        std::for_each(begin(sc_input), end(sc_input), [this](ShortCircuitInput& fault_input) {
+            std::for_each(begin(fault_input.faults), end(fault_input.faults), [this](FaultCalcParam& param) {
+                auto const u_rated = state_.components.template get_item<Node>(param.math_fault_object).u_rated();
+                double const base_z = u_rated * u_rated / base_power_3p;
+                param.y_fault = base_z * param.y_fault_abs;
+            });
+        });
 
         return sc_input;
     }

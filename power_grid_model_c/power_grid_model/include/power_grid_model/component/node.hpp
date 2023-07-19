@@ -76,7 +76,7 @@ class Node final : public Base {
         return output;
     }
 
-    constexpr double u_rated() {
+    constexpr double u_rated() const {
         return u_rated_;
     }
     constexpr bool energized(bool is_connected_to_source) const final {

@@ -385,10 +385,13 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
     return detail::produce_output<Component, Idx2D>(
         state, res_it, [&state, &math_output](Fault const& fault, Idx2D math_id) {
             if (math_id.group == -1) {
-                return fault.get_null_output();
+                return fault.get_null_sc_output();
             }
+
             auto const group_output = math_output[math_id.group];
-            return fault.get_sc_output(group_output.fault[math_id.pos], group_output.u_bus[math_id.pos]);
+            auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+
+            return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
         });
 }
 
