@@ -445,8 +445,12 @@ class YBus {
     }
 
     // calculate shunt flow based on voltage, injection direction
-    std::vector<ApplianceMathOutput<sym>> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<ApplianceMathOutput<sym>> shunt_flow(math_topology_->n_shunt());
+    template <typename MathOutputType>
+    requires std::same_as<MathOutputType, ApplianceMathOutput<sym>> ||
+        std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
+            std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u)
+    const {
+        std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
         // loop all bus, then all shunt within the bus
         for (Idx bus = 0; bus != size(); ++bus) {
             for (Idx shunt = math_topology_->shunt_bus_indptr[bus]; shunt != math_topology_->shunt_bus_indptr[bus + 1];
@@ -455,8 +459,10 @@ class YBus {
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);
 
-                // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
-                shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
+                if constexpr (std::same_as<MathOutputType, ApplianceMathOutput<sym>>) {
+                    // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
+                    shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
+                }
             }
         }
         return shunt_flow;

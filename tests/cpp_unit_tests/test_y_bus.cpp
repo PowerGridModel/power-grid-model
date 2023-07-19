@@ -172,7 +172,7 @@ TEST_CASE("Test y bus") {
     SUBCASE("Test shunt flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
-        auto shunt_flow = ybus.calculate_shunt_flow(u);
+        auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceMathOutput<true>>(u);
 
         // shunt 1
         // i = -4 * 200i

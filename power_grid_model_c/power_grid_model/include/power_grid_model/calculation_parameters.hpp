@@ -235,6 +235,7 @@ struct ShortCircuitMathOutput {
     std::vector<FaultShortCircuitMathOutput<sym>> fault;
     std::vector<BranchShortCircuitMathOutput<sym>> branch;
     std::vector<ApplianceShortCircuitMathOutput<sym>> source;
+    std::vector<ApplianceShortCircuitMathOutput<sym>> shunt;
 };
 
 template <typename T>
