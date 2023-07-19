@@ -109,7 +109,7 @@ class IterativePFSolver {
         // pending to correct
         // call y bus
         output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.calculate_shunt_flow(output.u);
+        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
 
         // prepare source, load gen and bus_injection
         output.source.resize(source_bus_indptr_->back());

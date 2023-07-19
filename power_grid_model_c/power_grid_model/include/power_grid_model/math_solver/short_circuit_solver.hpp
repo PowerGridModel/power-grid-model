@@ -344,6 +344,7 @@ class ShortCircuitSolver {
         }
 
         output.branch = y_bus.template calculate_branch_flow<BranchShortCircuitMathOutput<sym>>(output.u_bus);
+        output.shunt = y_bus.template calculate_shunt_flow<ApplianceShortCircuitMathOutput<sym>>(output.u_bus);
     }
 
     static constexpr auto set_phase_index(FaultPhase fault_phase) {
