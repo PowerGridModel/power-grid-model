@@ -392,7 +392,7 @@ class ShortCircuitSolver {
 
     static void check_input_valid(ShortCircuitInput const& input) {
         if (input.faults.empty()) {
-            return;
+            throw NoShortCircuit{};
         }
 
         // For one calculation all faults should be of the same type and have the same phase
