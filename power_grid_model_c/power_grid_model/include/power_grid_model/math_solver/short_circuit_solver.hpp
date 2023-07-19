@@ -289,10 +289,9 @@ class ShortCircuitSolver {
                             i_fault(phase_2) = y_fault * x_bus_subtotal[phase_2] - y_fault * x_bus_subtotal[phase_1];
                         }
                         else if (fault_type == FaultType::two_phase_to_ground) {
-                            i_fault(phase_1) =
-                                2.0 * y_fault * x_bus_subtotal[phase_1] - y_fault * x_bus_subtotal[phase_2];
-                            i_fault(phase_2) =
-                                2.0 * y_fault * x_bus_subtotal[phase_2] - y_fault * x_bus_subtotal[phase_1];
+                            i_fault(phase_1) = -1.0 * x_bus_subtotal[phase_2];
+                            i_fault(phase_2) = -1.0 * i_fault(phase_1) + y_fault * x_bus_subtotal[phase_1];
+                            u_bus(phase_2) = u_bus(phase_1);
                         }
                         else {
                             assert((fault_type == FaultType::three_phase));
