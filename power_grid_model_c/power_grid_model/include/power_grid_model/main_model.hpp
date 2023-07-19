@@ -392,14 +392,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double source_voltage_ref,
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double subtransient_voltage_factor,
                                                                       CalculationMethod calculation_method) {
         return calculate_<sym, ShortCircuitInput>(
             [this] {
                 return prepare_short_circuit_input<sym>();
             },
-            [this, source_voltage_ref, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
-                return solver.run_short_circuit(y, source_voltage_ref, calculation_info_, calculation_method);
+            [this, subtransient_voltage_factor, calculation_method](MathSolver<sym>& solver,
+                                                                    ShortCircuitInput const& y) {
+                return solver.run_short_circuit(y, subtransient_voltage_factor, calculation_info_, calculation_method);
             });
     }
 
@@ -660,27 +661,37 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single short circuit calculation, returning short circuit math output results
     template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double err_tol, Idx max_iter,
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double subtransient_voltage_factor,
                                                                      CalculationMethod calculation_method) {
-        return calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
+        return calculate_short_circuit_<sym>(subtransient_voltage_factor, calculation_method);
     }
 
     // Single short circuit calculation, propagating the results to result_data
-    template <bool sym>
-    void calculate_short_circuit(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                 Dataset const& /* result_data */, Idx pos = 0) {
+    void calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
+                                 Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
-        auto const math_output = calculate_short_circuit_<sym>(err_tol, max_iter, calculation_method);
-        output_sc_result(math_output, result_data, pos);
+        auto const run = [&]<bool sym> {
+            auto const math_output = calculate_short_circuit_<sym>(subtransient_voltage_factor, calculation_method);
+            output_sc_result<sym>(math_output, result_data, pos);
+        };
+        if (std::all_of(state.components.template citer<Fault>().begin(),
+                        state.components.template citer<Fault>().end(), [](Fault const& fault) {
+                            return fault.get_fault_type() == FaultType::three_phase;
+                        })) {
+            run<true>();
+        }
+        else {
+            run<false>();
+        }
     }
 
     // Batch short circuit calculation, propagating the results to result_data
-    template <bool sym>
-    BatchParameter calculate_short_circuit(double err_tol, Idx max_iter, CalculationMethod calculation_method,
+    BatchParameter calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
                                            Dataset const& result_data, ConstDataset const& update_data,
                                            Idx threading = -1) {
-        return batch_calculation_<sym, &MainModelImpl::calculate_short_circuit_<sym>>(
-            err_tol, max_iter, calculation_method, result_data, update_data, threading);
+        throw InvalidCalculationMethod{};  // TODO(mgovers) implement batch calculation
+        // return batch_calculation_<sym, &MainModelImpl::calculate_short_circuit_<sym>>(
+        //     subtransient_voltage_factor, calculation_method, result_data, update_data, threading);
     }
 
     template <typename Component, math_output_type MathOutputType, std::forward_iterator ResIt>

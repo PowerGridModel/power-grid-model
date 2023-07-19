@@ -150,7 +150,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 // output branch3
-template <std::derived_from<Branch3> Component, class ComponentContainer, math_output_type MathOutputType,
+template <std::derived_from<Branch3> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -163,9 +163,24 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                 return branch3.get_null_output<sym>();
             }
 
-            return branch3.get_output<sym>(math_output[math_id.group].branch[math_id.pos[0]],
-                                           math_output[math_id.group].branch[math_id.pos[1]],
-                                           math_output[math_id.group].branch[math_id.pos[2]]);
+            auto const& branches = math_output[math_id.group].branch;
+            return branch3.get_output<sym>(branches[math_id.pos[0]], branches[math_id.pos[1]],
+                                           branches[math_id.pos[2]]);
+        });
+}
+template <std::derived_from<Branch3> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx2DBranch3>(
+        state, res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
+            if (math_id.group == -1) {
+                return branch3.get_null_sc_output();
+            }
+
+            auto const& branches = math_output[math_id.group].branch;
+            return branch3.get_sc_output(branches[math_id.pos[0]], branches[math_id.pos[1]], branches[math_id.pos[2]]);
         });
 }
 
@@ -182,7 +197,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 // output source
-template <std::same_as<Source> Component, class ComponentContainer, math_output_type MathOutputType,
+template <std::same_as<Source> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -196,10 +211,22 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         return source.get_output<sym>(math_output[math_id.group].source[math_id.pos]);
     });
 }
+template <std::same_as<Source> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Source const& source, Idx2D math_id) {
+        if (math_id.group == -1) {
+            return source.get_null_sc_output();
+        }
+        return source.get_sc_output(math_output[math_id.group].source[math_id.pos]);
+    });
+}
 
 // output load gen
-template <std::derived_from<GenericLoadGen> Component, class ComponentContainer, math_output_type MathOutputType,
-          std::forward_iterator ResIt>
+template <std::derived_from<GenericLoadGen> Component, class ComponentContainer,
+          steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -213,9 +240,19 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
             return load_gen.get_output<sym>(math_output[math_id.group].load_gen[math_id.pos]);
         });
 }
+template <std::derived_from<GenericLoadGen> Component, class ComponentContainer,
+          short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [&math_output](GenericLoadGen const& load_gen, Idx2D /* math_id */) {
+            return load_gen.get_null_sc_output();
+        });
+}
 
 // output shunt
-template <std::same_as<Shunt> Component, class ComponentContainer, math_output_type MathOutputType,
+template <std::same_as<Shunt> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -229,10 +266,20 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         return shunt.get_output<sym>(math_output[math_id.group].shunt[math_id.pos]);
     });
 }
+template <std::same_as<Shunt> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+          std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(state, res_it,
+                                                    [&math_output](Shunt const& shunt, Idx2D /* math_id */) {
+                                                        return shunt.get_null_sc_output();
+                                                    });
+}
 
 // output voltage sensor
-template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer, math_output_type MathOutputType,
-          std::forward_iterator ResIt>
+template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
+          steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {

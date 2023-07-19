@@ -36,7 +36,7 @@ class ShortCircuitSolver {
           perm_{static_cast<BlockPermArray>(n_bus_)} {
     }
 
-    ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
+    ShortCircuitMathOutput<sym> run_short_circuit(double subtransient_voltage_factor, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
         check_input_valid(input);
 
@@ -79,8 +79,9 @@ class ShortCircuitSolver {
                  ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                 diagonal_element += y_source;  // add y_source to the diagonal of Ybus
-                u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number] *
-                                                         source_voltage_ref});  // rhs += Y_source * U_source * c
+                u_bus +=
+                    dot(y_source, ComplexValue<sym>{input.source[source_number] *
+                                                    subtransient_voltage_factor});  // rhs += Y_source * U_source * c
             }
             // add all faults
             for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
@@ -199,7 +200,7 @@ class ShortCircuitSolver {
 
         // post processing
         calculate_result(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2,
-                         source_voltage_ref);
+                         subtransient_voltage_factor);
 
         return output;
     }
@@ -219,7 +220,7 @@ class ShortCircuitSolver {
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
-                          int const& phase_1, int const& phase_2, double const& source_voltage_ref) {
+                          int const& phase_1, int const& phase_2, double const& subtransient_voltage_factor) {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
@@ -297,9 +298,9 @@ class ShortCircuitSolver {
             for (Idx source_number = (*source_bus_indptr_)[bus_number];
                  source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-                output.source[source_number].i = dot(
-                    y_source,
-                    (ComplexValue<sym>{input.source[source_number] * source_voltage_ref} - output.u_bus[bus_number]));
+                output.source[source_number].i =
+                    dot(y_source, (ComplexValue<sym>{input.source[source_number] * subtransient_voltage_factor} -
+                                   output.u_bus[bus_number]));
                 i_source_bus += output.source[source_number].i;
             }
 
