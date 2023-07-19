@@ -51,11 +51,13 @@ TEST_CASE("Test block") {
     }
 }
 
-#define CHECK_CLOSE(x, y, tolerance)        \
-    if constexpr (sym)                      \
-        CHECK(cabs((x) - (y)) < tolerance); \
-    else                                    \
-        CHECK((cabs((x) - (y)) < tolerance).all());
+#define CHECK_CLOSE(x, y, tolerance)                    \
+    do {                                                \
+        if constexpr (sym)                              \
+            CHECK(cabs((x) - (y)) < tolerance);         \
+        else                                            \
+            CHECK((cabs((x) - (y)) < tolerance).all()); \
+    } while (false)
 
 template <bool sym>
 void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
@@ -827,7 +829,7 @@ TEST_CASE("Short circuit solver") {
     }
 }
 
-#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance);
+#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance)
 
 TEST_CASE("Math solver, zero variance test") {
     /*
