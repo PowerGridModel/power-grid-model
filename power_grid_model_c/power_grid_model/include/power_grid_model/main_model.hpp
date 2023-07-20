@@ -937,9 +937,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      */
     template <bool sym, class CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
-              typename PredicateIn = decltype(include_all)>
-    void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
-                       PredicateIn include = include_all) {
+              std::invocable<Idx> PredicateIn = decltype(include_all)>
+    requires std::convertible_to < std::invoke_result_t<PredicateIn, Idx>,
+    bool > void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
+                              PredicateIn include = include_all) {
         for (Idx i = 0, n = (Idx)components.size(); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
@@ -954,13 +955,33 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <bool sym>
-    auto calculate_param(auto const& c) {
-        if constexpr (requires { {c.calc_param()}; }) {
-            return c.calc_param();
+    template <bool sym, class CalcStructOut, typename CalcParamOut,
+              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::invocable<Idx> PredicateIn = decltype(include_all)>
+    requires std::convertible_to < std::invoke_result_t<PredicateIn, Idx>,
+    bool > void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
+                              std::invocable<ComponentIn const&> auto extra_args, PredicateIn include = include_all) {
+        for (Idx i = 0, n = (Idx)components.size(); i != n; ++i) {
+            if (include(i)) {
+                Idx2D const math_idx = components[i];
+                if (math_idx.group != -1) {
+                    auto const& component = state_.components.template get_item_by_seq<ComponentIn>(i);
+                    CalcParamOut const calc_param = calculate_param<sym>(component, extra_args(component));
+                    CalcStructOut& math_model_input = calc_input[math_idx.group];
+                    std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
+                    math_model_input_vect[math_idx.pos] = calc_param;
+                }
+            }
         }
-        else if constexpr (requires { {c.template calc_param<sym>()}; }) {
-            return c.template calc_param<sym>();
+    }
+
+    template <bool sym>
+    auto calculate_param(auto const& c, auto const&... extra_args) {
+        if constexpr (requires { {c.calc_param(extra_args...)}; }) {
+            return c.calc_param(extra_args...);
+        }
+        else if constexpr (requires { {c.template calc_param<sym>(extra_args...)}; }) {
+            return c.template calc_param<sym>(extra_args...);
         }
         else {
             return;
@@ -1073,18 +1094,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-            state_.comp_coup->fault, sc_input);
+            state_.comp_coup->fault, sc_input, [this](Fault const& fault) {
+                return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+            });
         prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
             state_.comp_coup->source, sc_input);
-
-        // y_fault to p.u.
-        std::for_each(begin(sc_input), end(sc_input), [this](ShortCircuitInput& fault_input) {
-            std::for_each(begin(fault_input.faults), end(fault_input.faults), [this](FaultCalcParam& param) {
-                auto const u_rated = state_.components.template get_item<Node>(param.math_fault_object).u_rated();
-                double const base_z = u_rated * u_rated / base_power_3p;
-                param.y_fault = base_z * param.y_fault_abs;
-            });
-        });
 
         return sc_input;
     }

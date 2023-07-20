@@ -21,29 +21,25 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test calc_param") {
         // Not connected to source
-        FaultCalcParam param = fault.calc_param(false);
+        FaultCalcParam param = fault.calc_param(u_rated, false);
         CHECK(param.math_fault_object == -1);
-        CHECK(cabs(param.y_fault_abs) == doctest::Approx(0.0));
         CHECK(cabs(param.y_fault) == doctest::Approx(0.0));
 
         // Connected to source
         param = fault.calc_param(u_rated);
-        DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0);
-        CHECK(param.math_fault_object == fault.get_fault_object());
-        CHECK(cabs(param.y_fault_abs) == doctest::Approx(cabs(y_f)));
-        CHECK(std::isnan(param.y_fault.real()));
-        CHECK(std::isnan(param.y_fault.imag()));
+        double const base_y = base_i / (u_rated / sqrt(3));
+        DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
+        CHECK(param.math_fault_object == -1);
+        CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
         CHECK(param.fault_phase == FaultPhase::ab);
     }
 
     SUBCASE("Test calc param with nan impedance input") {
         Fault fault_nan_imp{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, nan, nan}};
-        FaultCalcParam param = fault_nan_imp.calc_param();
+        FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
-        CHECK(std::isinf(param.y_fault_abs.real()));
-        CHECK(std::isinf(param.y_fault_abs.imag()));
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
         CHECK(param.fault_phase == FaultPhase::ab);
     }
@@ -53,8 +49,6 @@ TEST_CASE("Test fault") {
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
-        CHECK(std::isinf(param.y_fault_abs.real()));
-        CHECK(std::isinf(param.y_fault_abs.imag()));
         CHECK(param.fault_type == FaultType::three_phase);
         CHECK(param.fault_phase == FaultPhase::abc);
     }
@@ -82,6 +76,7 @@ TEST_CASE("Test fault") {
         FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
+        CHECK((output.i_f - cabs(i_f_res) * base_i < numerical_tolerance).all());
         CHECK((output.i_f_angle - arg(i_f_res) < numerical_tolerance).all());
     }
 
