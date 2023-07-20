@@ -18,6 +18,10 @@ using CalculationMethod::iterative_linear;
 using CalculationMethod::linear;
 using CalculationMethod::linear_current;
 using CalculationMethod::newton_raphson;
+using FaultType::single_phase_to_ground;
+using FaultType::three_phase;
+using FaultType::two_phase;
+using FaultType::two_phase_to_ground;
 }  // namespace
 
 TEST_CASE("Test block") {
@@ -47,11 +51,13 @@ TEST_CASE("Test block") {
     }
 }
 
-#define CHECK_CLOSE(x, y, tolerance)        \
-    if constexpr (sym)                      \
-        CHECK(cabs((x) - (y)) < tolerance); \
-    else                                    \
-        CHECK((cabs((x) - (y)) < tolerance).all());
+#define CHECK_CLOSE(x, y, tolerance)                    \
+    do {                                                \
+        if constexpr (sym)                              \
+            CHECK(cabs((x) - (y)) < tolerance);         \
+        else                                            \
+            CHECK((cabs((x) - (y)) < tolerance).all()); \
+    } while (false)
 
 template <bool sym>
 void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
@@ -80,6 +86,26 @@ void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_
     for (size_t i = 0; i != output.shunt.size(); ++i) {
         CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
         CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
+    }
+}
+
+template <bool sym>
+void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
+                      double tolerance = numerical_tolerance) {
+    for (size_t i = 0; i != output.u_bus.size(); ++i) {
+        CHECK_CLOSE(output.u_bus[i], output_ref.u_bus[i], tolerance);
+    }
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f, tolerance);
+    }
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t, tolerance);
+    }
+    for (size_t i = 0; i != output.fault.size(); ++i) {
+        CHECK_CLOSE(output.fault[i].i_fault, output_ref.fault[i].i_fault, tolerance);
+    }
+    for (size_t i = 0; i != output.source.size(); ++i) {
+        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i, tolerance);
     }
 }
 
@@ -536,7 +562,286 @@ TEST_CASE("Test math solver") {
     }
 }
 
-#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance);
+namespace {
+
+ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_phase, DoubleComplex const& y_fault,
+                                       double const vref, IdxVector const& fault_bus_indptr) {
+    ShortCircuitInput sc_input;
+    sc_input.fault_bus_indptr = fault_bus_indptr;
+    sc_input.source = {vref};
+    sc_input.faults = {{y_fault, fault_type, fault_phase}};
+    return sc_input;
+}
+
+template <bool sym>
+constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
+    ShortCircuitMathOutput<sym> sc_output;
+    sc_output.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
+    sc_output.fault = {{ComplexValue<sym>{}}};
+    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = {ComplexValue<sym>{}}, .i_t = {ComplexValue<sym>{}}}};
+    sc_output.source = {{ComplexValue<sym>{}}};
+    return sc_output;
+}
+
+template <bool sym>
+constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
+                                                            ComplexValue<sym> if_abc) {
+    ShortCircuitMathOutput<sym> sc_output;
+    sc_output.u_bus = {u0, u1};
+    sc_output.fault = {{if_abc}};
+    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = if_abc, .i_t = -if_abc}};
+    sc_output.source = {{if_abc}};
+    return sc_output;
+}
+
+template <bool sym>
+ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
+                                                  DoubleComplex const& y0, DoubleComplex const& y0_0, double const vref,
+                                                  DoubleComplex const& yref, double c_factor) {
+    // make function: input - fault type, zf, zs, z0 output - i_fault_abc
+    // i_fault_abc = t_mat @ i_fault_012
+    // i_fault_012 = [0, if, 0] for 3ph, [if, if, if] for 1phg, [0, if, -if] for 2ph
+    DoubleComplex const z0_0 = 1.0 / y0_0;
+    DoubleComplex const z0 = 1.0 / y0;
+    DoubleComplex const cvref = c_factor * vref;
+    DoubleComplex const zref = 1.0 / yref;
+
+    if constexpr (sym) {
+        DoubleComplex const if_abc = cvref / (z0 + zref + z_fault);
+        DoubleComplex const u0 = cvref - if_abc / yref;
+        DoubleComplex const u1 = u0 - if_abc * z0;
+        return create_math_sc_output<true>(u0, u1, if_abc);
+    }
+    else {
+        ComplexValue<false> if_abc{};
+        switch (fault_type) {
+            case three_phase: {
+                DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
+                if_abc = ComplexValue<false>(if_3ph);
+                break;
+            }
+            case single_phase_to_ground: {
+                DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
+                if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
+                break;
+            }
+            case two_phase: {
+                DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
+                if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
+                break;
+            }
+            case two_phase_to_ground: {
+                DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
+                DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
+                DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
+                DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
+                DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
+                DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
+                if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
+                break;
+            }
+            default:
+                throw InvalidShortCircuitType{false, fault_type};
+        }
+        ComplexValue<false> const cvref_asym{cvref};
+        ComplexValue<false> const u0 = cvref_asym - if_abc / yref;
+        DoubleComplex const z_self{(2.0 * z0 + z0_0) / 3.0};
+        DoubleComplex const z_mutual{(z0_0 - z0) / 3.0};
+        ComplexValue<false> const u_drop{
+            if_abc(0) * z_self + (if_abc(1) + if_abc(2)) * z_mutual,
+            if_abc(1) * z_self + (if_abc(0) + if_abc(2)) * z_mutual,
+            if_abc(2) * z_self + (if_abc(0) + if_abc(1)) * z_mutual,
+        };
+        ComplexValue<false> const u1 = u0 - u_drop;
+        return create_math_sc_output<false>(u0, u1, if_abc);
+    }
+}
+
+}  // namespace
+
+TEST_CASE("Short circuit solver") {
+    // Test case grid
+    // source -- bus --- line -- bus -- fault(type varying as per subcase)
+
+    // Grid for short circuit
+    MathModelTopology topo_sc;
+    topo_sc.slack_bus_ = 0;
+    topo_sc.phase_shift = {0.0, 0.0};
+    topo_sc.branch_bus_idx = {{0, 1}};
+    topo_sc.source_bus_indptr = {0, 1, 1};
+    topo_sc.shunt_bus_indptr = {0, 0, 0};
+    topo_sc.load_gen_bus_indptr = {0, 0, 0};
+    IdxVector const fault_bus_indptr{0, 0, 1};
+
+    // Impedance / admittances
+    // source
+    double const vref = 1.1;
+    DoubleComplex const yref{10.0 - 50.0i};
+    // line
+    DoubleComplex const y0{1.0 - 2.0i};
+    DoubleComplex const y0_0{0.5 + 0.5i};
+    // fault
+    DoubleComplex const z_fault{1.0 + 1.0i};
+    DoubleComplex const y_fault{1.0 / z_fault};
+    DoubleComplex const z_fault_solid{0.0 + 0.0i};
+    DoubleComplex const y_fault_solid{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
+    // c factor
+    double c_factor = 1.2;
+
+    // params sym
+    MathModelParam<true> param_sc_sym;
+    param_sc_sym.branch_param = {{y0, -y0, -y0, y0}};
+    param_sc_sym.source_param = {yref};
+
+    // params asym
+    MathModelParam<false> param_sc_asym;
+    ComplexTensor<false> const y0a{(2.0 * y0 + y0_0) / 3.0, (y0_0 - y0) / 3.0};
+    param_sc_asym.branch_param = {{y0a, -y0a, -y0a, y0a}};
+    ComplexTensor<false> const yref_asym{yref};
+    param_sc_asym.source_param = {yref_asym};
+
+    // topo and param ptr
+    auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
+    auto param_sym_ptr = std::make_shared<MathModelParam<true> const>(param_sc_sym);
+    auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_sc_asym);
+
+    SUBCASE("Test short circuit solver 3ph") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 3ph solid fault") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 3ph sym params") {
+        MathSolver<true> solver{topo_sc_ptr, param_sym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<true>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 3ph sym params solid fault") {
+        MathSolver<true> solver{topo_sc_ptr, param_sym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<true>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 1phg") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref =
+            create_sc_test_output<false>(single_phase_to_ground, z_fault, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 1phg solid fault") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input =
+            create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref =
+            create_sc_test_output<false>(single_phase_to_ground, z_fault_solid, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 2ph") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 2ph solid fault") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 2phg") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 2phg solid") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input =
+            create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref =
+            create_sc_test_output<false>(two_phase_to_ground, z_fault_solid, y0, y0_0, vref, yref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver no faults") {
+        MathSolver<false> solver_asym{topo_sc_ptr, param_asym_ptr};
+        ShortCircuitInput sc_input;
+        sc_input.source = {vref};
+        auto asym_sc_output_ref = blank_sc_output<false>(vref);
+        CalculationInfo info;
+        CHECK_THROWS_AS(solver_asym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909),
+                        NoShortCircuit);
+
+        MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
+        auto sym_sc_output_ref = blank_sc_output<true>(vref);
+        CHECK_THROWS_AS(solver_sym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909),
+                        NoShortCircuit);
+    }
+}
+
+#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance)
 
 TEST_CASE("Math solver, zero variance test") {
     /*
@@ -811,4 +1116,5 @@ TEST_CASE("Math solver, measurements") {
     CHECK(output.bus_injection[1] == output.branch[0].s_t);
     CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
 }
+
 }  // namespace power_grid_model

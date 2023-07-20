@@ -161,6 +161,13 @@ class UnknownAttributeName : public PowerGridError {
     }
 };
 
+class NoShortCircuit : public PowerGridError {
+   public:
+    NoShortCircuit() {
+        append_msg("No faults present in short circuit calculation!\n");
+    }
+};
+
 class InvalidShortCircuitType : public PowerGridError {
    public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
@@ -179,6 +186,13 @@ class InvalidShortCircuitPhases : public PowerGridError {
         append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
                    ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
                    ")\n");
+    }
+};
+
+class InvalidShortCircuitPhaseOrType : public PowerGridError {
+   public:
+    InvalidShortCircuitPhaseOrType() {
+        append_msg("During one calculation the short circuit types phases should be similar for all faults \n");
     }
 };
 

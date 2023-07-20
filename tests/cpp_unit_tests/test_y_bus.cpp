@@ -156,7 +156,7 @@ TEST_CASE("Test y bus") {
     SUBCASE("Test branch flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
-        auto branch_flow = ybus.calculate_branch_flow(u);
+        auto branch_flow = ybus.calculate_branch_flow<BranchMathOutput<true>>(u);
 
         // branch 2, bus 2->3
         // if = 3 * 9i + 4 * 10i = 67i
@@ -172,7 +172,7 @@ TEST_CASE("Test y bus") {
     SUBCASE("Test shunt flow calculation") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         ComplexVector u{1.0, 2.0, 3.0, 4.0};
-        auto shunt_flow = ybus.calculate_shunt_flow(u);
+        auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceMathOutput<true>>(u);
 
         // shunt 1
         // i = -4 * 200i

@@ -59,12 +59,22 @@ struct BranchMathOutput {
     ComplexValue<sym> i_t;
 };
 
+template <bool sym>
+struct BranchShortCircuitMathOutput {
+    ComplexValue<sym> i_f;
+    ComplexValue<sym> i_t;
+};
+
 // fault math calculation parameters and math output
 struct FaultCalcParam {
-    Idx math_fault_object{-1};
     DoubleComplex y_fault;
     FaultType fault_type;
     FaultPhase fault_phase;
+};
+
+template <bool sym>
+struct FaultShortCircuitMathOutput {
+    ComplexValue<sym> i_fault;
 };
 
 // appliance math output, always injection direction
@@ -72,6 +82,10 @@ struct FaultCalcParam {
 template <bool sym>
 struct ApplianceMathOutput {
     ComplexValue<sym> s;
+    ComplexValue<sym> i;
+};
+template <bool sym>
+struct ApplianceShortCircuitMathOutput {
     ComplexValue<sym> i;
 };
 
@@ -112,7 +126,6 @@ struct MathModelTopology {
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
-    IdxVector fault_bus_indptr;                 // indptr of the fault
 
     Idx n_bus() const {
         return (Idx)phase_shift.size();
@@ -161,10 +174,6 @@ struct MathModelTopology {
     Idx n_bus_power_sensor() const {
         return bus_power_sensor_indptr.back();
     }
-
-    Idx n_fault() const {
-        return fault_bus_indptr.back();
-    }
 };
 
 template <bool sym>
@@ -199,6 +208,7 @@ struct StateEstimationInput {
 };
 
 struct ShortCircuitInput {
+    IdxVector fault_bus_indptr;  // indptr of the fault
     std::vector<FaultCalcParam> faults;
     ComplexVector source;  // Complex u_ref of each source
 };
@@ -215,11 +225,11 @@ struct MathOutput {
 
 template <bool sym>
 struct ShortCircuitMathOutput {
-    std::vector<ComplexValue<sym>> i_fault;
     std::vector<ComplexValue<sym>> u_bus;
-    std::vector<ComplexValue<sym>> i_branch_from;
-    std::vector<ComplexValue<sym>> i_branch_to;
-    std::vector<ComplexValue<sym>> i_source;
+    std::vector<FaultShortCircuitMathOutput<sym>> fault;
+    std::vector<BranchShortCircuitMathOutput<sym>> branch;
+    std::vector<ApplianceShortCircuitMathOutput<sym>> source;
+    std::vector<ApplianceShortCircuitMathOutput<sym>> shunt;
 };
 
 template <typename T>
@@ -321,6 +331,17 @@ struct Idx2DBranch3 {
 //		pos = sequence number in math model,
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
+    std::vector<Idx2D> fault;
+};
+
+// couple component to math model
+// like ComponentToMathCoupling but for components that are immutable after the topology is fixed
+// use Idx2D to map component to math model
+//		group = math model sequence number,
+//		group = -1 means isolated component
+//		pos = sequence number in math model,
+//		pos = -1 means not connected at that side, only applicable for branches
+struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;
     std::vector<Idx2DBranch3> branch3;
@@ -329,7 +350,6 @@ struct ComponentToMathCoupling {
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
     std::vector<Idx2D> power_sensor;  // can be coupled to branch-from/to, source, load_gen, or shunt sensor
-    std::vector<Idx2D> fault;
 };
 
 // change of update cause topology and param change, or just param change
