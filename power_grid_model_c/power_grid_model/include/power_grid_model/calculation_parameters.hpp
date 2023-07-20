@@ -267,8 +267,9 @@ static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<true>>);
 static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<false>>);
 
 template <typename T>
-concept math_output_type = (symmetric_math_output_type<T> || asymmetric_math_output_type<T>)&&(
-    steady_state_math_output_type<T> || short_circuit_math_output_type<T>);
+concept math_output_type = (symmetric_math_output_type<T> ||
+                            asymmetric_math_output_type<T>)&&(steady_state_math_output_type<T> ||
+                                                              short_circuit_math_output_type<T>);
 
 static_assert(math_output_type<MathOutput<true>>);
 static_assert(math_output_type<MathOutput<false>>);
@@ -330,6 +331,17 @@ struct Idx2DBranch3 {
 //		pos = sequence number in math model,
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
+    std::vector<Idx2D> fault;
+};
+
+// couple component to math model
+// like ComponentToMathCoupling but for components that are immutable after the topology is fixed
+// use Idx2D to map component to math model
+//		group = math model sequence number,
+//		group = -1 means isolated component
+//		pos = sequence number in math model,
+//		pos = -1 means not connected at that side, only applicable for branches
+struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;
     std::vector<Idx2DBranch3> branch3;

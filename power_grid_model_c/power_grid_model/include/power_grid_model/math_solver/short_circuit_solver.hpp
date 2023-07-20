@@ -27,7 +27,6 @@ class ShortCircuitSolver {
    public:
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
-          n_fault_{topo_ptr->n_fault()},
           n_source_{topo_ptr->n_source()},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           mat_data_(y_bus.nnz_lu()),
@@ -50,7 +49,7 @@ class ShortCircuitSolver {
         // output
         ShortCircuitMathOutput<sym> output;
         output.u_bus.resize(n_bus_);
-        output.fault.resize(n_fault_);
+        output.fault.resize(input.faults.size());
         output.source.resize(n_source_);
 
         // copy y_bus data
@@ -226,7 +225,7 @@ class ShortCircuitSolver {
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
-                          int const& phase_1, int const& phase_2, double const& source_voltage_ref) {
+                          int const phase_1, int const phase_2, double const source_voltage_ref) {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
