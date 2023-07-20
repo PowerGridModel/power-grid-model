@@ -54,10 +54,12 @@ class Fault final : public Base {
         if (r_f_ == 0.0 && x_f_ == 0.0) {
             param.y_fault_abs.real(std::numeric_limits<double>::infinity());
             param.y_fault_abs.imag(std::numeric_limits<double>::infinity());
+            param.y_fault = param.y_fault_abs;
             return param;
         }
         // calculate the fault admittance in susceptance
         param.y_fault_abs = 1.0 / (r_f_ + 1.0i * x_f_);
+        param.y_fault = {nan, nan};
         return param;
     }
 

@@ -22,10 +22,9 @@ TEST_CASE("Test fault") {
     SUBCASE("Test calc_param") {
         // Not connected to source
         FaultCalcParam param = fault.calc_param(false);
-        CHECK(param.math_fault_object == fault.get_fault_object());
+        CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault_abs) == doctest::Approx(0.0));
-        CHECK(std::isnan(param.y_fault.real()));
-        CHECK(std::isnan(param.y_fault.imag()));
+        CHECK(cabs(param.y_fault) == doctest::Approx(0.0));
 
         // Connected to source
         param = fault.calc_param(u_rated);
@@ -43,6 +42,8 @@ TEST_CASE("Test fault") {
         FaultCalcParam param = fault_nan_imp.calc_param();
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
+        CHECK(std::isinf(param.y_fault_abs.real()));
+        CHECK(std::isinf(param.y_fault_abs.imag()));
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
         CHECK(param.fault_phase == FaultPhase::ab);
     }
@@ -52,6 +53,8 @@ TEST_CASE("Test fault") {
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
+        CHECK(std::isinf(param.y_fault_abs.real()));
+        CHECK(std::isinf(param.y_fault_abs.imag()));
         CHECK(param.fault_type == FaultType::three_phase);
         CHECK(param.fault_phase == FaultPhase::abc);
     }

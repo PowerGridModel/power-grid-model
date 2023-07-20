@@ -68,8 +68,8 @@ struct BranchShortCircuitMathOutput {
 // fault math calculation parameters and math output
 struct FaultCalcParam {
     Idx math_fault_object{-1};
-    DoubleComplex y_fault_abs;   // in susceptance, not p.u.
-    DoubleComplex y_fault{nan};  // in p.u.
+    DoubleComplex y_fault_abs;  // in susceptance, not p.u.
+    DoubleComplex y_fault;      // in p.u.
     FaultType fault_type;
     FaultPhase fault_phase;
 };
