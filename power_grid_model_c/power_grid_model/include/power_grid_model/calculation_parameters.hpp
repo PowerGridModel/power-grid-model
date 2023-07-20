@@ -67,7 +67,6 @@ struct BranchShortCircuitMathOutput {
 
 // fault math calculation parameters and math output
 struct FaultCalcParam {
-    Idx math_fault_object{-1};
     DoubleComplex y_fault;
     FaultType fault_type;
     FaultPhase fault_phase;
@@ -127,7 +126,6 @@ struct MathModelTopology {
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
-    IdxVector fault_bus_indptr;                 // indptr of the fault
 
     Idx n_bus() const {
         return (Idx)phase_shift.size();
@@ -176,10 +174,6 @@ struct MathModelTopology {
     Idx n_bus_power_sensor() const {
         return bus_power_sensor_indptr.back();
     }
-
-    Idx n_fault() const {
-        return fault_bus_indptr.back();
-    }
 };
 
 template <bool sym>
@@ -214,6 +208,7 @@ struct StateEstimationInput {
 };
 
 struct ShortCircuitInput {
+    IdxVector fault_bus_indptr;  // indptr of the fault
     std::vector<FaultCalcParam> faults;
     ComplexVector source;  // Complex u_ref of each source
 };
@@ -272,9 +267,8 @@ static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<true>>);
 static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<false>>);
 
 template <typename T>
-concept math_output_type = (symmetric_math_output_type<T> ||
-                            asymmetric_math_output_type<T>)&&(steady_state_math_output_type<T> ||
-                                                              short_circuit_math_output_type<T>);
+concept math_output_type = (symmetric_math_output_type<T> || asymmetric_math_output_type<T>)&&(
+    steady_state_math_output_type<T> || short_circuit_math_output_type<T>);
 
 static_assert(math_output_type<MathOutput<true>>);
 static_assert(math_output_type<MathOutput<false>>);
@@ -344,7 +338,6 @@ struct ComponentToMathCoupling {
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
     std::vector<Idx2D> power_sensor;  // can be coupled to branch-from/to, source, load_gen, or shunt sensor
-    std::vector<Idx2D> fault;
 };
 
 // change of update cause topology and param change, or just param change
