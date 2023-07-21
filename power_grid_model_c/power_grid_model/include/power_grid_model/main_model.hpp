@@ -1090,16 +1090,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<ShortCircuitInput> prepare_short_circuit_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
-        // auto faulty_node = [this](Fault const& fault) {
-        //     return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-        // };
+        auto faulty_node = [this](Fault const& fault) {
+            return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+        };
 
-        // IdxVector fault_node_idx(state_.components.template size<Fault>());
-        // std::transform(state_.components.template citer<Fault>().begin(),
-        //                state_.components.template citer<Fault>().end(), fault_node_idx.begin(),
-        //                [this](Fault const& fault) {
-        //                    return state_.components.template get_seq<Node>(fault.get_fault_object());
-        //                });
+        IdxVector fault_node_idx(state_.components.template size<Fault>());
+        std::transform(state_.components.template citer<Fault>().begin(),
+                       state_.components.template citer<Fault>().end(), fault_node_idx.begin(),
+                       [this](Fault const& fault) {
+                           return state_.components.template get_seq<Node>(fault.get_fault_object());
+                       });
 
         // IntSVector fault_connected(fault_node_idx.size());
         // std::transform(state_.components.template citer<Fault>().begin(),
@@ -1108,6 +1108,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         //                    return static_cast<IntS>(fault.status());
         //                });
 
+        state_.comp_coup.reset(new ComponentToMathCoupling{std::vector{Idx2D{-1, -1}}});
         // state_.comp_coup->fault.reset();
         // for (auto const& it : state_.components.template citer<Fault>()) {
         //     state_.comp_coup->fault.push_back(
@@ -1115,15 +1116,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // }
 
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
-        // for (Idx i = 0; i != n_math_solvers_; ++i) {
-        //     sc_input[i].faults.resize(math_topology_[i]->n_fault());
-        //     sc_input[i].source.resize(math_topology_[i]->n_source());
-        // }
+        for (Idx i = 0; i != n_math_solvers_; ++i) {
+            sc_input[i].fault_bus_indptr = {0, 1};  // TODO(mgovers) calculate this
+            sc_input[i].faults.resize(fault_node_idx.size());
+            sc_input[i].source.resize(math_topology_[i]->n_source());
+        }
 
-        // prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-        //     state_.comp_coup->fault, sc_input, faulty_node);
-        // prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
-        //     state_.topo_comp_coup->source, sc_input);
+        prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
+            state_.comp_coup->fault, sc_input, faulty_node);
+        prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
+            state_.topo_comp_coup->source, sc_input);
 
         return sc_input;
     }
