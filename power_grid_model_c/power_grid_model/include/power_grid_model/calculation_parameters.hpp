@@ -67,9 +67,7 @@ struct BranchShortCircuitMathOutput {
 
 // fault math calculation parameters and math output
 struct FaultCalcParam {
-    Idx math_fault_object{-1};
-    DoubleComplex y_fault_abs;  // in susceptance, not p.u.
-    DoubleComplex y_fault;      // in p.u.
+    DoubleComplex y_fault;
     FaultType fault_type;
     FaultPhase fault_phase;
 };
@@ -128,58 +126,53 @@ struct MathModelTopology {
     IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
-    IdxVector fault_bus_indptr;                 // indptr of the fault
 
-    Idx n_bus() const {
-        return (Idx)phase_shift.size();
+    constexpr Idx n_bus() const {
+        return static_cast<Idx>(phase_shift.size());
     }
 
-    Idx n_branch() const {
-        return (Idx)branch_bus_idx.size();
+    constexpr Idx n_branch() const {
+        return static_cast<Idx>(branch_bus_idx.size());
     }
 
-    Idx n_source() const {
+    constexpr Idx n_source() const {
         return source_bus_indptr.back();
     }
 
-    Idx n_shunt() const {
+    constexpr Idx n_shunt() const {
         return shunt_bus_indptr.back();
     }
 
-    Idx n_load_gen() const {
+    constexpr Idx n_load_gen() const {
         return load_gen_bus_indptr.back();
     }
 
-    Idx n_voltage_sensor() const {
+    constexpr Idx n_voltage_sensor() const {
         return voltage_sensor_indptr.back();
     }
 
-    Idx n_source_power_sensor() const {
+    constexpr Idx n_source_power_sensor() const {
         return source_power_sensor_indptr.back();
     }
 
-    Idx n_load_gen_power_sensor() const {
+    constexpr Idx n_load_gen_power_sensor() const {
         return load_gen_power_sensor_indptr.back();
     }
 
-    Idx n_shunt_power_power_sensor() const {
+    constexpr Idx n_shunt_power_power_sensor() const {
         return shunt_power_sensor_indptr.back();
     }
 
-    Idx n_branch_from_power_sensor() const {
+    constexpr Idx n_branch_from_power_sensor() const {
         return branch_from_power_sensor_indptr.back();
     }
 
-    Idx n_branch_to_power_sensor() const {
+    constexpr Idx n_branch_to_power_sensor() const {
         return branch_to_power_sensor_indptr.back();
     }
 
-    Idx n_bus_power_sensor() const {
+    constexpr Idx n_bus_power_sensor() const {
         return bus_power_sensor_indptr.back();
-    }
-
-    Idx n_fault() const {
-        return fault_bus_indptr.back();
     }
 };
 
@@ -215,6 +208,7 @@ struct StateEstimationInput {
 };
 
 struct ShortCircuitInput {
+    IdxVector fault_bus_indptr;  // indptr of the fault
     std::vector<FaultCalcParam> faults;
     ComplexVector source;  // Complex u_ref of each source
 };
@@ -337,6 +331,17 @@ struct Idx2DBranch3 {
 //		pos = sequence number in math model,
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
+    std::vector<Idx2D> fault;
+};
+
+// couple component to math model
+// like ComponentToMathCoupling but for components that are immutable after the topology is fixed
+// use Idx2D to map component to math model
+//		group = math model sequence number,
+//		group = -1 means isolated component
+//		pos = sequence number in math model,
+//		pos = -1 means not connected at that side, only applicable for branches
+struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;
     std::vector<Idx2DBranch3> branch3;
@@ -345,7 +350,6 @@ struct ComponentToMathCoupling {
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
     std::vector<Idx2D> power_sensor;  // can be coupled to branch-from/to, source, load_gen, or shunt sensor
-    std::vector<Idx2D> fault;
 };
 
 // change of update cause topology and param change, or just param change

@@ -24,37 +24,37 @@ constexpr auto comp_sequence_offset(MainModelState<ComponentContainer> const& st
 template <std::same_as<Node> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->node.cbegin();
+    return state.topo_comp_coup->node.cbegin();
 }
 
 template <std::derived_from<Branch> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->branch.cbegin() + comp_sequence_offset<Branch, Component>(state);
+    return state.topo_comp_coup->branch.cbegin() + comp_sequence_offset<Branch, Component>(state);
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->branch3.cbegin() + comp_sequence_offset<Branch3, Component>(state);
+    return state.topo_comp_coup->branch3.cbegin() + comp_sequence_offset<Branch3, Component>(state);
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->source.cbegin();
+    return state.topo_comp_coup->source.cbegin();
 }
 
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->load_gen.cbegin() + comp_sequence_offset<GenericLoadGen, Component>(state);
+    return state.topo_comp_coup->load_gen.cbegin() + comp_sequence_offset<GenericLoadGen, Component>(state);
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->shunt.cbegin();
+    return state.topo_comp_coup->shunt.cbegin();
 }
 
 template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer>
@@ -289,7 +289,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         state, res_it, [&state, &math_output](GenericVoltageSensor const& voltage_sensor, Idx const node_seq) {
             constexpr auto sym = symmetric_math_output_type<MathOutputType>;
 
-            Idx2D const node_math_id = state.comp_coup->node[node_seq];
+            Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
             if (node_math_id.group == -1) {
                 return voltage_sensor.get_null_output<sym>();
             }
@@ -314,23 +314,26 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 
                     case branch_from:
                     case branch_to:
-                        return state.comp_coup->branch[obj_seq];
+                        return state.topo_comp_coup->branch[obj_seq];
                     case source:
-                        return state.comp_coup->source[obj_seq];
+                        return state.topo_comp_coup->source[obj_seq];
                     case shunt:
-                        return state.comp_coup->shunt[obj_seq];
+                        return state.topo_comp_coup->shunt[obj_seq];
                     case load:
                     case generator:
-                        return state.comp_coup->load_gen[obj_seq];
+                        return state.topo_comp_coup->load_gen[obj_seq];
                     // from branch3, get relevant math object branch based on the measured side
                     case branch3_1:
-                        return Idx2D{state.comp_coup->branch3[obj_seq].group, state.comp_coup->branch3[obj_seq].pos[0]};
+                        return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
+                                     state.topo_comp_coup->branch3[obj_seq].pos[0]};
                     case branch3_2:
-                        return Idx2D{state.comp_coup->branch3[obj_seq].group, state.comp_coup->branch3[obj_seq].pos[1]};
+                        return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
+                                     state.topo_comp_coup->branch3[obj_seq].pos[1]};
                     case branch3_3:
-                        return Idx2D{state.comp_coup->branch3[obj_seq].group, state.comp_coup->branch3[obj_seq].pos[2]};
+                        return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
+                                     state.topo_comp_coup->branch3[obj_seq].pos[2]};
                     case node:
-                        return state.comp_coup->node[obj_seq];
+                        return state.topo_comp_coup->node[obj_seq];
                     default:
                         throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
                                                       terminal_type);

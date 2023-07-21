@@ -316,6 +316,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         asym_solvers_.clear();
         math_topology_.clear();
         state_.comp_coup.reset();
+        state_.topo_comp_coup.reset();
     }
 
     /*
@@ -819,7 +820,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        });
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
-        std::tie(math_topology_, state_.comp_coup) = topology.build_topology();
+        std::tie(math_topology_, state_.topo_comp_coup) = topology.build_topology();
         n_math_solvers_ = (Idx)math_topology_.size();
         is_topology_up_to_date_ = true;
         is_sym_parameter_up_to_date_ = false;
@@ -836,7 +837,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         // loop all branch
         for (Idx i = 0; i != (Idx)state_.comp_topo->branch_node_idx.size(); ++i) {
-            Idx2D const math_idx = state_.comp_coup->branch[i];
+            Idx2D const math_idx = state_.topo_comp_coup->branch[i];
             if (math_idx.group == -1) {
                 continue;
             }
@@ -846,7 +847,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         // loop all branch3
         for (Idx i = 0; i != (Idx)state_.comp_topo->branch3_node_idx.size(); ++i) {
-            Idx2DBranch3 const math_idx = state_.comp_coup->branch3[i];
+            Idx2DBranch3 const math_idx = state_.topo_comp_coup->branch3[i];
             if (math_idx.group == -1) {
                 continue;
             }
@@ -859,7 +860,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         // loop all shunt
         for (Idx i = 0; i != (Idx)state_.comp_topo->shunt_node_idx.size(); ++i) {
-            Idx2D const math_idx = state_.comp_coup->shunt[i];
+            Idx2D const math_idx = state_.topo_comp_coup->shunt[i];
             if (math_idx.group == -1) {
                 continue;
             }
@@ -869,7 +870,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         // loop all source
         for (Idx i = 0; i != (Idx)state_.comp_topo->source_node_idx.size(); ++i) {
-            Idx2D const math_idx = state_.comp_coup->source[i];
+            Idx2D const math_idx = state_.topo_comp_coup->source[i];
             if (math_idx.group == -1) {
                 continue;
             }
@@ -924,7 +925,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    deduced.
      *
      * @param component[in]
-     *      The vector of component math indices to consider (e.g. state_.comp_coup->source).
+     *      The vector of component math indices to consider (e.g. state_.topo_comp_coup->source).
      *      When idx.group = -1, the original component is not assigned to a math model, so we can skip it.
      *
      * @param calc_input[out]
@@ -1009,10 +1010,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             pf_input[i].source.resize(math_topology_[i]->n_source());
         }
         prepare_input<sym, PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
-            state_.comp_coup->source, pf_input);
+            state_.topo_comp_coup->source, pf_input);
 
         prepare_input<sym, PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
-            state_.comp_coup->load_gen, pf_input);
+            state_.topo_comp_coup->load_gen, pf_input);
 
         return pf_input;
     }
@@ -1036,34 +1037,35 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             se_input[i].measured_bus_injection.resize(math_topology_[i]->n_bus_power_sensor());
         }
 
-        prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state_.comp_coup->shunt, se_input);
+        prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state_.topo_comp_coup->shunt,
+                                                                                   se_input);
         prepare_input_status<sym, &StateEstimationInput<sym>::load_gen_status, GenericLoadGen>(
-            state_.comp_coup->load_gen, se_input);
-        prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(state_.comp_coup->source,
+            state_.topo_comp_coup->load_gen, se_input);
+        prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(state_.topo_comp_coup->source,
                                                                                      se_input);
 
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_voltage, GenericVoltageSensor>(
-            state_.comp_coup->voltage_sensor, se_input);
+            state_.topo_comp_coup->voltage_sensor, se_input);
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_source_power, GenericPowerSensor>(
-            state_.comp_coup->power_sensor, se_input, [this](Idx i) {
+            state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_load_gen_power, GenericPowerSensor>(
-            state_.comp_coup->power_sensor, se_input, [this](Idx i) {
+            state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_shunt_power, GenericPowerSensor>(
-            state_.comp_coup->power_sensor, se_input, [this](Idx i) {
+            state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
-            state_.comp_coup->power_sensor, se_input, [this](Idx i) {
+            state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
                        // all branch3 sensors are at from side in the mathematical model
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
@@ -1072,12 +1074,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
-            state_.comp_coup->power_sensor, se_input, [this](Idx i) {
+            state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
             });
         prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
-            state_.comp_coup->power_sensor, se_input, [this](Idx i) {
+            state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::node;
             });
 
@@ -1087,18 +1089,41 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym>
     std::vector<ShortCircuitInput> prepare_short_circuit_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-        std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            sc_input[i].faults.resize(math_topology_[i]->n_fault());
-            sc_input[i].source.resize(math_topology_[i]->n_source());
-        }
 
-        prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-            state_.comp_coup->fault, sc_input, [this](Fault const& fault) {
-                return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-            });
-        prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
-            state_.comp_coup->source, sc_input);
+        // auto faulty_node = [this](Fault const& fault) {
+        //     return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+        // };
+
+        // IdxVector fault_node_idx(state_.components.template size<Fault>());
+        // std::transform(state_.components.template citer<Fault>().begin(),
+        //                state_.components.template citer<Fault>().end(), fault_node_idx.begin(),
+        //                [this](Fault const& fault) {
+        //                    return state_.components.template get_seq<Node>(fault.get_fault_object());
+        //                });
+
+        // IntSVector fault_connected(fault_node_idx.size());
+        // std::transform(state_.components.template citer<Fault>().begin(),
+        //                state_.components.template citer<Fault>().end(), comp_conn.branch_connected.begin(),
+        //                [](Fault const& fault) {
+        //                    return static_cast<IntS>(fault.status());
+        //                });
+
+        // state_.comp_coup->fault.reset();
+        // for (auto const& it : state_.components.template citer<Fault>()) {
+        //     state_.comp_coup->fault.push_back(
+        //         state.topo_comp_coup->node[state_.components.template get_idx_by_id<Node>(it->get_fault_object())]);
+        // }
+
+        std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
+        // for (Idx i = 0; i != n_math_solvers_; ++i) {
+        //     sc_input[i].faults.resize(math_topology_[i]->n_fault());
+        //     sc_input[i].source.resize(math_topology_[i]->n_source());
+        // }
+
+        // prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
+        //     state_.comp_coup->fault, sc_input, faulty_node);
+        // prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
+        //     state_.topo_comp_coup->source, sc_input);
 
         return sc_input;
     }

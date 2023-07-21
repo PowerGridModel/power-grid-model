@@ -20,6 +20,7 @@ struct MainModelState {
     ComponentContainer components;
     // calculation parameters
     std::shared_ptr<ComponentTopology const> comp_topo;
+    std::shared_ptr<TopologicalComponentToMathCoupling const> topo_comp_coup;
     std::shared_ptr<ComponentToMathCoupling const> comp_coup;
 };
 

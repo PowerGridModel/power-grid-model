@@ -27,10 +27,8 @@ class ShortCircuitSolver {
    public:
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
-          n_fault_{topo_ptr->n_fault()},
           n_source_{topo_ptr->n_source()},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          fault_bus_indptr_{topo_ptr, &topo_ptr->fault_bus_indptr},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {
@@ -51,7 +49,7 @@ class ShortCircuitSolver {
         // output
         ShortCircuitMathOutput<sym> output;
         output.u_bus.resize(n_bus_);
-        output.fault.resize(n_fault_);
+        output.fault.resize(input.faults.size());
         output.source.resize(n_source_);
 
         // copy y_bus data
@@ -67,7 +65,7 @@ class ShortCircuitSolver {
         // prepare matrix + rhs
         IdxVector infinite_admittance_fault_counter(n_bus_);
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        IdxVector const& fault_bus_indptr = *fault_bus_indptr_;
+        IdxVector const& fault_bus_indptr = input.fault_bus_indptr;
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
@@ -220,7 +218,6 @@ class ShortCircuitSolver {
     Idx n_source_;
     // shared topo data
     std::shared_ptr<IdxVector const> source_bus_indptr_;
-    std::shared_ptr<IdxVector const> fault_bus_indptr_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -229,15 +226,15 @@ class ShortCircuitSolver {
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
-                          int const& phase_1, int const& phase_2, double const& subtransient_voltage_factor) {
+                          int const phase_1, int const phase_2, double const subtransient_voltage_factor) const {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
             double const infinite_admittance_fault_counter_bus =
                 static_cast<double>(infinite_admittance_fault_counter[bus_number]);
 
-            for (Idx fault_number = (*fault_bus_indptr_)[bus_number];
-                 fault_number != (*fault_bus_indptr_)[bus_number + 1]; ++fault_number) {
+            for (Idx fault_number = input.fault_bus_indptr[bus_number];
+                 fault_number != input.fault_bus_indptr[bus_number + 1]; ++fault_number) {
                 auto& i_fault = output.fault[fault_number].i_fault;
                 auto& u_bus = output.u_bus[bus_number];
                 DoubleComplex const y_fault = input.faults[fault_number].y_fault;
@@ -313,8 +310,8 @@ class ShortCircuitSolver {
             }
 
             // compensate source current into hard fault
-            for (Idx fault_number = (*fault_bus_indptr_)[bus_number];
-                 fault_number != (*fault_bus_indptr_)[bus_number + 1]; ++fault_number) {
+            for (Idx fault_number = input.fault_bus_indptr[bus_number];
+                 fault_number != input.fault_bus_indptr[bus_number + 1]; ++fault_number) {
                 auto& i_fault = output.fault[fault_number].i_fault;
                 DoubleComplex const y_fault = input.faults[fault_number].y_fault;
 
