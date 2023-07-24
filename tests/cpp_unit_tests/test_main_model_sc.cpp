@@ -23,7 +23,15 @@ TEST_CASE("Test Main Model - short circuit") {
                     main_model.calculate_short_circuit<true>(1.0, CalculationMethod::iec60909);
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
-                CHECK(std::isinf(fault_output[0].i_f(0)));
+                CHECK(fault_output[0].i_f(0) == doctest::Approx(0.0));
+            }
+
+            SUBCASE("Asymmetric Calculation") {
+                std::vector<ShortCircuitMathOutput<false>> const math_output =
+                    main_model.calculate_short_circuit<false>(1.0, CalculationMethod::iec60909);
+                std::vector<FaultShortCircuitOutput> fault_output(1);
+                main_model.output_result<Fault>(math_output, fault_output.begin());
+                CHECK(fault_output[0].i_f(0) == doctest::Approx(0.0));
             }
         }
     }

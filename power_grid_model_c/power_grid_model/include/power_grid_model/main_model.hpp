@@ -1089,30 +1089,35 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<ShortCircuitInput> prepare_short_circuit_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
-        auto faulty_node = [this](Fault const& fault) {
-            return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-        };
+        IdxVector fault_node_idx;
+        std::vector<IdxVector> topo_fault_indices(state_.math_topology.size());
+        std::vector<IdxVector> topo_node_indices(state_.math_topology.size());
 
-        IdxVector fault_node_idx(state_.components.template size<Fault>());
-        std::transform(state_.components.template citer<Fault>().begin(),
-                       state_.components.template citer<Fault>().end(), fault_node_idx.begin(),
-                       [this](Fault const& fault) {
-                           return state_.components.template get_seq<Node>(fault.get_fault_object());
-                       });
+        fault_node_idx.reserve(state_.components.template size<Fault>());
+        for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
+            auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
+            auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
+            auto const topo_node_idx = state_.topo_comp_coup->node[node_idx];
 
-        // IntSVector fault_connected(fault_node_idx.size());
-        // std::transform(state_.components.template citer<Fault>().begin(),
-        //                state_.components.template citer<Fault>().end(), comp_conn.branch_connected.begin(),
-        //                [](Fault const& fault) {
-        //                    return static_cast<IntS>(fault.status());
-        //                });
+            fault_node_idx.push_back(node_idx);
+            topo_fault_indices[topo_node_idx.group].push_back(fault_idx);
+            topo_node_indices[topo_node_idx.group].push_back(topo_node_idx.pos);
+        }
 
-        state_.comp_coup.reset(new ComponentToMathCoupling{std::vector{Idx2D{-1, -1}}});
-        // state_.comp_coup->fault.reset();
-        // for (auto const& it : state_.components.template citer<Fault>()) {
-        //     state_.comp_coup->fault.push_back(
-        //         state.topo_comp_coup->node[state_.components.template get_idx_by_id<Node>(it->get_fault_object())]);
-        // }
+        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1});
+
+        state_.math_view_topology.resize(state_.math_topology.size());
+        for (Idx topo_idx{0}; topo_idx < state_.math_topology.size(); ++topo_idx) {
+            auto map = build_sparse_mapping(topo_node_indices[topo_idx], static_cast<Idx>(fault_node_idx.size()));
+            state_.math_view_topology[topo_idx].reset(new MathModelTopologyView{
+                .math_topo = state_.math_topology[topo_idx], .fault_bus_ind_ptr = std::move(map.indptr)});
+
+            for (Idx reordered_idx{0}; reordered_idx < map.reorder.size(); ++reordered_idx) {
+                fault_coup[topo_fault_indices[topo_idx][map.reorder[reordered_idx]]] = Idx2D{topo_idx, reordered_idx};
+            }
+        }
+
+        state_.comp_coup.reset(new ComponentToMathCoupling{.fault = std::move(fault_coup)});
 
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
@@ -1121,8 +1126,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
+        auto u_rated = [this](Fault const& fault) {
+            return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+        };
+
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-            state_.comp_coup->fault, sc_input, faulty_node);
+            state_.comp_coup->fault, sc_input, u_rated);
         prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
             state_.topo_comp_coup->source, sc_input);
 

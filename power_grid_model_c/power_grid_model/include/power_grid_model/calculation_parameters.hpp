@@ -176,6 +176,11 @@ struct MathModelTopology {
     }
 };
 
+struct MathModelTopologyView {
+    std::shared_ptr<const MathModelTopology> math_topo;
+    IdxVector fault_bus_ind_ptr;
+};
+
 template <bool sym>
 struct MathModelParam {
     std::vector<BranchCalcParam<sym>> branch_param;
