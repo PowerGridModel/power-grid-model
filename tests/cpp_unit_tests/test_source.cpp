@@ -25,9 +25,9 @@ TEST_CASE("Test source") {
     DoubleComplex const y_ref_sym = y1;
 
     // calculation
-    double u_input = 1.1;
-    double u = 0.9;
-    double i = cabs(y1 * (u_input - u)) * base_power_3p / sqrt3 / un;
+    double const u_input = 1.1;
+    double const u = 0.9;
+    double const i = cabs(y1 * (u_input - u)) * base_power_3p / sqrt3 / un;
 
     // asym
     ComplexTensor<false> const sym_matrix = get_sym_matrix();
@@ -37,7 +37,7 @@ TEST_CASE("Test source") {
     ComplexTensor<false> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
-    SourceInput source_input{{{1}, 2, true}, u_input, nan, sk, rx_ratio, z01_ratio};
+    SourceInput const source_input{{{1}, 2, true}, u_input, nan, sk, rx_ratio, z01_ratio};
     Source source{source_input, un};
 
     CHECK(source.math_model_type() == ComponentType::source);
@@ -122,7 +122,7 @@ TEST_CASE("Test source") {
 
     SUBCASE("test sym source short circuit results") {
         // Sym and asym results should be the same
-        DoubleComplex i_sym = 1.0 + 2.0i;
+        DoubleComplex const i_sym = 1.0 + 2.0i;
         ComplexValue<false> const i_asym{1.0 + 2.0i};
         ApplianceShortCircuitOutput const sym_sc_result = source.get_sc_output(i_sym);
         ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i_asym);

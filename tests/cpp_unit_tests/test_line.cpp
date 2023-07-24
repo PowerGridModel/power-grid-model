@@ -11,7 +11,7 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test line") {
-    LineInput input{{{1}, 2, 3, true, true}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
+    LineInput const input{{{1}, 2, 3, true, true}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
     Line line{input, 50.0, 10.0e3, 10.0e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_i * base_i / base_power_1p;
@@ -28,9 +28,9 @@ TEST_CASE("Test line") {
     DoubleComplex const yff0 = y0_series + 0.5 * y0_shunt;
     DoubleComplex const yft0 = -y0_series;
     DoubleComplex const ys0 = 0.5 * y0_shunt + 1.0 / (1.0 / y0_series + 2.0 / y0_shunt);
-    ComplexTensor<false> yffa{(2.0 * yff1 + yff0) / 3.0, (yff0 - yff1) / 3.0};
-    ComplexTensor<false> yfta{(2.0 * yft1 + yft0) / 3.0, (yft0 - yft1) / 3.0};
-    ComplexTensor<false> ysa{(2.0 * ys1 + ys0) / 3.0, (ys0 - ys1) / 3.0};
+    ComplexTensor<false> const yffa{(2.0 * yff1 + yff0) / 3.0, (yff0 - yff1) / 3.0};
+    ComplexTensor<false> const yfta{(2.0 * yft1 + yft0) / 3.0, (yft0 - yft1) / 3.0};
+    ComplexTensor<false> const ysa{(2.0 * ys1 + ys0) / 3.0, (ys0 - ys1) / 3.0};
 
     DoubleComplex const u1f = 1.0;
     DoubleComplex const u1t = 0.9;
@@ -40,11 +40,11 @@ TEST_CASE("Test line") {
     DoubleComplex const i1t = (yft1 * u1f + yff1 * u1t) * base_i;
     DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
     DoubleComplex const s_t = conj(i1t) * u1t * 10e3 * sqrt3;
-    double loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
+    double const loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
 
     // Short circuit results
-    DoubleComplex if_sc{1.0, 1.0};
-    DoubleComplex it_sc{2.0, 2.0 * sqrt(3)};
+    DoubleComplex const if_sc{1.0, 1.0};
+    DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
     ComplexValue<false> const if_sc_asym{1.0 + 1.0i};
     ComplexValue<false> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
 

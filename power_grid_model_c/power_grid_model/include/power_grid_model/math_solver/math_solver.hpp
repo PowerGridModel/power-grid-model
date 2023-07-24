@@ -87,7 +87,7 @@ class MathSolver {
 
         // construct model if needed
         if (!iec60909_sc_solver_.has_value()) {
-            Timer timer(calculation_info, 2210, "Create math solver");
+            Timer const timer(calculation_info, 2210, "Create math solver");
             iec60909_sc_solver_.emplace(y_bus_, topo_ptr_);
         }
 

@@ -34,7 +34,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with nan impedance input") {
-        Fault fault_nan_imp{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, nan, nan}};
+        Fault const fault_nan_imp{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, nan, nan}};
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
@@ -43,7 +43,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with other fault type") {
-        Fault fault_nan_imp{{{1}, 1, FaultType::three_phase, FaultPhase::abc, 4, nan, nan}};
+        Fault const fault_nan_imp{{{1}, 1, FaultType::three_phase, FaultPhase::abc, 4, nan, nan}};
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
@@ -52,7 +52,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with nan fault type") {
-        Fault fault_nan_imp{{{1}, 1, FaultType::nan, FaultPhase::nan, 4, nan, nan}};
+        Fault const fault_nan_imp{{{1}, 1, FaultType::nan, FaultPhase::nan, 4, nan, nan}};
         CHECK_THROWS_AS((fault_nan_imp.calc_param(u_rated)), InvalidShortCircuitType);
     }
 
@@ -147,7 +147,7 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test update") {
         FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::ac, 10};
-        UpdateChange updated = fault.update(fault_update);
+        UpdateChange const updated = fault.update(fault_update);
 
         CHECK(!updated.param);
         CHECK(!updated.topo);
