@@ -10,6 +10,7 @@
 #include "iterative_linear_se_solver.hpp"
 #include "linear_pf_solver.hpp"
 #include "newton_raphson_pf_solver.hpp"
+#include "short_circuit_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -76,6 +77,24 @@ class MathSolver {
                                                                         calculation_info);
     }
 
+    ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitInput const& input, double source_voltage_ref,
+                                                  CalculationInfo& calculation_info,
+                                                  CalculationMethod calculation_method) {
+        if (calculation_method != CalculationMethod::default_method &&
+            calculation_method != CalculationMethod::iec60909) {
+            throw InvalidCalculationMethod{};
+        }
+
+        // construct model if needed
+        if (!iec60909_sc_solver_.has_value()) {
+            Timer timer(calculation_info, 2210, "Create math solver");
+            iec60909_sc_solver_.emplace(y_bus_, topo_ptr_);
+        }
+
+        // call calculation
+        return iec60909_sc_solver_.value().run_short_circuit(source_voltage_ref, y_bus_, input);
+    }
+
     void clear_solver() {
         newton_pf_solver_.reset();
         linear_pf_solver_.reset();
@@ -99,6 +118,7 @@ class MathSolver {
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
     std::optional<IterativeCurrentPFSolver<sym>> iterative_current_pf_solver_;
+    std::optional<ShortCircuitSolver<sym>> iec60909_sc_solver_;
 
     MathOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                   CalculationInfo& calculation_info) {

@@ -41,7 +41,7 @@ class Fault final : public Base {
         check_sanity();
     }
 
-    FaultCalcParam calc_param(double const& u_rated, bool const& is_connected_to_source = true) const {
+    FaultCalcParam calc_param(double const u_rated, bool const& is_connected_to_source = true) const {
         // param object
         FaultCalcParam param{};
         param.fault_type = get_fault_type();

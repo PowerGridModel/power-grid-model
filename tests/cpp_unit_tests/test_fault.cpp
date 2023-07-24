@@ -22,14 +22,12 @@ TEST_CASE("Test fault") {
     SUBCASE("Test calc_param") {
         // Not connected to source
         FaultCalcParam param = fault.calc_param(u_rated, false);
-        CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault) == doctest::Approx(0.0));
 
         // Connected to source
         param = fault.calc_param(u_rated);
         double const base_y = base_i / (u_rated / sqrt(3));
         DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
-        CHECK(param.math_fault_object == -1);
         CHECK(cabs(param.y_fault) == doctest::Approx(cabs(y_f)));
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
         CHECK(param.fault_phase == FaultPhase::ab);

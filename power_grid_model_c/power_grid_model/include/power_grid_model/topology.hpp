@@ -116,7 +116,8 @@ class Topology {
     }
 
     // build topology
-    std::pair<std::vector<std::shared_ptr<MathModelTopology const>>, std::shared_ptr<ComponentToMathCoupling const>>
+    std::pair<std::vector<std::shared_ptr<MathModelTopology const>>,
+              std::shared_ptr<TopologicalComponentToMathCoupling const>>
     build_topology() {
         reset_topology();
         build_sparse_graph();
@@ -125,12 +126,13 @@ class Topology {
         couple_all_appliance();
         couple_sensors();
         // create return pair with shared pointer
-        std::pair<std::vector<std::shared_ptr<MathModelTopology const>>, std::shared_ptr<ComponentToMathCoupling const>>
+        std::pair<std::vector<std::shared_ptr<MathModelTopology const>>,
+                  std::shared_ptr<TopologicalComponentToMathCoupling const>>
             pair;
         for (Idx k = 0; k != (Idx)math_topology_.size(); ++k) {
             pair.first.emplace_back(std::make_shared<MathModelTopology const>(std::move(math_topology_[k])));
         }
-        pair.second = std::make_shared<ComponentToMathCoupling const>(std::move(comp_coup_));
+        pair.second = std::make_shared<TopologicalComponentToMathCoupling const>(std::move(comp_coup_));
         return pair;
     }
 
@@ -149,7 +151,7 @@ class Topology {
     std::vector<Idx> node_status_;
     // output
     std::vector<MathModelTopology> math_topology_;
-    ComponentToMathCoupling comp_coup_;
+    TopologicalComponentToMathCoupling comp_coup_;
 
     void reset_topology() {
         comp_coup_.node.resize(comp_topo_.n_node_total(), Idx2D{-1, -1});
