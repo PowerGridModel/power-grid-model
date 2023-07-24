@@ -314,7 +314,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         n_math_solvers_ = 0;
         sym_solvers_.clear();
         asym_solvers_.clear();
-        math_topology_.clear();
+        state_.math_topology.clear();
         state_.comp_coup.reset();
         state_.topo_comp_coup.reset();
     }
@@ -747,7 +747,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     MainModelState state_;
     // math model
-    std::vector<std::shared_ptr<MathModelTopology const>> math_topology_;
     std::vector<MathSolver<true>> sym_solvers_;
     std::vector<MathSolver<false>> asym_solvers_;
     Idx n_math_solvers_{0};
@@ -820,8 +819,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        });
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
-        std::tie(math_topology_, state_.topo_comp_coup) = topology.build_topology();
-        n_math_solvers_ = (Idx)math_topology_.size();
+        std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
+        n_math_solvers_ = static_cast<Idx>(state_.math_topology.size());
         is_topology_up_to_date_ = true;
         is_sym_parameter_up_to_date_ = false;
         is_asym_parameter_up_to_date_ = false;
@@ -831,9 +830,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<MathModelParam<sym>> get_math_param() {
         std::vector<MathModelParam<sym>> math_param(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
-            math_param[i].branch_param.resize(math_topology_[i]->n_branch());
-            math_param[i].shunt_param.resize(math_topology_[i]->n_shunt());
-            math_param[i].source_param.resize(math_topology_[i]->n_source());
+            math_param[i].branch_param.resize(state_.math_topology[i]->n_branch());
+            math_param[i].shunt_param.resize(state_.math_topology[i]->n_shunt());
+            math_param[i].source_param.resize(state_.math_topology[i]->n_source());
         }
         // loop all branch
         for (Idx i = 0; i != (Idx)state_.comp_topo->branch_node_idx.size(); ++i) {
@@ -1006,8 +1005,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
         std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
-            pf_input[i].s_injection.resize(math_topology_[i]->n_load_gen());
-            pf_input[i].source.resize(math_topology_[i]->n_source());
+            pf_input[i].s_injection.resize(state_.math_topology[i]->n_load_gen());
+            pf_input[i].source.resize(state_.math_topology[i]->n_source());
         }
         prepare_input<sym, PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
             state_.topo_comp_coup->source, pf_input);
@@ -1025,16 +1024,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<StateEstimationInput<sym>> se_input(n_math_solvers_);
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {
-            se_input[i].shunt_status.resize(math_topology_[i]->n_shunt());
-            se_input[i].load_gen_status.resize(math_topology_[i]->n_load_gen());
-            se_input[i].source_status.resize(math_topology_[i]->n_source());
-            se_input[i].measured_voltage.resize(math_topology_[i]->n_voltage_sensor());
-            se_input[i].measured_source_power.resize(math_topology_[i]->n_source_power_sensor());
-            se_input[i].measured_load_gen_power.resize(math_topology_[i]->n_load_gen_power_sensor());
-            se_input[i].measured_shunt_power.resize(math_topology_[i]->n_shunt_power_power_sensor());
-            se_input[i].measured_branch_from_power.resize(math_topology_[i]->n_branch_from_power_sensor());
-            se_input[i].measured_branch_to_power.resize(math_topology_[i]->n_branch_to_power_sensor());
-            se_input[i].measured_bus_injection.resize(math_topology_[i]->n_bus_power_sensor());
+            se_input[i].shunt_status.resize(state_.math_topology[i]->n_shunt());
+            se_input[i].load_gen_status.resize(state_.math_topology[i]->n_load_gen());
+            se_input[i].source_status.resize(state_.math_topology[i]->n_source());
+            se_input[i].measured_voltage.resize(state_.math_topology[i]->n_voltage_sensor());
+            se_input[i].measured_source_power.resize(state_.math_topology[i]->n_source_power_sensor());
+            se_input[i].measured_load_gen_power.resize(state_.math_topology[i]->n_load_gen_power_sensor());
+            se_input[i].measured_shunt_power.resize(state_.math_topology[i]->n_shunt_power_power_sensor());
+            se_input[i].measured_branch_from_power.resize(state_.math_topology[i]->n_branch_from_power_sensor());
+            se_input[i].measured_branch_to_power.resize(state_.math_topology[i]->n_branch_to_power_sensor());
+            se_input[i].measured_bus_injection.resize(state_.math_topology[i]->n_bus_power_sensor());
         }
 
         prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state_.topo_comp_coup->shunt,
@@ -1119,7 +1118,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             sc_input[i].fault_bus_indptr = {0, 1};  // TODO(mgovers) calculate this
             sc_input[i].faults.resize(fault_node_idx.size());
-            sc_input[i].source.resize(math_topology_[i]->n_source());
+            sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
@@ -1151,13 +1150,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 // if other solver exists, construct from existing y bus struct
                 if (other_solver_exist) {
-                    solvers.emplace_back(math_topology_[i],
+                    solvers.emplace_back(state_.math_topology[i],
                                          std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
                                          other_solvers[i].shared_y_bus_struct());
                 }
                 // else construct from scratch
                 else {
-                    solvers.emplace_back(math_topology_[i],
+                    solvers.emplace_back(state_.math_topology[i],
                                          std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
                 }
             }
