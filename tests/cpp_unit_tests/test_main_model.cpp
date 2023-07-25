@@ -710,10 +710,10 @@ TEST_CASE("Test main model - linear calculation") {
 }
 
 TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cached_update) {
-    State state;
+    State const state;
     auto main_model = default_model(state);
 
-    std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan, nan}};
+    std::vector<SourceUpdate> const source_update2{SourceUpdate{{{100}, true}, nan, nan}};
     CHECK_THROWS_AS((main_model.update_component<Source, typename settings::update_type>(source_update2)), IDNotFound);
 }
 
@@ -1034,8 +1034,8 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     State state;
     auto main_model = default_model(state);
 
-    std::vector<SourceInput> incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
-                                                     {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
+    std::vector<SourceInput> const incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
+                                                           {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
     std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, nan, nan}};
     std::vector<AsymLoadGenInput> incomplete_asym_load_input{
         {{{{8}, 3, true}, LoadGenType::const_y}, RealValue<false>{nan}, RealValue<false>{nan}}};
@@ -1065,7 +1065,7 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
         DataPointer<true>{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
 
     MainModel test_model{50.0, input_data};
-    MainModel ref_model{main_model};
+    MainModel const ref_model{main_model};
 
     Dataset test_result_data;
     Dataset ref_result_data;

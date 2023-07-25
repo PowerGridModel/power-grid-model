@@ -107,7 +107,7 @@ TEST_CASE("Test three winding transformer") {
     input.pk_23_max = 120e3;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
 
-    for (ThreeWindingTransformer& transformer3 : vec) {
+    for (ThreeWindingTransformer const& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
     }
 
@@ -213,7 +213,7 @@ TEST_CASE("Test three winding transformer") {
     };
 
     auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
-        Transformer t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
+        Transformer const t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
         return std::array<Transformer, 3>{t1, t2, t3};
     };
 
@@ -372,12 +372,12 @@ TEST_CASE("Test three winding transformer") {
     }
 
     SUBCASE("Check asym short circuit output of branch 3") {
-        ComplexValue<true> i_1{1.5 - 2.5i};
-        ComplexValue<true> i_2{1.0 - 2.2i};
-        ComplexValue<true> i_3{1.3 - 2.1i};
-        ComplexValue<false> i_1_asym{1.5 - 2.5i};
-        ComplexValue<false> i_2_asym{1.0 - 2.2i};
-        ComplexValue<false> i_3_asym{1.3 - 2.1i};
+        ComplexValue<true> const i_1{1.5 - 2.5i};
+        ComplexValue<true> const i_2{1.0 - 2.2i};
+        ComplexValue<true> const i_3{1.3 - 2.1i};
+        ComplexValue<false> const i_1_asym{1.5 - 2.5i};
+        ComplexValue<false> const i_2_asym{1.0 - 2.2i};
+        ComplexValue<false> const i_3_asym{1.3 - 2.1i};
 
         Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(i_1_asym, i_2_asym, i_3_asym);
 
@@ -392,15 +392,15 @@ TEST_CASE("Test three winding transformer") {
     }
 
     SUBCASE("Check sym short circuit output of branch 3") {
-        ComplexValue<true> i_1{1.5 - 2.5i};
-        ComplexValue<true> i_2{1.0 - 2.2i};
-        ComplexValue<true> i_3{1.3 - 2.1i};
+        ComplexValue<true> const i_1{1.5 - 2.5i};
+        ComplexValue<true> const i_2{1.0 - 2.2i};
+        ComplexValue<true> const i_3{1.3 - 2.1i};
 
         Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output(i_1, i_2, i_3);
 
-        ComplexValue<false> i_1_asym{1.5 - 2.5i};
-        ComplexValue<false> i_2_asym{1.0 - 2.2i};
-        ComplexValue<false> i_3_asym{1.3 - 2.1i};
+        ComplexValue<false> const i_1_asym{1.5 - 2.5i};
+        ComplexValue<false> const i_2_asym{1.0 - 2.2i};
+        ComplexValue<false> const i_3_asym{1.3 - 2.1i};
 
         Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(i_1_asym, i_2_asym, i_3_asym);
 

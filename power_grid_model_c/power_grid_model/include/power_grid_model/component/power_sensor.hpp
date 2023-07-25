@@ -117,8 +117,8 @@ class PowerSensor : public GenericPowerSensor {
     template <bool sym_calc>
     PowerSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& s) const {
         PowerSensorOutput<sym_calc> output{};
-        ComplexValue<sym_calc> s_residual{process_mean_val<sym_calc>(s_measured_ - s) * convert_direction() *
-                                          base_power<sym_calc>};
+        ComplexValue<sym_calc> const s_residual{process_mean_val<sym_calc>(s_measured_ - s) * convert_direction() *
+                                                base_power<sym_calc>};
         output.id = id();
         output.energized = 1;  // power sensor is always energized
         output.p_residual = real(s_residual);
