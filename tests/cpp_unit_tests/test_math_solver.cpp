@@ -576,9 +576,9 @@ ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_ph
 }
 
 template <bool sym>
-constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
+constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref, DoubleComplex c_factor) {
     ShortCircuitMathOutput<sym> sc_output;
-    sc_output.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
+    sc_output.u_bus = {ComplexValue<sym>(vref * c_factor), ComplexValue<sym>(vref * c_factor)};
     sc_output.fault = {{ComplexValue<sym>{}}};
     sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = {ComplexValue<sym>{}}, .i_t = {ComplexValue<sym>{}}}};
     sc_output.source = {{ComplexValue<sym>{}}};
@@ -828,15 +828,15 @@ TEST_CASE("Short circuit solver") {
         MathSolver<false> solver_asym{topo_sc_ptr, param_asym_ptr};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
-        auto asym_sc_output_ref = blank_sc_output<false>(vref);
+        auto asym_sc_output_ref = blank_sc_output<false>(vref, c_factor);
         CalculationInfo info;
-        CHECK_THROWS_AS(solver_asym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909),
-                        NoShortCircuit);
+        auto asym_output = solver_asym.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(asym_output, asym_sc_output_ref);
 
         MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
-        auto sym_sc_output_ref = blank_sc_output<true>(vref);
-        CHECK_THROWS_AS(solver_sym.run_short_circuit(sc_input, vref, info, CalculationMethod::iec60909),
-                        NoShortCircuit);
+        auto sym_sc_output_ref = blank_sc_output<true>(vref, c_factor);
+        auto sym_output = solver_sym.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<true>(sym_output, sym_sc_output_ref);
     }
 
     SUBCASE("Test fault on source bus") {
