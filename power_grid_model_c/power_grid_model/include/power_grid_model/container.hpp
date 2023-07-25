@@ -35,7 +35,7 @@ inline constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx
 
 template <typename U, typename First, typename... Rest>
 constexpr size_t get_type_index() {
-    if constexpr (std::is_same<U, First>::value) {
+    if constexpr (std::is_same_v<U, First>) {
         return 0;
     }
     else {
