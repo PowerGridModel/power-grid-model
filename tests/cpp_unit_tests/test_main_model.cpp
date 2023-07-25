@@ -124,7 +124,7 @@ auto default_model(State const& state) -> MainModel {
 }
 }  // namespace
 
-TEST_CASE("Test main model") {
+TEST_CASE("Test main model - power flow") {
     State state;
     auto main_model = default_model(state);
 

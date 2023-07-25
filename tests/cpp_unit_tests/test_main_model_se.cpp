@@ -12,7 +12,7 @@ constexpr double s3 = sqrt3;
 constexpr double ph = 2.0 / 3.0 * pi;
 }  // namespace
 
-TEST_CASE("Test Main Model") {
+TEST_CASE("Test main model - state estimation") {
     MainModel main_model{50.0};
     SUBCASE("State Estimation") {
         SUBCASE("Single Node + Source") {

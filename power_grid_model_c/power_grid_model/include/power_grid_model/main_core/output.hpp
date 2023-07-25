@@ -393,9 +393,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                 return fault.get_null_sc_output();
             }
 
-            auto const group_output = math_output[math_id.group];
             auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-
             return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
         });
 }

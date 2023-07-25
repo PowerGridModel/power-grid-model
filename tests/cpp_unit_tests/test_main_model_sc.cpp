@@ -7,7 +7,7 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
-TEST_CASE("Test Main Model - short circuit") {
+TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
 
     SUBCASE("Single node + source") {
