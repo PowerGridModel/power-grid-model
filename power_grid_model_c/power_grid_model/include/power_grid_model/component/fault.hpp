@@ -85,7 +85,7 @@ class Fault final : public Base {
     }
 
     FaultShortCircuitOutput get_sc_output(ComplexValue<true> i_f, double const u_rated) const {
-        ComplexValue<false> iabc_f{i_f};
+        ComplexValue<false> const iabc_f{i_f};
         return get_sc_output(iabc_f, u_rated);
     }
 

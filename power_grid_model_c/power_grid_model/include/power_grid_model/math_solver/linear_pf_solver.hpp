@@ -66,7 +66,7 @@ class LinearPFSolver {
         MathOutput<sym> output;
         output.u.resize(n_bus_);
 
-        Timer main_timer(calculation_info, 2220, "Math solver");
+        Timer const main_timer(calculation_info, 2220, "Math solver");
 
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");

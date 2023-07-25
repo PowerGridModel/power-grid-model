@@ -68,7 +68,7 @@ class MathSolver {
 
         // construct model if needed
         if (!iterative_linear_se_solver_.has_value()) {
-            Timer timer(calculation_info, 2210, "Create math solver");
+            Timer const timer(calculation_info, 2210, "Create math solver");
             iterative_linear_se_solver_.emplace(y_bus_, topo_ptr_);
         }
 
@@ -87,7 +87,7 @@ class MathSolver {
 
         // construct model if needed
         if (!iec60909_sc_solver_.has_value()) {
-            Timer timer(calculation_info, 2210, "Create math solver");
+            Timer const timer(calculation_info, 2210, "Create math solver");
             iec60909_sc_solver_.emplace(y_bus_, topo_ptr_);
         }
 
@@ -123,7 +123,7 @@ class MathSolver {
     MathOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                   CalculationInfo& calculation_info) {
         if (!newton_pf_solver_.has_value()) {
-            Timer timer(calculation_info, 2210, "Create math solver");
+            Timer const timer(calculation_info, 2210, "Create math solver");
             newton_pf_solver_.emplace(y_bus_, topo_ptr_);
         }
         return newton_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);
@@ -132,7 +132,7 @@ class MathSolver {
     MathOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double /* err_tol */, Idx /* max_iter */,
                                           CalculationInfo& calculation_info) {
         if (!linear_pf_solver_.has_value()) {
-            Timer timer(calculation_info, 2210, "Create math solver");
+            Timer const timer(calculation_info, 2210, "Create math solver");
             linear_pf_solver_.emplace(y_bus_, topo_ptr_);
         }
         return linear_pf_solver_.value().run_power_flow(y_bus_, input, calculation_info);
@@ -141,7 +141,7 @@ class MathSolver {
     MathOutput<sym> run_power_flow_iterative_current(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                      CalculationInfo& calculation_info) {
         if (!iterative_current_pf_solver_.has_value()) {
-            Timer timer(calculation_info, 2210, "Create math solver");
+            Timer const timer(calculation_info, 2210, "Create math solver");
             iterative_current_pf_solver_.emplace(y_bus_, topo_ptr_);
         }
         return iterative_current_pf_solver_.value().run_power_flow(y_bus_, input, err_tol, max_iter, calculation_info);

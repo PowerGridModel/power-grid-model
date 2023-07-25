@@ -39,7 +39,7 @@ TEST_CASE("Test block") {
 
     SUBCASE("Asymmetric") {
         math_model_impl::PFJacBlock<false> b{};
-        RealTensor<false> h{1.0}, n{2.0}, m{3.0}, l{4.0};
+        RealTensor<false> const h{1.0}, n{2.0}, m{3.0}, l{4.0};
         b.h() += h;
         b.n() += n;
         b.m() += m;
@@ -237,7 +237,7 @@ TEST_CASE("Test math solver") {
     DoubleComplex const y0_0 = 0.5 + 0.5i;
     ComplexTensor<false> y0a{2.0 * y0 + y0_0, y0_0 - y0};
     y0a /= 3.0;
-    ComplexTensor<false> ys0a{ys0, 0.0};
+    ComplexTensor<false> const ys0a{ys0, 0.0};
     ComplexTensor<false> y1_1{2.0 * y1, -y1};
     y1_1 /= 3.0;
     ComplexTensor<false> y1_3;
@@ -426,7 +426,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current);
+        MathOutput<true> const output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current);
         // verify
         assert_output(output, output_ref);
     }
@@ -438,7 +438,7 @@ TEST_CASE("Test math solver") {
 
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current);
+        MathOutput<true> const output = solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current);
         // verify
         assert_output(output, output_ref, false, result_tolerance);
     }
@@ -455,7 +455,7 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
 
         // const z
-        MathOutput<true> output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear);
+        MathOutput<true> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -483,11 +483,11 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test asymmetric pf solver") {
-        MathSolver<true> solver_sym{topo_ptr, param_ptr};
+        MathSolver<true> const solver_sym{topo_ptr, param_ptr};
         // construct from existing y bus struct
         MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
         CalculationInfo info;
-        MathOutput<false> output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -495,7 +495,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test iterative current asymmetric pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -504,7 +504,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         // const z
-        MathOutput<false> output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -512,7 +512,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear);
+        MathOutput<true> const output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref);
     }
@@ -520,7 +520,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se without angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear);
+        MathOutput<true> const output =
+            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref, true);
     }
@@ -528,7 +529,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle, const z") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
+        MathOutput<true> const output =
             solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_z);
@@ -537,7 +538,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear);
+        MathOutput<false> const output =
+            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -545,7 +547,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se without angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output =
+        MathOutput<false> const output =
             solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_asym, true);
@@ -554,9 +556,9 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle, const z") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
+        MathOutput<false> const output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
 
-                                                               iterative_linear);
+                                                                     iterative_linear);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -686,7 +688,7 @@ TEST_CASE("Short circuit solver") {
     DoubleComplex const z_fault_solid{0.0 + 0.0i};
     DoubleComplex const y_fault_solid{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
     // c factor
-    double c_factor = 1.2;
+    double const c_factor = 1.2;
 
     // params sym
     MathModelParam<true> param_sc_sym;

@@ -89,7 +89,7 @@ TEST_CASE("C API Model") {
     std::array<Idx const*, 2> indptrs_per_component{source_update_indptr.data(), nullptr};
 
     // create model
-    ModelPtr unique_model{
+    ModelPtr const unique_model{
         PGM_create_model(hl, 50.0, 3, input_components.data(), input_component_sizes.data(), input_data.data())};
     PGM_PowerGridModel* model = unique_model.get();
 
@@ -118,7 +118,7 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Copy model") {
-        ModelPtr model_copy{PGM_copy_model(hl, model)};
+        ModelPtr const model_copy{PGM_copy_model(hl, model)};
         CHECK(PGM_error_code(hl) == PGM_no_error);
         PGM_calculate(hl, model_copy.get(), opt, 1, output_components.data(),
                       sym_output_data.data(),                     // basic parameters
@@ -173,11 +173,11 @@ TEST_CASE("C API Model") {
 
     SUBCASE("Construction error") {
         load_input.id = 0;
-        ModelPtr wrong_model{
+        ModelPtr const wrong_model{
             PGM_create_model(hl, 50.0, 3, input_components.data(), input_component_sizes.data(), input_data.data())};
         CHECK(wrong_model.get() == nullptr);
         CHECK(PGM_error_code(hl) == PGM_regular_error);
-        std::string err_msg{PGM_error_message(hl)};
+        std::string const err_msg{PGM_error_message(hl)};
         CHECK(err_msg.find("Conflicting id detected:") != std::string::npos);
     }
 
@@ -185,7 +185,7 @@ TEST_CASE("C API Model") {
         source_update.id = 5;
         PGM_update_model(hl, model, 2, update_components.data(), update_component_sizes.data(), update_data.data());
         CHECK(PGM_error_code(hl) == PGM_regular_error);
-        std::string err_msg{PGM_error_message(hl)};
+        std::string const err_msg{PGM_error_message(hl)};
         CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
     }
 
@@ -221,7 +221,7 @@ TEST_CASE("C API Model") {
         CHECK(PGM_error_code(hl) == PGM_batch_error);
         CHECK(PGM_n_failed_scenarios(hl) == 1);
         CHECK(PGM_failed_scenarios(hl)[0] == 1);
-        std::string err_msg{PGM_batch_errors(hl)[0]};
+        std::string const err_msg{PGM_batch_errors(hl)[0]};
         CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
         // valid results for batch 0
         CHECK(node_result_0.id == 0);

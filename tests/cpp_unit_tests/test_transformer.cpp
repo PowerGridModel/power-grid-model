@@ -80,7 +80,7 @@ TEST_CASE("Test transformer") {
     input.clock = 2;
     vec.emplace_back(input, 150e3, 10e3);
 
-    for (Transformer& transformer : vec) {
+    for (Transformer const& transformer : vec) {
         CHECK(transformer.math_model_type() == ComponentType::branch);
     }
 
@@ -208,8 +208,8 @@ TEST_CASE("Test transformer") {
 }
 
 TEST_CASE("Test Transfomer - Test 0 YNyn12") {
-    ComplexTensor<false> A = get_a();
-    ComplexTensor<false> A_inv = get_a_inv();
+    ComplexTensor<false> const A = get_a();
+    ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
         {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
@@ -309,8 +309,8 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
 }
 
 TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
-    ComplexTensor<false> A = get_a();
-    ComplexTensor<false> A_inv = get_a_inv();
+    ComplexTensor<false> const A = get_a();
+    ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
         {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
@@ -417,8 +417,8 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
 }
 
 TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
-    ComplexTensor<false> A = get_a();
-    ComplexTensor<false> A_inv = get_a_inv();
+    ComplexTensor<false> const A = get_a();
+    ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
         {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
@@ -525,8 +525,8 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
 }
 
 TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
-    ComplexTensor<false> A = get_a();
-    ComplexTensor<false> A_inv = get_a_inv();
+    ComplexTensor<false> const A = get_a();
+    ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
         {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}

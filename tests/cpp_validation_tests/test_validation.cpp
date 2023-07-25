@@ -440,7 +440,7 @@ ValidationCase create_validation_case(CaseParam const& param) {
 std::vector<CaseParam> read_all_cases(bool is_batch) {
     std::vector<CaseParam> all_cases;
     // detect all test cases
-    for (std::string calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
+    for (std::string const calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
         // loop all sub-directories
         for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_path / calculation_type)) {
             std::filesystem::path const& case_dir = dir_entry.path();
@@ -498,9 +498,11 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
         ValidationCase const validation_case = create_validation_case(param);
         std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
-        SingleData result = create_result_dataset(validation_case.input, output_prefix);
+        SingleData const result = create_result_dataset(validation_case.input, output_prefix);
 
         // create model and run
+        // TODO (mgovers): fix false positive of misc-const-correctness
+        // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
         CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
         (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
@@ -513,9 +515,11 @@ void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&]() {
         ValidationCase const validation_case = create_validation_case(param);
         std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
-        SingleData result = create_result_dataset(validation_case.input, output_prefix);
+        SingleData const result = create_result_dataset(validation_case.input, output_prefix);
 
         // create model
+        // TODO (mgovers): fix false positive of misc-const-correctness
+        // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
         Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
         CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
@@ -534,8 +538,8 @@ void validate_batch_case(CaseParam const& param) {
         }
 
         // run in one-go, with different threading possibility
-        SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
-        for (Idx threading : {-1, 0, 1, 2}) {
+        SingleData const batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+        for (Idx const threading : {-1, 0, 1, 2}) {
             (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
                           validation_case.update_batch.const_dataset, threading);
             assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix,

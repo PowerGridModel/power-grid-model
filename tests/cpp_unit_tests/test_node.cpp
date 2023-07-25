@@ -24,7 +24,7 @@ TEST_CASE("Test node") {
     ComplexValue<false> u, s;
     u << 1.0, a2, a;
     s << 0.0, DoubleComplex(2.1, 2.2), DoubleComplex(3.1, 3.2);
-    DoubleComplex u_sym = 1.0;
+    DoubleComplex const u_sym = 1.0;
     auto asym_res = node.get_output<false>(u, s);
     CHECK(asym_res.u(1) == doctest::Approx(10.0e3 / sqrt3));
     CHECK(asym_res.u_angle(2) == doctest::Approx(-deg_240 + 2 * pi));
@@ -60,7 +60,7 @@ TEST_CASE("Test node") {
     }
 
     SUBCASE("Test node update") {
-        BaseUpdate base_update;
+        BaseUpdate const base_update{};
         UpdateChange update_change = node.update(base_update);
         CHECK(update_change.topo == false);
         CHECK(update_change.param == false);

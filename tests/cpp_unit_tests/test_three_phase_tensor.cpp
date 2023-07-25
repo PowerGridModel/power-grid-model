@@ -81,7 +81,7 @@ TEST_CASE("Three phase tensor") {
         CHECK(sum_row(2.0) == 2.0);
         RealTensor<false> mat3;
         mat3 << 1, 1, 1, 1, 1, 1, 1, 1, 1;
-        RealTensor<false> mat4 = diag_mult(vec1, mat3, vec2);
+        RealTensor<false> const mat4 = diag_mult(vec1, mat3, vec2);
         CHECK((mat4 == mat).all());
         CHECK(diag_mult(1.0, 2.0, 3.0) == 6.0);
         // test layout
@@ -92,7 +92,7 @@ TEST_CASE("Three phase tensor") {
     }
 
     SUBCASE("Test tensor initialization and inverse") {
-        ComplexTensor<false> mat{1.0 + 1.0i};
+        ComplexTensor<false> const mat{1.0 + 1.0i};
         ComplexTensor<false> mat2;
         mat2 << (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i);
         CHECK((mat == mat2).all());
@@ -118,14 +118,14 @@ TEST_CASE("Three phase tensor") {
     }
 
     SUBCASE("Test symmetrical matrix") {
-        ComplexTensor<false> sym = get_sym_matrix();
-        ComplexTensor<false> sym1 = get_sym_matrix_inv();
-        ComplexValue<false> uabc{1.0};
+        ComplexTensor<false> const sym = get_sym_matrix();
+        ComplexTensor<false> const sym1 = get_sym_matrix_inv();
+        ComplexValue<false> const uabc{1.0};
         ComplexValue<false> u012 = dot(sym1, uabc);
         CHECK(cabs(u012(0)) < numerical_tolerance);
         CHECK(cabs(u012(1)) == doctest::Approx(1.0));
         CHECK(cabs(u012(2)) < numerical_tolerance);
-        ComplexValue<false> uabc1 = dot(sym, u012);
+        ComplexValue<false> const uabc1 = dot(sym, u012);
         CHECK((cabs(uabc1 - uabc) < numerical_tolerance).all());
     }
 
@@ -178,9 +178,9 @@ TEST_CASE("Three phase tensor") {
 
     SUBCASE("Test RealValue update - sym") {
         RealValue<true> value = 1.0;
-        RealValue<true> update_1 = nan;
-        RealValue<true> update_2 = 2.0;
-        double scalar = 3.0;
+        RealValue<true> const update_1 = nan;
+        RealValue<true> const update_2 = 2.0;
+        double const scalar = 3.0;
 
         update_real_value<true>(update_1, value, scalar);
         CHECK(value == 1.0);
@@ -191,9 +191,9 @@ TEST_CASE("Three phase tensor") {
 
     SUBCASE("Test RealValue update - asym") {
         RealValue<false> vec{1.0, nan, nan};
-        RealValue<false> vec_update_1{nan, nan, nan};
-        RealValue<false> vec_update_2{nan, nan, 2.0};
-        double scalar = 3.0;
+        RealValue<false> const vec_update_1{nan, nan, nan};
+        RealValue<false> const vec_update_2{nan, nan, 2.0};
+        double const scalar = 3.0;
 
         update_real_value<false>(vec_update_1, vec, scalar);
         CHECK(vec(0) == 1.0);

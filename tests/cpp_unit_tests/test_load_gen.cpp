@@ -16,8 +16,8 @@ TEST_CASE("Test load generator") {
     AsymLoad asym_load_pq{asym_load_gen_input, 10e3};
     sym_load_gen_input.type = LoadGenType::const_i;
     asym_load_gen_input.type = LoadGenType::const_y;
-    SymLoad sym_load_i{sym_load_gen_input, 10e3};
-    AsymGenerator asym_gen_y{asym_load_gen_input, 10e3};
+    SymLoad const sym_load_i{sym_load_gen_input, 10e3};
+    AsymGenerator const asym_gen_y{asym_load_gen_input, 10e3};
 
     double const base_i = base_power_1p / (10e3 / sqrt3);
     DoubleComplex const u{1.1 * std::exp(1.0i * 10.0)};
@@ -271,13 +271,13 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test set_power - sym") {
         // update with nan, nothing happens
         sym_gen_pq.set_power(RealValue<true>{nan}, RealValue<true>{nan});
-        ComplexValue<true> s_1 = sym_gen_pq.calc_param<true>();
+        ComplexValue<true> const s_1 = sym_gen_pq.calc_param<true>();
         CHECK(real(s_1) == 3.0);
         CHECK(imag(s_1) == 3.0);
 
         // update with values, s changes
         sym_gen_pq.set_power(RealValue<true>{4.0e6}, RealValue<true>{5.0e6});
-        ComplexValue<true> s_2 = sym_gen_pq.calc_param<true>();
+        ComplexValue<true> const s_2 = sym_gen_pq.calc_param<true>();
         CHECK(real(s_2) == 4.0);
         CHECK(imag(s_2) == 5.0);
     }

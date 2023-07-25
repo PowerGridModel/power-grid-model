@@ -24,8 +24,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
@@ -117,8 +117,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
@@ -210,8 +210,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
@@ -303,8 +303,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
@@ -396,8 +396,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
@@ -489,8 +489,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
@@ -604,8 +604,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
@@ -698,8 +698,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
@@ -792,8 +792,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
@@ -886,8 +886,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
@@ -980,8 +980,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
@@ -1074,8 +1074,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
 
-        ComplexValue<true> s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-        ComplexValue<false> s_asym = s_sym * RealValue<false>{1.0};
+        ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
+        ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
