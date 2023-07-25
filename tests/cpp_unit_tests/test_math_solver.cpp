@@ -877,7 +877,7 @@ TEST_CASE("Short circuit solver") {
 
         DoubleComplex const uf_b_2phg = (cvref * (a * a + a)) * z_fault / (zref + 2.0 * z_fault);
         DoubleComplex const if_b_2phg = (cvref * a * a - uf_b_2phg) / zref;
-        DoubleComplex const if_c_2phg = (cvref * a + uf_b_2phg) / zref;
+        DoubleComplex const if_c_2phg = (cvref * a - uf_b_2phg) / zref;
         DoubleComplex const uf_b_2phg_solid = 0.0 + 0.0i;
         DoubleComplex const if_b_2phg_solid = cvref * a * a / zref;
         DoubleComplex const if_c_2phg_solid = cvref * a / zref;
