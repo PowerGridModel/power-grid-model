@@ -311,6 +311,7 @@ class ShortCircuitSolver {
             }
 
             // compensate source current into hard fault
+            // compensate source current into two phase to ground fault with impedance
             for (Idx fault_number = input.fault_bus_indptr[bus_number];
                  fault_number != input.fault_bus_indptr[bus_number + 1]; ++fault_number) {
                 auto& i_fault = output.fault[fault_number].i_fault;
@@ -342,6 +343,25 @@ class ShortCircuitSolver {
                         else {
                             assert((fault_type == FaultType::three_phase));
                             continue;
+                        }
+                    }
+                }
+                else {
+                    // compensate for 2 phase to ground fault with impedance
+                    assert(!std::isinf(y_fault.imag()));
+                    if constexpr (!sym) {
+                        if ((fault_type == FaultType::two_phase_to_ground) &&
+                            (infinite_admittance_fault_counter_bus == 0.0)) {
+                            double const finite_admittance_fault_counter_bus = static_cast<double>(
+                                input.fault_bus_indptr[bus_number + 1] - input.fault_bus_indptr[bus_number]);
+                            // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2 - u_12 * y_fault
+                            // i_fault_2_p = i_inj_1 + u_12 * y_fault
+                            //      i_fault_2_p is the i_fault_2 status quo after the first fault loop
+                            // i_inj_2 = - i_inj_1 + i_ref_1 + i_ref_2 - u_12 * y_fault
+                            // i_fault_2 = i_ref_2 - i_inj_2 = i_ref_2 + i_inj_1 - i_ref_1 - i_ref_2 + u_12 * y_fault
+                            //           = i_inj_1 + u_12 * y_fault - i_ref_1 = i_fault_2_p - i_ref_1
+                            i_fault(phase_1) += i_source_inject[phase_1] / finite_admittance_fault_counter_bus;
+                            i_fault(phase_2) -= i_source_inject[phase_1] / finite_admittance_fault_counter_bus;
                         }
                     }
                 }
