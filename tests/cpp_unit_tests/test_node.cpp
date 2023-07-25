@@ -60,7 +60,7 @@ TEST_CASE("Test node") {
     }
 
     SUBCASE("Test node update") {
-        BaseUpdate base_update;
+        BaseUpdate const base_update{};
         UpdateChange update_change = node.update(base_update);
         CHECK(update_change.topo == false);
         CHECK(update_change.param == false);
