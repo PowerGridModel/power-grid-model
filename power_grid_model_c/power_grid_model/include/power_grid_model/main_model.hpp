@@ -673,18 +673,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
                                  Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
-        auto const run = [&]<bool sym> {
-            auto const math_output = calculate_short_circuit_<sym>(subtransient_voltage_factor, calculation_method);
-            output_result<sym>(math_output, result_data, pos);
-        };
-        if (std::all_of(state.components.template citer<Fault>().begin(),
-                        state.components.template citer<Fault>().end(), [](Fault const& fault) {
+        if (std::all_of(state_.components.template citer<Fault>().begin(),
+                        state_.components.template citer<Fault>().end(), [](Fault const& fault) {
                             return fault.get_fault_type() == FaultType::three_phase;
                         })) {
-            run<true>();
+            auto const math_output = calculate_short_circuit_<true>(subtransient_voltage_factor, calculation_method);
+            output_result<true>(math_output, result_data, pos);
         }
         else {
-            run<false>();
+            auto const math_output = calculate_short_circuit_<false>(subtransient_voltage_factor, calculation_method);
+            output_result<false>(math_output, result_data, pos);
         }
     }
 
@@ -1106,32 +1104,25 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1});
 
-        state_.math_view_topology.resize(state_.math_topology.size());
-        for (Idx topo_idx{0}; topo_idx < state_.math_topology.size(); ++topo_idx) {
-            auto map = build_sparse_mapping(topo_node_indices[topo_idx], static_cast<Idx>(fault_node_idx.size()));
-            state_.math_view_topology[topo_idx].reset(new MathModelTopologyView{
-                .math_topo = state_.math_topology[topo_idx], .fault_bus_ind_ptr = std::move(map.indptr)});
-
-            for (Idx reordered_idx{0}; reordered_idx < map.reorder.size(); ++reordered_idx) {
-                fault_coup[topo_fault_indices[topo_idx][map.reorder[reordered_idx]]] = Idx2D{topo_idx, reordered_idx};
-            }
-        }
-
-        state_.comp_coup.reset(new ComponentToMathCoupling{.fault = std::move(fault_coup)});
-
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
-            sc_input[i].fault_bus_indptr = {0, 1};  // TODO(mgovers) calculate this
+            auto map = build_sparse_mapping(topo_node_indices[i], static_cast<Idx>(fault_node_idx.size()));
+
+            for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
+                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{i, reordered_idx};
+            }
+
+            sc_input[i].fault_bus_indptr = std::move(map.indptr);
             sc_input[i].faults.resize(fault_node_idx.size());
             sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
-        auto u_rated = [this](Fault const& fault) {
-            return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-        };
+        state_.comp_coup.reset(new ComponentToMathCoupling{.fault = std::move(fault_coup)});
 
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-            state_.comp_coup->fault, sc_input, u_rated);
+            state_.comp_coup->fault, sc_input, [this](Fault const& fault) {
+                return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+            });
         prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
             state_.topo_comp_coup->source, sc_input);
 
