@@ -56,8 +56,8 @@ TEST_CASE("Test Sparse LU solver") {
             3, 7, 0,  // row 1
             2, 0, 6   // row 2
         };
-        std::vector<double> rhs = {21, 2, 18};
-        std::vector<double> x_ref = {3, -1, 2};
+        std::vector<double> const rhs = {21, 2, 18};
+        std::vector<double> const x_ref = {3, -1, 2};
         std::vector<double> x(3, 0.0);
         SparseLUSolver<double, double, double> solver{row_indptr, col_indices, diag_lu};
         SparseLUSolver<double, double, double>::BlockPermArray block_perm{};
@@ -107,8 +107,8 @@ TEST_CASE("Test Sparse LU solver") {
             {{0, 0}, {0, 0}},    // 2, 1
             {{1, 0}, {0, 100}},  // 2, 2
         };
-        std::vector<Array> rhs = {{38, 356}, {-389, 2}, {44, 611}};
-        std::vector<Array> x_ref = {{3, 4}, {-1, -2}, {5, 6}};
+        std::vector<Array> const rhs = {{38, 356}, {-389, 2}, {44, 611}};
+        std::vector<Array> const x_ref = {{3, 4}, {-1, -2}, {5, 6}};
         std::vector<Array> x(3, Array::Zero());
         SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu};
         SparseLUSolver<Tensor, Array, Array>::BlockPermArray block_perm(3);

@@ -158,7 +158,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
 
-        UpdateChange changed = main_core::update_component<CompType, CacheType>(state_, begin, end, sequence_idx);
+        UpdateChange const changed = main_core::update_component<CompType, CacheType>(state_, begin, end, sequence_idx);
 
         // update, get changed variable
         update_state(changed);

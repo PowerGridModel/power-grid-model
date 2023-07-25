@@ -19,7 +19,7 @@ TEST_CASE("Test main model static") {
         {{{0}, na_IntS}, 1.0, nan},
     };
 
-    Idx batches = 3;
+    Idx const batches = 3;
     std::array<Idx, 4> const link_indptr = {0, 2, 4, 6};
     std::array<Idx, 4> const source_indptr = {0, 1, 2, 3};
     // dependent dataset

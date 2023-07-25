@@ -317,7 +317,7 @@ class Topology {
             // add edges
             for (GraphIdx i = 0; i != n_cycle_node; ++i) {
                 // loop all edges of vertex i
-                GraphIdx global_i = (GraphIdx)cyclic_node[i];
+                GraphIdx const global_i = (GraphIdx)cyclic_node[i];
                 BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
                     // skip if j is not part of cyclic sub graph
                     if (node_status_[global_j] == -1) {
@@ -335,7 +335,7 @@ class Topology {
         // start minimum degree ordering
         std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node), inverse_perm(n_cycle_node), degree(n_cycle_node),
             supernode_sizes(n_cycle_node, 1);
-        boost::vec_adj_list_vertex_id_map<boost::no_property, std::make_signed_t<GraphIdx>> id{};
+        boost::vec_adj_list_vertex_id_map<boost::no_property, std::make_signed_t<GraphIdx>> const id{};
         int const delta = 0;
         boost::minimum_degree_ordering(meshed_graph, boost::make_iterator_property_map(degree.begin(), id),
                                        boost::make_iterator_property_map(inverse_perm.begin(), id),

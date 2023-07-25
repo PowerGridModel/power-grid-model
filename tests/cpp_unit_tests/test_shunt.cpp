@@ -9,14 +9,14 @@
 namespace power_grid_model {
 
 TEST_CASE("Test shunt") {
-    ShuntInput shunt_input{{{1}, 2, true}, 1.0, 2.0, 3.0, 4.0};
+    ShuntInput const shunt_input{{{1}, 2, true}, 1.0, 2.0, 3.0, 4.0};
     Shunt shunt{shunt_input, 10e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_power_3p / 10e3 / 10e3;
     DoubleComplex const y1 = (1.0 + 2.0i) / base_y;
     DoubleComplex const y0 = (3.0 + 4.0i) / base_y;
     DoubleComplex const u{1.0};
-    ComplexValue<false> ua{1.0};
+    ComplexValue<false> const ua{1.0};
     double const p = 10e3 * 10e3 * 1.0;
     double const q = -10e3 * 10e3 * 2.0;
     double const s = std::sqrt(p * p + q * q);
@@ -26,7 +26,7 @@ TEST_CASE("Test shunt") {
     CHECK(shunt.math_model_type() == ComponentType::shunt);
 
     SUBCASE("test parameters") {
-        ComplexTensor<true> y = shunt.calc_param<true>();
+        ComplexTensor<true> const y = shunt.calc_param<true>();
         CHECK(cabs(y - y1) < numerical_tolerance);
         ComplexTensor<false> ya = shunt.calc_param<false>();
         CHECK(cabs(ya(0, 0) - (2.0 * y1 + y0) / 3.0) < numerical_tolerance);

@@ -857,7 +857,7 @@ class IterativeLinearSESolver {
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // phase offset to calculated voltage as normalized
-            ComplexValue<sym> u_normalized = x_rhs_[bus].u() * angle_offset;
+            ComplexValue<sym> const u_normalized = x_rhs_[bus].u() * angle_offset;
             // get dev of last iteration, get max
             double const dev = max_val(cabs(u_normalized - u[bus]));
             max_dev = std::max(dev, max_dev);

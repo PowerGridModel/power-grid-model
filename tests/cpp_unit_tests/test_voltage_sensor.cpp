@@ -15,7 +15,7 @@ namespace power_grid_model {
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
-        VoltageSensorInput<true> voltage_sensor_input{};
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -24,7 +24,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test Sensor math_model_type") {
-        VoltageSensorInput<true> voltage_sensor_input{};
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -45,7 +45,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - sym") {
-        VoltageSensorInput<true> voltage_sensor_input{};
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<true> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -76,7 +76,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - asym") {
-        VoltageSensorInput<false> voltage_sensor_input{};
+        VoltageSensorInput<false> const voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<false> voltage_sensor{voltage_sensor_input, u_rated};
 

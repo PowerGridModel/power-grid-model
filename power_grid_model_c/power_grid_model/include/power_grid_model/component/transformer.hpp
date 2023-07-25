@@ -98,8 +98,8 @@ class Transformer : public Branch {
     // update for transformer, hide default update for branch
     UpdateChange update(TransformerUpdate const& update) {
         assert(update.id == id());
-        bool topo_changed = set_status(update.from_status, update.to_status);
-        bool param_changed = set_tap(update.tap_pos) || topo_changed;
+        bool const topo_changed = set_status(update.from_status, update.to_status);
+        bool const param_changed = set_tap(update.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
     }
 
