@@ -327,7 +327,12 @@ class ShortCircuitSolver {
                         }
                         else if (fault_type == FaultType::two_phase) {
                             i_fault(phase_1) += i_source_inject[phase_1] / infinite_admittance_fault_counter_bus;
-                            i_fault(phase_2) += i_source_inject[phase_2] / infinite_admittance_fault_counter_bus;
+                            // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2
+                            // i_fault_2_p = i_inj_1  (i_fault_2_p is the i_fault status quo after the first fault loop)
+                            // i_inj_2 = - i_inj_1 + i_ref_1 + i_ref_2
+                            // i_fault_2 = i_ref_2 - i_inj_2 = i_ref_2 + i_inj_1 - i_ref_1 - i_ref_2
+                            //           = i_inj_1 - i_ref_1 = i_fault_2_p - i_ref_1
+                            i_fault(phase_2) -= i_source_inject[phase_1] / infinite_admittance_fault_counter_bus;
                         }
                         else if (fault_type == FaultType::two_phase_to_ground) {
                             i_fault(phase_1) += i_source_bus[phase_1];
