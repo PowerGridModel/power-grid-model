@@ -115,7 +115,7 @@ std::map<std::string, Buffer> parse_single_dict(json const& j, std::string const
     std::map<std::string, Buffer> buffer_map;
     for (auto const& it : j.items()) {
         // skip empty list
-        if (it.value().size() == 0) {
+        if (it.value().empty()) {
             continue;
         }
         buffer_map[it.key()] = parse_single_type(it.value(), meta.get_component(it.key()));
