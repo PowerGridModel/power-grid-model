@@ -111,7 +111,8 @@ TEST_CASE("Test source") {
 
     SUBCASE("test asym source short circuit results") {
         ComplexValue<false> const i_asym{1.0 + 2.0i};
-        ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i_asym);
+        ApplianceShortCircuitOutput const asym_sc_result =
+            source.get_sc_output(ApplianceShortCircuitMathOutput<false>{i_asym});
         CHECK(asym_sc_result.id == 1);
         CHECK(asym_sc_result.energized == 1);
         CHECK(asym_sc_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
@@ -124,8 +125,10 @@ TEST_CASE("Test source") {
         // Sym and asym results should be the same
         DoubleComplex const i_sym = 1.0 + 2.0i;
         ComplexValue<false> const i_asym{1.0 + 2.0i};
-        ApplianceShortCircuitOutput const sym_sc_result = source.get_sc_output(i_sym);
-        ApplianceShortCircuitOutput const asym_sc_result = source.get_sc_output(i_asym);
+        ApplianceShortCircuitOutput const sym_sc_result =
+            source.get_sc_output(ApplianceShortCircuitMathOutput<true>{i_sym});
+        ApplianceShortCircuitOutput const asym_sc_result =
+            source.get_sc_output(ApplianceShortCircuitMathOutput<false>{i_asym});
         CHECK(sym_sc_result.id == asym_sc_result.id);
         CHECK(sym_sc_result.energized == asym_sc_result.energized);
         CHECK(sym_sc_result.i(0) == doctest::Approx(asym_sc_result.i(0)));

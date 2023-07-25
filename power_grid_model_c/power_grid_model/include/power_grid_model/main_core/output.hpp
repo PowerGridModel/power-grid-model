@@ -296,10 +296,20 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
             return voltage_sensor.get_output<sym>(math_output[node_math_id.group].u[node_math_id.pos]);
         });
 }
+template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
+          short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx>(
+        state, res_it, [&state, &math_output](GenericVoltageSensor const& voltage_sensor, Idx const node_seq) {
+            return voltage_sensor.get_null_sc_output();
+        });
+}
 
 // output power sensor
-template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer, math_output_type MathOutputType,
-          std::forward_iterator ResIt>
+template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
+          steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -368,6 +378,16 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                     throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
                                                   terminal_type);
             }
+        });
+}
+template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
+          short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
+requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx>(
+        state, res_it, [&state, &math_output](GenericPowerSensor const& power_sensor, Idx const node_seq) {
+            return power_sensor.get_null_sc_output();
         });
 }
 

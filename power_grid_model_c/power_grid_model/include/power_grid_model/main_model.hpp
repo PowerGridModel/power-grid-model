@@ -443,24 +443,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     /*
-    calculate power flow or state estimation in batch
-    provide update data
+    run the calculation function in batch on the provided update data.
+    The calculation function (required) should be able to run standalone.
+    The preparation function (optional) may be provided to allow speeding up calculations.
     threading
         < 0 sequential
         = 0 parallel, use number of hardware threads
         > 0 specify number of parallel threads
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
-    template <bool sym, std::vector<MathOutput<sym>> (MainModelImpl::*calculation_fn)(double, Idx, CalculationMethod)>
-    BatchParameter batch_calculation_(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                      Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
+    template <typename Calculate, typename Prepare>
+    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&>&&
+        std::invocable<std::remove_cvref_t<Prepare>, MainModelImpl&>
+            BatchParameter batch_calculation_(Calculate&& calculation_fn, Prepare&& preparation_fn,
+                                              Dataset const& result_data, ConstDataset const& update_data,
+                                              Idx threading = -1) {
         // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
         // NOTE: if the map is not empty but the datasets inside are empty
         //     that will be considered as a zero batch_size
         bool const all_empty = update_data.empty();
         if (all_empty) {
-            auto const math_output = (this->*calculation_fn)(err_tol, max_iter, calculation_method);
+            auto const math_output = calculation_fn(*this);
             output_result(math_output, result_data);
             return BatchParameter{};
         }
@@ -480,7 +484,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            (this->*calculation_fn)(std::numeric_limits<double>::infinity(), 1, calculation_method);
+            preparation_fn(*this);
         }
         catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
@@ -498,15 +502,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<std::string> exceptions(n_batch, "");
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &result_data, &update_data, &sequence_idx_map, n_batch, err_tol,
-                          max_iter, calculation_method](Idx start, Idx stride) {
+        auto sub_batch = [&base_model, &exceptions, &calculation_fn, &result_data, &update_data, &sequence_idx_map,
+                          n_batch](Idx start, Idx stride) {
             // copy base model
             MainModelImpl model{base_model};
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
                 // try to update model and run calculation
                 try {
                     model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
-                    auto const math_output = (model.*calculation_fn)(err_tol, max_iter, calculation_method);
+                    auto const math_output = calculation_fn(model);
                     model.output_result(math_output, result_data, batch_number);
                     model.restore_components();
                 }
@@ -560,6 +564,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         return BatchParameter{};
+    }
+    template <typename Calculate>
+    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&> BatchParameter batch_calculation_(
+        Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
+        return batch_calculation_(
+            calculation_fn,
+            [](MainModelImpl& /* model */) {  // nothing to prepare
+            },
+            result_data, update_data, threading);
     }
 
    public:
@@ -633,8 +646,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     BatchParameter calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
                                         Dataset const& result_data, ConstDataset const& update_data,
                                         Idx threading = -1) {
-        return batch_calculation_<sym, &MainModelImpl::calculate_power_flow_<sym>>(
-            err_tol, max_iter, calculation_method, result_data, update_data, threading);
+        return batch_calculation_(
+            [err_tol, max_iter, calculation_method](MainModelImpl& model) {
+                return model.calculate_power_flow_<sym>(err_tol, max_iter, calculation_method);
+            },
+            [calculation_method](MainModelImpl& model) {
+                model.calculate_power_flow_<sym>(std::numeric_limits<double>::max(), 1, calculation_method);
+            },
+            result_data, update_data, threading);
     }
 
     // Single state estimation calculation, returning math output results
@@ -658,8 +677,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     BatchParameter calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
                                               Dataset const& result_data, ConstDataset const& update_data,
                                               Idx threading = -1) {
-        return batch_calculation_<sym, &MainModelImpl::calculate_state_estimation_<sym>>(
-            err_tol, max_iter, calculation_method, result_data, update_data, threading);
+        return batch_calculation_(
+            [err_tol, max_iter, calculation_method](MainModelImpl& model) {
+                return model.calculate_state_estimation_<sym>(err_tol, max_iter, calculation_method);
+            },
+            [calculation_method](MainModelImpl& model) {
+                model.calculate_state_estimation_<sym>(std::numeric_limits<double>::max(), 1, calculation_method);
+            },
+            result_data, update_data, threading);
     }
 
     // Single short circuit calculation, returning short circuit math output results
@@ -687,12 +712,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Batch short circuit calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(double /*subtransient_voltage_factor*/,
-                                           CalculationMethod /*calculation_method*/, Dataset const& /*result_data*/,
-                                           ConstDataset const& /*update_data*/, Idx /*threading*/ = -1) {
-        throw InvalidCalculationMethod{};  // TODO(mgovers) implement batch calculation
-        // return batch_calculation_<sym, &MainModelImpl::calculate_short_circuit_<sym>>(
-        //     subtransient_voltage_factor, calculation_method, result_data, update_data, threading);
+    BatchParameter calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
+                                           Dataset const& result_data, ConstDataset const& update_data,
+                                           Idx threading = -1) {
+        return batch_calculation_(
+            [subtransient_voltage_factor, calculation_method](MainModelImpl& model) {
+                return model.calculate_short_circuit_<false>(subtransient_voltage_factor, calculation_method);
+            },
+            result_data, update_data, threading);
     }
 
     template <typename Component, math_output_type MathOutputType, std::forward_iterator ResIt>

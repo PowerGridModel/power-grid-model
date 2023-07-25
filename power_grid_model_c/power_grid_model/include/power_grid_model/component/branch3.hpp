@@ -136,6 +136,12 @@ class Branch3 : public Base {
         ComplexValue<false> const iabc_3{i_3};
         return get_sc_output(iabc_1, iabc_2, iabc_3);
     }
+    template <bool sym>
+    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<sym> const& branch_math_output1,
+                                            BranchShortCircuitMathOutput<sym> const& branch_math_output2,
+                                            BranchShortCircuitMathOutput<sym> const& branch_math_output3) const {
+        return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
+    }
 
     template <bool sym>
     Branch3Output<sym> get_null_output() const {
