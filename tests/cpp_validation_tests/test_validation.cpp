@@ -500,7 +500,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create model and run
         // TODO (mgovers): fix false positive of misc-const-correctness
-        // NOLINTNEXTLINE(misc-const-correctness,-warnings-as-errors)
+        // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
         CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
         (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
@@ -517,7 +517,7 @@ void validate_batch_case(CaseParam const& param) {
 
         // create model
         // TODO (mgovers): fix false positive of misc-const-correctness
-        // NOLINTNEXTLINE(misc-const-correctness,-warnings-as-errors)
+        // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
         Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
         CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
