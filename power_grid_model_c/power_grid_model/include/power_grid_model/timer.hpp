@@ -49,8 +49,9 @@ class Timer {
     }
 
     ~Timer() {
-        if (info_)
+        if (info_) {
             stop();
+        }
     }
 
     void stop() {
@@ -67,8 +68,9 @@ class Timer {
         ss << std::setw(4) << std::setfill('0') << code << ".";
         auto key = ss.str();
         for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
-            if (key[i] == '0')
+            if (key[i] == '0') {
                 break;
+            }
             key += "\t";
         }
         key += name;

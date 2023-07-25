@@ -24,19 +24,23 @@ namespace container_impl {
 // get index of the first true in bool array
 template <size_t N>
 inline constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx = 0) {
-    if (idx == N)
+    if (idx == N) {
         return N;
-    if (arr[idx])
+    }
+    if (arr[idx]) {
         return idx;
+    }
     return get_index_bool_array(arr, idx + 1);
 }
 
 template <typename U, typename First, typename... Rest>
 constexpr size_t get_type_index() {
-    if constexpr (std::is_same<U, First>::value)
+    if constexpr (std::is_same<U, First>::value) {
         return 0;
-    else
+    }
+    else {
         return 1 + get_type_index<U, Rest...>();
+    }
 }
 
 // get index of class in classes, with exact match
