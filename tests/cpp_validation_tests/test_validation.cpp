@@ -480,7 +480,9 @@ bool should_skip_test(CaseParam const& param) {
     return param.calculation_method == "short_circuit"s;
 }
 
-void execute_test(CaseParam const& param, std::invocable auto&& func) {
+template <typename T>
+requires std::invocable<std::remove_cvref_t<T>>
+void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 
     if (should_skip_test(param)) {

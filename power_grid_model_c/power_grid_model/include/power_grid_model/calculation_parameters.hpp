@@ -127,51 +127,51 @@ struct MathModelTopology {
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
 
-    constexpr Idx n_bus() const {
+    Idx n_bus() const {
         return static_cast<Idx>(phase_shift.size());
     }
 
-    constexpr Idx n_branch() const {
+    Idx n_branch() const {
         return static_cast<Idx>(branch_bus_idx.size());
     }
 
-    constexpr Idx n_source() const {
+    Idx n_source() const {
         return source_bus_indptr.back();
     }
 
-    constexpr Idx n_shunt() const {
+    Idx n_shunt() const {
         return shunt_bus_indptr.back();
     }
 
-    constexpr Idx n_load_gen() const {
+    Idx n_load_gen() const {
         return load_gen_bus_indptr.back();
     }
 
-    constexpr Idx n_voltage_sensor() const {
+    Idx n_voltage_sensor() const {
         return voltage_sensor_indptr.back();
     }
 
-    constexpr Idx n_source_power_sensor() const {
+    Idx n_source_power_sensor() const {
         return source_power_sensor_indptr.back();
     }
 
-    constexpr Idx n_load_gen_power_sensor() const {
+    Idx n_load_gen_power_sensor() const {
         return load_gen_power_sensor_indptr.back();
     }
 
-    constexpr Idx n_shunt_power_power_sensor() const {
+    Idx n_shunt_power_power_sensor() const {
         return shunt_power_sensor_indptr.back();
     }
 
-    constexpr Idx n_branch_from_power_sensor() const {
+    Idx n_branch_from_power_sensor() const {
         return branch_from_power_sensor_indptr.back();
     }
 
-    constexpr Idx n_branch_to_power_sensor() const {
+    Idx n_branch_to_power_sensor() const {
         return branch_to_power_sensor_indptr.back();
     }
 
-    constexpr Idx n_bus_power_sensor() const {
+    Idx n_bus_power_sensor() const {
         return bus_power_sensor_indptr.back();
     }
 };
