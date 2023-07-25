@@ -298,14 +298,16 @@ class ShortCircuitSolver {
                 }
             }
 
-            ComplexValue<sym> i_source_bus{};  // if asym, already initialized to zero
+            ComplexValue<sym> i_source_bus{};     // total source current in to the bus
+            ComplexValue<sym> i_source_inject{};  // total raw source current as a Norton equievalent
             for (Idx source_number = (*source_bus_indptr_)[bus_number];
                  source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-                output.source[source_number].i = dot(
-                    y_source,
-                    (ComplexValue<sym>{input.source[source_number] * source_voltage_ref} - output.u_bus[bus_number]));
+                ComplexValue<sym> const i_source_inject_single =
+                    dot(y_source, ComplexValue<sym>{input.source[source_number] * source_voltage_ref});
+                output.source[source_number].i = i_source_inject_single - dot(y_source, output.u_bus[bus_number]);
                 i_source_bus += output.source[source_number].i;
+                i_source_inject += i_source_inject_single;
             }
 
             // compensate source current into hard fault
@@ -324,8 +326,8 @@ class ShortCircuitSolver {
                             i_fault(phase_1) += i_source_bus[phase_1] / infinite_admittance_fault_counter_bus;
                         }
                         else if (fault_type == FaultType::two_phase) {
-                            i_fault(phase_1) -= i_source_bus[phase_1];
-                            i_fault(phase_2) -= i_source_bus[phase_2];
+                            i_fault(phase_1) += i_source_inject[phase_1];
+                            i_fault(phase_2) += i_source_inject[phase_2];
                         }
                         else if (fault_type == FaultType::two_phase_to_ground) {
                             i_fault(phase_1) += i_source_bus[phase_1];
