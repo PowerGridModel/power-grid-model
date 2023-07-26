@@ -51,6 +51,8 @@ TEST_CASE("Test block") {
     }
 }
 
+namespace {
+
 #define CHECK_CLOSE(x, y, tolerance)                      \
     do {                                                  \
         if constexpr (sym) {                              \
@@ -58,39 +60,38 @@ TEST_CASE("Test block") {
         }                                                 \
         else {                                            \
             CHECK((cabs((x) - (y)) < (tolerance)).all()); \
-        }
-}  // namespace power_grid_model
-while (false)
+        }                                                 \
+    } while (false)
 
-    template <bool sym>
-    void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
-                       double tolerance = numerical_tolerance) {
-        DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
-        for (size_t i = 0; i != output.u.size(); ++i) {
-            CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset, tolerance);
-        }
-        for (size_t i = 0; i != output.bus_injection.size(); ++i) {
-            CHECK_CLOSE(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
-        }
-        for (size_t i = 0; i != output.branch.size(); ++i) {
-            CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
-            CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
-            CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
-            CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
-        }
-        for (size_t i = 0; i != output.source.size(); ++i) {
-            CHECK_CLOSE(output.source[i].s, output_ref.source[i].s, tolerance);
-            CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
-        }
-        for (size_t i = 0; i != output.load_gen.size(); ++i) {
-            CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
-            CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
-        }
-        for (size_t i = 0; i != output.shunt.size(); ++i) {
-            CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
-            CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
-        }
+template <bool sym>
+void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
+                   double tolerance = numerical_tolerance) {
+    DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
+    for (size_t i = 0; i != output.u.size(); ++i) {
+        CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset, tolerance);
     }
+    for (size_t i = 0; i != output.bus_injection.size(); ++i) {
+        CHECK_CLOSE(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
+    }
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
+        CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
+        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
+        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
+    }
+    for (size_t i = 0; i != output.source.size(); ++i) {
+        CHECK_CLOSE(output.source[i].s, output_ref.source[i].s, tolerance);
+        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
+    }
+    for (size_t i = 0; i != output.load_gen.size(); ++i) {
+        CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
+        CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
+    }
+    for (size_t i = 0; i != output.shunt.size(); ++i) {
+        CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
+        CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
+    }
+}
 
 template <bool sym>
 void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
@@ -113,6 +114,8 @@ void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMat
 }
 
 #undef CHECK_CLOSE
+
+}  // namespace
 
 TEST_CASE("Test math solver") {
     /*
