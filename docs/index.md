@@ -78,6 +78,7 @@ api_reference/power-grid-model-c-api-reference
 :maxdepth: 2
 examples/Power Flow Example.ipynb
 examples/State Estimation Example.ipynb
+examples/Short Circuit Example.ipynb
 examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
 ```
