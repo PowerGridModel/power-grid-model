@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.15)
 
 # export the license and readme
 configure_file("${CMAKE_SOURCE_DIR}/cmake/README.md.in" "${CMAKE_CURRENT_BINARY_DIR}/README.md")
