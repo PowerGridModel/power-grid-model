@@ -122,10 +122,12 @@ class Fault final : public Base {
 
     // setter
     constexpr bool set_status(IntS new_status) {
-        if (new_status == na_IntS)
+        if (new_status == na_IntS) {
             return false;
-        if (static_cast<bool>(new_status) == status_)
+        }
+        if (static_cast<bool>(new_status) == status_) {
             return false;
+        }
         status_ = static_cast<bool>(new_status);
         return true;
     }
