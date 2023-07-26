@@ -1122,7 +1122,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             .fault = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1})};
         auto& fault_coup = state_.comp_coup.fault;
 
-        for (Idx node_idx{}; node_idx < state_.topo_comp_coup->node.size(); ++node_idx) {
+        for (Idx node_idx{}; node_idx < static_cast<Idx>(state_.topo_comp_coup->node.size()); ++node_idx) {
             auto const& node_topo_idx = state_.topo_comp_coup->node[node_idx];
             auto const node_id = state_.components.template get_item_by_seq<Node>(node_idx).id();
 
