@@ -712,9 +712,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Batch short circuit calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(double /* subtransient_voltage_factor */,
-                                           CalculationMethod /* calculation_method */, Dataset const& /* result_data */,
-                                           ConstDataset const& /* update_data */, Idx /* threading */ = -1) {
+    BatchParameter calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
+                                           Dataset const& result_data, ConstDataset const& update_data,
+                                           Idx threading = -1) {
         throw InvalidCalculationMethod{};
         // return batch_calculation_(
         //     [subtransient_voltage_factor, calculation_method](MainModelImpl& model) {
