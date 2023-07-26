@@ -74,6 +74,21 @@ of importance. Also, there should be at least one voltage measurement. The [iter
 state estimation algorithm assumes voltage angles to be zero when not given. This might result in the calculation succeeding, but giving 
 a faulty outcome instead of raising a singular matrix error. 
 
+#### Short Circuit Calculations
+
+
+Short circuit calculation is carried out to analyze a worse case scenario where a fault has occurred.
+The currents flowing through branches and node voltages are calculated.
+Some typical use-cases are selection or design of components like conductors or breakers and power system protection, eg. relay co-ordination.
+
+Input:
+- Network data: topology + component attributes
+- Fault type and impedance.
+
+Output:
+- Node voltage magnitude and angle
+- Current flowing through branches and fault.
+
 ### Power flow algorithms
 
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
@@ -412,7 +427,27 @@ Algorithm call: `CalculationMethod.iterative_linear`
 
 ### Short circuit algorithms
 
-**TODO**
+Short circuit calculation is solving of following equations with border conditions of fault added as constraints. 
+
+$$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
+
+This gives the initial symmetrical short circuit current ($I_k^('')$) for a fault.
+This quantity is then used to derive almost all further calculations of short circuit studies applications.
+
+The assumptions used for calculations in power-grid-model are aligned to ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
+
+- The state of grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
+- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. By default, the value is considered as `1.1` in power-grid-model. 
+A detailed table for its selection is mentioned in IEC 60909.
+- The prefault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
+- The calculations are assumed to be independent of time component. (Voltages are sine throughout with fault occurring at zero crossing of voltage, complexity of rotating machines and harmonics are neglected, etc).
+
+There are 4 types of fault situations that can occur in the grid along with these possible combination of associated phases:
+
+- Three-phase to ground: abc
+- Single phase to ground: a, b, c
+- Two phase: ab, bc, ac
+- Two phase to ground: ab, bc, ac
 
 ## Batch Calculations
 
