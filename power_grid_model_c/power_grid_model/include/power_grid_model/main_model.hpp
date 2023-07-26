@@ -1016,7 +1016,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (n_math_solvers_ != (Idx)solvers.size()) {
             // check if other (sym/asym) solver exist
             bool const other_solver_exist = (n_math_solvers_ == (Idx)other_solvers.size());
-            assert(solvers.size() == 0);
+            assert(solvers.empty());
             solvers.reserve(n_math_solvers_);
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();

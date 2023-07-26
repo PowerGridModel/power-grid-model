@@ -49,10 +49,12 @@ class Appliance : public Base {
 
     // setter
     bool set_status(IntS new_status) {
-        if (new_status == na_IntS)
+        if (new_status == na_IntS) {
             return false;
-        if (static_cast<bool>(new_status) == status_)
+        }
+        if (static_cast<bool>(new_status) == status_) {
             return false;
+        }
         status_ = static_cast<bool>(new_status);
         return true;
     }
@@ -80,17 +82,21 @@ class Appliance : public Base {
         output.i = base_i_ * cabs(appliance_math_output.i);
         // pf
         if constexpr (sym) {
-            if (output.s < numerical_tolerance)
+            if (output.s < numerical_tolerance) {
                 output.pf = 0.0;
-            else
+            }
+            else {
                 output.pf = output.p / output.s;
+            }
         }
         else {
             for (size_t j = 0; j != 3; ++j) {
-                if (output.s(j) < numerical_tolerance)
+                if (output.s(j) < numerical_tolerance) {
                     output.pf(j) = 0.0;
-                else
+                }
+                else {
                     output.pf(j) = output.p(j) / output.s(j);
+                }
             }
         }
         return output;

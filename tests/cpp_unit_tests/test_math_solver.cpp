@@ -51,12 +51,16 @@ TEST_CASE("Test block") {
     }
 }
 
-#define CHECK_CLOSE(x, y, tolerance)                    \
-    do {                                                \
-        if constexpr (sym)                              \
-            CHECK(cabs((x) - (y)) < tolerance);         \
-        else                                            \
-            CHECK((cabs((x) - (y)) < tolerance).all()); \
+namespace {
+
+#define CHECK_CLOSE(x, y, tolerance)                      \
+    do {                                                  \
+        if constexpr (sym) {                              \
+            CHECK(cabs((x) - (y)) < (tolerance));         \
+        }                                                 \
+        else {                                            \
+            CHECK((cabs((x) - (y)) < (tolerance)).all()); \
+        }                                                 \
     } while (false)
 
 template <bool sym>
@@ -110,6 +114,8 @@ void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMat
 }
 
 #undef CHECK_CLOSE
+
+}  // namespace
 
 TEST_CASE("Test math solver") {
     /*
