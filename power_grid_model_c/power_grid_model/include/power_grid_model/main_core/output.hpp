@@ -74,7 +74,7 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::same_as<Fault> Component, class ComponentContainer>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_coup->fault.cbegin();
+    return state.comp_coup.fault.cbegin();
 }
 
 template <typename Component, typename IndexType, class ComponentContainer, std::forward_iterator ResIt,

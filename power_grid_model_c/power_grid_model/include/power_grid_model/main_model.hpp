@@ -315,8 +315,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         sym_solvers_.clear();
         asym_solvers_.clear();
         state_.math_topology.clear();
-        state_.comp_coup.reset();
         state_.topo_comp_coup.reset();
+        state_.comp_coup = {};
     }
 
     /*
@@ -1145,10 +1145,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
-        state_.comp_coup.reset(new ComponentToMathCoupling{.fault = std::move(fault_coup)});
+        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
 
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-            state_.comp_coup->fault, sc_input, [this](Fault const& fault) {
+            state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
                 return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
             });
         prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(

@@ -21,11 +21,16 @@ TEST_CASE("Test main model - short circuit") {
             SUBCASE("Symmetric Calculation") {
                 std::vector<ShortCircuitMathOutput<true>> const math_output =
                     main_model.calculate_short_circuit<true>(1.0, CalculationMethod::iec60909);
+
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
 
                 // abs(source.y1_ref) * 1e6 / 10e4 / sqrt3
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(57735.026918962572175));
+
+                std::vector<NodeShortCircuitOutput> node_output(1);
+                main_model.output_result<Node>(math_output, node_output.begin());
+                CHECK(node_output[0].u_pu(0) == doctest::Approx(0.0));
             }
 
             SUBCASE("Asymmetric Calculation") {
@@ -34,6 +39,10 @@ TEST_CASE("Test main model - short circuit") {
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(57735.026918962572175));
+
+                std::vector<NodeShortCircuitOutput> node_output(1);
+                main_model.output_result<Node>(math_output, node_output.begin());
+                CHECK(node_output[0].u_pu(0) == doctest::Approx(0.0));
             }
         }
     }
