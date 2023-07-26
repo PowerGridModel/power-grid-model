@@ -25,8 +25,7 @@ struct MainModelState {
     std::vector<std::shared_ptr<MathModelTopology const>> math_topology;
     std::shared_ptr<TopologicalComponentToMathCoupling const> topo_comp_coup;
 
-    std::vector<std::shared_ptr<MathModelTopologyView const>> math_view_topology;
-    std::shared_ptr<ComponentToMathCoupling const> comp_coup;
+    ComponentToMathCoupling comp_coup;
 };
 
 template <typename ContainerType, typename ComponentType>
