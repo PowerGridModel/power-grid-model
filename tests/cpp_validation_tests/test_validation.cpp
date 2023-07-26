@@ -307,8 +307,8 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
     constexpr auto c_factor{1.1};
 
     if (calculation_type == "power_flow"s) {
-        return [err_tol, max_iter, sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                                        ConstDataset const& update_dataset, Idx threading) {
+        return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                     ConstDataset const& update_dataset, Idx threading) {
             if (sym) {
                 return model.calculate_power_flow<true>(err_tol, max_iter, calculation_method, dataset, update_dataset,
                                                         threading);
@@ -320,8 +320,8 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
         };
     }
     if (calculation_type == "state_estimation"s) {
-        return [err_tol, max_iter, sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                                        ConstDataset const& update_dataset, Idx threading) {
+        return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                     ConstDataset const& update_dataset, Idx threading) {
             if (sym) {
                 return model.calculate_state_estimation<true>(err_tol, max_iter, calculation_method, dataset,
                                                               update_dataset, threading);
@@ -333,8 +333,8 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
         };
     }
     if (calculation_type == "short_circuit"s) {
-        return [c_factor](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                          ConstDataset const& update_dataset, Idx threading) {
+        return [](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                  ConstDataset const& update_dataset, Idx threading) {
             return model.calculate_short_circuit(c_factor, calculation_method, dataset, update_dataset, threading);
         };
     }
