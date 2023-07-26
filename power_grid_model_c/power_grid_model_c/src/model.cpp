@@ -146,10 +146,11 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
                 }
                 break;
             case PGM_short_circuit: {
-                constexpr double subtransient_voltage_factor{1.1};
-                handle->batch_parameter = model->calculate_short_circuit(
-                    subtransient_voltage_factor, calculation_method, output_dataset, update_dataset, opt->threading);
-                break;
+                [[fallthrough]];  // TODO(mgovers) remove
+                // constexpr double subtransient_voltage_factor{1.1};
+                // handle->batch_parameter = model->calculate_short_circuit(
+                //     subtransient_voltage_factor, calculation_method, output_dataset, update_dataset, opt->threading);
+                // break;
             }
             default:
                 throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};

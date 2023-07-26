@@ -388,7 +388,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
 
     // add a case if output file exists
     std::filesystem::path const output_file =
-        case_dir / (get_output_type(calculation_method, sym) + batch_suffix + ".json"s);
+        case_dir / (get_output_type(calculation_type, sym) + batch_suffix + ".json"s);
     if (!std::filesystem::exists(output_file)) {
         return std::nullopt;
     }
@@ -432,7 +432,7 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
     // loop sym and batch
     for (bool const sym : {true, false}) {
         for (auto const& calculation_method : calculation_methods) {
-            if (calculation_method == "short_circuit"s && sym) {
+            if (calculation_method == "iec60909"s && sym) {
                 continue;  // only asym short circuit calculations are supported
             }
 
@@ -510,10 +510,10 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-bool should_skip_test(CaseParam const& /* param */) {
+bool should_skip_test(CaseParam const& param) {
     using namespace std::string_literals;
 
-    return false;
+    return param.calculation_type == "short_circuit"s;
 }
 
 template <typename T>

@@ -715,12 +715,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     BatchParameter calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
                                            Dataset const& result_data, ConstDataset const& update_data,
                                            Idx threading = -1) {
-        throw InvalidCalculationMethod{};
-        // return batch_calculation_(
-        //     [subtransient_voltage_factor, calculation_method](MainModelImpl& model) {
-        //         return model.calculate_short_circuit_<false>(subtransient_voltage_factor, calculation_method);
-        //     },
-        //     result_data, update_data, threading);
+        return batch_calculation_(
+            [subtransient_voltage_factor, calculation_method](MainModelImpl& model) {
+                return model.calculate_short_circuit_<false>(subtransient_voltage_factor, calculation_method);
+            },
+            result_data, update_data, threading);
     }
 
     template <typename Component, math_output_type MathOutputType, std::forward_iterator ResIt>
@@ -1126,8 +1125,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto const topo_node_idx = state_.topo_comp_coup->node[node_idx];
 
             fault_node_idx.push_back(node_idx);
-            topo_fault_indices[topo_node_idx.group].push_back(fault_idx);
-            topo_node_indices[topo_node_idx.group].push_back(topo_node_idx.pos);
+            if (topo_node_idx.group >= 0) {  // Consider non-isolated objects only
+                topo_fault_indices[topo_node_idx.group].push_back(fault_idx);
+                topo_node_indices[topo_node_idx.group].push_back(topo_node_idx.pos);
+            }
         }
 
         auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1});
