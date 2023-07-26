@@ -244,7 +244,7 @@ template <std::derived_from<GenericLoadGen> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it,
                                                     [](GenericLoadGen const& load_gen, Idx2D /* math_id */) {
                                                         return load_gen.get_null_sc_output();
@@ -300,7 +300,7 @@ template <std::derived_from<GenericVoltageSensor> Component, class ComponentCont
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
         state, res_it, [](GenericVoltageSensor const& voltage_sensor, Idx const /* node_seq */) {
             return voltage_sensor.get_null_sc_output();
@@ -384,7 +384,7 @@ template <std::derived_from<GenericPowerSensor> Component, class ComponentContai
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx>(state, res_it,
                                                   [](GenericPowerSensor const& power_sensor, Idx const /* node_seq */) {
                                                       return power_sensor.get_null_sc_output();
