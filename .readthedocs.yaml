@@ -26,6 +26,7 @@ build:
       - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Power%20Flow%20Example.ipynb
       - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/State%20Estimation%20Example.ipynb
       - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Validation%20Examples.ipynb
+      - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Short%20Circuit%20Example.ipynb
       # download support
       - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/RELEASE.md
       - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/SUPPORT.md
