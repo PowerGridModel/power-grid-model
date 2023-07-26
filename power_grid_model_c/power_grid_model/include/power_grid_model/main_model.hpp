@@ -395,15 +395,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double subtransient_voltage_factor,
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double voltage_scaling_factor_c,
                                                                       CalculationMethod calculation_method) {
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, ShortCircuitInput>(
             [this] {
                 return prepare_short_circuit_input<sym>();
             },
-            [this, subtransient_voltage_factor, calculation_method](MathSolver<sym>& solver,
-                                                                    ShortCircuitInput const& y) {
-                return solver.run_short_circuit(y, subtransient_voltage_factor, calculation_info_, calculation_method);
+            [this, voltage_scaling_factor_c, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
+                return solver.run_short_circuit(y, voltage_scaling_factor_c, calculation_info_, calculation_method);
             });
     }
 
@@ -689,35 +688,35 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single short circuit calculation, returning short circuit math output results
     template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double subtransient_voltage_factor,
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double voltage_scaling_factor_c,
                                                                      CalculationMethod calculation_method) {
-        return calculate_short_circuit_<sym>(subtransient_voltage_factor, calculation_method);
+        return calculate_short_circuit_<sym>(voltage_scaling_factor_c, calculation_method);
     }
 
     // Single short circuit calculation, propagating the results to result_data
-    void calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
+    void calculate_short_circuit(double voltage_scaling_factor_c, CalculationMethod calculation_method,
                                  Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         if (std::all_of(state_.components.template citer<Fault>().begin(),
                         state_.components.template citer<Fault>().end(), [](Fault const& fault) {
                             return fault.get_fault_type() == FaultType::three_phase;
                         })) {
-            auto const math_output = calculate_short_circuit_<true>(subtransient_voltage_factor, calculation_method);
+            auto const math_output = calculate_short_circuit_<true>(voltage_scaling_factor_c, calculation_method);
             output_result<true>(math_output, result_data, pos);
         }
         else {
-            auto const math_output = calculate_short_circuit_<false>(subtransient_voltage_factor, calculation_method);
+            auto const math_output = calculate_short_circuit_<false>(voltage_scaling_factor_c, calculation_method);
             output_result<false>(math_output, result_data, pos);
         }
     }
 
     // Batch short circuit calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(double subtransient_voltage_factor, CalculationMethod calculation_method,
+    BatchParameter calculate_short_circuit(double voltage_scaling_factor_c, CalculationMethod calculation_method,
                                            Dataset const& result_data, ConstDataset const& update_data,
                                            Idx threading = -1) {
         return batch_calculation_(
-            [subtransient_voltage_factor, calculation_method](MainModelImpl& model) {
-                return model.calculate_short_circuit_<false>(subtransient_voltage_factor, calculation_method);
+            [voltage_scaling_factor_c, calculation_method](MainModelImpl& model) {
+                return model.calculate_short_circuit_<false>(voltage_scaling_factor_c, calculation_method);
             },
             result_data, update_data, threading);
     }

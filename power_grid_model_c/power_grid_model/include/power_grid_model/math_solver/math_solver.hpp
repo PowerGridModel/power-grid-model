@@ -77,7 +77,7 @@ class MathSolver {
                                                                         calculation_info);
     }
 
-    ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitInput const& input, double subtransient_voltage_factor,
+    ShortCircuitMathOutput<sym> run_short_circuit(ShortCircuitInput const& input, double voltage_scaling_factor_c,
                                                   CalculationInfo& calculation_info,
                                                   CalculationMethod calculation_method) {
         if (calculation_method != CalculationMethod::default_method &&
@@ -92,7 +92,7 @@ class MathSolver {
         }
 
         // call calculation
-        return iec60909_sc_solver_.value().run_short_circuit(subtransient_voltage_factor, y_bus_, input);
+        return iec60909_sc_solver_.value().run_short_circuit(voltage_scaling_factor_c, y_bus_, input);
     }
 
     void clear_solver() {
