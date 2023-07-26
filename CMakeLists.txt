@@ -5,7 +5,7 @@
 # CMakeList.txt : CMake project for power_grid_model, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.15)
 
 include("cmake/pgm_version.cmake")
 
