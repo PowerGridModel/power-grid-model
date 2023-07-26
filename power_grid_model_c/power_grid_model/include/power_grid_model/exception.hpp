@@ -161,13 +161,6 @@ class UnknownAttributeName : public PowerGridError {
     }
 };
 
-class NoShortCircuit : public PowerGridError {
-   public:
-    NoShortCircuit() {
-        append_msg("No faults present in short circuit calculation!\n");
-    }
-};
-
 class InvalidShortCircuitType : public PowerGridError {
    public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
