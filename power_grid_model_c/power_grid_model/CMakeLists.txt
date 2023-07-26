@@ -5,7 +5,7 @@
 add_library(power_grid_model INTERFACE)
 
 target_link_libraries(power_grid_model
-	INTERFACE Eigen3::Eigen Boost::boost
+	INTERFACE Eigen3::Eigen Boost::headers
 )
 
 if(Threads_FOUND)
