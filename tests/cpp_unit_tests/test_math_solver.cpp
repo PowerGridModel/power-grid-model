@@ -53,10 +53,12 @@ TEST_CASE("Test block") {
 
 #define CHECK_CLOSE(x, y, tolerance)                      \
     do {                                                  \
-        if constexpr (sym)                                \
+        if constexpr (sym) {                              \
             CHECK(cabs((x) - (y)) < (tolerance));         \
-        else                                              \
+        }                                                 \
+        else {                                            \
             CHECK((cabs((x) - (y)) < (tolerance)).all()); \
+        }
     } while (false)
 
 template <bool sym>
