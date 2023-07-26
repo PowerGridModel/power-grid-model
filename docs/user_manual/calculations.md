@@ -434,7 +434,7 @@ $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 This gives the initial symmetrical short circuit current ($I_k^('')$) for a fault.
 This quantity is then used to derive almost all further calculations of short circuit studies applications.
 
-The assumptions used for calculations in power-grid-model are aligned to ones mentioned in IEC 60909.
+The assumptions used for calculations in power-grid-model are aligned to ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
 
 - The state of grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
 - To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. By default, the value is considered as `1.1` in power-grid-model. 
