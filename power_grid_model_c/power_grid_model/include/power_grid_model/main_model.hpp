@@ -1113,39 +1113,38 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<ShortCircuitInput> prepare_short_circuit_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
-        IdxVector fault_node_idx;
-        std::vector<IdxVector> topo_fault_indices(state_.math_topology.size());
-        std::vector<IdxVector> topo_node_indices(state_.math_topology.size());
-
-        fault_node_idx.reserve(state_.components.template size<Fault>());
-        for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
-            auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
-            auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
-            auto const topo_node_idx = state_.topo_comp_coup->node[node_idx];
-
-            fault_node_idx.push_back(node_idx);
-            if (topo_node_idx.group >= 0) {  // Consider non-isolated objects only
-                topo_fault_indices[topo_node_idx.group].push_back(fault_idx);
-                topo_node_indices[topo_node_idx.group].push_back(topo_node_idx.pos);
-            }
-        }
-
-        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1});
-
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            auto map = build_sparse_mapping(topo_node_indices[i], static_cast<Idx>(fault_node_idx.size()));
-
-            for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{i, reordered_idx};
-            }
-
-            sc_input[i].fault_bus_indptr = std::move(map.indptr);
-            sc_input[i].faults.resize(fault_node_idx.size());
-            sc_input[i].source.resize(state_.math_topology[i]->n_source());
+        for (auto& solver_input : sc_input) {
+            solver_input.fault_bus_indptr = {0};
         }
 
-        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
+        state_.comp_coup = ComponentToMathCoupling{
+            .fault = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1})};
+        auto& fault_coup = state_.comp_coup.fault;
+
+        for (Idx node_idx{}; node_idx < state_.topo_comp_coup->node.size(); ++node_idx) {
+            auto const& node_topo_idx = state_.topo_comp_coup->node[node_idx];
+            auto const node_id = state_.components.template get_item_by_seq<Node>(node_idx).id();
+
+            auto& solver_input = sc_input[node_topo_idx.group];
+
+            Idx node_fault_count{};
+            for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
+                auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
+                if (fault.get_fault_object() == node_id) {
+                    fault_coup[fault_idx] = {node_topo_idx.group, node_fault_count};
+                    ++node_fault_count;
+                }
+            }
+
+            solver_input.fault_bus_indptr.push_back(solver_input.fault_bus_indptr.back() + node_fault_count);
+        }
+
+        for (Idx i = 0; i != n_math_solvers_; ++i) {
+            auto& solver_input = sc_input[i];
+            solver_input.faults.resize(solver_input.fault_bus_indptr.back());
+            solver_input.source.resize(state_.math_topology[i]->n_source());
+        }
 
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
             state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
