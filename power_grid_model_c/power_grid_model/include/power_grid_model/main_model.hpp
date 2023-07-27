@@ -349,11 +349,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <math_output_type MathOutputType, typename MathSolverType, typename InputType, typename PrepareInputFn,
               typename SolveFn>
-        requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
-                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, InputType const&> &&
-                 std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>> &&
-                 std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, InputType const&>, MathOutputType>
-    std::vector<MathOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+    requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
+        std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, InputType const&>&&
+            std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>>&&
+                std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, InputType const&>, MathOutputType>
+                    std::vector<MathOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
         constexpr bool sym = symmetric_math_output_type<MathOutputType>;
 
         assert(construction_complete_);
@@ -452,10 +452,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
     template <typename Calculate, typename Prepare>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&> &&
-                 std::invocable<std::remove_cvref_t<Prepare>, MainModelImpl&>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, Prepare&& preparation_fn, Dataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = -1) {
+    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&>&&
+        std::invocable<std::remove_cvref_t<Prepare>, MainModelImpl&>
+            BatchParameter batch_calculation_(Calculate&& calculation_fn, Prepare&& preparation_fn,
+                                              Dataset const& result_data, ConstDataset const& update_data,
+                                              Idx threading = -1) {
         // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
         // NOTE: if the map is not empty but the datasets inside are empty
@@ -564,9 +565,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return BatchParameter{};
     }
     template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = -1) {
+    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&> BatchParameter batch_calculation_(
+        Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
         return batch_calculation_(
             calculation_fn,
             [](MainModelImpl& /* model */) {  // nothing to prepare
@@ -962,9 +962,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, class CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>
-        requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
-    void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
-                       PredicateIn include = include_all) {
+    requires std::convertible_to < std::invoke_result_t<PredicateIn, Idx>,
+    bool > void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
+                              PredicateIn include = include_all) {
         for (Idx i = 0, n = (Idx)components.size(); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
@@ -982,9 +982,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, class CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>
-        requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
-    void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
-                       std::invocable<ComponentIn const&> auto extra_args, PredicateIn include = include_all) {
+    requires std::convertible_to < std::invoke_result_t<PredicateIn, Idx>,
+    bool > void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
+                              std::invocable<ComponentIn const&> auto extra_args, PredicateIn include = include_all) {
         for (Idx i = 0, n = (Idx)components.size(); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
@@ -1001,14 +1001,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <bool sym>
     auto calculate_param(auto const& c, auto const&... extra_args) {
-        if constexpr (requires {
-                          { c.calc_param(extra_args...) };
-                      }) {
+        if constexpr (requires { {c.calc_param(extra_args...)}; }) {
             return c.calc_param(extra_args...);
         }
-        else if constexpr (requires {
-                               { c.template calc_param<sym>(extra_args...) };
-                           }) {
+        else if constexpr (requires { {c.template calc_param<sym>(extra_args...)}; }) {
             return c.template calc_param<sym>(extra_args...);
         }
         else {
