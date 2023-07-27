@@ -349,11 +349,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <math_output_type MathOutputType, typename MathSolverType, typename InputType, typename PrepareInputFn,
               typename SolveFn>
-    requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
-        std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, InputType const&>&&
-            std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>>&&
-                std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, InputType const&>, MathOutputType>
-                    std::vector<MathOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+        requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
+                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, InputType const&> &&
+                 std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>> &&
+                 std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, InputType const&>, MathOutputType>
+    std::vector<MathOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
         constexpr bool sym = symmetric_math_output_type<MathOutputType>;
 
         assert(construction_complete_);
@@ -452,11 +452,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
     template <typename Calculate, typename Prepare>
-    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&>&&
-        std::invocable<std::remove_cvref_t<Prepare>, MainModelImpl&>
-            BatchParameter batch_calculation_(Calculate&& calculation_fn, Prepare&& preparation_fn,
-                                              Dataset const& result_data, ConstDataset const& update_data,
-                                              Idx threading = -1) {
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&> &&
+                 std::invocable<std::remove_cvref_t<Prepare>, MainModelImpl&>
+    BatchParameter batch_calculation_(Calculate&& calculation_fn, Prepare&& preparation_fn, Dataset const& result_data,
+                                      ConstDataset const& update_data, Idx threading = -1) {
         // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
         // NOTE: if the map is not empty but the datasets inside are empty
@@ -565,8 +564,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return BatchParameter{};
     }
     template <typename Calculate>
-    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&> BatchParameter batch_calculation_(
-        Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&>
+    BatchParameter batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data,
+                                      ConstDataset const& update_data, Idx threading = -1) {
         return batch_calculation_(
             calculation_fn,
             [](MainModelImpl& /* model */) {  // nothing to prepare
@@ -962,9 +962,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, class CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>
-    requires std::convertible_to < std::invoke_result_t<PredicateIn, Idx>,
-    bool > void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
-                              PredicateIn include = include_all) {
+        requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
+    void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
+                       PredicateIn include = include_all) {
         for (Idx i = 0, n = (Idx)components.size(); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
@@ -982,9 +982,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym, class CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>
-    requires std::convertible_to < std::invoke_result_t<PredicateIn, Idx>,
-    bool > void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
-                              std::invocable<ComponentIn const&> auto extra_args, PredicateIn include = include_all) {
+        requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
+    void prepare_input(std::vector<Idx2D> const& components, std::vector<CalcStructOut>& calc_input,
+                       std::invocable<ComponentIn const&> auto extra_args, PredicateIn include = include_all) {
         for (Idx i = 0, n = (Idx)components.size(); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
@@ -1001,10 +1001,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <bool sym>
     auto calculate_param(auto const& c, auto const&... extra_args) {
-        if constexpr (requires { {c.calc_param(extra_args...)}; }) {
+        if constexpr (requires {
+                          { c.calc_param(extra_args...) };
+                      }) {
             return c.calc_param(extra_args...);
         }
-        else if constexpr (requires { {c.template calc_param<sym>(extra_args...)}; }) {
+        else if constexpr (requires {
+                               { c.template calc_param<sym>(extra_args...) };
+                           }) {
             return c.template calc_param<sym>(extra_args...);
         }
         else {
@@ -1113,38 +1117,36 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<ShortCircuitInput> prepare_short_circuit_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
-        std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
-        for (auto& solver_input : sc_input) {
-            solver_input.fault_bus_indptr = {0};
+        std::vector<IdxVector> topo_fault_indices(state_.math_topology.size());
+        std::vector<IdxVector> topo_bus_indices(state_.math_topology.size());
+
+        for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
+            auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
+            auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
+            auto const topo_bus_idx = state_.topo_comp_coup->node[node_idx];
+
+            if (topo_bus_idx.group >= 0) {  // Consider non-isolated objects only
+                topo_fault_indices[topo_bus_idx.group].push_back(fault_idx);
+                topo_bus_indices[topo_bus_idx.group].push_back(topo_bus_idx.pos);
+            }
         }
 
-        state_.comp_coup = ComponentToMathCoupling{
-            .fault = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1})};
-        auto& fault_coup = state_.comp_coup.fault;
+        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{-1, -1});
 
-        for (Idx node_idx{}; node_idx < static_cast<Idx>(state_.topo_comp_coup->node.size()); ++node_idx) {
-            auto const& node_topo_idx = state_.topo_comp_coup->node[node_idx];
-            auto const node_id = state_.components.template get_item_by_seq<Node>(node_idx).id();
+        std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
+        for (Idx i = 0; i != n_math_solvers_; ++i) {
+            auto map = build_sparse_mapping(topo_bus_indices[i], state_.math_topology[i]->n_bus());
 
-            auto& solver_input = sc_input[node_topo_idx.group];
-
-            Idx node_fault_count{};
-            for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
-                auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
-                if (fault.get_fault_object() == node_id) {
-                    fault_coup[fault_idx] = {node_topo_idx.group, node_fault_count};
-                    ++node_fault_count;
-                }
+            for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
+                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{i, reordered_idx};
             }
 
-            solver_input.fault_bus_indptr.push_back(solver_input.fault_bus_indptr.back() + node_fault_count);
+            sc_input[i].fault_bus_indptr = std::move(map.indptr);
+            sc_input[i].faults.resize(state_.components.template size<Fault>());
+            sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            auto& solver_input = sc_input[i];
-            solver_input.faults.resize(solver_input.fault_bus_indptr.back());
-            solver_input.source.resize(state_.math_topology[i]->n_source());
-        }
+        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
 
         prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
             state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
