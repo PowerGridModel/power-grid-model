@@ -352,14 +352,15 @@ def validate_values(  # pylint: disable=too-many-branches
         errors += validate_generic_load_gen(data, "asym_gen")
     if "shunt" in data:
         errors += validate_shunt(data)
-    if "sym_voltage_sensor" in data and calculation_type != CalculationType.power_flow:
-        errors += validate_generic_voltage_sensor(data, "sym_voltage_sensor")
-    if "asym_voltage_sensor" in data and calculation_type != CalculationType.power_flow:
-        errors += validate_generic_voltage_sensor(data, "asym_voltage_sensor")
-    if "sym_power_sensor" in data and calculation_type != CalculationType.power_flow:
-        errors += validate_generic_power_sensor(data, "sym_power_sensor")
-    if "asym_power_sensor" in data and calculation_type != CalculationType.power_flow:
-        errors += validate_generic_power_sensor(data, "asym_power_sensor")
+    if calculation_type in (None, CalculationType.state_estimation):
+        if "sym_voltage_sensor" in data:
+            errors += validate_generic_voltage_sensor(data, "sym_voltage_sensor")
+        if "asym_voltage_sensor" in data:
+            errors += validate_generic_voltage_sensor(data, "asym_voltage_sensor")
+        if "sym_power_sensor" in data:
+            errors += validate_generic_power_sensor(data, "sym_power_sensor")
+        if "asym_power_sensor" in data:
+            errors += validate_generic_power_sensor(data, "asym_power_sensor")
     return errors
 
 
