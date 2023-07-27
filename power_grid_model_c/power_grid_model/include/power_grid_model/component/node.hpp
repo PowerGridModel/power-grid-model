@@ -24,7 +24,7 @@ class Node final : public Base {
     using OutputType = NodeOutput<sym>;
     using ShortCircuitOutputType = NodeShortCircuitOutput;
     static constexpr char const* name = "node";
-    ComponentType math_model_type() const final {
+    constexpr ComponentType math_model_type() const final {
         return ComponentType::node;
     }
 
@@ -32,7 +32,7 @@ class Node final : public Base {
     }
 
     // update node, nothing happens here
-    UpdateChange update(BaseUpdate const&) {
+    constexpr UpdateChange update(BaseUpdate const&) {
         return {false, false};
     }
 
@@ -76,10 +76,10 @@ class Node final : public Base {
         return output;
     }
 
-    double u_rated() {
+    constexpr double u_rated() const {
         return u_rated_;
     }
-    bool energized(bool is_connected_to_source) const final {
+    constexpr bool energized(bool is_connected_to_source) const final {
         return is_connected_to_source;
     }
 

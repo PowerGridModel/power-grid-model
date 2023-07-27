@@ -128,11 +128,11 @@ struct MathModelTopology {
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
 
     Idx n_bus() const {
-        return (Idx)phase_shift.size();
+        return static_cast<Idx>(phase_shift.size());
     }
 
     Idx n_branch() const {
-        return (Idx)branch_bus_idx.size();
+        return static_cast<Idx>(branch_bus_idx.size());
     }
 
     Idx n_source() const {

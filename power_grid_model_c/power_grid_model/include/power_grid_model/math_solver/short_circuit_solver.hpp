@@ -34,7 +34,7 @@ class ShortCircuitSolver {
           perm_{static_cast<BlockPermArray>(n_bus_)} {
     }
 
-    ShortCircuitMathOutput<sym> run_short_circuit(double source_voltage_ref, YBus<sym> const& y_bus,
+    ShortCircuitMathOutput<sym> run_short_circuit(double voltage_scaling_factor_c, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
         check_input_valid(input);
 
@@ -78,7 +78,7 @@ class ShortCircuitSolver {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                 diagonal_element += y_source;  // add y_source to the diagonal of Ybus
                 u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number] *
-                                                         source_voltage_ref});  // rhs += Y_source * U_source * c
+                                                         voltage_scaling_factor_c});  // rhs += Y_source * U_source * c
             }
             // skip if no fault
             if (!input.faults.empty()) {
@@ -210,7 +210,7 @@ class ShortCircuitSolver {
 
         // post processing
         calculate_result(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2,
-                         source_voltage_ref);
+                         voltage_scaling_factor_c);
 
         return output;
     }
@@ -229,7 +229,7 @@ class ShortCircuitSolver {
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
-                          int const phase_1, int const phase_2, double const source_voltage_ref) {
+                          int const phase_1, int const phase_2, double const voltage_scaling_factor_c) const {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
@@ -311,12 +311,12 @@ class ShortCircuitSolver {
                 }
 
                 ComplexValue<sym> i_source_bus{};     // total source current in to the bus
-                ComplexValue<sym> i_source_inject{};  // total raw source current as a Norton equievalent
+                ComplexValue<sym> i_source_inject{};  // total raw source current as a Norton equivalent
                 for (Idx source_number = (*source_bus_indptr_)[bus_number];
                      source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
                     ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                     ComplexValue<sym> const i_source_inject_single =
-                        dot(y_source, ComplexValue<sym>{input.source[source_number] * source_voltage_ref});
+                        dot(y_source, ComplexValue<sym>{input.source[source_number] * voltage_scaling_factor_c});
                     output.source[source_number].i = i_source_inject_single - dot(y_source, output.u_bus[bus_number]);
                     i_source_bus += output.source[source_number].i;
                     i_source_inject += i_source_inject_single;

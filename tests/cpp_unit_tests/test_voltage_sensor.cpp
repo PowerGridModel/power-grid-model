@@ -42,6 +42,10 @@ TEST_CASE("Test voltage sensor") {
         CHECK(vs_output.energized == 0);
         CHECK(vs_output.u_residual == doctest::Approx(0.0));
         CHECK(vs_output.u_angle_residual == doctest::Approx(0.0));
+
+        SensorShortCircuitOutput vs_sc_output = voltage_sensor.get_null_sc_output();
+        CHECK(vs_sc_output.id == 12);
+        CHECK(vs_sc_output.energized == 0);
     }
 
     SUBCASE("Test voltage sensor update - sym") {

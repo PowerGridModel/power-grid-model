@@ -62,6 +62,18 @@ TEST_CASE("Test fault") {
         CHECK(!output.energized);
     }
 
+    SUBCASE("Test get_null_sc_output") {
+        FaultShortCircuitOutput output = fault.get_null_sc_output();
+        CHECK(output.id == 1);
+        CHECK(!output.energized);
+        CHECK(output.i_f(0) == doctest::Approx(0.0));
+        CHECK(output.i_f(1) == doctest::Approx(0.0));
+        CHECK(output.i_f(2) == doctest::Approx(0.0));
+        CHECK(output.i_f_angle(0) == doctest::Approx(0.0));
+        CHECK(output.i_f_angle(1) == doctest::Approx(0.0));
+        CHECK(output.i_f_angle(2) == doctest::Approx(0.0));
+    }
+
     SUBCASE("Test get_output") {
         FaultOutput output = fault.get_output();
         CHECK(output.id == 1);

@@ -119,33 +119,39 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     }
     // call calculation
     try {
+        auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
         switch (opt->calculation_type) {
             case PGM_power_flow:
                 if (opt->symmetric) {
-                    handle->batch_parameter = model->calculate_power_flow<true>(
-                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
-                        update_dataset, opt->threading);
+                    handle->batch_parameter =
+                        model->calculate_power_flow<true>(opt->err_tol, opt->max_iter, calculation_method,
+                                                          output_dataset, update_dataset, opt->threading);
                 }
                 else {
-                    handle->batch_parameter = model->calculate_power_flow<false>(
-                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
-                        update_dataset, opt->threading);
+                    handle->batch_parameter =
+                        model->calculate_power_flow<false>(opt->err_tol, opt->max_iter, calculation_method,
+                                                           output_dataset, update_dataset, opt->threading);
                 }
                 break;
             case PGM_state_estimation:
                 if (opt->symmetric) {
-                    handle->batch_parameter = model->calculate_state_estimation<true>(
-                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
-                        update_dataset, opt->threading);
+                    handle->batch_parameter =
+                        model->calculate_state_estimation<true>(opt->err_tol, opt->max_iter, calculation_method,
+                                                                output_dataset, update_dataset, opt->threading);
                 }
                 else {
-                    handle->batch_parameter = model->calculate_state_estimation<false>(
-                        opt->err_tol, opt->max_iter, (CalculationMethod)opt->calculation_method, output_dataset,
-                        update_dataset, opt->threading);
+                    handle->batch_parameter =
+                        model->calculate_state_estimation<false>(opt->err_tol, opt->max_iter, calculation_method,
+                                                                 output_dataset, update_dataset, opt->threading);
                 }
                 break;
-            case PGM_short_circuit:
-                [[fallthrough]];
+            case PGM_short_circuit: {
+                [[fallthrough]];  // TODO(mgovers) remove
+                // constexpr double voltage_scaling_factor_c{1.1};
+                // handle->batch_parameter = model->calculate_short_circuit(
+                //     voltage_scaling_factor_c, calculation_method, output_dataset, update_dataset, opt->threading);
+                // break;
+            }
             default:
                 throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
         }

@@ -42,6 +42,10 @@ class GenericPowerSensor : public Sensor {
         return {{id(), false}, {}, {}};
     }
 
+    SensorShortCircuitOutput get_null_sc_output() const {
+        return {{id(), false}};
+    }
+
    protected:
     double convert_direction() const {
         if (terminal_type_ == MeasuredTerminalType::load || terminal_type_ == MeasuredTerminalType::shunt) {

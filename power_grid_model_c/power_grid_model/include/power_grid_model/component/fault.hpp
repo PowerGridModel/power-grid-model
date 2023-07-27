@@ -62,16 +62,16 @@ class Fault final : public Base {
     }
 
     FaultOutput get_null_output() const {
-        FaultOutput output{};
-        static_cast<BaseOutput&>(output) = base_output(false);
-        return output;
+        return get_null_output_impl<FaultOutput>();
     }
     FaultOutput get_output() const {
         // During power flow and state estimation the fault object will have an empty output
         return get_null_output();
     }
 
-    // energized
+    FaultShortCircuitOutput get_null_sc_output() const {
+        return get_null_output_impl<FaultShortCircuitOutput>();
+    }
     FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
@@ -87,6 +87,12 @@ class Fault final : public Base {
     FaultShortCircuitOutput get_sc_output(ComplexValue<true> i_f, double const u_rated) const {
         ComplexValue<false> const iabc_f{i_f};
         return get_sc_output(iabc_f, u_rated);
+    }
+
+    template <bool sym>
+    FaultShortCircuitOutput get_sc_output(FaultShortCircuitMathOutput<sym> const& math_output,
+                                          double const u_rated) const {
+        return get_sc_output(math_output.i_fault, u_rated);
     }
 
     // update faulted object
@@ -174,6 +180,13 @@ class Fault final : public Base {
     ID fault_object_;
     double r_f_;
     double x_f_;
+
+    template <std::derived_from<BaseOutput> T>
+    T get_null_output_impl() const {
+        T output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
 
     void check_sanity() {
         using enum FaultPhase;

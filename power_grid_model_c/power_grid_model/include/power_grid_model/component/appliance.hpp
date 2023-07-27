@@ -121,6 +121,10 @@ class Appliance : public Base {
             return get_output<false>(asym_u2si(u));
         }
     }
+    template <bool sym>
+    ApplianceShortCircuitOutput get_sc_output(ApplianceShortCircuitMathOutput<sym> const& appliance_math_output) const {
+        return get_sc_output(appliance_math_output.i);
+    }
 
    private:
     ID node_;
