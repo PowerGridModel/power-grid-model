@@ -393,6 +393,21 @@ def test_validate_values():
     assert both_errors == node_errors + line_errors
 
 
+def test_validate_values__calculation_types():
+    # Create invalid sensor
+    sym_voltage_sensor = initialize_array("input", "sym_voltage_sensor", 3)
+    all_errors = validate_values({"sym_voltage_sensor": sym_voltage_sensor})
+    power_flow_errors = validate_values(
+        {"sym_voltage_sensor": sym_voltage_sensor}, calculation_type=CalculationType.power_flow
+    )
+    state_estimation_errors = validate_values(
+        {"sym_voltage_sensor": sym_voltage_sensor}, calculation_type=CalculationType.state_estimation
+    )
+
+    assert not power_flow_errors
+    assert all_errors == state_estimation_errors
+
+
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
 @patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
 @patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
