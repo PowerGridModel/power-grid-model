@@ -82,7 +82,7 @@ def validate_input_data(
     errors: List[ValidationError] = []
     errors += validate_required_values(input_data_copy, calculation_type, symmetric)
     errors += validate_unique_ids_across_components(input_data_copy)
-    errors += validate_values(input_data_copy)
+    errors += validate_values(input_data_copy, calculation_type)
     return errors if errors else None
 
 
@@ -135,7 +135,7 @@ def validate_batch_data(
         if not id_errors:
             merged_data = update_input_data(input_data, batch_update_data)
             batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
-            batch_errors += validate_values(merged_data)
+            batch_errors += validate_values(merged_data, calculation_type)
 
         if batch_errors:
             errors[batch] = batch_errors
@@ -316,12 +316,15 @@ def validate_required_values(
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 
 
-def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: disable=too-many-branches
+def validate_values(  # pylint: disable=too-many-branches
+    data: SingleDataset, calculation_type: Optional[CalculationType] = None
+) -> List[ValidationError]:
     """
     For each component supplied in the data, call the appropriate validation function
 
     Args:
         data: a power-grid-model input dataset
+        calculation_type: supply a calculation method, to allow missing values for unused fields
 
     Returns: an empty list if all required data is valid, or a list of ValidationErrors.
 
@@ -349,14 +352,15 @@ def validate_values(data: SingleDataset) -> List[ValidationError]:  # pylint: di
         errors += validate_generic_load_gen(data, "asym_gen")
     if "shunt" in data:
         errors += validate_shunt(data)
-    if "sym_voltage_sensor" in data:
-        errors += validate_generic_voltage_sensor(data, "sym_voltage_sensor")
-    if "asym_voltage_sensor" in data:
-        errors += validate_generic_voltage_sensor(data, "asym_voltage_sensor")
-    if "sym_power_sensor" in data:
-        errors += validate_generic_power_sensor(data, "sym_power_sensor")
-    if "asym_power_sensor" in data:
-        errors += validate_generic_power_sensor(data, "asym_power_sensor")
+    if calculation_type in (None, CalculationType.state_estimation):
+        if "sym_voltage_sensor" in data:
+            errors += validate_generic_voltage_sensor(data, "sym_voltage_sensor")
+        if "asym_voltage_sensor" in data:
+            errors += validate_generic_voltage_sensor(data, "asym_voltage_sensor")
+        if "sym_power_sensor" in data:
+            errors += validate_generic_power_sensor(data, "sym_power_sensor")
+        if "asym_power_sensor" in data:
+            errors += validate_generic_power_sensor(data, "asym_power_sensor")
     return errors
 
 
