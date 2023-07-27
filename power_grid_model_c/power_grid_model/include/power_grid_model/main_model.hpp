@@ -1118,12 +1118,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
             auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
-            auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
-            auto const topo_bus_idx = state_.topo_comp_coup->node[node_idx];
+            if (fault.status()) {
+                auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
+                auto const topo_bus_idx = state_.topo_comp_coup->node[node_idx];
 
-            if (topo_bus_idx.group >= 0) {  // Consider non-isolated objects only
-                topo_fault_indices[topo_bus_idx.group].push_back(fault_idx);
-                topo_bus_indices[topo_bus_idx.group].push_back(topo_bus_idx.pos);
+                if (topo_bus_idx.group >= 0) {  // Consider non-isolated objects only
+                    topo_fault_indices[topo_bus_idx.group].push_back(fault_idx);
+                    topo_bus_indices[topo_bus_idx.group].push_back(topo_bus_idx.pos);
+                }
             }
         }
 
