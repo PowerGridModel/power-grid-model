@@ -63,7 +63,7 @@ TEST_CASE("Test main model - short circuit") {
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
             main_model.output_result<Fault>(math_output, fault_output.begin());
-            CHECK(fault_output[0].i_f(0) == doctest::Approx(5689.08));
+            CHECK(fault_output[0].i_f(0) == doctest::Approx(10e4 / sqrt3));
 
             std::vector<NodeShortCircuitOutput> node_output(2);
             main_model.output_result<Node>(math_output, node_output.begin());
