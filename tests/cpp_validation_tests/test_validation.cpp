@@ -513,7 +513,8 @@ namespace {
 bool should_skip_test(CaseParam const& param) {
     using namespace std::string_literals;
 
-    return param.calculation_type == "short_circuit"s;
+    // return param.calculation_type == "short_circuit"s;
+    return false;
 }
 
 template <typename T>
