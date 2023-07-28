@@ -80,8 +80,6 @@ def add_case(
         kwargs = {}
         if "fail" in params:
             kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
-        elif calculation_type == "short_circuit":
-            kwargs["marks"] = (pytest.mark.xfail(reason="Short circuit is not yet supported"),)
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
