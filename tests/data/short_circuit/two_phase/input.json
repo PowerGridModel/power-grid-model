@@ -17,8 +17,8 @@
     ],
   "source":
     [
-      {"id": 4, "node": 0, "status": 1, "u_ref": 1.1, "u_ref_angle": 0.0, "sk": 2000000000.0, "rx_ratio": 0.1, "z01_ratio": 1},
-      {"id": 5, "node": 2, "status": 0, "u_ref": 1.1, "u_ref_angle": -0.5235987755982988, "sk": 20000000000.0, "rx_ratio": 0.1, "z01_ratio": 1}
+      {"id": 4, "node": 0, "status": 1, "u_ref": 1.0, "u_ref_angle": 0.0, "sk": 2000000000.0, "rx_ratio": 0.1, "z01_ratio": 1},
+      {"id": 5, "node": 2, "status": 0, "u_ref": 1.0, "u_ref_angle": -0.5235987755982988, "sk": 20000000000.0, "rx_ratio": 0.1, "z01_ratio": 1}
     ],
   "shunt":
     [
