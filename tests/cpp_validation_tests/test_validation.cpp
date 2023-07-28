@@ -227,6 +227,41 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
     return batch_data;
 }
 
+template <typename T>
+std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
+    // ensure that we don't read outside owned memory
+    REQUIRE(attr.ctype == ctype_v<T>);
+    REQUIRE(attr.size == sizeof(T));
+
+    T value{};
+    attr.get_value(raw_data_ptr, reinterpret_cast<RawDataPtr>(&value), obj);
+
+    if constexpr (std::same_as<T, RealValue<false>>) {
+        return "(" + std::to_string(value(0)) + ", " + std::to_string(value(1)) + ", " + std::to_string(value(2)) + ")";
+    }
+    else {
+        return std::to_string(value);
+    }
+}
+
+std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
+    using enum CType;
+    using namespace std::string_literals;
+
+    switch (attr.ctype) {
+        case c_int32:
+            return get_as_string<int32_t>(raw_data_ptr, attr, obj);
+        case c_int8:
+            return get_as_string<int8_t>(raw_data_ptr, attr, obj);
+        case c_double:
+            return get_as_string<double>(raw_data_ptr, attr, obj);
+        case c_double3:
+            return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
+        default:
+            return "<unknown value type>"s;
+    }
+}
+
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
@@ -269,8 +304,11 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     }
                     else {
-                        std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
-                                                     " #" + std::to_string(obj) + ", attribute: " + attr.name;
+                        std::string const case_str =
+                            "batch: #" + std::to_string(batch) + ", Component: " + type_name + " #" +
+                            std::to_string(obj) + ", attribute: " + attr.name +
+                            ": actual = " + get_as_string(result_ptr, attr, obj) +
+                            " vs. expected = " + get_as_string(reference_result_ptr, attr, obj);
                         CHECK_MESSAGE(match, case_str);
                     }
                 }
@@ -510,10 +548,7 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-bool should_skip_test(CaseParam const& param) {
-    using namespace std::string_literals;
-
-    // return param.calculation_type == "short_circuit"s;
+constexpr bool should_skip_test(CaseParam const& /* param */) {
     return false;
 }
 
