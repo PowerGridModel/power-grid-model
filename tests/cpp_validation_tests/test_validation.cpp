@@ -510,10 +510,7 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-bool should_skip_test(CaseParam const& param) {
-    using namespace std::string_literals;
-
-    // return param.calculation_type == "short_circuit"s;
+constexpr bool should_skip_test(CaseParam const& /* param */) {
     return false;
 }
 
