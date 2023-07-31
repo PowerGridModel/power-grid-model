@@ -388,6 +388,7 @@ struct CaseParam {
     bool sym{};
     bool is_batch{};
     double rtol{};
+    bool fail{};
     [[no_unique_address]] BatchParameter batch_parameter{};
     std::map<std::string, double> atol;
 
@@ -445,6 +446,9 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     }
     else {
         j_atol.get_to(param.atol);
+    }
+    if (j.contains("fail")) {
+        j.at("fail").get_to(param.fail);
     }
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
@@ -548,8 +552,8 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-constexpr bool should_skip_test(CaseParam const& /* param */) {
-    return false;
+constexpr bool should_skip_test(CaseParam const& param) {
+    return param.fail;
 }
 
 template <typename T>

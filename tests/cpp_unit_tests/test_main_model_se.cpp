@@ -230,10 +230,10 @@ TEST_CASE("Test main model - state estimation") {
                 ref_result_data["node"] =
                     DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
-                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                            test_result_data, update_data, -1);
-                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                           ref_result_data, update_data, -1);
+                test_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                             test_result_data, update_data, -1);
+                ref_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                            ref_result_data, update_data, -1);
 
                 CHECK(test_node_output[0].u.x() == doctest::Approx(ref_node_output[0].u.x()));
                 CHECK(test_node_output[0].u.y() == doctest::Approx(ref_node_output[0].u.y()));
