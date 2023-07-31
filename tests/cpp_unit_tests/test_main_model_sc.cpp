@@ -94,7 +94,7 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
 
         MainModel model{50.0, input_data};
 
-        std::vector<NodeShortCircuitOutput> node_output(1);
+        std::vector<NodeShortCircuitOutput> node_output(2);
 
         Dataset result_data;
         result_data["node"] = DataPointer<false>{node_output.data(), static_cast<Idx>(node_output.size())};
