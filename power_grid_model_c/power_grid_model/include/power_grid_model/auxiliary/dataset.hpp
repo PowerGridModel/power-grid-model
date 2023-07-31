@@ -92,9 +92,7 @@ class DataPointer {
         if (indptr_) {
             return (indptr_[batch_size_] == 0);
         }
-        else {
-            return batch_size_ == 0 || elements_per_scenario_ == 0;
-        }
+        return batch_size_ == 0 || elements_per_scenario_ == 0;
     }
 
     // conversion to const iterator
