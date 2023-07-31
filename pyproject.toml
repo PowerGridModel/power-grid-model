@@ -105,7 +105,12 @@ test-command = "pytest {package}/tests"
 #    PyPy
 #    musllinux when python < 3.9
 #    musllinux in aarch64
-skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
+
+# we disable musllinux in cibuildwheel because there is not support for musllinux 1.2 yet
+# we build separately at this moment
+skip = ["pp*", "*musllinux*"]
+# TODO restore this
+# skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
@@ -114,7 +119,7 @@ repair-wheel-command = "auditwheel repair --plat ${AUDITWHEEL_PLAT//2_28/2_24} -
 environment = { CC="gcc", CXX="g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
-musllinux-x86_64-image = "musllinux_1_2"
+musllinux-x86_64-image = "musllinux_1_1"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
