@@ -313,10 +313,8 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
                 return model.calculate_power_flow<true>(err_tol, max_iter, calculation_method, dataset, update_dataset,
                                                         threading);
             }
-            else {
-                return model.calculate_power_flow<false>(err_tol, max_iter, calculation_method, dataset, update_dataset,
-                                                         threading);
-            }
+            return model.calculate_power_flow<false>(err_tol, max_iter, calculation_method, dataset, update_dataset,
+                                                     threading);
         };
     }
     if (calculation_type == "state_estimation"s) {
@@ -326,10 +324,8 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
                 return model.calculate_state_estimation<true>(err_tol, max_iter, calculation_method, dataset,
                                                               update_dataset, threading);
             }
-            else {
-                return model.calculate_state_estimation<false>(err_tol, max_iter, calculation_method, dataset,
-                                                               update_dataset, threading);
-            }
+            return model.calculate_state_estimation<false>(err_tol, max_iter, calculation_method, dataset,
+                                                           update_dataset, threading);
         };
     }
     if (calculation_type == "short_circuit"s) {
@@ -371,12 +367,10 @@ std::string get_output_type(std::string const& calculation_type, bool sym) {
         }
         return "sc_output"s;
     }
-    else if (sym) {
+    if (sym) {
         return "sym_output"s;
     }
-    else {
-        return "asym_output"s;
-    }
+    return "asym_output"s;
 }
 
 std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,

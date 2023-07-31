@@ -9,7 +9,7 @@
 namespace power_grid_model {
 
 TEST_CASE("Test node") {
-    Node node{{{1}, 10.0e3}};
+    Node const node{{{1}, 10.0e3}};
     CHECK(node.math_model_type() == ComponentType::node);
     CHECK(node.u_rated() == 10.0e3);
 
@@ -61,7 +61,7 @@ TEST_CASE("Test node") {
 
     SUBCASE("Test node update") {
         BaseUpdate const base_update{};
-        UpdateChange update_change = node.update(base_update);
+        UpdateChange update_change = Node::update(base_update);
         CHECK(update_change.topo == false);
         CHECK(update_change.param == false);
     }
