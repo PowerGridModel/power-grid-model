@@ -262,6 +262,41 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
     }
 }
 
+template <bool sym>
+bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
+                                MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
+                                double rtol, Idx obj) {
+    RealValue<sym> mag{}, mag_ref{}, angle{}, angle_ref{};
+    mag_attr.get_value(result_ptr, &mag, obj);
+    mag_attr.get_value(reference_result_ptr, &mag_ref, obj);
+    angle_attr.get_value(result_ptr, &angle, obj);
+    angle_attr.get_value(reference_result_ptr, &angle_ref, obj);
+    ComplexValue<sym> const result = mag * exp(1.0i * angle);
+    ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
+    if constexpr (sym) {
+        return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
+    }
+    else {
+        return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
+    }
+}
+
+bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
+                                MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
+                                double rtol, Idx obj) {
+    if (angle_attr.ctype == CType::c_double) {
+        assert(mag_attr.ctype == CType::c_double);
+        return assert_angle_and_magnitude<true>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
+                                                obj);
+    }
+    else {
+        assert(angle_attr.ctype == CType::c_double3);
+        assert(mag_attr.ctype == CType::c_double3);
+        return assert_angle_and_magnitude<false>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
+                                                 obj);
+    }
+}
+
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
@@ -292,6 +327,12 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         break;
                     }
                 }
+                // for other _angle attribute, we need to find the magnitue and compare together
+                std::regex const angle_regex("(.*)(_angle)");
+                std::smatch angle_match;
+                bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                MetaAttribute const& possible_attr_magnitude =
+                    is_angle ? component_meta.get_attribute(angle_match[1]) : attr;
 
                 // loop all object
                 for (Idx obj = 0; obj != length; ++obj) {
@@ -299,7 +340,14 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                     if (attr.check_nan(reference_result_ptr, obj)) {
                         continue;
                     }
-                    bool const match = attr.compare_value(result_ptr, reference_result_ptr, dynamic_atol, rtol, obj);
+                    // for angle attribute, also check the magnitude available
+                    if (is_angle && possible_attr_magnitude.check_nan(reference_result_ptr, obj)) {
+                        continue;
+                    }
+                    bool const match =
+                        is_angle ? assert_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
+                                                              possible_attr_magnitude, dynamic_atol, rtol, obj)
+                                 : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
                     if (match) {
                         CHECK(match);
                     }
@@ -557,7 +605,7 @@ constexpr bool should_skip_test(CaseParam const& param) {
 }
 
 template <typename T>
-requires std::invocable<std::remove_cvref_t<T>>
+    requires std::invocable<std::remove_cvref_t<T>>
 void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 
