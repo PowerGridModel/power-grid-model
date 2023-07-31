@@ -59,7 +59,6 @@ performance-*,
 portability-*,
 readability-*,
 -readability-function-cognitive-complexity,
--readability-identifier-length,
 -readability-implicit-bool-conversion,
 -readability-isolate-declaration,
 -readability-make-member-function-const,
@@ -69,6 +68,10 @@ readability-*,
 -readability-redundant-member-init,
 -readability-suspicious-call-argument
 '
+
+MinimumVariableNameLength = 0,
+MinimumParameterNameLength = 0,
+MinimumLoopCounterNameLength = 0,
 
 WarningsAsErrors: '*'
 

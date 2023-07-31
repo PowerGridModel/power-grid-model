@@ -69,8 +69,6 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
-
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -161,8 +159,6 @@ TEST_CASE("Test power sensor") {
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
-
-        terminal_type = sym_power_sensor.get_terminal_type();
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -255,8 +251,6 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
-
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -347,8 +341,6 @@ TEST_CASE("Test power sensor") {
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
-
-        terminal_type = sym_power_sensor.get_terminal_type();
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -441,8 +433,6 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
-
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -533,8 +523,6 @@ TEST_CASE("Test power sensor") {
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
-
-        terminal_type = sym_power_sensor.get_terminal_type();
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -649,8 +637,6 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
-
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -742,8 +728,6 @@ TEST_CASE("Test power sensor") {
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
-
-        terminal_type = asym_power_sensor.get_terminal_type();
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -837,8 +821,6 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
-
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -930,8 +912,6 @@ TEST_CASE("Test power sensor") {
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
-
-        terminal_type = asym_power_sensor.get_terminal_type();
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -1025,8 +1005,6 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
-
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -1118,8 +1096,6 @@ TEST_CASE("Test power sensor") {
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
-
-        terminal_type = asym_power_sensor.get_terminal_type();
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
