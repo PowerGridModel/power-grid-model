@@ -26,6 +26,6 @@
     ],
   "fault":
     [
-      {"id": 10, "status": 1, "fault_type": 2, "fault_phase": -1, "fault_object": 3, "r": 0.1, "x": 0.1}
+      {"id": 10, "status": 1, "fault_type": 2, "fault_phase": -1, "fault_object": 3, "r_f": 0.1, "x_f": 0.1}
     ]
 }
