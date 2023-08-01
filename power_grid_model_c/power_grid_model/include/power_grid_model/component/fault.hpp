@@ -108,6 +108,12 @@ class Fault final : public Base {
         if (update.fault_object != na_IntID) {
             fault_object_ = update.fault_object;
         }
+        if (!is_nan(update.r_f)) {
+            r_f_ = update.r_f;
+        }
+        if (!is_nan(update.x_f)) {
+            x_f_ = update.x_f;
+        }
         check_sanity();
         return {false, false};  // topology and parameters do not change
     }

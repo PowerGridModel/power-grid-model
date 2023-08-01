@@ -102,7 +102,7 @@ struct State {
     std::vector<ApplianceUpdate> shunt_update{{{9}, false}};
     std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, true, false}};
-    std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1}};
+    std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
 };
 
 auto default_model(State const& state) -> MainModel {

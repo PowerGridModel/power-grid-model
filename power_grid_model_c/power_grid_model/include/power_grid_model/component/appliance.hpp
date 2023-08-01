@@ -75,7 +75,7 @@ class Appliance : public Base {
     template <bool sym>
     ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
         ApplianceOutput<sym> output{};
-        static_cast<BaseOutput&>(output) = base_output(true);
+        static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.p = base_power<sym> * real(appliance_math_output.s) * injection_direction();
         output.q = base_power<sym> * imag(appliance_math_output.s) * injection_direction();
         output.s = base_power<sym> * cabs(appliance_math_output.s);
@@ -103,7 +103,7 @@ class Appliance : public Base {
     }
     ApplianceShortCircuitOutput get_sc_output(ComplexValue<false> const& i) const {
         ApplianceShortCircuitOutput output{};
-        static_cast<BaseOutput&>(output) = base_output(true);
+        static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.i = base_i_ * cabs(i);
         output.i_angle = arg(i * injection_direction());
         return output;

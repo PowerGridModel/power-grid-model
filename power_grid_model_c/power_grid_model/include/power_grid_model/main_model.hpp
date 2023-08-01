@@ -86,6 +86,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using GetSeqIdxFunc = std::vector<Idx2D> (*)(MainModelImpl const& x, ConstDataPointer const& component_update);
     using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
 
+    static constexpr Idx ignore_output{-1};
+
    public:
     struct cached_update_t : std::true_type {};
 
@@ -443,28 +445,27 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     /*
     run the calculation function in batch on the provided update data.
-    The calculation function (required) should be able to run standalone.
-    The preparation function (optional) may be provided to allow speeding up calculations.
+
+    The calculation function should be able to run standalone.
+    It should output to the provided result_data if the trailing argument is not ignore_output.
+
     threading
         < 0 sequential
         = 0 parallel, use number of hardware threads
         > 0 specify number of parallel threads
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
-    template <typename Calculate, typename Prepare>
-    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&>&&
-        std::invocable<std::remove_cvref_t<Prepare>, MainModelImpl&>
-            BatchParameter batch_calculation_(Calculate&& calculation_fn, Prepare&& preparation_fn,
-                                              Dataset const& result_data, ConstDataset const& update_data,
-                                              Idx threading = -1) {
+    template <typename Calculate>
+    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx> BatchParameter
+    batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data,
+                       Idx threading = -1) {
         // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
         // NOTE: if the map is not empty but the datasets inside are empty
         //     that will be considered as a zero batch_size
         bool const all_empty = update_data.empty();
         if (all_empty) {
-            auto const math_output = calculation_fn(*this);
-            output_result(math_output, result_data);
+            calculation_fn(*this, result_data, 0);
             return BatchParameter{};
         }
 
@@ -483,7 +484,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            preparation_fn(*this);
+            calculation_fn(*this, {}, ignore_output);
         }
         catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
@@ -509,8 +510,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 // try to update model and run calculation
                 try {
                     model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
-                    auto const math_output = calculation_fn(model);
-                    model.output_result(math_output, result_data, batch_number);
+                    calculation_fn(model, result_data, batch_number);
                     model.restore_components();
                 }
                 catch (std::exception const& ex) {
@@ -563,15 +563,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         return BatchParameter{};
-    }
-    template <typename Calculate>
-    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&> BatchParameter batch_calculation_(
-        Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data, Idx threading = -1) {
-        return batch_calculation_(
-            calculation_fn,
-            [](MainModelImpl& /* model */) {  // nothing to prepare
-            },
-            result_data, update_data, threading);
     }
 
    public:
@@ -637,7 +628,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                               Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const math_output = calculate_power_flow_<sym>(err_tol, max_iter, calculation_method);
-        output_result(math_output, result_data, pos);
+        if (pos != ignore_output) {
+            output_result(math_output, result_data, pos);
+        }
     }
 
     // Batch load flow calculation, propagating the results to result_data
@@ -646,11 +639,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                         Dataset const& result_data, ConstDataset const& update_data,
                                         Idx threading = -1) {
         return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model) {
-                return model.calculate_power_flow_<sym>(err_tol, max_iter, calculation_method);
-            },
-            [calculation_method](MainModelImpl& model) {
-                model.calculate_power_flow_<sym>(std::numeric_limits<double>::max(), 1, calculation_method);
+            [err_tol, max_iter, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+                auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
+                auto const max_iter_ = pos != ignore_output ? max_iter : 1;
+
+                model.calculate_power_flow<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
             },
             result_data, update_data, threading);
     }
@@ -677,11 +670,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                               Dataset const& result_data, ConstDataset const& update_data,
                                               Idx threading = -1) {
         return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model) {
-                return model.calculate_state_estimation_<sym>(err_tol, max_iter, calculation_method);
-            },
-            [calculation_method](MainModelImpl& model) {
-                model.calculate_state_estimation_<sym>(std::numeric_limits<double>::max(), 1, calculation_method);
+            [err_tol, max_iter, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+                auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
+                auto const max_iter_ = pos != ignore_output ? max_iter : 1;
+
+                model.calculate_state_estimation<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
             },
             result_data, update_data, threading);
     }
@@ -702,11 +695,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                             return fault.get_fault_type() == FaultType::three_phase;
                         })) {
             auto const math_output = calculate_short_circuit_<true>(voltage_scaling_factor_c, calculation_method);
-            output_result<true>(math_output, result_data, pos);
+            output_result(math_output, result_data, pos);
         }
         else {
             auto const math_output = calculate_short_circuit_<false>(voltage_scaling_factor_c, calculation_method);
-            output_result<false>(math_output, result_data, pos);
+            output_result(math_output, result_data, pos);
         }
     }
 
@@ -715,8 +708,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                            Dataset const& result_data, ConstDataset const& update_data,
                                            Idx threading = -1) {
         return batch_calculation_(
-            [voltage_scaling_factor_c, calculation_method](MainModelImpl& model) {
-                return model.calculate_short_circuit_<false>(voltage_scaling_factor_c, calculation_method);
+            [voltage_scaling_factor_c, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+                if (pos != ignore_output) {
+                    model.calculate_short_circuit(voltage_scaling_factor_c, calculation_method, target_data, pos);
+                }
             },
             result_data, update_data, threading);
     }
@@ -752,11 +747,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
+    // TODO(mgovers): remove this functionality
     template <bool sym, typename Component, std::forward_iterator ResIt>
     ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
         return output_result<Component, MathOutput<sym>, ResIt>(math_output, res_it);
     }
 
+    // TODO(mgovers): remove this functionality
     template <bool sym>
     void output_result(std::vector<MathOutput<sym>> const& math_output, Dataset const& result_data, Idx pos = 0) {
         return output_result<MathOutput<sym>>(math_output, result_data, pos);

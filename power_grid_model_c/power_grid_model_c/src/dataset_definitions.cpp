@@ -671,6 +671,8 @@ PGM_MetaAttribute const* const PGM_def_update_fault_status = PGM_meta_get_attrib
 PGM_MetaAttribute const* const PGM_def_update_fault_fault_type = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "fault_type");
 PGM_MetaAttribute const* const PGM_def_update_fault_fault_phase = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "fault_phase");
 PGM_MetaAttribute const* const PGM_def_update_fault_fault_object = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "fault_object");
+PGM_MetaAttribute const* const PGM_def_update_fault_r_f = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "r_f");
+PGM_MetaAttribute const* const PGM_def_update_fault_x_f = PGM_meta_get_attribute_by_name(nullptr, "update", "fault", "x_f");
 // dataset sc_output
 PGM_MetaDataset const* const PGM_def_sc_output = PGM_meta_get_dataset_by_name(nullptr, "sc_output");
 // components of sc_output

@@ -512,8 +512,8 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 | `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                              &#10024; only for short circuit                               | &#10004; |                   |
 | `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default `FaultPhase.default_value` (see [below](#default-values-for-fault_phase)) | &#10004; |                   |
 | `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                          &#10004;                                          | &#10004; | A valid `node` ID |
-| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                    &#10060; default 0.0                                    | &#10060; |                   |
-| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                    &#10060; default 0.0                                    | &#10060; |                   |
+| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                    &#10060; default 0.0                                    | &#10004; |                   |
+| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                    &#10060; default 0.0                                    | &#10004; |                   |
 
 ```{note}
 Multiple faults may exist within one calculation. Currently, all faults in one scenario are required to have the

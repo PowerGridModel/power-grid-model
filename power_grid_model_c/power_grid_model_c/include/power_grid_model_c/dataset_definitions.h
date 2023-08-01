@@ -683,6 +683,8 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_update_fault_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_fault_fault_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_fault_fault_phase;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_fault_fault_object;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_fault_r_f;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_fault_x_f;
 // dataset sc_output
 PGM_API extern PGM_MetaDataset const* const PGM_def_sc_output;
 // components of sc_output
