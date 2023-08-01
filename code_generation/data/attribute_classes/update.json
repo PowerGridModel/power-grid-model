@@ -166,6 +166,14 @@
                     "data_type": "ID",
                     "names": "fault_object",
                     "description": "ID of the faulted object"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r_f",
+                        "x_f"
+                    ],
+                    "description": "short circuit impedance"
                 }
             ]
         }

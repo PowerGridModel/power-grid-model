@@ -166,6 +166,8 @@ struct get_attributes_list<FaultUpdate> {
             {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_type>{}, "fault_type"},
             {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase>{}, "fault_phase"},
             {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object>{}, "fault_object"},
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::r_f>{}, "r_f"},
+            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::x_f>{}, "x_f"},
         };
     }
 };
@@ -320,6 +322,8 @@ struct get_component_nan<FaultUpdate> {
         set_nan(comp.fault_type);
         set_nan(comp.fault_phase);
         set_nan(comp.fault_object);
+        set_nan(comp.r_f);
+        set_nan(comp.x_f);
         return comp;
     }
 };

@@ -80,8 +80,6 @@ def add_case(
         kwargs = {}
         if "fail" in params:
             kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
-        elif calculation_type == "short_circuit":
-            kwargs["marks"] = (pytest.mark.xfail(reason="Short circuit is not yet supported"),)
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
@@ -197,12 +195,13 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                     # set the u_angle of 0-th entry to zero
                     actual_col = actual_col - actual_col.ravel()[0]
                     expected_col = expected_col - expected_col.ravel()[0]
-                    # convert to unity complex number, to avoid under and over flows
-                    actual_col = np.exp(1j * actual_col)
-                    expected_col = np.exp(1j * expected_col)
-                    # convert to radians
-                    actual_col = np.angle(actual_col)
-                    expected_col = np.angle(expected_col)
+
+                if col_name.endswith("_angle"):
+                    magnitude_name = col_name[: -len("_angle")]
+                    if np.all(np.isnan(expected_data[magnitude_name])):
+                        continue
+                    actual_col = actual[key][magnitude_name] * np.exp(1j * actual_col)
+                    expected_col = expected_data[magnitude_name] * np.exp(1j * expected_col)
 
                 # Define the absolute tolerance based on the field name
                 p = "default"
@@ -216,11 +215,10 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                 else:
                     a = atol
 
-                if not np.allclose(actual_col, expected_col, rtol=rtol, atol=a):
-                    msg = f"Not all values match for {key}.{col_name} (rtol={rtol}, atol={a}, pattern={p})"
-                    print(f"\n{msg}")
-                    print("Actual:     ", actual_col)
-                    print("Expected:   ", expected_col)
-                    print("Difference: ", actual_col - expected_col)
-                    print("Matches:    ", np.isclose(actual_col, expected_col, rtol=rtol, atol=a))
-                    raise AssertionError(msg)
+                assert np.allclose(actual_col, expected_col, rtol=rtol, atol=a), (
+                    f"Not all values match for {key}.{col_name} (rtol={rtol}, atol={a}, pattern={p})"
+                    f"\nActual:     {actual_col}"
+                    f"\nExpected:   {expected_col}"
+                    f"\nDifference: {actual_col - expected_col}"
+                    f"\nMatches:    {np.isclose(actual_col, expected_col, rtol=rtol, atol=a)}"
+                )
