@@ -198,6 +198,8 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
 
                 if col_name.endswith("_angle"):
                     magnitude_name = col_name[: -len("_angle")]
+                    if np.all(np.isnan(expected_data[magnitude_name])):
+                        continue
                     actual_col = actual[key][magnitude_name] * np.exp(1j * actual_col)
                     expected_col = expected_data[magnitude_name] * np.exp(1j * expected_col)
 
