@@ -201,6 +201,10 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                     # convert to radians
                     actual_col = np.angle(actual_col)
                     expected_col = np.angle(expected_col)
+                elif col_name.endswith("_angle"):
+                    magnitude_name = col_name[: -len("_angle")]
+                    actual_col = actual[key][magnitude_name] * np.exp(1j * actual_col)
+                    expected_col = expected[magnitude_name] * np.exp(1j * actual_col)
 
                 # Define the absolute tolerance based on the field name
                 p = "default"
