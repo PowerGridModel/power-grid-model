@@ -9,41 +9,55 @@
 namespace power_grid_model {
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
+    double const u_rated = 10e3;
+    double const u_ref = 1.0, c_factor = 1.0, sk = 100e6, rx_ratio = 0.1;
+    double const z_ref_abs = u_rated * u_rated / sk;
+    double const x_ref = z_ref_abs / sqrt(rx_ratio * rx_ratio + 1.0);
+    double const r_ref = x_ref * rx_ratio;
+    DoubleComplex const z_ref{r_ref, x_ref};
+    double const u_source = u_rated * u_ref * c_factor / sqrt3;
+    double const r_f = 0.1, x_f = 0.1;
+    DoubleComplex const z_f{r_f, x_f};
 
     SUBCASE("Single node + source") {
-        main_model.add_component<Node>({{{1}, 10e4}});
-        main_model.add_component<Source>({{{{2}, 1, true}, 1.0, nan, nan, nan, nan}});
+        main_model.add_component<Node>({{{1}, u_rated}});
+        main_model.add_component<Source>({{{{2}, 1, true}, u_ref, nan, sk, rx_ratio, nan}});
 
         SUBCASE("three phase fault") {
-            main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, nan, nan}});
+            main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
             main_model.set_construction_complete();
+
+            DoubleComplex const i_f = u_source / (z_ref + z_f);
+            double const i_f_abs = cabs(i_f);
+            DoubleComplex const u_node = i_f * z_f;
+            double const u_node_abs = cabs(u_node);
+            double const u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
 
             SUBCASE("Symmetric Calculation") {
                 std::vector<ShortCircuitMathOutput<true>> const math_output =
-                    main_model.calculate_short_circuit<true>(1.0, CalculationMethod::iec60909);
+                    main_model.calculate_short_circuit<true>(c_factor, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
 
-                // abs(source.y1_ref) * 1e6 / 10e4 / sqrt3
-                CHECK(fault_output[0].i_f(0) == doctest::Approx(57735.026918962572175));
+                CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
                 main_model.output_result<Node>(math_output, node_output.begin());
-                CHECK(node_output[0].u_pu(0) == doctest::Approx(0.0));
+                CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
 
             SUBCASE("Asymmetric Calculation") {
                 std::vector<ShortCircuitMathOutput<false>> const math_output =
-                    main_model.calculate_short_circuit<false>(1.0, CalculationMethod::iec60909);
+                    main_model.calculate_short_circuit<false>(c_factor, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
-                CHECK(fault_output[0].i_f(0) == doctest::Approx(57735.026918962572175));
+                CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
                 main_model.output_result<Node>(math_output, node_output.begin());
-                CHECK(node_output[0].u_pu(0) == doctest::Approx(0.0));
+                CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
         }
     }
