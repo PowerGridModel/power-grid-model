@@ -370,7 +370,7 @@ class MeasuredValues {
                         ++n_unmeasured;
                         continue;
                     }
-                    else if (idx_load_gen_power_[load_gen] == disconnected) {
+                    if (idx_load_gen_power_[load_gen] == disconnected) {
                         continue;
                     }
                     appliance_injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
@@ -382,7 +382,7 @@ class MeasuredValues {
                         ++n_unmeasured;
                         continue;
                     }
-                    else if (idx_source_power_[source] == disconnected) {
+                    if (idx_source_power_[source] == disconnected) {
                         continue;
                     }
                     appliance_injection_measurement.value += extra_value_[idx_source_power_[source]].value;
