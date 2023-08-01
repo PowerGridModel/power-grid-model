@@ -9,17 +9,18 @@
 namespace power_grid_model {
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
-    double const u_rated = 10e3;
-    double const u_ref = 1.0, c_factor = 1.0, sk = 100e6, rx_ratio = 0.1;
-    double const z_ref_abs = u_rated * u_rated / sk;
-    double const x_ref = z_ref_abs / sqrt(rx_ratio * rx_ratio + 1.0);
-    double const r_ref = x_ref * rx_ratio;
-    DoubleComplex const z_ref{r_ref, x_ref};
-    double const u_source = u_rated * u_ref * c_factor / sqrt3;
-    double const r_f = 0.1, x_f = 0.1;
-    DoubleComplex const z_f{r_f, x_f};
 
     SUBCASE("Single node + source") {
+        double const u_rated = 10e3;
+        double const u_ref = 1.0, c_factor = 1.0, sk = 100e6, rx_ratio = 0.1;
+        double const z_ref_abs = u_rated * u_rated / sk;
+        double const x_ref = z_ref_abs / sqrt(rx_ratio * rx_ratio + 1.0);
+        double const r_ref = x_ref * rx_ratio;
+        DoubleComplex const z_ref{r_ref, x_ref};
+        double const u_source = u_rated * u_ref * c_factor / sqrt3;
+        double const r_f = 0.1, x_f = 0.1;
+        DoubleComplex const z_f{r_f, x_f};
+
         main_model.add_component<Node>({{{1}, u_rated}});
         main_model.add_component<Source>({{{{2}, 1, true}, u_ref, nan, sk, rx_ratio, nan}});
 
