@@ -6,22 +6,7 @@
       ],
     "source":
       [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -51,7 +36,67 @@
       ],
     "source":
       [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 1}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
         {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -77,71 +122,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
         {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -171,7 +156,7 @@
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -182,7 +167,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0, "x_f": 0, "fault_object": 3}
       ],
     "source":
       [
@@ -197,11 +182,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -212,7 +197,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -227,11 +212,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -242,7 +227,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -257,11 +242,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -272,7 +257,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -287,11 +272,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -302,7 +287,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -317,11 +302,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -332,7 +317,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -347,37 +332,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -392,11 +347,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 6, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -422,7 +377,37 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 1}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 1}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 1}
       ],
     "source":
       [
@@ -441,7 +426,7 @@
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -471,7 +456,67 @@
       ],
     "source":
       [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 3}
+      ],
+    "source":
+      [
         {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -497,11 +542,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -512,7 +557,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -527,37 +572,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0, "x_f": 0, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -572,37 +587,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -617,11 +602,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -632,7 +617,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -647,37 +632,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -692,11 +647,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -707,7 +662,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -722,7 +677,37 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 5, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -741,7 +726,7 @@
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -771,7 +756,67 @@
       ],
     "source":
       [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 1}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
         {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -797,71 +842,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
         {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -891,7 +876,7 @@
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -902,7 +887,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0, "fault_object": 3}
       ],
     "source":
       [
@@ -917,11 +902,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -932,7 +917,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -947,11 +932,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -962,7 +947,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -977,11 +962,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -992,7 +977,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -1007,11 +992,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -1022,7 +1007,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -1037,11 +1022,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -1052,7 +1037,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -1067,37 +1052,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -1112,11 +1067,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": 4, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -1142,7 +1097,37 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 1}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 1}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 1}
       ],
     "source":
       [
@@ -1161,7 +1146,7 @@
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -1191,7 +1176,67 @@
       ],
     "source":
       [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 3}
+      ],
+    "source":
+      [
         {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
@@ -1217,11 +1262,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -1232,7 +1277,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -1247,37 +1292,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0, "x_f": 0, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -1292,37 +1307,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 1}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 1}
       ],
     "source":
       [
@@ -1337,11 +1322,11 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
-        {"id": 5, "status": 1}
+        {"id": 5, "status": 0}
       ],
     "shunt":
       [
@@ -1352,7 +1337,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -1367,37 +1352,7 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 2}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 0}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 0}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
-      ],
-    "source":
-      [
-        {"id": 5, "status": 1}
-      ],
-    "shunt":
-      [
-        {"id": 9, "status": 1}
-      ]
-  }
-,
-  {
-    "fault":
-      [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
       ],
     "source":
       [
@@ -1412,7 +1367,37 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 2}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
@@ -1427,15 +1412,30 @@
   {
     "fault":
       [
-        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.1, "x_f": 0.1, "fault_object": 3}
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
       ],
     "source":
       [
-        {"id": 5, "status": 0}
+        {"id": 5, "status": 1}
       ],
     "shunt":
       [
         {"id": 9, "status": 0}
+      ]
+  }
+,
+  {
+    "fault":
+      [
+        {"id": 10, "fault_type": 3, "fault_phase": -1, "r_f": 0.01, "x_f": 0.01, "fault_object": 3}
+      ],
+    "source":
+      [
+        {"id": 5, "status": 1}
+      ],
+    "shunt":
+      [
+        {"id": 9, "status": 1}
       ]
   }
 
