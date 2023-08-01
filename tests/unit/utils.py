@@ -203,8 +203,10 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                     expected_col = np.angle(expected_col)
                 elif col_name.endswith("_angle"):
                     magnitude_name = col_name[: -len("_angle")]
+                    if magnitude_name not in expected_data.dtype.names:
+                        continue
                     actual_col = actual[key][magnitude_name] * np.exp(1j * actual_col)
-                    expected_col = expected[magnitude_name] * np.exp(1j * actual_col)
+                    expected_col = expected_data[magnitude_name] * np.exp(1j * expected_col)
 
                 # Define the absolute tolerance based on the field name
                 p = "default"
