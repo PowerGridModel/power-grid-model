@@ -289,12 +289,9 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
         return assert_angle_and_magnitude<true>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
                                                 obj);
     }
-    else {
-        assert(angle_attr.ctype == CType::c_double3);
-        assert(mag_attr.ctype == CType::c_double3);
-        return assert_angle_and_magnitude<false>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
-                                                 obj);
-    }
+    assert(angle_attr.ctype == CType::c_double3);
+    assert(mag_attr.ctype == CType::c_double3);
+    return assert_angle_and_magnitude<false>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol, obj);
 }
 
 // assert single result
@@ -599,7 +596,7 @@ constexpr bool should_skip_test(CaseParam const& param) {
 }
 
 template <typename T>
-    requires std::invocable<std::remove_cvref_t<T>>
+requires std::invocable<std::remove_cvref_t<T>>
 void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 
