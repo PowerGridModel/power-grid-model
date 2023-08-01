@@ -280,12 +280,12 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
 }
 
 // root path
-#ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH
+#ifdef POWER_GRID_MODEL_VALIDATION_TEST_data_dir
 // use marco definition input
-std::filesystem::path const data_path{POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH};
+std::filesystem::path const data_dir{POWER_GRID_MODEL_VALIDATION_TEST_data_dir};
 #else
 // use relative path to this file
-std::filesystem::path const data_path = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
+std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
 #endif
 
 // method map
@@ -389,7 +389,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
 
     CaseParam param{};
     param.case_dir = case_dir;
-    param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
+    param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_dir).string());
     param.calculation_type = calculation_type;
     param.calculation_method = calculation_method;
     param.sym = sym;
@@ -472,7 +472,7 @@ std::vector<CaseParam> read_all_cases(bool is_batch) {
     // detect all test cases
     for (std::string const calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
         // loop all sub-directories
-        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_path / calculation_type)) {
+        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_dir / calculation_type)) {
             std::filesystem::path const& case_dir = dir_entry.path();
             if (!std::filesystem::exists(case_dir / "params.json")) {
                 continue;
@@ -499,8 +499,8 @@ std::vector<CaseParam> const& get_all_batch_cases() {
 }  // namespace
 
 TEST_CASE("Check existence of validation data path") {
-    REQUIRE(std::filesystem::exists(data_path));
-    std::cout << "Validation test dataset: " << data_path << '\n';
+    REQUIRE(std::filesystem::exists(data_dir));
+    std::cout << "Validation test dataset: " << data_dir << '\n';
 }
 
 namespace {

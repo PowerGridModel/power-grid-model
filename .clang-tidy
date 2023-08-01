@@ -65,9 +65,6 @@ readability-*,
 -readability-make-member-function-const,
 -readability-named-parameter,
 -readability-magic-numbers,
--readability-redundant-access-specifiers,
--readability-redundant-member-init,
--readability-suspicious-call-argument
 '
 
 WarningsAsErrors: '*'
