@@ -61,18 +61,12 @@ class DataPointer {
             if (pos < 0) {
                 return std::make_pair(ptr, ptr + indptr_[batch_size_]);
             }
-            else {
-                return std::make_pair(ptr + indptr_[pos], ptr + indptr_[pos + 1]);
-            }
+            return std::make_pair(ptr + indptr_[pos], ptr + indptr_[pos + 1]);
         }
-        else {
-            if (pos < 0) {
-                return std::make_pair(ptr, ptr + elements_per_scenario_ * batch_size_);
-            }
-            else {
-                return std::make_pair(ptr + elements_per_scenario_ * pos, ptr + elements_per_scenario_ * (pos + 1));
-            }
+        if (pos < 0) {
+            return std::make_pair(ptr, ptr + elements_per_scenario_ * batch_size_);
         }
+        return std::make_pair(ptr + elements_per_scenario_ * pos, ptr + elements_per_scenario_ * (pos + 1));
     }
 
     Idx batch_size() const {
@@ -85,9 +79,7 @@ class DataPointer {
         if (indptr_) {
             return indptr_[pos + 1] - indptr_[pos];
         }
-        else {
-            return (Idx)elements_per_scenario_;
-        }
+        return (Idx)elements_per_scenario_;
     }
 
     ptr_t<void> raw_ptr() const {
@@ -100,9 +92,7 @@ class DataPointer {
         if (indptr_) {
             return (indptr_[batch_size_] == 0);
         }
-        else {
-            return batch_size_ == 0 || elements_per_scenario_ == 0;
-        }
+        return batch_size_ == 0 || elements_per_scenario_ == 0;
     }
 
     // conversion to const iterator

@@ -76,9 +76,7 @@ class LinearPFSolver {
             if (k == -1) {
                 return ComplexTensor<sym>{};
             }
-            else {
-                return ydata[k];
-            }
+            return ydata[k];
         });
 
         // loop to all loads and sources, j as load number

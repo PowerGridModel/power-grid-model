@@ -98,9 +98,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 if (k == -1) {
                     return ComplexTensor<sym>{};
                 }
-                else {
-                    return ydata[k];
-                }
+                return ydata[k];
             });
 
             // loop bus
