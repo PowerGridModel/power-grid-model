@@ -52,9 +52,7 @@ class GenericPowerSensor : public Sensor {
             return -1.0;  // For shunt and load the direction in the math model is opposite to the direction in the
                           // physical model
         }
-        else {
-            return 1.0;
-        }
+        return 1.0;
     }
 
    private:

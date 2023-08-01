@@ -32,7 +32,7 @@ class Node final : public Base {
     }
 
     // update node, nothing happens here
-    constexpr UpdateChange update(BaseUpdate const&) {
+    static constexpr UpdateChange update(BaseUpdate const&) {
         return {false, false};
     }
 

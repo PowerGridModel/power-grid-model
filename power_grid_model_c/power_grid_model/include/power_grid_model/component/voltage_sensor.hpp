@@ -107,10 +107,8 @@ class VoltageSensor : public GenericVoltageSensor {
             ComplexValue<true> const u = pos_seq(u_measured_ * exp(1i * u_angle_measured_));
             return {u, u_variance};
         }
-        else {
-            ComplexValue<true> const u{mean_val(u_measured_), nan};
-            return {u, u_variance};
-        }
+        ComplexValue<true> const u{mean_val(u_measured_), nan};
+        return {u, u_variance};
     }
 
     SensorCalcParam<false> asym_calc_param() const final {
@@ -119,10 +117,8 @@ class VoltageSensor : public GenericVoltageSensor {
             ComplexValue<false> const u{u_measured_ * exp(1i * u_angle_measured_)};
             return {u, u_variance};
         }
-        else {
-            ComplexValue<false> const u = RealValue<false>{u_measured_} + DoubleComplex{0.0, nan};
-            return {u, u_variance};
-        }
+        ComplexValue<false> const u = RealValue<false>{u_measured_} + DoubleComplex{0.0, nan};
+        return {u, u_variance};
     }
 
     VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const final {

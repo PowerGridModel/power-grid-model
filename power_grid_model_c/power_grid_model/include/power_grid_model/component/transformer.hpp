@@ -135,7 +135,7 @@ class Transformer : public Branch {
     DoubleComplex z_grounding_to_;
 
     // calculate z in per unit with NaN detection
-    DoubleComplex calculate_z_pu(double r, double x, double u) {
+    static DoubleComplex calculate_z_pu(double r, double x, double u) {
         r = is_nan(r) ? 0 : r;
         x = is_nan(x) ? 0 : x;
         double const base_z = u * u / base_power_3p;

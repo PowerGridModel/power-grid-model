@@ -260,7 +260,7 @@ struct PowerGridBenchmark {
         std::cout << "\n\n";
     }
 
-    void print(CalculationInfo const& info) {
+    static void print(CalculationInfo const& info) {
         for (auto const& [key, val] : info) {
             std::cout << key << ": " << val << '\n';
         }
