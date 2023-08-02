@@ -267,13 +267,22 @@ class Deserializer {
             void* element_pointer = buffer.component->advance_ptr(scenario_pointer, element);
             msgpack::object const& obj = msg_data[element];
             if (obj.type == msgpack::type::ARRAY) {
+                parse_array_element(element_pointer, obj, attributes);
             }
             else if (obj.type == msgpack::type::MAP) {
+                parse_map_element(element_pointer, obj, *buffer.component);
             }
             else {
                 throw SerializationError{"An element can only be a list or dictionary!\n"};
             }
         }
+    }
+
+    void parse_array_element(void* element_pointer, msgpack::object const& obj,
+                             std::span<MetaAttribute const* const> attributes) const {
+    }
+
+    void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) const {
     }
 };
 
