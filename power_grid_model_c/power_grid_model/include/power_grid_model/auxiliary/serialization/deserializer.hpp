@@ -28,9 +28,9 @@ class Deserializer {
         bool is_uniform;
         Idx elements_per_scenario;
         Idx total_elements;
-        std::vector<std::span<msgpack::object>> msg_data;  // vector of spans of msgpack object of each batch
-        void* data;                                        // set by user
-        std::span<Idx> indptr;                             // set by user
+        std::vector<std::span<msgpack::object const>> msg_data;  // vector of spans of msgpack object of each batch
+        void* data;                                              // set by user
+        std::span<Idx> indptr;                                   // set by user
     };
 
     // not copyable
@@ -186,7 +186,7 @@ class Deserializer {
     Buffer count_component(std::span<msgpack::object const> batch_data, std::string const& component) {
         // count number of element of all scenarios
         IdxVector counter(batch_size_);
-        std::vector<std::span<msgpack::object>> msg_data(batch_size_);
+        std::vector<std::span<msgpack::object const>> msg_data(batch_size_);
         for (Idx scenario_number = 0; scenario_number != batch_size_; ++scenario_number) {
             msgpack::object const& scenario = batch_data[scenario_number];
             Idx const found_component_idx = find_key_from_map(scenario, component);
@@ -244,6 +244,16 @@ class Deserializer {
         }
         // set nan
         buffer.component->set_nan(buffer.data, 0, buffer.total_elements);
+        // all scenarios
+        for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
+            Idx const scenario_offset =
+                buffer.is_uniform ? scenario * buffer.elements_per_scenario : buffer.indptr[scenario];
+            void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
+            parse_scenario(buffer, scenario_pointer, buffer.msg_data[scenario]);
+        }
+    }
+
+    void parse_scenario(Buffer const& buffer, void* scenario_pointer, std::span<msgpack::object const> msg_data) {
     }
 };
 
