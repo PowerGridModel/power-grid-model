@@ -1,5 +1,6 @@
 {
   "calculation_method": "iec60909",
+  "voltage_scaling_factor_c": 1.1,
   "rtol": 1e-08,
   "atol": 1e-08
 }
