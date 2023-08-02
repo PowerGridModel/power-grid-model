@@ -82,7 +82,7 @@ class Deserializer {
         }
     }
 
-    void parse() {
+    void parse() const {
         for (Buffer const& buffer : buffers_) {
             parse_component(buffer);
         }
@@ -231,7 +231,7 @@ class Deserializer {
         return counter.front();
     }
 
-    void parse_component(Buffer const& buffer) {
+    void parse_component(Buffer const& buffer) const {
         // handle indptr
         if (!buffer.is_uniform) {
             // first always zero
@@ -244,16 +244,36 @@ class Deserializer {
         }
         // set nan
         buffer.component->set_nan(buffer.data, 0, buffer.total_elements);
+        // attributes
+        auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
+            auto const found = attributes_.find(buffer.component->name);
+            if (found == attributes_.cend()) {
+                return {};
+            }
+            return found->second;
+        }();
         // all scenarios
         for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
             Idx const scenario_offset =
                 buffer.is_uniform ? scenario * buffer.elements_per_scenario : buffer.indptr[scenario];
             void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
-            parse_scenario(buffer, scenario_pointer, buffer.msg_data[scenario]);
+            parse_scenario(buffer, scenario_pointer, buffer.msg_data[scenario], attributes);
         }
     }
 
-    void parse_scenario(Buffer const& buffer, void* scenario_pointer, std::span<msgpack::object const> msg_data) {
+    void parse_scenario(Buffer const& buffer, void* scenario_pointer, std::span<msgpack::object const> msg_data,
+                        std::span<MetaAttribute const* const> attributes) const {
+        for (Idx element = 0; element != (Idx)msg_data.size(); ++element) {
+            void* element_pointer = buffer.component->advance_ptr(scenario_pointer, element);
+            msgpack::object const& obj = msg_data[element];
+            if (obj.type == msgpack::type::ARRAY) {
+            }
+            else if (obj.type == msgpack::type::MAP) {
+            }
+            else {
+                throw SerializationError{"An element can only be a list or dictionary!\n"};
+            }
+        }
     }
 };
 
