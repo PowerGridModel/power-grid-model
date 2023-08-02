@@ -26,14 +26,14 @@ struct YBusElementMap {
 };
 
 // append to element vector
-inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx bus1, Idx bus2, YBusElementType element_type,
-                                  Idx idx) {
+inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bus, Idx second_bus,
+                                  YBusElementType element_type, Idx idx) {
     // skip for -1
-    if (bus1 == -1 || bus2 == -1) {
+    if (first_bus == -1 || second_bus == -1) {
         return;
     }
     // add
-    vec.push_back({{bus1, bus2}, {element_type, idx}});
+    vec.push_back({{first_bus, second_bus}, {element_type, idx}});
 }
 
 // counting sort element

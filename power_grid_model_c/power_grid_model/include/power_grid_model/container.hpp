@@ -297,7 +297,6 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         cached_vec.clear();
     }
 
-   private:
     // define iterator
     template <class Gettable>
     class Iterator : public boost::iterator_facade<Iterator<Gettable>, Gettable, boost::random_access_traversal_tag,
