@@ -46,7 +46,6 @@ class Deserializer {
         get_value_from_root("type", msgpack::type::STR) >> dataset_type_;
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
         dataset_ = &meta_data().get_dataset(dataset_type_);
-        data_object_ = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
         read_predefined_attributes();
     }
 
@@ -63,6 +62,7 @@ class Deserializer {
     }
 
     void read_predefined_attributes() {
+        attributes_ = {};
         if (!root_map_.contains("attributes")) {
             return;
         }
