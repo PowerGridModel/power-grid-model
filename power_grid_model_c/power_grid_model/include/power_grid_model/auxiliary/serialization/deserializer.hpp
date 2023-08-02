@@ -15,6 +15,7 @@
 #include <msgpack.hpp>
 
 #include <span>
+#include <string_view>
 
 namespace power_grid_model::meta_data {
 
@@ -68,11 +69,10 @@ class Deserializer {
     }
 
     msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
-        std::vector<std::string> keys;
         msgpack::object const& root = handle_.get();
         msgpack::object const& obj = [&]() -> msgpack::object const& {
             for (auto const& kv : std::span{root.via.map.ptr, root.via.map.size}) {
-                if (key == kv.key.as<std::string>()) {
+                if (key == kv.key.as<std::string_view>()) {
                     return kv.val;
                 }
             }
