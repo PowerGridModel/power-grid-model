@@ -50,6 +50,10 @@ class Deserializer {
         count_data();
     }
 
+    std::string const& dataset_name() const {
+        return dataset_->name;
+    }
+
     Idx batch_size() const {
         return batch_size_;
     }
@@ -81,7 +85,6 @@ class Deserializer {
    private:
     msgpack::object_handle handle_;
     std::string version_;
-    std::string dataset_type_;
     bool is_batch_{};
     MetaDataset const* dataset_{};
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
@@ -93,9 +96,8 @@ class Deserializer {
             throw SerializationError{"The root level object should be a dictionary!\n"};
         }
         get_value_from_root("version", msgpack::type::STR) >> version_;
-        get_value_from_root("type", msgpack::type::STR) >> dataset_type_;
+        dataset_ = &meta_data().get_dataset(get_value_from_root("type", msgpack::type::STR).as<std::string_view>());
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
-        dataset_ = &meta_data().get_dataset(dataset_type_);
         read_predefined_attributes();
     }
 
