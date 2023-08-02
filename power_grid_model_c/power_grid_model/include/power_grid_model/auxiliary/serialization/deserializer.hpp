@@ -38,7 +38,7 @@ class Deserializer {
     std::string dataset_type_;
     bool is_batch_{};
     MetaDataset const* dataset_{};
-    std::map<std::string, std::vector<MetaAttribute const*>> attributes;
+    std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
 
     void parse_meta_data() {
         handle_.get() >> root_map_;
@@ -47,6 +47,7 @@ class Deserializer {
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
         dataset_ = &meta_data().get_dataset(dataset_type_);
         data_object_ = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
+        read_predefined_attributes();
     }
 
     msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
@@ -59,6 +60,19 @@ class Deserializer {
             throw SerializationError{"Wrong data type for key " + key + " in the root level dictionary!"};
         }
         return obj;
+    }
+
+    void read_predefined_attributes() {
+        if (!root_map_.contains("attributes")) {
+            return;
+        }
+        auto const attribute_map = root_map_.at("attributes").as<std::map<std::string, std::vector<std::string>>>();
+        for (auto const& [component_name, attributes] : attribute_map) {
+            MetaComponent const& component = dataset_->get_component(component_name);
+            for (auto const& attribute : attributes) {
+                attributes_[component_name].push_back(&component.get_attribute(attribute));
+            }
+        }
     }
 };
 
