@@ -13,6 +13,7 @@
 
 #include <bit>
 #include <string>
+#include <string_view>
 
 namespace power_grid_model::meta_data {
 
@@ -212,15 +213,15 @@ struct PGM_MetaComponent {
         return static_cast<Idx>(attributes.size());
     }
 
-    MetaAttribute const& get_attribute(std::string const& attribute_name) const {
+    MetaAttribute const& get_attribute(std::string_view attribute_name) const {
         Idx const found = find_attribute(attribute_name);
         if (found < 0) {
-            throw std::out_of_range{"Cannot find attribute with name: " + attribute_name + "!\n"};
+            throw std::out_of_range{"Cannot find attribute with name: " + std::string(attribute_name) + "!\n"};
         }
         return attributes[found];
     }
 
-    Idx find_attribute(std::string const& attribute_name) const {
+    Idx find_attribute(std::string_view attribute_name) const {
         for (Idx i = 0; i != n_attributes(); ++i) {
             if (attributes[i].name == attribute_name) {
                 return i;
@@ -229,7 +230,7 @@ struct PGM_MetaComponent {
         return -1;
     }
 
-    Idx has_attribute(std::string const& attribute_name) const {
+    Idx has_attribute(std::string_view attribute_name) const {
         return find_attribute(attribute_name) >= 0;
     }
 };
@@ -252,13 +253,13 @@ struct PGM_MetaDataset {
         return static_cast<Idx>(components.size());
     }
 
-    MetaComponent const& get_component(std::string const& component_name) const {
+    MetaComponent const& get_component(std::string_view component_name) const {
         for (auto const& component : components) {
             if (component.name == component_name) {
                 return component;
             }
         }
-        throw std::out_of_range{"Cannot find component with name: " + component_name + "!\n"};
+        throw std::out_of_range{"Cannot find component with name: " + std::string(component_name) + "!\n"};
     }
 };
 
@@ -274,13 +275,13 @@ struct MetaData {
         return static_cast<Idx>(datasets.size());
     }
 
-    MetaDataset const& get_dataset(std::string const& dataset_name) const {
+    MetaDataset const& get_dataset(std::string_view dataset_name) const {
         for (auto const& dataset : datasets) {
             if (dataset.name == dataset_name) {
                 return dataset;
             }
         }
-        throw std::out_of_range{"Cannot find dataset with name: " + dataset_name + "!\n"};
+        throw std::out_of_range{"Cannot find dataset with name: " + std::string(dataset_name) + "!\n"};
     }
 };
 

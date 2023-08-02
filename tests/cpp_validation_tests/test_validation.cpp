@@ -328,8 +328,9 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
                 bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                std::string const magnitude_name = angle_match[1];
                 MetaAttribute const& possible_attr_magnitude =
-                    is_angle ? component_meta.get_attribute(angle_match[1]) : attr;
+                    is_angle ? component_meta.get_attribute(magnitude_name) : attr;
 
                 // loop all object
                 for (Idx obj = 0; obj != length; ++obj) {
@@ -596,7 +597,7 @@ constexpr bool should_skip_test(CaseParam const& param) {
 }
 
 template <typename T>
-requires std::invocable<std::remove_cvref_t<T>>
+    requires std::invocable<std::remove_cvref_t<T>>
 void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 

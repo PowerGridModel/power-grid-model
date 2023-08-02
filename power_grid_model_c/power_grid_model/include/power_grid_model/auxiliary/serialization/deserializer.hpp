@@ -88,14 +88,14 @@ class Deserializer {
     void read_predefined_attributes() {
         msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
         for (auto const& kv : std::span{attribute_map.via.map.ptr, attribute_map.via.map.size}) {
-            MetaComponent const& component = dataset_->get_component(kv.key.as<std::string>());
+            MetaComponent const& component = dataset_->get_component(kv.key.as<std::string_view>());
             msgpack::object const& attribute_list = kv.val;
             if (attribute_list.type != msgpack::type::ARRAY) {
                 throw SerializationError{
                     "Each entry of attribute dictionary should be a list for the corresponding component!"};
             }
             for (auto const& attr_obj : std::span{attribute_list.via.array.ptr, attribute_list.via.array.size}) {
-                attributes_[component.name].push_back(&component.get_attribute(attr_obj.as<std::string>()));
+                attributes_[component.name].push_back(&component.get_attribute(attr_obj.as<std::string_view>()));
             }
         }
     }
