@@ -61,6 +61,22 @@ class Deserializer {
         return buffers_[i];
     }
 
+    void set_buffer(char const** components, void** data, Idx** indptrs) {
+        for (Idx i = 0; i != n_components(); ++i) {
+            auto const found = std::find_if(buffers_.begin(), buffers_.end(), [components, i](Buffer const& buffer) {
+                return buffer.component->name == components[i];
+            });
+            if (found == buffers_.end()) {
+                throw SerializationError{"Unkown component: " + std::string(components[i]) +
+                                         "! You need to supply the components which are present.\n"};
+            }
+            found->data = data[i];
+            if (!found->is_uniform) {
+                found->indptr = {indptrs[i], (size_t)(batch_size_ + 1)};
+            }
+        }
+    }
+
    private:
     msgpack::object_handle handle_;
     std::string version_;
@@ -73,7 +89,7 @@ class Deserializer {
 
     void parse_meta_data() {
         if (handle_.get().type != msgpack::type::MAP) {
-            throw SerializationError{"The root level object should be a dictionary!"};
+            throw SerializationError{"The root level object should be a dictionary!\n"};
         }
         get_value_from_root("version", msgpack::type::STR) >> version_;
         get_value_from_root("type", msgpack::type::STR) >> dataset_type_;
@@ -91,11 +107,12 @@ class Deserializer {
                                               msgpack::type::object_type type) {
         Idx const idx = find_key_from_map(map, key);
         if (idx < 0) {
-            throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!"};
+            throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!\n"};
         }
         msgpack::object const& obj = map.via.map.ptr[idx].val;
         if (obj.type != type) {
-            throw SerializationError{"Wrong data type for key " + std::string(key) + " in the root level dictionary!"};
+            throw SerializationError{"Wrong data type for key " + std::string(key) +
+                                     " in the root level dictionary!\n"};
         }
         return obj;
     }
@@ -117,7 +134,7 @@ class Deserializer {
             msgpack::object const& attribute_list = kv.val;
             if (attribute_list.type != msgpack::type::ARRAY) {
                 throw SerializationError{
-                    "Each entry of attribute dictionary should be a list for the corresponding component!"};
+                    "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
             }
             for (auto const& attr_obj : std::span{attribute_list.via.array.ptr, attribute_list.via.array.size}) {
                 attributes_[component.name].push_back(&component.get_attribute(attr_obj.as<std::string_view>()));
@@ -143,7 +160,7 @@ class Deserializer {
         std::set<std::string> all_components;
         for (msgpack::object const& scenario : batch_data) {
             if (scenario.type != msgpack::type::MAP) {
-                throw SerializationError{"The data object of each scenario should be a dictionary!"};
+                throw SerializationError{"The data object of each scenario should be a dictionary!\n"};
             }
             std::span<msgpack::object_kv> const scenario_map{scenario.via.map.ptr, scenario.via.map.size};
             for (msgpack::object_kv const& kv : scenario_map) {
@@ -167,7 +184,7 @@ class Deserializer {
             if (found_component_idx >= 0) {
                 msgpack::object const& component = scenario.via.map.ptr[found_component_idx].val;
                 if (component.type != msgpack::type::ARRAY) {
-                    throw SerializationError{"Each entry of component per scenario should be a list!"};
+                    throw SerializationError{"Each entry of component per scenario should be a list!\n"};
                 }
                 counter[scenario_number] = (Idx)component.via.array.size;
                 msg_data[scenario_number] = {component.via.array.ptr, component.via.array.size};
