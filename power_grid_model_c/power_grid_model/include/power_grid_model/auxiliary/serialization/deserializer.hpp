@@ -14,6 +14,8 @@
 
 #include <msgpack.hpp>
 
+#include <span>
+
 namespace power_grid_model::meta_data {
 
 class Deserializer {
@@ -27,6 +29,10 @@ class Deserializer {
     };
 
    public:
+    // not copyable
+    Deserializer(Deserializer const&) = delete;
+    Deserializer& operator=(Deserializer const&) = delete;
+
     void deserialize_from_json(char const* json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
         std::vector<char> msgpack_data;
@@ -46,8 +52,9 @@ class Deserializer {
     bool is_batch_{};
     MetaDataset const* dataset_{};
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
-    Idx batch_size_;                       // for single dataset, the batch size is one
-    msgpack::object const* msgpack_data_;  // pointer to array (or single value) of msgpack objects to the data
+    Idx batch_size_;  // for single dataset, the batch size is one
+    // pointer to array (or single value) of msgpack objects to the data
+    std::span<msgpack::object const> msgpack_data_;
 
     void parse_meta_data() {
         if (handle_.get().type != msgpack::type::MAP) {
@@ -64,9 +71,9 @@ class Deserializer {
         std::vector<std::string> keys;
         msgpack::object const& root = handle_.get();
         msgpack::object const& obj = [&]() -> msgpack::object const& {
-            for (Idx i = 0; i != (Idx)root.via.map.size; ++i) {
-                if (key == root.via.map.ptr[i].key.as<std::string>()) {
-                    return root.via.map.ptr[i].val;
+            for (auto const& kv : std::span{root.via.map.ptr, root.via.map.size}) {
+                if (key == kv.key.as<std::string>()) {
+                    return kv.val;
                 }
             }
             throw SerializationError{"Cannot find key " + key + " in the root level dictionary!"};
@@ -79,20 +86,15 @@ class Deserializer {
 
     void read_predefined_attributes() {
         msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
-        auto const map_ptr = attribute_map.via.map.ptr;
-        auto const map_size = attribute_map.via.map.size;
-        for (msgpack::object_kv const* kv = map_ptr; kv != map_ptr + map_size; ++kv) {
-            MetaComponent const& component = dataset_->get_component(kv->key.as<std::string>());
-            msgpack::object const& attribute_list = kv->val;
+        for (auto const& kv : std::span{attribute_map.via.map.ptr, attribute_map.via.map.size}) {
+            MetaComponent const& component = dataset_->get_component(kv.key.as<std::string>());
+            msgpack::object const& attribute_list = kv.val;
             if (attribute_list.type != msgpack::type::ARRAY) {
                 throw SerializationError{
                     "Each entry of attribute dictionary should be a list for the corresponding component!"};
             }
-            auto const list_ptr = attribute_list.via.array.ptr;
-            auto const list_size = attribute_list.via.array.size;
-
-            for (msgpack::object const* attr_obj = list_ptr; attr_obj != list_ptr + list_size; ++attr_obj) {
-                attributes_[component.name].push_back(&component.get_attribute(attr_obj->as<std::string>()));
+            for (auto const& attr_obj : std::span{attribute_list.via.array.ptr, attribute_list.via.array.size}) {
+                attributes_[component.name].push_back(&component.get_attribute(attr_obj.as<std::string>()));
             }
         }
     }
@@ -101,11 +103,11 @@ class Deserializer {
         msgpack::object const& obj = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
         if (is_batch_) {
             batch_size_ = (Idx)obj.via.array.size;
-            msgpack_data_ = obj.via.array.ptr;
+            msgpack_data_ = {obj.via.array.ptr, obj.via.array.size};
         }
         else {
             batch_size_ = 1;
-            msgpack_data_ = &obj;
+            msgpack_data_ = {&obj, 1};
         }
     }
 };
