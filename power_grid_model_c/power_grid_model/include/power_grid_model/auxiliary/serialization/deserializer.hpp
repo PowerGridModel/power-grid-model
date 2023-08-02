@@ -46,7 +46,7 @@ class Deserializer {
         get_value_from_root("type", msgpack::type::STR) >> dataset_type_;
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
         dataset_ = &meta_data().get_dataset(dataset_type_);
-        data_object_ = get_value_from_root("data", msgpack::type::ARRAY);
+        data_object_ = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
     }
 
     msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
