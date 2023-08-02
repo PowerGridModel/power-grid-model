@@ -20,16 +20,18 @@
 namespace power_grid_model::meta_data {
 
 class Deserializer {
-    struct ComponentData {
+   public:
+    // struct of buffer data
+    struct Buffer {
         std::string name;
         bool is_uniform{false};
         Idx elements_per_scenario{-1};
         Idx total_elements{};
-        void* data{};   // set by user
-        Idx* indptr{};  // set by user
+        std::vector<std::span<msgpack::object>> msg_data;  // vector of spans of msgpack object of each batch
+        void* data{};                                      // set by user
+        std::span<Idx> indptr{};                           // set by user
     };
 
-   public:
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
@@ -54,8 +56,7 @@ class Deserializer {
     MetaDataset const* dataset_{};
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
     Idx batch_size_;  // for single dataset, the batch size is one
-    // pointer to array (or single value) of msgpack objects to the data
-    std::span<msgpack::object const> msgpack_data_;
+    std::vector<Buffer> buffers_;
 
     void parse_meta_data() {
         if (handle_.get().type != msgpack::type::MAP) {
@@ -101,13 +102,15 @@ class Deserializer {
 
     void count_data() {
         msgpack::object const& obj = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
+        // pointer to array (or single value) of msgpack objects to the data
+        std::span<msgpack::object const> msgpack_data;
         if (is_batch_) {
             batch_size_ = (Idx)obj.via.array.size;
-            msgpack_data_ = {obj.via.array.ptr, obj.via.array.size};
+            msgpack_data = {obj.via.array.ptr, obj.via.array.size};
         }
         else {
             batch_size_ = 1;
-            msgpack_data_ = {&obj, 1};
+            msgpack_data = {&obj, 1};
         }
     }
 };
