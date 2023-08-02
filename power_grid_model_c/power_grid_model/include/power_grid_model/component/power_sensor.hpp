@@ -16,12 +16,11 @@
 namespace power_grid_model {
 
 class GenericPowerSensor : public Sensor {
-   public:
+  public:
     static constexpr char const* name = "generic_power_sensor";
 
     explicit GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
-        : Sensor{generic_power_sensor_input}, terminal_type_{generic_power_sensor_input.measured_terminal_type} {
-    }
+        : Sensor{generic_power_sensor_input}, terminal_type_{generic_power_sensor_input.measured_terminal_type} {}
 
     MeasuredTerminalType get_terminal_type() const {
         return terminal_type_;
@@ -46,7 +45,7 @@ class GenericPowerSensor : public Sensor {
         return {{id(), false}};
     }
 
-   protected:
+  protected:
     double convert_direction() const {
         if (terminal_type_ == MeasuredTerminalType::load || terminal_type_ == MeasuredTerminalType::shunt) {
             return -1.0;  // For shunt and load the direction in the math model is opposite to the direction in the
@@ -55,7 +54,7 @@ class GenericPowerSensor : public Sensor {
         return 1.0;
     }
 
-   private:
+  private:
     MeasuredTerminalType terminal_type_;
 
     virtual PowerSensorOutput<true> get_sym_output(ComplexValue<true> const& s) const = 0;
@@ -64,7 +63,7 @@ class GenericPowerSensor : public Sensor {
 
 template <bool sym>
 class PowerSensor : public GenericPowerSensor {
-   public:
+  public:
     static constexpr char const* name = sym ? "sym_power_sensor" : "asym_power_sensor";
     using InputType = PowerSensorInput<sym>;
     using UpdateType = PowerSensorUpdate<sym>;
@@ -85,7 +84,7 @@ class PowerSensor : public GenericPowerSensor {
         return {false, false};
     }
 
-   private:
+  private:
     ComplexValue<sym> s_measured_{};
     double power_sigma_;
 

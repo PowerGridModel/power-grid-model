@@ -24,15 +24,14 @@ class ShortCircuitSolver {
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
-   public:
+  public:
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           n_source_{topo_ptr->n_source()},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_{static_cast<BlockPermArray>(n_bus_)} {
-    }
+          perm_{static_cast<BlockPermArray>(n_bus_)} {}
 
     ShortCircuitMathOutput<sym> run_short_circuit(double voltage_scaling_factor_c, YBus<sym> const& y_bus,
                                                   ShortCircuitInput const& input) {
@@ -211,7 +210,7 @@ class ShortCircuitSolver {
         return output;
     }
 
-   private:
+  private:
     Idx n_bus_;
     Idx n_fault_;
     Idx n_source_;
@@ -392,35 +391,35 @@ class ShortCircuitSolver {
         using enum FaultPhase;
 
         switch (fault_phase) {
-            case a: {
-                phase_1 = 0;
-                break;
-            }
-            case b: {
-                phase_1 = 1;
-                break;
-            }
-            case c: {
-                phase_1 = 2;
-                break;
-            }
-            case ab: {
-                phase_1 = 0;
-                phase_2 = 1;
-                break;
-            }
-            case ac: {
-                phase_1 = 0;
-                phase_2 = 2;
-                break;
-            }
-            case bc: {
-                phase_1 = 1;
-                phase_2 = 2;
-                break;
-            }
-            default:
-                break;
+        case a: {
+            phase_1 = 0;
+            break;
+        }
+        case b: {
+            phase_1 = 1;
+            break;
+        }
+        case c: {
+            phase_1 = 2;
+            break;
+        }
+        case ab: {
+            phase_1 = 0;
+            phase_2 = 1;
+            break;
+        }
+        case ac: {
+            phase_1 = 0;
+            phase_2 = 2;
+            break;
+        }
+        case bc: {
+            phase_1 = 1;
+            phase_2 = 2;
+            break;
+        }
+        default:
+            break;
         }
 
         return std::make_pair(phase_1, phase_2);

@@ -61,7 +61,7 @@ using SERhs = SEUnknown<sym>;
 */
 template <bool sym>
 class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
-   public:
+  public:
     template <int r, int c>
     using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
 
@@ -102,7 +102,7 @@ class MeasuredValues {
         Idx n_unmeasured_appliances = 0;
     };
 
-   public:
+  public:
     // construct
     MeasuredValues(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input)
         : math_topology_{y_bus.shared_topology()},
@@ -252,7 +252,7 @@ class MeasuredValues {
         return std::make_pair(load_gen_flow, source_flow);
     }
 
-   private:
+  private:
     // cache topology
     std::shared_ptr<MathModelTopology const> math_topology_;
 
@@ -601,15 +601,14 @@ class IterativeLinearSESolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
-   public:
+  public:
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           math_topo_{topo_ptr},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {
-    }
+          perm_(y_bus.size()) {}
 
     MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
                                          Idx max_iter, CalculationInfo& calculation_info) {
@@ -666,7 +665,7 @@ class IterativeLinearSESolver {
         return output;
     }
 
-   private:
+  private:
     // array selection function pointer
     static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
     static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,

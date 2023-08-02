@@ -61,7 +61,7 @@ class Container;
 // real definition with retrievable types
 template <class... GettableTypes, class... StorageableTypes>
 class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
-   public:
+  public:
     static constexpr size_t num_storageable = sizeof...(StorageableTypes);
     static constexpr size_t num_gettable = sizeof...(GettableTypes);
 
@@ -217,7 +217,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         (restore_values_impl<StorageableTypes>(), ...);
     }
 
-   private:
+  private:
     std::tuple<std::vector<StorageableTypes>...> vectors_;
     std::unordered_map<ID, Idx2D> map_;
     std::array<Idx, num_gettable> size_;
@@ -301,21 +301,20 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     template <class Gettable>
     class Iterator : public boost::iterator_facade<Iterator<Gettable>, Gettable, boost::random_access_traversal_tag,
                                                    Gettable&, Idx> {
-       public:
+      public:
         static constexpr bool is_const = std::is_const_v<Gettable>;
         using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
         // constructor including default
         explicit Iterator(container_type* container_ptr = nullptr, Idx idx = 0)
-            : container_ptr_{container_ptr}, idx_{idx} {
-        }
+            : container_ptr_{container_ptr}, idx_{idx} {}
         // conversion to const iterator
         template <class ConstGettable = Gettable>
         requires(!is_const) explicit operator Iterator<ConstGettable const>() const {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
-       private:
+      private:
         friend class boost::iterator_core_access;
 
         Gettable& dereference() const {
@@ -347,15 +346,14 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     // define proxy
     template <class Gettable>
     class Proxy {
-       private:
+      private:
         static constexpr bool is_const = std::is_const_v<Gettable>;
         using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
 
-       public:
+      public:
         explicit Proxy(container_type& container)
-            : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {
-        }
+            : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {}
         Iterator<Gettable> begin() {
             return begin_;
         }
@@ -363,12 +361,12 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             return end_;
         }
 
-       private:
+      private:
         Iterator<Gettable> const begin_;
         Iterator<Gettable> const end_;
     };
 
-   public:
+  public:
     template <class Gettable>
     Proxy<Gettable> iter() {
         return Proxy<Gettable>{*this};

@@ -19,7 +19,7 @@
 namespace power_grid_model {
 
 class Branch : public Base {
-   public:
+  public:
     using InputType = BranchInput;
     using UpdateType = BranchUpdate;
     template <bool sym>
@@ -173,12 +173,12 @@ class Branch : public Base {
         return {changed, changed};
     }
 
-   protected:
+  protected:
     // calculate branch param based on symmetric component
-    BranchCalcParam<true> calc_param_y_sym(
-        DoubleComplex const& y_series,  // y_series must be converted to the "to" side of the branch
-        DoubleComplex const& y_shunt,   // y_shunt must be converted to the "to" side of the branch
-        DoubleComplex const& tap_ratio) const {
+    BranchCalcParam<true>
+    calc_param_y_sym(DoubleComplex const& y_series,  // y_series must be converted to the "to" side of the branch
+                     DoubleComplex const& y_shunt,   // y_shunt must be converted to the "to" side of the branch
+                     DoubleComplex const& tap_ratio) const {
         double const tap = cabs(tap_ratio);
         BranchCalcParam<true> param{};
         // not both connected
@@ -227,7 +227,7 @@ class Branch : public Base {
         return param;
     }
 
-   private:
+  private:
     ID from_node_;
     ID to_node_;
     bool from_status_;

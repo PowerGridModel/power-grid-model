@@ -19,7 +19,7 @@
 namespace power_grid_model {
 
 class Shunt : public Appliance {
-   public:
+  public:
     using InputType = ShuntInput;
     using UpdateType = ApplianceUpdate;
     static constexpr char const* name = "shunt";
@@ -60,7 +60,7 @@ class Shunt : public Appliance {
         return {false, changed};
     }
 
-   private:
+  private:
     DoubleComplex y1_, y0_;
 
     template <bool sym_calc>

@@ -41,7 +41,7 @@ class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
 class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
-   private:
+  private:
     // internal type traits
     // container class
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
@@ -88,7 +88,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr Idx ignore_output{-1};
 
-   public:
+  public:
     struct cached_update_t : std::true_type {};
 
     struct permanent_update_t : std::false_type {};
@@ -114,8 +114,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // constructor with only frequency
-    explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency} {
-    }
+    explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency} {}
 
     // get number
     template <class CompType>
@@ -271,34 +270,34 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                            return state_.components.template get_seq<Node>(voltage_sensor.measured_object());
                        });
         comp_topo.power_sensor_object_idx.resize(state_.components.template size<GenericPowerSensor>());
-        std::transform(
-            state_.components.template citer<GenericPowerSensor>().begin(),
-            state_.components.template citer<GenericPowerSensor>().end(), comp_topo.power_sensor_object_idx.begin(),
-            [this](GenericPowerSensor const& power_sensor) {
-                switch (power_sensor.get_terminal_type()) {
-                    using enum MeasuredTerminalType;
+        std::transform(state_.components.template citer<GenericPowerSensor>().begin(),
+                       state_.components.template citer<GenericPowerSensor>().end(),
+                       comp_topo.power_sensor_object_idx.begin(), [this](GenericPowerSensor const& power_sensor) {
+                           switch (power_sensor.get_terminal_type()) {
+                               using enum MeasuredTerminalType;
 
-                    case branch_from:
-                    case branch_to:
-                        return state_.components.template get_seq<Branch>(power_sensor.measured_object());
-                    case source:
-                        return state_.components.template get_seq<Source>(power_sensor.measured_object());
-                    case shunt:
-                        return state_.components.template get_seq<Shunt>(power_sensor.measured_object());
-                    case load:
-                    case generator:
-                        return state_.components.template get_seq<GenericLoadGen>(power_sensor.measured_object());
-                    case branch3_1:
-                    case branch3_2:
-                    case branch3_3:
-                        return state_.components.template get_seq<Branch3>(power_sensor.measured_object());
-                    case node:
-                        return state_.components.template get_seq<Node>(power_sensor.measured_object());
-                    default:
-                        throw MissingCaseForEnumError("Power sensor idx to seq transformation",
-                                                      power_sensor.get_terminal_type());
-                }
-            });
+                           case branch_from:
+                           case branch_to:
+                               return state_.components.template get_seq<Branch>(power_sensor.measured_object());
+                           case source:
+                               return state_.components.template get_seq<Source>(power_sensor.measured_object());
+                           case shunt:
+                               return state_.components.template get_seq<Shunt>(power_sensor.measured_object());
+                           case load:
+                           case generator:
+                               return state_.components.template get_seq<GenericLoadGen>(
+                                   power_sensor.measured_object());
+                           case branch3_1:
+                           case branch3_2:
+                           case branch3_3:
+                               return state_.components.template get_seq<Branch3>(power_sensor.measured_object());
+                           case node:
+                               return state_.components.template get_seq<Node>(power_sensor.measured_object());
+                           default:
+                               throw MissingCaseForEnumError("Power sensor idx to seq transformation",
+                                                             power_sensor.get_terminal_type());
+                           }
+                       });
         comp_topo.power_sensor_terminal_type.resize(state_.components.template size<GenericPowerSensor>());
         std::transform(state_.components.template citer<GenericPowerSensor>().begin(),
                        state_.components.template citer<GenericPowerSensor>().end(),
@@ -340,7 +339,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-   private:
+  private:
     void update_state(const UpdateChange& changes) {
         // if topology changed, everything is not up to date
         // if only param changed, set param to not up to date
@@ -456,9 +455,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
     template <typename Calculate>
-    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx> BatchParameter
-    batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data,
-                       Idx threading = -1) {
+    requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
+        BatchParameter batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data,
+                                          ConstDataset const& update_data, Idx threading = -1) {
         // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
         // NOTE: if the map is not empty but the datasets inside are empty
@@ -565,7 +564,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return BatchParameter{};
     }
 
-   public:
+  public:
     template <class Component>
     using UpdateType = typename Component::UpdateType;
 
@@ -763,7 +762,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return calculation_info_;
     }
 
-   private:
+  private:
     double system_frequency_;
 
     MainModelState state_;

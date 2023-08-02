@@ -65,33 +65,33 @@ void add_component(MainModelState<ComponentContainer>& state, ForwardIterator be
             switch (input.measured_terminal_type) {
                 using enum MeasuredTerminalType;
 
-                case branch_from:
-                case branch_to:
-                    state.components.template get_item<Branch>(measured_object);
-                    break;
-                case branch3_1:
-                case branch3_2:
-                case branch3_3:
-                    state.components.template get_item<Branch3>(measured_object);
-                    break;
-                case shunt:
-                    state.components.template get_item<Shunt>(measured_object);
-                    break;
-                case source:
-                    state.components.template get_item<Source>(measured_object);
-                    break;
-                case load:
-                    state.components.template get_item<GenericLoad>(measured_object);
-                    break;
-                case generator:
-                    state.components.template get_item<GenericGenerator>(measured_object);
-                    break;
-                case node:
-                    state.components.template get_item<Node>(measured_object);
-                    break;
-                default:
-                    throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " item retrieval",
-                                                  input.measured_terminal_type);
+            case branch_from:
+            case branch_to:
+                state.components.template get_item<Branch>(measured_object);
+                break;
+            case branch3_1:
+            case branch3_2:
+            case branch3_3:
+                state.components.template get_item<Branch3>(measured_object);
+                break;
+            case shunt:
+                state.components.template get_item<Shunt>(measured_object);
+                break;
+            case source:
+                state.components.template get_item<Source>(measured_object);
+                break;
+            case load:
+                state.components.template get_item<GenericLoad>(measured_object);
+                break;
+            case generator:
+                state.components.template get_item<GenericGenerator>(measured_object);
+                break;
+            case node:
+                state.components.template get_item<Node>(measured_object);
+                break;
+            default:
+                throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " item retrieval",
+                                              input.measured_terminal_type);
             }
 
             state.components.template emplace<Component>(id, input);

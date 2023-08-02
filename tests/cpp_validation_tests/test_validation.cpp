@@ -36,7 +36,7 @@ json read_json(std::filesystem::path const& json_file) {
 }
 
 class UnsupportedValidationCase : public PowerGridError {
-   public:
+  public:
     UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
         using namespace std::string_literals;
 
@@ -70,28 +70,28 @@ void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& met
         MetaAttribute const& attr = meta.get_attribute(it.key());
         using enum CType;
         switch (attr.ctype) {
-            case c_int8: {
-                int8_t const value = it.value().get<int8_t>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            case c_int32: {
-                int32_t const value = it.value().get<int32_t>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            case c_double: {
-                double const value = it.value().get<double>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            case c_double3: {
-                std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            default:
-                throw MissingCaseForEnumError("CType for attribute", attr.ctype);
+        case c_int8: {
+            int8_t const value = it.value().get<int8_t>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        case c_int32: {
+            int32_t const value = it.value().get<int32_t>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        case c_double: {
+            double const value = it.value().get<double>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        case c_double3: {
+            std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        default:
+            throw MissingCaseForEnumError("CType for attribute", attr.ctype);
         }
     }
 }
@@ -249,16 +249,16 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
     using namespace std::string_literals;
 
     switch (attr.ctype) {
-        case c_int32:
-            return get_as_string<int32_t>(raw_data_ptr, attr, obj);
-        case c_int8:
-            return get_as_string<int8_t>(raw_data_ptr, attr, obj);
-        case c_double:
-            return get_as_string<double>(raw_data_ptr, attr, obj);
-        case c_double3:
-            return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
-        default:
-            return "<unknown value type>"s;
+    case c_int32:
+        return get_as_string<int32_t>(raw_data_ptr, attr, obj);
+    case c_int8:
+        return get_as_string<int8_t>(raw_data_ptr, attr, obj);
+    case c_double:
+        return get_as_string<double>(raw_data_ptr, attr, obj);
+    case c_double3:
+        return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
+    default:
+        return "<unknown value type>"s;
     }
 }
 

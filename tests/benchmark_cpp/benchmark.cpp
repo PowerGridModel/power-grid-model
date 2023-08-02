@@ -19,8 +19,7 @@ constexpr Idx nodes_per_feeder = 100;
 constexpr Idx ring_node_pos = 2;
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{50.0} {
-    }
+    PowerGridBenchmark() : main_model{50.0} {}
 
     void generate_network(Idx n_nodes, bool meshed) {
         sym_load_input.clear();

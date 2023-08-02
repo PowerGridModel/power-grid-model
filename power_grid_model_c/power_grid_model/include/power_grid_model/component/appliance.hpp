@@ -18,7 +18,7 @@
 namespace power_grid_model {
 
 class Appliance : public Base {
-   public:
+  public:
     using InputType = ApplianceInput;
     using UpdateType = ApplianceUpdate;
     template <bool sym>
@@ -30,8 +30,7 @@ class Appliance : public Base {
         : Base{appliance_input},
           node_{appliance_input.node},
           status_{appliance_input.status != 0},
-          base_i_{base_power_3p / u / sqrt3} {
-    }
+          base_i_{base_power_3p / u / sqrt3} {}
 
     // getter
     ID node() const {
@@ -126,7 +125,7 @@ class Appliance : public Base {
         return get_sc_output(appliance_math_output.i);
     }
 
-   private:
+  private:
     ID node_;
     bool status_;
     double base_i_;

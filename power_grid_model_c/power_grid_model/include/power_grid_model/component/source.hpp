@@ -19,7 +19,7 @@
 namespace power_grid_model {
 
 class Source : public Appliance {
-   public:
+  public:
     using InputType = SourceInput;
     using UpdateType = SourceUpdate;
     static constexpr char const* name = "source";
@@ -92,7 +92,7 @@ class Source : public Appliance {
         return {topo_changed, param_changed || topo_changed};
     }
 
-   private:
+  private:
     double u_ref_;
     double u_ref_angle_;
     // positive and zero sequence ref

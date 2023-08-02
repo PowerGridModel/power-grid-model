@@ -273,7 +273,7 @@ struct YBusStructure {
 // See also "Node Admittance Matrix" in "State Estimation Alliander"
 template <bool sym>
 class YBus {
-   public:
+  public:
     YBus(std::shared_ptr<MathModelTopology const> const& topo_ptr,
          std::shared_ptr<MathModelParam<sym> const> const& param,
          std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
@@ -468,7 +468,7 @@ class YBus {
         return shunt_flow;
     }
 
-   private:
+  private:
     // csr structure
     std::shared_ptr<YBusStructure const> y_bus_struct_;
 

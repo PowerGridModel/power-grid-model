@@ -29,29 +29,24 @@ class DataPointer {
     template <class T>
     using ptr_t = std::conditional_t<is_const, T const*, T*>;
 
-   public:
-    DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, elements_per_scenario_{} {
-    }
+  public:
+    DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, elements_per_scenario_{} {}
 
     // single batch dataset
     DataPointer(ptr_t<void> ptr, Idx single_length)
-        : ptr_{ptr}, indptr_{nullptr}, batch_size_{1}, elements_per_scenario_{single_length} {
-    }
+        : ptr_{ptr}, indptr_{nullptr}, batch_size_{1}, elements_per_scenario_{single_length} {}
 
     // fix batch length
     DataPointer(ptr_t<void> ptr, Idx batch_size, Idx elements_per_scenario)
-        : ptr_{ptr}, indptr_{nullptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {
-    }
+        : ptr_{ptr}, indptr_{nullptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {}
 
     // variable batches
     DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size)
-        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{-1} {
-    }
+        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{-1} {}
 
     // copy to const constructor
     DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size, Idx elements_per_scenario)
-        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {
-    }
+        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {}
 
     template <class T>
     std::pair<ptr_t<T>, ptr_t<T>> get_iterators(Idx pos) const {
@@ -101,7 +96,7 @@ class DataPointer {
         return DataPointer<true>{ptr_, indptr_, batch_size_, elements_per_scenario_};
     }
 
-   private:
+  private:
     ptr_t<void> ptr_;
     Idx const* indptr_;
     Idx batch_size_;             // number of batches

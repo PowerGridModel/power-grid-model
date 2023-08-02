@@ -19,14 +19,13 @@
 namespace power_grid_model {
 
 class Link final : public Branch {
-   public:
+  public:
     using InputType = LinkInput;
     using UpdateType = BranchUpdate;
     static constexpr char const* name = "link";
 
     explicit Link(LinkInput const& link_input, double u1, double u2)
-        : Branch{link_input}, base_i_from_{base_power_3p / u1 / sqrt3}, base_i_to_{base_power_3p / u2 / sqrt3} {
-    }
+        : Branch{link_input}, base_i_from_{base_power_3p / u1 / sqrt3}, base_i_to_{base_power_3p / u2 / sqrt3} {}
 
     // override getter
     double base_i_from() const final {
@@ -45,7 +44,7 @@ class Link final : public Branch {
         return false;
     }
 
-   private:
+  private:
     double base_i_from_;
     double base_i_to_;
     BranchCalcParam<true> sym_calc_param() const final {

@@ -31,14 +31,13 @@ using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
 
 template <scalar_value T>
 class Vector : public Eigen3Vector<T> {
-   public:
+  public:
     Vector() {
         (*this) = Eigen3Vector<T>::Zero();
     };
     // eigen expression
     template <typename OtherDerived>
-    Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {
-    }
+    Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {}
     template <typename OtherDerived>
     Vector& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->Eigen3Vector<T>::operator=(other);
@@ -68,7 +67,7 @@ class Vector : public Eigen3Vector<T> {
 
 template <scalar_value T>
 class Tensor : public Eigen3Tensor<T> {
-   public:
+  public:
     Tensor() {
         (*this) = Eigen3Tensor<T>::Zero();
     }
@@ -84,8 +83,7 @@ class Tensor : public Eigen3Tensor<T> {
     }
     // eigen expression
     template <typename OtherDerived>
-    Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {
-    }
+    Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
     template <typename OtherDerived>
     Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->Eigen3Tensor<T>::operator=(other);

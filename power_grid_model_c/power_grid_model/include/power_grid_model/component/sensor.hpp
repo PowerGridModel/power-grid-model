@@ -18,15 +18,14 @@
 namespace power_grid_model {
 
 class Sensor : public Base {
-   public:
+  public:
     static constexpr char const* name = "sensor";
     using InputType = SensorInput;
     using ShortCircuitOutputType = SensorShortCircuitOutput;
 
     // constructor
     explicit Sensor(SensorInput const& sensor_input)
-        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {
-    }
+        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {}
 
     ID measured_object() const {
         return measured_object_;
@@ -51,7 +50,7 @@ class Sensor : public Base {
         }
     }
 
-   private:
+  private:
     ID measured_object_;
 
     // virtual function getter for sym and asym param

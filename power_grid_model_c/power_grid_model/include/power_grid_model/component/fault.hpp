@@ -18,7 +18,7 @@
 namespace power_grid_model {
 
 class Fault final : public Base {
-   public:
+  public:
     using InputType = FaultInput;
     using UpdateType = FaultUpdate;
     template <bool sym>
@@ -158,16 +158,16 @@ class Fault final : public Base {
                 switch (fault_type) {
                     using enum FaultPhase;
 
-                    case three_phase:
-                        return abc;
-                    case single_phase_to_ground:
-                        return a;
-                    case two_phase:
-                        [[fallthrough]];
-                    case two_phase_to_ground:
-                        return bc;
-                    default:
-                        throw InvalidShortCircuitType(fault_type);
+                case three_phase:
+                    return abc;
+                case single_phase_to_ground:
+                    return a;
+                case two_phase:
+                    [[fallthrough]];
+                case two_phase_to_ground:
+                    return bc;
+                default:
+                    throw InvalidShortCircuitType(fault_type);
                 }
             }(fault_type_);
             return default_phase;
@@ -178,7 +178,7 @@ class Fault final : public Base {
         return fault_object_;
     }
 
-   private:
+  private:
     // short circuit parameters
     bool status_;
     FaultType fault_type_;
@@ -203,18 +203,18 @@ class Fault final : public Base {
             }
         };
         switch (fault_type_) {
-            case FaultType::three_phase:
-                return check_supported(std::array{FaultPhase::nan, default_value, abc});
-            case FaultType::single_phase_to_ground:
-                return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
-            case FaultType::two_phase:
-                [[fallthrough]];
-            case FaultType::two_phase_to_ground:
-                return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
-            case FaultType::nan:
-                return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
-            default:
-                throw InvalidShortCircuitType(fault_type_);
+        case FaultType::three_phase:
+            return check_supported(std::array{FaultPhase::nan, default_value, abc});
+        case FaultType::single_phase_to_ground:
+            return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+        case FaultType::two_phase:
+            [[fallthrough]];
+        case FaultType::two_phase_to_ground:
+            return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+        case FaultType::nan:
+            return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+        default:
+            throw InvalidShortCircuitType(fault_type_);
         }
     }
 };

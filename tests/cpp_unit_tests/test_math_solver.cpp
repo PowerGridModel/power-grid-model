@@ -53,14 +53,14 @@ TEST_CASE("Test block") {
 
 namespace {
 
-#define CHECK_CLOSE(x, y, tolerance)                      \
-    do {                                                  \
-        if constexpr (sym) {                              \
-            CHECK(cabs((x) - (y)) < (tolerance));         \
-        }                                                 \
-        else {                                            \
-            CHECK((cabs((x) - (y)) < (tolerance)).all()); \
-        }                                                 \
+#define CHECK_CLOSE(x, y, tolerance)                                                                                   \
+    do {                                                                                                               \
+        if constexpr (sym) {                                                                                           \
+            CHECK(cabs((x) - (y)) < (tolerance));                                                                      \
+        }                                                                                                              \
+        else {                                                                                                         \
+            CHECK((cabs((x) - (y)) < (tolerance)).all());                                                              \
+        }                                                                                                              \
     } while (false)
 
 template <bool sym>
@@ -617,33 +617,33 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
     else {
         ComplexValue<false> if_abc{};
         switch (fault_type) {
-            case three_phase: {
-                DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
-                if_abc = ComplexValue<false>(if_3ph);
-                break;
-            }
-            case single_phase_to_ground: {
-                DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
-                if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
-                break;
-            }
-            case two_phase: {
-                DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
-                if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
-                break;
-            }
-            case two_phase_to_ground: {
-                DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
-                DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
-                DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
-                DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
-                DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
-                DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
-                if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
-                break;
-            }
-            default:
-                throw InvalidShortCircuitType{false, fault_type};
+        case three_phase: {
+            DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
+            if_abc = ComplexValue<false>(if_3ph);
+            break;
+        }
+        case single_phase_to_ground: {
+            DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
+            if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
+            break;
+        }
+        case two_phase: {
+            DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
+            if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
+            break;
+        }
+        case two_phase_to_ground: {
+            DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
+            DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
+            DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
+            DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
+            DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
+            DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
+            if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
+            break;
+        }
+        default:
+            throw InvalidShortCircuitType{false, fault_type};
         }
         ComplexValue<false> const cvref_asym{cvref};
         ComplexValue<false> const u0 = cvref_asym - if_abc * zref;

@@ -9,21 +9,18 @@
 namespace power_grid_model {
 
 struct C {
-    explicit C(Idx a1) : a{a1} {
-    }
+    explicit C(Idx a1) : a{a1} {}
 
     Idx a;
 };
 
 struct C1 : C {
-    C1(Idx a1, double b1) : C{a1}, b{b1} {
-    }
+    C1(Idx a1, double b1) : C{a1}, b{b1} {}
     double b;
 };
 
 struct C2 : C {
-    C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {
-    }
+    C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {}
     uint16_t b;
 };
 

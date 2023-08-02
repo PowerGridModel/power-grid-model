@@ -18,7 +18,7 @@
 namespace power_grid_model {
 
 class Node final : public Base {
-   public:
+  public:
     using InputType = NodeInput;
     template <bool sym>
     using OutputType = NodeOutput<sym>;
@@ -28,8 +28,7 @@ class Node final : public Base {
         return ComponentType::node;
     }
 
-    explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {
-    }
+    explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {}
 
     // update node, nothing happens here
     static constexpr UpdateChange update(BaseUpdate const&) {
@@ -83,7 +82,7 @@ class Node final : public Base {
         return is_connected_to_source;
     }
 
-   private:
+  private:
     double u_rated_;
 };
 

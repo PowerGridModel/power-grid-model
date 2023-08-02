@@ -26,7 +26,7 @@ struct block_trait {
 
 template <class T, bool sym, bool is_tensor, int n_sub_block>
 class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
-   public:
+  public:
     using ArrayType = typename block_trait<T, sym, is_tensor, n_sub_block>::ArrayType;
     using ArrayType::operator();
 
@@ -34,8 +34,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     Block() : ArrayType{ArrayType::Zero()} {};
     // eigen expression
     template <typename OtherDerived>
-    explicit Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {
-    }
+    explicit Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {}
     template <typename OtherDerived>
     Block& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->ArrayType::operator=(other);

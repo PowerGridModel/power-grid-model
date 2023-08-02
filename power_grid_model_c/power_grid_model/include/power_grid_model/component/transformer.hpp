@@ -20,7 +20,7 @@
 namespace power_grid_model {
 
 class Transformer : public Branch {
-   public:
+  public:
     using InputType = TransformerInput;
     using UpdateType = TransformerUpdate;
     static constexpr char const* name = "transformer";
@@ -103,7 +103,7 @@ class Transformer : public Branch {
         return {topo_changed, param_changed};
     }
 
-   private:
+  private:
     // transformer parameter
     double u1_;
     double u2_;

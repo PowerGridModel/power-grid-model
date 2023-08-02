@@ -14,24 +14,23 @@
 namespace power_grid_model {
 
 class Timer {
-   private:
-    CalculationInfo *info_;
+  private:
+    CalculationInfo* info_;
     int code_;
     std::string name_;
     Clock::time_point start_;
 
-   public:
+  public:
     Timer() : info_(nullptr){};
 
-    Timer(CalculationInfo &info, int code, std::string name)
-        : info_(&info), code_(code), name_(std::move(name)), start_(Clock::now()) {
-    }
+    Timer(CalculationInfo& info, int code, std::string name)
+        : info_(&info), code_(code), name_(std::move(name)), start_(Clock::now()) {}
 
-    Timer(const Timer &) = delete;
-    Timer(Timer &&) = default;
-    Timer &operator=(const Timer &) = delete;
+    Timer(const Timer&) = delete;
+    Timer(Timer&&) = default;
+    Timer& operator=(const Timer&) = delete;
 
-    Timer &operator=(Timer &&timer) noexcept {
+    Timer& operator=(Timer&& timer) noexcept {
         // Stop the current timer
         stop();
 
@@ -63,7 +62,7 @@ class Timer {
         }
     }
 
-    static std::string make_key(int code, const std::string &name) {
+    static std::string make_key(int code, const std::string& name) {
         std::stringstream ss;
         ss << std::setw(4) << std::setfill('0') << code << ".";
         auto key = ss.str();

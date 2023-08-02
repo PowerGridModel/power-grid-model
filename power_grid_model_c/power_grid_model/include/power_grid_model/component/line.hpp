@@ -19,7 +19,7 @@
 namespace power_grid_model {
 
 class Line final : public Branch {
-   public:
+  public:
     using InputType = LineInput;
     using UpdateType = BranchUpdate;
     static constexpr char const* name = "line";
@@ -53,7 +53,7 @@ class Line final : public Branch {
         return false;
     }
 
-   private:
+  private:
     double i_n_;
     double base_i_;
     DoubleComplex y1_series_;

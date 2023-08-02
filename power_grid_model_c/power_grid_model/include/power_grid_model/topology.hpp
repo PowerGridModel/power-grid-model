@@ -52,7 +52,7 @@ class Topology {
 
     // dfs visitor for global graph
     class GlobalDFSVisitor : public boost::dfs_visitor<> {
-       public:
+      public:
         GlobalDFSVisitor(Idx math_group, std::vector<Idx2D>& node_coupling, std::vector<double>& phase_shift,
                          std::vector<Idx>& dfs_node, std::vector<GraphIdx>& predecessors,
                          std::vector<std::pair<GraphIdx, GraphIdx>>& back_edges)
@@ -61,8 +61,7 @@ class Topology {
               phase_shift_{phase_shift},
               dfs_node_{dfs_node},
               predecessors_{predecessors},
-              back_edges_{back_edges} {
-        }
+              back_edges_{back_edges} {}
 
         // accumulate phase shift
         // assign predecessor
@@ -95,7 +94,7 @@ class Topology {
             dfs_node_.push_back((Idx)u);
         }
 
-       private:
+      private:
         Idx math_group_;
         std::vector<Idx2D>& node_coupling_;
         std::vector<double>& phase_shift_;
@@ -104,7 +103,7 @@ class Topology {
         std::vector<std::pair<GraphIdx, GraphIdx>>& back_edges_;
     };
 
-   public:
+  public:
     Topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn)
         : comp_topo_{comp_topo},
           comp_conn_{comp_conn},
@@ -112,8 +111,7 @@ class Topology {
           predecessors_(
               boost::counting_iterator<GraphIdx>{0},  // Predecessors is initialized as 0, 1, 2, ..., n_node_total() - 1
               boost::counting_iterator<GraphIdx>{(GraphIdx)comp_topo_.n_node_total()}),
-          node_status_(comp_topo_.n_node_total(), -1) {
-    }
+          node_status_(comp_topo_.n_node_total(), -1) {}
 
     // build topology
     std::pair<std::vector<std::shared_ptr<MathModelTopology const>>,
@@ -136,7 +134,7 @@ class Topology {
         return pair;
     }
 
-   private:
+  private:
     // input
     ComponentTopology const& comp_topo_;
     ComponentConnections const& comp_conn_;
@@ -516,18 +514,18 @@ class Topology {
             switch (power_sensor_terminal_type[component_i]) {
                 using enum MeasuredTerminalType;
 
-                case branch_from:
-                    return branch_coupling[obj_idx];
-                // return relevant branch mapped from branch3
-                case branch3_1:
-                    return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[0]};
-                case branch3_2:
-                    return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[1]};
-                case branch3_3:
-                    return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[2]};
-                default:
-                    assert(false);
-                    return {};
+            case branch_from:
+                return branch_coupling[obj_idx];
+            // return relevant branch mapped from branch3
+            case branch3_1:
+                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[0]};
+            case branch3_2:
+                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[1]};
+            case branch3_3:
+                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[2]};
+            default:
+                assert(false);
+                return {};
             }
         }
         IdxVector const& sensor_obj_idx;

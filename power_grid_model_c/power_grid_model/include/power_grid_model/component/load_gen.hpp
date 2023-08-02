@@ -20,7 +20,7 @@
 namespace power_grid_model {
 
 class GenericLoadGen : public Appliance {
-   public:
+  public:
     using InputType = GenericLoadGenInput;
     static constexpr char const* name = "generic_load_gen";
     ComponentType math_model_type() const final {
@@ -28,8 +28,7 @@ class GenericLoadGen : public Appliance {
     }
 
     explicit GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
-        : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {
-    }
+        : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {}
 
     // getter for load type
     LoadGenType type() const {
@@ -49,7 +48,7 @@ class GenericLoadGen : public Appliance {
         }
     }
 
-   private:
+  private:
     LoadGenType type_;
     virtual ComplexValue<true> sym_calc_param() const = 0;
     virtual ComplexValue<false> asym_calc_param() const = 0;
@@ -57,17 +56,17 @@ class GenericLoadGen : public Appliance {
 
 // abstraction of load/generation
 class GenericLoad : public GenericLoadGen {
-   public:
+  public:
     using GenericLoadGen::GenericLoadGen;
 };
 class GenericGenerator : public GenericLoadGen {
-   public:
+  public:
     using GenericLoadGen::GenericLoadGen;
 };
 
 template <bool sym, bool is_gen>
 class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, GenericLoad> {
-   public:
+  public:
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
     using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
@@ -96,7 +95,7 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
         return {false, false};
     }
 
-   private:
+  private:
     ComplexValue<sym> s_specified_{};  // specified power injection
 
     // direction of load_gen
@@ -134,14 +133,14 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
 
         ComplexValue<sym_calc> s = this->template calc_param<sym_calc>();
         switch (this->type()) {
-            case const_pq:
-                return s;
-            case const_y:
-                return s * abs2(u);
-            case const_i:
-                return s * cabs(u);
-            default:
-                throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
+        case const_pq:
+            return s;
+        case const_y:
+            return s * abs2(u);
+        case const_i:
+            return s * cabs(u);
+        default:
+            throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
         }
     }
 };

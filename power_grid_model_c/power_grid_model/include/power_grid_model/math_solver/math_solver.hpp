@@ -25,7 +25,7 @@ namespace power_grid_model {
 
 template <bool sym>
 class MathSolver {
-   public:
+  public:
     MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr,
                std::shared_ptr<MathModelParam<sym> const> const& param,
                std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
@@ -33,8 +33,7 @@ class MathSolver {
           y_bus_{topo_ptr, param, y_bus_struct},
           all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(), [](LoadGenType x) {
               return x == LoadGenType::const_y;
-          })} {
-    }
+          })} {}
 
     MathOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                    CalculationInfo& calculation_info, CalculationMethod calculation_method) {
@@ -44,18 +43,18 @@ class MathSolver {
         calculation_method = all_const_y_ ? linear : calculation_method;
 
         switch (calculation_method) {
-            case default_method:
-                [[fallthrough]];  // use Newton-Raphson by default
-            case newton_raphson:
-                return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
-            case linear:
-                return run_power_flow_linear(input, err_tol, max_iter, calculation_info);
-            case linear_current:
-                return run_power_flow_linear_current(input, err_tol, max_iter, calculation_info);
-            case iterative_current:
-                return run_power_flow_iterative_current(input, err_tol, max_iter, calculation_info);
-            default:
-                throw InvalidCalculationMethod{};
+        case default_method:
+            [[fallthrough]];  // use Newton-Raphson by default
+        case newton_raphson:
+            return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
+        case linear:
+            return run_power_flow_linear(input, err_tol, max_iter, calculation_info);
+        case linear_current:
+            return run_power_flow_linear_current(input, err_tol, max_iter, calculation_info);
+        case iterative_current:
+            return run_power_flow_iterative_current(input, err_tol, max_iter, calculation_info);
+        default:
+            throw InvalidCalculationMethod{};
         }
     }
 
@@ -110,7 +109,7 @@ class MathSolver {
         return y_bus_.shared_y_bus_struct();
     }
 
-   private:
+  private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     YBus<sym> y_bus_;
     bool all_const_y_;  // if all the load_gen is const element_admittance (impedance) type

@@ -8,7 +8,6 @@
 
 namespace power_grid_model {
 
-TEST_CASE("Test short circuit solver") {
-}
+TEST_CASE("Test short circuit solver") {}
 
 }  // namespace power_grid_model

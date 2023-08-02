@@ -27,7 +27,7 @@ namespace math_model_impl {
 // solver
 template <bool sym, typename DerivedSolver>
 class IterativePFSolver {
-   public:
+  public:
     friend DerivedSolver;
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
@@ -133,21 +133,21 @@ class IterativePFSolver {
                 switch (type) {
                     using enum LoadGenType;
 
-                    case const_pq:
-                        // always same power
-                        output.load_gen[load_gen].s = input.s_injection[load_gen];
-                        break;
-                    case const_y:
-                        // power is quadratic relation to voltage
-                        output.load_gen[load_gen].s =
-                            input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
-                        break;
-                    case const_i:
-                        // power is linear relation to voltage
-                        output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]);
-                        break;
-                    default:
-                        throw MissingCaseForEnumError("Power injection", type);
+                case const_pq:
+                    // always same power
+                    output.load_gen[load_gen].s = input.s_injection[load_gen];
+                    break;
+                case const_y:
+                    // power is quadratic relation to voltage
+                    output.load_gen[load_gen].s =
+                        input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
+                    break;
+                case const_i:
+                    // power is linear relation to voltage
+                    output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]);
+                    break;
+                default:
+                    throw MissingCaseForEnumError("Power injection", type);
                 }
                 output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
             }
@@ -155,7 +155,7 @@ class IterativePFSolver {
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
 
-   private:
+  private:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
@@ -166,8 +166,7 @@ class IterativePFSolver {
           phase_shift_{topo_ptr, &topo_ptr->phase_shift},
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {
-    }
+          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };
 
 }  // namespace math_model_impl

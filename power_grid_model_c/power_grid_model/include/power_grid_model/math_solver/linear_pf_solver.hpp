@@ -43,19 +43,18 @@ namespace power_grid_model {
 
 template <bool sym>
 class LinearPFSolver {
-   private:
+  private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
 
-   public:
+  public:
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(n_bus_) {
-    }
+          perm_(n_bus_) {}
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    CalculationInfo& calculation_info) {
@@ -114,7 +113,7 @@ class LinearPFSolver {
         return output;
     }
 
-   private:
+  private:
     Idx n_bus_;
     // shared topo data
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;

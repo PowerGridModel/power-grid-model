@@ -13,7 +13,7 @@
 namespace power_grid_model {
 
 class ThreeWindingTransformer : public Branch3 {
-   public:
+  public:
     using InputType = ThreeWindingTransformerInput;
     using UpdateType = ThreeWindingTransformerUpdate;
     static constexpr char const* name = "three_winding_transformer";
@@ -132,7 +132,7 @@ class ThreeWindingTransformer : public Branch3 {
         return {topo_changed, param_changed};
     }
 
-   private:
+  private:
     // three winding transformer parameters
     double u1_;
     double u2_;

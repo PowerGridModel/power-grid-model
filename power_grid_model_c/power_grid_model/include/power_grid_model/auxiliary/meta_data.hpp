@@ -138,8 +138,7 @@ struct PGM_MetaAttribute {
           check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
           set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
           get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
-          compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {
-    }
+          compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
 
     // meta data
     std::string name;
@@ -195,8 +194,7 @@ struct PGM_MetaComponent {
           attributes{power_grid_model::meta_data::get_attributes_list<StructType>{}()},
           set_nan{MetaComponentImpl<StructType>::set_nan},
           create_buffer{MetaComponentImpl<StructType>::create_buffer},
-          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {
-    }
+          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {}
 
     // meta data
     std::string name;

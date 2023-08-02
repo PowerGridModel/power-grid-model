@@ -17,7 +17,7 @@
 namespace power_grid_model {
 
 class Branch3 : public Base {
-   public:
+  public:
     using InputType = Branch3Input;
     using UpdateType = Branch3Update;
     template <bool sym>
@@ -185,7 +185,7 @@ class Branch3 : public Base {
         return {changed, changed};
     }
 
-   private:
+  private:
     ID node_1_;
     ID node_2_;
     ID node_3_;

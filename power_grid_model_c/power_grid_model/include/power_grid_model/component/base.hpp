@@ -15,7 +15,7 @@
 namespace power_grid_model {
 
 class Base {
-   public:
+  public:
     using InputType = BaseInput;
     using UpdateType = BaseUpdate;
     template <bool sym>
@@ -23,8 +23,7 @@ class Base {
     static constexpr char const* name = "base";
     virtual ComponentType math_model_type() const = 0;
 
-    explicit Base(BaseInput const& base_input) : id_{base_input.id} {
-    }
+    explicit Base(BaseInput const& base_input) : id_{base_input.id} {}
     virtual ~Base() = default;
     constexpr ID id() const noexcept {
         return id_;
@@ -37,11 +36,11 @@ class Base {
     Base(Base&&) = default;
     Base& operator=(Base&&) = default;
 
-   protected:
+  protected:
     Base(const Base&) = default;
     Base& operator=(const Base&) = default;
 
-   private:
+  private:
     ID id_;
 };
 

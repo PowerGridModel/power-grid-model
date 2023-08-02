@@ -322,31 +322,31 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                 switch (terminal_type) {
                     using enum MeasuredTerminalType;
 
-                    case branch_from:
-                    case branch_to:
-                        return state.topo_comp_coup->branch[obj_seq];
-                    case source:
-                        return state.topo_comp_coup->source[obj_seq];
-                    case shunt:
-                        return state.topo_comp_coup->shunt[obj_seq];
-                    case load:
-                    case generator:
-                        return state.topo_comp_coup->load_gen[obj_seq];
-                    // from branch3, get relevant math object branch based on the measured side
-                    case branch3_1:
-                        return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
-                                     state.topo_comp_coup->branch3[obj_seq].pos[0]};
-                    case branch3_2:
-                        return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
-                                     state.topo_comp_coup->branch3[obj_seq].pos[1]};
-                    case branch3_3:
-                        return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
-                                     state.topo_comp_coup->branch3[obj_seq].pos[2]};
-                    case node:
-                        return state.topo_comp_coup->node[obj_seq];
-                    default:
-                        throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
-                                                      terminal_type);
+                case branch_from:
+                case branch_to:
+                    return state.topo_comp_coup->branch[obj_seq];
+                case source:
+                    return state.topo_comp_coup->source[obj_seq];
+                case shunt:
+                    return state.topo_comp_coup->shunt[obj_seq];
+                case load:
+                case generator:
+                    return state.topo_comp_coup->load_gen[obj_seq];
+                // from branch3, get relevant math object branch based on the measured side
+                case branch3_1:
+                    return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
+                                 state.topo_comp_coup->branch3[obj_seq].pos[0]};
+                case branch3_2:
+                    return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
+                                 state.topo_comp_coup->branch3[obj_seq].pos[1]};
+                case branch3_3:
+                    return Idx2D{state.topo_comp_coup->branch3[obj_seq].group,
+                                 state.topo_comp_coup->branch3[obj_seq].pos[2]};
+                case node:
+                    return state.topo_comp_coup->node[obj_seq];
+                default:
+                    throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
+                                                  terminal_type);
                 }
             }();
 
@@ -357,26 +357,26 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
             switch (terminal_type) {
                 using enum MeasuredTerminalType;
 
-                case branch_from:
-                // all power sensors in branch3 are at from side in the mathematical model
-                case branch3_1:
-                case branch3_2:
-                case branch3_3:
-                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
-                case branch_to:
-                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
-                case source:
-                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
-                case shunt:
-                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
-                case load:
-                case generator:
-                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
-                case node:
-                    return power_sensor.get_output<sym>(math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
-                default:
-                    throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
-                                                  terminal_type);
+            case branch_from:
+            // all power sensors in branch3 are at from side in the mathematical model
+            case branch3_1:
+            case branch3_2:
+            case branch3_3:
+                return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
+            case branch_to:
+                return power_sensor.get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
+            case source:
+                return power_sensor.get_output<sym>(math_output[obj_math_id.group].source[obj_math_id.pos].s);
+            case shunt:
+                return power_sensor.get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
+            case load:
+            case generator:
+                return power_sensor.get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
+            case node:
+                return power_sensor.get_output<sym>(math_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
+            default:
+                throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()",
+                                              terminal_type);
             }
         });
 }
