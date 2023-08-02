@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 find_package(doctest REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
 
 include("${doctest_DIR}/doctest.cmake")
 
