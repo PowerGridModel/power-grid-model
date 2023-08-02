@@ -49,6 +49,18 @@ class Deserializer {
         parse_meta_data();
     }
 
+    Idx batch_size() const {
+        return batch_size_;
+    }
+
+    Idx n_components() const {
+        return (Idx)buffers_.size();
+    }
+
+    Buffer const& get_buffer_info(Idx i) const {
+        return buffers_[i];
+    }
+
    private:
     msgpack::object_handle handle_;
     std::string version_;
@@ -148,18 +160,17 @@ class Deserializer {
     Buffer count_component(std::span<msgpack::object const> batch_data, std::string const& component) {
         // count number of element of all scenarios
         IdxVector counter(batch_size_);
+        std::vector<std::span<msgpack::object>> msg_data(batch_size_);
         for (Idx scenario_number = 0; scenario_number != batch_size_; ++scenario_number) {
             msgpack::object const& scenario = batch_data[scenario_number];
             Idx const found_component_idx = find_key_from_map(scenario, component);
-            if (found_component_idx < 0) {
-                counter[scenario_number] = 0;
-            }
-            else {
+            if (found_component_idx >= 0) {
                 msgpack::object const& component = scenario.via.map.ptr[found_component_idx].val;
                 if (component.type != msgpack::type::ARRAY) {
                     throw SerializationError{"Each entry of component per scenario should be a list!"};
                 }
                 counter[scenario_number] = (Idx)component.via.array.size;
+                msg_data[scenario_number] = {component.via.array.ptr, component.via.array.size};
             }
         }
         bool const is_uniform = check_uniform(counter);
@@ -171,7 +182,7 @@ class Deserializer {
                       .is_uniform = is_uniform,
                       .elements_per_scenario = elements_per_scenario,
                       .total_elements = total_elements,
-                      .msg_data = {},
+                      .msg_data = msg_data,
                       .data = nullptr,
                       .indptr = {}};
     }
