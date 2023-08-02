@@ -82,6 +82,12 @@ class Deserializer {
         }
     }
 
+    void parse() {
+        for (Buffer const& buffer : buffers_) {
+            parse_component(buffer);
+        }
+    }
+
    private:
     msgpack::object_handle handle_;
     std::string version_;
@@ -223,6 +229,21 @@ class Deserializer {
             return 0;
         }
         return counter.front();
+    }
+
+    void parse_component(Buffer const& buffer) {
+        // handle indptr
+        if (!buffer.is_uniform) {
+            // first always zero
+            buffer.indptr.front() = 0;
+            // accumulate sum
+            std::transform_inclusive_scan(buffer.msg_data.cbegin(), buffer.msg_data.cend(), buffer.indptr.begin() + 1,
+                                          std::plus{}, [](auto const& x) {
+                                              return (Idx)x.size();
+                                          });
+        }
+        // set nan
+        buffer.component->set_nan(buffer.data, 0, buffer.total_elements);
     }
 };
 

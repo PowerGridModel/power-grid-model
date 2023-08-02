@@ -174,6 +174,12 @@ struct MetaComponentImpl {
         StructType* ptr = reinterpret_cast<StructType*>(buffer_ptr);
         std::fill(ptr + pos, ptr + pos + size, nan_value);
     }
+    static RawDataPtr advance_ptr(RawDataPtr buffer_ptr, Idx diff) {
+        return reinterpret_cast<StructType*>(buffer_ptr) + diff;
+    }
+    static RawDataConstPtr advance_const_ptr(RawDataConstPtr buffer_ptr, Idx diff) {
+        return reinterpret_cast<StructType const*>(buffer_ptr) + diff;
+    }
 };
 
 }  // namespace power_grid_model::meta_data
@@ -195,7 +201,9 @@ struct PGM_MetaComponent {
           attributes{power_grid_model::meta_data::get_attributes_list<StructType>{}()},
           set_nan{MetaComponentImpl<StructType>::set_nan},
           create_buffer{MetaComponentImpl<StructType>::create_buffer},
-          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {
+          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer},
+          advance_ptr{MetaComponentImpl<StructType>::advance_ptr},
+          advance_const_ptr{MetaComponentImpl<StructType>::advance_const_ptr} {
     }
 
     // meta data
@@ -208,6 +216,8 @@ struct PGM_MetaComponent {
     std::add_pointer_t<void(RawDataPtr, Idx, Idx)> set_nan;
     std::add_pointer_t<RawDataPtr(Idx)> create_buffer;
     std::add_pointer_t<void(RawDataConstPtr)> destroy_buffer;
+    std::add_pointer_t<RawDataPtr(RawDataPtr, Idx)> advance_ptr;
+    std::add_pointer_t<RawDataConstPtr(RawDataConstPtr, Idx)> advance_const_ptr;
 
     Idx n_attributes() const {
         return static_cast<Idx>(attributes.size());
