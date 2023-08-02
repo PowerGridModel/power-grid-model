@@ -47,6 +47,7 @@ class Deserializer {
     void deserialize_from_msgpack(char const* data, size_t length) {
         handle_ = msgpack::unpack(data, length);
         parse_meta_data();
+        count_data();
     }
 
     Idx batch_size() const {
