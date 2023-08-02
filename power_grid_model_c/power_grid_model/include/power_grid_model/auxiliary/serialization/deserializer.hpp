@@ -257,20 +257,21 @@ class Deserializer {
             Idx const scenario_offset =
                 buffer.is_uniform ? scenario * buffer.elements_per_scenario : buffer.indptr[scenario];
             void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
-            parse_scenario(buffer, scenario_pointer, buffer.msg_data[scenario], attributes);
+            parse_scenario(*buffer.component, scenario_pointer, buffer.msg_data[scenario], attributes);
         }
     }
 
-    void parse_scenario(Buffer const& buffer, void* scenario_pointer, std::span<msgpack::object const> msg_data,
+    void parse_scenario(MetaComponent const& component, void* scenario_pointer,
+                        std::span<msgpack::object const> msg_data,
                         std::span<MetaAttribute const* const> attributes) const {
         for (Idx element = 0; element != (Idx)msg_data.size(); ++element) {
-            void* element_pointer = buffer.component->advance_ptr(scenario_pointer, element);
+            void* element_pointer = component.advance_ptr(scenario_pointer, element);
             msgpack::object const& obj = msg_data[element];
             if (obj.type == msgpack::type::ARRAY) {
                 parse_array_element(element_pointer, obj, attributes);
             }
             else if (obj.type == msgpack::type::MAP) {
-                parse_map_element(element_pointer, obj, *buffer.component);
+                parse_map_element(element_pointer, obj, component);
             }
             else {
                 throw SerializationError{"An element can only be a list or dictionary!\n"};
@@ -280,9 +281,28 @@ class Deserializer {
 
     void parse_array_element(void* element_pointer, msgpack::object const& obj,
                              std::span<MetaAttribute const* const> attributes) const {
+        std::span<msgpack::object const> arr{obj.via.array.ptr, obj.via.array.size};
+        if (arr.size() != attributes.size()) {
+            throw SerializationError{
+                "An element of a list should have same length as the list of predefined attributes!\n"};
+        }
+        for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
+            parse_attribute(element_pointer, arr[i], *attributes[i]);
+        }
     }
 
     void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) const {
+        std::span<msgpack::object_kv const> map{obj.via.map.ptr, obj.via.map.size};
+        for (msgpack::object_kv const& kv : map) {
+            Idx const found_idx = component.find_attribute(kv.key.as<std::string_view>());
+            if (found_idx < 0) {
+                continue;  // allow unknown key for additional user info
+            }
+            parse_attribute(element_pointer, kv.val, component.attributes[found_idx]);
+        }
+    }
+
+    void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) const {
     }
 };
 
