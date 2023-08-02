@@ -14,7 +14,9 @@
 
 namespace power_grid_model::meta_data {
 
-class Serializer {};
+class Serializer {
+   public:
+};
 
 }  // namespace power_grid_model::meta_data
 
