@@ -23,7 +23,7 @@ class Deserializer {
    public:
     // struct of buffer data
     struct Buffer {
-        std::string name;
+        MetaComponent const* component;
         bool is_uniform{false};
         Idx elements_per_scenario{-1};
         Idx total_elements{};
@@ -112,6 +112,8 @@ class Deserializer {
             batch_size_ = 1;
             msgpack_data = {&obj, 1};
         }
+
+        // get set of all components
     }
 };
 
