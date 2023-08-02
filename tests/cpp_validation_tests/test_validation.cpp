@@ -363,9 +363,9 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
 }
 
 // root path
-#ifdef POWER_GRID_MODEL_VALIDATION_TEST_data_dir
+#ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR
 // use marco definition input
-std::filesystem::path const data_dir{POWER_GRID_MODEL_VALIDATION_TEST_data_dir};
+std::filesystem::path const data_dir{POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR};
 #else
 // use relative path to this file
 std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
