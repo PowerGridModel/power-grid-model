@@ -17,6 +17,15 @@
 namespace power_grid_model::meta_data {
 
 class Deserializer {
+    struct ComponentData {
+        std::string name;
+        bool is_uniform{false};
+        Idx elements_per_scenario{-1};
+        Idx total_elements{};
+        void* data{};   // set by user
+        Idx* indptr{};  // set by user
+    };
+
    public:
     void deserialize_from_json(char const* json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
@@ -54,7 +63,7 @@ class Deserializer {
     msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
         std::vector<std::string> keys;
         msgpack::object const& root = handle_.get();
-        msgpack::object const& obj = [&]() {
+        msgpack::object const& obj = [&]() -> msgpack::object const& {
             for (Idx i = 0; i != (Idx)root.via.map.size; ++i) {
                 if (key == root.via.map.ptr[i].key.as<std::string>()) {
                     return root.via.map.ptr[i].val;
