@@ -14,6 +14,7 @@
 
 #include <msgpack.hpp>
 
+#include <set>
 #include <span>
 #include <string_view>
 
@@ -24,12 +25,12 @@ class Deserializer {
     // struct of buffer data
     struct Buffer {
         MetaComponent const* component;
-        bool is_uniform{false};
-        Idx elements_per_scenario{-1};
-        Idx total_elements{};
+        bool is_uniform;
+        Idx elements_per_scenario;
+        Idx total_elements;
         std::vector<std::span<msgpack::object>> msg_data;  // vector of spans of msgpack object of each batch
-        void* data{};                                      // set by user
-        std::span<Idx> indptr{};                           // set by user
+        void* data;                                        // set by user
+        std::span<Idx> indptr;                             // set by user
     };
 
     // not copyable
@@ -69,20 +70,32 @@ class Deserializer {
         read_predefined_attributes();
     }
 
-    msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
+    msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
         msgpack::object const& root = handle_.get();
-        msgpack::object const& obj = [&]() -> msgpack::object const& {
-            for (auto const& kv : std::span{root.via.map.ptr, root.via.map.size}) {
-                if (key == kv.key.as<std::string_view>()) {
-                    return kv.val;
-                }
-            }
-            throw SerializationError{"Cannot find key " + key + " in the root level dictionary!"};
-        }();
+        return get_value_from_map(root, key, type);
+    }
+
+    msgpack::object const& get_value_from_map(msgpack::object const& map, std::string_view key,
+                                              msgpack::type::object_type type) {
+        Idx const idx = find_key_from_map(map, key);
+        if (idx < 0) {
+            throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!"};
+        }
+        msgpack::object const& obj = map.via.map.ptr[idx].val;
         if (obj.type != type) {
-            throw SerializationError{"Wrong data type for key " + key + " in the root level dictionary!"};
+            throw SerializationError{"Wrong data type for key " + std::string(key) + " in the root level dictionary!"};
         }
         return obj;
+    }
+
+    Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
+        std::span const kv_map{map.via.map.ptr, map.via.map.size};
+        for (Idx i = 0; i != (Idx)kv_map.size(); ++i) {
+            if (key == kv_map[i].key.as<std::string_view>()) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     void read_predefined_attributes() {
@@ -102,18 +115,83 @@ class Deserializer {
 
     void count_data() {
         msgpack::object const& obj = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
+        buffers_ = {};
         // pointer to array (or single value) of msgpack objects to the data
-        std::span<msgpack::object const> msgpack_data;
+        std::span<msgpack::object const> batch_data;
         if (is_batch_) {
             batch_size_ = (Idx)obj.via.array.size;
-            msgpack_data = {obj.via.array.ptr, obj.via.array.size};
+            batch_data = {obj.via.array.ptr, obj.via.array.size};
         }
         else {
             batch_size_ = 1;
-            msgpack_data = {&obj, 1};
+            batch_data = {&obj, 1};
         }
 
         // get set of all components
+        std::set<std::string> all_components;
+        for (msgpack::object const& scenario : batch_data) {
+            if (scenario.type != msgpack::type::MAP) {
+                throw SerializationError{"The data object of each scenario should be a dictionary!"};
+            }
+            std::span<msgpack::object_kv> const scenario_map{scenario.via.map.ptr, scenario.via.map.size};
+            for (msgpack::object_kv const& kv : scenario_map) {
+                all_components.insert(kv.val.as<std::string>());
+            }
+        }
+
+        // create buffer object
+        for (std::string const& component : all_components) {
+            buffers_.push_back(count_component(batch_data, component));
+        }
+    }
+
+    Buffer count_component(std::span<msgpack::object const> batch_data, std::string const& component) {
+        // count number of element of all scenarios
+        IdxVector counter(batch_size_);
+        for (Idx scenario_number = 0; scenario_number != batch_size_; ++scenario_number) {
+            msgpack::object const& scenario = batch_data[scenario_number];
+            Idx const found_component_idx = find_key_from_map(scenario, component);
+            if (found_component_idx < 0) {
+                counter[scenario_number] = 0;
+            }
+            else {
+                msgpack::object const& component = scenario.via.map.ptr[found_component_idx].val;
+                if (component.type != msgpack::type::ARRAY) {
+                    throw SerializationError{"Each entry of component per scenario should be a list!"};
+                }
+                counter[scenario_number] = (Idx)component.via.array.size;
+            }
+        }
+        bool const is_uniform = check_uniform(counter);
+        Idx const elements_per_scenario = get_elements_per_scenario(counter, is_uniform);
+        Idx const total_elements =                              // total element based on is_uniform
+            is_uniform ? elements_per_scenario * batch_size_ :  // multiply
+                std::reduce(counter.cbegin(), counter.cend());  // aggregation
+        return Buffer{.component = &dataset_->get_component(component),
+                      .is_uniform = is_uniform,
+                      .elements_per_scenario = elements_per_scenario,
+                      .total_elements = total_elements,
+                      .msg_data = {},
+                      .data = nullptr,
+                      .indptr = {}};
+    }
+
+    bool check_uniform(IdxVector const& counter) {
+        if (batch_size_ < 2) {
+            return true;
+        }
+        return std::transform_reduce(counter.cbegin(), counter.cend() - 1, counter.cbegin() + 1, true,
+                                     std::logical_and{}, std::equal_to{});
+    }
+
+    Idx get_elements_per_scenario(IdxVector const& counter, bool is_uniform) {
+        if (!is_uniform) {
+            return -1;
+        }
+        if (batch_size_ == 0) {
+            return 0;
+        }
+        return counter.front();
     }
 };
 
