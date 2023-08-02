@@ -32,15 +32,18 @@ class Deserializer {
 
    private:
     msgpack::object_handle handle_;
-    std::map<std::string, msgpack::object> root_map_;
-    msgpack::object data_object_;
     std::string version_;
     std::string dataset_type_;
     bool is_batch_{};
     MetaDataset const* dataset_{};
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
+    Idx batch_size_;                       // for single dataset, the batch size is one
+    msgpack::object const* msgpack_data_;  // pointer to array (or single value) of msgpack objects to the data
 
     void parse_meta_data() {
+        if (handle_.get().type != msgpack::type::MAP) {
+            throw SerializationError{"The root level object should be a dictionary!"};
+        }
         handle_.get() >> root_map_;
         get_value_from_root("version", msgpack::type::STR) >> version_;
         get_value_from_root("type", msgpack::type::STR) >> dataset_type_;
@@ -50,6 +53,10 @@ class Deserializer {
     }
 
     msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
+        std::vector<std::string> keys;
+        msgpack::object const& root = handle_.get();
+        // for (Idx i = 0; i != root.via.array.)
+
         auto const found = root_map_.find(key);
         if (found == root_map_.cend()) {
             throw SerializationError{"Cannot find key " + key + " in the root level dictionary!"};
@@ -73,6 +80,11 @@ class Deserializer {
                 attributes_[component_name].push_back(&component.get_attribute(attribute));
             }
         }
+    }
+
+    void count_data() {
+        // msgpack::object const& obj = get_value_from_root("data", is_batch ? msgpack::type::ARRAY :
+        // msgpack::type::MAP);
     }
 };
 
