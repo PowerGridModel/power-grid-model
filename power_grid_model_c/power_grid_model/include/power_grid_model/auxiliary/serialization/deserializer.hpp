@@ -44,7 +44,6 @@ class Deserializer {
         if (handle_.get().type != msgpack::type::MAP) {
             throw SerializationError{"The root level object should be a dictionary!"};
         }
-        handle_.get() >> root_map_;
         get_value_from_root("version", msgpack::type::STR) >> version_;
         get_value_from_root("type", msgpack::type::STR) >> dataset_type_;
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
@@ -55,13 +54,14 @@ class Deserializer {
     msgpack::object const& get_value_from_root(std::string const& key, msgpack::type::object_type type) {
         std::vector<std::string> keys;
         msgpack::object const& root = handle_.get();
-        // for (Idx i = 0; i != root.via.array.)
-
-        auto const found = root_map_.find(key);
-        if (found == root_map_.cend()) {
+        msgpack::object const& obj = [&]() {
+            for (Idx i = 0; i != (Idx)root.via.map.size; ++i) {
+                if (key == root.via.map.ptr[i].key.as<std::string>()) {
+                    return root.via.map.ptr[i].val;
+                }
+            }
             throw SerializationError{"Cannot find key " + key + " in the root level dictionary!"};
-        }
-        msgpack::object const& obj = found->second;
+        }();
         if (obj.type != type) {
             throw SerializationError{"Wrong data type for key " + key + " in the root level dictionary!"};
         }
@@ -69,22 +69,35 @@ class Deserializer {
     }
 
     void read_predefined_attributes() {
-        attributes_ = {};
-        if (!root_map_.contains("attributes")) {
-            return;
-        }
-        auto const attribute_map = root_map_.at("attributes").as<std::map<std::string, std::vector<std::string>>>();
-        for (auto const& [component_name, attributes] : attribute_map) {
-            MetaComponent const& component = dataset_->get_component(component_name);
-            for (auto const& attribute : attributes) {
-                attributes_[component_name].push_back(&component.get_attribute(attribute));
+        msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
+        auto const map_ptr = attribute_map.via.map.ptr;
+        auto const map_size = attribute_map.via.map.size;
+        for (msgpack::object_kv const* kv = map_ptr; kv != map_ptr + map_size; ++kv) {
+            MetaComponent const& component = dataset_->get_component(kv->key.as<std::string>());
+            msgpack::object const& attribute_list = kv->val;
+            if (attribute_list.type != msgpack::type::ARRAY) {
+                throw SerializationError{
+                    "Each entry of attribute dictionary should be a list for the corresponding component!"};
+            }
+            auto const list_ptr = attribute_list.via.array.ptr;
+            auto const list_size = attribute_list.via.array.size;
+
+            for (msgpack::object const* attr_obj = list_ptr; attr_obj != list_ptr + list_size; ++attr_obj) {
+                attributes_[component.name].push_back(&component.get_attribute(attr_obj->as<std::string>()));
             }
         }
     }
 
     void count_data() {
-        // msgpack::object const& obj = get_value_from_root("data", is_batch ? msgpack::type::ARRAY :
-        // msgpack::type::MAP);
+        msgpack::object const& obj = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
+        if (is_batch_) {
+            batch_size_ = (Idx)obj.via.array.size;
+            msgpack_data_ = obj.via.array.ptr;
+        }
+        else {
+            batch_size_ = 1;
+            msgpack_data_ = &obj;
+        }
     }
 };
 
