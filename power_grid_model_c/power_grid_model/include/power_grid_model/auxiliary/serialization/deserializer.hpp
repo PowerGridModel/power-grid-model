@@ -49,7 +49,7 @@ class Deserializer {
     // struct of buffer data
     struct Buffer {
         MetaComponent const* component;
-        bool is_uniform;
+        // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
         Idx elements_per_scenario;
         Idx total_elements;
         std::vector<std::span<msgpack::object const>> msg_data; // vector of spans of msgpack object of each batch
@@ -91,7 +91,7 @@ class Deserializer {
                                          "! You need to supply the components which are present.\n"};
             }
             found->data = data[i];
-            if (!found->is_uniform) {
+            if (found->elements_per_scenario < 0) {
                 found->indptr = {indptrs[i], (size_t)(batch_size_ + 1)};
             }
         }
@@ -221,13 +221,12 @@ class Deserializer {
                 msg_data[scenario_number] = {component.via.array.ptr, component.via.array.size};
             }
         }
-        bool const is_uniform = check_uniform(counter);
-        Idx const elements_per_scenario = get_elements_per_scenario(counter, is_uniform);
-        Idx const total_elements =                             // total element based on is_uniform
-            is_uniform ? elements_per_scenario * batch_size_ : // multiply
-                std::reduce(counter.cbegin(), counter.cend()); // aggregation
+
+        Idx const elements_per_scenario = get_elements_per_scenario(counter);
+        Idx const total_elements = // total element based on is_uniform
+            elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
+                elements_per_scenario * batch_size_;                                    // multiply
         return Buffer{.component = &dataset_->get_component(component),
-                      .is_uniform = is_uniform,
                       .elements_per_scenario = elements_per_scenario,
                       .total_elements = total_elements,
                       .msg_data = msg_data,
@@ -243,7 +242,8 @@ class Deserializer {
                                      std::logical_and{}, std::equal_to{});
     }
 
-    Idx get_elements_per_scenario(IdxVector const& counter, bool is_uniform) {
+    Idx get_elements_per_scenario(IdxVector const& counter) {
+        bool const is_uniform = check_uniform(counter);
         if (!is_uniform) {
             return -1;
         }
@@ -255,7 +255,7 @@ class Deserializer {
 
     void parse_component(Buffer const& buffer) const {
         // handle indptr
-        if (!buffer.is_uniform) {
+        if (buffer.elements_per_scenario < 0) {
             // first always zero
             buffer.indptr.front() = 0;
             // accumulate sum
@@ -275,12 +275,13 @@ class Deserializer {
         // all scenarios
         for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
             Idx const scenario_offset =
-                buffer.is_uniform ? scenario * buffer.elements_per_scenario : buffer.indptr[scenario];
+                buffer.elements_per_scenario < 0 ? buffer.indptr[scenario] : scenario * buffer.elements_per_scenario;
 #ifndef NDEBUG
-            if (buffer.is_uniform) {
-                assert(buffer.elements_per_scenario == (Idx)buffer.msg_data[scenario].size());
-            } else {
+            if (buffer.elements_per_scenario < 0) {
                 assert(buffer.indptr[scenario + 1] - buffer.indptr[scenario] == (Idx)buffer.msg_data[scenario].size());
+
+            } else {
+                assert(buffer.elements_per_scenario == (Idx)buffer.msg_data[scenario].size());
             }
 #endif
             void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
