@@ -38,6 +38,8 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+    "black",
+    "clang-format==15.0.7",
     "pre-commit",
     "pylint",
     "pytest",
