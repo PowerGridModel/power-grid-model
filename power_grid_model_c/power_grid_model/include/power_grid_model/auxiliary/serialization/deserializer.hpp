@@ -18,6 +18,31 @@
 #include <span>
 #include <string_view>
 
+// converter for double[3]
+namespace msgpack {
+MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
+    namespace adaptor {
+    template <>
+    struct convert<power_grid_model::RealValue<false>> {
+        msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
+            if (o.type != msgpack::type::ARRAY)
+                throw msgpack::type_error();
+            if (o.via.array.size != 3)
+                throw msgpack::type_error();
+            for (int8_t i = 0; i != 3; ++i) {
+                if (o.is_nil()) {
+                    continue;
+                }
+                o.via.array.ptr[i] >> v(i);
+            }
+            return o;
+        }
+    };
+
+    }  // namespace adaptor
+}  // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
+}  // namespace msgpack
+
 namespace power_grid_model::meta_data {
 
 class Deserializer {
@@ -38,16 +63,14 @@ class Deserializer {
     Deserializer& operator=(Deserializer const&) = delete;
 
     void deserialize_from_json(char const* json_string) {
-        nlohmann::json const json_document = nlohmann::json::parse(json_string);
-        std::vector<char> msgpack_data;
-        json_document.to_msgpack(msgpack_data);
-        deserialize_from_msgpack(msgpack_data.data(), msgpack_data.size());
+        std::vector<char> const msgpack_data = json_to_msgpack(json_string);
+        handle_ = msgpack::unpack(msgpack_data.data(), msgpack_data.size());
+        post_serialization();
     }
 
     void deserialize_from_msgpack(char const* data, size_t length) {
         handle_ = msgpack::unpack(data, length);
-        parse_meta_data();
-        count_data();
+        post_serialization();
     }
 
     std::string const& dataset_name() const {
@@ -97,7 +120,14 @@ class Deserializer {
     Idx batch_size_;  // for single dataset, the batch size is one
     std::vector<Buffer> buffers_;
 
-    void parse_meta_data() {
+    static std::vector<char> json_to_msgpack(char const* json_string) {
+        nlohmann::json const json_document = nlohmann::json::parse(json_string);
+        std::vector<char> msgpack_data;
+        json_document.to_msgpack(msgpack_data);
+        return msgpack_data;
+    }
+
+    void post_serialization() {
         if (handle_.get().type != msgpack::type::MAP) {
             throw SerializationError{"The root level object should be a dictionary!\n"};
         }
@@ -105,6 +135,7 @@ class Deserializer {
         dataset_ = &meta_data().get_dataset(get_value_from_root("type", msgpack::type::STR).as<std::string_view>());
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
         read_predefined_attributes();
+        count_data();
     }
 
     msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
@@ -303,6 +334,31 @@ class Deserializer {
     }
 
     void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) const {
+        // skip for none
+        if (obj.is_nil()) {
+            return;
+        }
+        // call relevant parser
+        switch (attribute.ctype) {
+            case CType::c_double:
+                return parse_attribute_per_type<double>(element_pointer, obj, attribute);
+            case CType::c_double3:
+                return parse_attribute_per_type<RealValue<false>>(element_pointer, obj, attribute);
+            case CType::c_int8:
+                return parse_attribute_per_type<int8_t>(element_pointer, obj, attribute);
+            case CType::c_int32:
+                return parse_attribute_per_type<int32_t>(element_pointer, obj, attribute);
+            default:
+                throw SerializationError{"Unknown data type for attriute!\n"};
+        }
+    }
+
+    template <class T>
+    void parse_attribute_per_type(void* element_pointer, msgpack::object const& obj,
+                                  MetaAttribute const& attribute) const {
+        T value;
+        obj >> value;
+        attribute.set_value(element_pointer, &value, 0);
     }
 };
 
