@@ -38,8 +38,7 @@ class Sensor : public Base {
     SensorCalcParam<sym> calc_param() const {
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }

@@ -37,8 +37,7 @@ template <typename U, typename First, typename... Rest>
 constexpr size_t get_type_index() {
     if constexpr (std::is_same_v<U, First>) {
         return 0;
-    }
-    else {
+    } else {
         return 1 + get_type_index<U, Rest...>();
     }
 }

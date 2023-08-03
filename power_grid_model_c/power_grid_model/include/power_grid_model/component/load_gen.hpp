@@ -38,8 +38,7 @@ class GenericLoadGen : public Appliance {
         }
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }

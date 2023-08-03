@@ -115,8 +115,7 @@ class SparseLUSolver {
             // permutation if needed
             if constexpr (is_block) {
                 x[row] = (block_perm_array[row].p * rhs[row].matrix()).array();
-            }
-            else {
+            } else {
                 x[row] = rhs[row];
             }
 
@@ -161,8 +160,7 @@ class SparseLUSolver {
                     }
                     xb(br) = xb(br) / pivot(br, br);
                 }
-            }
-            else {
+            } else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }
         }
@@ -209,8 +207,7 @@ class SparseLUSolver {
                     // record block permutation
                     block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
                     return block_perm_array[pivot_row_col];
-                }
-                else {
+                } else {
                     if (lu_matrix[pivot_idx] == 0.0) {
                         throw SparseMatrixError{};
                     }
@@ -296,8 +293,7 @@ class SparseLUSolver {
                         // divide diagonal
                         l.col(block_col) = l.col(block_col) / pivot(block_col, block_col);
                     }
-                }
-                else {
+                } else {
                     // for scalar matrix, just divide
                     // L_k,pivot = A_k,pivot / U_pivot    k > pivot
                     lu_matrix[l_idx] = lu_matrix[l_idx] / pivot;

@@ -281,8 +281,7 @@ class YBus {
         // use existing struct or make new struct
         if (y_bus_struct) {
             y_bus_struct_ = y_bus_struct;
-        }
-        else {
+        } else {
             y_bus_struct_ = std::make_shared<YBusStructure const>(YBusStructure{*topo_ptr});
         }
         // update values
@@ -337,8 +336,7 @@ class YBus {
                 if (y_bus_element[element].element_type == YBusElementType::shunt) {
                     // shunt
                     entry_admittance += shunt_param[y_bus_element[element].idx];
-                }
-                else {
+                } else {
                     // branch
                     entry_admittance += branch_param[y_bus_element[element].idx]
                                             .value[static_cast<Idx>(y_bus_element[element].element_type)];

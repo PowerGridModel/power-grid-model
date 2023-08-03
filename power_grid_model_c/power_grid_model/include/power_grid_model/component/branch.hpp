@@ -52,8 +52,7 @@ class Branch : public Base {
         }
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }
@@ -177,8 +176,7 @@ class Branch : public Base {
                 // shunt value
                 if (cabs(y_shunt) < numerical_tolerance) {
                     branch_shunt = 0.0;
-                }
-                else {
+                } else {
                     // branch_shunt = y_shunt/2 + 1/(1/y_series + 2/y_shunt)
                     branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 }

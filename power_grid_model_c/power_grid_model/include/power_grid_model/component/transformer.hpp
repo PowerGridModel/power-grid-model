@@ -145,8 +145,7 @@ class Transformer : public Branch {
             double result_u2 = u2_;
             if (tap_side_ == BranchSide::from) {
                 result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            else {
+            } else {
                 result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
             return std::pair{result_u1, result_u2};
@@ -181,8 +180,7 @@ class Transformer : public Branch {
         y_shunt.real(p0_ / u2 / u2);
         if (y_shunt.real() > y_shunt_abs) {
             y_shunt.imag(0.0);
-        }
-        else {
+        } else {
             y_shunt.imag(-std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real()));
         }
         // y shunt

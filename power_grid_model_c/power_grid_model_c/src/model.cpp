@@ -35,8 +35,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     }
     try {
         return new PGM_PowerGridModel{system_frequency, dataset, 0};
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
         return nullptr;
@@ -53,8 +52,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_c
     }
     try {
         model->update_component<MainModel::permanent_update_t>(dataset);
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
     }
@@ -64,8 +62,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_c
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
     try {
         return new PGM_PowerGridModel{*model};
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
         return nullptr;
@@ -77,8 +74,7 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
                      PGM_ID const* ids, PGM_Idx* indexer) {
     try {
         model->get_indexer(component, ids, size, indexer);
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
     }
@@ -110,8 +106,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             // use indptr as sparse batch
             update_dataset[update_components[i]] =
                 ConstDataPointer(update_data[i], indptrs_per_component[i], n_scenarios);
-        }
-        else {
+        } else {
             // use dense batch
             update_dataset[update_components[i]] =
                 ConstDataPointer(update_data[i], n_scenarios, n_component_elements_per_scenario[i]);
@@ -125,8 +120,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             if (opt->symmetric) {
                 handle->batch_parameter = model->calculate_power_flow<true>(
                     opt->err_tol, opt->max_iter, calculation_method, output_dataset, update_dataset, opt->threading);
-            }
-            else {
+            } else {
                 handle->batch_parameter = model->calculate_power_flow<false>(
                     opt->err_tol, opt->max_iter, calculation_method, output_dataset, update_dataset, opt->threading);
             }
@@ -135,8 +129,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             if (opt->symmetric) {
                 handle->batch_parameter = model->calculate_state_estimation<true>(
                     opt->err_tol, opt->max_iter, calculation_method, output_dataset, update_dataset, opt->threading);
-            }
-            else {
+            } else {
                 handle->batch_parameter = model->calculate_state_estimation<false>(
                     opt->err_tol, opt->max_iter, calculation_method, output_dataset, update_dataset, opt->threading);
             }
@@ -150,18 +143,15 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         default:
             throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
         }
-    }
-    catch (BatchCalculationError& e) {
+    } catch (BatchCalculationError& e) {
         handle->err_code = PGM_batch_error;
         handle->err_msg = e.what();
         handle->failed_scenarios = e.failed_scenarios();
         handle->batch_errs = e.err_msgs();
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = e.what();
-    }
-    catch (...) {
+    } catch (...) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = "Unknown error!\n";
     }

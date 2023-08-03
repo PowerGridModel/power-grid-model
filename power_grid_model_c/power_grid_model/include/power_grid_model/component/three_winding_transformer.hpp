@@ -270,11 +270,9 @@ class ThreeWindingTransformer : public Branch3 {
             double result_u3 = u3_;
             if (tap_side_ == Branch3Side::side_1) {
                 result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            else if (tap_side_ == Branch3Side::side_2) {
+            } else if (tap_side_ == Branch3Side::side_2) {
                 result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            else {
+            } else {
                 result_u3 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
             return std::make_tuple(result_u1, result_u2, result_u3);

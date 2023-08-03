@@ -57,8 +57,7 @@ namespace {
     do {                                                                                                               \
         if constexpr (sym) {                                                                                           \
             CHECK(cabs((x) - (y)) < (tolerance));                                                                      \
-        }                                                                                                              \
-        else {                                                                                                         \
+        } else {                                                                                                       \
             CHECK((cabs((x) - (y)) < (tolerance)).all());                                                              \
         }                                                                                                              \
     } while (false)
@@ -229,8 +228,7 @@ TEST_CASE("Test math solver") {
             pf_input_z.s_injection[i] *= 3.0;
             output_ref_z.load_gen[i].i *= 3.0;
             output_ref_z.load_gen[i].s *= 3.0;
-        }
-        else {
+        } else {
             pf_input_z.s_injection[i] = 0.0;
             output_ref_z.load_gen[i] = {};
         }
@@ -309,8 +307,7 @@ TEST_CASE("Test math solver") {
             pf_input_asym_z.s_injection[i] *= 3.0;
             output_ref_asym_z.load_gen[i].i *= 3.0;
             output_ref_asym_z.load_gen[i].s *= 3.0;
-        }
-        else {
+        } else {
             pf_input_asym_z.s_injection[i] = ComplexValue<false>{0.0};
             output_ref_asym_z.load_gen[i] = {};
         }
@@ -613,8 +610,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
         DoubleComplex const u0 = cvref - if_abc * zref;
         DoubleComplex const u1 = u0 - if_abc * z0;
         return create_math_sc_output<true>(u0, u1, if_abc);
-    }
-    else {
+    } else {
         ComplexValue<false> if_abc{};
         switch (fault_type) {
         case three_phase: {

@@ -234,8 +234,7 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
 
     if constexpr (std::same_as<T, RealValue<false>>) {
         return "(" + std::to_string(value(0)) + ", " + std::to_string(value(1)) + ", " + std::to_string(value(2)) + ")";
-    }
-    else {
+    } else {
         return std::to_string(value);
     }
 }
@@ -271,8 +270,7 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
     ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
     if constexpr (sym) {
         return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
-    }
-    else {
+    } else {
         return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
     }
 }
@@ -343,8 +341,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                                  : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
                     if (match) {
                         CHECK(match);
-                    }
-                    else {
+                    } else {
                         std::string const case_str =
                             "batch: #" + std::to_string(batch) + ", Component: " + type_name + " #" +
                             std::to_string(obj) + ", attribute: " + attr.name +
@@ -476,8 +473,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     json const& j_atol = j.at("atol");
     if (j_atol.type() != json::value_t::object) {
         param.atol = {{"default", j_atol.get<double>()}};
-    }
-    else {
+    } else {
         j_atol.get_to(param.atol);
     }
     if (j.contains("fail")) {
@@ -500,8 +496,7 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
     std::vector<std::string> calculation_methods;
     if (j.at("calculation_method").type() == json::value_t::array) {
         j.at("calculation_method").get_to(calculation_methods);
-    }
-    else {
+    } else {
         calculation_methods.push_back(j.at("calculation_method").get<std::string>());
     }
     // loop sym and batch
@@ -539,8 +534,7 @@ ValidationCase create_validation_case(CaseParam const& param) {
     // output and update
     if (!param.is_batch) {
         validation_case.output = convert_json_single(read_json(param.case_dir / (output_type + ".json")), output_type);
-    }
-    else {
+    } else {
         validation_case.update_batch = convert_json_batch(read_json(param.case_dir / "update_batch.json"), "update");
         validation_case.output_batch =
             convert_json_batch(read_json(param.case_dir / (output_type + "_batch.json")), output_type);
@@ -594,8 +588,7 @@ void execute_test(CaseParam const& param, T&& func) {
 
     if (should_skip_test(param)) {
         std::cout << " [skipped]" << std::endl;
-    }
-    else {
+    } else {
         std::cout << std::endl;
         func();
     }
@@ -663,8 +656,7 @@ TEST_CASE("Validation test single") {
         SUBCASE(param.case_name.c_str()) {
             try {
                 validate_single_case(param);
-            }
-            catch (std::exception& e) {
+            } catch (std::exception& e) {
                 auto const msg = std::string("Unexpected exception with message: ") + e.what();
                 FAIL_CHECK(msg);
             }
@@ -678,8 +670,7 @@ TEST_CASE("Validation test batch") {
         SUBCASE(param.case_name.c_str()) {
             try {
                 validate_batch_case(param);
-            }
-            catch (std::exception& e) {
+            } catch (std::exception& e) {
                 auto const msg = std::string("Unexpected exception with message: ") + e.what();
                 FAIL_CHECK(msg);
             }

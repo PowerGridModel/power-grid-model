@@ -28,33 +28,27 @@ void add_component(MainModelState<ComponentContainer>& state, ForwardIterator be
         // construct based on type of component
         if constexpr (std::derived_from<Component, Node>) {
             state.components.template emplace<Component>(id, input);
-        }
-        else if constexpr (std::derived_from<Component, Branch>) {
+        } else if constexpr (std::derived_from<Component, Branch>) {
             double const u1 = state.components.template get_item<Node>(input.from_node).u_rated();
             double const u2 = state.components.template get_item<Node>(input.to_node).u_rated();
             // set system frequency for line
             if constexpr (std::same_as<Component, Line>) {
                 state.components.template emplace<Component>(id, input, system_frequency, u1, u2);
-            }
-            else {
+            } else {
                 state.components.template emplace<Component>(id, input, u1, u2);
             }
-        }
-        else if constexpr (std::derived_from<Component, Branch3>) {
+        } else if constexpr (std::derived_from<Component, Branch3>) {
             double const u1 = state.components.template get_item<Node>(input.node_1).u_rated();
             double const u2 = state.components.template get_item<Node>(input.node_2).u_rated();
             double const u3 = state.components.template get_item<Node>(input.node_3).u_rated();
             state.components.template emplace<Component>(id, input, u1, u2, u3);
-        }
-        else if constexpr (std::derived_from<Component, Appliance>) {
+        } else if constexpr (std::derived_from<Component, Appliance>) {
             double const u = state.components.template get_item<Node>(input.node).u_rated();
             state.components.template emplace<Component>(id, input, u);
-        }
-        else if constexpr (std::derived_from<Component, GenericVoltageSensor>) {
+        } else if constexpr (std::derived_from<Component, GenericVoltageSensor>) {
             double const u = state.components.template get_item<Node>(input.measured_object).u_rated();
             state.components.template emplace<Component>(id, input, u);
-        }
-        else if constexpr (std::derived_from<Component, GenericPowerSensor>) {
+        } else if constexpr (std::derived_from<Component, GenericPowerSensor>) {
             // it is not allowed to place a sensor at a link
             if (state.components.get_idx_by_id(input.measured_object).group ==
                 state.components.template get_type_idx<Link>()) {
@@ -95,8 +89,7 @@ void add_component(MainModelState<ComponentContainer>& state, ForwardIterator be
             }
 
             state.components.template emplace<Component>(id, input);
-        }
-        else if constexpr (std::derived_from<Component, Fault>) {
+        } else if constexpr (std::derived_from<Component, Fault>) {
             // check that fault object exists (currently, only faults at nodes are supported)
             state.components.template get_item<Node>(input.fault_object);
             state.components.template emplace<Component>(id, input);

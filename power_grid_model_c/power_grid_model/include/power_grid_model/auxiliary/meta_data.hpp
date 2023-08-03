@@ -92,11 +92,9 @@ struct MetaAttributeImpl {
         ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
         if constexpr (std::same_as<ValueType, double>) {
             return std::abs(y - x) < (std::abs(x) * rtol + atol);
-        }
-        else if constexpr (std::same_as<ValueType, RealValue<false>>) {
+        } else if constexpr (std::same_as<ValueType, RealValue<false>>) {
             return (abs(y - x) < (abs(x) * rtol + atol)).all();
-        }
-        else {
+        } else {
             return x == y;
         }
     }

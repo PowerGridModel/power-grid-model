@@ -47,8 +47,7 @@ class Vector : public Eigen3Vector<T> {
     explicit Vector(T const& x) {
         if constexpr (std::same_as<T, double>) {
             (*this) << x, x, x;
-        }
-        else {
+        } else {
             (*this) << x, (x * a2), (x * a);
         }
     }
@@ -120,8 +119,7 @@ template <bool sym = false>
 inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
     if constexpr (sym) {
         return x;
-    }
-    else {
+    } else {
         return ComplexValue<false>{std::piecewise_construct, x};
     }
 }
@@ -198,8 +196,7 @@ template <bool sym, class T>
 inline auto process_mean_val(const T& m) {
     if constexpr (sym) {
         return mean_val(m);
-    }
-    else {
+    } else {
         return m;
     }
 }
@@ -276,8 +273,7 @@ void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, d
         if (!is_nan(new_value)) {
             current_value = scalar * new_value;
         }
-    }
-    else {
+    } else {
         for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
                 current_value(i) = scalar * new_value(i);

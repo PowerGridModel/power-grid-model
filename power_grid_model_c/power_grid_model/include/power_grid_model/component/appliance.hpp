@@ -75,17 +75,14 @@ class Appliance : public Base {
         if constexpr (sym) {
             if (output.s < numerical_tolerance) {
                 output.pf = 0.0;
-            }
-            else {
+            } else {
                 output.pf = output.p / output.s;
             }
-        }
-        else {
+        } else {
             for (size_t j = 0; j != 3; ++j) {
                 if (output.s(j) < numerical_tolerance) {
                     output.pf(j) = 0.0;
-                }
-                else {
+                } else {
                     output.pf(j) = output.p(j) / output.s(j);
                 }
             }
@@ -107,8 +104,7 @@ class Appliance : public Base {
     ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
         if constexpr (sym) {
             return get_output<true>(sym_u2si(u));
-        }
-        else {
+        } else {
             return get_output<false>(asym_u2si(u));
         }
     }

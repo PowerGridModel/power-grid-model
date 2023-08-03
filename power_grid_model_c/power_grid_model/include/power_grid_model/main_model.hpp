@@ -194,8 +194,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (found_seq == sequence_idx_map.cend()) {
                 // if not found sequence, update using IDs
                 update[entry.index](*this, found->second, pos, {});
-            }
-            else {
+            } else {
                 // else update using pre-cached sequence number
                 update[entry.index](*this, found->second, pos, found_seq->second);
             }
@@ -470,8 +469,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
             calculation_fn(*this, {}, ignore_output);
-        }
-        catch (const SparseMatrixError&) {
+        } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         }
 
@@ -497,11 +495,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
                     calculation_fn(model, result_data, batch_number);
                     model.restore_components();
-                }
-                catch (std::exception const& ex) {
+                } catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
-                }
-                catch (...) {
+                } catch (...) {
                     exceptions[batch_number] = "unknown exception";
                 }
             }
@@ -516,8 +512,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
             // run all in sequential
             sub_batch(0, 1);
-        }
-        else {
+        } else {
             // create parallel threads
             Idx const n_thread = threading == 0 ? hardware_thread : threading;
             std::vector<std::thread> threads;
@@ -680,8 +675,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
             auto const math_output = calculate_short_circuit_<true>(voltage_scaling_factor_c, calculation_method);
             output_result(math_output, result_data, pos);
-        }
-        else {
+        } else {
             auto const math_output = calculate_short_circuit_<false>(voltage_scaling_factor_c, calculation_method);
             output_result(math_output, result_data, pos);
         }
@@ -767,8 +761,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool& is_parameter_up_to_date() {
         if constexpr (sym) {
             return is_sym_parameter_up_to_date_;
-        }
-        else {
+        } else {
             return is_asym_parameter_up_to_date_;
         }
     }
@@ -777,8 +770,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<MathSolver<sym>>& get_solvers() {
         if constexpr (sym) {
             return sym_solvers_;
-        }
-        else {
+        } else {
             return asym_solvers_;
         }
     }
@@ -974,11 +966,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     auto calculate_param(auto const& c, auto const&... extra_args) {
         if constexpr (requires { {c.calc_param(extra_args...)}; }) {
             return c.calc_param(extra_args...);
-        }
-        else if constexpr (requires { {c.template calc_param<sym>(extra_args...)}; }) {
+        } else if constexpr (requires { {c.template calc_param<sym>(extra_args...)}; }) {
             return c.template calc_param<sym>(extra_args...);
-        }
-        else {
+        } else {
             return;
         }
     }

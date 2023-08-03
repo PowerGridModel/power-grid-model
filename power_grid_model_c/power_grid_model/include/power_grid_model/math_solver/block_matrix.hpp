@@ -49,8 +49,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     static auto get_asym_col_idx() {
         if constexpr (is_tensor) {
             return Eigen::seqN(Eigen::fix<c * 3>, Eigen::fix<3>);
-        }
-        else {
+        } else {
             return Eigen::seqN(Eigen::fix<0>, Eigen::fix<1>);
         }
     }
@@ -63,8 +62,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     GetterType<r, c> get_val() {
         if constexpr (sym) {
             return (*this)(r, c);
-        }
-        else {
+        } else {
             return (*this)(get_asym_row_idx<r>(), get_asym_col_idx<c>());
         }
     }

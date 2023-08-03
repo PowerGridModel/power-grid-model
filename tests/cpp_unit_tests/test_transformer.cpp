@@ -269,8 +269,7 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -355,8 +354,7 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -463,8 +461,7 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -571,8 +568,7 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -681,8 +677,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
     double y_1_shunt_imag;
     if (y_1_shunt_real > y_1_shunt_abs) {
         y_1_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_1_shunt_imag = -std::sqrt(y_1_shunt_abs * y_1_shunt_abs - y_1_shunt_real * y_1_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_1_shunt_real + 1i * y_1_shunt_imag) / base_y_to;
@@ -757,8 +752,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     double y_1_shunt_imag;
     if (y_1_shunt_real > y_1_shunt_abs) {
         y_1_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_1_shunt_imag = -std::sqrt(y_1_shunt_abs * y_1_shunt_abs - y_1_shunt_real * y_1_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_1_shunt_real + 1i * y_1_shunt_imag) / base_y_to;

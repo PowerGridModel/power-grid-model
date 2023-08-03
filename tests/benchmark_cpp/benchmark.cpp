@@ -218,11 +218,9 @@ struct PowerGridBenchmark {
         title += sym ? "symmetric, " : "asymmetric, ";
         if (calculation_method == CalculationMethod::newton_raphson) {
             title += "Newton-Raphson method";
-        }
-        else if (calculation_method == CalculationMethod::linear) {
+        } else if (calculation_method == CalculationMethod::linear) {
             title += "Linear method";
-        }
-        else {
+        } else {
             title += "Iterative current method";
         }
         std::cout << "=============" << title << "=============\n";
@@ -236,8 +234,7 @@ struct PowerGridBenchmark {
             }
             if (sym) {
                 run_pf<true>(calculation_method, info);
-            }
-            else {
+            } else {
                 run_pf<false>(calculation_method, info);
             }
         }
@@ -249,8 +246,7 @@ struct PowerGridBenchmark {
             Timer const t_total(info, 0000, "Total");
             if (sym) {
                 run_pf<true>(calculation_method, info);
-            }
-            else {
+            } else {
                 run_pf<false>(calculation_method, info);
             }
         }

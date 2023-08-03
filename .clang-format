@@ -13,10 +13,3 @@ AlwaysBreakTemplateDeclarations: Yes
 SpacesBeforeTrailingComments: 2
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
-
-# Old settings
-
-BreakBeforeBraces: Custom
-BraceWrapping:
-  BeforeCatch: true
-  BeforeElse: true

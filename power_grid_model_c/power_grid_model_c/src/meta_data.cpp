@@ -21,8 +21,7 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
     static std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<Functor>>> const empty{};
     try {
         return func();
-    }
-    catch (std::out_of_range& e) {
+    } catch (std::out_of_range& e) {
         handle->err_code = PGM_regular_error;
         handle->err_msg = std::string(e.what()) + "\n You supplied wrong name and/or index!\n";
         return empty;

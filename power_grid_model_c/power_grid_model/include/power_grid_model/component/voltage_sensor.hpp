@@ -29,8 +29,7 @@ class GenericVoltageSensor : public Sensor {
         if constexpr (sym) {
             assert(u != 0.0 + 0.0i);
             return get_sym_output(u);
-        }
-        else {
+        } else {
             assert(u[0] != 0.0 + 0.0i && "Voltage should not be 0.0 + 0.0i V");
             assert(u[1] != 0.0 + 0.0i && "Voltage should not be 0.0 + 0.0i V");
             assert(u[2] != 0.0 + 0.0i && "Voltage should not be 0.0 + 0.0i V");
@@ -93,8 +92,7 @@ class VoltageSensor : public GenericVoltageSensor {
     bool has_angle() const {
         if constexpr (sym) {
             return !is_nan(u_angle_measured_);
-        }
-        else {
+        } else {
             return !u_angle_measured_.isNaN().any();
         }
     }
@@ -128,8 +126,7 @@ class VoltageSensor : public GenericVoltageSensor {
         bool const has_angle = !is_nan(imag(u1_measured));
         if (has_angle) {
             value.u_residual = (cabs(u1_measured) - cabs(u)) * u_rated_;
-        }
-        else {
+        } else {
             value.u_residual = (real(u1_measured) - cabs(u)) * u_rated_;
         }
         value.u_angle_residual = arg(u1_measured) - arg(u);

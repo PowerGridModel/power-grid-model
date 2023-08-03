@@ -26,8 +26,7 @@ void check_result(std::vector<T> const& x, std::vector<T> const& x_solver) {
     for (size_t i = 0; i < x.size(); i++) {
         if constexpr (scalar_value<T>) {
             CHECK(cabs(x[i] - x_solver[i]) < numerical_tolerance);
-        }
-        else {
+        } else {
             CHECK((cabs(x[i] - x_solver[i]) < numerical_tolerance).all());
         }
     }

@@ -50,8 +50,7 @@ class Source : public Appliance {
         // internal element_admittance
         if constexpr (sym) {
             return y1_ref_;
-        }
-        else {
+        } else {
             ComplexTensor<false> const sym_matrix = get_sym_matrix();
             ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
             ComplexTensor<false> y012;

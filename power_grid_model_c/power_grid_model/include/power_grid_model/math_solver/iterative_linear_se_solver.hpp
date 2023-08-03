@@ -280,16 +280,14 @@ class MeasuredValues {
                 Idx const end = topo.voltage_sensor_indptr[bus + 1];
                 if (begin == end) {
                     idx_voltage_[bus] = unmeasured;
-                }
-                else {
+                } else {
                     idx_voltage_[bus] = (Idx)main_value_.size();
                     // check if there is nan
                     if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
                                     [](auto const& x) { return is_nan(imag(x.value)); })) {
                         // only keep magnitude
                         main_value_.push_back(combine_measurements<true>(input.measured_voltage, begin, end));
-                    }
-                    else {
+                    } else {
                         // keep complex number
                         main_value_.push_back(combine_measurements(input.measured_voltage, begin, end));
                         ++n_angle_;
@@ -356,21 +354,18 @@ class MeasuredValues {
                     if (n_unmeasured > 0) {
                         // only direct injection
                         main_value_.push_back(direct_injection_measurement);
-                    }
-                    else if (std::isinf(direct_injection_measurement.variance) ||
-                             appliance_injection_measurement.variance == 0.0) {
+                    } else if (std::isinf(direct_injection_measurement.variance) ||
+                               appliance_injection_measurement.variance == 0.0) {
                         // only appliance injection if
                         //    there is no direct injection measurement,
                         //    or we have zero injection
                         main_value_.push_back(appliance_injection_measurement);
-                    }
-                    else {
+                    } else {
                         // both valid, we combine again
                         main_value_.push_back(combine_measurements(
                             {direct_injection_measurement, appliance_injection_measurement}, 0, 2));
                     }
-                }
-                else {
+                } else {
                     bus_injection_[bus].idx_bus_injection = unmeasured;
                 }
             }
@@ -429,13 +424,11 @@ class MeasuredValues {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
                 if (is_nan(imag(data[pos].value))) {
                     abs_value += real(data[pos].value);  // only keep real part
-                }
-                else {
+                } else {
                     abs_value += cabs(data[pos].value);  // get abs of the value
                 }
                 accumulated_value += abs_value / data[pos].variance;
-            }
-            else {
+            } else {
                 // accumulate value
                 accumulated_value += data[pos].value / data[pos].variance;
             }
@@ -500,16 +493,14 @@ class MeasuredValues {
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
-            }
-            else if (idx_load_gen_power_[load_gen] == unmeasured) {
+            } else if (idx_load_gen_power_[load_gen] == unmeasured) {
                 load_gen_flow[load_gen].s = s_residual_per_appliance;
             }
         }
         for (Idx source = source_begin; source != source_end; ++source) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value;
-            }
-            else if (idx_source_power_[source] == unmeasured) {
+            } else if (idx_source_power_[source] == unmeasured) {
                 source_flow[source].s = s_residual_per_appliance;
             }
         }
@@ -792,8 +783,7 @@ class IterativeLinearSESolver {
             }
             if constexpr (sym) {
                 return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
-            }
-            else {
+            } else {
                 return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
             }
         }();

@@ -864,8 +864,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
         if constexpr (settings::update_type::value) {
             CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
             CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        }
-        else {
+        } else {
             CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load * 2));
             CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
         }
@@ -886,8 +885,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
         if constexpr (settings::update_type::value) {
             CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
             CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        }
-        else {
+        } else {
             CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load * 2));
             CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
         }

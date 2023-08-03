@@ -39,8 +39,7 @@ class Shunt : public Appliance {
         }
         if constexpr (sym) {
             return y1_;
-        }
-        else {
+        } else {
             // abc matrix
             // 1/3 *
             // [[2y1+y0, y0-y1, y0-y1],

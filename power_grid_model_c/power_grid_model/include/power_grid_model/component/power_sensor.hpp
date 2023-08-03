@@ -28,8 +28,7 @@ class GenericPowerSensor : public Sensor {
     PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
         if constexpr (sym) {
             return get_sym_output(s);
-        }
-        else {
+        } else {
             return get_asym_output(s);
         }
     }

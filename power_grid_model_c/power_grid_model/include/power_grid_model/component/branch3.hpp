@@ -67,8 +67,7 @@ class Branch3 : public Base {
         }
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }
