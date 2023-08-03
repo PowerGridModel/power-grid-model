@@ -1182,4 +1182,4 @@ TEST_CASE("Test power sensor") {
         CHECK(result.q_residual[2] != r_nan[2]);
     }
 }
-}  // namespace power_grid_model
+} // namespace power_grid_model

@@ -9,16 +9,12 @@
 
 namespace {
 // custom deleter
-template <auto func>
-struct DeleterFunctor {
-    template <typename T>
-    void operator()(T* arg) const {
-        func(arg);
-    }
+template <auto func> struct DeleterFunctor {
+    template <typename T> void operator()(T* arg) const { func(arg); }
 };
 
 using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<&PGM_destroy_handle>>;
-}  // namespace
+} // namespace
 
 auto main() -> int {
     // get handle

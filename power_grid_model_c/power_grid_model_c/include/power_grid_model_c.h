@@ -29,4 +29,4 @@
 #include "power_grid_model_c/model.h"
 #include "power_grid_model_c/options.h"
 
-#endif  // POWER_GRID_MODEL_C_H
+#endif // POWER_GRID_MODEL_C_H

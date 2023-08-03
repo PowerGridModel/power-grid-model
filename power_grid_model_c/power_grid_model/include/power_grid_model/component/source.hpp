@@ -19,13 +19,11 @@
 namespace power_grid_model {
 
 class Source : public Appliance {
-   public:
+  public:
     using InputType = SourceInput;
     using UpdateType = SourceUpdate;
     static constexpr char const* name = "source";
-    ComponentType math_model_type() const final {
-        return ComponentType::source;
-    }
+    ComponentType math_model_type() const final { return ComponentType::source; }
 
     explicit Source(SourceInput const& source_input, double u)
         : Appliance{source_input, u},
@@ -39,7 +37,7 @@ class Source : public Appliance {
 
     // calculate y1 y0 ref
     void calculate_y_ref(double sk, double rx_ratio, double z01_ratio) {
-        double const z_abs = base_power_3p / sk;  // s_pu = s/base_s, z = u^2/s = 1/s = base_s/s_pu
+        double const z_abs = base_power_3p / sk; // s_pu = s/base_s, z = u^2/s = 1/s = base_s/s_pu
         double const x1 = z_abs / sqrt(rx_ratio * rx_ratio + 1.0);
         double const r1 = x1 * rx_ratio;
         y1_ref_ = 1.0 / DoubleComplex{r1, x1};
@@ -47,13 +45,11 @@ class Source : public Appliance {
     }
 
     // getter for calculation param, y_ref
-    template <bool sym>
-    ComplexTensor<sym> math_param() const {
+    template <bool sym> ComplexTensor<sym> math_param() const {
         // internal element_admittance
         if constexpr (sym) {
             return y1_ref_;
-        }
-        else {
+        } else {
             ComplexTensor<false> const sym_matrix = get_sym_matrix();
             ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
             ComplexTensor<false> y012;
@@ -77,10 +73,7 @@ class Source : public Appliance {
         return changed;
     }
     // getter for u_ref for calc_param
-    template <bool sym>
-    DoubleComplex calc_param() const {
-        return u_ref_ * std::exp(1.0i * u_ref_angle_);
-    }
+    template <bool sym> DoubleComplex calc_param() const { return u_ref_ * std::exp(1.0i * u_ref_angle_); }
 
     // update for source
     UpdateChange update(SourceUpdate const& update) {
@@ -92,15 +85,14 @@ class Source : public Appliance {
         return {topo_changed, param_changed || topo_changed};
     }
 
-   private:
+  private:
     double u_ref_;
     double u_ref_angle_;
     // positive and zero sequence ref
     DoubleComplex y1_ref_{};
     DoubleComplex y0_ref_{};
 
-    template <bool sym_calc>
-    ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+    template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
         ComplexTensor<sym_calc> const y_ref = math_param<sym_calc>();
@@ -109,18 +101,12 @@ class Source : public Appliance {
         return appliance_math_output;
     }
 
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final {
-        return u2si<true>(u);
-    }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final {
-        return u2si<false>(u);
-    }
+    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
+    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
 
-    double injection_direction() const final {
-        return 1.0;
-    }
+    double injection_direction() const final { return 1.0; }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

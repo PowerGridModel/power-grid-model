@@ -71,9 +71,8 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // solver
-template <bool sym>
-class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
-   public:
+template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
+  public:
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
@@ -81,8 +80,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
           rhs_u_(y_bus.size()),
           y_data_ptr_(nullptr),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {
-    }
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const&) {
@@ -142,21 +140,20 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 switch (type) {
                     using enum LoadGenType;
 
-                    case const_pq:
-                        // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
-                        rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
-                        break;
-                    case const_y:
-                        // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
-                        rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
-                        break;
-                    case const_i:
-                        // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
-                        rhs_u_[bus_number] +=
-                            conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
-                        break;
-                    default:
-                        throw MissingCaseForEnumError("Injection current calculation", type);
+                case const_pq:
+                    // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
+                    rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
+                    break;
+                case const_y:
+                    // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
+                    rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
+                    break;
+                case const_i:
+                    // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
+                    rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
+                    break;
+                default:
+                    throw MissingCaseForEnumError("Injection current calculation", type);
                 }
             }
             // loop sources: j
@@ -171,9 +168,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
 
     // Solve the linear equations I_inj = YU
     // inplace
-    void solve_matrix() {
-        sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_);
-    }
+    void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_); }
 
     // Find maximum deviation in voltage among all buses
     double iterate_unknown(ComplexValueVector<sym>& u) {
@@ -190,7 +185,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         return max_dev;
     }
 
-   private:
+  private:
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
     ComplexTensorVector<sym> const* y_data_ptr_;
@@ -202,11 +197,10 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
 template class IterativeCurrentPFSolver<true>;
 template class IterativeCurrentPFSolver<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using IterativeCurrentPFSolver = math_model_impl::IterativeCurrentPFSolver<sym>;
+template <bool sym> using IterativeCurrentPFSolver = math_model_impl::IterativeCurrentPFSolver<sym>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

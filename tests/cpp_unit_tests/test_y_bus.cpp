@@ -39,17 +39,17 @@ TEST_CASE("Test y bus") {
     MathModelParam<true> param_sym;
     topo.phase_shift.resize(4, 0.0);
     topo.branch_bus_idx = {
-        {1, 0},  // branch 0 from node 1 to 0
-        {1, 2},  // branch 1 from node 1 to 2
-        {2, 3},  // branch 2 from node 2 to 3
-        {3, 2},  // branch 3 from node 3 to 2
-        {0, 1},  // branch 4 from node 0 to 1
-        {2, -1}  // branch 5 from node 2 to "not connected"
+        {1, 0}, // branch 0 from node 1 to 0
+        {1, 2}, // branch 1 from node 1 to 2
+        {2, 3}, // branch 2 from node 2 to 3
+        {3, 2}, // branch 3 from node 3 to 2
+        {0, 1}, // branch 4 from node 0 to 1
+        {2, -1} // branch 5 from node 2 to "not connected"
     };
     param_sym.branch_param = {// ff, ft, tf, tt
                               {1.0i, 2.0i, 3.0i, 4.0i}, {5.0, 6.0, 7.0, 8.0},     {9.0i, 10.0i, 11.0i, 12.0i},
                               {13.0, 14.0, 15.0, 16.0}, {17.0, 18.0, 19.0, 20.0}, {1000i, 0.0, 0.0, 0.0}};
-    topo.shunt_bus_indptr = {0, 1, 1, 1, 2};  // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
+    topo.shunt_bus_indptr = {0, 1, 1, 1, 2}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
 
     // get shared ptr
@@ -67,27 +67,27 @@ TEST_CASE("Test y bus") {
      */
     IdxVector col_indices = {// Culumn col_indices for each non-zero element in Y bus.
                              0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
-    Idx nnz = 10;  // Number of non-zero elements in Y bus
+    Idx nnz = 10; // Number of non-zero elements in Y bus
     IdxVector bus_entry = {0, 3, 6, 9};
     IdxVector lu_transpose_entry = {// Flip the id's of non-diagonal elements
                                     0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
-    IdxVector y_bus_entry_indptr = {0,  3,       // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
-                                    5,  7,  10,  // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
-                                    11, 12, 16,  // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
-                                    18, 20,      // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
+    IdxVector y_bus_entry_indptr = {0,  3,      // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
+                                    5,  7,  10, // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
+                                    11, 12, 16, // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
+                                    18, 20,     // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
                                     23};
     IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ComplexTensorVector<true> admittance_sym = {
-        17.0 + 104.0i,   // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
-        18.0 + 3.0i,     // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
-        19.0 + 2.0i,     // 1, 0 -> {0, 1}tf + {1, 0}ft = 19.0 + 2.0i
-        25.0 + 1.0i,     // 1, 1 -> {0, 1}tt + {1, 0}ff + {1,2}ff = 20.0 + 1.0i + 5.0
-        6.0,             // 1, 2 -> {1,2}ft = 6.0
-        7.0,             // 2, 1 -> {1,2}tf = 7.0
-        24.0 + 1009.0i,  // 2, 2 -> {1,2}tt + {2,3}ff + {3, 2}tt + {2,-1}ff = 8.0 + 9.0i + 16.0 + 1000.0i = 24.0 + 1009i
-        15.0 + 10.0i,    // 2, 3 -> {2,3}ft + {3,2}tf = 10.0i + 15.0
-        14.0 + 11.0i,    // 3, 2 -> {2,3}tf + {3,2}ft = 11.0i + 14.0
-        13.0 + 212.0i    // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1) = 12.0i + 13.0 + 200.0i
+        17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
+        18.0 + 3.0i,    // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
+        19.0 + 2.0i,    // 1, 0 -> {0, 1}tf + {1, 0}ft = 19.0 + 2.0i
+        25.0 + 1.0i,    // 1, 1 -> {0, 1}tt + {1, 0}ff + {1,2}ff = 20.0 + 1.0i + 5.0
+        6.0,            // 1, 2 -> {1,2}ft = 6.0
+        7.0,            // 2, 1 -> {1,2}tf = 7.0
+        24.0 + 1009.0i, // 2, 2 -> {1,2}tt + {2,3}ff + {3, 2}tt + {2,-1}ff = 8.0 + 9.0i + 16.0 + 1000.0i = 24.0 + 1009i
+        15.0 + 10.0i,   // 2, 3 -> {2,3}ft + {3,2}tf = 10.0i + 15.0
+        14.0 + 11.0i,   // 3, 2 -> {2,3}tf + {3,2}ft = 11.0i + 14.0
+        13.0 + 212.0i   // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1) = 12.0i + 13.0 + 200.0i
     };
 
     // asym input
@@ -225,8 +225,8 @@ TEST_CASE("Test fill-in y bus") {
     MathModelTopology topo{};
     topo.phase_shift.resize(3, 0.0);
     topo.branch_bus_idx = {
-        {1, 0},  // branch 0 from node 1 to 0
-        {0, 2},  // branch 1 from node 0 to 2
+        {1, 0}, // branch 0 from node 1 to 0
+        {0, 2}, // branch 1 from node 0 to 2
     };
     topo.shunt_bus_indptr = {0, 0, 0, 0};
     topo.fill_in = {{1, 2}};
@@ -235,8 +235,8 @@ TEST_CASE("Test fill-in y bus") {
     IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
     IdxVector bus_entry = {0, 4, 6};
     IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
-    IdxVector y_bus_entry_indptr = {0, 2,               // 0, 1 belong to element [0,0] in Ybus
-                                    3, 4, 5, 6, 7, 8};  // everything else has only one entry
+    IdxVector y_bus_entry_indptr = {0, 2,              // 0, 1 belong to element [0,0] in Ybus
+                                    3, 4, 5, 6, 7, 8}; // everything else has only one entry
     // lu matrix
     IdxVector row_indptr_lu = {0, 3, 6, 9};
     IdxVector col_indices_lu = {0, 1, 2, 0, 1, 2, 0, 1, 2};
@@ -262,4 +262,4 @@ TODO:
 - test counting_sort_element()
 */
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

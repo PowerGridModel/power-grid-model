@@ -36,7 +36,7 @@ json read_json(std::filesystem::path const& json_file) {
 }
 
 class UnsupportedValidationCase : public PowerGridError {
-   public:
+  public:
     UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
         using namespace std::string_literals;
 
@@ -47,14 +47,10 @@ class UnsupportedValidationCase : public PowerGridError {
 
 // memory buffer
 struct BufferDeleter {
-    void operator()(RawDataPtr ptr) {
-        std::free(ptr);
-    }
+    void operator()(RawDataPtr ptr) { std::free(ptr); }
 };
 using BufferPtr = std::unique_ptr<void, BufferDeleter>;
-BufferPtr create_buffer(size_t size, size_t length) {
-    return BufferPtr(std::malloc(size * length));
-}
+BufferPtr create_buffer(size_t size, size_t length) { return BufferPtr(std::malloc(size * length)); }
 struct Buffer {
     BufferPtr ptr;
     IdxVector indptr;
@@ -70,28 +66,28 @@ void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& met
         MetaAttribute const& attr = meta.get_attribute(it.key());
         using enum CType;
         switch (attr.ctype) {
-            case c_int8: {
-                int8_t const value = it.value().get<int8_t>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            case c_int32: {
-                int32_t const value = it.value().get<int32_t>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            case c_double: {
-                double const value = it.value().get<double>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            case c_double3: {
-                std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
-                attr.set_value(ptr, &value, position);
-                break;
-            }
-            default:
-                throw MissingCaseForEnumError("CType for attribute", attr.ctype);
+        case c_int8: {
+            int8_t const value = it.value().get<int8_t>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        case c_int32: {
+            int32_t const value = it.value().get<int32_t>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        case c_double: {
+            double const value = it.value().get<double>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        case c_double3: {
+            std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
+            attr.set_value(ptr, &value, position);
+            break;
+        }
+        default:
+            throw MissingCaseForEnumError("CType for attribute", attr.ctype);
         }
     }
 }
@@ -238,8 +234,7 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
 
     if constexpr (std::same_as<T, RealValue<false>>) {
         return "(" + std::to_string(value(0)) + ", " + std::to_string(value(1)) + ", " + std::to_string(value(2)) + ")";
-    }
-    else {
+    } else {
         return std::to_string(value);
     }
 }
@@ -249,16 +244,16 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
     using namespace std::string_literals;
 
     switch (attr.ctype) {
-        case c_int32:
-            return get_as_string<int32_t>(raw_data_ptr, attr, obj);
-        case c_int8:
-            return get_as_string<int8_t>(raw_data_ptr, attr, obj);
-        case c_double:
-            return get_as_string<double>(raw_data_ptr, attr, obj);
-        case c_double3:
-            return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
-        default:
-            return "<unknown value type>"s;
+    case c_int32:
+        return get_as_string<int32_t>(raw_data_ptr, attr, obj);
+    case c_int8:
+        return get_as_string<int8_t>(raw_data_ptr, attr, obj);
+    case c_double:
+        return get_as_string<double>(raw_data_ptr, attr, obj);
+    case c_double3:
+        return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
+    default:
+        return "<unknown value type>"s;
     }
 }
 
@@ -275,8 +270,7 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
     ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
     if constexpr (sym) {
         return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
-    }
-    else {
+    } else {
         return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
     }
 }
@@ -348,8 +342,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                                  : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
                     if (match) {
                         CHECK(match);
-                    }
-                    else {
+                    } else {
                         std::string const case_str =
                             "batch: #" + std::to_string(batch) + ", Component: " + type_name + " #" +
                             std::to_string(obj) + ", attribute: " + attr.name +
@@ -436,9 +429,7 @@ struct CaseParam {
 
     static std::string replace_backslash(std::string const& str) {
         std::string str_out{str};
-        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) {
-            return c == '\\' ? '/' : c;
-        });
+        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) { return c == '\\' ? '/' : c; });
         return str_out;
     }
 };
@@ -483,8 +474,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     json const& j_atol = j.at("atol");
     if (j_atol.type() != json::value_t::object) {
         param.atol = {{"default", j_atol.get<double>()}};
-    }
-    else {
+    } else {
         j_atol.get_to(param.atol);
     }
     if (j.contains("fail")) {
@@ -507,15 +497,14 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
     std::vector<std::string> calculation_methods;
     if (j.at("calculation_method").type() == json::value_t::array) {
         j.at("calculation_method").get_to(calculation_methods);
-    }
-    else {
+    } else {
         calculation_methods.push_back(j.at("calculation_method").get<std::string>());
     }
     // loop sym and batch
     for (bool const sym : {true, false}) {
         for (auto const& calculation_method : calculation_methods) {
             if (calculation_method == "iec60909"s && sym) {
-                continue;  // only asym short circuit calculations are supported
+                continue; // only asym short circuit calculations are supported
             }
 
             CHECK_NOTHROW([&]() {
@@ -546,8 +535,7 @@ ValidationCase create_validation_case(CaseParam const& param) {
     // output and update
     if (!param.is_batch) {
         validation_case.output = convert_json_single(read_json(param.case_dir / (output_type + ".json")), output_type);
-    }
-    else {
+    } else {
         validation_case.update_batch = convert_json_batch(read_json(param.case_dir / "update_batch.json"), "update");
         validation_case.output_batch =
             convert_json_batch(read_json(param.case_dir / (output_type + "_batch.json")), output_type);
@@ -584,7 +572,7 @@ std::vector<CaseParam> const& get_all_batch_cases() {
     return all_cases;
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Check existence of validation data path") {
     REQUIRE(std::filesystem::exists(data_dir));
@@ -592,9 +580,7 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-constexpr bool should_skip_test(CaseParam const& param) {
-    return param.fail;
-}
+constexpr bool should_skip_test(CaseParam const& param) { return param.fail; }
 
 template <typename T>
     requires std::invocable<std::remove_cvref_t<T>>
@@ -603,8 +589,7 @@ void execute_test(CaseParam const& param, T&& func) {
 
     if (should_skip_test(param)) {
         std::cout << " [skipped]" << std::endl;
-    }
-    else {
+    } else {
         std::cout << std::endl;
         func();
     }
@@ -664,7 +649,7 @@ void validate_batch_case(CaseParam const& param) {
     });
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
@@ -672,8 +657,7 @@ TEST_CASE("Validation test single") {
         SUBCASE(param.case_name.c_str()) {
             try {
                 validate_single_case(param);
-            }
-            catch (std::exception& e) {
+            } catch (std::exception& e) {
                 auto const msg = std::string("Unexpected exception with message: ") + e.what();
                 FAIL_CHECK(msg);
             }
@@ -687,8 +671,7 @@ TEST_CASE("Validation test batch") {
         SUBCASE(param.case_name.c_str()) {
             try {
                 validate_batch_case(param);
-            }
-            catch (std::exception& e) {
+            } catch (std::exception& e) {
                 auto const msg = std::string("Unexpected exception with message: ") + e.what();
                 FAIL_CHECK(msg);
             }
@@ -696,5 +679,5 @@ TEST_CASE("Validation test batch") {
     }
 }
 
-}  // namespace meta_data
-}  // namespace power_grid_model
+} // namespace meta_data
+} // namespace power_grid_model

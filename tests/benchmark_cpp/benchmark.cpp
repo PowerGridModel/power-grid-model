@@ -19,8 +19,7 @@ constexpr Idx nodes_per_feeder = 100;
 constexpr Idx ring_node_pos = 2;
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{50.0} {
-    }
+    PowerGridBenchmark() : main_model{50.0} {}
 
     void generate_network(Idx n_nodes, bool meshed) {
         sym_load_input.clear();
@@ -190,8 +189,7 @@ struct PowerGridBenchmark {
         main_model.set_construction_complete();
     }
 
-    template <bool sym>
-    void run_pf(CalculationMethod calculation_method, CalculationInfo& info) {
+    template <bool sym> void run_pf(CalculationMethod calculation_method, CalculationInfo& info) {
         std::vector<NodeOutput<sym>> node(node_input.size());
         std::vector<BranchOutput<sym>> branch(line_input.size() + transformer_input.size() + link_input.size());
         std::vector<ApplianceOutput<sym>> appliance(source_input.size() + sym_load_input.size() +
@@ -206,9 +204,8 @@ struct PowerGridBenchmark {
         CalculationInfo info_extra = main_model.calculation_info();
         info.merge(info_extra);
         std::cout << "Number of nodes: " << node.size() << '\n';
-        auto const [min_l, max_l] = std::minmax_element(branch.cbegin(), branch.cend(), [](auto x, auto y) {
-            return x.loading < y.loading;
-        });
+        auto const [min_l, max_l] =
+            std::minmax_element(branch.cbegin(), branch.cend(), [](auto x, auto y) { return x.loading < y.loading; });
         std::cout << "Min loading: " << min_l->loading << ", max loading: " << max_l->loading << '\n';
     }
 
@@ -220,11 +217,9 @@ struct PowerGridBenchmark {
         title += sym ? "symmetric, " : "asymmetric, ";
         if (calculation_method == CalculationMethod::newton_raphson) {
             title += "Newton-Raphson method";
-        }
-        else if (calculation_method == CalculationMethod::linear) {
+        } else if (calculation_method == CalculationMethod::linear) {
             title += "Linear method";
-        }
-        else {
+        } else {
             title += "Iterative current method";
         }
         std::cout << "=============" << title << "=============\n";
@@ -238,8 +233,7 @@ struct PowerGridBenchmark {
             }
             if (sym) {
                 run_pf<true>(calculation_method, info);
-            }
-            else {
+            } else {
                 run_pf<false>(calculation_method, info);
             }
         }
@@ -251,8 +245,7 @@ struct PowerGridBenchmark {
             Timer const t_total(info, 0000, "Total");
             if (sym) {
                 run_pf<true>(calculation_method, info);
-            }
-            else {
+            } else {
                 run_pf<false>(calculation_method, info);
             }
         }
@@ -277,7 +270,7 @@ struct PowerGridBenchmark {
     std::vector<LinkInput> link_input;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 int main(int, char**) {
 #ifndef NDEBUG

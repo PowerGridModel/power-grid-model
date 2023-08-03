@@ -18,9 +18,9 @@ namespace power_grid_model::main_core {
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
 template <std::derived_from<Base> Component, class CacheType, class ComponentContainer,
           std::forward_iterator ForwardIterator>
-requires model_component_state<MainModelState, ComponentContainer, Component> UpdateChange
-update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
-                 std::vector<Idx2D> const& sequence_idx = {}) {
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
+                              std::vector<Idx2D> const& sequence_idx = {}) {
     bool const has_sequence_id = !sequence_idx.empty();
     Idx seq = 0;
 
@@ -46,6 +46,6 @@ update_component(MainModelState<ComponentContainer>& state, ForwardIterator begi
     return changed;
 }
 
-}  // namespace power_grid_model::main_core
+} // namespace power_grid_model::main_core
 
 #endif

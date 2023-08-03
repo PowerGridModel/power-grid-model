@@ -52,9 +52,7 @@ TEST_CASE("C API Meta Data") {
             }
         }
 
-        SUBCASE("Endian") {
-            CHECK(static_cast<bool>(PGM_is_little_endian(hl)) == is_little_endian());
-        }
+        SUBCASE("Endian") { CHECK(static_cast<bool>(PGM_is_little_endian(hl)) == is_little_endian()); }
 
         SUBCASE("Check error handling for unknown name") {
             CHECK(PGM_meta_get_attribute_by_name(hl, "No_dataset", "no_name", "no attribute") == nullptr);
@@ -68,4 +66,4 @@ TEST_CASE("C API Meta Data") {
     }
 }
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data

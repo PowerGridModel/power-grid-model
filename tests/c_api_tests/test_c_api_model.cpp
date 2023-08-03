@@ -35,7 +35,7 @@ namespace power_grid_model {
 namespace {
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
-}  // namespace
+} // namespace
 
 TEST_CASE("C API Model") {
     // get handle
@@ -94,8 +94,8 @@ TEST_CASE("C API Model") {
     PGM_PowerGridModel* model = unique_model.get();
 
     SUBCASE("Simple power flow") {
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -107,8 +107,8 @@ TEST_CASE("C API Model") {
     SUBCASE("Simple update") {
         PGM_update_model(hl, model, 2, update_components.data(), update_component_sizes.data(), update_data.data());
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -121,8 +121,8 @@ TEST_CASE("C API Model") {
         ModelPtr const model_copy{PGM_copy_model(hl, model)};
         CHECK(PGM_error_code(hl) == PGM_no_error);
         PGM_calculate(hl, model_copy.get(), opt, 1, output_components.data(),
-                      sym_output_data.data(),                     // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);  // batch parameters
+                      sym_output_data.data(),                    // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr); // batch parameters
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -144,10 +144,10 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Batch power flow") {
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
                       2, 2, update_components.data(), n_component_elements_per_scenario.data(),
                       indptrs_per_component.data(),
-                      update_data.data());  // batch parameters
+                      update_data.data()); // batch parameters
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -166,7 +166,7 @@ TEST_CASE("C API Model") {
         CHECK(u_pu[1] == doctest::Approx(0.7));
         std::array<double, 4> u{};
         PGM_buffer_get_value(hl, PGM_def_sym_output_node_u, sym_node_outputs.data(), u.data(), 0, 2,
-                             2 * sizeof(double));  // stride of two double
+                             2 * sizeof(double)); // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
     }
@@ -195,16 +195,16 @@ TEST_CASE("C API Model") {
         PGM_set_err_tol(hl, opt, 1e-100);
         PGM_set_symmetric(hl, opt, 0);
         PGM_set_threading(hl, opt, 1);
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_error_message(hl)};
         CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
         // wrong method
         PGM_set_calculation_type(hl, opt, PGM_state_estimation);
         PGM_set_calculation_method(hl, opt, PGM_iterative_current);
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                            // batch parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
+                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         err_msg = PGM_error_message(hl);
         CHECK(err_msg.find("The calculation method is invalid for this calculation!") != std::string::npos);
@@ -213,10 +213,10 @@ TEST_CASE("C API Model") {
     SUBCASE("Batch calculation error") {
         // wrong id
         load_updates[1].id = 5;
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(),  // basic parameters
+        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
                       2, 2, update_components.data(), n_component_elements_per_scenario.data(),
                       indptrs_per_component.data(),
-                      update_data.data());  // batch parameters
+                      update_data.data()); // batch parameters
         // failed in batch 1
         CHECK(PGM_error_code(hl) == PGM_batch_error);
         CHECK(PGM_n_failed_scenarios(hl) == 1);
@@ -232,4 +232,4 @@ TEST_CASE("C API Model") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

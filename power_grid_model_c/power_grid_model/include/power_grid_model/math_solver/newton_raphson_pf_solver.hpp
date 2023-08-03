@@ -163,33 +163,22 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // class for phasor in polar coordinate and/or complex power
-template <bool sym>
-struct PolarPhasor : public Block<double, sym, false, 2> {
-    template <int r, int c>
-    using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
+template <bool sym> struct PolarPhasor : public Block<double, sym, false, 2> {
+    template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, false, 2>::Block;
     using Block<double, sym, false, 2>::operator=;
 
-    GetterType<0, 0> theta() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> v() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> theta() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> v() { return this->template get_val<1, 0>(); }
 
-    GetterType<0, 0> p() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> q() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> p() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
 };
 
 // class for complex power
-template <bool sym>
-using ComplexPower = PolarPhasor<sym>;
+template <bool sym> using ComplexPower = PolarPhasor<sym>;
 
 // class of pf block
 // block of incomplete power flow jacobian
@@ -198,42 +187,30 @@ using ComplexPower = PolarPhasor<sym>;
 // [M = dQ/dTheta = -N, L = V * dQ/dV = H] ]
 // Hij = Gij .* sij - Bij .* cij = L
 // Nij = Gij .* cij + Bij .* sij = -M
-template <bool sym>
-class PFJacBlock : public Block<double, sym, true, 2> {
-   public:
-    template <int r, int c>
-    using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
+template <bool sym> class PFJacBlock : public Block<double, sym, true, 2> {
+  public:
+    template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, true, 2>::Block;
     using Block<double, sym, true, 2>::operator=;
 
-    GetterType<0, 0> h() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<0, 1> n() {
-        return this->template get_val<0, 1>();
-    }
-    GetterType<1, 0> m() {
-        return this->template get_val<1, 0>();
-    }
-    GetterType<1, 1> l() {
-        return this->template get_val<1, 1>();
-    }
+    GetterType<0, 0> h() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> n() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> m() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> l() { return this->template get_val<1, 1>(); }
 };
 
 // solver
-template <bool sym>
-class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
-   public:
+template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
+  public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
           data_jac_(y_bus.nnz_lu()),
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {
-    }
+          perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> const& output) {
@@ -305,30 +282,30 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
                 LoadGenType const type = load_gen_type[j];
                 // modify jacobian and del_pq based on type
                 switch (type) {
-                    case LoadGenType::const_pq:
-                        // PQ_sp = PQ_base
-                        del_x_pq_[i].p() += real(input.s_injection[j]);
-                        del_x_pq_[i].q() += imag(input.s_injection[j]);
-                        // -dPQ_sp/dV * V = 0
-                        break;
-                    case LoadGenType::const_y:
-                        // PQ_sp = PQ_base * V^2
-                        del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v() * x_[i].v();
-                        del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v() * x_[i].v();
-                        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
-                        add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
-                        add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
-                        break;
-                    case LoadGenType::const_i:
-                        // PQ_sp = PQ_base * V
-                        del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v();
-                        del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v();
-                        // -dPQ_sp/dV * V = -PQ_base * V
-                        add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * x_[i].v());
-                        add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * x_[i].v());
-                        break;
-                    default:
-                        throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
+                case LoadGenType::const_pq:
+                    // PQ_sp = PQ_base
+                    del_x_pq_[i].p() += real(input.s_injection[j]);
+                    del_x_pq_[i].q() += imag(input.s_injection[j]);
+                    // -dPQ_sp/dV * V = 0
+                    break;
+                case LoadGenType::const_y:
+                    // PQ_sp = PQ_base * V^2
+                    del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v() * x_[i].v();
+                    del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v() * x_[i].v();
+                    // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
+                    add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
+                    add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
+                    break;
+                case LoadGenType::const_i:
+                    // PQ_sp = PQ_base * V
+                    del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v();
+                    del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v();
+                    // -dPQ_sp/dV * V = -PQ_base * V
+                    add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * x_[i].v());
+                    add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * x_[i].v());
+                    break;
+                default:
+                    throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
                 }
             }
 
@@ -363,9 +340,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     }
 
     // Solve the linear Equations
-    void solve_matrix() {
-        sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
-    }
+    void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
 
     // Get maximum deviation among all bus voltages
     double iterate_unknown(ComplexValueVector<sym>& u) {
@@ -388,11 +363,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         return max_dev;
     }
 
-   private:
+  private:
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
     // calculation data
-    std::vector<PolarPhasor<sym>> x_;  // unknown
+    std::vector<PolarPhasor<sym>> x_; // unknown
     // this stores in different steps
     // 1. negative power injection: - p/q_calculated
     // 2. power unbalance: p/q_specified - p/q_calculated
@@ -436,11 +411,10 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
 template class NewtonRaphsonPFSolver<true>;
 template class NewtonRaphsonPFSolver<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
+template <bool sym> using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

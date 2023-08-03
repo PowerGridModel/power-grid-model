@@ -18,16 +18,13 @@
 namespace power_grid_model {
 
 class Fault final : public Base {
-   public:
+  public:
     using InputType = FaultInput;
     using UpdateType = FaultUpdate;
-    template <bool sym>
-    using OutputType = FaultOutput;
+    template <bool sym> using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
-    ComponentType math_model_type() const final {
-        return ComponentType::fault;
-    }
+    ComponentType math_model_type() const final { return ComponentType::fault; }
 
     explicit Fault(FaultInput const& fault_input)
         : Base{fault_input},
@@ -61,17 +58,13 @@ class Fault final : public Base {
         return param;
     }
 
-    FaultOutput get_null_output() const {
-        return get_null_output_impl<FaultOutput>();
-    }
+    FaultOutput get_null_output() const { return get_null_output_impl<FaultOutput>(); }
     FaultOutput get_output() const {
         // During power flow and state estimation the fault object will have an empty output
         return get_null_output();
     }
 
-    FaultShortCircuitOutput get_null_sc_output() const {
-        return get_null_output_impl<FaultShortCircuitOutput>();
-    }
+    FaultShortCircuitOutput get_null_sc_output() const { return get_null_output_impl<FaultShortCircuitOutput>(); }
     FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
@@ -115,16 +108,12 @@ class Fault final : public Base {
             x_f_ = update.x_f;
         }
         check_sanity();
-        return {false, false};  // topology and parameters do not change
+        return {false, false}; // topology and parameters do not change
     }
 
-    constexpr bool energized(bool is_connected_to_source) const final {
-        return is_connected_to_source;
-    }
+    constexpr bool energized(bool is_connected_to_source) const final { return is_connected_to_source; }
 
-    constexpr bool status() const {
-        return status_;
-    }
+    constexpr bool status() const { return status_; }
 
     // setter
     constexpr bool set_status(IntS new_status) {
@@ -158,27 +147,25 @@ class Fault final : public Base {
                 switch (fault_type) {
                     using enum FaultPhase;
 
-                    case three_phase:
-                        return abc;
-                    case single_phase_to_ground:
-                        return a;
-                    case two_phase:
-                        [[fallthrough]];
-                    case two_phase_to_ground:
-                        return bc;
-                    default:
-                        throw InvalidShortCircuitType(fault_type);
+                case three_phase:
+                    return abc;
+                case single_phase_to_ground:
+                    return a;
+                case two_phase:
+                    [[fallthrough]];
+                case two_phase_to_ground:
+                    return bc;
+                default:
+                    throw InvalidShortCircuitType(fault_type);
                 }
             }(fault_type_);
             return default_phase;
         }
         return fault_phase_;
     }
-    constexpr ID get_fault_object() const {
-        return fault_object_;
-    }
+    constexpr ID get_fault_object() const { return fault_object_; }
 
-   private:
+  private:
     // short circuit parameters
     bool status_;
     FaultType fault_type_;
@@ -187,8 +174,7 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    template <std::derived_from<BaseOutput> T>
-    T get_null_output_impl() const {
+    template <std::derived_from<BaseOutput> T> T get_null_output_impl() const {
         T output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -203,22 +189,22 @@ class Fault final : public Base {
             }
         };
         switch (fault_type_) {
-            case FaultType::three_phase:
-                return check_supported(std::array{FaultPhase::nan, default_value, abc});
-            case FaultType::single_phase_to_ground:
-                return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
-            case FaultType::two_phase:
-                [[fallthrough]];
-            case FaultType::two_phase_to_ground:
-                return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
-            case FaultType::nan:
-                return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
-            default:
-                throw InvalidShortCircuitType(fault_type_);
+        case FaultType::three_phase:
+            return check_supported(std::array{FaultPhase::nan, default_value, abc});
+        case FaultType::single_phase_to_ground:
+            return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+        case FaultType::two_phase:
+            [[fallthrough]];
+        case FaultType::two_phase_to_ground:
+            return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+        case FaultType::nan:
+            return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+        default:
+            throw InvalidShortCircuitType(fault_type_);
         }
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

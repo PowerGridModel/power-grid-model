@@ -17,33 +17,31 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-template <class Tensor, class RHSVector, class XVector, class = void>
-struct sparse_lu_entry_trait;
+template <class Tensor, class RHSVector, class XVector, class = void> struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
 concept scalar_value_lu = scalar_value<Tensor> && std::same_as<Tensor, RHSVector> && std::same_as<Tensor, XVector>;
 
 // TODO(mgovers) improve this concept
-template <class Derived>
-int check_array_base(Eigen::ArrayBase<Derived> const&) {
-    return 0;
-}
+template <class Derived> int check_array_base(Eigen::ArrayBase<Derived> const&) { return 0; }
 template <class ArrayLike>
-concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>;  // should be an eigen array
+concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>; // should be an eigen array
 
 template <class LHSArrayLike, class RHSArrayLike>
 concept matrix_multiplicable = eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
-    (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
+                               (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) ==
+                                static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
 
 template <class Tensor, class RHSVector, class XVector>
-concept tensor_lu = rk2_tensor<Tensor> && column_vector<RHSVector> && column_vector<XVector> &&
+concept tensor_lu =
+    rk2_tensor<Tensor> && column_vector<RHSVector> && column_vector<XVector> &&
     matrix_multiplicable<Tensor, RHSVector> && matrix_multiplicable<Tensor, XVector> &&
-    std::same_as<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
-    std::same_as<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
-    scalar_value<typename Tensor::Scalar>;                                // scalar can only be double or complex double
+    std::same_as<typename Tensor::Scalar, typename RHSVector::Scalar> && // all entries should have same scalar type
+    std::same_as<typename Tensor::Scalar, typename XVector::Scalar> &&   // all entries should have same scalar type
+    scalar_value<typename Tensor::Scalar>;                               // scalar can only be double or complex double
 
 template <class Tensor, class RHSVector, class XVector>
-requires scalar_value_lu<Tensor, RHSVector, XVector>
+    requires scalar_value_lu<Tensor, RHSVector, XVector>
 struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = false;
     static constexpr Idx block_size = 1;
@@ -55,23 +53,22 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
 };
 
 template <class Tensor, class RHSVector, class XVector>
-requires tensor_lu<Tensor, RHSVector, XVector>
+    requires tensor_lu<Tensor, RHSVector, XVector>
 struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = true;
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = typename Tensor::Scalar;
     using Matrix = Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>;
-    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Matrix>>;  // LU decomposition with full pivoting in place
+    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Matrix>>; // LU decomposition with full pivoting in place
     struct BlockPerm {
         typename LUFactor::PermutationPType p;
         typename LUFactor::PermutationQType q;
-    };  // Extract permutation matrices p and q from LUFactor
+    }; // Extract permutation matrices p and q from LUFactor
     using BlockPermArray = std::vector<BlockPerm>;
 };
 
-template <class Tensor, class RHSVector, class XVector>
-class SparseLUSolver {
-   public:
+template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
+  public:
     using entry_trait = sparse_lu_entry_trait<Tensor, RHSVector, XVector>;
     static constexpr bool is_block = entry_trait::is_block;
     static constexpr Idx block_size = entry_trait::block_size;
@@ -80,31 +77,30 @@ class SparseLUSolver {
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
 
-    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,   // indptr including fill-ins
-                   std::shared_ptr<IdxVector const> const& col_indices,  // indices including fill-ins
+    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,  // indptr including fill-ins
+                   std::shared_ptr<IdxVector const> const& col_indices, // indices including fill-ins
                    std::shared_ptr<IdxVector const> const& diag_lu)
         : size_{(Idx)row_indptr->size() - 1},
           nnz_{row_indptr->back()},
           row_indptr_{row_indptr},
           col_indices_{col_indices},
-          diag_lu_{diag_lu} {
-    }
+          diag_lu_{diag_lu} {}
 
     // solve with new matrix data, need to factorize first
-    void prefactorize_and_solve(
-        std::vector<Tensor>& data,         // matrix data, factorize in-place
-        BlockPermArray& block_perm_array,  // pre-allocated permutation array, will be overwritten
-        std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+    void
+    prefactorize_and_solve(std::vector<Tensor>& data,        // matrix data, factorize in-place
+                           BlockPermArray& block_perm_array, // pre-allocated permutation array, will be overwritten
+                           std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         prefactorize(data, block_perm_array);
         // call solve with const method
         solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
     }
 
     // solve with existing pre-factorization
-    void solve_with_prefactorized_matrix(
-        std::vector<Tensor> const& data,         // pre-factoirzed data, const ref
-        BlockPermArray const& block_perm_array,  // pre-calculated permutation, const ref
-        std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+    void
+    solve_with_prefactorized_matrix(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+                                    BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
+                                    std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
@@ -116,8 +112,7 @@ class SparseLUSolver {
             // permutation if needed
             if constexpr (is_block) {
                 x[row] = (block_perm_array[row].p * rhs[row].matrix()).array();
-            }
-            else {
+            } else {
                 x[row] = rhs[row];
             }
 
@@ -162,8 +157,7 @@ class SparseLUSolver {
                     }
                     xb(br) = xb(br) / pivot(br, br);
                 }
-            }
-            else {
+            } else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }
         }
@@ -210,8 +204,7 @@ class SparseLUSolver {
                     // record block permutation
                     block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
                     return block_perm_array[pivot_row_col];
-                }
-                else {
+                } else {
                     if (lu_matrix[pivot_idx] == 0.0) {
                         throw SparseMatrixError{};
                     }
@@ -297,8 +290,7 @@ class SparseLUSolver {
                         // divide diagonal
                         l.col(block_col) = l.col(block_col) / pivot(block_col, block_col);
                     }
-                }
-                else {
+                } else {
                     // for scalar matrix, just divide
                     // L_k,pivot = A_k,pivot / U_pivot    k > pivot
                     lu_matrix[l_idx] = lu_matrix[l_idx] / pivot;
@@ -334,19 +326,19 @@ class SparseLUSolver {
         }
     }
 
-   private:
+  private:
     Idx size_;
-    Idx nnz_;  // number of non zeroes (in block)
+    Idx nnz_; // number of non zeroes (in block)
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
 };
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
 template <class Tensor, class RHSVector, class XVector>
 using SparseLUSolver = math_model_impl::SparseLUSolver<Tensor, RHSVector, XVector>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

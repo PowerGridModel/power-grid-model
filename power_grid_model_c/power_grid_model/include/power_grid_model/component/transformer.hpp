@@ -20,7 +20,7 @@
 namespace power_grid_model {
 
 class Transformer : public Branch {
-   public:
+  public:
     using InputType = TransformerInput;
     using UpdateType = TransformerUpdate;
     static constexpr char const* name = "transformer";
@@ -66,26 +66,14 @@ class Transformer : public Branch {
     }
 
     // override getter
-    double base_i_from() const final {
-        return base_i_from_;
-    }
-    double base_i_to() const final {
-        return base_i_to_;
-    }
-    double loading(double max_s, double) const final {
-        return max_s / sn_;
-    };
+    double base_i_from() const final { return base_i_from_; }
+    double base_i_to() const final { return base_i_to_; }
+    double loading(double max_s, double) const final { return max_s / sn_; };
     // phase shift is theta_from - theta_to
-    double phase_shift() const final {
-        return clock_ * deg_30;
-    }
-    bool is_param_mutable() const final {
-        return true;
-    }
+    double phase_shift() const final { return clock_ * deg_30; }
+    bool is_param_mutable() const final { return true; }
     // get tap
-    IntS tap_pos() const {
-        return tap_pos_;
-    }
+    IntS tap_pos() const { return tap_pos_; }
     // setter
     bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
@@ -103,7 +91,7 @@ class Transformer : public Branch {
         return {topo_changed, param_changed};
     }
 
-   private:
+  private:
     // transformer parameter
     double u1_;
     double u2_;
@@ -157,8 +145,7 @@ class Transformer : public Branch {
             double result_u2 = u2_;
             if (tap_side_ == BranchSide::from) {
                 result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            else {
+            } else {
                 result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
             return std::pair{result_u1, result_u2};
@@ -193,8 +180,7 @@ class Transformer : public Branch {
         y_shunt.real(p0_ / u2 / u2);
         if (y_shunt.real() > y_shunt_abs) {
             y_shunt.imag(0.0);
-        }
-        else {
+        } else {
             y_shunt.imag(-std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real()));
         }
         // y shunt
@@ -267,6 +253,6 @@ class Transformer : public Branch {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

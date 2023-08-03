@@ -18,40 +18,31 @@
 namespace power_grid_model {
 
 class Sensor : public Base {
-   public:
+  public:
     static constexpr char const* name = "sensor";
     using InputType = SensorInput;
     using ShortCircuitOutputType = SensorShortCircuitOutput;
 
     // constructor
     explicit Sensor(SensorInput const& sensor_input)
-        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {
-    }
+        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {}
 
-    ID measured_object() const {
-        return measured_object_;
-    };
+    ID measured_object() const { return measured_object_; };
 
     // sensor always energized
-    bool energized(bool) const final {
-        return true;
-    }
-    ComponentType math_model_type() const final {
-        return ComponentType::sensor;
-    }
+    bool energized(bool) const final { return true; }
+    ComponentType math_model_type() const final { return ComponentType::sensor; }
 
     // getter for calculation param
-    template <bool sym>
-    SensorCalcParam<sym> calc_param() const {
+    template <bool sym> SensorCalcParam<sym> calc_param() const {
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }
 
-   private:
+  private:
     ID measured_object_;
 
     // virtual function getter for sym and asym param
@@ -60,6 +51,6 @@ class Sensor : public Base {
     virtual SensorCalcParam<false> asym_calc_param() const = 0;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

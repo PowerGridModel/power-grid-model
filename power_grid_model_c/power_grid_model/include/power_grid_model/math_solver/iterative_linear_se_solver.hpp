@@ -24,33 +24,22 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
-template <bool sym>
-struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
-    template <int r, int c>
-    using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
+template <bool sym> struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
+    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<DoubleComplex, sym, false, 2>::Block;
     using Block<DoubleComplex, sym, false, 2>::operator=;
 
-    GetterType<0, 0> u() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> phi() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> u() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> phi() { return this->template get_val<1, 0>(); }
 
-    GetterType<0, 0> eta() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> tau() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> eta() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> tau() { return this->template get_val<1, 0>(); }
 };
 
 // block class for the right hand side in state estimation equation
-template <bool sym>
-using SERhs = SEUnknown<sym>;
+template <bool sym> using SERhs = SEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
 /*
@@ -59,35 +48,24 @@ using SERhs = SEUnknown<sym>;
    [Q, R ]
 ]
 */
-template <bool sym>
-class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
-   public:
-    template <int r, int c>
-    using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
+template <bool sym> class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
+  public:
+    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<DoubleComplex, sym, true, 2>::Block;
     using Block<DoubleComplex, sym, true, 2>::operator=;
 
-    GetterType<0, 0> g() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<0, 1> qh() {
-        return this->template get_val<0, 1>();
-    }
-    GetterType<1, 0> q() {
-        return this->template get_val<1, 0>();
-    }
-    GetterType<1, 1> r() {
-        return this->template get_val<1, 1>();
-    }
+    GetterType<0, 0> g() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> qh() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> r() { return this->template get_val<1, 1>(); }
 };
 
 // processed measurement struct
 // combined all measurement of the same quantity
 // accumulate for bus injection measurement
-template <bool sym>
-class MeasuredValues {
+template <bool sym> class MeasuredValues {
     static constexpr Idx disconnected = -1;
     static constexpr Idx unmeasured = -2;
     static constexpr Idx undefined = -3;
@@ -102,7 +80,7 @@ class MeasuredValues {
         Idx n_unmeasured_appliances = 0;
     };
 
-   public:
+  public:
     // construct
     MeasuredValues(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input)
         : math_topology_{y_bus.shared_topology()},
@@ -128,39 +106,21 @@ class MeasuredValues {
     }
 
     // checker of measured data, return true if measurement is available
-    bool has_voltage(Idx bus) const {
-        return idx_voltage_[bus] >= 0;
-    }
-    bool has_bus_injection(Idx bus) const {
-        return bus_injection_[bus].idx_bus_injection >= 0;
-    }
-    bool has_branch_from(Idx branch) const {
-        return idx_branch_from_power_[branch] >= 0;
-    }
-    bool has_branch_to(Idx branch) const {
-        return idx_branch_to_power_[branch] >= 0;
-    }
-    bool has_shunt(Idx shunt) const {
-        return idx_shunt_power_[shunt] >= 0;
-    }
-    bool has_load_gen(Idx load_gen) const {
-        return idx_load_gen_power_[load_gen] >= 0;
-    }
-    bool has_source(Idx source) const {
-        return idx_source_power_[source] >= 0;
-    }
-    bool has_angle() const {
-        return n_angle_ > 0;
-    }
+    bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
+    bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
+    bool has_branch_from(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
+    bool has_branch_to(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
+    bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
+    bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
+    bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
+    bool has_angle() const { return n_angle_ > 0; }
 
     // getter of measurement and variance
     // if the obj is not measured, it is undefined behaviour to call this function
     // use checker first
 
     // getter of voltage variance
-    double voltage_var(Idx bus) const {
-        return main_value_[idx_voltage_[bus]].variance;
-    }
+    double voltage_var(Idx bus) const { return main_value_[idx_voltage_[bus]].variance; }
     // getter of voltage value for all buses
     // for no measurement, the voltage phasor is used from the current iteration
     // for magnitude only measurement, angle is added from the current iteration
@@ -175,7 +135,7 @@ class MeasuredValues {
             // no angle measurement
             else if (is_nan(imag(main_value_[idx_voltage_[bus]].value))) {
                 u[bus] = real(main_value_[idx_voltage_[bus]].value) * current_u[bus] /
-                         cabs(current_u[bus]);  // U / |U| to get angle shift
+                         cabs(current_u[bus]); // U / |U| to get angle shift
             }
             // full measurement
             else {
@@ -192,26 +152,16 @@ class MeasuredValues {
     SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
         return main_value_[idx_branch_from_power_[branch]];
     }
-    SensorCalcParam<sym> const& branch_to_power(Idx branch) const {
-        return main_value_[idx_branch_to_power_[branch]];
-    }
-    SensorCalcParam<sym> const& shunt_power(Idx shunt) const {
-        return main_value_[idx_shunt_power_[shunt]];
-    }
+    SensorCalcParam<sym> const& branch_to_power(Idx branch) const { return main_value_[idx_branch_to_power_[branch]]; }
+    SensorCalcParam<sym> const& shunt_power(Idx shunt) const { return main_value_[idx_shunt_power_[shunt]]; }
     SensorCalcParam<sym> const& load_gen_power(Idx load_gen) const {
         return extra_value_[idx_load_gen_power_[load_gen]];
     }
-    SensorCalcParam<sym> const& source_power(Idx source) const {
-        return extra_value_[idx_source_power_[source]];
-    }
+    SensorCalcParam<sym> const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
 
     // getter mean angle shift
-    RealValue<sym> mean_angle_shift() const {
-        return mean_angle_shift_;
-    }
-    bool has_angle_measurement() const {
-        return n_angle_ > 0;
-    }
+    RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
+    bool has_angle_measurement() const { return n_angle_ > 0; }
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
@@ -252,7 +202,7 @@ class MeasuredValues {
         return std::make_pair(load_gen_flow, source_flow);
     }
 
-   private:
+  private:
     // cache topology
     std::shared_ptr<MathModelTopology const> math_topology_;
 
@@ -284,9 +234,7 @@ class MeasuredValues {
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
 
-    MathModelTopology const& math_topology() const {
-        return *math_topology_;
-    }
+    MathModelTopology const& math_topology() const { return *math_topology_; }
 
     void process_bus_related_measurements(StateEstimationInput<sym> const& input) {
         /*
@@ -318,7 +266,7 @@ class MeasuredValues {
         and idx_shunt_power_ (for shunt).
         */
         MathModelTopology const& topo = math_topology();
-        RealValue<sym> angle_cum{};  // cumulative angle
+        RealValue<sym> angle_cum{}; // cumulative angle
         for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
             // voltage
             {
@@ -326,18 +274,14 @@ class MeasuredValues {
                 Idx const end = topo.voltage_sensor_indptr[bus + 1];
                 if (begin == end) {
                     idx_voltage_[bus] = unmeasured;
-                }
-                else {
+                } else {
                     idx_voltage_[bus] = (Idx)main_value_.size();
                     // check if there is nan
                     if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
-                                    [](auto const& x) {
-                                        return is_nan(imag(x.value));
-                                    })) {
+                                    [](auto const& x) { return is_nan(imag(x.value)); })) {
                         // only keep magnitude
                         main_value_.push_back(combine_measurements<true>(input.measured_voltage, begin, end));
-                    }
-                    else {
+                    } else {
                         // keep complex number
                         main_value_.push_back(combine_measurements(input.measured_voltage, begin, end));
                         ++n_angle_;
@@ -404,21 +348,18 @@ class MeasuredValues {
                     if (n_unmeasured > 0) {
                         // only direct injection
                         main_value_.push_back(direct_injection_measurement);
-                    }
-                    else if (std::isinf(direct_injection_measurement.variance) ||
-                             appliance_injection_measurement.variance == 0.0) {
+                    } else if (std::isinf(direct_injection_measurement.variance) ||
+                               appliance_injection_measurement.variance == 0.0) {
                         // only appliance injection if
                         //    there is no direct injection measurement,
                         //    or we have zero injection
                         main_value_.push_back(appliance_injection_measurement);
-                    }
-                    else {
+                    } else {
                         // both valid, we combine again
                         main_value_.push_back(combine_measurements(
                             {direct_injection_measurement, appliance_injection_measurement}, 0, 2));
                     }
-                }
-                else {
+                } else {
                     bus_injection_[bus].idx_bus_injection = unmeasured;
                 }
             }
@@ -448,12 +389,8 @@ class MeasuredValues {
         main_value_. The power values in main_value_ can be found using idx_branch_to_power_/idx_branch_from_power_.
         */
         MathModelTopology const& topo = math_topology();
-        static constexpr auto branch_from_checker = [](BranchIdx x) -> bool {
-            return x[0] != -1;
-        };
-        static constexpr auto branch_to_checker = [](BranchIdx x) -> bool {
-            return x[1] != -1;
-        };
+        static constexpr auto branch_from_checker = [](BranchIdx x) -> bool { return x[0] != -1; };
+        static constexpr auto branch_to_checker = [](BranchIdx x) -> bool { return x[1] != -1; };
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
             idx_branch_from_power_[branch] =
@@ -480,14 +417,12 @@ class MeasuredValues {
             if constexpr (only_magnitude) {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
                 if (is_nan(imag(data[pos].value))) {
-                    abs_value += real(data[pos].value);  // only keep real part
-                }
-                else {
-                    abs_value += cabs(data[pos].value);  // get abs of the value
+                    abs_value += real(data[pos].value); // only keep real part
+                } else {
+                    abs_value += cabs(data[pos].value); // get abs of the value
                 }
                 accumulated_value += abs_value / data[pos].variance;
-            }
-            else {
+            } else {
                 // accumulate value
                 accumulated_value += data[pos].value / data[pos].variance;
             }
@@ -507,9 +442,7 @@ class MeasuredValues {
     }
 
     // process one object
-    static constexpr auto default_status_checker = [](auto x) -> bool {
-        return x;
-    };
+    static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
     template <class TS, class StatusChecker = decltype(default_status_checker)>
     static Idx process_one_object(Idx const obj, IdxVector const& sensor_indptr, std::vector<TS> const& obj_status,
                                   std::vector<SensorCalcParam<sym>> const& input_data,
@@ -541,9 +474,7 @@ class MeasuredValues {
             }
         }
         // scale
-        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) {
-            x.variance /= min_var;
-        });
+        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
@@ -556,16 +487,14 @@ class MeasuredValues {
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
-            }
-            else if (idx_load_gen_power_[load_gen] == unmeasured) {
+            } else if (idx_load_gen_power_[load_gen] == unmeasured) {
                 load_gen_flow[load_gen].s = s_residual_per_appliance;
             }
         }
         for (Idx source = source_begin; source != source_end; ++source) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value;
-            }
-            else if (idx_source_power_[source] == unmeasured) {
+            } else if (idx_source_power_[source] == unmeasured) {
                 source_flow[source].s = s_residual_per_appliance;
             }
         }
@@ -596,20 +525,18 @@ template class MeasuredValues<true>;
 template class MeasuredValues<false>;
 
 // solver
-template <bool sym>
-class IterativeLinearSESolver {
+template <bool sym> class IterativeLinearSESolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
-   public:
+  public:
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           math_topo_{topo_ptr},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {
-    }
+          perm_(y_bus.size()) {}
 
     MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
                                          Idx max_iter, CalculationInfo& calculation_info) {
@@ -666,7 +593,7 @@ class IterativeLinearSESolver {
         return output;
     }
 
-   private:
+  private:
     // array selection function pointer
     static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
     static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
@@ -849,8 +776,7 @@ class IterativeLinearSESolver {
             }
             if constexpr (sym) {
                 return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
-            }
-            else {
+            } else {
                 return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
             }
         }();
@@ -880,11 +806,10 @@ class IterativeLinearSESolver {
 template class IterativeLinearSESolver<true>;
 template class IterativeLinearSESolver<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using IterativeLinearSESolver = math_model_impl::IterativeLinearSESolver<sym>;
+template <bool sym> using IterativeLinearSESolver = math_model_impl::IterativeLinearSESolver<sym>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

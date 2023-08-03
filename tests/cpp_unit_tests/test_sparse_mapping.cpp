@@ -17,4 +17,4 @@ TEST_CASE("Test sparse mapping") {
     CHECK(mapping.reorder == mapping_2.reorder);
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

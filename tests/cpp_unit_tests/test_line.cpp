@@ -50,9 +50,7 @@ TEST_CASE("Test line") {
 
     CHECK(line.math_model_type() == ComponentType::branch);
 
-    SUBCASE("Voltge error") {
-        CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage);
-    }
+    SUBCASE("Voltge error") { CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage); }
 
     SUBCASE("General") {
         CHECK(branch.from_node() == 2);
@@ -225,4 +223,4 @@ TEST_CASE("Test line") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
