@@ -287,6 +287,14 @@ class Deserializer {
         for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
             Idx const scenario_offset =
                 buffer.is_uniform ? scenario * buffer.elements_per_scenario : buffer.indptr[scenario];
+#ifndef NDEBUG
+            if (buffer.is_uniform) {
+                assert(buffer.elements_per_scenario == (Idx)buffer.msg_data[scenario].size());
+            }
+            else {
+                assert(buffer.indptr[scenario + 1] - buffer.indptr[scenario] == (Idx)buffer.msg_data[scenario].size());
+            }
+#endif
             void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
             parse_scenario(*buffer.component, scenario_pointer, buffer.msg_data[scenario], attributes);
         }
