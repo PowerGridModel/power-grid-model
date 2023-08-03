@@ -58,6 +58,7 @@ class Deserializer {
         std::span<Idx> indptr;                                   // set by user
     };
 
+    Deserializer() = default;
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
@@ -112,12 +113,12 @@ class Deserializer {
     }
 
    private:
-    msgpack::object_handle handle_;
-    std::string version_;
+    msgpack::object_handle handle_{};
+     std::string version_;
     bool is_batch_{};
     MetaDataset const* dataset_{};
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
-    Idx batch_size_;  // for single dataset, the batch size is one
+    Idx batch_size_{}; // for single dataset, the batch size is one
     std::vector<Buffer> buffers_;
 
     static std::vector<char> json_to_msgpack(char const* json_string) {
