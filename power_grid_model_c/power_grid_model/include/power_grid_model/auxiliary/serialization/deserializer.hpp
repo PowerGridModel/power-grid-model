@@ -29,7 +29,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             if (o.via.array.size != 3)
                 throw msgpack::type_error();
             for (int8_t i = 0; i != 3; ++i) {
-                if (o.is_nil()) {
+                if (o.via.array.ptr[i].is_nil()) {
                     continue;
                 }
                 o.via.array.ptr[i] >> v(i);
@@ -352,9 +352,7 @@ class Deserializer {
     template <class T>
     void parse_attribute_per_type(void* element_pointer, msgpack::object const& obj,
                                   MetaAttribute const& attribute) const {
-        T value;
-        obj >> value;
-        attribute.set_value(element_pointer, &value, 0);
+        obj >> *reinterpret_cast<T*>(reinterpret_cast<char*>(element_pointer) + attribute.offset);
     }
 };
 

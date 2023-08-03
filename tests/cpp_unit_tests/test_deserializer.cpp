@@ -309,7 +309,7 @@ TEST_CASE("Deserializer") {
             std::array all_components{"sym_load", "asym_load"};
             std::array<Idx*, 2> all_indptrs{sym_load_indptr.data(), nullptr};
             deserializer.set_buffer(all_components.data(), all_data.data(), all_indptrs.data());
-            //deserializer.parse();
+            deserializer.parse();
         }
     }
 }
