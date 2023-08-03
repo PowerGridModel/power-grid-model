@@ -22,8 +22,7 @@
 namespace msgpack {
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
-    template <>
-    struct convert<power_grid_model::RealValue<false>> {
+    template <> struct convert<power_grid_model::RealValue<false>> {
         msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
             if (o.type != msgpack::type::ARRAY)
                 throw msgpack::type_error();
@@ -39,23 +38,23 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         }
     };
 
-    }  // namespace adaptor
-}  // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
-}  // namespace msgpack
+    } // namespace adaptor
+} // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
+} // namespace msgpack
 
 namespace power_grid_model::meta_data {
 
 class Deserializer {
-   public:
+  public:
     // struct of buffer data
     struct Buffer {
         MetaComponent const* component;
         bool is_uniform;
         Idx elements_per_scenario;
         Idx total_elements;
-        std::vector<std::span<msgpack::object const>> msg_data;  // vector of spans of msgpack object of each batch
-        void* data;                                              // set by user
-        std::span<Idx> indptr;                                   // set by user
+        std::vector<std::span<msgpack::object const>> msg_data; // vector of spans of msgpack object of each batch
+        void* data;                                             // set by user
+        std::span<Idx> indptr;                                  // set by user
     };
 
     Deserializer() = default;
@@ -74,21 +73,13 @@ class Deserializer {
         post_serialization();
     }
 
-    std::string const& dataset_name() const {
-        return dataset_->name;
-    }
+    std::string const& dataset_name() const { return dataset_->name; }
 
-    Idx batch_size() const {
-        return batch_size_;
-    }
+    Idx batch_size() const { return batch_size_; }
 
-    Idx n_components() const {
-        return (Idx)buffers_.size();
-    }
+    Idx n_components() const { return (Idx)buffers_.size(); }
 
-    Buffer const& get_buffer_info(Idx i) const {
-        return buffers_[i];
-    }
+    Buffer const& get_buffer_info(Idx i) const { return buffers_[i]; }
 
     void set_buffer(char const** components, void** data, Idx** indptrs) {
         for (Idx i = 0; i != n_components(); ++i) {
@@ -112,9 +103,9 @@ class Deserializer {
         }
     }
 
-   private:
+  private:
     msgpack::object_handle handle_{};
-     std::string version_;
+    std::string version_;
     bool is_batch_{};
     MetaDataset const* dataset_{};
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
@@ -124,7 +115,7 @@ class Deserializer {
     static std::vector<char> json_to_msgpack(char const* json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
         std::vector<char> msgpack_data;
-        json_document.to_msgpack(msgpack_data);
+        nlohmann::json::to_msgpack(json_document, msgpack_data);
         return msgpack_data;
     }
 
@@ -191,8 +182,7 @@ class Deserializer {
         if (is_batch_) {
             batch_size_ = (Idx)obj.via.array.size;
             batch_data = {obj.via.array.ptr, obj.via.array.size};
-        }
-        else {
+        } else {
             batch_size_ = 1;
             batch_data = {&obj, 1};
         }
@@ -205,7 +195,7 @@ class Deserializer {
             }
             std::span<msgpack::object_kv> const scenario_map{scenario.via.map.ptr, scenario.via.map.size};
             for (msgpack::object_kv const& kv : scenario_map) {
-                all_components.insert(kv.val.as<std::string>());
+                all_components.insert(kv.key.as<std::string>());
             }
         }
 
@@ -233,9 +223,9 @@ class Deserializer {
         }
         bool const is_uniform = check_uniform(counter);
         Idx const elements_per_scenario = get_elements_per_scenario(counter, is_uniform);
-        Idx const total_elements =                              // total element based on is_uniform
-            is_uniform ? elements_per_scenario * batch_size_ :  // multiply
-                std::reduce(counter.cbegin(), counter.cend());  // aggregation
+        Idx const total_elements =                             // total element based on is_uniform
+            is_uniform ? elements_per_scenario * batch_size_ : // multiply
+                std::reduce(counter.cbegin(), counter.cend()); // aggregation
         return Buffer{.component = &dataset_->get_component(component),
                       .is_uniform = is_uniform,
                       .elements_per_scenario = elements_per_scenario,
@@ -270,9 +260,7 @@ class Deserializer {
             buffer.indptr.front() = 0;
             // accumulate sum
             std::transform_inclusive_scan(buffer.msg_data.cbegin(), buffer.msg_data.cend(), buffer.indptr.begin() + 1,
-                                          std::plus{}, [](auto const& x) {
-                                              return (Idx)x.size();
-                                          });
+                                          std::plus{}, [](auto const& x) { return (Idx)x.size(); });
         }
         // set nan
         buffer.component->set_nan(buffer.data, 0, buffer.total_elements);
@@ -291,8 +279,7 @@ class Deserializer {
 #ifndef NDEBUG
             if (buffer.is_uniform) {
                 assert(buffer.elements_per_scenario == (Idx)buffer.msg_data[scenario].size());
-            }
-            else {
+            } else {
                 assert(buffer.indptr[scenario + 1] - buffer.indptr[scenario] == (Idx)buffer.msg_data[scenario].size());
             }
 #endif
@@ -309,11 +296,9 @@ class Deserializer {
             msgpack::object const& obj = msg_data[element];
             if (obj.type == msgpack::type::ARRAY) {
                 parse_array_element(element_pointer, obj, attributes);
-            }
-            else if (obj.type == msgpack::type::MAP) {
+            } else if (obj.type == msgpack::type::MAP) {
                 parse_map_element(element_pointer, obj, component);
-            }
-            else {
+            } else {
                 throw SerializationError{"An element can only be a list or dictionary!\n"};
             }
         }
@@ -336,7 +321,7 @@ class Deserializer {
         for (msgpack::object_kv const& kv : map) {
             Idx const found_idx = component.find_attribute(kv.key.as<std::string_view>());
             if (found_idx < 0) {
-                continue;  // allow unknown key for additional user info
+                continue; // allow unknown key for additional user info
             }
             parse_attribute(element_pointer, kv.val, component.attributes[found_idx]);
         }
@@ -349,16 +334,16 @@ class Deserializer {
         }
         // call relevant parser
         switch (attribute.ctype) {
-            case CType::c_double:
-                return parse_attribute_per_type<double>(element_pointer, obj, attribute);
-            case CType::c_double3:
-                return parse_attribute_per_type<RealValue<false>>(element_pointer, obj, attribute);
-            case CType::c_int8:
-                return parse_attribute_per_type<int8_t>(element_pointer, obj, attribute);
-            case CType::c_int32:
-                return parse_attribute_per_type<int32_t>(element_pointer, obj, attribute);
-            default:
-                throw SerializationError{"Unknown data type for attriute!\n"};
+        case CType::c_double:
+            return parse_attribute_per_type<double>(element_pointer, obj, attribute);
+        case CType::c_double3:
+            return parse_attribute_per_type<RealValue<false>>(element_pointer, obj, attribute);
+        case CType::c_int8:
+            return parse_attribute_per_type<int8_t>(element_pointer, obj, attribute);
+        case CType::c_int32:
+            return parse_attribute_per_type<int32_t>(element_pointer, obj, attribute);
+        default:
+            throw SerializationError{"Unknown data type for attriute!\n"};
         }
     }
 
@@ -371,6 +356,6 @@ class Deserializer {
     }
 };
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data
 
 #endif
