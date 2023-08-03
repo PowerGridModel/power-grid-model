@@ -223,18 +223,18 @@ For each iteration the following steps are executed:
 
 #### Iterative Current
 
-This algorithm is a jacobi like method for powerflow analysis.
-It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson would also be more robust in achieving convergence in case of greater meshed configurations. However, Iterative current algorithm will be faster most of the time.
+This algorithm is a Jacobi-like method for powerflow analysis.
+It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
 
 The algorithm is as follows:
 1. Build $Y_{bus}$ matrix 
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
-$$  
+$
    \begin{eqnarray}
       I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
    \end{eqnarray}
-$$
+$
 4. Solve linear equation: $YU_N^i = I_N^i$ 
 5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
 
@@ -431,18 +431,18 @@ Short circuit calculation is solving of following equations with border conditio
 
 $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 
-This gives the initial symmetrical short circuit current ($I_k^('')$) for a fault.
+This gives the initial symmetrical short circuit current ($I_k^{\prime\prime}$) for a fault.
 This quantity is then used to derive almost all further calculations of short circuit studies applications.
 
 The assumptions used for calculations in power-grid-model are aligned to ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
 
 - The state of grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
-- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. By default, the value is considered as `1.1` in power-grid-model. 
+- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. Currently, the value is assumed to be `1.1` in the power-grid-model. 
 A detailed table for its selection is mentioned in IEC 60909.
-- The prefault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
-- The calculations are assumed to be independent of time component. (Voltages are sine throughout with fault occurring at zero crossing of voltage, complexity of rotating machines and harmonics are neglected, etc).
+- The pre-fault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
+- The calculations are assumed to be time-independent. (Voltages are sine throughout with the fault occurring at a zero crossing of the voltage, the complexity of rotating machines and harmonics are neglected, etc.)
 
-There are 4 types of fault situations that can occur in the grid along with these possible combination of associated phases:
+There are 4 types of fault situations that can occur in the grid, along with the following possible combinations of the associated phases:
 
 - Three-phase to ground: abc
 - Single phase to ground: a, b, c
