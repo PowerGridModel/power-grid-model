@@ -74,6 +74,8 @@ class Deserializer {
 
     std::string const& dataset_name() const { return dataset_->name; }
 
+    bool is_batch() const { return is_batch_; }
+
     Idx batch_size() const { return batch_size_; }
 
     Idx n_components() const { return (Idx)buffers_.size(); }

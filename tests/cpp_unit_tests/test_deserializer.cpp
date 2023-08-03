@@ -121,6 +121,84 @@ constexpr char const* json_single = R"(
 }
 )";
 
+constexpr char const* json_batch = R"(
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {
+    "sym_load": [
+      "id",
+      "p_specified",
+      "q_specified"
+    ],
+    "asym_load": [
+      "id",
+      "p_specified"
+    ]
+  },
+  "data": [
+    {
+      "sym_load": [
+        [
+          7,
+          20.0,
+          50.0
+        ]
+      ],
+      "asym_load": [
+        [
+          9,
+          [
+            100.0,
+            null,
+            200.0
+          ]
+        ]
+      ]
+    },
+    {
+      "sym_load": [
+        [
+          8,
+          null,
+          33.0
+        ]
+      ],
+      "asym_load": [
+        [
+          9,
+          null
+        ]
+      ]
+    },
+    {
+      "sym_load": [
+        [
+          7,
+          null,
+          10.0
+        ],
+        {
+          "id": 8,
+          "status": 0
+        }
+      ],
+      "asym_load": [
+        {
+          "id": 9,
+          "q_specified": [
+            70.0,
+            80.0,
+            90.0
+          ]
+        }
+      ]
+    }
+  ]
+}
+)";
+
 namespace power_grid_model::meta_data {
 
 namespace {
@@ -144,6 +222,7 @@ TEST_CASE("Deserializer") {
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.dataset_name() == "input");
+            CHECK(!deserializer.is_batch());
             CHECK(deserializer.batch_size() == 1);
             CHECK(deserializer.n_components() == 4);
         }
