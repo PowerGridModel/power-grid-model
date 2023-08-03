@@ -310,6 +310,39 @@ TEST_CASE("Deserializer") {
             std::array<Idx*, 2> all_indptrs{sym_load_indptr.data(), nullptr};
             deserializer.set_buffer(all_components.data(), all_data.data(), all_indptrs.data());
             deserializer.parse();
+
+            // sym_load
+            CHECK(sym_load_indptr == IdxVector{0, 1, 2, 4});
+            CHECK(sym_load[0].id == 7);
+            CHECK(sym_load[0].p_specified == doctest::Approx(20.0));
+            CHECK(sym_load[0].status == na_IntS);
+            CHECK(sym_load[1].id == 8);
+            CHECK(is_nan(sym_load[1].p_specified));
+            CHECK(sym_load[1].q_specified == doctest::Approx(33.0));
+            CHECK(sym_load[1].status == na_IntS);
+            CHECK(sym_load[2].id == 7);
+            CHECK(is_nan(sym_load[2].p_specified));
+            CHECK(sym_load[2].q_specified == doctest::Approx(10.0));
+            CHECK(sym_load[2].status == na_IntS);
+            CHECK(sym_load[3].id == 8);
+            CHECK(is_nan(sym_load[3].p_specified));
+            CHECK(is_nan(sym_load[3].q_specified));
+            CHECK(sym_load[3].status == 0);
+
+            // asym_load
+            CHECK(asym_load[0].id == 9);
+            CHECK(asym_load[0].p_specified(0) == doctest::Approx(100.0));
+            CHECK(is_nan(asym_load[0].p_specified(1)));
+            CHECK(asym_load[0].p_specified(2) == doctest::Approx(200));
+            CHECK(is_nan(asym_load[0].q_specified));
+            CHECK(asym_load[1].id == 9);
+            CHECK(is_nan(asym_load[1].p_specified));
+            CHECK(is_nan(asym_load[1].q_specified));
+            CHECK(asym_load[2].id == 9);
+            CHECK(is_nan(asym_load[2].p_specified));
+            CHECK(asym_load[2].q_specified(0) == doctest::Approx(70.0));
+            CHECK(asym_load[2].q_specified(1) == doctest::Approx(80.0));
+            CHECK(asym_load[2].q_specified(2) == doctest::Approx(90.0));
         }
     }
 }
