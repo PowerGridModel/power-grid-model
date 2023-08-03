@@ -6,11 +6,13 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
 #define POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
 
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "base.hpp"
+#include "../exception.hpp"
 
 namespace power_grid_model {
 
@@ -20,19 +22,20 @@ class Branch3 : public Base {
     using UpdateType = Branch3Update;
     template <bool sym>
     using OutputType = Branch3Output<sym>;
+    using ShortCircuitOutputType = Branch3ShortCircuitOutput;
     static constexpr char const* name = "branch3";
     ComponentType math_model_type() const final {
         return ComponentType::branch3;
     }
 
-    Branch3(Branch3Input const& branch3_input)
+    explicit Branch3(Branch3Input const& branch3_input)
         : Base{branch3_input},
           node_1_{branch3_input.node_1},
           node_2_{branch3_input.node_2},
           node_3_{branch3_input.node_3},
-          status_1_{(bool)branch3_input.status_1},
-          status_2_{(bool)branch3_input.status_2},
-          status_3_{(bool)branch3_input.status_3} {
+          status_1_{static_cast<bool>(branch3_input.status_1)},
+          status_2_{static_cast<bool>(branch3_input.status_2)},
+          status_3_{static_cast<bool>(branch3_input.status_3)} {
         if (node_1_ == node_2_ || node_1_ == node_3_ || node_2_ == node_3_) {
             throw InvalidBranch3{id(), node_1_, node_2_, node_3_};
         }
@@ -112,9 +115,43 @@ class Branch3 : public Base {
         return output;
     }
 
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<false> const& i_1, ComplexValue<false> const& i_2,
+                                            ComplexValue<false> const& i_3) const {
+        // result object
+        Branch3ShortCircuitOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        // calculate result
+        output.i_1 = base_i_1() * cabs(i_1);
+        output.i_2 = base_i_2() * cabs(i_2);
+        output.i_3 = base_i_3() * cabs(i_3);
+        output.i_1_angle = arg(i_1);
+        output.i_2_angle = arg(i_2);
+        output.i_3_angle = arg(i_3);
+        return output;
+    }
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<true> const& i_1, ComplexValue<true> const& i_2,
+                                            ComplexValue<true> const& i_3) const {
+        ComplexValue<false> const iabc_1{i_1};
+        ComplexValue<false> const iabc_2{i_2};
+        ComplexValue<false> const iabc_3{i_3};
+        return get_sc_output(iabc_1, iabc_2, iabc_3);
+    }
+    template <bool sym>
+    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<sym> const& branch_math_output1,
+                                            BranchShortCircuitMathOutput<sym> const& branch_math_output2,
+                                            BranchShortCircuitMathOutput<sym> const& branch_math_output3) const {
+        return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
+    }
+
     template <bool sym>
     Branch3Output<sym> get_null_output() const {
         Branch3Output<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
+
+    Branch3ShortCircuitOutput get_null_sc_output() const {
+        Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -126,16 +163,16 @@ class Branch3 : public Base {
         bool const set_3 = new_status_3 != na_IntS;
         bool changed = false;
         if (set_1) {
-            changed = changed || (status_1_ != (bool)new_status_1);
-            status_1_ = (bool)new_status_1;
+            changed = changed || (status_1_ != static_cast<bool>(new_status_1));
+            status_1_ = static_cast<bool>(new_status_1);
         }
         if (set_2) {
-            changed = changed || (status_2_ != (bool)new_status_2);
-            status_2_ = (bool)new_status_2;
+            changed = changed || (status_2_ != static_cast<bool>(new_status_2));
+            status_2_ = static_cast<bool>(new_status_2);
         }
         if (set_3) {
-            changed = changed || (status_3_ != (bool)new_status_3);
-            status_3_ = (bool)new_status_3;
+            changed = changed || (status_3_ != static_cast<bool>(new_status_3));
+            status_3_ = static_cast<bool>(new_status_3);
         }
         return changed;
     }

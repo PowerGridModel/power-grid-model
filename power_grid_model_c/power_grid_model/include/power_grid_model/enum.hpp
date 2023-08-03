@@ -23,11 +23,13 @@ enum class BranchSide : IntS { from = 0, to = 1 };
 enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
 enum class CalculationMethod : IntS {
+    default_method = -128,
     linear = 0,
     newton_raphson = 1,
     iterative_linear = 2,
     iterative_current = 3,
-    linear_current = 4
+    linear_current = 4,
+    iec60909 = 5,
 };
 
 enum class MeasuredTerminalType : IntS {
@@ -53,7 +55,8 @@ enum class ComponentType : IntS {
     generic_load_gen = 6,
     shunt = 7,
     source = 8,
-    branch3 = 9
+    branch3 = 9,
+    fault = 10
 };
 
 // DO NOT change the order of enumerations
@@ -70,6 +73,28 @@ enum class YBusElementType : IntS {
     fill_in_ft = 0b101,
     fill_in_tf = 0b110
 };
+
+enum class FaultType : IntS {
+    three_phase = 0,
+    single_phase_to_ground = 1,
+    two_phase = 2,
+    two_phase_to_ground = 3,
+    nan = na_IntS
+};
+
+enum class FaultPhase : IntS {
+    abc = 0,
+    a = 1,
+    b = 2,
+    c = 3,
+    ab = 4,
+    ac = 5,
+    bc = 6,
+    default_value = -1,
+    nan = na_IntS
+};
+
+enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 
 }  // namespace power_grid_model
 

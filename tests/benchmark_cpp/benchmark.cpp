@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/timer.hpp>
+
 #include <iostream>
 #include <random>
-
-#include "power_grid_model/main_model.hpp"
-#include "power_grid_model/timer.hpp"
 
 namespace power_grid_model {
 
@@ -198,7 +198,7 @@ struct PowerGridBenchmark {
                                                     asym_load_input.size());
         auto const math_output = main_model.calculate_power_flow<sym>(1e-8, 20, calculation_method);
         {
-            Timer t_output(info, 3000, "Calculate output");
+            Timer const t_output(info, 3000, "Calculate output");
             main_model.output_result<sym, Node>(math_output, node.begin());
             main_model.output_result<sym, Branch>(math_output, branch.begin());
             main_model.output_result<sym, Appliance>(math_output, appliance.begin());
@@ -231,9 +231,9 @@ struct PowerGridBenchmark {
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer t_total(info, 0000, "Total");
+            Timer const t_total(info, 0000, "Total");
             {
-                Timer t_build(info, 1000, "Build model");
+                Timer const t_build(info, 1000, "Build model");
                 build_network();
             }
             if (sym) {
@@ -248,7 +248,7 @@ struct PowerGridBenchmark {
         info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer t_total(info, 0000, "Total");
+            Timer const t_total(info, 0000, "Total");
             if (sym) {
                 run_pf<true>(calculation_method, info);
             }
@@ -260,7 +260,7 @@ struct PowerGridBenchmark {
         std::cout << "\n\n";
     }
 
-    void print(CalculationInfo const& info) {
+    static void print(CalculationInfo const& info) {
         for (auto const& [key, val] : info) {
             std::cout << key << ": " << val << '\n';
         }

@@ -6,6 +6,8 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_BRANCH_HPP
 #define POWER_GRID_MODEL_COMPONENT_BRANCH_HPP
 
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -13,7 +15,6 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
@@ -23,17 +24,18 @@ class Branch : public Base {
     using UpdateType = BranchUpdate;
     template <bool sym>
     using OutputType = BranchOutput<sym>;
+    using ShortCircuitOutputType = BranchShortCircuitOutput;
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final {
         return ComponentType::branch;
     }
 
-    Branch(BranchInput const& branch_input)
+    explicit Branch(BranchInput const& branch_input)
         : Base{branch_input},
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},
-          from_status_{(bool)branch_input.from_status},
-          to_status_{(bool)branch_input.to_status} {
+          from_status_{static_cast<bool>(branch_input.from_status)},
+          to_status_{static_cast<bool>(branch_input.to_status)} {
         if (from_node_ == to_node_) {
             throw InvalidBranch{id(), from_node_};
         }
@@ -111,9 +113,38 @@ class Branch : public Base {
         return output;
     }
 
+    BranchShortCircuitOutput get_sc_output(ComplexValue<true> const& i_f, ComplexValue<true> const& i_t) const {
+        return get_sc_output(BranchShortCircuitMathOutput<true>{.i_f = i_f, .i_t = i_t});
+    }
+    BranchShortCircuitOutput get_sc_output(ComplexValue<false> const& i_f, ComplexValue<false> const& i_t) const {
+        return get_sc_output(BranchShortCircuitMathOutput<false>{.i_f = i_f, .i_t = i_t});
+    }
+
+    BranchShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<false> const& branch_math_output) const {
+        BranchShortCircuitOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        // calculate result
+        output.i_from = base_i_from() * cabs(branch_math_output.i_f);
+        output.i_to = base_i_to() * cabs(branch_math_output.i_t);
+        output.i_from_angle = arg(branch_math_output.i_f);
+        output.i_to_angle = arg(branch_math_output.i_t);
+        return output;
+    }
+
+    BranchShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<true> const& branch_math_output) const {
+        return get_sc_output(BranchShortCircuitMathOutput<false>{.i_f = ComplexValue<false>{branch_math_output.i_f},
+                                                                 .i_t = ComplexValue<false>{branch_math_output.i_t}});
+    }
+
     template <bool sym>
     BranchOutput<sym> get_null_output() const {
         BranchOutput<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
+
+    BranchShortCircuitOutput get_null_sc_output() const {
+        BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -124,12 +155,12 @@ class Branch : public Base {
         bool const set_to = new_to_status != na_IntS;
         bool changed = false;
         if (set_from) {
-            changed = changed || (from_status_ != (bool)new_from_status);
-            from_status_ = (bool)new_from_status;
+            changed = changed || (from_status_ != static_cast<bool>(new_from_status));
+            from_status_ = static_cast<bool>(new_from_status);
         }
         if (set_to) {
-            changed = changed || (to_status_ != (bool)new_to_status);
-            to_status_ = (bool)new_to_status;
+            changed = changed || (to_status_ != static_cast<bool>(new_to_status));
+            to_status_ = static_cast<bool>(new_to_status);
         }
         return changed;
     }

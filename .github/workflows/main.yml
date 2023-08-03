@@ -94,9 +94,10 @@ jobs:
     strategy:
       matrix:
         build-option: [ debug, release ]
+        compiler: [msvc, clang-cl]
 
     env:
-      PRESET: msvc-${{ matrix.build-option }}
+      PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v3

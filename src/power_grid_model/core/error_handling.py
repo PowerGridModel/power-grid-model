@@ -66,3 +66,30 @@ def assert_no_error(batch_size: int = 1):
     error = find_error(batch_size=batch_size)
     if error is not None:
         raise error
+
+
+def handle_errors(continue_on_batch_error: bool, batch_size: int = 1) -> Optional[PowerGridBatchError]:
+    """
+    Handle any errors in the way that is specified.
+
+    Args:
+        continue_on_batch_error (bool): Return the error when the error type is a batch error instead of reraising it.
+        batch_size (int, optional): Size of batch. Defaults to 1.
+
+    Raises:
+        error: Any errors previously encountered, unless it was a batch error and continue_on_batch_error was True.
+
+    Returns:
+        Optional[PowerGridBatchError]: None if there were no errors, or the previously encountered
+                                       error if it was a batch error and continue_on_batch_error was True.
+    """
+    error: Optional[RuntimeError] = find_error(batch_size=batch_size)
+    if error is None:
+        return None
+
+    if continue_on_batch_error and isinstance(error, PowerGridBatchError):
+        # continue on batch error
+        return error
+
+    # raise normal error
+    raise error

@@ -6,13 +6,14 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_SENSOR_HPP
 #define POWER_GRID_MODEL_COMPONENT_SENSOR_HPP
 
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
@@ -20,9 +21,11 @@ class Sensor : public Base {
    public:
     static constexpr char const* name = "sensor";
     using InputType = SensorInput;
+    using ShortCircuitOutputType = SensorShortCircuitOutput;
 
     // constructor
-    Sensor(SensorInput const& sensor_input) : Base{sensor_input}, measured_object_{sensor_input.measured_object} {
+    explicit Sensor(SensorInput const& sensor_input)
+        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {
     }
 
     ID measured_object() const {

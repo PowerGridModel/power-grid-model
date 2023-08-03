@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/three_winding_transformer.hpp"
-#include "power_grid_model/component/transformer.hpp"
+#include <power_grid_model/component/three_winding_transformer.hpp>
+#include <power_grid_model/component/transformer.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
@@ -106,7 +107,7 @@ TEST_CASE("Test three winding transformer") {
     input.pk_23_max = 120e3;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
 
-    for (ThreeWindingTransformer& transformer3 : vec) {
+    for (ThreeWindingTransformer const& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
     }
 
@@ -212,7 +213,7 @@ TEST_CASE("Test three winding transformer") {
     };
 
     auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
-        Transformer t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
+        Transformer const t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
         return std::array<Transformer, 3>{t1, t2, t3};
     };
 
@@ -296,11 +297,10 @@ TEST_CASE("Test three winding transformer") {
 
     SUBCASE("Check output of branch 3") {
         // TODO asym output check
-        BranchMathOutput<true> b1_output, b2_output, b3_output;
         // Branch initialization: s_f, s_t, i_f, i_t
-        b1_output = {(1.0 - 2.0i), (2.0 - 3.0i), (1.5 - 2.5i), (2.5 - 3.5i)};
-        b2_output = {(2.0 - 3.0i), (-3.0 + 2.0i), (1.5 - 2.5i), (-4.0 + 1.5i)};
-        b3_output = {(3.0 + 1.0i), (1.0 + 1.0i), (1.5 - 2.5i), (1.5 + 2.0i)};
+        BranchMathOutput<true> const b1_output{(1.0 - 2.0i), (2.0 - 3.0i), (1.5 - 2.5i), (2.5 - 3.5i)};
+        BranchMathOutput<true> const b2_output{(2.0 - 3.0i), (-3.0 + 2.0i), (1.5 - 2.5i), (-4.0 + 1.5i)};
+        BranchMathOutput<true> const b3_output{(3.0 + 1.0i), (1.0 + 1.0i), (1.5 - 2.5i), (1.5 + 2.0i)};
 
         Branch3Output<true> sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
 
@@ -337,19 +337,18 @@ TEST_CASE("Test three winding transformer") {
         CHECK(sym_output.s_3 == doctest::Approx(out_s_3));
         CHECK(sym_output.loading == doctest::Approx(out_loading));
 
-        BranchMathOutput<false> asym_b1_output, asym_b2_output, asym_b3_output;
-        asym_b1_output = {{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
-                          {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
-                          {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                          {(2.5 - 3.5i), (2.5 - 3.5i), (2.5 - 3.5i)}};
-        asym_b2_output = {{(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
-                          {(-3.0 + 2.0i), (-3.0 + 2.0i), (-3.0 + 2.0i)},
-                          {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                          {(-4.0 + 1.5i), (-4.0 + 1.5i), (-4.0 + 1.5i)}};
-        asym_b3_output = {{(3.0 + 1.0i), (3.0 + 1.0i), (3.0 + 1.0i)},
-                          {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
-                          {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                          {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
+        BranchMathOutput<false> const asym_b1_output{{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
+                                                     {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
+                                                     {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                     {(2.5 - 3.5i), (2.5 - 3.5i), (2.5 - 3.5i)}};
+        BranchMathOutput<false> const asym_b2_output{{(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
+                                                     {(-3.0 + 2.0i), (-3.0 + 2.0i), (-3.0 + 2.0i)},
+                                                     {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                     {(-4.0 + 1.5i), (-4.0 + 1.5i), (-4.0 + 1.5i)}};
+        BranchMathOutput<false> const asym_b3_output{{(3.0 + 1.0i), (3.0 + 1.0i), (3.0 + 1.0i)},
+                                                     {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
+                                                     {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                     {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
 
         Branch3Output<false> asym_output = vec[0].get_output(asym_b1_output, asym_b2_output, asym_b3_output);
 
@@ -370,6 +369,57 @@ TEST_CASE("Test three winding transformer") {
         CHECK(asym_output.loading == doctest::Approx(out_loading));
     }
 
+    SUBCASE("Check asym short circuit output of branch 3") {
+        ComplexValue<true> const i_1{1.5 - 2.5i};
+        ComplexValue<true> const i_2{1.0 - 2.2i};
+        ComplexValue<true> const i_3{1.3 - 2.1i};
+        ComplexValue<false> const i_1_asym{1.5 - 2.5i};
+        ComplexValue<false> const i_2_asym{1.0 - 2.2i};
+        ComplexValue<false> const i_3_asym{1.3 - 2.1i};
+
+        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(i_1_asym, i_2_asym, i_3_asym);
+
+        CHECK(asym_sc_output.id == 1);
+        CHECK(asym_sc_output.energized == 1);
+        CHECK(asym_sc_output.i_1(2) == doctest::Approx(cabs(i_1) * base_i_1));
+        CHECK(asym_sc_output.i_2(0) == doctest::Approx(cabs(i_2) * base_i_2));
+        CHECK(asym_sc_output.i_3(1) == doctest::Approx(cabs(i_3) * base_i_3));
+        CHECK(asym_sc_output.i_1_angle(2) == doctest::Approx(arg(i_1) + deg_120));
+        CHECK(asym_sc_output.i_2_angle(0) == doctest::Approx(arg(i_2)));
+        CHECK(asym_sc_output.i_3_angle(1) == doctest::Approx(arg(i_3) - deg_120));
+    }
+
+    SUBCASE("Check sym short circuit output of branch 3") {
+        ComplexValue<true> const i_1{1.5 - 2.5i};
+        ComplexValue<true> const i_2{1.0 - 2.2i};
+        ComplexValue<true> const i_3{1.3 - 2.1i};
+
+        BranchShortCircuitMathOutput<true> const sym_b1_output{i_1, ComplexValue<true>{}};
+        BranchShortCircuitMathOutput<true> const sym_b2_output{i_2, ComplexValue<true>{}};
+        BranchShortCircuitMathOutput<true> const sym_b3_output{i_3, ComplexValue<true>{}};
+
+        Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output(sym_b1_output, sym_b2_output, sym_b3_output);
+
+        ComplexValue<false> const i_1_asym{1.5 - 2.5i};
+        ComplexValue<false> const i_2_asym{1.0 - 2.2i};
+        ComplexValue<false> const i_3_asym{1.3 - 2.1i};
+
+        BranchShortCircuitMathOutput<false> const asym_b1_output{i_1_asym, ComplexValue<false>{}};
+        BranchShortCircuitMathOutput<false> const asym_b2_output{i_2_asym, ComplexValue<false>{}};
+        BranchShortCircuitMathOutput<false> const asym_b3_output{i_3_asym, ComplexValue<false>{}};
+
+        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(asym_b1_output, asym_b2_output, asym_b3_output);
+
+        CHECK(sym_sc_output.id == asym_sc_output.id);
+        CHECK(sym_sc_output.energized == asym_sc_output.energized);
+        CHECK(sym_sc_output.i_1(2) == doctest::Approx(asym_sc_output.i_1(2)));
+        CHECK(sym_sc_output.i_2(0) == doctest::Approx(asym_sc_output.i_2(0)));
+        CHECK(sym_sc_output.i_3(1) == doctest::Approx(asym_sc_output.i_3(1)));
+        CHECK(sym_sc_output.i_1_angle(2) == doctest::Approx(asym_sc_output.i_1_angle(2)));
+        CHECK(sym_sc_output.i_2_angle(0) == doctest::Approx(asym_sc_output.i_2_angle(0)));
+        CHECK(sym_sc_output.i_3_angle(1) == doctest::Approx(asym_sc_output.i_3_angle(1)));
+    }
+
     SUBCASE("No source results") {
         Branch3Output<false> output = vec[0].get_null_output<false>();
         CHECK(output.id == 1);
@@ -387,6 +437,18 @@ TEST_CASE("Test three winding transformer") {
         CHECK(output.i_3(1) == 0);
         CHECK(output.s_3(2) == 0);
         CHECK(output.loading == 0);
+    }
+
+    SUBCASE("No source short circuit results") {
+        Branch3ShortCircuitOutput output = vec[0].get_null_sc_output();
+        CHECK(output.id == 1);
+        CHECK(!output.energized);
+        CHECK(output.i_1(2) == 0);
+        CHECK(output.i_2(0) == 0);
+        CHECK(output.i_3(1) == 0);
+        CHECK(output.i_1_angle(2) == 0);
+        CHECK(output.i_2_angle(0) == 0);
+        CHECK(output.i_3_angle(1) == 0);
     }
 
     SUBCASE("invalid input") {
@@ -438,6 +500,6 @@ TEST_CASE("Test three winding transformer") {
             CHECK(!changed.param);
         }
     }
-}
+}  // namespace power_grid_model
 
 }  // namespace power_grid_model

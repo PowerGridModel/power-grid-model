@@ -6,6 +6,8 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_LINK_HPP
 #define POWER_GRID_MODEL_COMPONENT_LINK_HPP
 
+#include "branch.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -13,7 +15,6 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "branch.hpp"
 
 namespace power_grid_model {
 
@@ -23,7 +24,7 @@ class Link final : public Branch {
     using UpdateType = BranchUpdate;
     static constexpr char const* name = "link";
 
-    Link(LinkInput const& link_input, double u1, double u2)
+    explicit Link(LinkInput const& link_input, double u1, double u2)
         : Branch{link_input}, base_i_from_{base_power_3p / u1 / sqrt3}, base_i_to_{base_power_3p / u2 / sqrt3} {
     }
 

@@ -6,7 +6,7 @@
 	// Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
 	// List of extensions which should be recommended for users of this workspace.
 	"recommendations": [
-		"bungcip.better-toml",
+		"tamasfe.even-better-toml",
 		"ms-python.black-formatter",
 		"ms-python.isort",
 		"ms-python.python",
@@ -26,6 +26,7 @@
 		"twxs.cmake",
 		"matepek.vscode-catch2-test-adapter",
 		"cschlosser.doxdocgen",
-		"fredericbonnet.cmake-test-adapter"
+		"fredericbonnet.cmake-test-adapter",
+		"sonarsource.sonarlint-vscode"
 	]
 }

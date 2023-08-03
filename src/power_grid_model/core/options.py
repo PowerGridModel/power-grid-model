@@ -40,7 +40,7 @@ class Options:
     calculation_method = OptionSetter(pgc.set_calculation_method)
     symmetric = OptionSetter(pgc.set_symmetric)
     error_tolerance = OptionSetter(pgc.set_err_tol)
-    max_iteration = OptionSetter(pgc.set_max_iter)
+    max_iterations = OptionSetter(pgc.set_max_iter)
     threading = OptionSetter(pgc.set_threading)
 
     @property

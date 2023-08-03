@@ -6,11 +6,11 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
 
-#include <memory>
-
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+
+#include <memory>
 
 namespace power_grid_model {
 
@@ -21,30 +21,30 @@ template <class Tensor, class RHSVector, class XVector, class = void>
 struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
-using enable_scalar_lu_t =
-    std::enable_if_t<std::is_same_v<Tensor, RHSVector> && std::is_same_v<Tensor, XVector> && check_scalar_v<Tensor>>;
+concept scalar_value_lu = scalar_value<Tensor> && std::same_as<Tensor, RHSVector> && std::same_as<Tensor, XVector>;
 
+// TODO(mgovers) improve this concept
 template <class Derived>
 int check_array_base(Eigen::ArrayBase<Derived> const&) {
     return 0;
 }
+template <class ArrayLike>
+concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>;  // should be an eigen array
+
+template <class LHSArrayLike, class RHSArrayLike>
+concept matrix_multiplicable = eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
+    (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
 
 template <class Tensor, class RHSVector, class XVector>
-using enable_tensor_lu_t = std::enable_if_t<
-    std::is_same_v<decltype(check_array_base(Tensor{})), int> &&            // tensor should be an eigen array
-    std::is_same_v<decltype(check_array_base(RHSVector{})), int> &&         // rhs vector should be an eigen array
-    std::is_same_v<decltype(check_array_base(XVector{})), int> &&           // x vector should be an eigen array
-    (Idx)Tensor::RowsAtCompileTime == (Idx)Tensor::ColsAtCompileTime &&     // tensor should be square
-    RHSVector::ColsAtCompileTime == 1 &&                                    // rhs vector should be column vector
-    (Idx)RHSVector::RowsAtCompileTime == (Idx)Tensor::RowsAtCompileTime &&  // rhs vector should be column vector
-    XVector::ColsAtCompileTime == 1 &&                                      // x vector should be column vector
-    (Idx)XVector::RowsAtCompileTime == (Idx)Tensor::RowsAtCompileTime &&    // x vector should be column vector
-    std::is_same_v<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
-    std::is_same_v<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
-    check_scalar_v<typename Tensor::Scalar>>;  // scalar can only be double or complex double
+concept tensor_lu = rk2_tensor<Tensor> && column_vector<RHSVector> && column_vector<XVector> &&
+    matrix_multiplicable<Tensor, RHSVector> && matrix_multiplicable<Tensor, XVector> &&
+    std::same_as<typename Tensor::Scalar, typename RHSVector::Scalar> &&  // all entries should have same scalar type
+    std::same_as<typename Tensor::Scalar, typename XVector::Scalar> &&    // all entries should have same scalar type
+    scalar_value<typename Tensor::Scalar>;                                // scalar can only be double or complex double
 
 template <class Tensor, class RHSVector, class XVector>
-struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_scalar_lu_t<Tensor, RHSVector, XVector>> {
+requires scalar_value_lu<Tensor, RHSVector, XVector>
+struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = false;
     static constexpr Idx block_size = 1;
     using Scalar = Tensor;
@@ -55,7 +55,8 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_scalar_lu_t<Tens
 };
 
 template <class Tensor, class RHSVector, class XVector>
-struct sparse_lu_entry_trait<Tensor, RHSVector, XVector, enable_tensor_lu_t<Tensor, RHSVector, XVector>> {
+requires tensor_lu<Tensor, RHSVector, XVector>
+struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = true;
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = typename Tensor::Scalar;

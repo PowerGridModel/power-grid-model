@@ -10,12 +10,13 @@
 iterative linear state estimation solver
 */
 
+#include "y_bus.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "y_bus.hpp"
 
 namespace power_grid_model {
 
@@ -369,7 +370,7 @@ class MeasuredValues {
                         ++n_unmeasured;
                         continue;
                     }
-                    else if (idx_load_gen_power_[load_gen] == disconnected) {
+                    if (idx_load_gen_power_[load_gen] == disconnected) {
                         continue;
                     }
                     appliance_injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
@@ -381,7 +382,7 @@ class MeasuredValues {
                         ++n_unmeasured;
                         continue;
                     }
-                    else if (idx_source_power_[source] == disconnected) {
+                    if (idx_source_power_[source] == disconnected) {
                         continue;
                     }
                     appliance_injection_measurement.value += extra_value_[idx_source_power_[source]].value;
@@ -856,7 +857,7 @@ class IterativeLinearSESolver {
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // phase offset to calculated voltage as normalized
-            ComplexValue<sym> u_normalized = x_rhs_[bus].u() * angle_offset;
+            ComplexValue<sym> const u_normalized = x_rhs_[bus].u() * angle_offset;
             // get dev of last iteration, get max
             double const dev = max_val(cabs(u_normalized - u[bus]));
             max_dev = std::max(dev, max_dev);
@@ -868,8 +869,8 @@ class IterativeLinearSESolver {
 
     void calculate_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, MathOutput<sym>& output) {
         // call y bus
-        output.branch = y_bus.calculate_branch_flow(output.u);
-        output.shunt = y_bus.calculate_shunt_flow(output.u);
+        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
+        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
         output.bus_injection = y_bus.calculate_injection(output.u);
         std::tie(output.load_gen, output.source) =
             measured_value.calculate_load_gen_source(output.u, output.bus_injection);

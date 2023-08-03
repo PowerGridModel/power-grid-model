@@ -6,10 +6,11 @@
 #ifndef POWER_GRID_MODEL_EXCEPTION_HPP
 #define POWER_GRID_MODEL_EXCEPTION_HPP
 
+#include "enum.hpp"
+#include "power_grid_model.hpp"
+
 #include <exception>
 #include <string>
-
-#include "power_grid_model.hpp"
 
 namespace power_grid_model {
 
@@ -94,14 +95,14 @@ class IterationDiverge : public PowerGridError {
 
 class ConflictID : public PowerGridError {
    public:
-    ConflictID(ID id) {
+    explicit ConflictID(ID id) {
         append_msg("Conflicting id detected: " + std::to_string(id) + '\n');
     }
 };
 
 class IDNotFound : public PowerGridError {
    public:
-    IDNotFound(ID id) {
+    explicit IDNotFound(ID id) {
         append_msg("The id cannot be found: " + std::to_string(id) + '\n');
     }
 };
@@ -115,14 +116,14 @@ class InvalidMeasuredObject : public PowerGridError {
 
 class IDWrongType : public PowerGridError {
    public:
-    IDWrongType(ID id) {
+    explicit IDWrongType(ID id) {
         append_msg("Wrong type for object with id " + std::to_string(id) + '\n');
     }
 };
 
 class CalculationError : public PowerGridError {
    public:
-    CalculationError(std::string const &msg) {
+    explicit CalculationError(std::string const &msg) {
         append_msg(msg);
     }
 };
@@ -155,8 +156,36 @@ class InvalidCalculationMethod : public CalculationError {
 
 class UnknownAttributeName : public PowerGridError {
    public:
-    UnknownAttributeName(std::string const &attr_name) {
+    explicit UnknownAttributeName(std::string const &attr_name) {
         append_msg("Unknown attribute name!" + attr_name + "\n");
+    }
+};
+
+class InvalidShortCircuitType : public PowerGridError {
+   public:
+    explicit InvalidShortCircuitType(FaultType short_circuit_type) {
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") is invalid!\n");
+    }
+    InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") does not match the calculation type (symmetric=" + std::to_string(sym) + ")\n");
+    }
+};
+
+class InvalidShortCircuitPhases : public PowerGridError {
+   public:
+    InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
+        append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
+                   ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ")\n");
+    }
+};
+
+class InvalidShortCircuitPhaseOrType : public PowerGridError {
+   public:
+    InvalidShortCircuitPhaseOrType() {
+        append_msg("During one calculation the short circuit types phases should be similar for all faults \n");
     }
 };
 

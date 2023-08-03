@@ -37,7 +37,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "breathe",
-    "numpydoc",
+    "sphinx.ext.napoleon",
     "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",

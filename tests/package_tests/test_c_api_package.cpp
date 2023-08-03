@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model_c.h"
+
 #include <iostream>
 #include <memory>
-
-#include "power_grid_model_c.h"
 
 namespace {
 // custom deleter
@@ -17,7 +17,7 @@ struct DeleterFunctor {
     }
 };
 
-using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<PGM_destroy_handle>>;
+using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<&PGM_destroy_handle>>;
 }  // namespace
 
 auto main() -> int {

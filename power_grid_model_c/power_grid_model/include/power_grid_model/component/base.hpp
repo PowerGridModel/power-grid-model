@@ -23,16 +23,23 @@ class Base {
     static constexpr char const* name = "base";
     virtual ComponentType math_model_type() const = 0;
 
-    Base(BaseInput const& base_input) : id_{base_input.id} {
+    explicit Base(BaseInput const& base_input) : id_{base_input.id} {
     }
     virtual ~Base() = default;
-    ID id() const noexcept {
+    constexpr ID id() const noexcept {
         return id_;
     }
-    BaseOutput base_output(bool is_energized) const {
-        return BaseOutput{id_, is_energized};
+    constexpr BaseOutput base_output(bool is_energized) const {
+        return BaseOutput{id_, static_cast<IntS>(is_energized)};
     }
     virtual bool energized(bool is_connected_to_source) const = 0;
+
+    Base(Base&&) = default;
+    Base& operator=(Base&&) = default;
+
+   protected:
+    Base(const Base&) = default;
+    Base& operator=(const Base&) = default;
 
    private:
     ID id_;

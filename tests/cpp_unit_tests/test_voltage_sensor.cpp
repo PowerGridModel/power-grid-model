@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/calculation_parameters.hpp"
-#include "power_grid_model/component/sensor.hpp"
-#include "power_grid_model/component/voltage_sensor.hpp"
-#include "power_grid_model/power_grid_model.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/component/sensor.hpp>
+#include <power_grid_model/component/voltage_sensor.hpp>
+#include <power_grid_model/power_grid_model.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
-        VoltageSensorInput<true> voltage_sensor_input{};
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -23,7 +24,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test Sensor math_model_type") {
-        VoltageSensorInput<true> voltage_sensor_input{};
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -41,10 +42,14 @@ TEST_CASE("Test voltage sensor") {
         CHECK(vs_output.energized == 0);
         CHECK(vs_output.u_residual == doctest::Approx(0.0));
         CHECK(vs_output.u_angle_residual == doctest::Approx(0.0));
+
+        SensorShortCircuitOutput vs_sc_output = voltage_sensor.get_null_sc_output();
+        CHECK(vs_sc_output.id == 12);
+        CHECK(vs_sc_output.energized == 0);
     }
 
     SUBCASE("Test voltage sensor update - sym") {
-        VoltageSensorInput<true> voltage_sensor_input{};
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<true> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -75,7 +80,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - asym") {
-        VoltageSensorInput<false> voltage_sensor_input{};
+        VoltageSensorInput<false> const voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<false> voltage_sensor{voltage_sensor_input, u_rated};
 

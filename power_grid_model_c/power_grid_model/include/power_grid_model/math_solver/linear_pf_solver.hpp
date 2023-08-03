@@ -30,13 +30,14 @@ if there are sources
 
 */
 
+#include "sparse_lu_solver.hpp"
+#include "y_bus.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "sparse_lu_solver.hpp"
-#include "y_bus.hpp"
 
 namespace power_grid_model {
 
@@ -65,7 +66,7 @@ class LinearPFSolver {
         MathOutput<sym> output;
         output.u.resize(n_bus_);
 
-        Timer main_timer(calculation_info, 2220, "Math solver");
+        Timer const main_timer(calculation_info, 2220, "Math solver");
 
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
@@ -75,9 +76,7 @@ class LinearPFSolver {
             if (k == -1) {
                 return ComplexTensor<sym>{};
             }
-            else {
-                return ydata[k];
-            }
+            return ydata[k];
         });
 
         // loop to all loads and sources, j as load number
@@ -128,8 +127,8 @@ class LinearPFSolver {
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // call y bus
-        output.branch = y_bus.calculate_branch_flow(output.u);
-        output.shunt = y_bus.calculate_shunt_flow(output.u);
+        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
+        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
 
         // prepare source, load gen and node injection
         output.source.resize(source_bus_indptr_->back());

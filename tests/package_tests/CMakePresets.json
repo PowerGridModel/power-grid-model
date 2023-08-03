@@ -111,22 +111,13 @@
       "inherits": [
         "clang-cl-base",
         "debug"
-      ],
-      "hidden": true
+      ]
     },
     {
       "name": "clang-cl-release",
       "displayName": "Release (Clang CL)",
       "inherits": [
         "clang-cl-base",
-        "release"
-      ],
-      "hidden": true
-    },
-    {
-      "name": "ci-clang-release",
-      "inherits": [
-        "ci-unix",
         "release"
       ]
     },
@@ -138,7 +129,7 @@
       ]
     },
     {
-      "name": "ci-gcc-release",
+      "name": "ci-clang-release",
       "inherits": [
         "ci-unix",
         "release"
@@ -149,6 +140,13 @@
       "inherits": [
         "ci-unix",
         "debug"
+      ]
+    },
+    {
+      "name": "ci-gcc-release",
+      "inherits": [
+        "ci-unix",
+        "release"
       ]
     },
     {

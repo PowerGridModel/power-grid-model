@@ -6,15 +6,15 @@
 #ifndef POWER_GRID_MODEL_TIMER_HPP
 #define POWER_GRID_MODEL_TIMER_HPP
 
+#include "power_grid_model.hpp"
+
 #include <iomanip>
 #include <sstream>
-
-#include "power_grid_model.hpp"
 
 namespace power_grid_model {
 
 class Timer {
-   protected:
+   private:
     CalculationInfo *info_;
     int code_;
     std::string name_;
@@ -27,10 +27,9 @@ class Timer {
         : info_(&info), code_(code), name_(std::move(name)), start_(Clock::now()) {
     }
 
-    ~Timer() {
-        if (info_)
-            stop();
-    }
+    Timer(const Timer &) = delete;
+    Timer(Timer &&) = default;
+    Timer &operator=(const Timer &) = delete;
 
     Timer &operator=(Timer &&timer) noexcept {
         // Stop the current timer
@@ -49,6 +48,12 @@ class Timer {
         return *this;
     }
 
+    ~Timer() {
+        if (info_) {
+            stop();
+        }
+    }
+
     void stop() {
         if (info_) {
             auto const now = Clock::now();
@@ -63,8 +68,9 @@ class Timer {
         ss << std::setw(4) << std::setfill('0') << code << ".";
         auto key = ss.str();
         for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
-            if (key[i] == '0')
+            if (key[i] == '0') {
                 break;
+            }
             key += "\t";
         }
         key += name;

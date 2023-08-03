@@ -26,14 +26,14 @@ struct YBusElementMap {
 };
 
 // append to element vector
-inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx bus1, Idx bus2, YBusElementType element_type,
-                                  Idx idx) {
+inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bus, Idx second_bus,
+                                  YBusElementType element_type, Idx idx) {
     // skip for -1
-    if (bus1 == -1 || bus2 == -1) {
+    if (first_bus == -1 || second_bus == -1) {
         return;
     }
     // add
-    vec.push_back({{bus1, bus2}, {element_type, idx}});
+    vec.push_back({{first_bus, second_bus}, {element_type, idx}});
 }
 
 // counting sort element
@@ -95,7 +95,7 @@ struct YBusStructure {
     IdxVector lu_transpose_entry;
 
     // construct ybus structure
-    YBusStructure(MathModelTopology const& topo) {
+    explicit YBusStructure(MathModelTopology const& topo) {
         Idx const n_bus = topo.n_bus();
         Idx const n_branch = topo.n_branch();
         Idx const n_fill_in = (Idx)topo.fill_in.size();
@@ -415,8 +415,11 @@ class YBus {
     }
 
     // calculate branch flow based on voltage
-    std::vector<BranchMathOutput<sym>> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<BranchMathOutput<sym>> branch_flow(math_topology_->branch_bus_idx.size());
+    template <typename T>
+    requires std::same_as<T, BranchMathOutput<sym>> || std::same_as<T, BranchShortCircuitMathOutput<sym>> std::vector<T>
+    calculate_branch_flow(ComplexValueVector<sym> const& u)
+    const {
+        std::vector<T> branch_flow(math_topology_->branch_bus_idx.size());
         std::transform(math_topology_->branch_bus_idx.cbegin(), math_topology_->branch_bus_idx.cend(),
                        math_model_param_->branch_param.cbegin(), branch_flow.begin(),
                        [&u](BranchIdx branch_idx, BranchCalcParam<sym> const& param) {
@@ -424,23 +427,30 @@ class YBus {
                            // if one side is disconnected, use zero voltage at that side
                            ComplexValue<sym> const uf = f != -1 ? u[f] : ComplexValue<sym>{0.0};
                            ComplexValue<sym> const ut = t != -1 ? u[t] : ComplexValue<sym>{0.0};
-                           BranchMathOutput<sym> output;
+                           T output;
 
                            // See "Branch Flow Calculation" in "State Estimation Alliander"
                            output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                            output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
-                           // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
-                           output.s_f = uf * conj(output.i_f);
-                           output.s_t = ut * conj(output.i_t);
+                           if constexpr (std::same_as<T, BranchMathOutput<sym>>) {
+                               // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
+                               output.s_f = uf * conj(output.i_f);
+                               output.s_t = ut * conj(output.i_t);
+                           }
+
                            return output;
                        });
         return branch_flow;
     }
 
     // calculate shunt flow based on voltage, injection direction
-    std::vector<ApplianceMathOutput<sym>> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<ApplianceMathOutput<sym>> shunt_flow(math_topology_->n_shunt());
+    template <typename MathOutputType>
+    requires std::same_as<MathOutputType, ApplianceMathOutput<sym>> ||
+        std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
+            std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u)
+    const {
+        std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
         // loop all bus, then all shunt within the bus
         for (Idx bus = 0; bus != size(); ++bus) {
             for (Idx shunt = math_topology_->shunt_bus_indptr[bus]; shunt != math_topology_->shunt_bus_indptr[bus + 1];
@@ -449,8 +459,10 @@ class YBus {
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);
 
-                // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
-                shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
+                if constexpr (std::same_as<MathOutputType, ApplianceMathOutput<sym>>) {
+                    // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
+                    shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
+                }
             }
         }
         return shunt_flow;

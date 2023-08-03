@@ -6,11 +6,12 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_POWER_SENSOR_HPP
 #define POWER_GRID_MODEL_COMPONENT_POWER_SENSOR_HPP
 
+#include "sensor.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../enum.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
-#include "sensor.hpp"
 
 namespace power_grid_model {
 
@@ -18,7 +19,7 @@ class GenericPowerSensor : public Sensor {
    public:
     static constexpr char const* name = "generic_power_sensor";
 
-    GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
+    explicit GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
         : Sensor{generic_power_sensor_input}, terminal_type_{generic_power_sensor_input.measured_terminal_type} {
     }
 
@@ -41,15 +42,17 @@ class GenericPowerSensor : public Sensor {
         return {{id(), false}, {}, {}};
     }
 
+    SensorShortCircuitOutput get_null_sc_output() const {
+        return {{id(), false}};
+    }
+
    protected:
     double convert_direction() const {
         if (terminal_type_ == MeasuredTerminalType::load || terminal_type_ == MeasuredTerminalType::shunt) {
             return -1.0;  // For shunt and load the direction in the math model is opposite to the direction in the
                           // physical model
         }
-        else {
-            return 1.0;
-        }
+        return 1.0;
     }
 
    private:
@@ -68,7 +71,7 @@ class PowerSensor : public GenericPowerSensor {
     template <bool sym_calc>
     using OutputType = PowerSensorOutput<sym_calc>;
 
-    PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
+    explicit PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input}, power_sigma_{power_sensor_input.power_sigma / base_power<sym>} {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };
@@ -116,8 +119,8 @@ class PowerSensor : public GenericPowerSensor {
     template <bool sym_calc>
     PowerSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& s) const {
         PowerSensorOutput<sym_calc> output{};
-        ComplexValue<sym_calc> s_residual{process_mean_val<sym_calc>(s_measured_ - s) * convert_direction() *
-                                          base_power<sym_calc>};
+        ComplexValue<sym_calc> const s_residual{process_mean_val<sym_calc>(s_measured_ - s) * convert_direction() *
+                                                base_power<sym_calc>};
         output.id = id();
         output.energized = 1;  // power sensor is always energized
         output.p_residual = real(s_residual);

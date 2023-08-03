@@ -2,6 +2,15 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/container.hpp>
+#include <power_grid_model/main_model.hpp>
+
+#include <doctest/doctest.h>
+#include <nlohmann/json.hpp>
+
+#include <concepts>
 #include <cstdlib>
 #include <cstring>
 #include <deque>
@@ -10,16 +19,11 @@
 #include <iostream>
 #include <regex>
 
-#include "doctest/doctest.h"
-#include "nlohmann/json.hpp"
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
-#include "power_grid_model/container.hpp"
-#include "power_grid_model/main_model.hpp"
-
 namespace power_grid_model {
 
 namespace meta_data {
+
+namespace {
 
 using nlohmann::json;
 
@@ -31,9 +35,19 @@ json read_json(std::filesystem::path const& json_file) {
     return j;
 }
 
+class UnsupportedValidationCase : public PowerGridError {
+   public:
+    UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
+        using namespace std::string_literals;
+
+        auto const sym_str = sym ? "sym"s : "asym"s;
+        append_msg("Unsupported validation case: "s + sym_str + " "s + calculation_type);
+    };
+};
+
 // memory buffer
 struct BufferDeleter {
-    void operator()(void* ptr) {
+    void operator()(RawDataPtr ptr) {
         std::free(ptr);
     }
 };
@@ -47,42 +61,47 @@ struct Buffer {
     MutableDataPointer data_ptr;
 };
 
-void parse_single_object(void* ptr, json const& j, MetaData const& meta, Idx position) {
-    meta.set_nan(ptr, position);
+void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& meta, Idx position) {
     for (auto const& it : j.items()) {
         // Allow and skip unknown attributes
-        if (!meta.has_attr(it.key())) {
+        if (!meta.has_attribute(it.key())) {
             continue;
         }
-        DataAttribute attr = meta.get_attr(it.key());
-        if (attr.numpy_type == "i1") {
-            int8_t const value = it.value().get<int8_t>();
-            meta.set_attr(ptr, &value, attr, position);
-        }
-        else if (attr.numpy_type == "i4") {
-            int32_t const value = it.value().get<int32_t>();
-            meta.set_attr(ptr, &value, attr, position);
-        }
-        else if (attr.numpy_type == "f8") {
-            if (attr.dims.empty()) {
-                // single double
+        MetaAttribute const& attr = meta.get_attribute(it.key());
+        using enum CType;
+        switch (attr.ctype) {
+            case c_int8: {
+                int8_t const value = it.value().get<int8_t>();
+                attr.set_value(ptr, &value, position);
+                break;
+            }
+            case c_int32: {
+                int32_t const value = it.value().get<int32_t>();
+                attr.set_value(ptr, &value, position);
+                break;
+            }
+            case c_double: {
                 double const value = it.value().get<double>();
-                meta.set_attr(ptr, &value, attr, position);
+                attr.set_value(ptr, &value, position);
+                break;
             }
-            else {
-                // double[3]
+            case c_double3: {
                 std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
-                meta.set_attr(ptr, &value, attr, position);
+                attr.set_value(ptr, &value, position);
+                break;
             }
+            default:
+                throw MissingCaseForEnumError("CType for attribute", attr.ctype);
         }
     }
 }
 
-Buffer parse_single_type(json const& j, MetaData const& meta) {
+Buffer parse_single_type(json const& j, MetaComponent const& meta) {
     Buffer buffer;
     size_t const length = j.size();
     size_t const obj_size = meta.size;
     buffer.ptr = create_buffer(obj_size, length);
+    meta.set_nan(buffer.ptr.get(), 0, static_cast<PGM_MetaComponent::Idx>(length));
     for (Idx position = 0; position != static_cast<Idx>(length); ++position) {
         parse_single_object(buffer.ptr.get(), j[position], meta, position);
     }
@@ -92,14 +111,14 @@ Buffer parse_single_type(json const& j, MetaData const& meta) {
 }
 
 std::map<std::string, Buffer> parse_single_dict(json const& j, std::string const& data_type) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     std::map<std::string, Buffer> buffer_map;
     for (auto const& it : j.items()) {
         // skip empty list
-        if (it.value().size() == 0) {
+        if (it.value().empty()) {
             continue;
         }
-        buffer_map[it.key()] = parse_single_type(it.value(), meta.at(it.key()));
+        buffer_map[it.key()] = parse_single_type(it.value(), meta.get_component(it.key()));
     }
     return buffer_map;
 }
@@ -108,7 +127,7 @@ template <bool is_const>
 std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
     std::map<std::string, DataPointer<is_const>> dataset;
     for (auto const& [name, buffer] : buffer_map) {
-        dataset[name] = buffer.data_ptr;
+        dataset[name] = static_cast<DataPointer<is_const>>(buffer.data_ptr);
     }
     return dataset;
 }
@@ -131,10 +150,10 @@ SingleData convert_json_single(json const& j, std::string const& data_type) {
 
 // create single result set
 SingleData create_result_dataset(SingleData const& input, std::string const& data_type, Idx n_batch = 1) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     SingleData result;
     for (auto const& [name, buffer] : input.buffer_map) {
-        MetaData const& component_meta = meta.at(name);
+        MetaComponent const& component_meta = meta.get_component(name);
         Buffer result_buffer;
         Idx const length = buffer.indptr.back();
         result_buffer.ptr = create_buffer(component_meta.size, length * n_batch);
@@ -160,7 +179,7 @@ struct BatchData {
 
 // parse batch json data
 BatchData convert_json_batch(json const& j, std::string const& data_type) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     BatchData batch_data;
     for (auto const& j_single : j) {
         batch_data.individual_batch.push_back(convert_json_single(j_single, data_type));
@@ -175,13 +194,13 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
     }
     // allocate and copy object into batch dataset
     for (auto const& [name, total_length] : obj_count) {
-        MetaData const& component_meta = meta.at(name);
+        MetaComponent const& component_meta = meta.get_component(name);
         // allocate
         Buffer batch_buffer;
         batch_buffer.ptr = create_buffer(component_meta.size, total_length);
         batch_buffer.indptr.resize(n_batch + 1, 0);
         batch_buffer.data_ptr = MutableDataPointer{batch_buffer.ptr.get(), batch_buffer.indptr.data(), n_batch};
-        void* current_ptr = batch_buffer.ptr.get();
+        RawDataPtr current_ptr = batch_buffer.ptr.get();
         // copy buffer
         for (Idx batch = 0; batch != n_batch; ++batch) {
             SingleData const& single_data = batch_data.individual_batch[batch];
@@ -191,7 +210,7 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
                 continue;
             }
             Buffer const& single_buffer = found->second;
-            void const* const src_ptr = single_buffer.ptr.get();
+            RawDataConstPtr const src_ptr = single_buffer.ptr.get();
             Idx const length = single_buffer.indptr.back();
             // copy memory, assign indptr
             std::memcpy(current_ptr, src_ptr, length * component_meta.size);
@@ -208,24 +227,91 @@ BatchData convert_json_batch(json const& j, std::string const& data_type) {
     return batch_data;
 }
 
+template <typename T>
+std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
+    // ensure that we don't read outside owned memory
+    REQUIRE(attr.ctype == ctype_v<T>);
+    REQUIRE(attr.size == sizeof(T));
+
+    T value{};
+    attr.get_value(raw_data_ptr, reinterpret_cast<RawDataPtr>(&value), obj);
+
+    if constexpr (std::same_as<T, RealValue<false>>) {
+        return "(" + std::to_string(value(0)) + ", " + std::to_string(value(1)) + ", " + std::to_string(value(2)) + ")";
+    }
+    else {
+        return std::to_string(value);
+    }
+}
+
+std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
+    using enum CType;
+    using namespace std::string_literals;
+
+    switch (attr.ctype) {
+        case c_int32:
+            return get_as_string<int32_t>(raw_data_ptr, attr, obj);
+        case c_int8:
+            return get_as_string<int8_t>(raw_data_ptr, attr, obj);
+        case c_double:
+            return get_as_string<double>(raw_data_ptr, attr, obj);
+        case c_double3:
+            return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
+        default:
+            return "<unknown value type>"s;
+    }
+}
+
+template <bool sym>
+bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
+                                MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
+                                double rtol, Idx obj) {
+    RealValue<sym> mag{}, mag_ref{}, angle{}, angle_ref{};
+    mag_attr.get_value(result_ptr, &mag, obj);
+    mag_attr.get_value(reference_result_ptr, &mag_ref, obj);
+    angle_attr.get_value(result_ptr, &angle, obj);
+    angle_attr.get_value(reference_result_ptr, &angle_ref, obj);
+    ComplexValue<sym> const result = mag * exp(1.0i * angle);
+    ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
+    if constexpr (sym) {
+        return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
+    }
+    else {
+        return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
+    }
+}
+
+bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
+                                MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
+                                double rtol, Idx obj) {
+    if (angle_attr.ctype == CType::c_double) {
+        assert(mag_attr.ctype == CType::c_double);
+        return assert_angle_and_magnitude<true>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
+                                                obj);
+    }
+    assert(angle_attr.ctype == CType::c_double3);
+    assert(mag_attr.ctype == CType::c_double3);
+    return assert_angle_and_magnitude<false>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol, obj);
+}
+
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
-    PowerGridMetaData const& meta = meta_data().at(data_type);
+    MetaDataset const& meta = meta_data().get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
     // loop all batch
     for (Idx batch = 0; batch != batch_size; ++batch) {
         // loop all component type name
         for (auto const& [type_name, reference_dataset] : reference_result) {
-            MetaData const& component_meta = meta.at(type_name);
+            MetaComponent const& component_meta = meta.get_component(type_name);
             Idx const length = reference_dataset.elements_per_scenario(batch);
             // offset batch
-            void const* const result_ptr =
+            RawDataConstPtr const result_ptr =
                 reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * batch * component_meta.size;
-            void const* const reference_result_ptr =
+            RawDataConstPtr const reference_result_ptr =
                 reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * batch * component_meta.size;
             // loop all attribute
-            for (DataAttribute const& attr : component_meta.attributes) {
+            for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
                 if (attr.name == "u_angle") {
                     continue;
@@ -238,21 +324,36 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         break;
                     }
                 }
+                // for other _angle attribute, we need to find the magnitue and compare together
+                std::regex const angle_regex("(.*)(_angle)");
+                std::smatch angle_match;
+                bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                MetaAttribute const& possible_attr_magnitude =
+                    is_angle ? component_meta.get_attribute(angle_match[1]) : attr;
 
                 // loop all object
                 for (Idx obj = 0; obj != length; ++obj) {
                     // only check if reference result is not nan
-                    if (component_meta.check_nan(reference_result_ptr, attr, obj)) {
+                    if (attr.check_nan(reference_result_ptr, obj)) {
+                        continue;
+                    }
+                    // for angle attribute, also check the magnitude available
+                    if (is_angle && possible_attr_magnitude.check_nan(reference_result_ptr, obj)) {
                         continue;
                     }
                     bool const match =
-                        component_meta.compare_attr(result_ptr, reference_result_ptr, dynamic_atol, rtol, attr, obj);
+                        is_angle ? assert_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
+                                                              possible_attr_magnitude, dynamic_atol, rtol, obj)
+                                 : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
                     if (match) {
                         CHECK(match);
                     }
                     else {
-                        std::string const case_str = "batch: #" + std::to_string(batch) + ", Component: " + type_name +
-                                                     " #" + std::to_string(obj) + ", attribute: " + attr.name;
+                        std::string const case_str =
+                            "batch: #" + std::to_string(batch) + ", Component: " + type_name + " #" +
+                            std::to_string(obj) + ", attribute: " + attr.name +
+                            ": actual = " + get_as_string(result_ptr, attr, obj) +
+                            " vs. expected = " + get_as_string(reference_result_ptr, attr, obj);
                         CHECK_MESSAGE(match, case_str);
                     }
                 }
@@ -262,12 +363,12 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
 }
 
 // root path
-#ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH
+#ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR
 // use marco definition input
-std::filesystem::path const data_path{POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH};
+std::filesystem::path const data_dir{POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR};
 #else
 // use relative path to this file
-std::filesystem::path const data_path = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
+std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
 #endif
 
 // method map
@@ -276,15 +377,48 @@ std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"linear", CalculationMethod::linear},
     {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
+    {"iec60909", CalculationMethod::iec60909},
 };
-using CalculationFunc = BatchParameter (MainModel::*)(double, Idx, CalculationMethod, Dataset const&,
-                                                      ConstDataset const&, Idx);
-std::map<std::pair<std::string, bool>, CalculationFunc> const calculation_type_mapping = {
-    {{"power_flow", true}, &MainModel::calculate_power_flow<true>},
-    {{"power_flow", false}, &MainModel::calculate_power_flow<false>},
-    {{"state_estimation", true}, &MainModel::calculate_state_estimation<true>},
-    {{"state_estimation", false}, &MainModel::calculate_state_estimation<false>},
-};
+using CalculationFunc =
+    std::function<BatchParameter(MainModel&, CalculationMethod, Dataset const&, ConstDataset const&, Idx)>;
+
+CalculationFunc calculation_func(std::string const& calculation_type, bool const sym) {
+    using namespace std::string_literals;
+
+    constexpr auto err_tol{1e-8};
+    constexpr auto max_iter{20};
+    constexpr auto c_factor{1.1};
+
+    if (calculation_type == "power_flow"s) {
+        return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                     ConstDataset const& update_dataset, Idx threading) {
+            if (sym) {
+                return model.calculate_power_flow<true>(err_tol, max_iter, calculation_method, dataset, update_dataset,
+                                                        threading);
+            }
+            return model.calculate_power_flow<false>(err_tol, max_iter, calculation_method, dataset, update_dataset,
+                                                     threading);
+        };
+    }
+    if (calculation_type == "state_estimation"s) {
+        return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                     ConstDataset const& update_dataset, Idx threading) {
+            if (sym) {
+                return model.calculate_state_estimation<true>(err_tol, max_iter, calculation_method, dataset,
+                                                              update_dataset, threading);
+            }
+            return model.calculate_state_estimation<false>(err_tol, max_iter, calculation_method, dataset,
+                                                           update_dataset, threading);
+        };
+    }
+    if (calculation_type == "short_circuit"s) {
+        return [](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                  ConstDataset const& update_dataset, Idx threading) {
+            return model.calculate_short_circuit(c_factor, calculation_method, dataset, update_dataset, threading);
+        };
+    }
+    throw UnsupportedValidationCase{calculation_type, sym};
+}
 
 // case parameters
 struct CaseParam {
@@ -295,7 +429,8 @@ struct CaseParam {
     bool sym{};
     bool is_batch{};
     double rtol{};
-    BatchParameter batch_parameter{};
+    bool fail{};
+    [[no_unique_address]] BatchParameter batch_parameter{};
     std::map<std::string, double> atol;
 
     static std::string replace_backslash(std::string const& str) {
@@ -307,8 +442,64 @@ struct CaseParam {
     }
 };
 
-inline void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
-                      std::vector<CaseParam>& cases) {
+std::string get_output_type(std::string const& calculation_type, bool sym) {
+    using namespace std::string_literals;
+
+    if (calculation_type == "short_circuit"s) {
+        if (sym) {
+            throw UnsupportedValidationCase{calculation_type, sym};
+        }
+        return "sc_output"s;
+    }
+    if (sym) {
+        return "sym_output"s;
+    }
+    return "asym_output"s;
+}
+
+std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,
+                                        std::string const& calculation_type, bool is_batch,
+                                        std::string const& calculation_method, bool sym) {
+    using namespace std::string_literals;
+
+    auto const batch_suffix = is_batch ? "_batch"s : ""s;
+
+    // add a case if output file exists
+    std::filesystem::path const output_file =
+        case_dir / (get_output_type(calculation_type, sym) + batch_suffix + ".json"s);
+    if (!std::filesystem::exists(output_file)) {
+        return std::nullopt;
+    }
+
+    CaseParam param{};
+    param.case_dir = case_dir;
+    param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_dir).string());
+    param.calculation_type = calculation_type;
+    param.calculation_method = calculation_method;
+    param.sym = sym;
+    param.is_batch = is_batch;
+    j.at("rtol").get_to(param.rtol);
+    json const& j_atol = j.at("atol");
+    if (j_atol.type() != json::value_t::object) {
+        param.atol = {{"default", j_atol.get<double>()}};
+    }
+    else {
+        j_atol.get_to(param.atol);
+    }
+    if (j.contains("fail")) {
+        j.at("fail").get_to(param.fail);
+    }
+    param.case_name += sym ? "-sym"s : "-asym"s;
+    param.case_name += "-"s + param.calculation_method;
+    param.case_name += is_batch ? "_batch"s : ""s;
+
+    return param;
+}
+
+void add_cases(std::filesystem::path const& case_dir, std::string const& calculation_type, bool is_batch,
+               std::vector<CaseParam>& cases) {
+    using namespace std::string_literals;
+
     std::filesystem::path const param_file = case_dir / "params.json";
     json const j = read_json(param_file);
     // calculation method a string or array of strings
@@ -321,32 +512,16 @@ inline void add_cases(std::filesystem::path const& case_dir, std::string const& 
     }
     // loop sym and batch
     for (bool const sym : {true, false}) {
-        std::string const output_prefix = sym ? "sym_output" : "asym_output";
-        for (std::string const& calculation_method : calculation_methods) {
-            std::string const batch_suffix = is_batch ? "_batch" : "";
-            // add a case if output file exists
-            std::filesystem::path const output_file = case_dir / (output_prefix + batch_suffix + ".json");
-            if (std::filesystem::exists(output_file)) {
-                CaseParam param{};
-                param.case_dir = case_dir;
-                param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_path).string());
-                param.calculation_type = calculation_type;
-                param.calculation_method = calculation_method;
-                param.sym = sym;
-                param.is_batch = is_batch;
-                j.at("rtol").get_to(param.rtol);
-                json const j_atol = j.at("atol");
-                if (j_atol.type() != json::value_t::object) {
-                    param.atol = {{"default", j_atol.get<double>()}};
-                }
-                else {
-                    j_atol.get_to(param.atol);
-                }
-                param.case_name += sym ? "-sym" : "-asym";
-                param.case_name += "-" + param.calculation_method;
-                param.case_name += is_batch ? "-batch" : "";
-                cases.push_back(param);
+        for (auto const& calculation_method : calculation_methods) {
+            if (calculation_method == "iec60909"s && sym) {
+                continue;  // only asym short circuit calculations are supported
             }
+
+            CHECK_NOTHROW([&]() {
+                if (auto test_case = construct_case(case_dir, j, calculation_type, is_batch, calculation_method, sym)) {
+                    cases.push_back(*std::move(test_case));
+                }
+            }());
         }
     }
 }
@@ -363,32 +538,33 @@ struct ValidationCase {
 ValidationCase create_validation_case(CaseParam const& param) {
     ValidationCase validation_case;
     validation_case.param = param;
-    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
+    auto const output_type = get_output_type(param.calculation_type, param.sym);
+
     // input
     validation_case.input = convert_json_single(read_json(param.case_dir / "input.json"), "input");
     // output and update
     if (!param.is_batch) {
-        validation_case.output =
-            convert_json_single(read_json(param.case_dir / (output_prefix + ".json")), output_prefix);
+        validation_case.output = convert_json_single(read_json(param.case_dir / (output_type + ".json")), output_type);
     }
     else {
         validation_case.update_batch = convert_json_batch(read_json(param.case_dir / "update_batch.json"), "update");
         validation_case.output_batch =
-            convert_json_batch(read_json(param.case_dir / (output_prefix + "_batch.json")), output_prefix);
+            convert_json_batch(read_json(param.case_dir / (output_type + "_batch.json")), output_type);
     }
     return validation_case;
 }
 
-inline std::vector<CaseParam> read_all_cases(bool is_batch) {
+std::vector<CaseParam> read_all_cases(bool is_batch) {
     std::vector<CaseParam> all_cases;
     // detect all test cases
-    for (std::string calculation_type : {"power_flow", "state_estimation"}) {
+    for (std::string const calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
         // loop all sub-directories
-        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_path / calculation_type)) {
-            std::filesystem::path const case_dir = dir_entry.path();
+        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_dir / calculation_type)) {
+            std::filesystem::path const& case_dir = dir_entry.path();
             if (!std::filesystem::exists(case_dir / "params.json")) {
                 continue;
             }
+
             // try to add cases
             add_cases(case_dir, calculation_type, is_batch, all_cases);
         }
@@ -397,67 +573,97 @@ inline std::vector<CaseParam> read_all_cases(bool is_batch) {
     return all_cases;
 }
 
-inline std::vector<CaseParam> const& get_all_single_cases() {
+std::vector<CaseParam> const& get_all_single_cases() {
     static std::vector<CaseParam> const all_cases = read_all_cases(false);
     return all_cases;
 }
 
-inline std::vector<CaseParam> const& get_all_batch_cases() {
+std::vector<CaseParam> const& get_all_batch_cases() {
     static std::vector<CaseParam> const all_cases = read_all_cases(true);
     return all_cases;
 }
 
+}  // namespace
+
 TEST_CASE("Check existence of validation data path") {
-    REQUIRE(std::filesystem::exists(data_path));
-    std::cout << "Validation test dataset: " << data_path << '\n';
+    REQUIRE(std::filesystem::exists(data_dir));
+    std::cout << "Validation test dataset: " << data_dir << '\n';
+}
+
+namespace {
+constexpr bool should_skip_test(CaseParam const& param) {
+    return param.fail;
+}
+
+template <typename T>
+requires std::invocable<std::remove_cvref_t<T>>
+void execute_test(CaseParam const& param, T&& func) {
+    std::cout << "Validation test: " << param.case_name;
+
+    if (should_skip_test(param)) {
+        std::cout << " [skipped]" << std::endl;
+    }
+    else {
+        std::cout << std::endl;
+        func();
+    }
 }
 
 void validate_single_case(CaseParam const& param) {
-    std::cout << "Validation test: " << param.case_name << std::endl;
-    ValidationCase const validation_case = create_validation_case(param);
-    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-    SingleData result = create_result_dataset(validation_case.input, output_prefix);
-    // create model and run
-    MainModel model{50.0, validation_case.input.const_dataset, 0};
-    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
-    (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
-    assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol, param.rtol);
+    execute_test(param, [&]() {
+        ValidationCase const validation_case = create_validation_case(param);
+        std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
+        SingleData const result = create_result_dataset(validation_case.input, output_prefix);
+
+        // create model and run
+        MainModel model{50.0, validation_case.input.const_dataset, 0};
+        CalculationFunc const func = calculation_func(param.calculation_type, param.sym);
+
+        func(model, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+        assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol,
+                      param.rtol);
+    });
 }
 
 void validate_batch_case(CaseParam const& param) {
-    std::cout << "Validation test: " << param.case_name << std::endl;
-    if (param.case_name == "power_flow/dummy-test-batch-incomplete-input-sym-linear-batch") {
-        std::cout << "here" << std::endl;
-    }
-    ValidationCase const validation_case = create_validation_case(param);
-    std::string const output_prefix = param.sym ? "sym_output" : "asym_output";
-    SingleData result = create_result_dataset(validation_case.input, output_prefix);
-    // create model
-    MainModel model{50.0, validation_case.input.const_dataset, 0};
-    Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
-    CalculationFunc const func = calculation_type_mapping.at(std::make_pair(param.calculation_type, param.sym));
+    execute_test(param, [&]() {
+        ValidationCase const validation_case = create_validation_case(param);
+        std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
+        SingleData const result = create_result_dataset(validation_case.input, output_prefix);
 
-    // run in loops
-    for (Idx batch = 0; batch != n_batch; ++batch) {
-        MainModel model_copy{model};
-        // update and run
-        model_copy.update_component<MainModel::permanent_update_t>(
-            validation_case.update_batch.individual_batch[batch].const_dataset);
-        (model_copy.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
-        // check
-        assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
-                      output_prefix, param.atol, param.rtol);
-    }
+        // create model
+        // TODO (mgovers): fix false positive of misc-const-correctness
+        // NOLINTNEXTLINE(misc-const-correctness)
+        MainModel model{50.0, validation_case.input.const_dataset, 0};
+        Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
+        CalculationFunc const func = calculation_func(param.calculation_type, param.sym);
 
-    // run in one-go, with different threading possibility
-    SingleData batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
-    for (Idx threading : {-1, 0, 1, 2}) {
-        (model.*func)(1e-8, 20, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
-                      validation_case.update_batch.const_dataset, threading);
-        assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix, param.atol,
-                      param.rtol);
-    }
+        // run in loops
+        for (Idx batch = 0; batch != n_batch; ++batch) {
+            MainModel model_copy{model};
+            // update and run
+            model_copy.update_component<MainModel::permanent_update_t>(
+                validation_case.update_batch.individual_batch[batch].const_dataset);
+            func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+
+            // check
+            assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
+                          output_prefix, param.atol, param.rtol);
+        }
+
+        // run in one-go, with different threading possibility
+        SingleData const batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+        for (Idx const threading : {-1, 0, 1, 2}) {
+            func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
+                 validation_case.update_batch.const_dataset, threading);
+
+            assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix,
+                          param.atol, param.rtol);
+        }
+    });
 }
+
+}  // namespace
 
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();

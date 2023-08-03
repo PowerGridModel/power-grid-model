@@ -6,13 +6,14 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_VOLTAGE_SENSOR_HPP
 #define POWER_GRID_MODEL_COMPONENT_VOLTAGE_SENSOR_HPP
 
-#include <limits>
+#include "sensor.hpp"
 
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "sensor.hpp"
+
+#include <limits>
 
 namespace power_grid_model {
 
@@ -20,7 +21,7 @@ class GenericVoltageSensor : public Sensor {
    public:
     static constexpr char const* name = "generic_voltage_sensor";
 
-    GenericVoltageSensor(GenericVoltageSensorInput const& generic_voltage_sensor_input)
+    explicit GenericVoltageSensor(GenericVoltageSensorInput const& generic_voltage_sensor_input)
         : Sensor{generic_voltage_sensor_input} {};
 
     template <bool sym>
@@ -48,6 +49,10 @@ class GenericVoltageSensor : public Sensor {
         return {{id(), false}, {}, {}};
     }
 
+    SensorShortCircuitOutput get_null_sc_output() const {
+        return {{id(), false}};
+    }
+
    private:
     virtual VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const = 0;
     virtual VoltageSensorOutput<false> get_asym_output(ComplexValue<false> const& u) const = 0;
@@ -62,7 +67,7 @@ class VoltageSensor : public GenericVoltageSensor {
     template <bool sym_calc>
     using OutputType = VoltageSensorOutput<sym_calc>;
 
-    VoltageSensor(VoltageSensorInput<sym> const& voltage_sensor_input, double u_rated)
+    explicit VoltageSensor(VoltageSensorInput<sym> const& voltage_sensor_input, double u_rated)
         : GenericVoltageSensor{voltage_sensor_input},
           u_rated_{u_rated},
           u_sigma_{voltage_sensor_input.u_sigma / (u_rated_ * u_scale<sym>)},
@@ -97,27 +102,23 @@ class VoltageSensor : public GenericVoltageSensor {
     }
 
     SensorCalcParam<true> sym_calc_param() const final {
-        double u_variance = u_sigma_ * u_sigma_;
+        double const u_variance = u_sigma_ * u_sigma_;
         if (has_angle()) {
             ComplexValue<true> const u = pos_seq(u_measured_ * exp(1i * u_angle_measured_));
             return {u, u_variance};
         }
-        else {
-            ComplexValue<true> const u{mean_val(u_measured_), nan};
-            return {u, u_variance};
-        }
+        ComplexValue<true> const u{mean_val(u_measured_), nan};
+        return {u, u_variance};
     }
 
     SensorCalcParam<false> asym_calc_param() const final {
-        double u_variance = u_sigma_ * u_sigma_;
+        double const u_variance = u_sigma_ * u_sigma_;
         if (has_angle()) {
             ComplexValue<false> const u{u_measured_ * exp(1i * u_angle_measured_)};
             return {u, u_variance};
         }
-        else {
-            ComplexValue<false> const u = RealValue<false>{u_measured_} + DoubleComplex{0.0, nan};
-            return {u, u_variance};
-        }
+        ComplexValue<false> const u = RealValue<false>{u_measured_} + DoubleComplex{0.0, nan};
+        return {u, u_variance};
     }
 
     VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const final {

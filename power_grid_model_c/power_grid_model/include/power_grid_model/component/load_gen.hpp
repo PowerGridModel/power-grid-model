@@ -6,6 +6,9 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_LOAD_GEN_HPP
 #define POWER_GRID_MODEL_COMPONENT_LOAD_GEN_HPP
 
+#include "appliance.hpp"
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -13,8 +16,6 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "appliance.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
@@ -26,7 +27,7 @@ class GenericLoadGen : public Appliance {
         return ComponentType::generic_load_gen;
     }
 
-    GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
+    explicit GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
         : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {
     }
 
@@ -129,13 +130,15 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     // scale load
     template <bool sym_calc>
     ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
-        ComplexValue<sym_calc> const s = this->template calc_param<sym_calc>();
+        using enum LoadGenType;
+
+        ComplexValue<sym_calc> s = this->template calc_param<sym_calc>();
         switch (this->type()) {
-            case LoadGenType::const_pq:
+            case const_pq:
                 return s;
-            case LoadGenType::const_y:
+            case const_y:
                 return s * abs2(u);
-            case LoadGenType::const_i:
+            case const_i:
                 return s * cabs(u);
             default:
                 throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());

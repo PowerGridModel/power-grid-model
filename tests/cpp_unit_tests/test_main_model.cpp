@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/main_model.hpp"
+#include <power_grid_model/main_model.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 namespace {
@@ -54,6 +55,8 @@ struct State {
     std::vector<AsymVoltageSensorInput> asym_voltage_sensor_input{
         {{{{27}, 3}, 105.0}, {10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3}, {0.0, -deg_120, -deg_240}}};
 
+    std::vector<FaultInput> fault_input{{{30}, 1, FaultType::single_phase_to_ground, FaultPhase::a, 3, 0.1, 0.1}};
+
     double const z_bus_2 = 1.0 / (0.015 + 0.5e6 / 10e3 / 10e3 * 2);
     double const z_total = z_bus_2 + 10.0;
     double const u1 = 1.05 * z_bus_2 / (z_bus_2 + 10.0);
@@ -99,6 +102,7 @@ struct State {
     std::vector<ApplianceUpdate> shunt_update{{{9}, false}};
     std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, true, false}};
+    std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
 };
 
 auto default_model(State const& state) -> MainModel {
@@ -114,12 +118,13 @@ auto default_model(State const& state) -> MainModel {
     main_model.add_component<AsymPowerSensor>(state.asym_power_sensor_input);
     main_model.add_component<SymVoltageSensor>(state.sym_voltage_sensor_input);
     main_model.add_component<AsymVoltageSensor>(state.asym_voltage_sensor_input);
+    main_model.add_component<Fault>(state.fault_input);
     main_model.set_construction_complete();
     return main_model;
 }
 }  // namespace
 
-TEST_CASE("Test main model") {
+TEST_CASE("Test main model - power flow") {
     State state;
     auto main_model = default_model(state);
 
@@ -166,9 +171,8 @@ TEST_CASE("Test main model") {
         CHECK_THROWS_AS(main_model2.add_component<SymVoltageSensor>(state.sym_voltage_sensor_input), IDWrongType);
 
         // Test for all MeasuredTerminalType instances
-        std::vector<MeasuredTerminalType> const mt_types{
-            MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::generator,
-            MeasuredTerminalType::load,        MeasuredTerminalType::shunt,     MeasuredTerminalType::source};
+        using enum MeasuredTerminalType;
+        std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
 
         // power sensor with terminal branch, with a measured id which is not a branch (node)
         for (auto const& mt_type : mt_types) {
@@ -706,10 +710,10 @@ TEST_CASE("Test main model - linear calculation") {
 }
 
 TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cached_update) {
-    State state;
+    State const state;
     auto main_model = default_model(state);
 
-    std::vector<SourceUpdate> source_update2{SourceUpdate{{{100}, true}, nan, nan}};
+    std::vector<SourceUpdate> const source_update2{SourceUpdate{{{100}, true}, nan, nan}};
     CHECK_THROWS_AS((main_model.update_component<Source, typename settings::update_type>(source_update2)), IDNotFound);
 }
 
@@ -801,6 +805,8 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     main_model.update_component<Shunt, typename settings::update_type>(state.shunt_update);
     main_model.update_component<Source, typename settings::update_type>(state.source_update);
     main_model.update_component<Link, typename settings::update_type>(state.link_update);
+    main_model.update_component<Fault, typename settings::update_type>(state.fault_update);
+
     SUBCASE("Symmetrical") {
         auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
         main_model.output_result<true, Node>(math_output, state.sym_node.begin());
@@ -1028,8 +1034,8 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     State state;
     auto main_model = default_model(state);
 
-    std::vector<SourceInput> incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
-                                                     {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
+    std::vector<SourceInput> const incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
+                                                           {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
     std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, nan, nan}};
     std::vector<AsymLoadGenInput> incomplete_asym_load_input{
         {{{{8}, 3, true}, LoadGenType::const_y}, RealValue<false>{nan}, RealValue<false>{nan}}};
@@ -1059,7 +1065,7 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
         DataPointer<true>{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
 
     MainModel test_model{50.0, input_data};
-    MainModel ref_model{main_model};
+    MainModel const ref_model{main_model};
 
     Dataset test_result_data;
     Dataset ref_result_data;

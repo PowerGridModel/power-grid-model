@@ -17,5 +17,10 @@
         "--no-cov"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}\\cpp_build\\clang-cl-debug\\compile_commands.json",
+    "sonarlint.connectedMode.project": {
+        "connectionId": "powergridmodel",
+        "projectKey": "PowerGridModel_power-grid-model"
+    }
 }

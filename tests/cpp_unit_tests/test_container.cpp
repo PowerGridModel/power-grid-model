@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/container.hpp"
+#include <power_grid_model/container.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
 struct C {
-    C(Idx a1) : a{a1} {
+    explicit C(Idx a1) : a{a1} {
     }
 
     Idx a;
@@ -72,8 +73,8 @@ TEST_CASE("Test component container") {
             CHECK(c.a == i);
             i++;
         }
-        auto it_begin = container.iter<C>().begin();
-        auto it_end = container.iter<C>().end();
+        auto it_begin = container.iter<C const>().begin();
+        auto it_end = container.iter<C const>().end();
         auto const_it_begin = const_container.iter<C>().begin();
         auto const_it_end = const_container.iter<C>().end();
         CHECK(it_begin != const_it_end);

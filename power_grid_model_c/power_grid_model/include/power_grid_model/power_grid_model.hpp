@@ -7,17 +7,21 @@
 #define POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
 
 // main header for the model
+#include <boost/iterator/counting_iterator.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <chrono>
 #include <cmath>
 #include <complex>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <limits>
 #include <map>
 #include <memory>
+#include <numbers>
 #include <numeric>
 #include <string>
 #include <tuple>
@@ -25,8 +29,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include "boost/iterator/counting_iterator.hpp"
 
 namespace power_grid_model {
 
@@ -45,19 +47,20 @@ using IdxCount = boost::counting_iterator<Idx>;
 struct Idx2D {
     Idx group;  // sequence number of outer module/groups
     Idx pos;    //  sequence number inside the group
+
+    friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
 };
-inline bool operator==(Idx2D x, Idx2D y) {
-    return x.group == y.group && x.pos == y.pos;
-}
 
 // math constant
 using namespace std::complex_literals;
 using DoubleComplex = std::complex<double>;
-constexpr double sqrt3 = 1.73205080756887729;
-constexpr double sqrt3_inv = 1.0 / sqrt3;
+
+using std::numbers::inv_sqrt3;
+using std::numbers::pi;
+using std::numbers::sqrt3;
+
 constexpr DoubleComplex a2{-0.5, -sqrt3 / 2.0};
 constexpr DoubleComplex a{-0.5, sqrt3 / 2.0};
-constexpr double pi = 3.14159265358979323;
 constexpr double deg_30 = 1.0 / 6.0 * pi;
 constexpr double deg_120 = 2.0 / 3.0 * pi;
 constexpr double deg_240 = 4.0 / 3.0 * pi;
@@ -70,7 +73,7 @@ constexpr ID na_IntID = std::numeric_limits<ID>::min();
 constexpr double base_power_3p = 1e6;
 constexpr double base_power_1p = base_power_3p / 3.0;
 template <bool sym>
-constexpr double u_scale = sym ? 1.0 : sqrt3_inv;
+constexpr double u_scale = sym ? 1.0 : inv_sqrt3;
 template <bool sym>
 constexpr double base_power = sym ? base_power_3p : base_power_1p;
 // links are direct line between nodes with infinite element_admittance in theory

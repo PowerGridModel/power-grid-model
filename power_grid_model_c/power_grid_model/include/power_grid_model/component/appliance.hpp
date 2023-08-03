@@ -6,13 +6,14 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_APPLIANCE_HPP
 #define POWER_GRID_MODEL_COMPONENT_APPLIANCE_HPP
 
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
@@ -22,12 +23,13 @@ class Appliance : public Base {
     using UpdateType = ApplianceUpdate;
     template <bool sym>
     using OutputType = ApplianceOutput<sym>;
+    using ShortCircuitOutputType = ApplianceShortCircuitOutput;
     static constexpr char const* name = "appliance";
 
     Appliance(ApplianceInput const& appliance_input, double u)
         : Base{appliance_input},
           node_{appliance_input.node},
-          status_{(bool)appliance_input.status},
+          status_{appliance_input.status != 0},
           base_i_{base_power_3p / u / sqrt3} {
     }
 
@@ -47,11 +49,13 @@ class Appliance : public Base {
 
     // setter
     bool set_status(IntS new_status) {
-        if (new_status == na_IntS)
+        if (new_status == na_IntS) {
             return false;
-        if ((bool)new_status == status_)
+        }
+        if (static_cast<bool>(new_status) == status_) {
             return false;
-        status_ = (bool)new_status;
+        }
+        status_ = static_cast<bool>(new_status);
         return true;
     }
 
@@ -62,31 +66,51 @@ class Appliance : public Base {
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
+    ApplianceShortCircuitOutput get_null_sc_output() const {
+        ApplianceShortCircuitOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
 
     template <bool sym>
     ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
         ApplianceOutput<sym> output{};
-        static_cast<BaseOutput&>(output) = base_output(true);
+        static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.p = base_power<sym> * real(appliance_math_output.s) * injection_direction();
         output.q = base_power<sym> * imag(appliance_math_output.s) * injection_direction();
         output.s = base_power<sym> * cabs(appliance_math_output.s);
         output.i = base_i_ * cabs(appliance_math_output.i);
         // pf
         if constexpr (sym) {
-            if (output.s < numerical_tolerance)
+            if (output.s < numerical_tolerance) {
                 output.pf = 0.0;
-            else
+            }
+            else {
                 output.pf = output.p / output.s;
+            }
         }
         else {
             for (size_t j = 0; j != 3; ++j) {
-                if (output.s(j) < numerical_tolerance)
+                if (output.s(j) < numerical_tolerance) {
                     output.pf(j) = 0.0;
-                else
+                }
+                else {
                     output.pf(j) = output.p(j) / output.s(j);
+                }
             }
         }
         return output;
+    }
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<false> const& i) const {
+        ApplianceShortCircuitOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(energized(true));
+        output.i = base_i_ * cabs(i);
+        output.i_angle = arg(i * injection_direction());
+        return output;
+    }
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<true> const& i) const {
+        ComplexValue<false> const iabc{i};
+        return get_sc_output(iabc);
     }
     template <bool sym>
     ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
@@ -97,8 +121,11 @@ class Appliance : public Base {
             return get_output<false>(asym_u2si(u));
         }
     }
+    template <bool sym>
+    ApplianceShortCircuitOutput get_sc_output(ApplianceShortCircuitMathOutput<sym> const& appliance_math_output) const {
+        return get_sc_output(appliance_math_output.i);
+    }
 
-   protected:
    private:
     ID node_;
     bool status_;

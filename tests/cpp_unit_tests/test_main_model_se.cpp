@@ -2,15 +2,17 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/main_model.hpp"
+#include <power_grid_model/main_model.hpp>
 
-#define s3 (1.7320508075688773433)  // sqrt(3)
-#define ph (2.0943951023931952219)  // 2/3 * pi
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+constexpr double s3 = sqrt3;
+constexpr double ph = 2.0 / 3.0 * pi;
+}  // namespace
 
-TEST_CASE("Test Main Model") {
+TEST_CASE("Test main model - state estimation") {
     MainModel main_model{50.0};
     SUBCASE("State Estimation") {
         SUBCASE("Single Node + Source") {
@@ -228,10 +230,10 @@ TEST_CASE("Test Main Model") {
                 ref_result_data["node"] =
                     DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
-                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                            test_result_data, update_data, -1);
-                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                           ref_result_data, update_data, -1);
+                test_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                             test_result_data, update_data, -1);
+                ref_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear,
+                                                            ref_result_data, update_data, -1);
 
                 CHECK(test_node_output[0].u.x() == doctest::Approx(ref_node_output[0].u.x()));
                 CHECK(test_node_output[0].u.y() == doctest::Approx(ref_node_output[0].u.y()));

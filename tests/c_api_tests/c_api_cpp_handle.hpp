@@ -6,9 +6,9 @@
 #ifndef POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
 #define POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
 
-#include <memory>
-
 #include "power_grid_model_c.h"
+
+#include <memory>
 
 namespace power_grid_model {
 
@@ -22,10 +22,10 @@ struct DeleterFunctor {
 };
 
 // unique pointers
-using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<PGM_destroy_handle>>;
-using OptionPtr = std::unique_ptr<PGM_Options, DeleterFunctor<PGM_destroy_options>>;
-using ModelPtr = std::unique_ptr<PGM_PowerGridModel, DeleterFunctor<PGM_destroy_model>>;
-using BufferPtr = std::unique_ptr<void, DeleterFunctor<PGM_destroy_buffer>>;
+using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<&PGM_destroy_handle>>;
+using OptionPtr = std::unique_ptr<PGM_Options, DeleterFunctor<&PGM_destroy_options>>;
+using ModelPtr = std::unique_ptr<PGM_PowerGridModel, DeleterFunctor<&PGM_destroy_model>>;
+using BufferPtr = std::unique_ptr<void, DeleterFunctor<&PGM_destroy_buffer>>;
 
 }  // namespace power_grid_model
 

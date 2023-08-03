@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <ostream>
+#include <power_grid_model/topology.hpp>
 
-#include "doctest/doctest.h"
-#include "power_grid_model/topology.hpp"
+#include <doctest/doctest.h>
+
+#include <ostream>
 
 /*
  *  [0]   = Node / Bus
@@ -88,12 +89,6 @@
  */
 
 namespace power_grid_model {
-
-// define operators
-inline bool operator==(Idx2DBranch3 x, Idx2DBranch3 y) {
-    return x.group == y.group && x.pos == y.pos;
-}
-
 std::ostream& operator<<(std::ostream& s, Idx2D const& idx) {
     s << "(" << idx.group << ", " << idx.pos << ")";
     return s;
@@ -174,7 +169,7 @@ TEST_CASE("Test topology") {
     comp_conn.source_connected = {1, 1, 0, 0};
 
     // result
-    ComponentToMathCoupling comp_coup_ref{};
+    TopologicalComponentToMathCoupling comp_coup_ref{};
     comp_coup_ref.node = {         // 0 1 2 3
                           {0, 4},  // Topological node 0 has become node 4 in mathematical model (group) 0
                           {0, 2},
@@ -286,17 +281,17 @@ TEST_CASE("Test topology") {
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
         auto const& math_topology = pair.first;
-        auto const& comp_coup = *pair.second;
+        auto const& topo_comp_coup = *pair.second;
 
         CHECK(math_topology.size() == 2);
         // test component coupling
-        CHECK(comp_coup.node == comp_coup_ref.node);
-        CHECK(comp_coup.source == comp_coup_ref.source);
-        CHECK(comp_coup.branch == comp_coup_ref.branch);
-        CHECK(comp_coup.branch3 == comp_coup_ref.branch3);
-        CHECK(comp_coup.load_gen == comp_coup_ref.load_gen);
-        CHECK(comp_coup.voltage_sensor == comp_coup_ref.voltage_sensor);
-        CHECK(comp_coup.power_sensor == comp_coup_ref.power_sensor);
+        CHECK(topo_comp_coup.node == comp_coup_ref.node);
+        CHECK(topo_comp_coup.source == comp_coup_ref.source);
+        CHECK(topo_comp_coup.branch == comp_coup_ref.branch);
+        CHECK(topo_comp_coup.branch3 == comp_coup_ref.branch3);
+        CHECK(topo_comp_coup.load_gen == comp_coup_ref.load_gen);
+        CHECK(topo_comp_coup.voltage_sensor == comp_coup_ref.voltage_sensor);
+        CHECK(topo_comp_coup.power_sensor == comp_coup_ref.power_sensor);
 
         for (size_t i = 0; i < math_topology.size(); i++) {
             auto const& math = *math_topology[i];
@@ -347,15 +342,15 @@ TEST_CASE("Test cycle reorder") {
     comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
     comp_conn.source_connected = {1};
     // result
-    ComponentToMathCoupling comp_coup_ref{};
+    TopologicalComponentToMathCoupling comp_coup_ref{};
     comp_coup_ref.node = {{0, 3}, {0, 5}, {0, 4}, {0, 2}, {0, 6}, {0, 1}, {0, 0}};
     std::vector<BranchIdx> const fill_in_ref{{3, 4}, {3, 6}, {4, 6}};
 
     Topology topo{comp_topo, comp_conn};
     auto pair = topo.build_topology();
-    auto const& comp_coup = *pair.second;
+    auto const& topo_comp_coup = *pair.second;
     auto const& math_topo = *pair.first[0];
-    CHECK(comp_coup.node == comp_coup_ref.node);
+    CHECK(topo_comp_coup.node == comp_coup_ref.node);
     CHECK(math_topo.fill_in == fill_in_ref);
 }
 

@@ -8,13 +8,14 @@
 
 // container for multiple components
 
+#include "exception.hpp"
+#include "power_grid_model.hpp"
+
+#include <boost/iterator/iterator_facade.hpp>
+
 #include <functional>
 #include <memory>
 #include <unordered_map>
-
-#include "boost/iterator/iterator_facade.hpp"
-#include "exception.hpp"
-#include "power_grid_model.hpp"
 
 namespace power_grid_model {
 
@@ -23,19 +24,23 @@ namespace container_impl {
 // get index of the first true in bool array
 template <size_t N>
 inline constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx = 0) {
-    if (idx == N)
+    if (idx == N) {
         return N;
-    if (arr[idx])
+    }
+    if (arr[idx]) {
         return idx;
+    }
     return get_index_bool_array(arr, idx + 1);
 }
 
 template <typename U, typename First, typename... Rest>
 constexpr size_t get_type_index() {
-    if constexpr (std::is_same<U, First>::value)
+    if constexpr (std::is_same_v<U, First>) {
         return 0;
-    else
+    }
+    else {
         return 1 + get_type_index<U, Rest...>();
+    }
 }
 
 // get index of class in classes, with exact match
@@ -75,7 +80,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         // template<class... Args> Args&&... args perfect forwarding
         assert(!construction_complete_);
         // throw if id already exists
-        if (map_.find(id) != map_.end()) {
+        if (map_.contains(id)) {
             throw ConflictID{id};
         }
         // find group and position
@@ -227,13 +232,11 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // get item per type
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType& get_raw(Idx pos) {
-        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType& get_raw(Idx pos) {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
     template <class GettableBaseType, class StorageableSubType>
-    GettableBaseType const& get_raw(Idx pos) const {
-        static_assert(std::is_base_of_v<GettableBaseType, StorageableSubType>);
+    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType const& get_raw(Idx pos) const {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
 
@@ -248,8 +251,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
     template <class GettableBaseType, class StorageableSubType>
-    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType,
-                                    std::enable_if_t<std::is_base_of_v<GettableBaseType, StorageableSubType>>> {
+    requires std::derived_from<StorageableSubType, GettableBaseType>
+    struct select_get_item_func_ptr<GettableBaseType, StorageableSubType> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
             &Container::get_raw<GettableBaseType, StorageableSubType>;
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const =
@@ -294,7 +297,6 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         cached_vec.clear();
     }
 
-   private:
     // define iterator
     template <class Gettable>
     class Iterator : public boost::iterator_facade<Iterator<Gettable>, Gettable, boost::random_access_traversal_tag,
@@ -309,7 +311,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         // conversion to const iterator
         template <class ConstGettable = Gettable>
-        operator std::enable_if_t<!is_const, Iterator<ConstGettable const>>() const {
+        requires(!is_const) explicit operator Iterator<ConstGettable const>() const {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
@@ -351,7 +353,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         using container_type = std::conditional_t<is_const, Container const, Container>;
 
        public:
-        Proxy(container_type& container)
+        explicit Proxy(container_type& container)
             : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {
         }
         Iterator<Gettable> begin() {

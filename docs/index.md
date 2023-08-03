@@ -59,6 +59,7 @@ quickstart
 :caption: "User Manual"
 :maxdepth: 2
 user_manual/data-model
+user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
 user_manual/performance-guide
@@ -77,6 +78,7 @@ api_reference/power-grid-model-c-api-reference
 :maxdepth: 2
 examples/Power Flow Example.ipynb
 examples/State Estimation Example.ipynb
+examples/Short Circuit Example.ipynb
 examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
 ```

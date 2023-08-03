@@ -25,13 +25,14 @@ We do batch calculation with 3 scenarios, with the following mutation
 #2: source: u_ref = 1.10, sym_load_3: -200 kW
 */
 
+#include "power_grid_model_c.h"
+#include "power_grid_model_c/dataset_definitions.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "power_grid_model_c.h"
 
 int main(int argc, char** argv) {
     (void)(argc);
@@ -44,13 +45,13 @@ int main(int argc, char** argv) {
     /**** create input buffer ****/
     // we create input buffer data using two ways of creating buffer
     // use PGM function to create node and sym_load buffer
-    void* node_input = PGM_create_buffer(handle, "input", "node", 1);
+    void* node_input = PGM_create_buffer(handle, PGM_def_input_node, 1);
     assert(PGM_error_code(handle) == PGM_no_error);
-    void* sym_load_input = PGM_create_buffer(handle, "input", "sym_load", 2);
+    void* sym_load_input = PGM_create_buffer(handle, PGM_def_input_sym_load, 2);
     assert(PGM_error_code(handle) == PGM_no_error);
     // allocate source buffer in the caller
-    size_t source_size = PGM_meta_component_size(handle, "input", "source");
-    size_t source_alignment = PGM_meta_component_alignment(handle, "input", "source");
+    size_t source_size = PGM_meta_component_size(handle, PGM_def_input_source);
+    size_t source_alignment = PGM_meta_component_alignment(handle, PGM_def_input_source);
 #ifdef _WIN32
     void* source_input = _aligned_malloc(source_size * 1, source_alignment);
 #else
@@ -66,39 +67,39 @@ int main(int argc, char** argv) {
     // Using the buffer helper function is more convenient but with some overhead.
 
     // node attribute, we use pointer cast
-    size_t node_id_offset = PGM_meta_attribute_offset(handle, "input", "node", "id");
-    size_t node_u_rated_offset = PGM_meta_attribute_offset(handle, "input", "node", "u_rated");
+    size_t node_id_offset = PGM_meta_attribute_offset(handle, PGM_def_input_node_id);
+    size_t node_u_rated_offset = PGM_meta_attribute_offset(handle, PGM_def_input_node_u_rated);
     // pointer cast of offset
     *(PGM_ID*)((char*)node_input + node_id_offset) = 1;
     *(double*)((char*)node_input + node_u_rated_offset) = 10e3;  // 10 kV node
 
     // source attribute, we use helper function
     // set to NaN for all values, it is recommended for input and update buffers
-    PGM_buffer_set_nan(handle, "input", "source", source_input, 1);
+    PGM_buffer_set_nan(handle, PGM_def_input_source, source_input, 0, 1);
     PGM_ID source_id = 0;
     PGM_ID node = 1;    // also used for load
     int8_t status = 1;  // also used for load
     double u_ref = 1.0;
     double sk = 1e6;  // 1 MVA short circuit capacity
-    PGM_buffer_set_value(handle, "input", "source", "id", source_input, &source_id, 1, -1);
-    PGM_buffer_set_value(handle, "input", "source", "node", source_input, &node, 1, -1);
-    PGM_buffer_set_value(handle, "input", "source", "status", source_input, &status, 1, -1);
-    PGM_buffer_set_value(handle, "input", "source", "u_ref", source_input, &u_ref, 1, -1);
-    PGM_buffer_set_value(handle, "input", "source", "sk", source_input, &sk, 1, -1);
+    PGM_buffer_set_value(handle, PGM_def_input_source_id, source_input, &source_id, 0, 1, -1);
+    PGM_buffer_set_value(handle, PGM_def_input_source_node, source_input, &node, 0, 1, -1);
+    PGM_buffer_set_value(handle, PGM_def_input_source_status, source_input, &status, 0, 1, -1);
+    PGM_buffer_set_value(handle, PGM_def_input_source_u_ref, source_input, &u_ref, 0, 1, -1);
+    PGM_buffer_set_value(handle, PGM_def_input_source_sk, source_input, &sk, 0, 1, -1);
     assert(PGM_error_code(handle) == PGM_no_error);
 
     // sym_load attribute, we use helper function
     PGM_ID sym_load_id[] = {2, 3};
     int8_t load_type = 0;                               // const power
     double pq_specified[] = {50e3, 10e3, 100e3, 20e3};  // p2, q2, p3, p3
-    PGM_buffer_set_value(handle, "input", "sym_load", "id", sym_load_input, sym_load_id, 2, -1);
+    PGM_buffer_set_value(handle, PGM_def_input_sym_load_id, sym_load_input, sym_load_id, 0, 2, -1);
     // node, status, type are the same for two sym_load, therefore the scr_stride is zero
-    PGM_buffer_set_value(handle, "input", "sym_load", "node", sym_load_input, &node, 2, 0);
-    PGM_buffer_set_value(handle, "input", "sym_load", "status", sym_load_input, &status, 2, 0);
-    PGM_buffer_set_value(handle, "input", "sym_load", "type", sym_load_input, &load_type, 2, 0);
+    PGM_buffer_set_value(handle, PGM_def_input_sym_load_node, sym_load_input, &node, 0, 2, 0);
+    PGM_buffer_set_value(handle, PGM_def_input_sym_load_status, sym_load_input, &status, 0, 2, 0);
+    PGM_buffer_set_value(handle, PGM_def_input_sym_load_type, sym_load_input, &load_type, 0, 2, 0);
     // the stride of p and q input is 2 double value, i.e. 16 bytes
-    PGM_buffer_set_value(handle, "input", "sym_load", "p_specified", sym_load_input, pq_specified, 2, 16);
-    PGM_buffer_set_value(handle, "input", "sym_load", "q_specified", sym_load_input, pq_specified + 1, 2, 16);
+    PGM_buffer_set_value(handle, PGM_def_input_sym_load_p_specified, sym_load_input, pq_specified, 0, 2, 16);
+    PGM_buffer_set_value(handle, PGM_def_input_sym_load_q_specified, sym_load_input, pq_specified + 1, 0, 2, 16);
     assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** initialize model ****/
@@ -115,7 +116,7 @@ int main(int argc, char** argv) {
     // we create of buffer size of 3
     // for one-time calculation, we only need one
     // for batch calculation, we need buffer size of 3 because we are going to run 3 scenarios
-    void* node_output = PGM_create_buffer(handle, "sym_output", "node", 3);
+    void* node_output = PGM_create_buffer(handle, PGM_def_sym_output_node, 3);
     assert(PGM_error_code(handle) == PGM_no_error);
     void** output_data = &node_output;
     // value arrays to retrieve, for three scenarios
@@ -132,8 +133,8 @@ int main(int argc, char** argv) {
         0, 0, NULL, NULL, NULL, NULL);
     assert(PGM_error_code(handle) == PGM_no_error);
     // get value and print
-    PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 1, -1);
-    PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 1, -1);
+    PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_pu, node_output, u_pu, 0, 1, -1);
+    PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_angle, node_output, u_angle, 0, 1, -1);
     printf("\nOne-time Calculation\n");
     printf("Node result u_pu: %f, u_angle: %f\n", u_pu[0], u_angle[0]);
 
@@ -157,22 +158,22 @@ int main(int argc, char** argv) {
     /**** prepare batch update dataset ****/
 
     // 1 source update per scenario
-    void* source_update = PGM_create_buffer(handle, "update", "source", 3);
+    void* source_update = PGM_create_buffer(handle, PGM_def_update_source, 3);
     assert(PGM_error_code(handle) == PGM_no_error);
     // set to NaN for all values, it is recommended for input and update buffers
-    PGM_buffer_set_nan(handle, "update", "source", source_update, 3);
+    PGM_buffer_set_nan(handle, PGM_def_update_source, source_update, 0, 3);
     double u_ref_update[] = {0.95, 1.05, 1.1};
     // set all source id to the same id, stride is zero
-    PGM_buffer_set_value(handle, "update", "source", "id", source_update, &source_id, 3, 0);
-    PGM_buffer_set_value(handle, "update", "source", "u_ref", source_update, u_ref_update, 3, -1);
+    PGM_buffer_set_value(handle, PGM_def_update_source_id, source_update, &source_id, 0, 3, 0);
+    PGM_buffer_set_value(handle, PGM_def_update_source_u_ref, source_update, u_ref_update, 0, 3, -1);
 
     // 2 load update in scenario 0, 1 load update in scenario 1, 1 load update in scenario 2
-    void* load_update = PGM_create_buffer(handle, "update", "sym_load", 4);
-    PGM_buffer_set_nan(handle, "update", "sym_load", load_update, 4);
+    void* load_update = PGM_create_buffer(handle, PGM_def_update_sym_load, 4);
+    PGM_buffer_set_nan(handle, PGM_def_update_sym_load, load_update, 0, 4);
     PGM_ID load_update_id[] = {2, 3, 2, 3};  // 2, 3 for #0, 2 for #1, 3 for #2
     double p_update[] = {100e3, 200e3, 0.0, -200e3};
-    PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
-    PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
+    PGM_buffer_set_value(handle, PGM_def_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
+    PGM_buffer_set_value(handle, PGM_def_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     PGM_Idx indptr_load[] = {0, 2, 3, 4};  // 2 updates for #0, 1 update for #1, 2 update for #2
 
     // update meta data
@@ -188,8 +189,8 @@ int main(int argc, char** argv) {
         3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
     assert(PGM_error_code(handle) == PGM_no_error);
     // get node result and print
-    PGM_buffer_get_value(handle, "sym_output", "node", "u_pu", node_output, u_pu, 3, -1);
-    PGM_buffer_get_value(handle, "sym_output", "node", "u_angle", node_output, u_angle, 3, -1);
+    PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_pu, node_output, u_pu, 0, 3, -1);
+    PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_angle, node_output, u_angle, 0, 3, -1);
     printf("\nBatch Calculation\n");
     int i;
     for (i = 0; i != 3; ++i) {
@@ -203,8 +204,8 @@ int main(int argc, char** argv) {
     // scenario 2 has a unknown id
     p_update[2] = 100e12;     // very high load for scenario 1
     load_update_id[3] = 100;  // unknown id for scenario 2
-    PGM_buffer_set_value(handle, "update", "sym_load", "id", load_update, load_update_id, 4, -1);
-    PGM_buffer_set_value(handle, "update", "sym_load", "p_specified", load_update, p_update, 4, -1);
+    PGM_buffer_set_value(handle, PGM_def_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
+    PGM_buffer_set_value(handle, PGM_def_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     // calculate
     PGM_calculate(
         // one time calculation parameter

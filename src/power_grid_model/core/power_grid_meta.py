@@ -8,16 +8,29 @@ Load meta data from C core and define numpy structured array
 
 from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Any, Dict, Mapping, Optional, Union
 
 import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import IdxPtr
+from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
-_CTYPE_NUMPY_MAP = {"double": "f8", "int32_t": "i4", "int8_t": "i1", "double[3]": "(3,)f8"}
+
+# constant enum for ctype
+# pylint: disable=invalid-name
+class PGMCType(IntEnum):
+    """enumeration for ctype"""
+
+    int32 = 0
+    int8 = 1
+    double = 2
+    double3 = 3
+
+
+_CTYPE_NUMPY_MAP = {PGMCType.double: "f8", PGMCType.int32: "i4", PGMCType.int8: "i1", PGMCType.double3: "(3,)f8"}
 _ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
 _NAN_VALUE_MAP = {
     f"{_ENDIANNESS}f8": np.nan,
@@ -64,16 +77,16 @@ def _generate_meta_data() -> PowerGridMetaData:
     py_meta_data = {}
     n_datasets = pgc.meta_n_datasets()
     for i in range(n_datasets):
-        dataset = pgc.meta_dataset_name(i)
-        py_meta_data[dataset] = _generate_meta_dataset(dataset)
+        dataset = pgc.meta_get_dataset_by_idx(i)
+        py_meta_data[pgc.meta_dataset_name(dataset)] = _generate_meta_dataset(dataset)
     return py_meta_data
 
 
-def _generate_meta_dataset(dataset: str) -> DatasetMetaData:
+def _generate_meta_dataset(dataset: DatasetPtr) -> DatasetMetaData:
     """
 
     Args:
-        dataset: dataset name
+        dataset: dataset
 
     Returns: meta data for one dataset
 
@@ -81,27 +94,26 @@ def _generate_meta_dataset(dataset: str) -> DatasetMetaData:
     py_meta_dataset = {}
     n_components = pgc.meta_n_components(dataset)
     for i in range(n_components):
-        component_name = pgc.meta_component_name(dataset, i)
-        py_meta_dataset[component_name] = _generate_meta_component(dataset, component_name)
+        component = pgc.meta_get_component_by_idx(dataset, i)
+        py_meta_dataset[pgc.meta_component_name(component)] = _generate_meta_component(component)
     return py_meta_dataset
 
 
-def _generate_meta_component(dataset: str, component_name: str) -> ComponentMetaData:
+def _generate_meta_component(component: ComponentPtr) -> ComponentMetaData:
     """
 
     Args:
-        dataset: dataset name
-        component_name: component name
+        component: component
 
     Returns: meta data for one component
 
     """
 
-    dtype_dict = _generate_meta_attributes(dataset, component_name)
+    dtype_dict = _generate_meta_attributes(component)
     dtype = np.dtype({k: v for k, v in dtype_dict.items() if k != "nans"})  # type: ignore
     nans = dict(zip(dtype_dict["names"], dtype_dict["nans"]))
-    if dtype.alignment != pgc.meta_component_alignment(dataset, component_name):
-        raise TypeError(f'Aligment mismatch for component type: "{component_name}" !')
+    if dtype.alignment != pgc.meta_component_alignment(component):
+        raise TypeError(f'Aligment mismatch for component type: "{pgc.meta_component_name(component)}" !')
     # get single nan scalar
     nan_scalar = np.empty(1, dtype=dtype)
     for key, value in nans.items():
@@ -110,12 +122,11 @@ def _generate_meta_component(dataset: str, component_name: str) -> ComponentMeta
     return ComponentMetaData(dtype=dtype, dtype_dict=dtype_dict, nans=nans, nan_scalar=nan_scalar)
 
 
-def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
+def _generate_meta_attributes(component: ComponentPtr) -> dict:
     """
 
     Args:
-        dataset: dataset name
-        component_name: component name
+        component: component
 
     Returns: meta data for all attributes
 
@@ -124,12 +135,13 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
     formats = []
     offsets = []
     nans = []
-    n_attrs = pgc.meta_n_attributes(dataset, component_name)
+    n_attrs = pgc.meta_n_attributes(component)
     for i in range(n_attrs):
-        attr_name: str = pgc.meta_attribute_name(dataset, component_name, i)
-        attr_ctype: str = pgc.meta_attribute_ctype(dataset, component_name, attr_name)
-        attr_offset: int = pgc.meta_attribute_offset(dataset, component_name, attr_name)
-        attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[attr_ctype]}"
+        attribute: AttributePtr = pgc.meta_get_attribute_by_idx(component, i)
+        attr_name: str = pgc.meta_attribute_name(attribute)
+        attr_ctype: int = pgc.meta_attribute_ctype(attribute)
+        attr_offset: int = pgc.meta_attribute_offset(attribute)
+        attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[PGMCType(attr_ctype)]}"
         attr_nan = _NAN_VALUE_MAP[attr_np_type]
         names.append(attr_name)
         formats.append(attr_np_type)
@@ -139,7 +151,7 @@ def _generate_meta_attributes(dataset: str, component_name: str) -> dict:
         "names": names,
         "formats": formats,
         "offsets": offsets,
-        "itemsize": pgc.meta_component_size(dataset, component_name),
+        "itemsize": pgc.meta_component_size(component),
         "aligned": True,
         "nans": nans,
     }

@@ -17,7 +17,7 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-template <class T, bool sym, bool is_tensor, int n_sub_block, class = std::enable_if_t<check_scalar_v<T>>>
+template <scalar_value T, bool sym, bool is_tensor, int n_sub_block>
 struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
     static constexpr int n_col = is_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;
@@ -34,7 +34,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     Block() : ArrayType{ArrayType::Zero()} {};
     // eigen expression
     template <typename OtherDerived>
-    Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {
+    explicit Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {
     }
     template <typename OtherDerived>
     Block& operator=(Eigen::ArrayBase<OtherDerived> const& other) {

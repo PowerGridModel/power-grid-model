@@ -59,11 +59,33 @@ struct BranchMathOutput {
     ComplexValue<sym> i_t;
 };
 
+template <bool sym>
+struct BranchShortCircuitMathOutput {
+    ComplexValue<sym> i_f;
+    ComplexValue<sym> i_t;
+};
+
+// fault math calculation parameters and math output
+struct FaultCalcParam {
+    DoubleComplex y_fault;
+    FaultType fault_type;
+    FaultPhase fault_phase;
+};
+
+template <bool sym>
+struct FaultShortCircuitMathOutput {
+    ComplexValue<sym> i_fault;
+};
+
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym>
 struct ApplianceMathOutput {
     ComplexValue<sym> s;
+    ComplexValue<sym> i;
+};
+template <bool sym>
+struct ApplianceShortCircuitMathOutput {
     ComplexValue<sym> i;
 };
 
@@ -106,11 +128,11 @@ struct MathModelTopology {
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
 
     Idx n_bus() const {
-        return (Idx)phase_shift.size();
+        return static_cast<Idx>(phase_shift.size());
     }
 
     Idx n_branch() const {
-        return (Idx)branch_bus_idx.size();
+        return static_cast<Idx>(branch_bus_idx.size());
     }
 
     Idx n_source() const {
@@ -185,6 +207,12 @@ struct StateEstimationInput {
     std::vector<SensorCalcParam<sym>> measured_bus_injection;
 };
 
+struct ShortCircuitInput {
+    IdxVector fault_bus_indptr;  // indptr of the fault
+    std::vector<FaultCalcParam> faults;
+    ComplexVector source;  // Complex u_ref of each source
+};
+
 template <bool sym>
 struct MathOutput {
     std::vector<ComplexValue<sym>> u;
@@ -194,6 +222,59 @@ struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> shunt;
     std::vector<ApplianceMathOutput<sym>> load_gen;
 };
+
+template <bool sym>
+struct ShortCircuitMathOutput {
+    std::vector<ComplexValue<sym>> u_bus;
+    std::vector<FaultShortCircuitMathOutput<sym>> fault;
+    std::vector<BranchShortCircuitMathOutput<sym>> branch;
+    std::vector<ApplianceShortCircuitMathOutput<sym>> source;
+    std::vector<ApplianceShortCircuitMathOutput<sym>> shunt;
+};
+
+template <typename T>
+concept symmetric_math_output_type = std::same_as<T, MathOutput<true>> || std::same_as<T, ShortCircuitMathOutput<true>>;
+
+static_assert(symmetric_math_output_type<MathOutput<true>>);
+static_assert(!symmetric_math_output_type<MathOutput<false>>);
+static_assert(symmetric_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(!symmetric_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept asymmetric_math_output_type =
+    std::same_as<T, MathOutput<false>> || std::same_as<T, ShortCircuitMathOutput<false>>;
+
+static_assert(!asymmetric_math_output_type<MathOutput<true>>);
+static_assert(asymmetric_math_output_type<MathOutput<false>>);
+static_assert(!asymmetric_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(asymmetric_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept steady_state_math_output_type = std::same_as<T, MathOutput<true>> || std::same_as<T, MathOutput<false>>;
+
+static_assert(steady_state_math_output_type<MathOutput<true>>);
+static_assert(steady_state_math_output_type<MathOutput<false>>);
+static_assert(!steady_state_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(!steady_state_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept short_circuit_math_output_type =
+    std::same_as<T, ShortCircuitMathOutput<true>> || std::same_as<T, ShortCircuitMathOutput<false>>;
+
+static_assert(!short_circuit_math_output_type<MathOutput<true>>);
+static_assert(!short_circuit_math_output_type<MathOutput<false>>);
+static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<false>>);
+
+template <typename T>
+concept math_output_type = (symmetric_math_output_type<T> ||
+                            asymmetric_math_output_type<T>)&&(steady_state_math_output_type<T> ||
+                                                              short_circuit_math_output_type<T>);
+
+static_assert(math_output_type<MathOutput<true>>);
+static_assert(math_output_type<MathOutput<false>>);
+static_assert(math_output_type<ShortCircuitMathOutput<true>>);
+static_assert(math_output_type<ShortCircuitMathOutput<false>>);
 
 // component indices at physical model side
 // from, to node indices for branches
@@ -239,6 +320,8 @@ struct Idx2DBranch3 {
     // 1: node 1 -> internal node
     // 2: node 2 -> internal node
     std::array<Idx, 3> pos;
+
+    friend constexpr bool operator==(Idx2DBranch3 const& x, Idx2DBranch3 const& y) = default;
 };
 
 // couple component to math model
@@ -248,6 +331,17 @@ struct Idx2DBranch3 {
 //		pos = sequence number in math model,
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
+    std::vector<Idx2D> fault;
+};
+
+// couple component to math model
+// like ComponentToMathCoupling but for components that are immutable after the topology is fixed
+// use Idx2D to map component to math model
+//		group = math model sequence number,
+//		group = -1 means isolated component
+//		pos = sequence number in math model,
+//		pos = -1 means not connected at that side, only applicable for branches
+struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;
     std::vector<Idx2DBranch3> branch3;

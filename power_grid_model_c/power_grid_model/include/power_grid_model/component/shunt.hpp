@@ -6,14 +6,15 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_SHUNT_HPP
 #define POWER_GRID_MODEL_COMPONENT_SHUNT_HPP
 
+#include "appliance.hpp"
+#include "base.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
-#include "appliance.hpp"
-#include "base.hpp"
 
 namespace power_grid_model {
 
@@ -26,7 +27,7 @@ class Shunt : public Appliance {
         return ComponentType::shunt;
     }
 
-    Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
+    explicit Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
         double const base_y = base_i() / (u / sqrt3);
         y1_ = (shunt_input.g1 + 1.0i * shunt_input.b1) / base_y;
         y0_ = (shunt_input.g0 + 1.0i * shunt_input.b0) / base_y;

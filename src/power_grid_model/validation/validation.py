@@ -20,6 +20,8 @@ from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
     CalculationType,
+    FaultPhase,
+    FaultType,
     LoadGenType,
     MeasuredTerminalType,
     WindingType,
@@ -36,6 +38,7 @@ from power_grid_model.validation.rules import (
     all_between_or_at,
     all_boolean,
     all_cross_unique,
+    all_enabled_identical,
     all_finite,
     all_greater_or_equal,
     all_greater_than_or_equal_to_zero,
@@ -47,6 +50,7 @@ from power_grid_model.validation.rules import (
     all_unique,
     all_valid_clocks,
     all_valid_enum_values,
+    all_valid_fault_phases,
     all_valid_ids,
     none_missing,
 )
@@ -69,11 +73,11 @@ def validate_input_data(
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
-    Raises:
-        KeyError, TypeError or ValueError if the data structure is invalid.
-
     Returns:
         None if the data is valid, or a list containing all validation errors.
+
+    Raises:
+        Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(input_data)
@@ -93,7 +97,7 @@ def validate_batch_data(
     symmetric: bool = True,
 ) -> Optional[Dict[int, List[ValidationError]]]:
     """
-    Ihe input dataset is validated:
+    The input dataset is validated:
 
         1. Is the data structure correct? (checking data types and numpy array shapes)
         2. Are all input data ID's unique? (checking object identifiers across all components)
@@ -107,17 +111,17 @@ def validate_batch_data(
         6. Are the supplied values valid? (checking limits and other logic as described in "Graph Data Model")
 
     Args:
-        input_data: a power-grid-model input dataset
-        update_data: a power-grid-model update dataset (one or more batches)
+        input_data: A power-grid-model input dataset
+        update_data: A power-grid-model update dataset (one or more batches)
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
-
-    Raises:
-        KeyError, TypeError or ValueError if the data structure is invalid.
 
     Returns:
         None if the data is valid, or a dictionary containing all validation errors,
         where the key is the batch number (0-indexed).
+
+    Raises:
+        Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
     assert_valid_data_structure(input_data, "input")
 
@@ -149,10 +153,11 @@ def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
     structured array as defined in the Power Grid Model meta data.
 
     Args:
-        data: a power-grid-model input/update dataset
+        data: A power-grid-model input/update dataset
         data_type: 'input' or 'update'
 
-    Raises: KeyError, TypeError
+    Raises:
+        Error: KeyError, TypeError
 
     """
     if data_type not in {"input", "update"}:
@@ -186,11 +191,11 @@ def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComp
     Checks if all ids in the input dataset are unique
 
     Args:
-        data: a power-grid-model input dataset
+        data: A power-grid-model input dataset
 
-    Returns: an empty list if all ids are unique, or a list of MultiComponentNotUniqueErrors for all components that
-             have non-unique ids
-
+    Returns:
+        An empty list if all ids are unique, or a list of MultiComponentNotUniqueErrors for all components that
+        have non-unique ids
     """
     return all_cross_unique(data, [(component, "id") for component in data])
 
@@ -203,11 +208,12 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     This function should be called for every update dataset in a batch set
 
     Args:
-        update_data: a single update dataset
-        input_data: a power-grid-model input dataset
+        update_data: A single update dataset
+        input_data: A power-grid-model input dataset
 
-    Returns: an empty list if all update data ids exist in the input dataset, or a list of IdNotInDatasetErrors for
-             all update components of which the id does not exist in the input dataset
+    Returns:
+        An empty list if all update data ids exist in the input dataset, or a list of IdNotInDatasetErrors for
+        all update components of which the id does not exist in the input dataset
 
     """
     errors = (all_ids_exist_in_data_set(update_data, input_data, component, "input_data") for component in update_data)
@@ -221,12 +227,12 @@ def validate_required_values(
     Checks if all required data is available.
 
     Args:
-        data: a power-grid-model input dataset
+        data: A power-grid-model input dataset
         calculation_type: Supply a calculation method, to allow missing values for unused fields
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
-    Returns: an empty list if all required data is available, or a list of MissingValueErrors.
-
+    Returns:
+        An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
     required = {"base": ["id"]}
@@ -309,7 +315,18 @@ def validate_required_values(
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
 
-    if not symmetric:
+    # Faults
+    required["fault"] = required["base"] + ["fault_object"]
+    asym_sc = False
+    if calculation_type is None or calculation_type == CalculationType.short_circuit:
+        required["fault"] += ["status", "fault_type"]
+        if "fault" in data:
+            for elem in data["fault"]["fault_type"]:
+                if elem not in (FaultType.three_phase, FaultType.nan):
+                    asym_sc = True
+                    break
+
+    if not symmetric or asym_sc:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
@@ -323,13 +340,15 @@ def validate_values(  # pylint: disable=too-many-branches
     For each component supplied in the data, call the appropriate validation function
 
     Args:
-        data: a power-grid-model input dataset
-        calculation_type: supply a calculation method, to allow missing values for unused fields
+        data: A power-grid-model input dataset
+        calculation_type: Supply a calculation method, to allow missing values for unused fields
 
-    Returns: an empty list if all required data is valid, or a list of ValidationErrors.
+    Returns:
+        An empty list if all required data is valid, or a list of ValidationErrors.
 
     """
     errors: List[ValidationError] = list(all_finite(data))
+
     if "node" in data:
         errors += validate_node(data)
     if "line" in data:
@@ -352,6 +371,7 @@ def validate_values(  # pylint: disable=too-many-branches
         errors += validate_generic_load_gen(data, "asym_gen")
     if "shunt" in data:
         errors += validate_shunt(data)
+
     if calculation_type in (None, CalculationType.state_estimation):
         if "sym_voltage_sensor" in data:
             errors += validate_generic_voltage_sensor(data, "sym_voltage_sensor")
@@ -361,6 +381,10 @@ def validate_values(  # pylint: disable=too-many-branches
             errors += validate_generic_power_sensor(data, "sym_power_sensor")
         if "asym_power_sensor" in data:
             errors += validate_generic_power_sensor(data, "asym_power_sensor")
+
+    if calculation_type in (None, CalculationType.short_circuit) and "fault" in data:
+        errors += validate_fault(data)
+
     return errors
 
 
@@ -675,4 +699,17 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         measured_terminal_type=MeasuredTerminalType.node,
     )
 
+    return errors
+
+
+def validate_fault(data: SingleDataset) -> List[ValidationError]:
+    errors = validate_base(data, "fault")
+    errors += all_boolean(data, "fault", "status")
+    errors += all_valid_enum_values(data, "fault", "fault_type", FaultType)
+    errors += all_valid_enum_values(data, "fault", "fault_phase", FaultPhase)
+    errors += all_valid_fault_phases(data, "fault", "fault_type", "fault_phase")
+    errors += all_valid_ids(data, "fault", field="fault_object", ref_components="node")
+    errors += all_greater_than_or_equal_to_zero(data, "fault", "r_f")
+    errors += all_enabled_identical(data, "fault", "fault_type", "status")
+    errors += all_enabled_identical(data, "fault", "fault_phase", "status")
     return errors

@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/math_solver/y_bus.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <power_grid_model/math_solver/y_bus.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
@@ -114,7 +115,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (symmetrical)") {
-        YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -135,10 +136,10 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (asymmetrical)") {
-        YBus<true> ybus_sym{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<true> const ybus_sym{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         // construct from existing structure
-        YBus<false> ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym),
-                         ybus_sym.shared_y_bus_struct()};
+        YBus<false> const ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym),
+                               ybus_sym.shared_y_bus_struct()};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -153,9 +154,9 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test branch flow calculation") {
-        YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
-        ComplexVector u{1.0, 2.0, 3.0, 4.0};
-        auto branch_flow = ybus.calculate_branch_flow(u);
+        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        ComplexVector const u{1.0, 2.0, 3.0, 4.0};
+        auto branch_flow = ybus.calculate_branch_flow<BranchMathOutput<true>>(u);
 
         // branch 2, bus 2->3
         // if = 3 * 9i + 4 * 10i = 67i
@@ -169,9 +170,9 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test shunt flow calculation") {
-        YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
-        ComplexVector u{1.0, 2.0, 3.0, 4.0};
-        auto shunt_flow = ybus.calculate_shunt_flow(u);
+        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        ComplexVector const u{1.0, 2.0, 3.0, 4.0};
+        auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceMathOutput<true>>(u);
 
         // shunt 1
         // i = -4 * 200i
@@ -183,7 +184,7 @@ TEST_CASE("Test y bus") {
 
 TEST_CASE("Test one bus system") {
     MathModelTopology topo{};
-    MathModelParam<true> param;
+    MathModelParam<true> const param;
 
     topo.phase_shift = {0.0};
     topo.shunt_bus_indptr = {0, 0};
@@ -196,8 +197,8 @@ TEST_CASE("Test one bus system") {
     IdxVector lu_transpose_entry = {0};
     IdxVector y_bus_entry_indptr = {0, 0};
 
-    YBus<true> ybus{std::make_shared<MathModelTopology const>(topo),
-                    std::make_shared<MathModelParam<true> const>(param)};
+    YBus<true> const ybus{std::make_shared<MathModelTopology const>(topo),
+                          std::make_shared<MathModelParam<true> const>(param)};
 
     CHECK(ybus.size() == 1);
     CHECK(ybus.nnz() == nnz);

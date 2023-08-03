@@ -54,15 +54,16 @@ Nomenclature:
 
 */
 
+#include "block_matrix.hpp"
+#include "iterative_pf_solver.hpp"
+#include "sparse_lu_solver.hpp"
+#include "y_bus.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
-#include "block_matrix.hpp"
-#include "iterative_pf_solver.hpp"
-#include "sparse_lu_solver.hpp"
-#include "y_bus.hpp"
 
 namespace power_grid_model {
 
@@ -97,9 +98,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 if (k == -1) {
                     return ComplexTensor<sym>{};
                 }
-                else {
-                    return ydata[k];
-                }
+                return ydata[k];
             });
 
             // loop bus
@@ -141,15 +140,17 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 // load type
                 LoadGenType const type = load_gen_type[load_number];
                 switch (type) {
-                    case LoadGenType::const_pq:
+                    using enum LoadGenType;
+
+                    case const_pq:
                         // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
                         rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
                         break;
-                    case LoadGenType::const_y:
+                    case const_y:
                         // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
                         rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
                         break;
-                    case LoadGenType::const_i:
+                    case const_i:
                         // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
                         rhs_u_[bus_number] +=
                             conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
