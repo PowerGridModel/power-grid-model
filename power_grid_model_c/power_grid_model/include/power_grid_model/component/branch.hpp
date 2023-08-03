@@ -26,9 +26,7 @@ class Branch : public Base {
     using OutputType = BranchOutput<sym>;
     using ShortCircuitOutputType = BranchShortCircuitOutput;
     static constexpr char const* name = "branch";
-    ComponentType math_model_type() const final {
-        return ComponentType::branch;
-    }
+    ComponentType math_model_type() const final { return ComponentType::branch; }
 
     explicit Branch(BranchInput const& branch_input)
         : Base{branch_input},
@@ -42,21 +40,11 @@ class Branch : public Base {
     }
 
     // getter
-    ID from_node() const {
-        return from_node_;
-    }
-    ID to_node() const {
-        return to_node_;
-    }
-    bool from_status() const {
-        return from_status_;
-    }
-    bool to_status() const {
-        return to_status_;
-    }
-    bool branch_status() const {
-        return from_status_ && to_status_;
-    }
+    ID from_node() const { return from_node_; }
+    ID to_node() const { return to_node_; }
+    bool from_status() const { return from_status_; }
+    bool to_status() const { return to_status_; }
+    bool branch_status() const { return from_status_ && to_status_; }
     template <bool sym>
     BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {

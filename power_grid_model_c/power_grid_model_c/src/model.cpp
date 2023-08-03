@@ -168,6 +168,4 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 }
 
 // destroy model
-void PGM_destroy_model(PGM_PowerGridModel* model) {
-    delete model;
-}
+void PGM_destroy_model(PGM_PowerGridModel* model) { delete model; }

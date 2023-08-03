@@ -22,9 +22,7 @@ class GenericPowerSensor : public Sensor {
     explicit GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
         : Sensor{generic_power_sensor_input}, terminal_type_{generic_power_sensor_input.measured_terminal_type} {}
 
-    MeasuredTerminalType get_terminal_type() const {
-        return terminal_type_;
-    }
+    MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
 
     template <bool sym>
     PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
@@ -41,9 +39,7 @@ class GenericPowerSensor : public Sensor {
         return {{id(), false}, {}, {}};
     }
 
-    SensorShortCircuitOutput get_null_sc_output() const {
-        return {{id(), false}};
-    }
+    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), false}}; }
 
   protected:
     double convert_direction() const {

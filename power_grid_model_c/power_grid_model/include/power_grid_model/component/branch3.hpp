@@ -24,9 +24,7 @@ class Branch3 : public Base {
     using OutputType = Branch3Output<sym>;
     using ShortCircuitOutputType = Branch3ShortCircuitOutput;
     static constexpr char const* name = "branch3";
-    ComponentType math_model_type() const final {
-        return ComponentType::branch3;
-    }
+    ComponentType math_model_type() const final { return ComponentType::branch3; }
 
     explicit Branch3(Branch3Input const& branch3_input)
         : Base{branch3_input},
@@ -42,24 +40,12 @@ class Branch3 : public Base {
     }
 
     // getter
-    ID node_1() const {
-        return node_1_;
-    }
-    ID node_2() const {
-        return node_2_;
-    }
-    ID node_3() const {
-        return node_3_;
-    }
-    bool status_1() const {
-        return status_1_;
-    }
-    bool status_2() const {
-        return status_2_;
-    }
-    bool status_3() const {
-        return status_3_;
-    }
+    ID node_1() const { return node_1_; }
+    ID node_2() const { return node_2_; }
+    ID node_3() const { return node_3_; }
+    bool status_1() const { return status_1_; }
+    bool status_2() const { return status_2_; }
+    bool status_3() const { return status_3_; }
     bool branch3_status() const {
         return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
     }

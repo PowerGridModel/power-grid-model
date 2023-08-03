@@ -37,21 +37,11 @@ class Line final : public Branch {
     }
 
     // override getter
-    double base_i_from() const final {
-        return base_i_;
-    }
-    double base_i_to() const final {
-        return base_i_;
-    }
-    double loading(double, double max_i) const final {
-        return max_i / i_n_;
-    };
-    double phase_shift() const final {
-        return 0.0;
-    }
-    bool is_param_mutable() const final {
-        return false;
-    }
+    double base_i_from() const final { return base_i_; }
+    double base_i_to() const final { return base_i_; }
+    double loading(double, double max_i) const final { return max_i / i_n_; };
+    double phase_shift() const final { return 0.0; }
+    bool is_param_mutable() const final { return false; }
 
   private:
     double i_n_;
@@ -61,9 +51,7 @@ class Line final : public Branch {
     DoubleComplex y0_series_;
     DoubleComplex y0_shunt_;
 
-    BranchCalcParam<true> sym_calc_param() const final {
-        return calc_param_y_sym(y1_series_, y1_shunt_, 1.0);
-    }
+    BranchCalcParam<true> sym_calc_param() const final { return calc_param_y_sym(y1_series_, y1_shunt_, 1.0); }
     BranchCalcParam<false> asym_calc_param() const final {
         return calc_param_y_asym(y1_series_, y1_shunt_, y0_series_, y0_shunt_, 1.0);
     }

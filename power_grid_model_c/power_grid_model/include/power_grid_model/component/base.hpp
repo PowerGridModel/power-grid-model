@@ -25,9 +25,7 @@ class Base {
 
     explicit Base(BaseInput const& base_input) : id_{base_input.id} {}
     virtual ~Base() = default;
-    constexpr ID id() const noexcept {
-        return id_;
-    }
+    constexpr ID id() const noexcept { return id_; }
     constexpr BaseOutput base_output(bool is_energized) const {
         return BaseOutput{id_, static_cast<IntS>(is_energized)};
     }

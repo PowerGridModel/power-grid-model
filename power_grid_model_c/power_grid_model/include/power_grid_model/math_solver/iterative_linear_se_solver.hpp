@@ -33,19 +33,11 @@ struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
     using Block<DoubleComplex, sym, false, 2>::Block;
     using Block<DoubleComplex, sym, false, 2>::operator=;
 
-    GetterType<0, 0> u() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> phi() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> u() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> phi() { return this->template get_val<1, 0>(); }
 
-    GetterType<0, 0> eta() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> tau() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> eta() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> tau() { return this->template get_val<1, 0>(); }
 };
 
 // block class for the right hand side in state estimation equation
@@ -69,18 +61,10 @@ class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
     using Block<DoubleComplex, sym, true, 2>::Block;
     using Block<DoubleComplex, sym, true, 2>::operator=;
 
-    GetterType<0, 0> g() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<0, 1> qh() {
-        return this->template get_val<0, 1>();
-    }
-    GetterType<1, 0> q() {
-        return this->template get_val<1, 0>();
-    }
-    GetterType<1, 1> r() {
-        return this->template get_val<1, 1>();
-    }
+    GetterType<0, 0> g() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> qh() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> r() { return this->template get_val<1, 1>(); }
 };
 
 // processed measurement struct
@@ -128,39 +112,21 @@ class MeasuredValues {
     }
 
     // checker of measured data, return true if measurement is available
-    bool has_voltage(Idx bus) const {
-        return idx_voltage_[bus] >= 0;
-    }
-    bool has_bus_injection(Idx bus) const {
-        return bus_injection_[bus].idx_bus_injection >= 0;
-    }
-    bool has_branch_from(Idx branch) const {
-        return idx_branch_from_power_[branch] >= 0;
-    }
-    bool has_branch_to(Idx branch) const {
-        return idx_branch_to_power_[branch] >= 0;
-    }
-    bool has_shunt(Idx shunt) const {
-        return idx_shunt_power_[shunt] >= 0;
-    }
-    bool has_load_gen(Idx load_gen) const {
-        return idx_load_gen_power_[load_gen] >= 0;
-    }
-    bool has_source(Idx source) const {
-        return idx_source_power_[source] >= 0;
-    }
-    bool has_angle() const {
-        return n_angle_ > 0;
-    }
+    bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
+    bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
+    bool has_branch_from(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
+    bool has_branch_to(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
+    bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
+    bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
+    bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
+    bool has_angle() const { return n_angle_ > 0; }
 
     // getter of measurement and variance
     // if the obj is not measured, it is undefined behaviour to call this function
     // use checker first
 
     // getter of voltage variance
-    double voltage_var(Idx bus) const {
-        return main_value_[idx_voltage_[bus]].variance;
-    }
+    double voltage_var(Idx bus) const { return main_value_[idx_voltage_[bus]].variance; }
     // getter of voltage value for all buses
     // for no measurement, the voltage phasor is used from the current iteration
     // for magnitude only measurement, angle is added from the current iteration
@@ -192,26 +158,16 @@ class MeasuredValues {
     SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
         return main_value_[idx_branch_from_power_[branch]];
     }
-    SensorCalcParam<sym> const& branch_to_power(Idx branch) const {
-        return main_value_[idx_branch_to_power_[branch]];
-    }
-    SensorCalcParam<sym> const& shunt_power(Idx shunt) const {
-        return main_value_[idx_shunt_power_[shunt]];
-    }
+    SensorCalcParam<sym> const& branch_to_power(Idx branch) const { return main_value_[idx_branch_to_power_[branch]]; }
+    SensorCalcParam<sym> const& shunt_power(Idx shunt) const { return main_value_[idx_shunt_power_[shunt]]; }
     SensorCalcParam<sym> const& load_gen_power(Idx load_gen) const {
         return extra_value_[idx_load_gen_power_[load_gen]];
     }
-    SensorCalcParam<sym> const& source_power(Idx source) const {
-        return extra_value_[idx_source_power_[source]];
-    }
+    SensorCalcParam<sym> const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
 
     // getter mean angle shift
-    RealValue<sym> mean_angle_shift() const {
-        return mean_angle_shift_;
-    }
-    bool has_angle_measurement() const {
-        return n_angle_ > 0;
-    }
+    RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
+    bool has_angle_measurement() const { return n_angle_ > 0; }
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
@@ -284,9 +240,7 @@ class MeasuredValues {
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
 
-    MathModelTopology const& math_topology() const {
-        return *math_topology_;
-    }
+    MathModelTopology const& math_topology() const { return *math_topology_; }
 
     void process_bus_related_measurements(StateEstimationInput<sym> const& input) {
         /*
@@ -331,9 +285,7 @@ class MeasuredValues {
                     idx_voltage_[bus] = (Idx)main_value_.size();
                     // check if there is nan
                     if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
-                                    [](auto const& x) {
-                                        return is_nan(imag(x.value));
-                                    })) {
+                                    [](auto const& x) { return is_nan(imag(x.value)); })) {
                         // only keep magnitude
                         main_value_.push_back(combine_measurements<true>(input.measured_voltage, begin, end));
                     }
@@ -448,12 +400,8 @@ class MeasuredValues {
         main_value_. The power values in main_value_ can be found using idx_branch_to_power_/idx_branch_from_power_.
         */
         MathModelTopology const& topo = math_topology();
-        static constexpr auto branch_from_checker = [](BranchIdx x) -> bool {
-            return x[0] != -1;
-        };
-        static constexpr auto branch_to_checker = [](BranchIdx x) -> bool {
-            return x[1] != -1;
-        };
+        static constexpr auto branch_from_checker = [](BranchIdx x) -> bool { return x[0] != -1; };
+        static constexpr auto branch_to_checker = [](BranchIdx x) -> bool { return x[1] != -1; };
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
             idx_branch_from_power_[branch] =
@@ -507,9 +455,7 @@ class MeasuredValues {
     }
 
     // process one object
-    static constexpr auto default_status_checker = [](auto x) -> bool {
-        return x;
-    };
+    static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
     template <class TS, class StatusChecker = decltype(default_status_checker)>
     static Idx process_one_object(Idx const obj, IdxVector const& sensor_indptr, std::vector<TS> const& obj_status,
                                   std::vector<SensorCalcParam<sym>> const& input_data,
@@ -541,9 +487,7 @@ class MeasuredValues {
             }
         }
         // scale
-        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) {
-            x.variance /= min_var;
-        });
+        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,

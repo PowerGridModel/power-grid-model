@@ -213,9 +213,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         cached_vec.emplace_back(pos, value);
     }
 
-    void restore_values() {
-        (restore_values_impl<StorageableTypes>(), ...);
-    }
+    void restore_values() { (restore_values_impl<StorageableTypes>(), ...); }
 
   private:
     std::tuple<std::vector<StorageableTypes>...> vectors_;
@@ -317,22 +315,14 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
       private:
         friend class boost::iterator_core_access;
 
-        Gettable& dereference() const {
-            return container_ptr_->template get_item_by_seq<base_type>(idx_);
-        }
+        Gettable& dereference() const { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
         bool equal(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
             return idx_ == other.idx_;
         }
-        void increment() {
-            ++idx_;
-        }
-        void decrement() {
-            --idx_;
-        }
-        void advance(Idx n) {
-            idx_ += n;
-        }
+        void increment() { ++idx_; }
+        void decrement() { --idx_; }
+        void advance(Idx n) { idx_ += n; }
         Idx distance_to(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
             return other.idx_ - idx_;
@@ -354,12 +344,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
       public:
         explicit Proxy(container_type& container)
             : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {}
-        Iterator<Gettable> begin() {
-            return begin_;
-        }
-        Iterator<Gettable> end() {
-            return end_;
-        }
+        Iterator<Gettable> begin() { return begin_; }
+        Iterator<Gettable> end() { return end_; }
 
       private:
         Iterator<Gettable> const begin_;

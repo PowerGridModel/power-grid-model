@@ -27,17 +27,11 @@ class Sensor : public Base {
     explicit Sensor(SensorInput const& sensor_input)
         : Base{sensor_input}, measured_object_{sensor_input.measured_object} {}
 
-    ID measured_object() const {
-        return measured_object_;
-    };
+    ID measured_object() const { return measured_object_; };
 
     // sensor always energized
-    bool energized(bool) const final {
-        return true;
-    }
-    ComponentType math_model_type() const final {
-        return ComponentType::sensor;
-    }
+    bool energized(bool) const final { return true; }
+    ComponentType math_model_type() const final { return ComponentType::sensor; }
 
     // getter for calculation param
     template <bool sym>

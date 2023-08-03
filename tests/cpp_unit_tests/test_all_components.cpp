@@ -29,9 +29,7 @@ namespace power_grid_model {
 template <typename T, typename U>
 concept is_copyable_to = std::derived_from<T, U> && requires(T const t, U u) {
     {
-        U {
-            t
-        }
+        U { t }
         } -> std::same_as<U>;       // copy
     { u = t } -> std::same_as<U&>;  // copy assignment
 };

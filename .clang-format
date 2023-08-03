@@ -16,9 +16,6 @@ PointerAlignment: Left
 
 # Old settings
 
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortLambdasOnASingleLine: Empty
-
 BreakBeforeBraces: Custom
 BraceWrapping:
   BeforeCatch: true

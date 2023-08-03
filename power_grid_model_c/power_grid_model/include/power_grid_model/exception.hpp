@@ -16,12 +16,8 @@ namespace power_grid_model {
 
 class PowerGridError : public std::exception {
   public:
-    void append_msg(std::string const& msg) {
-        msg_ += msg;
-    }
-    char const* what() const noexcept final {
-        return msg_.c_str();
-    }
+    void append_msg(std::string const& msg) { msg_ += msg; }
+    char const* what() const noexcept final { return msg_.c_str(); }
 
   private:
     std::string msg_;
@@ -95,16 +91,12 @@ class IterationDiverge : public PowerGridError {
 
 class ConflictID : public PowerGridError {
   public:
-    explicit ConflictID(ID id) {
-        append_msg("Conflicting id detected: " + std::to_string(id) + '\n');
-    }
+    explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + std::to_string(id) + '\n'); }
 };
 
 class IDNotFound : public PowerGridError {
   public:
-    explicit IDNotFound(ID id) {
-        append_msg("The id cannot be found: " + std::to_string(id) + '\n');
-    }
+    explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + std::to_string(id) + '\n'); }
 };
 
 class InvalidMeasuredObject : public PowerGridError {
@@ -116,16 +108,12 @@ class InvalidMeasuredObject : public PowerGridError {
 
 class IDWrongType : public PowerGridError {
   public:
-    explicit IDWrongType(ID id) {
-        append_msg("Wrong type for object with id " + std::to_string(id) + '\n');
-    }
+    explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + std::to_string(id) + '\n'); }
 };
 
 class CalculationError : public PowerGridError {
   public:
-    explicit CalculationError(std::string const& msg) {
-        append_msg(msg);
-    }
+    explicit CalculationError(std::string const& msg) { append_msg(msg); }
 };
 
 class BatchCalculationError : public CalculationError {
@@ -134,13 +122,9 @@ class BatchCalculationError : public CalculationError {
                           std::vector<std::string> const& err_msgs)
         : CalculationError(msg), failed_scenarios_{failed_scenarios}, err_msgs_(err_msgs) {}
 
-    IdxVector const& failed_scenarios() const {
-        return failed_scenarios_;
-    }
+    IdxVector const& failed_scenarios() const { return failed_scenarios_; }
 
-    std::vector<std::string> const& err_msgs() const {
-        return err_msgs_;
-    }
+    std::vector<std::string> const& err_msgs() const { return err_msgs_; }
 
   private:
     IdxVector failed_scenarios_;

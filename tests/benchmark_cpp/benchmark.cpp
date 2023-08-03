@@ -205,9 +205,8 @@ struct PowerGridBenchmark {
         CalculationInfo info_extra = main_model.calculation_info();
         info.merge(info_extra);
         std::cout << "Number of nodes: " << node.size() << '\n';
-        auto const [min_l, max_l] = std::minmax_element(branch.cbegin(), branch.cend(), [](auto x, auto y) {
-            return x.loading < y.loading;
-        });
+        auto const [min_l, max_l] =
+            std::minmax_element(branch.cbegin(), branch.cend(), [](auto x, auto y) { return x.loading < y.loading; });
         std::cout << "Min loading: " << min_l->loading << ", max loading: " << max_l->loading << '\n';
     }
 

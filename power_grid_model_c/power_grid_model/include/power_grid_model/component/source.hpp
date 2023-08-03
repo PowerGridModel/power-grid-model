@@ -23,9 +23,7 @@ class Source : public Appliance {
     using InputType = SourceInput;
     using UpdateType = SourceUpdate;
     static constexpr char const* name = "source";
-    ComponentType math_model_type() const final {
-        return ComponentType::source;
-    }
+    ComponentType math_model_type() const final { return ComponentType::source; }
 
     explicit Source(SourceInput const& source_input, double u)
         : Appliance{source_input, u},
@@ -109,16 +107,10 @@ class Source : public Appliance {
         return appliance_math_output;
     }
 
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final {
-        return u2si<true>(u);
-    }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final {
-        return u2si<false>(u);
-    }
+    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
+    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
 
-    double injection_direction() const final {
-        return 1.0;
-    }
+    double injection_direction() const final { return 1.0; }
 };
 
 }  // namespace power_grid_model

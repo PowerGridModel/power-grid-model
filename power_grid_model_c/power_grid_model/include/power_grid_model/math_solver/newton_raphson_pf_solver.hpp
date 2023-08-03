@@ -172,19 +172,11 @@ struct PolarPhasor : public Block<double, sym, false, 2> {
     using Block<double, sym, false, 2>::Block;
     using Block<double, sym, false, 2>::operator=;
 
-    GetterType<0, 0> theta() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> v() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> theta() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> v() { return this->template get_val<1, 0>(); }
 
-    GetterType<0, 0> p() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> q() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> p() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
 };
 
 // class for complex power
@@ -208,18 +200,10 @@ class PFJacBlock : public Block<double, sym, true, 2> {
     using Block<double, sym, true, 2>::Block;
     using Block<double, sym, true, 2>::operator=;
 
-    GetterType<0, 0> h() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<0, 1> n() {
-        return this->template get_val<0, 1>();
-    }
-    GetterType<1, 0> m() {
-        return this->template get_val<1, 0>();
-    }
-    GetterType<1, 1> l() {
-        return this->template get_val<1, 1>();
-    }
+    GetterType<0, 0> h() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> n() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> m() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> l() { return this->template get_val<1, 1>(); }
 };
 
 // solver
@@ -362,9 +346,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     }
 
     // Solve the linear Equations
-    void solve_matrix() {
-        sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
-    }
+    void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
 
     // Get maximum deviation among all bus voltages
     double iterate_unknown(ComplexValueVector<sym>& u) {

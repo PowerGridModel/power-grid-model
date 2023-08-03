@@ -290,17 +290,11 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     CHECK((cabs(param.value[2] - y_tf) < numerical_tolerance).all());
     CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
 
-    SUBCASE("Test transformer is_param_mutable") {
-        CHECK(YNyn12.is_param_mutable() == true);
-    }
+    SUBCASE("Test transformer is_param_mutable") { CHECK(YNyn12.is_param_mutable() == true); }
 
-    SUBCASE("Test transformer phase shift") {
-        CHECK(YNyn12.phase_shift() == doctest::Approx(0.0));
-    }
+    SUBCASE("Test transformer phase shift") { CHECK(YNyn12.phase_shift() == doctest::Approx(0.0)); }
 
-    SUBCASE("Test transformer loading") {
-        CHECK(YNyn12.loading(60.0e6, 0.0) == doctest::Approx(2.0));
-    }
+    SUBCASE("Test transformer loading") { CHECK(YNyn12.loading(60.0e6, 0.0) == doctest::Approx(2.0)); }
 
     SUBCASE("Test transformer set_limit - false") {
         CHECK(YNyn12.set_tap(na_IntS) == false);

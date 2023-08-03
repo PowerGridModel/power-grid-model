@@ -33,18 +33,10 @@ class Appliance : public Base {
           base_i_{base_power_3p / u / sqrt3} {}
 
     // getter
-    ID node() const {
-        return node_;
-    }
-    bool status() const {
-        return status_;
-    }
-    double base_i() const {
-        return base_i_;
-    }
-    bool energized(bool is_connected_to_source) const final {
-        return is_connected_to_source && status_;
-    }
+    ID node() const { return node_; }
+    bool status() const { return status_; }
+    double base_i() const { return base_i_; }
+    bool energized(bool is_connected_to_source) const final { return is_connected_to_source && status_; }
 
     // setter
     bool set_status(IntS new_status) {

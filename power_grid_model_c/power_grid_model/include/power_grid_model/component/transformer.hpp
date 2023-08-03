@@ -66,26 +66,14 @@ class Transformer : public Branch {
     }
 
     // override getter
-    double base_i_from() const final {
-        return base_i_from_;
-    }
-    double base_i_to() const final {
-        return base_i_to_;
-    }
-    double loading(double max_s, double) const final {
-        return max_s / sn_;
-    };
+    double base_i_from() const final { return base_i_from_; }
+    double base_i_to() const final { return base_i_to_; }
+    double loading(double max_s, double) const final { return max_s / sn_; };
     // phase shift is theta_from - theta_to
-    double phase_shift() const final {
-        return clock_ * deg_30;
-    }
-    bool is_param_mutable() const final {
-        return true;
-    }
+    double phase_shift() const final { return clock_ * deg_30; }
+    bool is_param_mutable() const final { return true; }
     // get tap
-    IntS tap_pos() const {
-        return tap_pos_;
-    }
+    IntS tap_pos() const { return tap_pos_; }
     // setter
     bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {

@@ -63,23 +63,13 @@ template <class T>
 constexpr CType ctype_v = ctype_t<T>::value;
 
 // set nan
-inline void set_nan(double& x) {
-    x = nan;
-}
-inline void set_nan(IntS& x) {
-    x = na_IntS;
-}
-inline void set_nan(ID& x) {
-    x = na_IntID;
-}
-inline void set_nan(RealValue<false>& x) {
-    x = RealValue<false>{nan};
-}
+inline void set_nan(double& x) { x = nan; }
+inline void set_nan(IntS& x) { x = na_IntS; }
+inline void set_nan(ID& x) { x = na_IntID; }
+inline void set_nan(RealValue<false>& x) { x = RealValue<false>{nan}; }
 template <class Enum>
 requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline void set_nan(Enum& x) {
-    x = static_cast<Enum>(na_IntS);
-}
+inline void set_nan(Enum& x) { x = static_cast<Enum>(na_IntS); }
 
 using RawDataPtr = void*;             // raw mutable data ptr
 using RawDataConstPtr = void const*;  // raw read-only data ptr
@@ -162,12 +152,8 @@ using MetaAttribute = PGM_MetaAttribute;
 // meta component
 template <class StructType>
 struct MetaComponentImpl {
-    static RawDataPtr create_buffer(Idx size) {
-        return new StructType[size];
-    }
-    static void destroy_buffer(RawDataConstPtr buffer_ptr) {
-        delete[] reinterpret_cast<StructType const*>(buffer_ptr);
-    }
+    static RawDataPtr create_buffer(Idx size) { return new StructType[size]; }
+    static void destroy_buffer(RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); }
     static void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) {
         static StructType const nan_value = get_component_nan<StructType>{}();
         StructType* ptr = reinterpret_cast<StructType*>(buffer_ptr);
@@ -207,9 +193,7 @@ struct PGM_MetaComponent {
     std::add_pointer_t<RawDataPtr(Idx)> create_buffer;
     std::add_pointer_t<void(RawDataConstPtr)> destroy_buffer;
 
-    Idx n_attributes() const {
-        return static_cast<Idx>(attributes.size());
-    }
+    Idx n_attributes() const { return static_cast<Idx>(attributes.size()); }
 
     MetaAttribute const& get_attribute(std::string const& attribute_name) const {
         Idx const found = find_attribute(attribute_name);
@@ -228,9 +212,7 @@ struct PGM_MetaComponent {
         return -1;
     }
 
-    Idx has_attribute(std::string const& attribute_name) const {
-        return find_attribute(attribute_name) >= 0;
-    }
+    Idx has_attribute(std::string const& attribute_name) const { return find_attribute(attribute_name) >= 0; }
 };
 
 namespace power_grid_model::meta_data {
@@ -247,9 +229,7 @@ struct PGM_MetaDataset {
     std::string name;
     std::vector<MetaComponent> components;
 
-    Idx n_components() const {
-        return static_cast<Idx>(components.size());
-    }
+    Idx n_components() const { return static_cast<Idx>(components.size()); }
 
     MetaComponent const& get_component(std::string const& component_name) const {
         for (auto const& component : components) {
@@ -269,9 +249,7 @@ using MetaDataset = PGM_MetaDataset;
 struct MetaData {
     std::vector<MetaDataset> datasets;
 
-    Idx n_datasets() const {
-        return static_cast<Idx>(datasets.size());
-    }
+    Idx n_datasets() const { return static_cast<Idx>(datasets.size()); }
 
     MetaDataset const& get_dataset(std::string const& dataset_name) const {
         for (auto const& dataset : datasets) {
@@ -284,9 +262,7 @@ struct MetaData {
 };
 
 // little endian
-constexpr bool is_little_endian() {
-    return std::endian::native == std::endian::little;
-}
+constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
 }  // namespace power_grid_model::meta_data
 

@@ -290,78 +290,34 @@ class YBus {
     }
 
     // getter
-    Idx size() const {
-        return (Idx)bus_entry().size();
-    }
-    Idx nnz() const {
-        return row_indptr().back();
-    }
-    Idx nnz_lu() const {
-        return row_indptr_lu().back();
-    }
-    IdxVector const& row_indptr() const {
-        return y_bus_struct_->row_indptr;
-    }
-    IdxVector const& col_indices() const {
-        return y_bus_struct_->col_indices;
-    }
-    IdxVector const& row_indptr_lu() const {
-        return y_bus_struct_->row_indptr_lu;
-    }
-    IdxVector const& col_indices_lu() const {
-        return y_bus_struct_->col_indices_lu;
-    }
-    IdxVector const& lu_transpose_entry() const {
-        return y_bus_struct_->lu_transpose_entry;
-    }
-    std::vector<YBusElement> const& y_bus_element() const {
-        return y_bus_struct_->y_bus_element;
-    }
-    IdxVector const& y_bus_entry_indptr() const {
-        return y_bus_struct_->y_bus_entry_indptr;
-    }
-    MathModelTopology const& math_topology() const {
-        return *math_topology_;
-    }
-    MathModelParam<sym> const& math_model_param() const {
-        return *math_model_param_;
-    }
+    Idx size() const { return (Idx)bus_entry().size(); }
+    Idx nnz() const { return row_indptr().back(); }
+    Idx nnz_lu() const { return row_indptr_lu().back(); }
+    IdxVector const& row_indptr() const { return y_bus_struct_->row_indptr; }
+    IdxVector const& col_indices() const { return y_bus_struct_->col_indices; }
+    IdxVector const& row_indptr_lu() const { return y_bus_struct_->row_indptr_lu; }
+    IdxVector const& col_indices_lu() const { return y_bus_struct_->col_indices_lu; }
+    IdxVector const& lu_transpose_entry() const { return y_bus_struct_->lu_transpose_entry; }
+    std::vector<YBusElement> const& y_bus_element() const { return y_bus_struct_->y_bus_element; }
+    IdxVector const& y_bus_entry_indptr() const { return y_bus_struct_->y_bus_entry_indptr; }
+    MathModelTopology const& math_topology() const { return *math_topology_; }
+    MathModelParam<sym> const& math_model_param() const { return *math_model_param_; }
 
-    ComplexTensorVector<sym> const& admittance() const {
-        return *admittance_;
-    }
-    IdxVector const& bus_entry() const {
-        return y_bus_struct_->bus_entry;
-    }
-    IdxVector const& lu_diag() const {
-        return y_bus_struct_->diag_lu;
-    }
-    IdxVector const& map_lu_y_bus() const {
-        return y_bus_struct_->map_lu_y_bus;
-    }
+    ComplexTensorVector<sym> const& admittance() const { return *admittance_; }
+    IdxVector const& bus_entry() const { return y_bus_struct_->bus_entry; }
+    IdxVector const& lu_diag() const { return y_bus_struct_->diag_lu; }
+    IdxVector const& map_lu_y_bus() const { return y_bus_struct_->map_lu_y_bus; }
 
     // getter of shared ptr
-    std::shared_ptr<IdxVector const> shared_indptr() const {
-        return {y_bus_struct_, &y_bus_struct_->row_indptr};
-    }
-    std::shared_ptr<IdxVector const> shared_indices() const {
-        return {y_bus_struct_, &y_bus_struct_->col_indices};
-    }
-    std::shared_ptr<MathModelTopology const> shared_topology() const {
-        return math_topology_;
-    }
-    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const {
-        return y_bus_struct_;
-    }
-    std::shared_ptr<IdxVector const> shared_indptr_lu() const {
-        return {y_bus_struct_, &y_bus_struct_->row_indptr_lu};
-    }
+    std::shared_ptr<IdxVector const> shared_indptr() const { return {y_bus_struct_, &y_bus_struct_->row_indptr}; }
+    std::shared_ptr<IdxVector const> shared_indices() const { return {y_bus_struct_, &y_bus_struct_->col_indices}; }
+    std::shared_ptr<MathModelTopology const> shared_topology() const { return math_topology_; }
+    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const { return y_bus_struct_; }
+    std::shared_ptr<IdxVector const> shared_indptr_lu() const { return {y_bus_struct_, &y_bus_struct_->row_indptr_lu}; }
     std::shared_ptr<IdxVector const> shared_indices_lu() const {
         return {y_bus_struct_, &y_bus_struct_->col_indices_lu};
     }
-    std::shared_ptr<IdxVector const> shared_diag_lu() const {
-        return {y_bus_struct_, &y_bus_struct_->diag_lu};
-    }
+    std::shared_ptr<IdxVector const> shared_diag_lu() const { return {y_bus_struct_, &y_bus_struct_->diag_lu}; }
 
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached parameters
@@ -400,17 +356,14 @@ class YBus {
         Idx const end = row_indptr()[bus_number + 1];
         ComplexValue<sym> const i_inj = std::transform_reduce(
             col_indices().cbegin() + begin, col_indices().cbegin() + end, admittance().cbegin() + begin,
-            ComplexValue<sym>{0.0}, std::plus{}, [&u](Idx j, ComplexTensor<sym> const& y) {
-                return dot(y, u[j]);
-            });
+            ComplexValue<sym>{0.0}, std::plus{}, [&u](Idx j, ComplexTensor<sym> const& y) { return dot(y, u[j]); });
         return conj(i_inj) * u[bus_number];
     }
 
     ComplexValueVector<sym> calculate_injection(ComplexValueVector<sym> const& u) const {
         ComplexValueVector<sym> s(size());
-        std::transform(IdxCount{0}, IdxCount{size()}, s.begin(), [this, &u](Idx bus) {
-            return calculate_injection(u, bus);
-        });
+        std::transform(IdxCount{0}, IdxCount{size()}, s.begin(),
+                       [this, &u](Idx bus) { return calculate_injection(u, bus); });
         return s;
     }
 

@@ -31,9 +31,8 @@ class MathSolver {
                std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
         : topo_ptr_{topo_ptr},
           y_bus_{topo_ptr, param, y_bus_struct},
-          all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(), [](LoadGenType x) {
-              return x == LoadGenType::const_y;
-          })} {}
+          all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(),
+                                   [](LoadGenType x) { return x == LoadGenType::const_y; })} {}
 
     MathOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                    CalculationInfo& calculation_info, CalculationMethod calculation_method) {
@@ -105,9 +104,7 @@ class MathSolver {
         y_bus_.update_admittance(math_model_param);
     }
 
-    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const {
-        return y_bus_.shared_y_bus_struct();
-    }
+    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const { return y_bus_.shared_y_bus_struct(); }
 
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;

@@ -24,16 +24,12 @@ class Node final : public Base {
     using OutputType = NodeOutput<sym>;
     using ShortCircuitOutputType = NodeShortCircuitOutput;
     static constexpr char const* name = "node";
-    constexpr ComponentType math_model_type() const final {
-        return ComponentType::node;
-    }
+    constexpr ComponentType math_model_type() const final { return ComponentType::node; }
 
     explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {}
 
     // update node, nothing happens here
-    static constexpr UpdateChange update(BaseUpdate const&) {
-        return {false, false};
-    }
+    static constexpr UpdateChange update(BaseUpdate const&) { return {false, false}; }
 
     // energized
     template <bool sym>
@@ -75,12 +71,8 @@ class Node final : public Base {
         return output;
     }
 
-    constexpr double u_rated() const {
-        return u_rated_;
-    }
-    constexpr bool energized(bool is_connected_to_source) const final {
-        return is_connected_to_source;
-    }
+    constexpr double u_rated() const { return u_rated_; }
+    constexpr bool energized(bool is_connected_to_source) const final { return is_connected_to_source; }
 
   private:
     double u_rated_;

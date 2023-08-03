@@ -64,9 +64,7 @@ class DataPointer {
         return std::make_pair(ptr + elements_per_scenario_ * pos, ptr + elements_per_scenario_ * (pos + 1));
     }
 
-    Idx batch_size() const {
-        return (Idx)batch_size_;
-    }
+    Idx batch_size() const { return (Idx)batch_size_; }
 
     Idx elements_per_scenario(Idx pos) const {
         assert(pos >= 0);
@@ -77,9 +75,7 @@ class DataPointer {
         return (Idx)elements_per_scenario_;
     }
 
-    ptr_t<void> raw_ptr() const {
-        return ptr_;
-    }
+    ptr_t<void> raw_ptr() const { return ptr_; }
 
     // check if the dataset is one empty batch
     // the length of data should be zero

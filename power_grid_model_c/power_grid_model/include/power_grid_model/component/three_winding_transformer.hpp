@@ -96,15 +96,9 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     // override getter
-    double base_i_1() const final {
-        return base_i_1_;
-    }
-    double base_i_2() const final {
-        return base_i_2_;
-    }
-    double base_i_3() const final {
-        return base_i_3_;
-    }
+    double base_i_1() const final { return base_i_1_; }
+    double base_i_2() const final { return base_i_2_; }
+    double base_i_3() const final { return base_i_3_; }
     double loading(double s_1, double s_2, double s_3) const final {
         return std::max(std::max(s_1 / sn_1_, s_2 / sn_2_), s_3 / sn_3_);
     }
@@ -112,9 +106,7 @@ class ThreeWindingTransformer : public Branch3 {
     // the clock_12 and clock_13 is reverted
     // because clock_12 is the phase shift node_1 - node_2
     // and the phase shift in the math model is node_x - node_internal
-    std::array<double, 3> phase_shift() const final {
-        return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30};
-    }
+    std::array<double, 3> phase_shift() const final { return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30}; }
 
     // setter
     bool set_tap(IntS new_tap) {

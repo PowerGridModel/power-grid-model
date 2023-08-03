@@ -32,9 +32,7 @@ using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
 template <scalar_value T>
 class Vector : public Eigen3Vector<T> {
   public:
-    Vector() {
-        (*this) = Eigen3Vector<T>::Zero();
-    };
+    Vector() { (*this) = Eigen3Vector<T>::Zero(); };
     // eigen expression
     template <typename OtherDerived>
     Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {}
@@ -56,31 +54,19 @@ class Vector : public Eigen3Vector<T> {
     }
     // piecewise constructor of single value
     // for both real and complex number, the value is repeated three times (without rotation)
-    explicit Vector(std::piecewise_construct_t, T const& x) {
-        (*this) << x, x, x;
-    }
+    explicit Vector(std::piecewise_construct_t, T const& x) { (*this) << x, x, x; }
     // constructor of three values
-    Vector(T const& x1, T const& x2, T const& x3) {
-        (*this) << x1, x2, x3;
-    }
+    Vector(T const& x1, T const& x2, T const& x3) { (*this) << x1, x2, x3; }
 };
 
 template <scalar_value T>
 class Tensor : public Eigen3Tensor<T> {
   public:
-    Tensor() {
-        (*this) = Eigen3Tensor<T>::Zero();
-    }
+    Tensor() { (*this) = Eigen3Tensor<T>::Zero(); }
     // additional constructors
-    explicit Tensor(T const& x) {
-        (*this) << x, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, x;
-    }
-    explicit Tensor(T const& s, T const& m) {
-        (*this) << s, m, m, m, s, m, m, m, s;
-    }
-    explicit Tensor(Vector<T> const& v) {
-        (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2);
-    }
+    explicit Tensor(T const& x) { (*this) << x, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, x; }
+    explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
+    explicit Tensor(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2); }
     // eigen expression
     template <typename OtherDerived>
     Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
@@ -146,36 +132,24 @@ inline ComplexValue<false> piecewise_complex_value(Eigen::ArrayBase<DerivedA> co
 }
 
 // abs
-inline double cabs(double x) {
-    return std::abs(x);
-}
-inline double cabs(DoubleComplex const& x) {
-    return std::sqrt(std::norm(x));
-}
-inline double abs2(DoubleComplex const& x) {
-    return std::norm(x);
-}
+inline double cabs(double x) { return std::abs(x); }
+inline double cabs(DoubleComplex const& x) { return std::sqrt(std::norm(x)); }
+inline double abs2(DoubleComplex const& x) { return std::norm(x); }
 template <column_vector_or_tensor DerivedA>
 inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
     return sqrt(abs2(m));
 }
 
 // calculate kron product of two vector
-inline double vector_outer_product(double x, double y) {
-    return x * y;
-}
+inline double vector_outer_product(double x, double y) { return x * y; }
 template <column_vector DerivedA, column_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
 }
 
 // calculate matrix multiply, dot
-inline double dot(double x, double y) {
-    return x * y;
-}
-inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) {
-    return x * y;
-}
+inline double dot(double x, double y) { return x * y; }
+inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) { return x * y; }
 
 template <scalar_value... T>
 inline auto dot(T const&... x) {
@@ -189,9 +163,7 @@ inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
 }
 
 // max of a vector
-inline double max_val(double val) {
-    return val;
-}
+inline double max_val(double val) { return val; }
 template <column_vector DerivedA>
 inline double max_val(Eigen::ArrayBase<DerivedA> const& val) {
     return val.maxCoeff();
@@ -203,9 +175,7 @@ inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) {
     return m.rowwise().sum();
 }
 // overload for double
-inline double sum_row(double d) {
-    return d;
-}
+inline double sum_row(double d) { return d; }
 
 // function to sum vector
 template <column_vector DerivedA>
@@ -213,24 +183,16 @@ inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) {
     return m.sum();
 }
 // overload for double and complex
-inline double sum_val(double d) {
-    return d;
-}
-inline DoubleComplex sum_val(DoubleComplex const& z) {
-    return z;
-}
+inline double sum_val(double d) { return d; }
+inline DoubleComplex sum_val(DoubleComplex const& z) { return z; }
 
 // function to mean vector
 template <column_vector DerivedA>
 inline auto mean_val(Eigen::ArrayBase<DerivedA> const& m) {
     return m.mean();
 }
-inline DoubleComplex mean_val(DoubleComplex const& z) {
-    return z;
-}
-inline double mean_val(double z) {
-    return z;
-}
+inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
+inline double mean_val(double z) { return z; }
 
 template <bool sym, class T>
 inline auto process_mean_val(const T& m) {
@@ -249,9 +211,7 @@ inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<Deri
     return (x.matrix().asDiagonal() * y.matrix() * z.matrix().asDiagonal()).array();
 }
 // double overload
-inline double diag_mult(double x, double y, double z) {
-    return x * y * z;
-}
+inline double diag_mult(double x, double y, double z) { return x * y * z; }
 
 // calculate positive sequence
 template <column_vector Derived>
@@ -259,25 +219,15 @@ inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
 
-inline DoubleComplex pos_seq(DoubleComplex const& val) {
-    return val;
-}
+inline DoubleComplex pos_seq(DoubleComplex const& val) { return val; }
 
 // inverse of tensor
-inline DoubleComplex inv(DoubleComplex const& val) {
-    return 1.0 / val;
-}
-inline auto inv(ComplexTensor<false> const& val) {
-    return val.matrix().inverse().array();
-}
+inline DoubleComplex inv(DoubleComplex const& val) { return 1.0 / val; }
+inline auto inv(ComplexTensor<false> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
-inline void add_diag(double& x, double y) {
-    x += y;
-}
-inline void add_diag(DoubleComplex& x, DoubleComplex const& y) {
-    x += y;
-}
+inline void add_diag(double& x, double y) { x += y; }
+inline void add_diag(DoubleComplex& x, DoubleComplex const& y) { x += y; }
 template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
@@ -302,20 +252,12 @@ template <class Derived>
 inline bool is_nan(Eigen::ArrayBase<Derived> const& x) {
     return x.isNaN().all();
 }
-inline bool is_nan(double x) {
-    return std::isnan(x);
-}
-inline bool is_nan(ID x) {
-    return x == na_IntID;
-}
-inline bool is_nan(IntS x) {
-    return x == na_IntS;
-}
+inline bool is_nan(double x) { return std::isnan(x); }
+inline bool is_nan(ID x) { return x == na_IntID; }
+inline bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
 requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline bool is_nan(Enum x) {
-    return static_cast<IntS>(x) == na_IntS;
-}
+inline bool is_nan(Enum x) { return static_cast<IntS>(x) == na_IntS; }
 
 /* update real values
 
@@ -358,12 +300,8 @@ inline ComplexTensor<false> get_sym_matrix_inv() {
 }
 
 // conjugate (hermitian) transpose
-inline DoubleComplex hermitian_transpose(DoubleComplex const& z) {
-    return conj(z);
-}
-inline double hermitian_transpose(double x) {
-    return x;
-}
+inline DoubleComplex hermitian_transpose(DoubleComplex const& z) { return conj(z); }
+inline double hermitian_transpose(double x) { return x; }
 template <rk2_tensor Derived>
 inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().adjoint().array();

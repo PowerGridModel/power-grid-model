@@ -25,9 +25,7 @@ class Fault final : public Base {
     using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
-    ComponentType math_model_type() const final {
-        return ComponentType::fault;
-    }
+    ComponentType math_model_type() const final { return ComponentType::fault; }
 
     explicit Fault(FaultInput const& fault_input)
         : Base{fault_input},
@@ -61,17 +59,13 @@ class Fault final : public Base {
         return param;
     }
 
-    FaultOutput get_null_output() const {
-        return get_null_output_impl<FaultOutput>();
-    }
+    FaultOutput get_null_output() const { return get_null_output_impl<FaultOutput>(); }
     FaultOutput get_output() const {
         // During power flow and state estimation the fault object will have an empty output
         return get_null_output();
     }
 
-    FaultShortCircuitOutput get_null_sc_output() const {
-        return get_null_output_impl<FaultShortCircuitOutput>();
-    }
+    FaultShortCircuitOutput get_null_sc_output() const { return get_null_output_impl<FaultShortCircuitOutput>(); }
     FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
@@ -118,13 +112,9 @@ class Fault final : public Base {
         return {false, false};  // topology and parameters do not change
     }
 
-    constexpr bool energized(bool is_connected_to_source) const final {
-        return is_connected_to_source;
-    }
+    constexpr bool energized(bool is_connected_to_source) const final { return is_connected_to_source; }
 
-    constexpr bool status() const {
-        return status_;
-    }
+    constexpr bool status() const { return status_; }
 
     // setter
     constexpr bool set_status(IntS new_status) {
@@ -174,9 +164,7 @@ class Fault final : public Base {
         }
         return fault_phase_;
     }
-    constexpr ID get_fault_object() const {
-        return fault_object_;
-    }
+    constexpr ID get_fault_object() const { return fault_object_; }
 
   private:
     // short circuit parameters

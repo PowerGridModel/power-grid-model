@@ -25,30 +25,14 @@ template <bool sym>
 struct BranchCalcParam {
     std::array<ComplexTensor<sym>, 4> value;
     // getter
-    ComplexTensor<sym>& yff() {
-        return value[0];
-    }
-    ComplexTensor<sym> const& yff() const {
-        return value[0];
-    }
-    ComplexTensor<sym>& yft() {
-        return value[1];
-    }
-    ComplexTensor<sym> const& yft() const {
-        return value[1];
-    }
-    ComplexTensor<sym>& ytf() {
-        return value[2];
-    }
-    ComplexTensor<sym> const& ytf() const {
-        return value[2];
-    }
-    ComplexTensor<sym>& ytt() {
-        return value[3];
-    }
-    ComplexTensor<sym> const& ytt() const {
-        return value[3];
-    }
+    ComplexTensor<sym>& yff() { return value[0]; }
+    ComplexTensor<sym> const& yff() const { return value[0]; }
+    ComplexTensor<sym>& yft() { return value[1]; }
+    ComplexTensor<sym> const& yft() const { return value[1]; }
+    ComplexTensor<sym>& ytf() { return value[2]; }
+    ComplexTensor<sym> const& ytf() const { return value[2]; }
+    ComplexTensor<sym>& ytt() { return value[3]; }
+    ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
 template <bool sym>
@@ -127,53 +111,29 @@ struct MathModelTopology {
     IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
     IdxVector bus_power_sensor_indptr;          // indptr of the bus
 
-    Idx n_bus() const {
-        return static_cast<Idx>(phase_shift.size());
-    }
+    Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
-    Idx n_branch() const {
-        return static_cast<Idx>(branch_bus_idx.size());
-    }
+    Idx n_branch() const { return static_cast<Idx>(branch_bus_idx.size()); }
 
-    Idx n_source() const {
-        return source_bus_indptr.back();
-    }
+    Idx n_source() const { return source_bus_indptr.back(); }
 
-    Idx n_shunt() const {
-        return shunt_bus_indptr.back();
-    }
+    Idx n_shunt() const { return shunt_bus_indptr.back(); }
 
-    Idx n_load_gen() const {
-        return load_gen_bus_indptr.back();
-    }
+    Idx n_load_gen() const { return load_gen_bus_indptr.back(); }
 
-    Idx n_voltage_sensor() const {
-        return voltage_sensor_indptr.back();
-    }
+    Idx n_voltage_sensor() const { return voltage_sensor_indptr.back(); }
 
-    Idx n_source_power_sensor() const {
-        return source_power_sensor_indptr.back();
-    }
+    Idx n_source_power_sensor() const { return source_power_sensor_indptr.back(); }
 
-    Idx n_load_gen_power_sensor() const {
-        return load_gen_power_sensor_indptr.back();
-    }
+    Idx n_load_gen_power_sensor() const { return load_gen_power_sensor_indptr.back(); }
 
-    Idx n_shunt_power_power_sensor() const {
-        return shunt_power_sensor_indptr.back();
-    }
+    Idx n_shunt_power_power_sensor() const { return shunt_power_sensor_indptr.back(); }
 
-    Idx n_branch_from_power_sensor() const {
-        return branch_from_power_sensor_indptr.back();
-    }
+    Idx n_branch_from_power_sensor() const { return branch_from_power_sensor_indptr.back(); }
 
-    Idx n_branch_to_power_sensor() const {
-        return branch_to_power_sensor_indptr.back();
-    }
+    Idx n_branch_to_power_sensor() const { return branch_to_power_sensor_indptr.back(); }
 
-    Idx n_bus_power_sensor() const {
-        return bus_power_sensor_indptr.back();
-    }
+    Idx n_bus_power_sensor() const { return bus_power_sensor_indptr.back(); }
 };
 
 template <bool sym>
@@ -292,9 +252,7 @@ struct ComponentTopology {
     IdxVector power_sensor_object_idx;  // the index is relative to branch, source, shunt, or load_gen
     std::vector<MeasuredTerminalType> power_sensor_terminal_type;
 
-    inline Idx n_node_total() const {
-        return n_node + (Idx)branch3_node_idx.size();
-    }
+    inline Idx n_node_total() const { return n_node + (Idx)branch3_node_idx.size(); }
 };
 
 // connection property

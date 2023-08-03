@@ -291,14 +291,12 @@ class Topology {
         }
 
         // copy all the far-end non-cyclic node, in reverse order
-        std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node), [this](Idx x) {
-            return node_status_[x] == -1;
-        });
+        std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
+                     [this](Idx x) { return node_status_[x] == -1; });
         // copy all cyclic node
         std::vector<Idx> cyclic_node;
-        std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node), [this](Idx x) {
-            return node_status_[x] == -2;
-        });
+        std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
+                     [this](Idx x) { return node_status_[x] == -2; });
         GraphIdx const n_cycle_node = cyclic_node.size();
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
         if (n_cycle_node < 4) {
@@ -485,19 +483,13 @@ class Topology {
         }
     }
 
-    static constexpr auto include_all = [](Idx) {
-        return true;
-    };
+    static constexpr auto include_all = [](Idx) { return true; };
 
     // proxy class to find the coupled object in math model in the coupling process to a single type object
     //    given a particular component index
     struct SingleTypeObjectFinder {
-        Idx size() const {
-            return (Idx)component_obj_idx.size();
-        }
-        Idx2D find_math_object(Idx component_i) const {
-            return objects_coupling[component_obj_idx[component_i]];
-        }
+        Idx size() const { return (Idx)component_obj_idx.size(); }
+        Idx2D find_math_object(Idx component_i) const { return objects_coupling[component_obj_idx[component_i]]; }
         IdxVector const& component_obj_idx;
         std::vector<Idx2D> const& objects_coupling;
     };
@@ -506,9 +498,7 @@ class Topology {
     // they are all coupled to the from-side of some branches in math model
     // the key is to find relevant coupling, either via branch or branch3
     struct SensorBranchObjectFinder {
-        Idx size() const {
-            return (Idx)sensor_obj_idx.size();
-        }
+        Idx size() const { return (Idx)sensor_obj_idx.size(); }
         Idx2D find_math_object(Idx component_i) const {
             Idx const obj_idx = sensor_obj_idx[component_i];
             switch (power_sensor_terminal_type[component_i]) {
@@ -594,9 +584,8 @@ class Topology {
 
         // set load gen type
         // resize vector
-        std::for_each(math_topology_.begin(), math_topology_.end(), [](MathModelTopology& topo) {
-            topo.load_gen_type.resize(topo.n_load_gen());
-        });
+        std::for_each(math_topology_.begin(), math_topology_.end(),
+                      [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
         for (Idx k = 0; k != (Idx)comp_topo_.load_gen_node_idx.size(); ++k) {
             Idx2D const idx_math = comp_coup_.load_gen[k];
@@ -608,9 +597,8 @@ class Topology {
 
         // source
         couple_object_components<&MathModelTopology::source_bus_indptr, &MathModelTopology::n_bus>(
-            {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source, [this](Idx i) {
-                return comp_conn_.source_connected[i];
-            });
+            {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source,
+            [this](Idx i) { return comp_conn_.source_connected[i]; });
     }
 
     void couple_sensors() {
@@ -620,15 +608,13 @@ class Topology {
 
         // source power sensors
         couple_object_components<&MathModelTopology::source_power_sensor_indptr, &MathModelTopology::n_source>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor, [this](Idx i) {
-                return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source;
-            });
+            {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor,
+            [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
 
         // shunt power sensors
         couple_object_components<&MathModelTopology::shunt_power_sensor_indptr, &MathModelTopology::n_shunt>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor, [this](Idx i) {
-                return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt;
-            });
+            {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor,
+            [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
 
         // load + generator power sensors
         couple_object_components<&MathModelTopology::load_gen_power_sensor_indptr, &MathModelTopology::n_load_gen>(
@@ -656,15 +642,13 @@ class Topology {
 
         // branch 'to' power sensors
         couple_object_components<&MathModelTopology::branch_to_power_sensor_indptr, &MathModelTopology::n_branch>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor, [this](Idx i) {
-                return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
-            });
+            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor,
+            [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
 
         // node injection power sensors
         couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor, [this](Idx i) {
-                return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node;
-            });
+            {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
+            [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }
 };
 

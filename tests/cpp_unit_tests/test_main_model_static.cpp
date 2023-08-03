@@ -31,13 +31,9 @@ TEST_CASE("Test main model static") {
     update_data_independent["link"] = ConstDataPointer{link.data(), link_indptr.data(), batches - 1};
     update_data_independent["source"] = ConstDataPointer{source.data(), source_indptr.data(), batches - 1};
 
-    SUBCASE("Independent update data") {
-        CHECK(MainModel::is_update_independent(update_data_independent) == true);
-    }
+    SUBCASE("Independent update data") { CHECK(MainModel::is_update_independent(update_data_independent) == true); }
 
-    SUBCASE("Dependent update data") {
-        CHECK(MainModel::is_update_independent(update_data_dependent) == false);
-    }
+    SUBCASE("Dependent update data") { CHECK(MainModel::is_update_independent(update_data_dependent) == false); }
 }
 
 }  // namespace power_grid_model

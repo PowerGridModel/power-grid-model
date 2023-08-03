@@ -245,10 +245,9 @@ template <std::derived_from<GenericLoadGen> Component, class ComponentContainer,
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(state, res_it,
-                                                    [](GenericLoadGen const& load_gen, Idx2D /* math_id */) {
-                                                        return load_gen.get_null_sc_output();
-                                                    });
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it,
+        [](GenericLoadGen const& load_gen, Idx2D /* math_id */) { return load_gen.get_null_sc_output(); });
 }
 
 // output shunt
@@ -397,9 +396,8 @@ template <std::same_as<Fault> Component, class ComponentContainer, steady_state_
 requires model_component_state<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(state, res_it, [](Fault const& fault, Idx2D /* math_id */) {
-        return fault.get_output();
-    });
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [](Fault const& fault, Idx2D /* math_id */) { return fault.get_output(); });
 }
 template <std::same_as<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>

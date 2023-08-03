@@ -23,9 +23,7 @@ class Shunt : public Appliance {
     using InputType = ShuntInput;
     using UpdateType = ApplianceUpdate;
     static constexpr char const* name = "shunt";
-    ComponentType math_model_type() const final {
-        return ComponentType::shunt;
-    }
+    ComponentType math_model_type() const final { return ComponentType::shunt; }
 
     explicit Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
         double const base_y = base_i() / (u / sqrt3);
@@ -72,16 +70,10 @@ class Shunt : public Appliance {
         appliance_math_output.s = u * conj(appliance_math_output.i);
         return appliance_math_output;
     }
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final {
-        return u2si<true>(u);
-    }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final {
-        return u2si<false>(u);
-    }
+    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
+    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
 
-    double injection_direction() const final {
-        return -1.0;
-    }
+    double injection_direction() const final { return -1.0; }
 };
 
 }  // namespace power_grid_model

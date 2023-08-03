@@ -47,14 +47,10 @@ class UnsupportedValidationCase : public PowerGridError {
 
 // memory buffer
 struct BufferDeleter {
-    void operator()(RawDataPtr ptr) {
-        std::free(ptr);
-    }
+    void operator()(RawDataPtr ptr) { std::free(ptr); }
 };
 using BufferPtr = std::unique_ptr<void, BufferDeleter>;
-BufferPtr create_buffer(size_t size, size_t length) {
-    return BufferPtr(std::malloc(size * length));
-}
+BufferPtr create_buffer(size_t size, size_t length) { return BufferPtr(std::malloc(size * length)); }
 struct Buffer {
     BufferPtr ptr;
     IdxVector indptr;
@@ -435,9 +431,7 @@ struct CaseParam {
 
     static std::string replace_backslash(std::string const& str) {
         std::string str_out{str};
-        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) {
-            return c == '\\' ? '/' : c;
-        });
+        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) { return c == '\\' ? '/' : c; });
         return str_out;
     }
 };
@@ -591,9 +585,7 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-constexpr bool should_skip_test(CaseParam const& param) {
-    return param.fail;
-}
+constexpr bool should_skip_test(CaseParam const& param) { return param.fail; }
 
 template <typename T>
 requires std::invocable<std::remove_cvref_t<T>>
