@@ -11,9 +11,9 @@
 namespace power_grid_model {
 
 enum class LoadGenType : IntS {
-    const_pq = 0,  // constant power
-    const_y = 1,   // constant element_admittance (impedance)
-    const_i = 2,   // constant current
+    const_pq = 0, // constant power
+    const_y = 1,  // constant element_admittance (impedance)
+    const_i = 2,  // constant current
 };
 
 enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigzag_n = 4 };
@@ -96,6 +96,6 @@ enum class FaultPhase : IntS {
 
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -29,8 +29,7 @@ using DatasetMap = std::map<std::string, MetaComponent>;
 using AllDatasetMap = std::map<std::string, DatasetMap>;
 
 // template function to add meta data
-template <class CT>
-void add_meta_data(AllDatasetMap& meta) {
+template <class CT> void add_meta_data(AllDatasetMap& meta) {
     meta["input"].try_emplace(CT::name, MetaComponentImpl<typename CT::InputType>{}, CT::name);
     meta["update"].try_emplace(CT::name, MetaComponentImpl<typename CT::UpdateType>{}, CT::name);
     meta["sym_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::template OutputType<true>>{}, CT::name);
@@ -38,11 +37,9 @@ void add_meta_data(AllDatasetMap& meta) {
     meta["sc_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::ShortCircuitOutputType>{}, CT::name);
 }
 
-template <class T>
-struct MetaDataGeneratorImpl;
+template <class T> struct MetaDataGeneratorImpl;
 
-template <class... ComponentType>
-struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
+template <class... ComponentType> struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
     using FuncPtr = std::add_pointer_t<void(AllDatasetMap& meta)>;
     static constexpr std::array<FuncPtr, sizeof...(ComponentType)> func_arr{&add_meta_data<ComponentType>...};
 
@@ -75,8 +72,8 @@ inline MetaData const& meta_data() {
     return meta_data;
 }
 
-}  // namespace meta_data
+} // namespace meta_data
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -20,36 +20,29 @@
 namespace power_grid_model {
 
 class GenericLoadGen : public Appliance {
-   public:
+  public:
     using InputType = GenericLoadGenInput;
     static constexpr char const* name = "generic_load_gen";
-    ComponentType math_model_type() const final {
-        return ComponentType::generic_load_gen;
-    }
+    ComponentType math_model_type() const final { return ComponentType::generic_load_gen; }
 
     explicit GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
-        : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {
-    }
+        : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {}
 
     // getter for load type
-    LoadGenType type() const {
-        return type_;
-    }
+    LoadGenType type() const { return type_; }
     // getter for calculation param, power injection
-    template <bool sym>
-    ComplexValue<sym> calc_param(bool is_connected_to_source = true) const {
+    template <bool sym> ComplexValue<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return ComplexValue<sym>{};
         }
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }
 
-   private:
+  private:
     LoadGenType type_;
     virtual ComplexValue<true> sym_calc_param() const = 0;
     virtual ComplexValue<false> asym_calc_param() const = 0;
@@ -57,17 +50,17 @@ class GenericLoadGen : public Appliance {
 
 // abstraction of load/generation
 class GenericLoad : public GenericLoadGen {
-   public:
+  public:
     using GenericLoadGen::GenericLoadGen;
 };
 class GenericGenerator : public GenericLoadGen {
-   public:
+  public:
     using GenericLoadGen::GenericLoadGen;
 };
 
 template <bool sym, bool is_gen>
 class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, GenericLoad> {
-   public:
+  public:
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
     using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
@@ -96,52 +89,40 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
         return {false, false};
     }
 
-   private:
-    ComplexValue<sym> s_specified_{};  // specified power injection
+  private:
+    ComplexValue<sym> s_specified_{}; // specified power injection
 
     // direction of load_gen
     static constexpr double direction_ = is_gen ? 1.0 : -1.0;
 
     // override calc_param
-    ComplexValue<true> sym_calc_param() const final {
-        return mean_val(s_specified_);
-    }
-    ComplexValue<false> asym_calc_param() const final {
-        return piecewise_complex_value(s_specified_);
-    }
-    template <bool sym_calc>
-    ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+    ComplexValue<true> sym_calc_param() const final { return mean_val(s_specified_); }
+    ComplexValue<false> asym_calc_param() const final { return piecewise_complex_value(s_specified_); }
+    template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         appliance_math_output.s = scale_power<sym_calc>(u);
         appliance_math_output.i = conj(appliance_math_output.s / u);
         return appliance_math_output;
     }
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final {
-        return u2si<true>(u);
-    }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final {
-        return u2si<false>(u);
-    }
+    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
+    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
 
-    double injection_direction() const final {
-        return direction_;
-    }
+    double injection_direction() const final { return direction_; }
 
     // scale load
-    template <bool sym_calc>
-    ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
+    template <bool sym_calc> ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
         using enum LoadGenType;
 
         ComplexValue<sym_calc> s = this->template calc_param<sym_calc>();
         switch (this->type()) {
-            case const_pq:
-                return s;
-            case const_y:
-                return s * abs2(u);
-            case const_i:
-                return s * cabs(u);
-            default:
-                throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
+        case const_pq:
+            return s;
+        case const_y:
+            return s * abs2(u);
+        case const_i:
+            return s * cabs(u);
+        default:
+            throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
         }
     }
 };
@@ -157,6 +138,6 @@ using AsymGenerator = LoadGen<false, true>;
 using SymLoad = LoadGen<true, false>;
 using AsymLoad = LoadGen<false, false>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

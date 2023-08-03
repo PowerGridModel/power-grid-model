@@ -15,28 +15,23 @@
 namespace power_grid_model {
 
 class PowerGridError : public std::exception {
-   public:
-    void append_msg(std::string const &msg) {
-        msg_ += msg;
-    }
-    char const *what() const noexcept final {
-        return msg_.c_str();
-    }
+  public:
+    void append_msg(std::string const& msg) { msg_ += msg; }
+    char const* what() const noexcept final { return msg_.c_str(); }
 
-   private:
+  private:
     std::string msg_;
 };
 
-template <typename T>
-class MissingCaseForEnumError : public PowerGridError {
-   public:
-    MissingCaseForEnumError(const std::string &method, const T &value) {
+template <typename T> class MissingCaseForEnumError : public PowerGridError {
+  public:
+    MissingCaseForEnumError(const std::string& method, const T& value) {
         append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
     }
 };
 
 class ConflictVoltage : public PowerGridError {
-   public:
+  public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
         append_msg("Conflicting voltage for line " + std::to_string(id) + "\n voltage at from node " +
                    std::to_string(id1) + " is " + std::to_string(u1) + "\n voltage at to node " + std::to_string(id2) +
@@ -45,7 +40,7 @@ class ConflictVoltage : public PowerGridError {
 };
 
 class InvalidBranch : public PowerGridError {
-   public:
+  public:
     InvalidBranch(ID branch_id, ID node_id) {
         append_msg("Branch " + std::to_string(branch_id) + " has the same from- and to-node " +
                    std::to_string(node_id) + ",\n This is not allowed!\n");
@@ -53,7 +48,7 @@ class InvalidBranch : public PowerGridError {
 };
 
 class InvalidBranch3 : public PowerGridError {
-   public:
+  public:
     InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id) {
         append_msg("Branch3 " + std::to_string(branch3_id) +
                    " is connected to the same node at least twice. Node 1/2/3: " + std::to_string(node_1_id) + "/" +
@@ -62,15 +57,15 @@ class InvalidBranch3 : public PowerGridError {
 };
 
 class InvalidTransformerClock : public PowerGridError {
-   public:
+  public:
     InvalidTransformerClock(ID id, IntS clock) {
         append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock  " + std::to_string(clock) + '\n');
     }
 };
 
 class SparseMatrixError : public PowerGridError {
-   public:
-    SparseMatrixError(Idx err, std::string const &msg = "") {
+  public:
+    SparseMatrixError(Idx err, std::string const& msg = "") {
         append_msg("Sparse matrix error with error code #" + std::to_string(err) + " (possibly singular)\n");
         if (!msg.empty()) {
             append_msg(msg + "\n");
@@ -86,7 +81,7 @@ class SparseMatrixError : public PowerGridError {
 };
 
 class IterationDiverge : public PowerGridError {
-   public:
+  public:
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
         append_msg("Iteration failed to converge after " + std::to_string(num_iter) + " iterations! Max deviation: " +
                    std::to_string(max_dev) + ", error tolerance: " + std::to_string(err_tol) + ".\n");
@@ -94,75 +89,61 @@ class IterationDiverge : public PowerGridError {
 };
 
 class ConflictID : public PowerGridError {
-   public:
-    explicit ConflictID(ID id) {
-        append_msg("Conflicting id detected: " + std::to_string(id) + '\n');
-    }
+  public:
+    explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + std::to_string(id) + '\n'); }
 };
 
 class IDNotFound : public PowerGridError {
-   public:
-    explicit IDNotFound(ID id) {
-        append_msg("The id cannot be found: " + std::to_string(id) + '\n');
-    }
+  public:
+    explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + std::to_string(id) + '\n'); }
 };
 
 class InvalidMeasuredObject : public PowerGridError {
-   public:
-    InvalidMeasuredObject(const std::string &object, const std::string &sensor) {
+  public:
+    InvalidMeasuredObject(const std::string& object, const std::string& sensor) {
         append_msg(sensor + " is not supported for " + object);
     }
 };
 
 class IDWrongType : public PowerGridError {
-   public:
-    explicit IDWrongType(ID id) {
-        append_msg("Wrong type for object with id " + std::to_string(id) + '\n');
-    }
+  public:
+    explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + std::to_string(id) + '\n'); }
 };
 
 class CalculationError : public PowerGridError {
-   public:
-    explicit CalculationError(std::string const &msg) {
-        append_msg(msg);
-    }
+  public:
+    explicit CalculationError(std::string const& msg) { append_msg(msg); }
 };
 
 class BatchCalculationError : public CalculationError {
-   public:
-    BatchCalculationError(std::string const &msg, IdxVector const &failed_scenarios,
-                          std::vector<std::string> const &err_msgs)
-        : CalculationError(msg), failed_scenarios_{failed_scenarios}, err_msgs_(err_msgs) {
-    }
+  public:
+    BatchCalculationError(std::string const& msg, IdxVector const& failed_scenarios,
+                          std::vector<std::string> const& err_msgs)
+        : CalculationError(msg), failed_scenarios_{failed_scenarios}, err_msgs_(err_msgs) {}
 
-    IdxVector const &failed_scenarios() const {
-        return failed_scenarios_;
-    }
+    IdxVector const& failed_scenarios() const { return failed_scenarios_; }
 
-    std::vector<std::string> const &err_msgs() const {
-        return err_msgs_;
-    }
+    std::vector<std::string> const& err_msgs() const { return err_msgs_; }
 
-   private:
+  private:
     IdxVector failed_scenarios_;
     std::vector<std::string> err_msgs_;
 };
 
 class InvalidCalculationMethod : public CalculationError {
-   public:
-    InvalidCalculationMethod() : CalculationError("The calculation method is invalid for this calculation!") {
-    }
+  public:
+    InvalidCalculationMethod() : CalculationError("The calculation method is invalid for this calculation!") {}
 };
 
 class UnknownAttributeName : public PowerGridError {
-   public:
-    explicit UnknownAttributeName(std::string const &attr_name) {
+  public:
+    explicit UnknownAttributeName(std::string const& attr_name) {
         append_msg("Unknown attribute name!" + attr_name + "\n");
     }
 };
 
 class InvalidShortCircuitType : public PowerGridError {
-   public:
+  public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
         append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
                    ") is invalid!\n");
@@ -174,7 +155,7 @@ class InvalidShortCircuitType : public PowerGridError {
 };
 
 class InvalidShortCircuitPhases : public PowerGridError {
-   public:
+  public:
     InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
         append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
                    ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
@@ -183,12 +164,12 @@ class InvalidShortCircuitPhases : public PowerGridError {
 };
 
 class InvalidShortCircuitPhaseOrType : public PowerGridError {
-   public:
+  public:
     InvalidShortCircuitPhaseOrType() {
         append_msg("During one calculation the short circuit types phases should be similar for all faults \n");
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

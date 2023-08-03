@@ -29,11 +29,11 @@
 #endif
 #endif
 // Now we use the generic helper definitions above to define PGM_API and PGM_LOCAL.
-#ifdef PGM_DLL_EXPORTS  // defined if we are building the POWER_GRID_MODEL DLL (instead of using it)
+#ifdef PGM_DLL_EXPORTS // defined if we are building the POWER_GRID_MODEL DLL (instead of using it)
 #define PGM_API PGM_HELPER_DLL_EXPORT
 #else
 #define PGM_API PGM_HELPER_DLL_IMPORT
-#endif  // PGM_DLL_EXPORTS
+#endif // PGM_DLL_EXPORTS
 #define PGM_LOCAL PGM_HELPER_DLL_LOCAL
 // API_MACRO_BLOCK
 

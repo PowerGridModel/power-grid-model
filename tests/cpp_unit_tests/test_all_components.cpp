@@ -28,13 +28,9 @@ namespace power_grid_model {
 // (This would mean that we lose private member variables or overloads)
 template <typename T, typename U>
 concept is_copyable_to = std::derived_from<T, U> && requires(T const t, U u) {
-    {
-        U {
-            t
-        }
-        } -> std::same_as<U>;       // copy
-    { u = t } -> std::same_as<U&>;  // copy assignment
-};
+                                                        { U{t} } -> std::same_as<U>;   // copy
+                                                        { u = t } -> std::same_as<U&>; // copy assignment
+                                                    };
 
 static_assert(is_copyable_to<Fault, Fault>);
 static_assert(!is_copyable_to<Fault, Base>);
@@ -94,4 +90,4 @@ static_assert(!is_copyable_to<GenericVoltageSensor, GenericVoltageSensor>);
 static_assert(std::is_abstract_v<Sensor>);
 static_assert(!is_copyable_to<Sensor, Sensor>);
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

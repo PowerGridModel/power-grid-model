@@ -71,16 +71,16 @@ int main(int argc, char** argv) {
     size_t node_u_rated_offset = PGM_meta_attribute_offset(handle, PGM_def_input_node_u_rated);
     // pointer cast of offset
     *(PGM_ID*)((char*)node_input + node_id_offset) = 1;
-    *(double*)((char*)node_input + node_u_rated_offset) = 10e3;  // 10 kV node
+    *(double*)((char*)node_input + node_u_rated_offset) = 10e3; // 10 kV node
 
     // source attribute, we use helper function
     // set to NaN for all values, it is recommended for input and update buffers
     PGM_buffer_set_nan(handle, PGM_def_input_source, source_input, 0, 1);
     PGM_ID source_id = 0;
-    PGM_ID node = 1;    // also used for load
-    int8_t status = 1;  // also used for load
+    PGM_ID node = 1;   // also used for load
+    int8_t status = 1; // also used for load
     double u_ref = 1.0;
-    double sk = 1e6;  // 1 MVA short circuit capacity
+    double sk = 1e6; // 1 MVA short circuit capacity
     PGM_buffer_set_value(handle, PGM_def_input_source_id, source_input, &source_id, 0, 1, -1);
     PGM_buffer_set_value(handle, PGM_def_input_source_node, source_input, &node, 0, 1, -1);
     PGM_buffer_set_value(handle, PGM_def_input_source_status, source_input, &status, 0, 1, -1);
@@ -90,8 +90,8 @@ int main(int argc, char** argv) {
 
     // sym_load attribute, we use helper function
     PGM_ID sym_load_id[] = {2, 3};
-    int8_t load_type = 0;                               // const power
-    double pq_specified[] = {50e3, 10e3, 100e3, 20e3};  // p2, q2, p3, p3
+    int8_t load_type = 0;                              // const power
+    double pq_specified[] = {50e3, 10e3, 100e3, 20e3}; // p2, q2, p3, p3
     PGM_buffer_set_value(handle, PGM_def_input_sym_load_id, sym_load_input, sym_load_id, 0, 2, -1);
     // node, status, type are the same for two sym_load, therefore the scr_stride is zero
     PGM_buffer_set_value(handle, PGM_def_input_sym_load_node, sym_load_input, &node, 0, 2, 0);
@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
 
     /**** initialize model ****/
     // component names and sizes
-    char const* components[] = {"source", "sym_load", "node"};  // we use this array for mutiple places
+    char const* components[] = {"source", "sym_load", "node"}; // we use this array for mutiple places
     PGM_Idx component_sizes[] = {1, 2, 1};
     void const* input_data[] = {source_input, sym_load_input, node_input};
     // create model
@@ -170,15 +170,15 @@ int main(int argc, char** argv) {
     // 2 load update in scenario 0, 1 load update in scenario 1, 1 load update in scenario 2
     void* load_update = PGM_create_buffer(handle, PGM_def_update_sym_load, 4);
     PGM_buffer_set_nan(handle, PGM_def_update_sym_load, load_update, 0, 4);
-    PGM_ID load_update_id[] = {2, 3, 2, 3};  // 2, 3 for #0, 2 for #1, 3 for #2
+    PGM_ID load_update_id[] = {2, 3, 2, 3}; // 2, 3 for #0, 2 for #1, 3 for #2
     double p_update[] = {100e3, 200e3, 0.0, -200e3};
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
-    PGM_Idx indptr_load[] = {0, 2, 3, 4};  // 2 updates for #0, 1 update for #1, 2 update for #2
+    PGM_Idx indptr_load[] = {0, 2, 3, 4}; // 2 updates for #0, 1 update for #1, 2 update for #2
 
     // update meta data
-    PGM_Idx n_component_elements_per_scenario[] = {1, -1};         // 1 per scenario for source, variable for load
-    PGM_Idx const* indptrs_per_component[] = {NULL, indptr_load};  // variable for load
+    PGM_Idx n_component_elements_per_scenario[] = {1, -1};        // 1 per scenario for source, variable for load
+    PGM_Idx const* indptrs_per_component[] = {NULL, indptr_load}; // variable for load
     void const* update_data[] = {source_update, load_update};
 
     /**** Batch calculation ****/
@@ -202,8 +202,8 @@ int main(int argc, char** argv) {
     // scenario 0 is normal
     // scenario 1 has a very high load so the calculation will diverge
     // scenario 2 has a unknown id
-    p_update[2] = 100e12;     // very high load for scenario 1
-    load_update_id[3] = 100;  // unknown id for scenario 2
+    p_update[2] = 100e12;    // very high load for scenario 1
+    load_update_id[3] = 100; // unknown id for scenario 2
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     // calculate

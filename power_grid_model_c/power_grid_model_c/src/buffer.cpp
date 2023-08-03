@@ -14,7 +14,7 @@ using namespace power_grid_model;
 
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
-}  // namespace
+} // namespace
 
 // buffer control
 RawDataPtr PGM_create_buffer(PGM_Handle*, PGM_MetaComponent const* component, PGM_Idx size) {
@@ -50,13 +50,12 @@ void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_p
             reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
         if constexpr (is_get) {
             attribute->get_value(buffer_ptr, shifted_value_ptr, i);
-        }
-        else {
+        } else {
             attribute->set_value(buffer_ptr, shifted_value_ptr, i);
         }
     }
 }
-}  // namespace
+} // namespace
 void PGM_buffer_set_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
                           RawDataConstPtr src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride) {
     buffer_get_set_value<false>(attribute, buffer_ptr, src_ptr, buffer_offset, size, src_stride);

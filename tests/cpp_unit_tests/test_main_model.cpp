@@ -122,7 +122,7 @@ auto default_model(State const& state) -> MainModel {
     main_model.set_construction_complete();
     return main_model;
 }
-}  // namespace
+} // namespace
 
 TEST_CASE("Test main model - power flow") {
     State state;
@@ -153,18 +153,18 @@ TEST_CASE("Test main model - power flow") {
         MainModel main_model2{50.0};
 
         state.link_input[0].from_node = 4;
-        main_model2.add_component<Node>(state.node_input);  // 1 2 3
-        main_model2.add_component<Line>(state.line_input);  // 4
+        main_model2.add_component<Node>(state.node_input); // 1 2 3
+        main_model2.add_component<Line>(state.line_input); // 4
         CHECK_THROWS_AS(main_model2.add_component<Link>(state.link_input), IDWrongType);
 
         // Fix link input, retry
         state.link_input[0].from_node = 2;
-        main_model2.add_component<Link>(state.link_input);  // 5
+        main_model2.add_component<Link>(state.link_input); // 5
 
-        main_model2.add_component<Source>(state.source_input);       // 6 10
-        main_model2.add_component<SymLoad>(state.sym_load_input);    // 7
-        main_model2.add_component<AsymLoad>(state.asym_load_input);  // 8
-        main_model2.add_component<Shunt>(state.shunt_input);         // 9
+        main_model2.add_component<Source>(state.source_input);      // 6 10
+        main_model2.add_component<SymLoad>(state.sym_load_input);   // 7
+        main_model2.add_component<AsymLoad>(state.asym_load_input); // 8
+        main_model2.add_component<Shunt>(state.shunt_input);        // 9
 
         // voltage sensor with a measured id which is not a node (link)
         state.sym_voltage_sensor_input[0].measured_object = 5;
@@ -864,8 +864,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
         if constexpr (settings::update_type::value) {
             CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
             CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        }
-        else {
+        } else {
             CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load * 2));
             CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
         }
@@ -886,8 +885,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
         if constexpr (settings::update_type::value) {
             CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
             CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        }
-        else {
+        } else {
             CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load * 2));
             CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
         }
@@ -1139,4 +1137,4 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

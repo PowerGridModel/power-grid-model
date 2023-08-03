@@ -113,4 +113,4 @@ TEST_CASE("Test link") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

@@ -17,76 +17,55 @@
 namespace power_grid_model::meta_data {
 
 // pointer to member
-template <class T>
-struct trait_pointer_to_member;
-template <class StructType, class ValueType>
-struct trait_pointer_to_member<ValueType StructType::*> {
+template <class T> struct trait_pointer_to_member;
+template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
-template <class StructType, auto member_ptr>
-inline size_t get_offset() {
+template <class StructType, auto member_ptr> inline size_t get_offset() {
     StructType const obj{};
     return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
 }
 
 // empty template functor classes to generate attributes list
-template <class T>
-struct get_attributes_list;
-template <class T>
-struct get_component_nan;
+template <class T> struct get_attributes_list;
+template <class T> struct get_component_nan;
 
 // ctype string
-template <class T>
-struct ctype_t;
-template <>
-struct ctype_t<double> {
+template <class T> struct ctype_t;
+template <> struct ctype_t<double> {
     static constexpr CType value = CType::c_double;
 };
-template <>
-struct ctype_t<int32_t> {
+template <> struct ctype_t<int32_t> {
     static constexpr CType value = CType::c_int32;
 };
-template <>
-struct ctype_t<int8_t> {
+template <> struct ctype_t<int8_t> {
     static constexpr CType value = CType::c_int8;
 };
 
-template <>
-struct ctype_t<RealValue<false>> {
+template <> struct ctype_t<RealValue<false>> {
     static constexpr CType value = CType::c_double3;
 };
 template <class T>
-requires std::is_enum_v<T>
-struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {
-};
-template <class T>
-constexpr CType ctype_v = ctype_t<T>::value;
+    requires std::is_enum_v<T>
+struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
+template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 
 // set nan
-inline void set_nan(double& x) {
-    x = nan;
-}
-inline void set_nan(IntS& x) {
-    x = na_IntS;
-}
-inline void set_nan(ID& x) {
-    x = na_IntID;
-}
-inline void set_nan(RealValue<false>& x) {
-    x = RealValue<false>{nan};
-}
+inline void set_nan(double& x) { x = nan; }
+inline void set_nan(IntS& x) { x = na_IntS; }
+inline void set_nan(ID& x) { x = na_IntID; }
+inline void set_nan(RealValue<false>& x) { x = RealValue<false>{nan}; }
 template <class Enum>
-requires std::same_as<std::underlying_type_t<Enum>, IntS>
+    requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }
 
-using RawDataPtr = void*;             // raw mutable data ptr
-using RawDataConstPtr = void const*;  // raw read-only data ptr
+using RawDataPtr = void*;            // raw mutable data ptr
+using RawDataConstPtr = void const*; // raw read-only data ptr
 
 // meta attribute
-template <class StructType, auto member_ptr>
-struct MetaAttributeImpl {
+template <class StructType, auto member_ptr> struct MetaAttributeImpl {
     using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
     static bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) {
         return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
@@ -102,30 +81,26 @@ struct MetaAttributeImpl {
         ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
         if constexpr (std::same_as<ValueType, double>) {
             return std::abs(y - x) < (std::abs(x) * rtol + atol);
-        }
-        else if constexpr (std::same_as<ValueType, RealValue<false>>) {
+        } else if constexpr (std::same_as<ValueType, RealValue<false>>) {
             return (abs(y - x) < (abs(x) * rtol + atol)).all();
-        }
-        else {
+        } else {
             return x == y;
         }
     }
 };
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data
 
 // attribute in global namespace
 struct PGM_MetaAttribute {
     using Idx = power_grid_model::Idx;
     using CType = power_grid_model::CType;
-    template <class T>
-    using trait_pointer_to_member = power_grid_model::meta_data::trait_pointer_to_member<T>;
+    template <class T> using trait_pointer_to_member = power_grid_model::meta_data::trait_pointer_to_member<T>;
     template <class StructType, auto member_ptr>
     using MetaAttributeImpl = power_grid_model::meta_data::MetaAttributeImpl<StructType, member_ptr>;
     using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
     using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
-    template <class T>
-    static constexpr CType ctype_v = power_grid_model::meta_data::ctype_v<T>;
+    template <class T> static constexpr CType ctype_v = power_grid_model::meta_data::ctype_v<T>;
 
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
@@ -138,8 +113,7 @@ struct PGM_MetaAttribute {
           check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
           set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
           get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
-          compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {
-    }
+          compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
 
     // meta data
     std::string name;
@@ -161,14 +135,9 @@ namespace power_grid_model::meta_data {
 using MetaAttribute = PGM_MetaAttribute;
 
 // meta component
-template <class StructType>
-struct MetaComponentImpl {
-    static RawDataPtr create_buffer(Idx size) {
-        return new StructType[size];
-    }
-    static void destroy_buffer(RawDataConstPtr buffer_ptr) {
-        delete[] reinterpret_cast<StructType const*>(buffer_ptr);
-    }
+template <class StructType> struct MetaComponentImpl {
+    static RawDataPtr create_buffer(Idx size) { return new StructType[size]; }
+    static void destroy_buffer(RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); }
     static void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) {
         static StructType const nan_value = get_component_nan<StructType>{}();
         StructType* ptr = reinterpret_cast<StructType*>(buffer_ptr);
@@ -176,12 +145,11 @@ struct MetaComponentImpl {
     }
 };
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data
 
 // component in global name space
 struct PGM_MetaComponent {
-    template <class StructType>
-    using MetaComponentImpl = power_grid_model::meta_data::MetaComponentImpl<StructType>;
+    template <class StructType> using MetaComponentImpl = power_grid_model::meta_data::MetaComponentImpl<StructType>;
     using MetaAttribute = power_grid_model::meta_data::MetaAttribute;
     using Idx = power_grid_model::Idx;
     using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
@@ -195,8 +163,7 @@ struct PGM_MetaComponent {
           attributes{power_grid_model::meta_data::get_attributes_list<StructType>{}()},
           set_nan{MetaComponentImpl<StructType>::set_nan},
           create_buffer{MetaComponentImpl<StructType>::create_buffer},
-          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {
-    }
+          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {}
 
     // meta data
     std::string name;
@@ -209,9 +176,7 @@ struct PGM_MetaComponent {
     std::add_pointer_t<RawDataPtr(Idx)> create_buffer;
     std::add_pointer_t<void(RawDataConstPtr)> destroy_buffer;
 
-    Idx n_attributes() const {
-        return static_cast<Idx>(attributes.size());
-    }
+    Idx n_attributes() const { return static_cast<Idx>(attributes.size()); }
 
     MetaAttribute const& get_attribute(std::string const& attribute_name) const {
         Idx const found = find_attribute(attribute_name);
@@ -230,16 +195,14 @@ struct PGM_MetaComponent {
         return -1;
     }
 
-    Idx has_attribute(std::string const& attribute_name) const {
-        return find_attribute(attribute_name) >= 0;
-    }
+    Idx has_attribute(std::string const& attribute_name) const { return find_attribute(attribute_name) >= 0; }
 };
 
 namespace power_grid_model::meta_data {
 
 using MetaComponent = PGM_MetaComponent;
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data
 
 // meta dataset in global namespace
 struct PGM_MetaDataset {
@@ -249,9 +212,7 @@ struct PGM_MetaDataset {
     std::string name;
     std::vector<MetaComponent> components;
 
-    Idx n_components() const {
-        return static_cast<Idx>(components.size());
-    }
+    Idx n_components() const { return static_cast<Idx>(components.size()); }
 
     MetaComponent const& get_component(std::string const& component_name) const {
         for (auto const& component : components) {
@@ -271,9 +232,7 @@ using MetaDataset = PGM_MetaDataset;
 struct MetaData {
     std::vector<MetaDataset> datasets;
 
-    Idx n_datasets() const {
-        return static_cast<Idx>(datasets.size());
-    }
+    Idx n_datasets() const { return static_cast<Idx>(datasets.size()); }
 
     MetaDataset const& get_dataset(std::string const& dataset_name) const {
         for (auto const& dataset : datasets) {
@@ -286,10 +245,8 @@ struct MetaData {
 };
 
 // little endian
-constexpr bool is_little_endian() {
-    return std::endian::native == std::endian::little;
-}
+constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data
 
 #endif

@@ -18,11 +18,10 @@
 namespace power_grid_model {
 
 class Appliance : public Base {
-   public:
+  public:
     using InputType = ApplianceInput;
     using UpdateType = ApplianceUpdate;
-    template <bool sym>
-    using OutputType = ApplianceOutput<sym>;
+    template <bool sym> using OutputType = ApplianceOutput<sym>;
     using ShortCircuitOutputType = ApplianceShortCircuitOutput;
     static constexpr char const* name = "appliance";
 
@@ -30,22 +29,13 @@ class Appliance : public Base {
         : Base{appliance_input},
           node_{appliance_input.node},
           status_{appliance_input.status != 0},
-          base_i_{base_power_3p / u / sqrt3} {
-    }
+          base_i_{base_power_3p / u / sqrt3} {}
 
     // getter
-    ID node() const {
-        return node_;
-    }
-    bool status() const {
-        return status_;
-    }
-    double base_i() const {
-        return base_i_;
-    }
-    bool energized(bool is_connected_to_source) const final {
-        return is_connected_to_source && status_;
-    }
+    ID node() const { return node_; }
+    bool status() const { return status_; }
+    double base_i() const { return base_i_; }
+    bool energized(bool is_connected_to_source) const final { return is_connected_to_source && status_; }
 
     // setter
     bool set_status(IntS new_status) {
@@ -60,8 +50,7 @@ class Appliance : public Base {
     }
 
     // empty output
-    template <bool sym>
-    ApplianceOutput<sym> get_null_output() const {
+    template <bool sym> ApplianceOutput<sym> get_null_output() const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -72,8 +61,7 @@ class Appliance : public Base {
         return output;
     }
 
-    template <bool sym>
-    ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
+    template <bool sym> ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.p = base_power<sym> * real(appliance_math_output.s) * injection_direction();
@@ -84,17 +72,14 @@ class Appliance : public Base {
         if constexpr (sym) {
             if (output.s < numerical_tolerance) {
                 output.pf = 0.0;
-            }
-            else {
+            } else {
                 output.pf = output.p / output.s;
             }
-        }
-        else {
+        } else {
             for (size_t j = 0; j != 3; ++j) {
                 if (output.s(j) < numerical_tolerance) {
                     output.pf(j) = 0.0;
-                }
-                else {
+                } else {
                     output.pf(j) = output.p(j) / output.s(j);
                 }
             }
@@ -112,12 +97,10 @@ class Appliance : public Base {
         ComplexValue<false> const iabc{i};
         return get_sc_output(iabc);
     }
-    template <bool sym>
-    ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
+    template <bool sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
         if constexpr (sym) {
             return get_output<true>(sym_u2si(u));
-        }
-        else {
+        } else {
             return get_output<false>(asym_u2si(u));
         }
     }
@@ -126,7 +109,7 @@ class Appliance : public Base {
         return get_sc_output(appliance_math_output.i);
     }
 
-   private:
+  private:
     ID node_;
     bool status_;
     double base_i_;
@@ -138,6 +121,6 @@ class Appliance : public Base {
     virtual double injection_direction() const = 0;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

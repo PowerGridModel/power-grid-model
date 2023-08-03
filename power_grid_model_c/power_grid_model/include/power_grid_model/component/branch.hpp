@@ -19,16 +19,13 @@
 namespace power_grid_model {
 
 class Branch : public Base {
-   public:
+  public:
     using InputType = BranchInput;
     using UpdateType = BranchUpdate;
-    template <bool sym>
-    using OutputType = BranchOutput<sym>;
+    template <bool sym> using OutputType = BranchOutput<sym>;
     using ShortCircuitOutputType = BranchShortCircuitOutput;
     static constexpr char const* name = "branch";
-    ComponentType math_model_type() const final {
-        return ComponentType::branch;
-    }
+    ComponentType math_model_type() const final { return ComponentType::branch; }
 
     explicit Branch(BranchInput const& branch_input)
         : Base{branch_input},
@@ -42,30 +39,18 @@ class Branch : public Base {
     }
 
     // getter
-    ID from_node() const {
-        return from_node_;
-    }
-    ID to_node() const {
-        return to_node_;
-    }
-    bool from_status() const {
-        return from_status_;
-    }
-    bool to_status() const {
-        return to_status_;
-    }
-    bool branch_status() const {
-        return from_status_ && to_status_;
-    }
-    template <bool sym>
-    BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
+    ID from_node() const { return from_node_; }
+    ID to_node() const { return to_node_; }
+    bool from_status() const { return from_status_; }
+    bool to_status() const { return to_status_; }
+    bool branch_status() const { return from_status_ && to_status_; }
+    template <bool sym> BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return BranchCalcParam<sym>{};
         }
         if constexpr (sym) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }
@@ -77,11 +62,10 @@ class Branch : public Base {
     virtual double base_i_from() const = 0;
     virtual double base_i_to() const = 0;
     virtual double loading(double max_s, double max_i) const = 0;
-    virtual double phase_shift() const = 0;  // shift theta_from - theta_to
+    virtual double phase_shift() const = 0; // shift theta_from - theta_to
     virtual bool is_param_mutable() const = 0;
 
-    template <bool sym>
-    BranchOutput<sym> get_output(ComplexValue<sym> const& u_f, ComplexValue<sym> const& u_t) const {
+    template <bool sym> BranchOutput<sym> get_output(ComplexValue<sym> const& u_f, ComplexValue<sym> const& u_t) const {
         // calculate flow
         BranchCalcParam<sym> const param = calc_param<sym>();
         BranchMathOutput<sym> branch_math_output{};
@@ -93,8 +77,7 @@ class Branch : public Base {
         return get_output<sym>(branch_math_output);
     }
 
-    template <bool sym>
-    BranchOutput<sym> get_output(BranchMathOutput<sym> const& branch_math_output) const {
+    template <bool sym> BranchOutput<sym> get_output(BranchMathOutput<sym> const& branch_math_output) const {
         // result object
         BranchOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
@@ -136,8 +119,7 @@ class Branch : public Base {
                                                                  .i_t = ComplexValue<false>{branch_math_output.i_t}});
     }
 
-    template <bool sym>
-    BranchOutput<sym> get_null_output() const {
+    template <bool sym> BranchOutput<sym> get_null_output() const {
         BranchOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -173,12 +155,12 @@ class Branch : public Base {
         return {changed, changed};
     }
 
-   protected:
+  protected:
     // calculate branch param based on symmetric component
-    BranchCalcParam<true> calc_param_y_sym(
-        DoubleComplex const& y_series,  // y_series must be converted to the "to" side of the branch
-        DoubleComplex const& y_shunt,   // y_shunt must be converted to the "to" side of the branch
-        DoubleComplex const& tap_ratio) const {
+    BranchCalcParam<true>
+    calc_param_y_sym(DoubleComplex const& y_series, // y_series must be converted to the "to" side of the branch
+                     DoubleComplex const& y_shunt,  // y_shunt must be converted to the "to" side of the branch
+                     DoubleComplex const& tap_ratio) const {
         double const tap = cabs(tap_ratio);
         BranchCalcParam<true> param{};
         // not both connected
@@ -189,8 +171,7 @@ class Branch : public Base {
                 // shunt value
                 if (cabs(y_shunt) < numerical_tolerance) {
                     branch_shunt = 0.0;
-                }
-                else {
+                } else {
                     // branch_shunt = y_shunt/2 + 1/(1/y_series + 2/y_shunt)
                     branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 }
@@ -227,7 +208,7 @@ class Branch : public Base {
         return param;
     }
 
-   private:
+  private:
     ID from_node_;
     ID to_node_;
     bool from_status_;
@@ -237,6 +218,6 @@ class Branch : public Base {
     virtual BranchCalcParam<false> asym_calc_param() const = 0;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

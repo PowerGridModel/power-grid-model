@@ -45,8 +45,8 @@ using IdxCount = boost::counting_iterator<Idx>;
 
 // struct of indexing to sub modules
 struct Idx2D {
-    Idx group;  // sequence number of outer module/groups
-    Idx pos;    //  sequence number inside the group
+    Idx group; // sequence number of outer module/groups
+    Idx pos;   //  sequence number inside the group
 
     friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
 };
@@ -72,17 +72,15 @@ constexpr ID na_IntID = std::numeric_limits<ID>::min();
 // power grid constant
 constexpr double base_power_3p = 1e6;
 constexpr double base_power_1p = base_power_3p / 3.0;
-template <bool sym>
-constexpr double u_scale = sym ? 1.0 : inv_sqrt3;
-template <bool sym>
-constexpr double base_power = sym ? base_power_3p : base_power_1p;
+template <bool sym> constexpr double u_scale = sym ? 1.0 : inv_sqrt3;
+template <bool sym> constexpr double base_power = sym ? base_power_3p : base_power_1p;
 // links are direct line between nodes with infinite element_admittance in theory
 // for numerical calculation, a big link element_admittance is assigned
 // 1e6 Siemens element_admittance in 10kV network
 constexpr double g_link = 1e6 / (base_power_3p / 10e3 / 10e3);
 constexpr DoubleComplex y_link{g_link, g_link};
 // default source short circuit power
-constexpr double default_source_sk = 1e10;  // 10 GVA 10^10
+constexpr double default_source_sk = 1e10; // 10 GVA 10^10
 constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
 
@@ -97,12 +95,11 @@ using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
 
 // component list
-template <class... T>
-struct ComponentList {};
+template <class... T> struct ComponentList {};
 
 // batch parameter
 struct BatchParameter {};
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

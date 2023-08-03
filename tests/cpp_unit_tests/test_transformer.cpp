@@ -25,35 +25,35 @@ ComplexTensor<false> get_a_inv() {
     A_inv = A_inv / 3.0;
     return A_inv;
 }
-}  // namespace
+} // namespace
 
 TEST_CASE("Test transformer") {
     TransformerInput input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.0,                      // i0
-        0.0,                      // p0
-        WindingType::wye_n,       // winding_from
-        WindingType::wye_n,       // winding_to
-        12,                       // clock
-        BranchSide::from,         // tap_side
-        0,                        // tap_pos
-        -11,                      // tap_min
-        9,                        // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        nan,                      // r_grounding_from
-        nan,                      // x_grounding_from
-        nan,                      // r_grounding_to
-        nan                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.0,                     // i0
+        0.0,                     // p0
+        WindingType::wye_n,      // winding_from
+        WindingType::wye_n,      // winding_to
+        12,                      // clock
+        BranchSide::from,        // tap_side
+        0,                       // tap_pos
+        -11,                     // tap_min
+        9,                       // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        nan,                     // r_grounding_from
+        nan,                     // x_grounding_from
+        nan,                     // r_grounding_to
+        nan                      // x_grounding_to
     };
 
     std::vector<Transformer> vec;
@@ -212,43 +212,43 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.015,                    // i0
-        30.0e4,                   // p0
-        WindingType::wye_n,       // winding_from
-        WindingType::wye_n,       // winding_to
-        12,                       // clock
-        BranchSide::from,         // tap_side
-        -2,                       // tap_pos
-        -11,                      // tap_min
-        9,                        // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        0.5,                      // r_grounding_from
-        2.0,                      // x_grounding_from
-        1.0,                      // r_grounding_to
-        4.0                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.015,                   // i0
+        30.0e4,                  // p0
+        WindingType::wye_n,      // winding_from
+        WindingType::wye_n,      // winding_to
+        12,                      // clock
+        BranchSide::from,        // tap_side
+        -2,                      // tap_pos
+        -11,                     // tap_min
+        9,                       // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        0.5,                     // r_grounding_from
+        2.0,                     // x_grounding_from
+        1.0,                     // r_grounding_to
+        4.0                      // x_grounding_to
     };
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer YNyn12{input, u1_rated, u2_rated};
 
-    double const z_abs = input.uk * input.u2 * input.u2 / input.sn;  // z_abs = uk * u2 * u2 / sn
+    double const z_abs = input.uk * input.u2 * input.u2 / input.sn; // z_abs = uk * u2 * u2 / sn
     double const z_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
     double const z_imag = std::sqrt(z_abs * z_abs - z_real * z_real);
 
     double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
-    double const u2 = input.u2;                          // Tap is on the from side, not the to side
-    double const k = (u1 / u2) / (u1_rated / u2_rated);  // =1
+    double const u2 = input.u2;                         // Tap is on the from side, not the to side
+    double const k = (u1 / u2) / (u1_rated / u2_rated); // =1
 
     double const base_y_from = base_i_from / (u1_rated / sqrt3);
     double const base_y_to = base_i_to / (u2_rated / sqrt3);
@@ -269,8 +269,7 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -290,17 +289,11 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     CHECK((cabs(param.value[2] - y_tf) < numerical_tolerance).all());
     CHECK((cabs(param.value[3] - y_tt) < numerical_tolerance).all());
 
-    SUBCASE("Test transformer is_param_mutable") {
-        CHECK(YNyn12.is_param_mutable() == true);
-    }
+    SUBCASE("Test transformer is_param_mutable") { CHECK(YNyn12.is_param_mutable() == true); }
 
-    SUBCASE("Test transformer phase shift") {
-        CHECK(YNyn12.phase_shift() == doctest::Approx(0.0));
-    }
+    SUBCASE("Test transformer phase shift") { CHECK(YNyn12.phase_shift() == doctest::Approx(0.0)); }
 
-    SUBCASE("Test transformer loading") {
-        CHECK(YNyn12.loading(60.0e6, 0.0) == doctest::Approx(2.0));
-    }
+    SUBCASE("Test transformer loading") { CHECK(YNyn12.loading(60.0e6, 0.0) == doctest::Approx(2.0)); }
 
     SUBCASE("Test transformer set_limit - false") {
         CHECK(YNyn12.set_tap(na_IntS) == false);
@@ -313,31 +306,31 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // u1, u2, sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.015,                    // i0
-        30.0e4,                   // p0
-        WindingType::delta,       // winding_from
-        WindingType::wye_n,       // winding_to
-        11,                       // clock
-        BranchSide::from,         // tap_side
-        -2,                       // tap_pos
-        -11,                      // tap_min
-        9,                        // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        nan,                      // r_grounding_from
-        nan,                      // x_grounding_from
-        1.0,                      // r_grounding_to
-        4.0                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // u1, u2, sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.015,                   // i0
+        30.0e4,                  // p0
+        WindingType::delta,      // winding_from
+        WindingType::wye_n,      // winding_to
+        11,                      // clock
+        BranchSide::from,        // tap_side
+        -2,                      // tap_pos
+        -11,                     // tap_min
+        9,                       // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        nan,                     // r_grounding_from
+        nan,                     // x_grounding_from
+        1.0,                     // r_grounding_to
+        4.0                      // x_grounding_to
     };
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
@@ -349,7 +342,7 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
 
     double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
-    double const u2 = input.u2;  // Tap is on the from side, not the to side
+    double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
     double const base_y_to = base_i_to / (u2_rated / sqrt3);
@@ -361,8 +354,7 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -421,31 +413,31 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // u1, u2, sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.015,                    // i0
-        30.0e4,                   // p0
-        WindingType::wye,         // winding_from
-        WindingType::zigzag_n,    // winding_to
-        11,                       // clock
-        BranchSide::from,         // tap_side
-        -2,                       // tap_pos
-        -11,                      // tap_min
-        9,                        // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        nan,                      // r_grounding_from
-        nan,                      // x_grounding_from
-        1.0,                      // r_grounding_to
-        4.0                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // u1, u2, sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.015,                   // i0
+        30.0e4,                  // p0
+        WindingType::wye,        // winding_from
+        WindingType::zigzag_n,   // winding_to
+        11,                      // clock
+        BranchSide::from,        // tap_side
+        -2,                      // tap_pos
+        -11,                     // tap_min
+        9,                       // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        nan,                     // r_grounding_from
+        nan,                     // x_grounding_from
+        1.0,                     // r_grounding_to
+        4.0                      // x_grounding_to
     };
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
@@ -457,7 +449,7 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
 
     double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
-    double const u2 = input.u2;  // Tap is on the from side, not the to side
+    double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
     double const base_y_to = base_i_to / (u2_rated / sqrt3);
@@ -469,8 +461,7 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -529,31 +520,31 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     ComplexTensor<false> const A_inv = get_a_inv();
 
     TransformerInput const input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.015,                    // i0
-        30.0e4,                   // p0
-        WindingType::delta,       // winding_from
-        WindingType::wye_n,       // winding_to
-        11,                       // clock
-        BranchSide::from,         // tap_side
-        -2,                       // tap_pos
-        9,                        // tap_min
-        -11,                      // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        nan,                      // r_grounding_from
-        nan,                      // x_grounding_from
-        1.0,                      // r_grounding_to
-        4.0                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.015,                   // i0
+        30.0e4,                  // p0
+        WindingType::delta,      // winding_from
+        WindingType::wye_n,      // winding_to
+        11,                      // clock
+        BranchSide::from,        // tap_side
+        -2,                      // tap_pos
+        9,                       // tap_min
+        -11,                     // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        nan,                     // r_grounding_from
+        nan,                     // x_grounding_from
+        1.0,                     // r_grounding_to
+        4.0                      // x_grounding_to
     };
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
@@ -565,7 +556,7 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
 
     double const u1 = input.u1 - (input.tap_pos - input.tap_nom) * input.tap_size;
-    double const u2 = input.u2;  // Tap is on the from side, not the to side
+    double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
     double const base_y_to = base_i_to / (u2_rated / sqrt3);
@@ -577,8 +568,7 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     double y_shunt_imag;
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
@@ -634,31 +624,31 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
 
 TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < tap_nom - Dyn11") {
     TransformerInput const input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.015,                    // i0
-        30.0e4,                   // p0
-        WindingType::delta,       // winding_from
-        WindingType::wye_n,       // winding_to
-        11,                       // clock
-        BranchSide::from,         // tap_side
-        -2,                       // tap_pos
-        -11,                      // tap_min
-        9,                        // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        0.1,                      // uk_min
-        0.4,                      // uk_max
-        50e3,                     // pk_min
-        200e3,                    // pk_max
-        nan,                      // r_grounding_from
-        nan,                      // x_grounding_from
-        nan,                      // r_grounding_to
-        nan                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.015,                   // i0
+        30.0e4,                  // p0
+        WindingType::delta,      // winding_from
+        WindingType::wye_n,      // winding_to
+        11,                      // clock
+        BranchSide::from,        // tap_side
+        -2,                      // tap_pos
+        -11,                     // tap_min
+        9,                       // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        0.1,                     // uk_min
+        0.4,                     // uk_max
+        50e3,                    // pk_min
+        200e3,                   // pk_max
+        nan,                     // r_grounding_from
+        nan,                     // x_grounding_from
+        nan,                     // r_grounding_to
+        nan                      // x_grounding_to
     };
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
@@ -675,7 +665,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
     double const z_imag = std::sqrt(z_abs * z_abs - z_real * z_real);
 
     double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
-    double const u2 = input.u2;  // Tap is on the from side, not the to side
+    double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
     double const base_y_to = base_i_to / (u2_rated / sqrt3);
@@ -687,8 +677,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
     double y_1_shunt_imag;
     if (y_1_shunt_real > y_1_shunt_abs) {
         y_1_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_1_shunt_imag = -std::sqrt(y_1_shunt_abs * y_1_shunt_abs - y_1_shunt_real * y_1_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_1_shunt_real + 1i * y_1_shunt_imag) / base_y_to;
@@ -710,31 +699,31 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
 
 TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > tap_nom - Dyn11") {
     TransformerInput const input{
-        {{1}, 2, 3, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                    // u1
-        10.0e3,                   // u2
-        30e6,                     // sn
-        0.203,                    // uk
-        100e3,                    // pk
-        0.015,                    // i0
-        30.0e4,                   // p0
-        WindingType::delta,       // winding_from
-        WindingType::wye_n,       // winding_to
-        11,                       // clock
-        BranchSide::from,         // tap_side
-        2,                        // tap_pos
-        -11,                      // tap_min
-        9,                        // tap_max
-        0,                        // tap_nom
-        2.5e3,                    // tap_size
-        0.1,                      // uk_min
-        0.4,                      // uk_max
-        50e3,                     // pk_min
-        200e3,                    // pk_max
-        nan,                      // r_grounding_from
-        nan,                      // x_grounding_from
-        nan,                      // r_grounding_to
-        nan                       // x_grounding_to
+        {{1}, 2, 3, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        155e3,                   // u1
+        10.0e3,                  // u2
+        30e6,                    // sn
+        0.203,                   // uk
+        100e3,                   // pk
+        0.015,                   // i0
+        30.0e4,                  // p0
+        WindingType::delta,      // winding_from
+        WindingType::wye_n,      // winding_to
+        11,                      // clock
+        BranchSide::from,        // tap_side
+        2,                       // tap_pos
+        -11,                     // tap_min
+        9,                       // tap_max
+        0,                       // tap_nom
+        2.5e3,                   // tap_size
+        0.1,                     // uk_min
+        0.4,                     // uk_max
+        50e3,                    // pk_min
+        200e3,                   // pk_max
+        nan,                     // r_grounding_from
+        nan,                     // x_grounding_from
+        nan,                     // r_grounding_to
+        nan                      // x_grounding_to
     };
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
@@ -751,7 +740,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     double const z_imag = std::sqrt(z_abs * z_abs - z_real * z_real);
 
     double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
-    double const u2 = input.u2;  // Tap is on the from side, not the to side
+    double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
     double const base_y_to = base_i_to / (u2_rated / sqrt3);
@@ -763,8 +752,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     double y_1_shunt_imag;
     if (y_1_shunt_real > y_1_shunt_abs) {
         y_1_shunt_imag = 0.0;
-    }
-    else {
+    } else {
         y_1_shunt_imag = -std::sqrt(y_1_shunt_abs * y_1_shunt_abs - y_1_shunt_real * y_1_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_1_shunt_real + 1i * y_1_shunt_imag) / base_y_to;
@@ -784,4 +772,4 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     CHECK(cabs(param.value[3] - y_tt) < numerical_tolerance);
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

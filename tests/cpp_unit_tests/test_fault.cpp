@@ -183,7 +183,7 @@ TEST_CASE("Test fault") {
         fault.update(fault_update_default_value);
         CHECK_FALSE(fault.status());
         CHECK(fault.get_fault_type() == FaultType::two_phase);
-        CHECK(fault.get_fault_phase() == FaultPhase::bc);  // bc is the default value for two_phase fault type
+        CHECK(fault.get_fault_phase() == FaultPhase::bc); // bc is the default value for two_phase fault type
         CHECK(fault.get_fault_object() == 10);
     }
 
@@ -292,4 +292,4 @@ TEST_CASE("Test fault") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

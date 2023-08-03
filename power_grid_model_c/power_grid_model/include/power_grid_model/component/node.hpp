@@ -18,23 +18,17 @@
 namespace power_grid_model {
 
 class Node final : public Base {
-   public:
+  public:
     using InputType = NodeInput;
-    template <bool sym>
-    using OutputType = NodeOutput<sym>;
+    template <bool sym> using OutputType = NodeOutput<sym>;
     using ShortCircuitOutputType = NodeShortCircuitOutput;
     static constexpr char const* name = "node";
-    constexpr ComponentType math_model_type() const final {
-        return ComponentType::node;
-    }
+    constexpr ComponentType math_model_type() const final { return ComponentType::node; }
 
-    explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {
-    }
+    explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {}
 
     // update node, nothing happens here
-    static constexpr UpdateChange update(BaseUpdate const&) {
-        return {false, false};
-    }
+    static constexpr UpdateChange update(BaseUpdate const&) { return {false, false}; }
 
     // energized
     template <bool sym>
@@ -63,8 +57,7 @@ class Node final : public Base {
         ComplexValue<false> const uabc_pu{u_pu};
         return get_sc_output(uabc_pu);
     }
-    template <bool sym>
-    NodeOutput<sym> get_null_output() const {
+    template <bool sym> NodeOutput<sym> get_null_output() const {
         NodeOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -76,17 +69,13 @@ class Node final : public Base {
         return output;
     }
 
-    constexpr double u_rated() const {
-        return u_rated_;
-    }
-    constexpr bool energized(bool is_connected_to_source) const final {
-        return is_connected_to_source;
-    }
+    constexpr double u_rated() const { return u_rated_; }
+    constexpr bool energized(bool is_connected_to_source) const final { return is_connected_to_source; }
 
-   private:
+  private:
     double u_rated_;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

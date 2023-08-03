@@ -65,4 +65,4 @@ TEST_CASE("Test column row conversion") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

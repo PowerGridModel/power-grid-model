@@ -22,7 +22,7 @@ using FaultType::single_phase_to_ground;
 using FaultType::three_phase;
 using FaultType::two_phase;
 using FaultType::two_phase_to_ground;
-}  // namespace
+} // namespace
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {
@@ -53,14 +53,13 @@ TEST_CASE("Test block") {
 
 namespace {
 
-#define CHECK_CLOSE(x, y, tolerance)                      \
-    do {                                                  \
-        if constexpr (sym) {                              \
-            CHECK(cabs((x) - (y)) < (tolerance));         \
-        }                                                 \
-        else {                                            \
-            CHECK((cabs((x) - (y)) < (tolerance)).all()); \
-        }                                                 \
+#define CHECK_CLOSE(x, y, tolerance)                                                                                   \
+    do {                                                                                                               \
+        if constexpr (sym) {                                                                                           \
+            CHECK(cabs((x) - (y)) < (tolerance));                                                                      \
+        } else {                                                                                                       \
+            CHECK((cabs((x) - (y)) < (tolerance)).all());                                                              \
+        }                                                                                                              \
     } while (false)
 
 template <bool sym>
@@ -115,7 +114,7 @@ void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMat
 
 #undef CHECK_CLOSE
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Test math solver") {
     /*
@@ -146,7 +145,7 @@ TEST_CASE("Test math solver") {
     topo.load_gen_type = {
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
-        LoadGenType::const_pq  // not connected
+        LoadGenType::const_pq // not connected
     };
     topo.voltage_sensor_indptr = {0, 1, 1, 3};
     topo.bus_power_sensor_indptr = {0, 1, 1, 1};
@@ -229,8 +228,7 @@ TEST_CASE("Test math solver") {
             pf_input_z.s_injection[i] *= 3.0;
             output_ref_z.load_gen[i].i *= 3.0;
             output_ref_z.load_gen[i].s *= 3.0;
-        }
-        else {
+        } else {
             pf_input_z.s_injection[i] = 0.0;
             output_ref_z.load_gen[i] = {};
         }
@@ -309,8 +307,7 @@ TEST_CASE("Test math solver") {
             pf_input_asym_z.s_injection[i] *= 3.0;
             output_ref_asym_z.load_gen[i].i *= 3.0;
             output_ref_asym_z.load_gen[i].s *= 3.0;
-        }
-        else {
+        } else {
             pf_input_asym_z.s_injection[i] = ComplexValue<false>{0.0};
             output_ref_asym_z.load_gen[i] = {};
         }
@@ -581,8 +578,7 @@ ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_ph
     return sc_input;
 }
 
-template <bool sym>
-constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref, DoubleComplex c_factor) {
+template <bool sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref, DoubleComplex c_factor) {
     ShortCircuitMathOutput<sym> sc_output;
     sc_output.u_bus = {ComplexValue<sym>(vref * c_factor), ComplexValue<sym>(vref * c_factor)};
     sc_output.fault = {{ComplexValue<sym>{}}};
@@ -613,37 +609,36 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
         DoubleComplex const u0 = cvref - if_abc * zref;
         DoubleComplex const u1 = u0 - if_abc * z0;
         return create_math_sc_output<true>(u0, u1, if_abc);
-    }
-    else {
+    } else {
         ComplexValue<false> if_abc{};
         switch (fault_type) {
-            case three_phase: {
-                DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
-                if_abc = ComplexValue<false>(if_3ph);
-                break;
-            }
-            case single_phase_to_ground: {
-                DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
-                if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
-                break;
-            }
-            case two_phase: {
-                DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
-                if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
-                break;
-            }
-            case two_phase_to_ground: {
-                DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
-                DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
-                DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
-                DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
-                DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
-                DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
-                if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
-                break;
-            }
-            default:
-                throw InvalidShortCircuitType{false, fault_type};
+        case three_phase: {
+            DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
+            if_abc = ComplexValue<false>(if_3ph);
+            break;
+        }
+        case single_phase_to_ground: {
+            DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
+            if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
+            break;
+        }
+        case two_phase: {
+            DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
+            if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
+            break;
+        }
+        case two_phase_to_ground: {
+            DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
+            DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
+            DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
+            DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
+            DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
+            DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
+            if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
+            break;
+        }
+        default:
+            throw InvalidShortCircuitType{false, fault_type};
         }
         ComplexValue<false> const cvref_asym{cvref};
         ComplexValue<false> const u0 = cvref_asym - if_abc * zref;
@@ -659,7 +654,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
     }
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Short circuit solver") {
     // Test case grid
@@ -1287,4 +1282,4 @@ TEST_CASE("Math solver, measurements") {
     CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

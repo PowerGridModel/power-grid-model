@@ -79,6 +79,6 @@ inline SparseMapping build_sparse_mapping(IdxVector const& idx_B_in_A, Idx const
     return sparse_mapping;
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

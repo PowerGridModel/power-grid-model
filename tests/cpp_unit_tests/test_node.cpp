@@ -67,4 +67,4 @@ TEST_CASE("Test node") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

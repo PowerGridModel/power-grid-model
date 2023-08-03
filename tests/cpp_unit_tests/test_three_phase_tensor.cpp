@@ -207,4 +207,4 @@ TEST_CASE("Three phase tensor") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

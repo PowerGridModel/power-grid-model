@@ -13,12 +13,8 @@
 namespace power_grid_model {
 
 // custom deleter
-template <auto func>
-struct DeleterFunctor {
-    template <typename T>
-    void operator()(T* arg) const {
-        func(arg);
-    }
+template <auto func> struct DeleterFunctor {
+    template <typename T> void operator()(T* arg) const { func(arg); }
 };
 
 // unique pointers
@@ -27,6 +23,6 @@ using OptionPtr = std::unique_ptr<PGM_Options, DeleterFunctor<&PGM_destroy_optio
 using ModelPtr = std::unique_ptr<PGM_PowerGridModel, DeleterFunctor<&PGM_destroy_model>>;
 using BufferPtr = std::unique_ptr<void, DeleterFunctor<&PGM_destroy_buffer>>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
-#endif  // POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
+#endif // POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP

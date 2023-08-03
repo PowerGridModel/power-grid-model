@@ -10,7 +10,7 @@ namespace power_grid_model {
 namespace {
 constexpr double s3 = sqrt3;
 constexpr double ph = 2.0 / 3.0 * pi;
-}  // namespace
+} // namespace
 
 TEST_CASE("Test main model - state estimation") {
     MainModel main_model{50.0};
@@ -102,10 +102,10 @@ TEST_CASE("Test main model - state estimation") {
                     CHECK(node_output[1].p == doctest::Approx(-900.0).scale(1e3));
                     CHECK(node_output[1].q == doctest::Approx(-90.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3));  // gen
-                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3));  // gen
-                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3));  // load
-                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3));  // load
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3)); // gen
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3)); // gen
+                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3)); // load
+                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3)); // load
                 }
                 SUBCASE("With Injection Sensor") {
                     main_model.add_component<SymPowerSensor>(
@@ -135,12 +135,12 @@ TEST_CASE("Test main model - state estimation") {
                     CHECK(node_output[1].p == doctest::Approx(-1000.0).scale(1e3));
                     CHECK(node_output[1].q == doctest::Approx(-100.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(50.0).scale(1e3));    // gen
-                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(5.0).scale(1e3));     // gen
-                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(-50.0).scale(1e3));   // load
-                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(-5.0).scale(1e3));    // load
-                    CHECK(power_sensor_output[2].p_residual == doctest::Approx(-200.0).scale(1e3));  // node
-                    CHECK(power_sensor_output[2].q_residual == doctest::Approx(-20.0).scale(1e3));   // node
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(50.0).scale(1e3));   // gen
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(5.0).scale(1e3));    // gen
+                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(-50.0).scale(1e3));  // load
+                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(-5.0).scale(1e3));   // load
+                    CHECK(power_sensor_output[2].p_residual == doctest::Approx(-200.0).scale(1e3)); // node
+                    CHECK(power_sensor_output[2].q_residual == doctest::Approx(-20.0).scale(1e3));  // node
                 }
             }
         }
@@ -243,4 +243,4 @@ TEST_CASE("Test main model - state estimation") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
