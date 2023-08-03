@@ -282,6 +282,36 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load[1].q_specified == doctest::Approx(0.22e6));
         }
     }
+
+    SUBCASE("Batch dataset") {
+        deserializer.deserialize_from_json(json_batch);
+
+        SUBCASE("Check meta data") {
+            CHECK(deserializer.dataset_name() == "update");
+            CHECK(deserializer.is_batch());
+            CHECK(deserializer.batch_size() == 3);
+            CHECK(deserializer.n_components() == 2);
+        }
+
+        SUBCASE("Check buffer") {
+            auto const map = get_buffer_map(deserializer);
+            CHECK(map.at("sym_load").elements_per_scenario == -1);
+            CHECK(map.at("sym_load").total_elements == 4);
+            CHECK(map.at("asym_load").elements_per_scenario == 1);
+            CHECK(map.at("asym_load").total_elements == 3);
+        }
+
+        SUBCASE("Check parse") {
+            std::vector<SymLoadGenUpdate> sym_load(4);
+            std::vector<AsymLoadGenUpdate> asym_load(3);
+            IdxVector sym_load_indptr(4);
+            std::array<void*, 2> all_data{sym_load.data(), asym_load.data()};
+            std::array all_components{"sym_load", "asym_load"};
+            std::array<Idx*, 2> all_indptrs{sym_load_indptr.data(), nullptr};
+            deserializer.set_buffer(all_components.data(), all_data.data(), all_indptrs.data());
+            //deserializer.parse();
+        }
+    }
 }
 
 } // namespace power_grid_model::meta_data
