@@ -127,7 +127,9 @@ TEST_CASE("Deserializer") {
 
     SUBCASE("Single dataset") {
         deserializer.deserialize_from_json(json_single);
+        CHECK(deserializer.dataset_name() == "input");
         CHECK(deserializer.batch_size() == 1);
+        CHECK(deserializer.n_components() == 4);
     }
 }
 
