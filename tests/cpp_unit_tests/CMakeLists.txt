@@ -28,7 +28,8 @@ set(PROJECT_SOURCES
     "test_power_sensor.cpp"
     "test_three_winding_transformer.cpp"
     "test_fault.cpp"
-    "test_serialization.cpp"
+    "test_deserializer.cpp"
+    "test_serializer.cpp"
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
