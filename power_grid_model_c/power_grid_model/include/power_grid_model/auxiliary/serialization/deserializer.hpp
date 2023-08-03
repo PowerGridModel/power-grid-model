@@ -64,8 +64,7 @@ class Deserializer {
 
     void deserialize_from_json(char const* json_string) {
         std::vector<char> const msgpack_data = json_to_msgpack(json_string);
-        handle_ = msgpack::unpack(msgpack_data.data(), msgpack_data.size());
-        post_serialization();
+        deserialize_from_msgpack(msgpack_data.data(), msgpack_data.size());
     }
 
     void deserialize_from_msgpack(char const* data, size_t length) {
