@@ -60,7 +60,7 @@ jobs:
 
       - name: Install and run clang-format
         run: |
-          sudo apt-get update && sudo apt-get install -y clang-format
+          sudo apt-get update && sudo apt-get install -y clang-format-15
           find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
 
       - name: If needed raise error

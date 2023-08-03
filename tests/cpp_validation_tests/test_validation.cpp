@@ -582,7 +582,7 @@ namespace {
 constexpr bool should_skip_test(CaseParam const& param) { return param.fail; }
 
 template <typename T>
-requires std::invocable<std::remove_cvref_t<T>>
+    requires std::invocable<std::remove_cvref_t<T>>
 void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 

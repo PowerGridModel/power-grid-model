@@ -32,15 +32,22 @@ template <class T> struct get_component_nan;
 
 // ctype string
 template <class T> struct ctype_t;
-template <> struct ctype_t<double> { static constexpr CType value = CType::c_double; };
-template <> struct ctype_t<int32_t> { static constexpr CType value = CType::c_int32; };
-template <> struct ctype_t<int8_t> { static constexpr CType value = CType::c_int8; };
-
-template <> struct ctype_t<RealValue<false>> { static constexpr CType value = CType::c_double3; };
-template <class T>
-requires std::is_enum_v<T>
-struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {
+template <> struct ctype_t<double> {
+    static constexpr CType value = CType::c_double;
 };
+template <> struct ctype_t<int32_t> {
+    static constexpr CType value = CType::c_int32;
+};
+template <> struct ctype_t<int8_t> {
+    static constexpr CType value = CType::c_int8;
+};
+
+template <> struct ctype_t<RealValue<false>> {
+    static constexpr CType value = CType::c_double3;
+};
+template <class T>
+    requires std::is_enum_v<T>
+struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
 template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 
 // set nan
@@ -49,8 +56,10 @@ inline void set_nan(IntS& x) { x = na_IntS; }
 inline void set_nan(ID& x) { x = na_IntID; }
 inline void set_nan(RealValue<false>& x) { x = RealValue<false>{nan}; }
 template <class Enum>
-requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline void set_nan(Enum& x) { x = static_cast<Enum>(na_IntS); }
+    requires std::same_as<std::underlying_type_t<Enum>, IntS>
+inline void set_nan(Enum& x) {
+    x = static_cast<Enum>(na_IntS);
+}
 
 using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr

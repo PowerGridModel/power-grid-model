@@ -53,7 +53,9 @@ struct FaultCalcParam {
     FaultPhase fault_phase;
 };
 
-template <bool sym> struct FaultShortCircuitMathOutput { ComplexValue<sym> i_fault; };
+template <bool sym> struct FaultShortCircuitMathOutput {
+    ComplexValue<sym> i_fault;
+};
 
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
@@ -61,7 +63,9 @@ template <bool sym> struct ApplianceMathOutput {
     ComplexValue<sym> s;
     ComplexValue<sym> i;
 };
-template <bool sym> struct ApplianceShortCircuitMathOutput { ComplexValue<sym> i; };
+template <bool sym> struct ApplianceShortCircuitMathOutput {
+    ComplexValue<sym> i;
+};
 
 // sensor calculation parameters for state estimation
 template <bool sym> struct SensorCalcParam {
@@ -211,9 +215,8 @@ static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<true>>);
 static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<false>>);
 
 template <typename T>
-concept math_output_type = (symmetric_math_output_type<T> ||
-                            asymmetric_math_output_type<T>)&&(steady_state_math_output_type<T> ||
-                                                              short_circuit_math_output_type<T>);
+concept math_output_type = (symmetric_math_output_type<T> || asymmetric_math_output_type<T>) &&
+                           (steady_state_math_output_type<T> || short_circuit_math_output_type<T>);
 
 static_assert(math_output_type<MathOutput<true>>);
 static_assert(math_output_type<MathOutput<false>>);

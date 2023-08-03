@@ -210,11 +210,13 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // get item per type
     template <class GettableBaseType, class StorageableSubType>
-    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType& get_raw(Idx pos) {
+        requires std::derived_from<StorageableSubType, GettableBaseType>
+    GettableBaseType& get_raw(Idx pos) {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
     template <class GettableBaseType, class StorageableSubType>
-    requires std::derived_from<StorageableSubType, GettableBaseType> GettableBaseType const& get_raw(Idx pos) const {
+        requires std::derived_from<StorageableSubType, GettableBaseType>
+    GettableBaseType const& get_raw(Idx pos) const {
         return std::get<std::vector<StorageableSubType>>(vectors_)[pos];
     }
 
@@ -226,7 +228,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         static constexpr GetItemFuncPtrConst<GettableBaseType> ptr_const = nullptr;
     };
     template <class GettableBaseType, class StorageableSubType>
-    requires std::derived_from<StorageableSubType, GettableBaseType>
+        requires std::derived_from<StorageableSubType, GettableBaseType>
     struct select_get_item_func_ptr<GettableBaseType, StorageableSubType> {
         static constexpr GetItemFuncPtr<GettableBaseType> ptr =
             &Container::get_raw<GettableBaseType, StorageableSubType>;
@@ -281,7 +283,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             : container_ptr_{container_ptr}, idx_{idx} {}
         // conversion to const iterator
         template <class ConstGettable = Gettable>
-        requires(!is_const) explicit operator Iterator<ConstGettable const>() const {
+            requires(!is_const)
+        explicit operator Iterator<ConstGettable const>() const {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
@@ -333,7 +336,9 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 // type traits to instantiate container
 template <class... T> struct ExtraRetrievableTypes;
 // with no extra types, default all vector value types
-template <class... T> struct container_trait { using type = Container<RetrievableTypes<T...>, T...>; };
+template <class... T> struct container_trait {
+    using type = Container<RetrievableTypes<T...>, T...>;
+};
 // if extra types are provided, also add to the retrievable types
 template <class... TR, class... T> struct container_trait<ExtraRetrievableTypes<TR...>, T...> {
     using type = Container<RetrievableTypes<T..., TR...>, T...>;

@@ -85,7 +85,8 @@ template <bool is_const> class DataPointer {
 
     // conversion to const iterator
     template <class UX = DataPointer<true>>
-    requires(!is_const) explicit operator UX() const {
+        requires(!is_const)
+    explicit operator UX() const {
         return DataPointer<true>{ptr_, indptr_, batch_size_, elements_per_scenario_};
     }
 

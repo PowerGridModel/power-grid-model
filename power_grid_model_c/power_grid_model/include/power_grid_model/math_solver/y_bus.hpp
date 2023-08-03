@@ -366,9 +366,8 @@ template <bool sym> class YBus {
 
     // calculate branch flow based on voltage
     template <typename T>
-    requires std::same_as<T, BranchMathOutput<sym>> || std::same_as<T, BranchShortCircuitMathOutput<sym>> std::vector<T>
-    calculate_branch_flow(ComplexValueVector<sym> const& u)
-    const {
+        requires std::same_as<T, BranchMathOutput<sym>> || std::same_as<T, BranchShortCircuitMathOutput<sym>>
+    std::vector<T> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
         std::vector<T> branch_flow(math_topology_->branch_bus_idx.size());
         std::transform(math_topology_->branch_bus_idx.cbegin(), math_topology_->branch_bus_idx.cend(),
                        math_model_param_->branch_param.cbegin(), branch_flow.begin(),
@@ -396,10 +395,9 @@ template <bool sym> class YBus {
 
     // calculate shunt flow based on voltage, injection direction
     template <typename MathOutputType>
-    requires std::same_as<MathOutputType, ApplianceMathOutput<sym>> ||
-        std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
-            std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u)
-    const {
+        requires std::same_as<MathOutputType, ApplianceMathOutput<sym>> ||
+                 std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
+    std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
         std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
         // loop all bus, then all shunt within the bus
         for (Idx bus = 0; bus != size(); ++bus) {
