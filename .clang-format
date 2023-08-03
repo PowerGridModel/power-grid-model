@@ -9,7 +9,6 @@ IndentWidth: 4
 
 # New settings
 
-AlwaysBreakTemplateDeclarations: Yes
-SpacesBeforeTrailingComments: 2
+AlwaysBreakTemplateDeclarations: MultiLine
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
