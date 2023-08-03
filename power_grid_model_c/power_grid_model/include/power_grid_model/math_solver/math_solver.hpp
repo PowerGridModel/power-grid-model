@@ -23,8 +23,7 @@
 
 namespace power_grid_model {
 
-template <bool sym>
-class MathSolver {
+template <bool sym> class MathSolver {
   public:
     MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr,
                std::shared_ptr<MathModelParam<sym> const> const& param,
@@ -43,7 +42,7 @@ class MathSolver {
 
         switch (calculation_method) {
         case default_method:
-            [[fallthrough]];  // use Newton-Raphson by default
+            [[fallthrough]]; // use Newton-Raphson by default
         case newton_raphson:
             return run_power_flow_newton_raphson(input, err_tol, max_iter, calculation_info);
         case linear:
@@ -109,7 +108,7 @@ class MathSolver {
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     YBus<sym> y_bus_;
-    bool all_const_y_;  // if all the load_gen is const element_admittance (impedance) type
+    bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type
     std::optional<NewtonRaphsonPFSolver<sym>> newton_pf_solver_;
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
@@ -152,6 +151,6 @@ class MathSolver {
 template class MathSolver<true>;
 template class MathSolver<false>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

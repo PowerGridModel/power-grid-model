@@ -36,4 +36,4 @@ TEST_CASE("Test main model static") {
     SUBCASE("Dependent update data") { CHECK(MainModel::is_update_independent(update_data_dependent) == false); }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

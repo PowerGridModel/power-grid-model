@@ -40,6 +40,6 @@ class Link final : public Branch {
     BranchCalcParam<true> sym_calc_param() const final { return calc_param_y_sym(y_link, 0.0, 1.0); }
     BranchCalcParam<false> asym_calc_param() const final { return calc_param_y_asym(y_link, 0.0, y_link, 0.0, 1.0); }
 };
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

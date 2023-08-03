@@ -57,6 +57,6 @@ class Line final : public Branch {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -29,6 +29,6 @@ using AllComponents =
     ComponentList<Node, Line, Link, Transformer, ThreeWindingTransformer, Shunt, Source, SymGenerator, AsymGenerator,
                   SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor, Fault>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
-#endif  // POWER_GRID_MODEL_ALL_COMPONENTS_HPP
+#endif // POWER_GRID_MODEL_ALL_COMPONENTS_HPP

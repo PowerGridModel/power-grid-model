@@ -16,7 +16,7 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-using OffDiagIdxMap = std::array<Idx, 2>;  // map of ft and tf for branch
+using OffDiagIdxMap = std::array<Idx, 2>; // map of ft and tf for branch
 
 using MatrixPos = std::pair<Idx, Idx>;
 
@@ -110,8 +110,8 @@ struct YBusStructure {
         for (Idx branch = 0; branch != n_branch; ++branch) {
             // ff, ft, tf, tt for branch
             for (IntS i = 0; i != 4; ++i) {
-                Idx const bus1 = topo.branch_bus_idx[branch][i / 2];  // 0, 0, 1, 1
-                Idx const bus2 = topo.branch_bus_idx[branch][i % 2];  // 0, 1, 0, 1
+                Idx const bus1 = topo.branch_bus_idx[branch][i / 2]; // 0, 0, 1, 1
+                Idx const bus2 = topo.branch_bus_idx[branch][i % 2]; // 0, 1, 0, 1
                 append_element_vector(vec_map_element, bus1, bus2, static_cast<YBusElementType>(i), branch);
             }
         }
@@ -196,8 +196,8 @@ struct YBusStructure {
                                 [static_cast<Idx>(it_element->element.element_type) - 1] = nnz_counter_lu;
                 }
                 // inner loop of elements in the same position
-                for (  // use it_element to start
-                    ;  // stop when reach end or new position
+                for ( // use it_element to start
+                    ; // stop when reach end or new position
                     it_element != vec_map_element.cend() && it_element->pos == pos; ++it_element) {
                     // no fill-ins are allowed
                     assert(it_element->element.element_type != YBusElementType::fill_in_ft &&
@@ -271,8 +271,7 @@ struct YBusStructure {
 };
 
 // See also "Node Admittance Matrix" in "State Estimation Alliander"
-template <bool sym>
-class YBus {
+template <bool sym> class YBus {
   public:
     YBus(std::shared_ptr<MathModelTopology const> const& topo_ptr,
          std::shared_ptr<MathModelParam<sym> const> const& param,
@@ -436,13 +435,12 @@ class YBus {
 template class YBus<true>;
 template class YBus<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using YBus = math_model_impl::YBus<sym>;
+template <bool sym> using YBus = math_model_impl::YBus<sym>;
 
 using YBusStructure = math_model_impl::YBusStructure;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

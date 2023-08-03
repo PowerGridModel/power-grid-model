@@ -90,7 +90,7 @@ requires model_component_state<MainModelState, ComponentContainer, Component> &&
                           comp_base_sequence_cbegin<Component>(state), res_it, func);
 }
 
-}  // namespace detail
+} // namespace detail
 
 // output node
 template <std::same_as<Node> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
@@ -416,6 +416,6 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 
-}  // namespace power_grid_model::main_core
+} // namespace power_grid_model::main_core
 
 #endif

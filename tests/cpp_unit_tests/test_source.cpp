@@ -171,4 +171,4 @@ TEST_CASE("Test source") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

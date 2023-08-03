@@ -66,4 +66,4 @@ TEST_CASE("C API Meta Data") {
     }
 }
 
-}  // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data

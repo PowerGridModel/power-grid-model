@@ -44,6 +44,6 @@ constexpr bool is_valid_clock(IntS clock, WindingType winding_from, WindingType 
 
 // add tap
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -189,8 +189,7 @@ struct PowerGridBenchmark {
         main_model.set_construction_complete();
     }
 
-    template <bool sym>
-    void run_pf(CalculationMethod calculation_method, CalculationInfo& info) {
+    template <bool sym> void run_pf(CalculationMethod calculation_method, CalculationInfo& info) {
         std::vector<NodeOutput<sym>> node(node_input.size());
         std::vector<BranchOutput<sym>> branch(line_input.size() + transformer_input.size() + link_input.size());
         std::vector<ApplianceOutput<sym>> appliance(source_input.size() + sym_load_input.size() +
@@ -271,7 +270,7 @@ struct PowerGridBenchmark {
     std::vector<LinkInput> link_input;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 int main(int, char**) {
 #ifndef NDEBUG

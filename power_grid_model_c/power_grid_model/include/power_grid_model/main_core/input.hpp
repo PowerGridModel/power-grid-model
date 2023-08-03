@@ -97,6 +97,6 @@ void add_component(MainModelState<ComponentContainer>& state, ForwardIterator be
     }
 }
 
-}  // namespace power_grid_model::main_core
+} // namespace power_grid_model::main_core
 
 #endif

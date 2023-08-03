@@ -18,8 +18,7 @@ class Base {
   public:
     using InputType = BaseInput;
     using UpdateType = BaseUpdate;
-    template <bool sym>
-    using OutputType = BaseOutput;
+    template <bool sym> using OutputType = BaseOutput;
     static constexpr char const* name = "base";
     virtual ComponentType math_model_type() const = 0;
 
@@ -42,6 +41,6 @@ class Base {
     ID id_;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

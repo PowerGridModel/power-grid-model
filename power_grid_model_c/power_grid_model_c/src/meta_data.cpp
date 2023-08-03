@@ -16,8 +16,7 @@ using namespace power_grid_model;
 static_assert(std::is_same_v<PGM_Idx, Idx>);
 static_assert(std::is_same_v<PGM_ID, ID>);
 
-template <class Functor>
-auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
+template <class Functor> auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
     static std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<Functor>>> const empty{};
     try {
         return func();
@@ -27,7 +26,7 @@ auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<F
         return empty;
     }
 }
-}  // namespace
+} // namespace
 
 // retrieve meta data
 // dataset

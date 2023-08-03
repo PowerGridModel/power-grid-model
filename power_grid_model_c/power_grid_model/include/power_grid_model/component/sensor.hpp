@@ -34,8 +34,7 @@ class Sensor : public Base {
     ComponentType math_model_type() const final { return ComponentType::sensor; }
 
     // getter for calculation param
-    template <bool sym>
-    SensorCalcParam<sym> calc_param() const {
+    template <bool sym> SensorCalcParam<sym> calc_param() const {
         if constexpr (sym) {
             return sym_calc_param();
         } else {
@@ -52,6 +51,6 @@ class Sensor : public Base {
     virtual SensorCalcParam<false> asym_calc_param() const = 0;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

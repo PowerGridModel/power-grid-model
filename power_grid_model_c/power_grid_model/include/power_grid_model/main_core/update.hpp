@@ -46,6 +46,6 @@ requires model_component_state<MainModelState, ComponentContainer, Component>
     return changed;
 }
 
-}  // namespace power_grid_model::main_core
+} // namespace power_grid_model::main_core
 
 #endif

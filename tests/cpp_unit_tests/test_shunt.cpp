@@ -94,4 +94,4 @@ TEST_CASE("Test shunt") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

@@ -100,19 +100,19 @@ TEST_CASE("Test topology") {
     comp_topo.n_node = 12;
 
     comp_topo.branch_node_idx = {
-        {0, 1},  // 0
-        {0, 3},  // 1
-        {3, 4},  // 2
-        {7, 8},  // 3
-        {6, 7},  // 4
-        {4, 2},  // 5
-        {5, 4},  // 6
-        {4, 5}   // 7
+        {0, 1}, // 0
+        {0, 3}, // 1
+        {3, 4}, // 2
+        {7, 8}, // 3
+        {6, 7}, // 4
+        {4, 2}, // 5
+        {5, 4}, // 6
+        {4, 5}  // 7
     };
     comp_topo.branch3_node_idx = {
-        {1, 3, 2},   // b0
-        {11, 7, 8},  // b1
-        {10, 6, 5}   // b2
+        {1, 3, 2},  // b0
+        {11, 7, 8}, // b1
+        {10, 6, 5}  // b2
     };
     comp_topo.source_node_idx = {0, 5, 9, 3};
     comp_topo.load_gen_node_idx = {0, 11, 5, 1};
@@ -122,43 +122,43 @@ TEST_CASE("Test topology") {
     comp_topo.voltage_sensor_node_idx = {2, 1, 2, 3, 5, 8};
     comp_topo.power_sensor_object_idx = {1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0, 0, 0, 0, 5};
     comp_topo.power_sensor_terminal_type = {
-        MeasuredTerminalType::branch_from,  // 0 (branch   1)
-        MeasuredTerminalType::source,       // 1 (source   1)
-        MeasuredTerminalType::branch_to,    // 2 (branch   1)
-        MeasuredTerminalType::source,       // 3 (source   2)
-        MeasuredTerminalType::load,         // 4 (load_gen 2)
-        MeasuredTerminalType::shunt,        // 5 (shunt    1)
-        MeasuredTerminalType::load,         // 6 (load_gen 1)
-        MeasuredTerminalType::generator,    // 7 (load_gen 3)
-        MeasuredTerminalType::load,         // 8 (load_gen 2)
-        MeasuredTerminalType::shunt,        // 9 (shunt    1)
-        MeasuredTerminalType::branch_to,    // 10 (branch   1)
-        MeasuredTerminalType::branch_from,  // 11 (branch   1)
-        MeasuredTerminalType::source,       // 12 (source   1)
-        MeasuredTerminalType::branch_to,    // 13 (branch   0)
-        MeasuredTerminalType::branch3_1,    // 14 (branch3  0)
-        MeasuredTerminalType::branch3_3,    // 15 (branch3  0)
-        MeasuredTerminalType::branch3_2,    // 16 (branch3  0)
-        MeasuredTerminalType::node,         // 17 (node     5)
+        MeasuredTerminalType::branch_from, // 0 (branch   1)
+        MeasuredTerminalType::source,      // 1 (source   1)
+        MeasuredTerminalType::branch_to,   // 2 (branch   1)
+        MeasuredTerminalType::source,      // 3 (source   2)
+        MeasuredTerminalType::load,        // 4 (load_gen 2)
+        MeasuredTerminalType::shunt,       // 5 (shunt    1)
+        MeasuredTerminalType::load,        // 6 (load_gen 1)
+        MeasuredTerminalType::generator,   // 7 (load_gen 3)
+        MeasuredTerminalType::load,        // 8 (load_gen 2)
+        MeasuredTerminalType::shunt,       // 9 (shunt    1)
+        MeasuredTerminalType::branch_to,   // 10 (branch   1)
+        MeasuredTerminalType::branch_from, // 11 (branch   1)
+        MeasuredTerminalType::source,      // 12 (source   1)
+        MeasuredTerminalType::branch_to,   // 13 (branch   0)
+        MeasuredTerminalType::branch3_1,   // 14 (branch3  0)
+        MeasuredTerminalType::branch3_3,   // 15 (branch3  0)
+        MeasuredTerminalType::branch3_2,   // 16 (branch3  0)
+        MeasuredTerminalType::node,        // 17 (node     5)
     };
 
     // component connection
     ComponentConnections comp_conn{};
     comp_conn.branch_connected = {
         // {from, to}
-        {1, 1},  // 0
-        {1, 1},  // 1
-        {1, 0},  // 2
-        {1, 1},  // 3
-        {0, 1},  // 4
-        {0, 1},  // 5
-        {1, 1},  // 6
-        {1, 1},  // 7
+        {1, 1}, // 0
+        {1, 1}, // 1
+        {1, 0}, // 2
+        {1, 1}, // 3
+        {0, 1}, // 4
+        {0, 1}, // 5
+        {1, 1}, // 6
+        {1, 1}, // 7
     };
     comp_conn.branch3_connected = {
-        {1, 1, 1},  // b0
-        {1, 1, 1},  // b1
-        {0, 1, 1},  // b2
+        {1, 1, 1}, // b0
+        {1, 1, 1}, // b1
+        {0, 1, 1}, // b2
     };
     comp_conn.branch_phase_shift = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     comp_conn.branch3_phase_shift = {
@@ -170,69 +170,69 @@ TEST_CASE("Test topology") {
 
     // result
     TopologicalComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {         // 0 1 2 3
-                          {0, 4},  // Topological node 0 has become node 4 in mathematical model (group) 0
+    comp_coup_ref.node = {        // 0 1 2 3
+                          {0, 4}, // Topological node 0 has become node 4 in mathematical model (group) 0
                           {0, 2},
                           {0, 0},
                           {0, 1},
                           // 4 5 6
-                          {1, 2},  // Topological node 4 has become node 2 in mathematical model (group) 1
+                          {1, 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
                           {1, 3},
                           {1, 0},
                           // 7, 8, 9, 10, 11
-                          {-1, -1},  // Topological node 7 is not included in the mathematical model, because it was not
-                                     // connected to any power source
+                          {-1, -1}, // Topological node 7 is not included in the mathematical model, because it was not
+                                    // connected to any power source
                           {-1, -1},
                           {-1, -1},
                           {-1, -1},
                           {-1, -1},
                           // b0, b1, b2
-                          {0, 3},  // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
+                          {0, 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
                           {-1, -1},
                           {1, 1}};
     comp_coup_ref.source = {
-        {0, 0},    // 0
-        {1, 0},    // 1
-        {-1, -1},  // 2
-        {-1, -1},  // 3
+        {0, 0},   // 0
+        {1, 0},   // 1
+        {-1, -1}, // 2
+        {-1, -1}, // 3
     };
     comp_coup_ref.branch = {
-        {0, 0},    // 0
-        {0, 1},    // 1
-        {0, 2},    // 2
-        {-1, -1},  // 3
-        {-1, -1},  // 4
-        {0, 3},    // 5
-        {1, 0},    // 6
-        {1, 1},    // 7
+        {0, 0},   // 0
+        {0, 1},   // 1
+        {0, 2},   // 2
+        {-1, -1}, // 3
+        {-1, -1}, // 4
+        {0, 3},   // 5
+        {1, 0},   // 6
+        {1, 1},   // 7
     };
     comp_coup_ref.branch3 = {
-        {0, {4, 5, 6}},      // b0
-        {-1, {-1, -1, -1}},  // b1
-        {1, {2, 3, 4}},      // b2
+        {0, {4, 5, 6}},     // b0
+        {-1, {-1, -1, -1}}, // b1
+        {1, {2, 3, 4}},     // b2
     };
     comp_coup_ref.load_gen = {{0, 1}, {-1, -1}, {1, 0}, {0, 0}};
     comp_coup_ref.shunt = {{0, 0}, {1, 0}, {-1, -1}};
     comp_coup_ref.voltage_sensor = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {1, 0}, {-1, -1}};
     comp_coup_ref.power_sensor = {
-        {0, 0},    // 0 branch_from
-        {1, 0},    // 1 source
-        {0, 1},    // 2 branch_to
-        {-1, -1},  // 3 source
-        {1, 0},    // 4 load       = load power sensor 0 in math model 1
-        {1, 0},    // 5 shunt      = shunt power sensor 0 in math model 1
-        {-1, -1},  // 6 load
-        {0, 0},    // 7 generator
-        {1, 1},    // 8 load
-        {1, 1},    // 9 shunt
-        {0, 2},    // 10 branch_to
-        {0, 1},    // 11 branch_from
-        {1, 1},    // 12 source
-        {0, 0},    // 13 branch_to
-        {0, 2},    // 14 branch_from
-        {0, 4},    // 15 branch_from
-        {0, 3},    // 16 branch_from
-        {1, 0}     // 17 node
+        {0, 0},   // 0 branch_from
+        {1, 0},   // 1 source
+        {0, 1},   // 2 branch_to
+        {-1, -1}, // 3 source
+        {1, 0},   // 4 load       = load power sensor 0 in math model 1
+        {1, 0},   // 5 shunt      = shunt power sensor 0 in math model 1
+        {-1, -1}, // 6 load
+        {0, 0},   // 7 generator
+        {1, 1},   // 8 load
+        {1, 1},   // 9 shunt
+        {0, 2},   // 10 branch_to
+        {0, 1},   // 11 branch_from
+        {1, 1},   // 12 source
+        {0, 0},   // 13 branch_to
+        {0, 2},   // 14 branch_from
+        {0, 4},   // 15 branch_from
+        {0, 3},   // 16 branch_from
+        {1, 0}    // 17 node
     };
 
     // Sub graph / math model 0
@@ -321,19 +321,19 @@ TEST_CASE("Test cycle reorder") {
     ComponentTopology comp_topo{};
     comp_topo.n_node = 7;
     comp_topo.branch_node_idx = {
-        {0, 1},  // 0
-        {1, 2},  // 1
-        {2, 3},  // 2
-        {3, 4},  // 3
-        {4, 5},  // 4
-        {0, 5},  // 5
-        {1, 4},  // 6
-        {6, 0},  // 7
-        {6, 2},  // 8
-        {5, 1},  // 9
-        {3, 1},  // 10
-        {6, 1},  // 11
-        {2, 1},  // 12
+        {0, 1}, // 0
+        {1, 2}, // 1
+        {2, 3}, // 2
+        {3, 4}, // 3
+        {4, 5}, // 4
+        {0, 5}, // 5
+        {1, 4}, // 6
+        {6, 0}, // 7
+        {6, 2}, // 8
+        {5, 1}, // 9
+        {3, 1}, // 10
+        {6, 1}, // 11
+        {2, 1}, // 12
     };
     comp_topo.source_node_idx = {0};
     // component connection
@@ -354,4 +354,4 @@ TEST_CASE("Test cycle reorder") {
     CHECK(math_topo.fill_in == fill_in_ref);
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

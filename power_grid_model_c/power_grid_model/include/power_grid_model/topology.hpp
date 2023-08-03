@@ -46,8 +46,8 @@ class Topology {
     using GlobalGraph = boost::compressed_sparse_row_graph<boost::directedS, GlobalVertex, GlobalEdge,
                                                            boost::no_property, GraphIdx, GraphIdx>;
 
-    using ReorderGraph = boost::adjacency_list<boost::vecS,  // vector as adjacency
-                                               boost::vecS,  // vector for vertices
+    using ReorderGraph = boost::adjacency_list<boost::vecS, // vector as adjacency
+                                               boost::vecS, // vector for vertices
                                                boost::directedS>;
 
     // dfs visitor for global graph
@@ -109,7 +109,7 @@ class Topology {
           comp_conn_{comp_conn},
           phase_shift_(comp_topo_.n_node_total(), 0.0),
           predecessors_(
-              boost::counting_iterator<GraphIdx>{0},  // Predecessors is initialized as 0, 1, 2, ..., n_node_total() - 1
+              boost::counting_iterator<GraphIdx>{0}, // Predecessors is initialized as 0, 1, 2, ..., n_node_total() - 1
               boost::counting_iterator<GraphIdx>{(GraphIdx)comp_topo_.n_node_total()}),
           node_status_(comp_topo_.n_node_total(), -1) {}
 
@@ -543,7 +543,7 @@ class Topology {
             }
             Idx2D const math_idx = object_finder.find_math_object(component_i);
             Idx const topo_idx = math_idx.group;
-            if (topo_idx >= 0) {  // Consider non-isolated objects only
+            if (topo_idx >= 0) { // Consider non-isolated objects only
                 topo_obj_idx[topo_idx].push_back(math_idx.pos);
                 topo_component_idx[topo_idx].push_back(component_i);
             }
@@ -651,6 +651,6 @@ class Topology {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

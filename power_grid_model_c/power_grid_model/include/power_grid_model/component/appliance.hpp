@@ -21,8 +21,7 @@ class Appliance : public Base {
   public:
     using InputType = ApplianceInput;
     using UpdateType = ApplianceUpdate;
-    template <bool sym>
-    using OutputType = ApplianceOutput<sym>;
+    template <bool sym> using OutputType = ApplianceOutput<sym>;
     using ShortCircuitOutputType = ApplianceShortCircuitOutput;
     static constexpr char const* name = "appliance";
 
@@ -51,8 +50,7 @@ class Appliance : public Base {
     }
 
     // empty output
-    template <bool sym>
-    ApplianceOutput<sym> get_null_output() const {
+    template <bool sym> ApplianceOutput<sym> get_null_output() const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -63,8 +61,7 @@ class Appliance : public Base {
         return output;
     }
 
-    template <bool sym>
-    ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
+    template <bool sym> ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.p = base_power<sym> * real(appliance_math_output.s) * injection_direction();
@@ -100,8 +97,7 @@ class Appliance : public Base {
         ComplexValue<false> const iabc{i};
         return get_sc_output(iabc);
     }
-    template <bool sym>
-    ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
+    template <bool sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
         if constexpr (sym) {
             return get_output<true>(sym_u2si(u));
         } else {
@@ -125,6 +121,6 @@ class Appliance : public Base {
     virtual double injection_direction() const = 0;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

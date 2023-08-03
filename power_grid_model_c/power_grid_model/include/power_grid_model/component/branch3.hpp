@@ -20,8 +20,7 @@ class Branch3 : public Base {
   public:
     using InputType = Branch3Input;
     using UpdateType = Branch3Update;
-    template <bool sym>
-    using OutputType = Branch3Output<sym>;
+    template <bool sym> using OutputType = Branch3Output<sym>;
     using ShortCircuitOutputType = Branch3ShortCircuitOutput;
     static constexpr char const* name = "branch3";
     ComponentType math_model_type() const final { return ComponentType::branch3; }
@@ -47,7 +46,7 @@ class Branch3 : public Base {
     bool status_2() const { return status_2_; }
     bool status_3() const { return status_3_; }
     bool branch3_status() const {
-        return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
+        return status_1_ && status_2_ && status_3_; // TODO: check if this makes sense for branch3
     }
 
     // virtual getter
@@ -60,8 +59,7 @@ class Branch3 : public Base {
     virtual double loading(double s_1, double s_2, double s_3) const = 0;
     virtual std::array<double, 3> phase_shift() const = 0;
 
-    template <bool sym>
-    std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
+    template <bool sym> std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return std::array<BranchCalcParam<sym>, 3>{};
         }
@@ -128,8 +126,7 @@ class Branch3 : public Base {
         return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
     }
 
-    template <bool sym>
-    Branch3Output<sym> get_null_output() const {
+    template <bool sym> Branch3Output<sym> get_null_output() const {
         Branch3Output<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -182,6 +179,6 @@ class Branch3 : public Base {
     virtual std::array<BranchCalcParam<false>, 3> asym_calc_param() const = 0;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

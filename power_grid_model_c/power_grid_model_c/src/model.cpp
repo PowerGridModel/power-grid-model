@@ -17,7 +17,7 @@ using namespace power_grid_model;
 
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
-}  // namespace
+} // namespace
 
 // aliases main class
 struct PGM_PowerGridModel : public MainModel {

@@ -36,8 +36,7 @@
 namespace power_grid_model {
 
 // main model implementation template
-template <class T, class U>
-class MainModelImpl;
+template <class T, class U> class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
 class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
@@ -55,8 +54,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         size_t index;
     };
 
-    template <class T, class U>
-    struct component_list_generator_impl;
+    template <class T, class U> struct component_list_generator_impl;
     template <class... C, size_t... index>
     struct component_list_generator_impl<ComponentList<C...>, std::index_sequence<index...>> {
         using AllTypes = ComponentList<C...>;
@@ -116,8 +114,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency} {}
 
     // get number
-    template <class CompType>
-    Idx component_count() const {
+    template <class CompType> Idx component_count() const {
         assert(construction_complete_);
         return state_.components.template size<CompType>();
     }
@@ -136,8 +133,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to add vectors of components
-    template <class CompType>
-    void add_component(std::vector<typename CompType::InputType> const& components) {
+    template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
         add_component<CompType>(components.cbegin(), components.cend());
     }
 
@@ -216,7 +212,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 #ifndef NDEBUG
         // set construction_complete for debug assertions
         construction_complete_ = true;
-#endif  // !NDEBUG
+#endif // !NDEBUG
         state_.components.set_construction_complete();
         // set component topo
         ComponentTopology comp_topo;
@@ -546,8 +542,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    template <class Component>
-    using UpdateType = typename Component::UpdateType;
+    template <class Component> using UpdateType = typename Component::UpdateType;
 
     static bool is_update_independent(ConstDataset const& update_data) {
         // check all components
@@ -565,8 +560,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                            });
     }
 
-    template <class Component>
-    static bool is_component_update_independent(ConstDataPointer const& component_update) {
+    template <class Component> static bool is_component_update_independent(ConstDataPointer const& component_update) {
         // If the batch size is (0 or) 1, then the update data for this component is 'independent'
         if (component_update.batch_size() <= 1) {
             return true;
@@ -755,10 +749,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
-#endif  // !NDEBUG
+#endif // !NDEBUG
 
-    template <bool sym>
-    bool& is_parameter_up_to_date() {
+    template <bool sym> bool& is_parameter_up_to_date() {
         if constexpr (sym) {
             return is_sym_parameter_up_to_date_;
         } else {
@@ -766,8 +759,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <bool sym>
-    std::vector<MathSolver<sym>>& get_solvers() {
+    template <bool sym> std::vector<MathSolver<sym>>& get_solvers() {
         if constexpr (sym) {
             return sym_solvers_;
         } else {
@@ -815,8 +807,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_asym_parameter_up_to_date_ = false;
     }
 
-    template <bool sym>
-    std::vector<MathModelParam<sym>> get_math_param() {
+    template <bool sym> std::vector<MathModelParam<sym>> get_math_param() {
         std::vector<MathModelParam<sym>> math_param(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             math_param[i].branch_param.resize(state_.math_topology[i]->n_branch());
@@ -962,8 +953,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <bool sym>
-    auto calculate_param(auto const& c, auto const&... extra_args) {
+    template <bool sym> auto calculate_param(auto const& c, auto const&... extra_args) {
         if constexpr (requires { {c.calc_param(extra_args...)}; }) {
             return c.calc_param(extra_args...);
         } else if constexpr (requires { {c.template calc_param<sym>(extra_args...)}; }) {
@@ -985,8 +975,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <bool sym>
-    std::vector<PowerFlowInput<sym>> prepare_power_flow_input() {
+    template <bool sym> std::vector<PowerFlowInput<sym>> prepare_power_flow_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
         std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
@@ -1002,8 +991,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return pf_input;
     }
 
-    template <bool sym>
-    std::vector<StateEstimationInput<sym>> prepare_state_estimation_input() {
+    template <bool sym> std::vector<StateEstimationInput<sym>> prepare_state_estimation_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
         std::vector<StateEstimationInput<sym>> se_input(n_math_solvers_);
@@ -1067,8 +1055,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return se_input;
     }
 
-    template <bool sym>
-    std::vector<ShortCircuitInput> prepare_short_circuit_input() {
+    template <bool sym> std::vector<ShortCircuitInput> prepare_short_circuit_input() {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
         std::vector<IdxVector> topo_fault_indices(state_.math_topology.size());
@@ -1080,7 +1067,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
                 auto const topo_bus_idx = state_.topo_comp_coup->node[node_idx];
 
-                if (topo_bus_idx.group >= 0) {  // Consider non-isolated objects only
+                if (topo_bus_idx.group >= 0) { // Consider non-isolated objects only
                     topo_fault_indices[topo_bus_idx.group].push_back(fault_idx);
                     topo_bus_indices[topo_bus_idx.group].push_back(topo_bus_idx.pos);
                 }
@@ -1114,8 +1101,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return sc_input;
     }
 
-    template <bool sym>
-    void prepare_solvers() {
+    template <bool sym> void prepare_solvers() {
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
         // also get the vector of other solvers (sym -> asym, or asym -> sym)
         std::vector<MathSolver<!sym>>& other_solvers = get_solvers<!sym>();
@@ -1165,6 +1151,6 @@ using MainModel =
                                         GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
                   AllComponents>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

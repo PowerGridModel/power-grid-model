@@ -22,7 +22,7 @@ using FaultType::single_phase_to_ground;
 using FaultType::three_phase;
 using FaultType::two_phase;
 using FaultType::two_phase_to_ground;
-}  // namespace
+} // namespace
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {
@@ -114,7 +114,7 @@ void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMat
 
 #undef CHECK_CLOSE
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Test math solver") {
     /*
@@ -145,7 +145,7 @@ TEST_CASE("Test math solver") {
     topo.load_gen_type = {
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
-        LoadGenType::const_pq  // not connected
+        LoadGenType::const_pq // not connected
     };
     topo.voltage_sensor_indptr = {0, 1, 1, 3};
     topo.bus_power_sensor_indptr = {0, 1, 1, 1};
@@ -578,8 +578,7 @@ ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_ph
     return sc_input;
 }
 
-template <bool sym>
-constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref, DoubleComplex c_factor) {
+template <bool sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref, DoubleComplex c_factor) {
     ShortCircuitMathOutput<sym> sc_output;
     sc_output.u_bus = {ComplexValue<sym>(vref * c_factor), ComplexValue<sym>(vref * c_factor)};
     sc_output.fault = {{ComplexValue<sym>{}}};
@@ -655,7 +654,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
     }
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Short circuit solver") {
     // Test case grid
@@ -1283,4 +1282,4 @@ TEST_CASE("Math solver, measurements") {
     CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

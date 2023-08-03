@@ -24,20 +24,15 @@ concept scalar_value = std::same_as<T, double> || std::same_as<T, DoubleComplex>
 
 namespace three_phase_tensor {
 
-template <class T>
-using Eigen3Vector = Eigen::Array<T, 3, 1>;
-template <class T>
-using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
+template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
+template <class T> using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
 
-template <scalar_value T>
-class Vector : public Eigen3Vector<T> {
+template <scalar_value T> class Vector : public Eigen3Vector<T> {
   public:
     Vector() { (*this) = Eigen3Vector<T>::Zero(); };
     // eigen expression
-    template <typename OtherDerived>
-    Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {}
-    template <typename OtherDerived>
-    Vector& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+    template <typename OtherDerived> Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {}
+    template <typename OtherDerived> Vector& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->Eigen3Vector<T>::operator=(other);
         return *this;
     }
@@ -58,8 +53,7 @@ class Vector : public Eigen3Vector<T> {
     Vector(T const& x1, T const& x2, T const& x3) { (*this) << x1, x2, x3; }
 };
 
-template <scalar_value T>
-class Tensor : public Eigen3Tensor<T> {
+template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
   public:
     Tensor() { (*this) = Eigen3Tensor<T>::Zero(); }
     // additional constructors
@@ -67,24 +61,20 @@ class Tensor : public Eigen3Tensor<T> {
     explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
     explicit Tensor(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2); }
     // eigen expression
-    template <typename OtherDerived>
-    Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
-    template <typename OtherDerived>
-    Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+    template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
+    template <typename OtherDerived> Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->Eigen3Tensor<T>::operator=(other);
         return *this;
     }
 };
 
-}  // namespace three_phase_tensor
+} // namespace three_phase_tensor
 
 // three phase vector and tensor
-template <bool sym>
-using RealTensor = std::conditional_t<sym, double, three_phase_tensor::Tensor<double>>;
+template <bool sym> using RealTensor = std::conditional_t<sym, double, three_phase_tensor::Tensor<double>>;
 template <bool sym>
 using ComplexTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
-template <bool sym>
-using RealValue = std::conditional_t<sym, double, three_phase_tensor::Vector<double>>;
+template <bool sym> using RealValue = std::conditional_t<sym, double, three_phase_tensor::Vector<double>>;
 template <bool sym>
 using ComplexValue = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
 // asserts to ensure alignment
@@ -110,13 +100,12 @@ template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
 concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
-                      static_cast<Idx>(T::ColsAtCompileTime));  // rank 2 tensor
+                      static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
 // piecewise factory construction for complex vector
-template <bool sym = false>
-inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
+template <bool sym = false> inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
     if constexpr (sym) {
         return x;
     } else {
@@ -133,8 +122,7 @@ inline ComplexValue<false> piecewise_complex_value(Eigen::ArrayBase<DerivedA> co
 inline double cabs(double x) { return std::abs(x); }
 inline double cabs(DoubleComplex const& x) { return std::sqrt(std::norm(x)); }
 inline double abs2(DoubleComplex const& x) { return std::norm(x); }
-template <column_vector_or_tensor DerivedA>
-inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
+template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
     return sqrt(abs2(m));
 }
 
@@ -149,51 +137,36 @@ inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::Arr
 inline double dot(double x, double y) { return x * y; }
 inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) { return x * y; }
 
-template <scalar_value... T>
-inline auto dot(T const&... x) {
-    return (... * x);
-}
+template <scalar_value... T> inline auto dot(T const&... x) { return (... * x); }
 
-template <column_vector_or_tensor... Derived>
-inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
+template <column_vector_or_tensor... Derived> inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
     auto res_mat = (... * x.matrix());
     return res_mat.array();
 }
 
 // max of a vector
 inline double max_val(double val) { return val; }
-template <column_vector DerivedA>
-inline double max_val(Eigen::ArrayBase<DerivedA> const& val) {
+template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<DerivedA> const& val) {
     return val.maxCoeff();
 }
 
 // function to sum rows of tensor
-template <rk2_tensor DerivedA>
-inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) {
-    return m.rowwise().sum();
-}
+template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
 // overload for double
 inline double sum_row(double d) { return d; }
 
 // function to sum vector
-template <column_vector DerivedA>
-inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) {
-    return m.sum();
-}
+template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }
 // overload for double and complex
 inline double sum_val(double d) { return d; }
 inline DoubleComplex sum_val(DoubleComplex const& z) { return z; }
 
 // function to mean vector
-template <column_vector DerivedA>
-inline auto mean_val(Eigen::ArrayBase<DerivedA> const& m) {
-    return m.mean();
-}
+template <column_vector DerivedA> inline auto mean_val(Eigen::ArrayBase<DerivedA> const& m) { return m.mean(); }
 inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
 inline double mean_val(double z) { return z; }
 
-template <bool sym, class T>
-inline auto process_mean_val(const T& m) {
+template <bool sym, class T> inline auto process_mean_val(const T& m) {
     if constexpr (sym) {
         return mean_val(m);
     } else {
@@ -211,8 +184,7 @@ inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<Deri
 inline double diag_mult(double x, double y, double z) { return x * y * z; }
 
 // calculate positive sequence
-template <column_vector Derived>
-inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
+template <column_vector Derived> inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
 
@@ -235,8 +207,7 @@ inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> 
 }
 
 // zero tensor
-template <bool sym>
-inline const ComplexTensor<sym> zero_tensor = ComplexTensor<sym>{0.0};
+template <bool sym> inline const ComplexTensor<sym> zero_tensor = ComplexTensor<sym>{0.0};
 
 // inverse symmetric param
 inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const& s, DoubleComplex const& m) {
@@ -245,10 +216,7 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
 }
 
 // is nan
-template <class Derived>
-inline bool is_nan(Eigen::ArrayBase<Derived> const& x) {
-    return x.isNaN().all();
-}
+template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(double x) { return std::isnan(x); }
 inline bool is_nan(ID x) { return x == na_IntID; }
 inline bool is_nan(IntS x) { return x == na_IntS; }
@@ -298,21 +266,16 @@ inline ComplexTensor<false> get_sym_matrix_inv() {
 // conjugate (hermitian) transpose
 inline DoubleComplex hermitian_transpose(DoubleComplex const& z) { return conj(z); }
 inline double hermitian_transpose(double x) { return x; }
-template <rk2_tensor Derived>
-inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
+template <rk2_tensor Derived> inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().adjoint().array();
 }
 
 // vector of values
-template <bool sym>
-using RealValueVector = std::vector<RealValue<sym>>;
-template <bool sym>
-using ComplexValueVector = std::vector<ComplexValue<sym>>;
-template <bool sym>
-using RealTensorVector = std::vector<RealTensor<sym>>;
-template <bool sym>
-using ComplexTensorVector = std::vector<ComplexTensor<sym>>;
+template <bool sym> using RealValueVector = std::vector<RealValue<sym>>;
+template <bool sym> using ComplexValueVector = std::vector<ComplexValue<sym>>;
+template <bool sym> using RealTensorVector = std::vector<RealTensor<sym>>;
+template <bool sym> using ComplexTensorVector = std::vector<ComplexTensor<sym>>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

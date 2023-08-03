@@ -41,8 +41,7 @@ if there are sources
 
 namespace power_grid_model {
 
-template <bool sym>
-class LinearPFSolver {
+template <bool sym> class LinearPFSolver {
   private:
     // block size 1 for symmetric, 3 for asym
     static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
@@ -159,6 +158,6 @@ class LinearPFSolver {
 template class LinearPFSolver<true>;
 template class LinearPFSolver<false>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -23,8 +23,7 @@ class PowerGridError : public std::exception {
     std::string msg_;
 };
 
-template <typename T>
-class MissingCaseForEnumError : public PowerGridError {
+template <typename T> class MissingCaseForEnumError : public PowerGridError {
   public:
     MissingCaseForEnumError(const std::string& method, const T& value) {
         append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
@@ -171,6 +170,6 @@ class InvalidShortCircuitPhaseOrType : public PowerGridError {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

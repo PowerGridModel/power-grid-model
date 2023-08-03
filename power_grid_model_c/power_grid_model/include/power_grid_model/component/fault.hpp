@@ -21,8 +21,7 @@ class Fault final : public Base {
   public:
     using InputType = FaultInput;
     using UpdateType = FaultUpdate;
-    template <bool sym>
-    using OutputType = FaultOutput;
+    template <bool sym> using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
     ComponentType math_model_type() const final { return ComponentType::fault; }
@@ -109,7 +108,7 @@ class Fault final : public Base {
             x_f_ = update.x_f;
         }
         check_sanity();
-        return {false, false};  // topology and parameters do not change
+        return {false, false}; // topology and parameters do not change
     }
 
     constexpr bool energized(bool is_connected_to_source) const final { return is_connected_to_source; }
@@ -175,8 +174,7 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    template <std::derived_from<BaseOutput> T>
-    T get_null_output_impl() const {
+    template <std::derived_from<BaseOutput> T> T get_null_output_impl() const {
         T output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -207,6 +205,6 @@ class Fault final : public Base {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -15,14 +15,13 @@ namespace power_grid_model {
 // Entry of YBus, node addmittance matrix
 struct YBusElement {
     YBusElementType element_type;
-    Idx idx;  // index of the component
+    Idx idx; // index of the component
 };
 
 // everything here always per unit
 
 // branch math calculation parameter and math output
-template <bool sym>
-struct BranchCalcParam {
+template <bool sym> struct BranchCalcParam {
     std::array<ComplexTensor<sym>, 4> value;
     // getter
     ComplexTensor<sym>& yff() { return value[0]; }
@@ -35,16 +34,14 @@ struct BranchCalcParam {
     ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
-template <bool sym>
-struct BranchMathOutput {
+template <bool sym> struct BranchMathOutput {
     ComplexValue<sym> s_f;
     ComplexValue<sym> s_t;
     ComplexValue<sym> i_f;
     ComplexValue<sym> i_t;
 };
 
-template <bool sym>
-struct BranchShortCircuitMathOutput {
+template <bool sym> struct BranchShortCircuitMathOutput {
     ComplexValue<sym> i_f;
     ComplexValue<sym> i_t;
 };
@@ -56,26 +53,18 @@ struct FaultCalcParam {
     FaultPhase fault_phase;
 };
 
-template <bool sym>
-struct FaultShortCircuitMathOutput {
-    ComplexValue<sym> i_fault;
-};
+template <bool sym> struct FaultShortCircuitMathOutput { ComplexValue<sym> i_fault; };
 
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
-template <bool sym>
-struct ApplianceMathOutput {
+template <bool sym> struct ApplianceMathOutput {
     ComplexValue<sym> s;
     ComplexValue<sym> i;
 };
-template <bool sym>
-struct ApplianceShortCircuitMathOutput {
-    ComplexValue<sym> i;
-};
+template <bool sym> struct ApplianceShortCircuitMathOutput { ComplexValue<sym> i; };
 
 // sensor calculation parameters for state estimation
-template <bool sym>
-struct SensorCalcParam {
+template <bool sym> struct SensorCalcParam {
     // measured value of the sensor in p.u.
     // for voltage it is a complex voltage
     // 	   If the imaginary part is NaN, it means the angle calculation is not correct
@@ -104,12 +93,12 @@ struct MathModelTopology {
     IdxVector load_gen_bus_indptr;
     std::vector<LoadGenType> load_gen_type;
     IdxVector voltage_sensor_indptr;
-    IdxVector source_power_sensor_indptr;       // indptr of the source
-    IdxVector load_gen_power_sensor_indptr;     // indptr of the load_gen
-    IdxVector shunt_power_sensor_indptr;        // indptr of the shunt
-    IdxVector branch_from_power_sensor_indptr;  // indptr of the branch
-    IdxVector branch_to_power_sensor_indptr;    // indptr of the branch
-    IdxVector bus_power_sensor_indptr;          // indptr of the bus
+    IdxVector source_power_sensor_indptr;      // indptr of the source
+    IdxVector load_gen_power_sensor_indptr;    // indptr of the load_gen
+    IdxVector shunt_power_sensor_indptr;       // indptr of the shunt
+    IdxVector branch_from_power_sensor_indptr; // indptr of the branch
+    IdxVector branch_to_power_sensor_indptr;   // indptr of the branch
+    IdxVector bus_power_sensor_indptr;         // indptr of the bus
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
@@ -136,21 +125,18 @@ struct MathModelTopology {
     Idx n_bus_power_sensor() const { return bus_power_sensor_indptr.back(); }
 };
 
-template <bool sym>
-struct MathModelParam {
+template <bool sym> struct MathModelParam {
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
     ComplexTensorVector<sym> source_param;
 };
 
-template <bool sym>
-struct PowerFlowInput {
-    ComplexVector source;                 // Complex u_ref of each source
-    ComplexValueVector<sym> s_injection;  // Specified injection power of each load_gen
+template <bool sym> struct PowerFlowInput {
+    ComplexVector source;                // Complex u_ref of each source
+    ComplexValueVector<sym> s_injection; // Specified injection power of each load_gen
 };
 
-template <bool sym>
-struct StateEstimationInput {
+template <bool sym> struct StateEstimationInput {
     // connection status of shunt, load_gen, source
     // this is needed to determine if a measurement is relevant
     // if the shunt/load_gen/source is disconnected, all its measurements are discarded
@@ -168,13 +154,12 @@ struct StateEstimationInput {
 };
 
 struct ShortCircuitInput {
-    IdxVector fault_bus_indptr;  // indptr of the fault
+    IdxVector fault_bus_indptr; // indptr of the fault
     std::vector<FaultCalcParam> faults;
-    ComplexVector source;  // Complex u_ref of each source
+    ComplexVector source; // Complex u_ref of each source
 };
 
-template <bool sym>
-struct MathOutput {
+template <bool sym> struct MathOutput {
     std::vector<ComplexValue<sym>> u;
     std::vector<ComplexValue<sym>> bus_injection;
     std::vector<BranchMathOutput<sym>> branch;
@@ -183,8 +168,7 @@ struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> load_gen;
 };
 
-template <bool sym>
-struct ShortCircuitMathOutput {
+template <bool sym> struct ShortCircuitMathOutput {
     std::vector<ComplexValue<sym>> u_bus;
     std::vector<FaultShortCircuitMathOutput<sym>> fault;
     std::vector<BranchShortCircuitMathOutput<sym>> branch;
@@ -249,7 +233,7 @@ struct ComponentTopology {
     IdxVector load_gen_node_idx;
     std::vector<LoadGenType> load_gen_type;
     IdxVector voltage_sensor_node_idx;
-    IdxVector power_sensor_object_idx;  // the index is relative to branch, source, shunt, or load_gen
+    IdxVector power_sensor_object_idx; // the index is relative to branch, source, shunt, or load_gen
     std::vector<MeasuredTerminalType> power_sensor_terminal_type;
 
     inline Idx n_node_total() const { return n_node + (Idx)branch3_node_idx.size(); }
@@ -307,7 +291,7 @@ struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> load_gen;
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
-    std::vector<Idx2D> power_sensor;  // can be coupled to branch-from/to, source, load_gen, or shunt sensor
+    std::vector<Idx2D> power_sensor; // can be coupled to branch-from/to, source, load_gen, or shunt sensor
 };
 
 // change of update cause topology and param change, or just param change
@@ -320,6 +304,6 @@ struct UpdateChange {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -503,7 +503,7 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
     for (bool const sym : {true, false}) {
         for (auto const& calculation_method : calculation_methods) {
             if (calculation_method == "iec60909"s && sym) {
-                continue;  // only asym short circuit calculations are supported
+                continue; // only asym short circuit calculations are supported
             }
 
             CHECK_NOTHROW([&]() {
@@ -571,7 +571,7 @@ std::vector<CaseParam> const& get_all_batch_cases() {
     return all_cases;
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Check existence of validation data path") {
     REQUIRE(std::filesystem::exists(data_dir));
@@ -648,7 +648,7 @@ void validate_batch_case(CaseParam const& param) {
     });
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
@@ -678,5 +678,5 @@ TEST_CASE("Validation test batch") {
     }
 }
 
-}  // namespace meta_data
-}  // namespace power_grid_model
+} // namespace meta_data
+} // namespace power_grid_model

@@ -13,8 +13,7 @@
 
 namespace power_grid_model::main_core {
 
-template <class CompContainer>
-struct MainModelState {
+template <class CompContainer> struct MainModelState {
     using ComponentContainer = CompContainer;
 
     ComponentContainer components;
@@ -42,6 +41,6 @@ concept model_component_state =
     component_container<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
     std::same_as<StateType<ContainerType>, MainModelState<ContainerType>>;
 
-}  // namespace power_grid_model::main_core
+} // namespace power_grid_model::main_core
 
 #endif

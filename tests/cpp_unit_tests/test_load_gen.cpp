@@ -295,11 +295,11 @@ TEST_CASE("Test load generator") {
         asym_load_pq.set_power(RealValue<false>{2.0e6, nan, 3.0e6}, RealValue<false>{nan, 4.0e6, nan});
         ComplexValue<false> s_2 = asym_load_pq.calc_param<false>();
         CHECK(real(s_2(0)) == -6.0);
-        CHECK(real(s_2(1)) == -3.0);  // not updated
+        CHECK(real(s_2(1)) == -3.0); // not updated
         CHECK(real(s_2(2)) == -9.0);
-        CHECK(imag(s_2(0)) == -3.0);  // not updated
+        CHECK(imag(s_2(0)) == -3.0); // not updated
         CHECK(imag(s_2(1)) == -12.0);
-        CHECK(imag(s_2(2)) == -3.0);  // not updated
+        CHECK(imag(s_2(2)) == -3.0); // not updated
     }
 
     SUBCASE("Test no source") {
@@ -341,4 +341,4 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         CHECK_FALSE(std::isnan(result.imag()));
     }
 }
-}  // namespace power_grid_model
+} // namespace power_grid_model

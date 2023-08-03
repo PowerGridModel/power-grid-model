@@ -17,8 +17,7 @@ namespace power_grid_model {
 // hide implementation in inside namespace
 namespace math_model_impl {
 
-template <scalar_value T, bool sym, bool is_tensor, int n_sub_block>
-struct block_trait {
+template <scalar_value T, bool sym, bool is_tensor, int n_sub_block> struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
     static constexpr int n_col = is_tensor ? (sym ? n_sub_block : n_sub_block * 3) : 1;
     using ArrayType = Eigen::Array<T, n_row, n_col, Eigen::ColMajor>;
@@ -33,20 +32,14 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     // default zero
     Block() : ArrayType{ArrayType::Zero()} {};
     // eigen expression
-    template <typename OtherDerived>
-    explicit Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {}
-    template <typename OtherDerived>
-    Block& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+    template <typename OtherDerived> explicit Block(Eigen::ArrayBase<OtherDerived> const& other) : ArrayType{other} {}
+    template <typename OtherDerived> Block& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->ArrayType::operator=(other);
         return *this;
     }
 
-    template <int r>
-    static auto get_asym_row_idx() {
-        return Eigen::seqN(Eigen::fix<r * 3>, Eigen::fix<3>);
-    }
-    template <int c>
-    static auto get_asym_col_idx() {
+    template <int r> static auto get_asym_row_idx() { return Eigen::seqN(Eigen::fix<r * 3>, Eigen::fix<3>); }
+    template <int c> static auto get_asym_col_idx() {
         if constexpr (is_tensor) {
             return Eigen::seqN(Eigen::fix<c * 3>, Eigen::fix<3>);
         } else {
@@ -58,8 +51,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     using GetterType =
         std::conditional_t<sym, T&, decltype(std::declval<ArrayType>()(get_asym_row_idx<r>(), get_asym_col_idx<c>()))>;
 
-    template <int r, int c>
-    GetterType<r, c> get_val() {
+    template <int r, int c> GetterType<r, c> get_val() {
         if constexpr (sym) {
             return (*this)(r, c);
         } else {
@@ -68,8 +60,8 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     }
 };
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -24,10 +24,8 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
-template <bool sym>
-struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
-    template <int r, int c>
-    using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
+template <bool sym> struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
+    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<DoubleComplex, sym, false, 2>::Block;
@@ -41,8 +39,7 @@ struct SEUnknown : public Block<DoubleComplex, sym, false, 2> {
 };
 
 // block class for the right hand side in state estimation equation
-template <bool sym>
-using SERhs = SEUnknown<sym>;
+template <bool sym> using SERhs = SEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
 /*
@@ -51,11 +48,9 @@ using SERhs = SEUnknown<sym>;
    [Q, R ]
 ]
 */
-template <bool sym>
-class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
+template <bool sym> class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
   public:
-    template <int r, int c>
-    using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<DoubleComplex, sym, true, 2>::Block;
@@ -70,8 +65,7 @@ class SEGainBlock : public Block<DoubleComplex, sym, true, 2> {
 // processed measurement struct
 // combined all measurement of the same quantity
 // accumulate for bus injection measurement
-template <bool sym>
-class MeasuredValues {
+template <bool sym> class MeasuredValues {
     static constexpr Idx disconnected = -1;
     static constexpr Idx unmeasured = -2;
     static constexpr Idx undefined = -3;
@@ -141,7 +135,7 @@ class MeasuredValues {
             // no angle measurement
             else if (is_nan(imag(main_value_[idx_voltage_[bus]].value))) {
                 u[bus] = real(main_value_[idx_voltage_[bus]].value) * current_u[bus] /
-                         cabs(current_u[bus]);  // U / |U| to get angle shift
+                         cabs(current_u[bus]); // U / |U| to get angle shift
             }
             // full measurement
             else {
@@ -272,7 +266,7 @@ class MeasuredValues {
         and idx_shunt_power_ (for shunt).
         */
         MathModelTopology const& topo = math_topology();
-        RealValue<sym> angle_cum{};  // cumulative angle
+        RealValue<sym> angle_cum{}; // cumulative angle
         for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
             // voltage
             {
@@ -423,9 +417,9 @@ class MeasuredValues {
             if constexpr (only_magnitude) {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
                 if (is_nan(imag(data[pos].value))) {
-                    abs_value += real(data[pos].value);  // only keep real part
+                    abs_value += real(data[pos].value); // only keep real part
                 } else {
-                    abs_value += cabs(data[pos].value);  // get abs of the value
+                    abs_value += cabs(data[pos].value); // get abs of the value
                 }
                 accumulated_value += abs_value / data[pos].variance;
             } else {
@@ -531,8 +525,7 @@ template class MeasuredValues<true>;
 template class MeasuredValues<false>;
 
 // solver
-template <bool sym>
-class IterativeLinearSESolver {
+template <bool sym> class IterativeLinearSESolver {
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
@@ -813,11 +806,10 @@ class IterativeLinearSESolver {
 template class IterativeLinearSESolver<true>;
 template class IterativeLinearSESolver<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using IterativeLinearSESolver = math_model_impl::IterativeLinearSESolver<sym>;
+template <bool sym> using IterativeLinearSESolver = math_model_impl::IterativeLinearSESolver<sym>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

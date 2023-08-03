@@ -24,8 +24,7 @@ class GenericPowerSensor : public Sensor {
 
     MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
 
-    template <bool sym>
-    PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
+    template <bool sym> PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
         if constexpr (sym) {
             return get_sym_output(s);
         } else {
@@ -33,18 +32,15 @@ class GenericPowerSensor : public Sensor {
         }
     }
 
-    template <bool sym>
-    PowerSensorOutput<sym> get_null_output() const {
-        return {{id(), false}, {}, {}};
-    }
+    template <bool sym> PowerSensorOutput<sym> get_null_output() const { return {{id(), false}, {}, {}}; }
 
     SensorShortCircuitOutput get_null_sc_output() const { return {{id(), false}}; }
 
   protected:
     double convert_direction() const {
         if (terminal_type_ == MeasuredTerminalType::load || terminal_type_ == MeasuredTerminalType::shunt) {
-            return -1.0;  // For shunt and load the direction in the math model is opposite to the direction in the
-                          // physical model
+            return -1.0; // For shunt and load the direction in the math model is opposite to the direction in the
+                         // physical model
         }
         return 1.0;
     }
@@ -56,14 +52,12 @@ class GenericPowerSensor : public Sensor {
     virtual PowerSensorOutput<false> get_asym_output(ComplexValue<false> const& s) const = 0;
 };
 
-template <bool sym>
-class PowerSensor : public GenericPowerSensor {
+template <bool sym> class PowerSensor : public GenericPowerSensor {
   public:
     static constexpr char const* name = sym ? "sym_power_sensor" : "asym_power_sensor";
     using InputType = PowerSensorInput<sym>;
     using UpdateType = PowerSensorUpdate<sym>;
-    template <bool sym_calc>
-    using OutputType = PowerSensorOutput<sym_calc>;
+    template <bool sym_calc> using OutputType = PowerSensorOutput<sym_calc>;
 
     explicit PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input}, power_sigma_{power_sensor_input.power_sigma / base_power<sym>} {
@@ -110,13 +104,12 @@ class PowerSensor : public GenericPowerSensor {
     PowerSensorOutput<false> get_asym_output(ComplexValue<false> const& s) const final {
         return get_generic_output<false>(s);
     }
-    template <bool sym_calc>
-    PowerSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& s) const {
+    template <bool sym_calc> PowerSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& s) const {
         PowerSensorOutput<sym_calc> output{};
         ComplexValue<sym_calc> const s_residual{process_mean_val<sym_calc>(s_measured_ - s) * convert_direction() *
                                                 base_power<sym_calc>};
         output.id = id();
-        output.energized = 1;  // power sensor is always energized
+        output.energized = 1; // power sensor is always energized
         output.p_residual = real(s_residual);
         output.q_residual = imag(s_residual);
         return output;
@@ -126,6 +119,6 @@ class PowerSensor : public GenericPowerSensor {
 using SymPowerSensor = PowerSensor<true>;
 using AsymPowerSensor = PowerSensor<false>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

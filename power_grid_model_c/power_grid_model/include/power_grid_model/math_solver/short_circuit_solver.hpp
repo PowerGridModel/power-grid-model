@@ -19,8 +19,7 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // solver
-template <bool sym>
-class ShortCircuitSolver {
+template <bool sym> class ShortCircuitSolver {
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
@@ -73,9 +72,9 @@ class ShortCircuitSolver {
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-                diagonal_element += y_source;  // add y_source to the diagonal of Ybus
+                diagonal_element += y_source; // add y_source to the diagonal of Ybus
                 u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number] *
-                                                         voltage_scaling_factor_c});  // rhs += Y_source * U_source * c
+                                                         voltage_scaling_factor_c}); // rhs += Y_source * U_source * c
             }
             // skip if no fault
             if (!input.faults.empty()) {
@@ -86,7 +85,7 @@ class ShortCircuitSolver {
                     if (std::isinf(y_fault.real())) {
                         assert(std::isinf(y_fault.imag()));
                         infinite_admittance_fault_counter[bus_number] += 1;
-                        if (fault_type == FaultType::three_phase) {  // three phase fault
+                        if (fault_type == FaultType::three_phase) { // three phase fault
                             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                                 Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -95,7 +94,7 @@ class ShortCircuitSolver {
                             }
                             // mat_data[bus,bus] = -1
                             diagonal_element = ComplexTensor<sym>{-1};
-                            u_bus = ComplexValue<sym>{0};  // update rhs
+                            u_bus = ComplexValue<sym>{0}; // update rhs
                         }
                         if constexpr (!sym) {
                             if (fault_type == FaultType::single_phase_to_ground) {
@@ -107,7 +106,7 @@ class ShortCircuitSolver {
                                 }
                                 // mat_data[bus,bus][phase_1, phase_1] = -1
                                 diagonal_element(phase_1, phase_1) = -1;
-                                u_bus(phase_1) = 0;  // update rhs
+                                u_bus(phase_1) = 0; // update rhs
                             } else if (fault_type == FaultType::two_phase) {
                                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
@@ -150,7 +149,7 @@ class ShortCircuitSolver {
                         break;
                     }
                     assert(!std::isinf(y_fault.imag()));
-                    if (fault_type == FaultType::three_phase) {  // three phase fault
+                    if (fault_type == FaultType::three_phase) { // three phase fault
                         // mat_data[bus,bus] += y_fault
                         diagonal_element += ComplexTensor<sym>{y_fault};
                     }
@@ -234,10 +233,10 @@ class ShortCircuitSolver {
 
                     if (std::isinf(y_fault.real())) {
                         assert(std::isinf(y_fault.imag()));
-                        if (fault_type == FaultType::three_phase) {  // three phase fault
+                        if (fault_type == FaultType::three_phase) { // three phase fault
                             i_fault = -1.0 * static_cast<ComplexValue<sym>>(x_bus_subtotal) /
-                                      infinite_admittance_fault_counter_bus;  // injection is
-                                                                              // negative to fault
+                                      infinite_admittance_fault_counter_bus; // injection is
+                                                                             // negative to fault
                             u_bus = ComplexValue<sym>{0.0};
                         }
                         if constexpr (!sym) {
@@ -269,7 +268,7 @@ class ShortCircuitSolver {
                             // bus
                             continue;
                         }
-                        if (fault_type == FaultType::three_phase) {  // three phase fault
+                        if (fault_type == FaultType::three_phase) { // three phase fault
                             i_fault = static_cast<ComplexValue<sym>>(y_fault * x_bus_subtotal);
                         }
                         if constexpr (!sym) {
@@ -292,8 +291,8 @@ class ShortCircuitSolver {
                     }
                 }
 
-                ComplexValue<sym> i_source_bus{};     // total source current in to the bus
-                ComplexValue<sym> i_source_inject{};  // total raw source current as a Norton equivalent
+                ComplexValue<sym> i_source_bus{};    // total source current in to the bus
+                ComplexValue<sym> i_source_inject{}; // total raw source current as a Norton equivalent
                 for (Idx source_number = (*source_bus_indptr_)[bus_number];
                      source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
                     ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
@@ -446,11 +445,10 @@ class ShortCircuitSolver {
 template class ShortCircuitSolver<true>;
 template class ShortCircuitSolver<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using ShortCircuitSolver = math_model_impl::ShortCircuitSolver<sym>;
+template <bool sym> using ShortCircuitSolver = math_model_impl::ShortCircuitSolver<sym>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

@@ -32,8 +32,7 @@ class Shunt : public Appliance {
     }
 
     // getter for calculation param, shunt y
-    template <bool sym>
-    ComplexTensor<sym> calc_param(bool is_connected_to_source = true) const {
+    template <bool sym> ComplexTensor<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return ComplexTensor<sym>{};
         }
@@ -60,8 +59,7 @@ class Shunt : public Appliance {
   private:
     DoubleComplex y1_, y0_;
 
-    template <bool sym_calc>
-    ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+    template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         ComplexTensor<sym_calc> const param = calc_param<sym_calc>();
         // return value should be injection direction, therefore a negative sign for i
@@ -75,6 +73,6 @@ class Shunt : public Appliance {
     double injection_direction() const final { return -1.0; }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

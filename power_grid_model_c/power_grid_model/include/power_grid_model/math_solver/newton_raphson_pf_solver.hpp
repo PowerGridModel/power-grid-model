@@ -163,10 +163,8 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // class for phasor in polar coordinate and/or complex power
-template <bool sym>
-struct PolarPhasor : public Block<double, sym, false, 2> {
-    template <int r, int c>
-    using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
+template <bool sym> struct PolarPhasor : public Block<double, sym, false, 2> {
+    template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, false, 2>::Block;
@@ -180,8 +178,7 @@ struct PolarPhasor : public Block<double, sym, false, 2> {
 };
 
 // class for complex power
-template <bool sym>
-using ComplexPower = PolarPhasor<sym>;
+template <bool sym> using ComplexPower = PolarPhasor<sym>;
 
 // class of pf block
 // block of incomplete power flow jacobian
@@ -190,11 +187,9 @@ using ComplexPower = PolarPhasor<sym>;
 // [M = dQ/dTheta = -N, L = V * dQ/dV = H] ]
 // Hij = Gij .* sij - Bij .* cij = L
 // Nij = Gij .* cij + Bij .* sij = -M
-template <bool sym>
-class PFJacBlock : public Block<double, sym, true, 2> {
+template <bool sym> class PFJacBlock : public Block<double, sym, true, 2> {
   public:
-    template <int r, int c>
-    using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, true, 2>::Block;
@@ -207,8 +202,7 @@ class PFJacBlock : public Block<double, sym, true, 2> {
 };
 
 // solver
-template <bool sym>
-class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
+template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
   public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
@@ -373,7 +367,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
     // calculation data
-    std::vector<PolarPhasor<sym>> x_;  // unknown
+    std::vector<PolarPhasor<sym>> x_; // unknown
     // this stores in different steps
     // 1. negative power injection: - p/q_calculated
     // 2. power unbalance: p/q_specified - p/q_calculated
@@ -417,11 +411,10 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
 template class NewtonRaphsonPFSolver<true>;
 template class NewtonRaphsonPFSolver<false>;
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-template <bool sym>
-using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
+template <bool sym> using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

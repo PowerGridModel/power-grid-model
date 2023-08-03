@@ -77,6 +77,6 @@ class Timer {
     }
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
-#endif  // POWER_GRID_MODEL_TIMER_HPP
+#endif // POWER_GRID_MODEL_TIMER_HPP

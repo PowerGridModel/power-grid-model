@@ -9,7 +9,7 @@
 
 namespace {
 using namespace power_grid_model;
-}  // namespace
+} // namespace
 
 // options
 PGM_Options* PGM_create_options(PGM_Handle*) { return new PGM_Options{}; }

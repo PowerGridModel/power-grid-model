@@ -228,4 +228,4 @@ TEST_CASE("Test component container") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

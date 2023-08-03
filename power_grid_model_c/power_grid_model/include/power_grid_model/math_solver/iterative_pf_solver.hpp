@@ -25,8 +25,7 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // solver
-template <bool sym, typename DerivedSolver>
-class IterativePFSolver {
+template <bool sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
@@ -51,7 +50,7 @@ class IterativePFSolver {
                 DoubleComplex sum_u_ref = 0.0;
                 for (Idx bus = 0; bus != n_bus_; ++bus) {
                     for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
-                        sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]);  // offset phase shift
+                        sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                     }
                 }
                 return sum_u_ref / (double)input.source.size();
@@ -169,8 +168,8 @@ class IterativePFSolver {
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };
 
-}  // namespace math_model_impl
+} // namespace math_model_impl
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif

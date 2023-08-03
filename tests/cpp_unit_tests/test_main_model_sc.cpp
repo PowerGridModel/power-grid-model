@@ -86,8 +86,8 @@ TEST_CASE("Test main model - short circuit") {
 
             std::vector<NodeShortCircuitOutput> node_output(2);
             main_model.output_result<Node>(math_output, node_output.begin());
-            CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0));  // influenced by fault
-            CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0));  // fault location
+            CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0)); // influenced by fault
+            CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0)); // fault location
 
             CHECK(node_output[0].u_pu(1) == doctest::Approx(1.0));
             CHECK(node_output[0].u_pu(2) == doctest::Approx(1.0));
@@ -120,9 +120,9 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
 
         model.calculate_short_circuit(1.0, CalculationMethod::iec60909, result_data);
 
-        CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0));  // influenced by fault
-        CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0));  // fault location
+        CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0)); // influenced by fault
+        CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0)); // fault location
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

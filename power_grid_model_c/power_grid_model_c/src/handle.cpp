@@ -9,7 +9,7 @@
 
 namespace {
 using namespace power_grid_model;
-}  // namespace
+} // namespace
 
 // create and destroy handle
 PGM_Handle* PGM_create_handle() { return new PGM_Handle{}; }

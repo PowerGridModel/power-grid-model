@@ -20,8 +20,7 @@ namespace power_grid_model {
 class Node final : public Base {
   public:
     using InputType = NodeInput;
-    template <bool sym>
-    using OutputType = NodeOutput<sym>;
+    template <bool sym> using OutputType = NodeOutput<sym>;
     using ShortCircuitOutputType = NodeShortCircuitOutput;
     static constexpr char const* name = "node";
     constexpr ComponentType math_model_type() const final { return ComponentType::node; }
@@ -58,8 +57,7 @@ class Node final : public Base {
         ComplexValue<false> const uabc_pu{u_pu};
         return get_sc_output(uabc_pu);
     }
-    template <bool sym>
-    NodeOutput<sym> get_null_output() const {
+    template <bool sym> NodeOutput<sym> get_null_output() const {
         NodeOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -78,6 +76,6 @@ class Node final : public Base {
     double u_rated_;
 };
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
 
 #endif
