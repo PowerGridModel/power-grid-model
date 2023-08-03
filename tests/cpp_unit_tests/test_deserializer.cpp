@@ -169,6 +169,38 @@ TEST_CASE("Deserializer") {
             std::array all_components{"node", "line", "source", "sym_load"};
             deserializer.set_buffer(all_components.data(), all_data.data(), nullptr);
             deserializer.parse();
+            // check node
+            CHECK(node[0].id == 1);
+            CHECK(node[0].u_rated == doctest::Approx(10.5e3));
+            CHECK(node[1].id == 2);
+            CHECK(node[1].u_rated == doctest::Approx(10.5e3));
+            CHECK(node[2].id == 3);
+            CHECK(node[2].u_rated == doctest::Approx(10.5e3));
+            // check line
+            CHECK(line[0].id == 4);
+            CHECK(line[0].r1 == doctest::Approx(0.11));
+            CHECK(is_nan(line[0].r0));
+            CHECK(line[1].id == 5);
+            CHECK(line[1].x1 == doctest::Approx(0.16));
+            CHECK(is_nan(line[1].x0));
+            // check source
+            CHECK(source[0].id == 15);
+            CHECK(source[0].u_ref == doctest::Approx(1.03));
+            CHECK(source[0].sk == doctest::Approx(1e20));
+            CHECK(is_nan(source[0].rx_ratio));
+            CHECK(source[1].id == 16);
+            CHECK(source[1].u_ref == doctest::Approx(1.04));
+            CHECK(is_nan(source[1].sk));
+            CHECK(is_nan(source[1].rx_ratio));
+            CHECK(source[2].id == 17);
+            CHECK(source[2].u_ref == doctest::Approx(1.03));
+            CHECK(source[2].sk == doctest::Approx(1e10));
+            CHECK(source[2].rx_ratio == doctest::Approx(0.2));
+            // check sym_load
+            CHECK(sym_load[0].id == 7);
+            CHECK(sym_load[0].p_specified == doctest::Approx(1.01e6));
+            CHECK(sym_load[1].id == 8);
+            CHECK(sym_load[1].q_specified == doctest::Approx(0.22e6));
         }
     }
 }
