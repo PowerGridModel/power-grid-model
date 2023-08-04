@@ -16,6 +16,7 @@
 
 #include <set>
 #include <span>
+#include <sstream>
 #include <string_view>
 
 // converter for double[3]
@@ -69,7 +70,11 @@ class Deserializer {
 
     void deserialize_from_msgpack(char const* data, size_t length) {
         handle_ = msgpack::unpack(data, length);
-        post_serialization();
+        try {
+            post_serialization();
+        } catch (std::exception&) {
+            handle_error();
+        }
     }
 
     std::string const& dataset_name() const { return dataset_->name; }
@@ -100,8 +105,12 @@ class Deserializer {
 
     void parse() const {
         root_key_ = "data";
-        for (Buffer const& buffer : buffers_) {
-            parse_component(buffer);
+        try {
+            for (Buffer const& buffer : buffers_) {
+                parse_component(buffer);
+            }
+        } catch (std::exception&) {
+            handle_error();
         }
     }
 
@@ -394,6 +403,35 @@ class Deserializer {
     void parse_attribute_per_type(void* element_pointer, msgpack::object const& obj,
                                   MetaAttribute const& attribute) const {
         obj >> *reinterpret_cast<T*>(reinterpret_cast<char*>(element_pointer) + attribute.offset);
+    }
+
+    void handle_error() const {
+        try {
+            throw;
+        } catch (std::exception& e) {
+            std::stringstream ss;
+            ss << e.what();
+            if (!root_key_.empty()) {
+                ss << "Position of error: " << root_key_;
+            }
+            if (is_batch_ && scenario_number_ >= 0) {
+                ss << "/" << scenario_number_;
+            }
+            if (!component_key_.empty()) {
+                ss << "/" << component_key_;
+            }
+            if (element_number_ >= 0) {
+                ss << "/" << element_number_;
+            }
+            if (!attribute_key_.empty()) {
+                ss << "/" << attribute_key_;
+            }
+            if (attribute_number_ >= 0) {
+                ss << "/" << attribute_number_;
+            }
+            ss << '\n';
+            throw SerializationError{ss.str()};
+        }
     }
 };
 
