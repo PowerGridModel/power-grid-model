@@ -115,13 +115,24 @@ class Deserializer {
     // attributes to track the movement of the position
     // for error report purpose
     mutable std::string_view root_key_;
-
+    mutable std::string_view component_key_;
+    mutable std::string_view attribute_key_;
+    mutable Idx scenario_number_{-1};
+    mutable Idx element_number_{-1};
 
     static std::vector<char> json_to_msgpack(char const* json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
         std::vector<char> msgpack_data;
         nlohmann::json::to_msgpack(json_document, msgpack_data);
         return msgpack_data;
+    }
+
+    static std::string_view key_to_string(msgpack::object_kv const& kv) {
+        try {
+            return kv.key.as<std::string_view>();
+        } catch (msgpack::type_error&) {
+            throw SerializationError{"Keys in the dictionary should always be a string!\n"};
+        }
     }
 
     void post_serialization() {
@@ -157,7 +168,7 @@ class Deserializer {
     Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
         std::span const kv_map{map.via.map.ptr, map.via.map.size};
         for (Idx i = 0; i != (Idx)kv_map.size(); ++i) {
-            if (key == kv_map[i].key.as<std::string_view>()) {
+            if (key == key_to_string(kv_map[i])) {
                 return i;
             }
         }
@@ -167,7 +178,7 @@ class Deserializer {
     void read_predefined_attributes() {
         msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
         for (auto const& kv : std::span{attribute_map.via.map.ptr, attribute_map.via.map.size}) {
-            MetaComponent const& component = dataset_->get_component(kv.key.as<std::string_view>());
+            MetaComponent const& component = dataset_->get_component(key_to_string(kv));
             msgpack::object const& attribute_list = kv.val;
             if (attribute_list.type != msgpack::type::ARRAY) {
                 throw SerializationError{
@@ -325,7 +336,7 @@ class Deserializer {
     void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) const {
         std::span<msgpack::object_kv const> map{obj.via.map.ptr, obj.via.map.size};
         for (msgpack::object_kv const& kv : map) {
-            Idx const found_idx = component.find_attribute(kv.key.as<std::string_view>());
+            Idx const found_idx = component.find_attribute(key_to_string(kv));
             if (found_idx < 0) {
                 continue; // allow unknown key for additional user info
             }
