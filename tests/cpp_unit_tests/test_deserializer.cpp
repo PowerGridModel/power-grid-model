@@ -344,4 +344,21 @@ TEST_CASE("Deserializer") {
     }
 }
 
+TEST_CASE("Deserializer with error") {
+    Deserializer deserializer{};
+
+    SUBCASE("Error in meta data") {
+        constexpr char const* no_version = R"({})";
+        CHECK_THROWS_WITH_AS(deserializer.deserialize_from_json(no_version),
+                             doctest::Contains("Position of error: version"), SerializationError);
+        constexpr char const* wrong_dataset = R"({"version": "1.0", "type": "sym_input"})";
+        CHECK_THROWS_WITH_AS(deserializer.deserialize_from_json(wrong_dataset),
+                             doctest::Contains("Position of error: type"), SerializationError);
+
+        constexpr char const* wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
+        CHECK_THROWS_WITH_AS(deserializer.deserialize_from_json(wrong_is_batch),
+                             doctest::Contains("Position of error: is_batch"), SerializationError);
+    }
+}
+
 } // namespace power_grid_model::meta_data

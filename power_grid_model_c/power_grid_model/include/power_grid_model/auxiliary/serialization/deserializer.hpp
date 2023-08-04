@@ -410,21 +410,27 @@ class Deserializer {
         ss << e.what();
         if (!root_key_.empty()) {
             ss << "Position of error: " << root_key_;
+            root_key_ = "";
         }
         if (is_batch_ && scenario_number_ >= 0) {
             ss << "/" << scenario_number_;
+            scenario_number_ = -1;
         }
         if (!component_key_.empty()) {
             ss << "/" << component_key_;
+            component_key_ = "";
         }
         if (element_number_ >= 0) {
             ss << "/" << element_number_;
+            element_number_ = -1;
         }
         if (!attribute_key_.empty()) {
             ss << "/" << attribute_key_;
+            attribute_key_ = "";
         }
         if (attribute_number_ >= 0) {
             ss << "/" << attribute_number_;
+            attribute_number_ = -1;
         }
         ss << '\n';
         throw SerializationError{ss.str()};
