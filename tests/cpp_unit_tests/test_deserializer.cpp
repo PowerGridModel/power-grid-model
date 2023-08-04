@@ -212,6 +212,22 @@ inline std::map<std::string, Deserializer::Buffer> get_buffer_map(Deserializer c
     }
     return map;
 }
+
+void check_error(char const* json, char const* err_msg) {
+    Deserializer deserializer{};
+    std::array components{"node"};
+    NodeInput node{};
+    std::array<void*, 1> buffer_data{&node};
+
+    auto const run = [&]() {
+        deserializer.deserialize_from_json(json);
+        deserializer.set_buffer(components.data(), buffer_data.data(), nullptr);
+        deserializer.parse();
+    };
+
+    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), SerializationError);
+}
+
 } // namespace
 
 TEST_CASE("Deserializer") {
@@ -345,19 +361,38 @@ TEST_CASE("Deserializer") {
 }
 
 TEST_CASE("Deserializer with error") {
-    Deserializer deserializer{};
 
     SUBCASE("Error in meta data") {
         constexpr char const* no_version = R"({})";
-        CHECK_THROWS_WITH_AS(deserializer.deserialize_from_json(no_version),
-                             doctest::Contains("Position of error: version"), SerializationError);
+        check_error(no_version, "Position of error: version");
         constexpr char const* wrong_dataset = R"({"version": "1.0", "type": "sym_input"})";
-        CHECK_THROWS_WITH_AS(deserializer.deserialize_from_json(wrong_dataset),
-                             doctest::Contains("Position of error: type"), SerializationError);
-
+        check_error(wrong_dataset, "Position of error: type");
         constexpr char const* wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
-        CHECK_THROWS_WITH_AS(deserializer.deserialize_from_json(wrong_is_batch),
-                             doctest::Contains("Position of error: is_batch"), SerializationError);
+        check_error(wrong_is_batch, "Position of error: is_batch");
+    }
+
+    SUBCASE("Error in attributes") {
+        constexpr char const* unknown_component =
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node1": []}})";
+        check_error(unknown_component, "Position of error: attributes/node1");
+        constexpr char const* unknown_attribute =
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["i_from"]}})";
+        check_error(unknown_attribute, "Position of error: attributes/node/0");
+    }
+
+    SUBCASE("Error in single data") {
+        constexpr char const* unknown_component =
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node1": []}})";
+        check_error(unknown_component, "Position of error: data/node1");
+        constexpr char const* unequal_attributes =
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [[5]]}})";
+        check_error(unequal_attributes, "Position of error: data/node/0");
+        constexpr char const* wrong_type_list =
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["id"]}, "data": {"node": [[true]]}})";
+        check_error(wrong_type_list, "Position of error: data/node/0/0");
+        constexpr char const* wrong_type_dict =
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id": true}]}})";
+        check_error(wrong_type_dict, "Position of error: data/node/0/id");
     }
 }
 
