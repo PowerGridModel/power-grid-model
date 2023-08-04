@@ -204,7 +204,7 @@ constexpr char const* json_batch = R"(
 
 namespace {
 
-inline std::map<std::string, Deserializer::Buffer> get_buffer_map(Deserializer const& deserializer) {
+std::map<std::string, Deserializer::Buffer> get_buffer_map(Deserializer const& deserializer) {
     std::map<std::string, Deserializer::Buffer> map;
     for (Idx i = 0; i != deserializer.n_components(); ++i) {
         auto const& buffer = deserializer.get_buffer_info(i);
