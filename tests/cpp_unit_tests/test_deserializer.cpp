@@ -8,6 +8,10 @@
 
 #include <doctest/doctest.h>
 
+namespace power_grid_model::meta_data {
+
+// single data
+namespace {
 constexpr char const* json_single = R"(
 {
   "version": "1.0",
@@ -121,6 +125,10 @@ constexpr char const* json_single = R"(
 }
 )";
 
+} // namespace
+
+// single data
+namespace {
 constexpr char const* json_batch = R"(
 {
   "version": "1.0",
@@ -199,7 +207,7 @@ constexpr char const* json_batch = R"(
 }
 )";
 
-namespace power_grid_model::meta_data {
+} // namespace
 
 namespace {
 
