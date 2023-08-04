@@ -167,7 +167,7 @@ The circuit diagram is as follows (The node 6 is same in both lines):
 ```
 
 
-## Vision validation
+## Vision validation case
 
 There are 2 test grid cases included for validation against vision: A minimal example and a network containing all components supported by power-grid-model-io
 Their vision files are included as well.
@@ -190,6 +190,26 @@ The cases are built taking into consideration the modelling differences between 
 The node voltages and branch power flows are validated for symmetrical calculation.
 For asymmetrical output only the result attributes being validated are the ones which can be exported to excel. (ie. node voltages and branch currents)
 The absolute tolerances here are set to the least count of the vision result export: till ie. till V and kW level.
+
+## Short Circuit Calculation cases
+
+The short circuit calculations are validated against manual calculations based on electrical engineering theory.
+The test grid is designed to encompass most grid configurations of short circuit that might be interesting.
+
+The test grid is as follows:
+```{image} ../images/validation/sc_validation_case.svg
+:alt: asym_gen
+:width: 250px
+:align: center
+```
+There are 4 cases for the 4 types of fault: three_phase, single_phase_ground, two_phase, two_phase_ground.
+Each case has multiple scenarios. They are combinations of following situations:
+
+- Valid phase combinations: abc, a, b, c, ab, bc, ac
+- Source switched on or off (highlighted in green)
+- A shunt with only `b0` value modelled to be a grounding transformer switched on or off. (highlighted in blue)
+- Fault locations (highlighted in red)
+- Fault impedance: hard ground or with impedance.
 
 ## Other library validation
 
