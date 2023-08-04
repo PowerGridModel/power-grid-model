@@ -112,6 +112,10 @@ class Deserializer {
     std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
     Idx batch_size_{}; // for single dataset, the batch size is one
     std::vector<Buffer> buffers_;
+    // attributes to track the movement of the position
+    // for error report purpose
+    mutable std::string_view root_key_;
+
 
     static std::vector<char> json_to_msgpack(char const* json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);

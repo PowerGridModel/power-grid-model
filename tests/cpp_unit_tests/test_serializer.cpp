@@ -8,7 +8,6 @@
 
 namespace power_grid_model {
 
-TEST_CASE("Serializer") {
-}
+TEST_CASE("Serializer") {}
 
-}  // namespace power_grid_model
+} // namespace power_grid_model
