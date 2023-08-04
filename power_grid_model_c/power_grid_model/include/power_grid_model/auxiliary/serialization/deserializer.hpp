@@ -148,6 +148,7 @@ class Deserializer {
 
     msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
         msgpack::object const& root = handle_.get();
+        root_key_ = key;
         return get_value_from_map(root, key, type);
     }
 
