@@ -179,16 +179,21 @@ class Deserializer {
     void read_predefined_attributes() {
         msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
         for (auto const& kv : std::span{attribute_map.via.map.ptr, attribute_map.via.map.size}) {
-            MetaComponent const& component = dataset_->get_component(key_to_string(kv));
+            component_key_ = key_to_string(kv);
+            MetaComponent const& component = dataset_->get_component(component_key_);
             msgpack::object const& attribute_list = kv.val;
             if (attribute_list.type != msgpack::type::ARRAY) {
                 throw SerializationError{
                     "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
             }
-            for (auto const& attr_obj : std::span{attribute_list.via.array.ptr, attribute_list.via.array.size}) {
-                attributes_[component.name].push_back(&component.get_attribute(attr_obj.as<std::string_view>()));
+            std::span const list_span{attribute_list.via.array.ptr, attribute_list.via.array.size};
+            for (element_number_ = 0; element_number_ != (Idx)list_span.size(); ++element_number_) {
+                attributes_[component.name].push_back(
+                    &component.get_attribute(list_span[element_number_].as<std::string_view>()));
             }
+            element_number_ = -1;
         }
+        component_key_ = "";
     }
 
     void count_data() {
@@ -205,45 +210,52 @@ class Deserializer {
         }
 
         // get set of all components
-        std::set<std::string> all_components;
-        for (msgpack::object const& scenario : batch_data) {
+        std::set<MetaComponent const*> all_components;
+        for (scenario_number_ = 0; scenario_number_ != (Idx)batch_data.size(); ++scenario_number_) {
+            msgpack::object const& scenario = batch_data[scenario_number_];
             if (scenario.type != msgpack::type::MAP) {
                 throw SerializationError{"The data object of each scenario should be a dictionary!\n"};
             }
             std::span<msgpack::object_kv> const scenario_map{scenario.via.map.ptr, scenario.via.map.size};
             for (msgpack::object_kv const& kv : scenario_map) {
-                all_components.insert(kv.key.as<std::string>());
+                component_key_ = key_to_string(kv);
+                all_components.insert(&dataset_->get_component(component_key_));
             }
+            component_key_ = "";
         }
+        scenario_number_ = -1;
 
         // create buffer object
-        for (std::string const& component : all_components) {
-            buffers_.push_back(count_component(batch_data, component));
+        for (MetaComponent const* const component : all_components) {
+            buffers_.push_back(count_component(batch_data, *component));
         }
     }
 
-    Buffer count_component(std::span<msgpack::object const> batch_data, std::string const& component) {
+    Buffer count_component(std::span<msgpack::object const> batch_data, MetaComponent const& component) {
+        component_key_ = component.name;
         // count number of element of all scenarios
         IdxVector counter(batch_size_);
         std::vector<std::span<msgpack::object const>> msg_data(batch_size_);
-        for (Idx scenario_number = 0; scenario_number != batch_size_; ++scenario_number) {
-            msgpack::object const& scenario = batch_data[scenario_number];
-            Idx const found_component_idx = find_key_from_map(scenario, component);
+        for (scenario_number_ = 0; scenario_number_ != batch_size_; ++scenario_number_) {
+            msgpack::object const& scenario = batch_data[scenario_number_];
+            Idx const found_component_idx = find_key_from_map(scenario, component.name);
             if (found_component_idx >= 0) {
-                msgpack::object const& component = scenario.via.map.ptr[found_component_idx].val;
-                if (component.type != msgpack::type::ARRAY) {
+                msgpack::object const& element_array = scenario.via.map.ptr[found_component_idx].val;
+                if (element_array.type != msgpack::type::ARRAY) {
                     throw SerializationError{"Each entry of component per scenario should be a list!\n"};
                 }
-                counter[scenario_number] = (Idx)component.via.array.size;
-                msg_data[scenario_number] = {component.via.array.ptr, component.via.array.size};
+                counter[scenario_number_] = (Idx)element_array.via.array.size;
+                msg_data[scenario_number_] = {element_array.via.array.ptr, element_array.via.array.size};
             }
         }
+        scenario_number_ = -1;
 
         Idx const elements_per_scenario = get_elements_per_scenario(counter);
         Idx const total_elements = // total element based on is_uniform
             elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
                 elements_per_scenario * batch_size_;                                    // multiply
-        return Buffer{.component = &dataset_->get_component(component),
+        component_key_ = "";
+        return Buffer{.component = &component,
                       .elements_per_scenario = elements_per_scenario,
                       .total_elements = total_elements,
                       .msg_data = msg_data,
