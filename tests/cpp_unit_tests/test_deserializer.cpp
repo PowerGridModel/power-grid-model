@@ -127,7 +127,7 @@ constexpr char const* json_single = R"(
 
 } // namespace
 
-// single data
+// batch data
 namespace {
 constexpr char const* json_batch = R"(
 {
@@ -166,13 +166,6 @@ constexpr char const* json_batch = R"(
       ]
     },
     {
-      "sym_load": [
-        [
-          8,
-          null,
-          33.0
-        ]
-      ],
       "asym_load": [
         [
           9,
@@ -304,13 +297,13 @@ TEST_CASE("Deserializer") {
         SUBCASE("Check buffer") {
             auto const map = get_buffer_map(deserializer);
             CHECK(map.at("sym_load").elements_per_scenario == -1);
-            CHECK(map.at("sym_load").total_elements == 4);
+            CHECK(map.at("sym_load").total_elements == 3);
             CHECK(map.at("asym_load").elements_per_scenario == 1);
             CHECK(map.at("asym_load").total_elements == 3);
         }
 
         SUBCASE("Check parse") {
-            std::vector<SymLoadGenUpdate> sym_load(4);
+            std::vector<SymLoadGenUpdate> sym_load(3);
             std::vector<AsymLoadGenUpdate> asym_load(3);
             IdxVector sym_load_indptr(4);
             std::array<void*, 2> all_data{sym_load.data(), asym_load.data()};
@@ -320,22 +313,18 @@ TEST_CASE("Deserializer") {
             deserializer.parse();
 
             // sym_load
-            CHECK(sym_load_indptr == IdxVector{0, 1, 2, 4});
+            CHECK(sym_load_indptr == IdxVector{0, 1, 1, 3});
             CHECK(sym_load[0].id == 7);
             CHECK(sym_load[0].p_specified == doctest::Approx(20.0));
             CHECK(sym_load[0].status == na_IntS);
-            CHECK(sym_load[1].id == 8);
+            CHECK(sym_load[1].id == 7);
             CHECK(is_nan(sym_load[1].p_specified));
-            CHECK(sym_load[1].q_specified == doctest::Approx(33.0));
+            CHECK(sym_load[1].q_specified == doctest::Approx(10.0));
             CHECK(sym_load[1].status == na_IntS);
-            CHECK(sym_load[2].id == 7);
+            CHECK(sym_load[2].id == 8);
             CHECK(is_nan(sym_load[2].p_specified));
-            CHECK(sym_load[2].q_specified == doctest::Approx(10.0));
-            CHECK(sym_load[2].status == na_IntS);
-            CHECK(sym_load[3].id == 8);
-            CHECK(is_nan(sym_load[3].p_specified));
-            CHECK(is_nan(sym_load[3].q_specified));
-            CHECK(sym_load[3].status == 0);
+            CHECK(is_nan(sym_load[2].q_specified));
+            CHECK(sym_load[2].status == 0);
 
             // asym_load
             CHECK(asym_load[0].id == 9);

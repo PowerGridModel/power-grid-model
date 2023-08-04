@@ -72,8 +72,8 @@ class Deserializer {
         handle_ = msgpack::unpack(data, length);
         try {
             post_serialization();
-        } catch (std::exception&) {
-            handle_error();
+        } catch (std::exception& e) {
+            handle_error(e);
         }
     }
 
@@ -109,8 +109,8 @@ class Deserializer {
             for (Buffer const& buffer : buffers_) {
                 parse_component(buffer);
             }
-        } catch (std::exception&) {
-            handle_error();
+        } catch (std::exception& e) {
+            handle_error(e);
         }
     }
 
@@ -405,33 +405,29 @@ class Deserializer {
         obj >> *reinterpret_cast<T*>(reinterpret_cast<char*>(element_pointer) + attribute.offset);
     }
 
-    void handle_error() const {
-        try {
-            throw;
-        } catch (std::exception& e) {
-            std::stringstream ss;
-            ss << e.what();
-            if (!root_key_.empty()) {
-                ss << "Position of error: " << root_key_;
-            }
-            if (is_batch_ && scenario_number_ >= 0) {
-                ss << "/" << scenario_number_;
-            }
-            if (!component_key_.empty()) {
-                ss << "/" << component_key_;
-            }
-            if (element_number_ >= 0) {
-                ss << "/" << element_number_;
-            }
-            if (!attribute_key_.empty()) {
-                ss << "/" << attribute_key_;
-            }
-            if (attribute_number_ >= 0) {
-                ss << "/" << attribute_number_;
-            }
-            ss << '\n';
-            throw SerializationError{ss.str()};
+    void handle_error(std::exception& e) const {
+        std::stringstream ss;
+        ss << e.what();
+        if (!root_key_.empty()) {
+            ss << "Position of error: " << root_key_;
         }
+        if (is_batch_ && scenario_number_ >= 0) {
+            ss << "/" << scenario_number_;
+        }
+        if (!component_key_.empty()) {
+            ss << "/" << component_key_;
+        }
+        if (element_number_ >= 0) {
+            ss << "/" << element_number_;
+        }
+        if (!attribute_key_.empty()) {
+            ss << "/" << attribute_key_;
+        }
+        if (attribute_number_ >= 0) {
+            ss << "/" << attribute_number_;
+        }
+        ss << '\n';
+        throw SerializationError{ss.str()};
     }
 };
 
