@@ -99,6 +99,7 @@ class Deserializer {
     }
 
     void parse() const {
+        root_key_ = "data";
         for (Buffer const& buffer : buffers_) {
             parse_component(buffer);
         }
@@ -119,6 +120,7 @@ class Deserializer {
     mutable std::string_view attribute_key_;
     mutable Idx scenario_number_{-1};
     mutable Idx element_number_{-1};
+    mutable Idx attribute_number_{-1};
 
     static std::vector<char> json_to_msgpack(char const* json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
@@ -284,6 +286,7 @@ class Deserializer {
     }
 
     void parse_component(Buffer const& buffer) const {
+        component_key_ = buffer.component->name;
         // handle indptr
         if (buffer.elements_per_scenario < 0) {
             // first always zero
@@ -303,28 +306,32 @@ class Deserializer {
             return found->second;
         }();
         // all scenarios
-        for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
-            Idx const scenario_offset =
-                buffer.elements_per_scenario < 0 ? buffer.indptr[scenario] : scenario * buffer.elements_per_scenario;
+        for (scenario_number_ = 0; scenario_number_ != batch_size_; ++scenario_number_) {
+            Idx const scenario_offset = buffer.elements_per_scenario < 0
+                                            ? buffer.indptr[scenario_number_]
+                                            : scenario_number_ * buffer.elements_per_scenario;
 #ifndef NDEBUG
             if (buffer.elements_per_scenario < 0) {
-                assert(buffer.indptr[scenario + 1] - buffer.indptr[scenario] == (Idx)buffer.msg_data[scenario].size());
+                assert(buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_] ==
+                       (Idx)buffer.msg_data[scenario_number_].size());
 
             } else {
-                assert(buffer.elements_per_scenario == (Idx)buffer.msg_data[scenario].size());
+                assert(buffer.elements_per_scenario == (Idx)buffer.msg_data[scenario_number_].size());
             }
 #endif
             void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
-            parse_scenario(*buffer.component, scenario_pointer, buffer.msg_data[scenario], attributes);
+            parse_scenario(*buffer.component, scenario_pointer, buffer.msg_data[scenario_number_], attributes);
         }
+        scenario_number_ = -1;
+        component_key_ = "";
     }
 
     void parse_scenario(MetaComponent const& component, void* scenario_pointer,
                         std::span<msgpack::object const> msg_data,
                         std::span<MetaAttribute const* const> attributes) const {
-        for (Idx element = 0; element != (Idx)msg_data.size(); ++element) {
-            void* element_pointer = component.advance_ptr(scenario_pointer, element);
-            msgpack::object const& obj = msg_data[element];
+        for (element_number_ = 0; element_number_ != (Idx)msg_data.size(); ++element_number_) {
+            void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
+            msgpack::object const& obj = msg_data[element_number_];
             if (obj.type == msgpack::type::ARRAY) {
                 parse_array_element(element_pointer, obj, attributes);
             } else if (obj.type == msgpack::type::MAP) {
@@ -333,6 +340,7 @@ class Deserializer {
                 throw SerializationError{"An element can only be a list or dictionary!\n"};
             }
         }
+        element_number_ = -1;
     }
 
     void parse_array_element(void* element_pointer, msgpack::object const& obj,
@@ -342,20 +350,24 @@ class Deserializer {
             throw SerializationError{
                 "An element of a list should have same length as the list of predefined attributes!\n"};
         }
-        for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
-            parse_attribute(element_pointer, arr[i], *attributes[i]);
+        for (attribute_number_ = 0; attribute_number_ != (Idx)attributes.size(); ++attribute_number_) {
+            parse_attribute(element_pointer, arr[attribute_number_], *attributes[attribute_number_]);
         }
+        attribute_number_ = -1;
     }
 
     void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) const {
         std::span<msgpack::object_kv const> map{obj.via.map.ptr, obj.via.map.size};
         for (msgpack::object_kv const& kv : map) {
-            Idx const found_idx = component.find_attribute(key_to_string(kv));
+            attribute_key_ = key_to_string(kv);
+            Idx const found_idx = component.find_attribute(attribute_key_);
             if (found_idx < 0) {
+                attribute_key_ = "";
                 continue; // allow unknown key for additional user info
             }
             parse_attribute(element_pointer, kv.val, component.attributes[found_idx]);
         }
+        attribute_key_ = "";
     }
 
     void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) const {
