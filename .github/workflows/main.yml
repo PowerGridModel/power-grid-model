@@ -84,7 +84,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
-          brew install boost eigen nlohmann-json doctest
+          brew install boost eigen nlohmann-json doctest msgpack-cxx
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
@@ -108,7 +108,7 @@ jobs:
 
       - name: Install conda environment
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest msgpack-cxx
 
       - name: Build and test
         run: |
@@ -149,7 +149,7 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
-          brew install ninja boost eigen nlohmann-json doctest
+          brew install ninja boost eigen nlohmann-json doctest msgpack-cxx
 
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t

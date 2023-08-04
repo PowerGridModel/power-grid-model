@@ -11,3 +11,4 @@ dependencies:
   - numpy
   - pytest
   - pytest-cov
+  - msgpack-cxx
