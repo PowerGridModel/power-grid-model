@@ -258,9 +258,6 @@ struct MetaData {
 // little endian
 constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
-// forward declare get meta data function
-MetaData const& meta_data();
-
 } // namespace power_grid_model::meta_data
 
 #endif

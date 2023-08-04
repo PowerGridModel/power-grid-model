@@ -9,6 +9,7 @@
 #include "../../exception.hpp"
 #include "../../power_grid_model.hpp"
 #include "../meta_data.hpp"
+#include "../meta_data_gen.hpp"
 
 #include <nlohmann/json.hpp>
 
