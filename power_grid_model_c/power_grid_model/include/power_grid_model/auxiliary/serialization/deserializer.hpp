@@ -144,6 +144,7 @@ class Deserializer {
         get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> is_batch_;
         read_predefined_attributes();
         count_data();
+        root_key_ = "";
     }
 
     msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
