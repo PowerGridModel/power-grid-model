@@ -394,6 +394,21 @@ TEST_CASE("Deserializer with error") {
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id": true}]}})";
         check_error(wrong_type_dict, "Position of error: data/node/0/id");
     }
+
+    SUBCASE("Error in batch data") {
+        constexpr char const* unknown_component =
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node1": []}]})";
+        check_error(unknown_component, "Position of error: data/0/node1");
+        constexpr char const* unequal_attributes =
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [[5]]}]})";
+        check_error(unequal_attributes, "Position of error: data/0/node/0");
+        constexpr char const* wrong_type_list =
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {"node": ["id"]}, "data": [{"node": [[true]]}]})";
+        check_error(wrong_type_list, "Position of error: data/0/node/0/0");
+        constexpr char const* wrong_type_dict =
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id": true}]}]})";
+        check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
+    }
 }
 
 } // namespace power_grid_model::meta_data
