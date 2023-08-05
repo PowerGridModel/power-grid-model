@@ -329,7 +329,7 @@ class Deserializer {
                 assert(buffer.elements_per_scenario == static_cast<Idx>(buffer.msg_data[scenario_number_].size()));
             }
 #endif
-            void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
+            void* scenario_pointer = reinterpret_cast<char*>(buffer.data) + scenario_offset * buffer.component->size;
             parse_scenario(*buffer.component, scenario_pointer, buffer.msg_data[scenario_number_], attributes);
         }
         scenario_number_ = -1;
@@ -340,7 +340,7 @@ class Deserializer {
                         std::span<msgpack::object const> msg_data,
                         std::span<MetaAttribute const* const> attributes) const {
         for (element_number_ = 0; element_number_ != static_cast<Idx>(msg_data.size()); ++element_number_) {
-            void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
+            void* element_pointer = reinterpret_cast<char*>(scenario_pointer) + element_number_ * component.size;
             msgpack::object const& obj = msg_data[element_number_];
             if (obj.type == msgpack::type::ARRAY) {
                 parse_array_element(element_pointer, obj, attributes);
