@@ -324,8 +324,14 @@ class Deserializer {
             // first always zero
             buffer.indptr.front() = 0;
             // accumulate sum
-            std::transform_inclusive_scan(buffer.msg_data.cbegin(), buffer.msg_data.cend(), buffer.indptr.begin() + 1,
-                                          std::plus{}, [](auto const& x) { return static_cast<Idx>(x.size()); });
+            // TODO Apple Clang cannot compile transform_inclusive_scan correctly
+            // So we disable the good code and write the loop manually
+            // std::transform_inclusive_scan(buffer.msg_data.cbegin(), buffer.msg_data.cend(),
+            //                               buffer.indptr.begin() + 1,
+            //                               std::plus{}, [](auto const& x) { return static_cast<Idx>(x.size()); });
+            for (Idx i = 0; i != batch_size_; ++i) {
+                buffer.indptr[i + 1] = buffer.indptr[i] + static_cast<Idx>(buffer.msg_data[i].size());
+            }
         }
         // set nan
         buffer.component->set_nan(buffer.data, 0, buffer.total_elements);
