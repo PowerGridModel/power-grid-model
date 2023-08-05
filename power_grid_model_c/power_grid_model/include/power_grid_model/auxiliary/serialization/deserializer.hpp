@@ -42,6 +42,19 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         }
     };
 
+    template <class T>
+        requires(std::same_as<T, msgpack::object> || std::same_as<T, msgpack::object_kv>)
+    struct convert<std::span<const T>> {
+        msgpack::object const& operator()(msgpack::object const& o, std::span<const T>& span) const {
+            if constexpr (std::same_as<T, msgpack::object>) {
+                span = {o.via.array.ptr, o.via.array.size};
+            } else {
+                span = {o.via.map.ptr, o.via.map.size};
+            }
+            return o;
+        }
+    };
+
     } // namespace adaptor
 } // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
 } // namespace msgpack
@@ -50,21 +63,29 @@ namespace power_grid_model::meta_data {
 
 class Deserializer {
   public:
+    using ArraySpan = std::span<msgpack::object const>;
+    using MapSpan = std::span<msgpack::object_kv const>;
+
     // struct of buffer data
     struct Buffer {
         MetaComponent const* component;
         // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
         Idx elements_per_scenario;
         Idx total_elements;
-        std::vector<std::span<msgpack::object const>> msg_data; // vector of spans of msgpack object of each batch
-        void* data;                                             // set by user
-        std::span<Idx> indptr;                                  // set by user
+        std::vector<ArraySpan> msg_data; // vector of spans of msgpack object of each batch
+        void* data;                      // set by user
+        std::span<Idx> indptr;           // set by user
     };
 
     Deserializer() = default;
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
+    // not movable
+    Deserializer(Deserializer&&) = delete;
+    Deserializer& operator=(Deserializer&&) = delete;
+    // destructor
+    ~Deserializer() = default;
 
     void deserialize_from_json(char const* json_string) {
         std::vector<char> const msgpack_data = json_to_msgpack(json_string);
@@ -182,7 +203,7 @@ class Deserializer {
     }
 
     static Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
-        std::span const kv_map{map.via.map.ptr, map.via.map.size};
+        auto const kv_map = map.as<MapSpan>();
         for (Idx i = 0; i != static_cast<Idx>(kv_map.size()); ++i) {
             if (key == key_to_string(kv_map[i])) {
                 return i;
@@ -193,7 +214,7 @@ class Deserializer {
 
     void read_predefined_attributes() {
         msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
-        for (auto const& kv : std::span{attribute_map.via.map.ptr, attribute_map.via.map.size}) {
+        for (auto const& kv : attribute_map.as<MapSpan>()) {
             component_key_ = key_to_string(kv);
             MetaComponent const& component = dataset_->get_component(component_key_);
             msgpack::object const& attribute_list = kv.val;
@@ -201,7 +222,7 @@ class Deserializer {
                 throw SerializationError{
                     "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
             }
-            std::span const list_span{attribute_list.via.array.ptr, attribute_list.via.array.size};
+            auto const list_span = attribute_list.as<ArraySpan>();
             for (element_number_ = 0; element_number_ != static_cast<Idx>(list_span.size()); ++element_number_) {
                 attributes_[component.name].push_back(
                     &component.get_attribute(list_span[element_number_].as<std::string_view>()));
@@ -215,7 +236,7 @@ class Deserializer {
         msgpack::object const& obj = get_value_from_root("data", is_batch_ ? msgpack::type::ARRAY : msgpack::type::MAP);
         buffers_ = {};
         // pointer to array (or single value) of msgpack objects to the data
-        std::span<msgpack::object const> batch_data;
+        ArraySpan batch_data;
         if (is_batch_) {
             batch_size_ = static_cast<Idx>(obj.via.array.size);
             batch_data = {obj.via.array.ptr, obj.via.array.size};
@@ -231,8 +252,7 @@ class Deserializer {
             if (scenario.type != msgpack::type::MAP) {
                 throw SerializationError{"The data object of each scenario should be a dictionary!\n"};
             }
-            std::span<msgpack::object_kv> const scenario_map{scenario.via.map.ptr, scenario.via.map.size};
-            for (msgpack::object_kv const& kv : scenario_map) {
+            for (msgpack::object_kv const& kv : scenario.as<MapSpan>()) {
                 component_key_ = key_to_string(kv);
                 all_components.insert(&dataset_->get_component(component_key_));
             }
@@ -246,11 +266,11 @@ class Deserializer {
         }
     }
 
-    Buffer count_component(std::span<msgpack::object const> batch_data, MetaComponent const& component) {
+    Buffer count_component(ArraySpan batch_data, MetaComponent const& component) {
         component_key_ = component.name;
         // count number of element of all scenarios
         IdxVector counter(batch_size_);
-        std::vector<std::span<msgpack::object const>> msg_data(batch_size_);
+        std::vector<ArraySpan> msg_data(batch_size_);
         for (scenario_number_ = 0; scenario_number_ != batch_size_; ++scenario_number_) {
             msgpack::object const& scenario = batch_data[scenario_number_];
             Idx const found_component_idx = find_key_from_map(scenario, component.name);
@@ -260,7 +280,7 @@ class Deserializer {
                     throw SerializationError{"Each entry of component per scenario should be a list!\n"};
                 }
                 counter[scenario_number_] = static_cast<Idx>(element_array.via.array.size);
-                msg_data[scenario_number_] = {element_array.via.array.ptr, element_array.via.array.size};
+                element_array >> msg_data[scenario_number_];
             }
         }
         scenario_number_ = -1;
@@ -338,8 +358,7 @@ class Deserializer {
         component_key_ = "";
     }
 
-    void parse_scenario(MetaComponent const& component, void* scenario_pointer,
-                        std::span<msgpack::object const> msg_data,
+    void parse_scenario(MetaComponent const& component, void* scenario_pointer, ArraySpan msg_data,
                         std::span<MetaAttribute const* const> attributes) const {
         for (element_number_ = 0; element_number_ != static_cast<Idx>(msg_data.size()); ++element_number_) {
             void* element_pointer = reinterpret_cast<char*>(scenario_pointer) + element_number_ * component.size;
@@ -357,7 +376,7 @@ class Deserializer {
 
     void parse_array_element(void* element_pointer, msgpack::object const& obj,
                              std::span<MetaAttribute const* const> attributes) const {
-        std::span<msgpack::object const> arr{obj.via.array.ptr, obj.via.array.size};
+        auto const arr = obj.as<ArraySpan>();
         if (arr.size() != attributes.size()) {
             throw SerializationError{
                 "An element of a list should have same length as the list of predefined attributes!\n"};
@@ -369,8 +388,7 @@ class Deserializer {
     }
 
     void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) const {
-        std::span<msgpack::object_kv const> map{obj.via.map.ptr, obj.via.map.size};
-        for (msgpack::object_kv const& kv : map) {
+        for (msgpack::object_kv const& kv : obj.as<MapSpan>()) {
             attribute_key_ = key_to_string(kv);
             Idx const found_idx = component.find_attribute(attribute_key_);
             if (found_idx < 0) {
