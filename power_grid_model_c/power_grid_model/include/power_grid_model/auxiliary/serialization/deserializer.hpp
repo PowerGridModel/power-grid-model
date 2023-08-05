@@ -26,10 +26,12 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
     template <> struct convert<power_grid_model::RealValue<false>> {
         msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
-            if (o.type != msgpack::type::ARRAY)
+            if (o.type != msgpack::type::ARRAY) {
                 throw msgpack::type_error();
-            if (o.via.array.size != 3)
+            }
+            if (o.via.array.size != 3) {
                 throw msgpack::type_error();
+            }
             for (int8_t i = 0; i != 3; ++i) {
                 if (o.via.array.ptr[i].is_nil()) {
                     continue;
@@ -179,7 +181,7 @@ class Deserializer {
         return obj;
     }
 
-    Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
+    static Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
         std::span const kv_map{map.via.map.ptr, map.via.map.size};
         for (Idx i = 0; i != static_cast<Idx>(kv_map.size()); ++i) {
             if (key == key_to_string(kv_map[i])) {
