@@ -188,8 +188,8 @@ class Deserializer {
         return get_value_from_map(root, key, type);
     }
 
-    msgpack::object const& get_value_from_map(msgpack::object const& map, std::string_view key,
-                                              msgpack::type::object_type type) {
+    static msgpack::object const& get_value_from_map(msgpack::object const& map, std::string_view key,
+                                                     msgpack::type::object_type type) {
         Idx const idx = find_key_from_map(map, key);
         if (idx < 0) {
             throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!\n"};
