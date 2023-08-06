@@ -214,13 +214,12 @@ std::map<std::string, Deserializer::Buffer> get_buffer_map(Deserializer const& d
 }
 
 void check_error(char const* json, char const* err_msg) {
-    Deserializer deserializer{};
     std::array components{"node"};
     NodeInput node{};
     std::array<void*, 1> buffer_data{&node};
 
     auto const run = [&]() {
-        deserializer.deserialize_from_json(json);
+        Deserializer deserializer{from_json, json};
         deserializer.set_buffer(components.data(), buffer_data.data(), nullptr);
         deserializer.parse();
     };
@@ -232,10 +231,8 @@ void check_error(char const* json, char const* err_msg) {
 
 TEST_CASE("Deserializer") {
 
-    Deserializer deserializer{};
-
     SUBCASE("Single dataset") {
-        deserializer.deserialize_from_json(json_single);
+        Deserializer deserializer{from_json, json_single};
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.dataset_name() == "input");
@@ -301,7 +298,7 @@ TEST_CASE("Deserializer") {
     }
 
     SUBCASE("Batch dataset") {
-        deserializer.deserialize_from_json(json_batch);
+        Deserializer deserializer{from_json, json_batch};
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.dataset_name() == "update");

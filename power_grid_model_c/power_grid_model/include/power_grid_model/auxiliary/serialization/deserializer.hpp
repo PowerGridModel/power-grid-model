@@ -61,6 +61,11 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 
 namespace power_grid_model::meta_data {
 
+constexpr struct from_msgpack_t {
+} from_msgpack;
+constexpr struct from_json_t {
+} from_json;
+
 class Deserializer {
   public:
     using ArraySpan = std::span<msgpack::object const>;
@@ -77,7 +82,6 @@ class Deserializer {
         std::span<Idx> indptr;           // set by user
     };
 
-    Deserializer() = default;
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
@@ -87,13 +91,11 @@ class Deserializer {
     // destructor
     ~Deserializer() = default;
 
-    void deserialize_from_json(char const* json_string) {
-        std::vector<char> const msgpack_data = json_to_msgpack(json_string);
-        deserialize_from_msgpack(msgpack_data.data(), msgpack_data.size());
-    }
+    Deserializer(from_json_t, std::string_view json_string)
+        : Deserializer{from_msgpack, json_to_msgpack(json_string)} {}
 
-    void deserialize_from_msgpack(char const* data, size_t length) {
-        handle_ = msgpack::unpack(data, length);
+    Deserializer(from_msgpack_t, std::span<char const> msgpack_data) {
+        handle_ = msgpack::unpack(msgpack_data.data(), msgpack_data.size());
         try {
             post_serialization();
         } catch (std::exception& e) {
@@ -155,7 +157,7 @@ class Deserializer {
     mutable Idx element_number_{-1};
     mutable Idx attribute_number_{-1};
 
-    static std::vector<char> json_to_msgpack(char const* json_string) {
+    static std::vector<char> json_to_msgpack(std::string_view json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
         std::vector<char> msgpack_data;
         nlohmann::json::to_msgpack(json_document, msgpack_data);
