@@ -128,6 +128,12 @@ struct PGM_MetaAttribute {
     std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value{};
     std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value{};
     std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value{};
+
+    // get attribute by offsetting the pointer
+    template <class T> T& get_attribute(std::conditional_t<std::is_const_v<T>, RawDataConstPtr, RawDataPtr> ptr) const {
+        assert(ctype_v<std::remove_cv_t<T>> == ctype);
+        return *reinterpret_cast<T*>(reinterpret_cast<char*>(ptr) + offset);
+    }
 };
 
 namespace power_grid_model::meta_data {

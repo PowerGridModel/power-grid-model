@@ -430,7 +430,7 @@ class Deserializer {
     template <class T>
     void parse_attribute_per_type(void* element_pointer, msgpack::object const& obj,
                                   MetaAttribute const& attribute) const {
-        obj >> *reinterpret_cast<T*>(reinterpret_cast<char*>(element_pointer) + attribute.offset);
+        obj >> attribute.get_attribute<T>(element_pointer);
     }
 
     void handle_error(std::exception& e) const {
