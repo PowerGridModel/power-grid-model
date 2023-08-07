@@ -61,10 +61,11 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 
 namespace power_grid_model::meta_data {
 
-constexpr struct from_msgpack_t {
-} from_msgpack;
-constexpr struct from_json_t {
-} from_json;
+struct from_msgpack_t {};
+constexpr from_msgpack_t from_msgpack;
+
+struct from_json_t {};
+constexpr from_json_t from_json;
 
 class Deserializer {
   public:
