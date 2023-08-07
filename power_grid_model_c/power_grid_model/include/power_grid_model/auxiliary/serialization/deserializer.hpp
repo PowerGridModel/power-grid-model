@@ -359,6 +359,7 @@ class Deserializer {
             Idx const scenario_offset = buffer.elements_per_scenario < 0
                                             ? buffer.indptr[scenario_number_]
                                             : scenario_number_ * buffer.elements_per_scenario;
+#ifndef NDEBUG
             if (buffer.elements_per_scenario < 0) {
                 assert(buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_] ==
                        static_cast<Idx>(buffer.msg_data[scenario_number_].size()));
@@ -366,6 +367,7 @@ class Deserializer {
             } else {
                 assert(buffer.elements_per_scenario == static_cast<Idx>(buffer.msg_data[scenario_number_].size()));
             }
+#endif
             void* scenario_pointer = buffer.component->advance_ptr(buffer.data, scenario_offset);
             parse_scenario(*buffer.component, scenario_pointer, buffer.msg_data[scenario_number_], attributes);
         }
