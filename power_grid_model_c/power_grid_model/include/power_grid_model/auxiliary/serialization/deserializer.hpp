@@ -86,9 +86,9 @@ class Deserializer {
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
-    // not movable
-    Deserializer(Deserializer&&) = delete;
-    Deserializer& operator=(Deserializer&&) = delete;
+    // movable
+    Deserializer(Deserializer&&) = default;
+    Deserializer& operator=(Deserializer&&) = default;
     // destructor
     ~Deserializer() = default;
 
