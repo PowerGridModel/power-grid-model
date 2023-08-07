@@ -327,7 +327,7 @@ class Deserializer {
             // first always zero
             buffer.indptr.front() = 0;
             // accumulate sum
-            // TODO Apple Clang cannot compile transform_inclusive_scan correctly
+            // TODO (TonyXiang8787) Apple Clang cannot compile transform_inclusive_scan correctly
             // So we disable the good code and write the loop manually
             // std::transform_inclusive_scan(buffer.msg_data.cbegin(), buffer.msg_data.cend(),
             //                               buffer.indptr.begin() + 1,
