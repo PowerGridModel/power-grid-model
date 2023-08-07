@@ -116,9 +116,10 @@ class Deserializer {
 
     void set_buffer(char const** components, void** data, Idx** indptrs) {
         for (Idx i = 0; i != n_components(); ++i) {
-            auto const found = std::find_if(buffers_.begin(), buffers_.end(), [components, i](Buffer const& buffer) {
-                return buffer.component->name == components[i];
-            });
+            auto const found =
+                std::find_if(buffers_.begin(), buffers_.end(), [component = components[i]](Buffer const& buffer) {
+                    return buffer.component->name == component;
+                });
             if (found == buffers_.end()) {
                 throw SerializationError{"Unkown component: " + std::string(components[i]) +
                                          "! You need to supply the components which are present.\n"};
