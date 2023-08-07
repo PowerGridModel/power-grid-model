@@ -100,8 +100,8 @@ template <bool is_const> class DataPointer {
 using MutableDataPointer = DataPointer<false>;
 using ConstDataPointer = DataPointer<true>;
 
-using Dataset = std::map<std::string, MutableDataPointer, std::less<std::string>>;
-using ConstDataset = std::map<std::string, ConstDataPointer, std::less<std::string>>;
+using Dataset = std::map<std::string, MutableDataPointer>;
+using ConstDataset = std::map<std::string, ConstDataPointer>;
 
 } // namespace power_grid_model
 
