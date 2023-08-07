@@ -29,6 +29,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             if (o.type != msgpack::type::ARRAY) {
                 throw msgpack::type_error();
             }
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
             if (o.via.array.size != 3) {
                 throw msgpack::type_error();
             }
@@ -38,6 +39,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
                 }
                 o.via.array.ptr[i] >> v(i);
             }
+            // NOLINTEND(cppcoreguidelines-pro-type-union-access)
             return o;
         }
     };
@@ -46,11 +48,13 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         requires(std::same_as<T, msgpack::object> || std::same_as<T, msgpack::object_kv>)
     struct convert<std::span<const T>> {
         msgpack::object const& operator()(msgpack::object const& o, std::span<const T>& span) const {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
             if constexpr (std::same_as<T, msgpack::object>) {
                 span = {o.via.array.ptr, o.via.array.size};
             } else {
                 span = {o.via.map.ptr, o.via.map.size};
             }
+            // NOLINTEND(cppcoreguidelines-pro-type-union-access)
             return o;
         }
     };
@@ -198,7 +202,7 @@ class Deserializer {
         if (idx < 0) {
             throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!\n"};
         }
-        msgpack::object const& obj = map.via.map.ptr[idx].val;
+        msgpack::object const& obj = map.via.map.ptr[idx].val; // NOLINT(cppcoreguidelines-pro-type-union-access)
         if (obj.type != type) {
             throw SerializationError{"Wrong data type for key " + std::string(key) +
                                      " in the root level dictionary!\n"};
@@ -242,8 +246,10 @@ class Deserializer {
         // pointer to array (or single value) of msgpack objects to the data
         ArraySpan batch_data;
         if (is_batch_) {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
             batch_size_ = static_cast<Idx>(obj.via.array.size);
             batch_data = {obj.via.array.ptr, obj.via.array.size};
+            // NOLINTEND(cppcoreguidelines-pro-type-union-access)
         } else {
             batch_size_ = 1;
             batch_data = {&obj, 1};
@@ -279,10 +285,12 @@ class Deserializer {
             msgpack::object const& scenario = batch_data[scenario_number_];
             Idx const found_component_idx = find_key_from_map(scenario, component.name);
             if (found_component_idx >= 0) {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
                 msgpack::object const& element_array = scenario.via.map.ptr[found_component_idx].val;
                 if (element_array.type != msgpack::type::ARRAY) {
                     throw SerializationError{"Each entry of component per scenario should be a list!\n"};
                 }
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
                 counter[scenario_number_] = static_cast<Idx>(element_array.via.array.size);
                 element_array >> msg_data[scenario_number_];
             }
