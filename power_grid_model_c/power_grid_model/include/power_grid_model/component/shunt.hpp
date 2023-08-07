@@ -21,14 +21,13 @@ namespace power_grid_model {
 class Shunt : public Appliance {
   public:
     using InputType = ShuntInput;
-    using UpdateType = ApplianceUpdate;
+    using UpdateType = ShuntUpdate;
     static constexpr char const* name = "shunt";
     ComponentType math_model_type() const final { return ComponentType::shunt; }
 
     explicit Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
-        double const base_y = base_i() / (u / sqrt3);
-        y1_ = (shunt_input.g1 + 1.0i * shunt_input.b1) / base_y;
-        y0_ = (shunt_input.g0 + 1.0i * shunt_input.b0) / base_y;
+        base_y_ = base_i() / (u / sqrt3);
+        update_params(shunt_input);
     }
 
     // getter for calculation param, shunt y
@@ -49,15 +48,49 @@ class Shunt : public Appliance {
     }
 
     // update for shunt
-    UpdateChange update(ApplianceUpdate const& update) {
+    UpdateChange update(ShuntUpdate const& update) {
         assert(update.id == id());
-        bool const changed = set_status(update.status);
+        bool changed = set_status(update.status);
+        changed = update_params(update) || changed;
+
         // change shunt connection will not change topology, but will change parameters
         return {false, changed};
     }
 
   private:
-    DoubleComplex y1_, y0_;
+    double base_y_{nan};
+
+    double g1_{nan};
+    double b1_{nan};
+    double g0_{nan};
+    double b0_{nan};
+    DoubleComplex y1_{nan};
+    DoubleComplex y0_{nan};
+
+    template <typename T>
+        requires std::same_as<T, ShuntInput> || std::same_as<T, ShuntUpdate> bool
+    update_params(T shunt_params) {
+        bool changed = update_param(shunt_params.g1, g1_);
+        changed = update_param(shunt_params.b1, b1_) || changed;
+        changed = update_param(shunt_params.g0, g0_) || changed;
+        changed = update_param(shunt_params.b0, b0_) || changed;
+
+        if (changed) {
+            y1_ = (g1_ + 1.0i * b1_) / base_y_;
+            y0_ = (g0_ + 1.0i * b0_) / base_y_;
+        }
+
+        return changed;
+    }
+
+    constexpr bool update_param(double const& value, double& target) {
+        if (is_nan(value) || value == target) {
+            return false;
+        }
+
+        target = value;
+        return true;
+    }
 
     template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;

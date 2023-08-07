@@ -99,7 +99,7 @@ struct State {
     // update vector
     std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, true}, 1.0e6, nan}};
     std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, false}, RealValue<false>{nan}, RealValue<false>{nan}}};
-    std::vector<ApplianceUpdate> shunt_update{{{9}, false}};
+    std::vector<ShuntUpdate> shunt_update{{{9}, false}};
     std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, true, false}};
     std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
