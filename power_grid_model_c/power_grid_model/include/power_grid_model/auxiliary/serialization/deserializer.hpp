@@ -221,23 +221,28 @@ class Deserializer {
     }
 
     void read_predefined_attributes() {
-        msgpack::object const& attribute_map = get_value_from_root("attributes", msgpack::type::MAP);
-        for (auto const& kv : attribute_map.as<MapSpan>()) {
+        for (auto const& kv : get_value_from_root("attributes", msgpack::type::MAP).as<MapSpan>()) {
             component_key_ = key_to_string(kv);
             MetaComponent const& component = dataset_->get_component(component_key_);
-            msgpack::object const& attribute_list = kv.val;
-            if (attribute_list.type != msgpack::type::ARRAY) {
-                throw SerializationError{
-                    "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
-            }
-            auto const list_span = attribute_list.as<ArraySpan>();
-            for (element_number_ = 0; element_number_ != static_cast<Idx>(list_span.size()); ++element_number_) {
-                attributes_[component.name].push_back(
-                    &component.get_attribute(list_span[element_number_].as<std::string_view>()));
-            }
-            element_number_ = -1;
+            attributes_[component.name] = read_component_attributes(component, kv.val);
         }
         component_key_ = "";
+    }
+
+    std::vector<MetaAttribute const*> read_component_attributes(MetaComponent const& component,
+                                                                msgpack::object const& attribute_list) {
+        if (attribute_list.type != msgpack::type::ARRAY) {
+            throw SerializationError{
+                "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
+        }
+        auto const attributes_span = attribute_list.as<ArraySpan>();
+        std::vector<MetaAttribute const*> attributes(attributes_span.size());
+        for (element_number_ = 0; element_number_ != static_cast<Idx>(attributes_span.size()); ++element_number_) {
+            attributes[element_number_] =
+                &component.get_attribute(attributes_span[element_number_].as<std::string_view>());
+        }
+        element_number_ = -1;
+        return attributes;
     }
 
     void count_data() {
