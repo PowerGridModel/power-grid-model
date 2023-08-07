@@ -57,6 +57,13 @@ struct SourceUpdate : ApplianceUpdate {
     double u_ref_angle;  // reference voltage
 };
 
+struct ShuntUpdate : ApplianceUpdate {
+    double g1;  // positive sequence admittance
+    double b1;  // positive sequence admittance
+    double g0;  // zero sequence admittance
+    double b0;  // zero sequence admittance
+};
+
 template <bool sym>
 struct VoltageSensorUpdate : BaseUpdate {
     double u_sigma;  // sigma of error margin of voltage measurement

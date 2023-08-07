@@ -127,6 +127,22 @@ struct get_attributes_list<SourceUpdate> {
     }
 };
 
+template<>
+struct get_attributes_list<ShuntUpdate> {
+    std::vector<MetaAttribute> operator() () const {
+        // all attributes including base class
+        return {
+            
+            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::id>{}, "id"},
+            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::status>{}, "status"},
+            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::g1>{}, "g1"},
+            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::b1>{}, "b1"},
+            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::g0>{}, "g0"},
+            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::b0>{}, "b0"},
+        };
+    }
+};
+
 template <bool sym>
 struct get_attributes_list<VoltageSensorUpdate<sym>> {
     std::vector<MetaAttribute> operator() () const {
@@ -279,6 +295,22 @@ struct get_component_nan<SourceUpdate> {
         set_nan(comp.status);
         set_nan(comp.u_ref);
         set_nan(comp.u_ref_angle);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<ShuntUpdate> {
+    ShuntUpdate operator() () const {
+        ShuntUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        set_nan(comp.g1);
+        set_nan(comp.b1);
+        set_nan(comp.g0);
+        set_nan(comp.b0);
         return comp;
     }
 };
