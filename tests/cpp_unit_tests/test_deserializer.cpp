@@ -12,7 +12,7 @@ namespace power_grid_model::meta_data {
 
 // single data
 namespace {
-constexpr char const* json_single = R"(
+constexpr std::string_view json_single = R"(
 {
   "version": "1.0",
   "type": "input",
@@ -129,7 +129,7 @@ constexpr char const* json_single = R"(
 
 // batch data
 namespace {
-constexpr char const* json_batch = R"(
+constexpr std::string_view json_batch = R"(
 {
   "version": "1.0",
   "type": "update",
@@ -213,7 +213,7 @@ std::map<std::string, Deserializer::Buffer> get_buffer_map(Deserializer const& d
     return map;
 }
 
-void check_error(char const* json, char const* err_msg) {
+void check_error(std::string_view json, char const* err_msg) {
     std::array components{"node"};
     NodeInput node{};
     std::array<void*, 1> buffer_data{&node};
@@ -360,49 +360,49 @@ TEST_CASE("Deserializer") {
 TEST_CASE("Deserializer with error") {
 
     SUBCASE("Error in meta data") {
-        constexpr char const* no_version = R"({})";
+        constexpr std::string_view no_version = R"({})";
         check_error(no_version, "Position of error: version");
-        constexpr char const* wrong_dataset = R"({"version": "1.0", "type": "sym_input"})";
+        constexpr std::string_view wrong_dataset = R"({"version": "1.0", "type": "sym_input"})";
         check_error(wrong_dataset, "Position of error: type");
-        constexpr char const* wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
+        constexpr std::string_view wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
         check_error(wrong_is_batch, "Position of error: is_batch");
     }
 
     SUBCASE("Error in attributes") {
-        constexpr char const* unknown_component =
+        constexpr std::string_view unknown_component =
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node1": []}})";
         check_error(unknown_component, "Position of error: attributes/node1");
-        constexpr char const* unknown_attribute =
+        constexpr std::string_view unknown_attribute =
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["i_from"]}})";
         check_error(unknown_attribute, "Position of error: attributes/node/0");
     }
 
     SUBCASE("Error in single data") {
-        constexpr char const* unknown_component =
+        constexpr std::string_view unknown_component =
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node1": []}})";
         check_error(unknown_component, "Position of error: data/node1");
-        constexpr char const* unequal_attributes =
+        constexpr std::string_view unequal_attributes =
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [[5]]}})";
         check_error(unequal_attributes, "Position of error: data/node/0");
-        constexpr char const* wrong_type_list =
+        constexpr std::string_view wrong_type_list =
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["id"]}, "data": {"node": [[true]]}})";
         check_error(wrong_type_list, "Position of error: data/node/0/0");
-        constexpr char const* wrong_type_dict =
+        constexpr std::string_view wrong_type_dict =
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id": true}]}})";
         check_error(wrong_type_dict, "Position of error: data/node/0/id");
     }
 
     SUBCASE("Error in batch data") {
-        constexpr char const* unknown_component =
+        constexpr std::string_view unknown_component =
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node1": []}]})";
         check_error(unknown_component, "Position of error: data/0/node1");
-        constexpr char const* unequal_attributes =
+        constexpr std::string_view unequal_attributes =
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [[5]]}]})";
         check_error(unequal_attributes, "Position of error: data/0/node/0");
-        constexpr char const* wrong_type_list =
+        constexpr std::string_view wrong_type_list =
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {"node": ["id"]}, "data": [{"node": [[true]]}]})";
         check_error(wrong_type_list, "Position of error: data/0/node/0/0");
-        constexpr char const* wrong_type_dict =
+        constexpr std::string_view wrong_type_dict =
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id": true}]}]})";
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
     }
