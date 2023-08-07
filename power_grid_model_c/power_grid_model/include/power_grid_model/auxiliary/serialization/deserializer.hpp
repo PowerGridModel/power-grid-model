@@ -289,7 +289,7 @@ class Deserializer {
         }
         scenario_number_ = -1;
 
-        Idx const elements_per_scenario = get_elements_per_scenario(counter);
+        Idx const elements_per_scenario = get_uniform_elements_per_scenario(counter);
         Idx const total_elements = // total element based on is_uniform
             elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
                 elements_per_scenario * batch_size_;                                    // multiply
@@ -310,9 +310,8 @@ class Deserializer {
                                      std::logical_and{}, std::equal_to{});
     }
 
-    Idx get_elements_per_scenario(IdxVector const& counter) {
-        bool const is_uniform = check_uniform(counter);
-        if (!is_uniform) {
+    Idx get_uniform_elements_per_scenario(IdxVector const& counter) {
+        if (!check_uniform(counter)) {
             return -1;
         }
         if (batch_size_ == 0) {
