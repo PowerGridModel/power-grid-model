@@ -135,7 +135,7 @@ class Deserializer {
         }
     }
 
-    void parse() const {
+    void parse() {
         root_key_ = "data";
         try {
             for (Buffer const& buffer : buffers_) {
@@ -156,12 +156,12 @@ class Deserializer {
     std::vector<Buffer> buffers_;
     // attributes to track the movement of the position
     // for error report purpose
-    mutable std::string_view root_key_;
-    mutable std::string_view component_key_;
-    mutable std::string_view attribute_key_;
-    mutable Idx scenario_number_{-1};
-    mutable Idx element_number_{-1};
-    mutable Idx attribute_number_{-1};
+    std::string_view root_key_;
+    std::string_view component_key_;
+    std::string_view attribute_key_;
+    Idx scenario_number_{-1};
+    Idx element_number_{-1};
+    Idx attribute_number_{-1};
 
     static std::vector<char> json_to_msgpack(std::string_view json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
@@ -333,7 +333,7 @@ class Deserializer {
         return counter.front();
     }
 
-    void parse_component(Buffer const& buffer) const {
+    void parse_component(Buffer const& buffer) {
         component_key_ = buffer.component->name;
         // handle indptr
         if (buffer.elements_per_scenario < 0) {
@@ -381,7 +381,7 @@ class Deserializer {
     }
 
     void parse_scenario(MetaComponent const& component, void* scenario_pointer, ArraySpan msg_data,
-                        std::span<MetaAttribute const* const> attributes) const {
+                        std::span<MetaAttribute const* const> attributes) {
         for (element_number_ = 0; element_number_ != static_cast<Idx>(msg_data.size()); ++element_number_) {
             void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
             msgpack::object const& obj = msg_data[element_number_];
@@ -397,7 +397,7 @@ class Deserializer {
     }
 
     void parse_array_element(void* element_pointer, msgpack::object const& obj,
-                             std::span<MetaAttribute const* const> attributes) const {
+                             std::span<MetaAttribute const* const> attributes) {
         auto const arr = obj.as<ArraySpan>();
         if (arr.size() != attributes.size()) {
             throw SerializationError{
@@ -409,7 +409,7 @@ class Deserializer {
         attribute_number_ = -1;
     }
 
-    void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) const {
+    void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) {
         for (msgpack::object_kv const& kv : obj.as<MapSpan>()) {
             attribute_key_ = key_to_string(kv);
             Idx const found_idx = component.find_attribute(attribute_key_);
@@ -448,7 +448,7 @@ class Deserializer {
         obj >> attribute.get_attribute<T>(element_pointer);
     }
 
-    void handle_error(std::exception& e) const {
+    void handle_error(std::exception& e) {
         std::stringstream ss;
         ss << e.what();
         if (!root_key_.empty()) {
