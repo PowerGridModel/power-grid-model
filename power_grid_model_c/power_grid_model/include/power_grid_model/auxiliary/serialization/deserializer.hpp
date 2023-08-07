@@ -208,12 +208,12 @@ class Deserializer {
 
     static Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
         auto const kv_map = map.as<MapSpan>();
-        for (Idx i = 0; i != static_cast<Idx>(kv_map.size()); ++i) {
-            if (key == key_to_string(kv_map[i])) {
-                return i;
-            }
+        auto const found =
+            std::find_if(kv_map.begin(), kv_map.end(), [key](auto const& x) { return key_to_string(x) == key; });
+        if (found == kv_map.end()) {
+            return -1;
         }
-        return -1;
+        return std::distance(kv_map.begin(), found);
     }
 
     void read_predefined_attributes() {
