@@ -197,6 +197,13 @@ struct PGM_MetaComponent {
     }
 
     Idx has_attribute(std::string_view attribute_name) const { return find_attribute(attribute_name) >= 0; }
+
+    RawDataPtr advance_ptr(RawDataPtr ptr, Idx difference) const {
+        return reinterpret_cast<char*>(ptr) + difference * size;
+    }
+    RawDataConstPtr advance_ptr(RawDataConstPtr ptr, Idx difference) const {
+        return reinterpret_cast<char const*>(ptr) + difference * size;
+    }
 };
 
 namespace power_grid_model::meta_data {
