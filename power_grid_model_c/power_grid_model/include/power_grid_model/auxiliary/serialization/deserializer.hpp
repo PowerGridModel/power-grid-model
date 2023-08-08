@@ -23,8 +23,8 @@
 // as array and map
 namespace power_grid_model::meta_data {
 // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-inline auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
-inline auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
+constexpr auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
+constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 } // namespace power_grid_model::meta_data
 
