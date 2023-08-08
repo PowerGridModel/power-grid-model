@@ -234,7 +234,7 @@ struct PGM_MetaDataset {
                 return component;
             }
         }
-        throw std::out_of_range{"Cannot find component with name: " + std::string(component_name) + "!\n"};
+        throw std::out_of_range{"Cannot find component with name: " + std::string{component_name} + "!\n"};
     }
 };
 
@@ -254,7 +254,7 @@ struct MetaData {
                 return dataset;
             }
         }
-        throw std::out_of_range{"Cannot find dataset with name: " + std::string(dataset_name) + "!\n"};
+        throw std::out_of_range{"Cannot find dataset with name: " + std::string{dataset_name} + "!\n"};
     }
 };
 

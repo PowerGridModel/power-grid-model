@@ -230,7 +230,6 @@ void check_error(std::string_view json, char const* err_msg) {
 } // namespace
 
 TEST_CASE("Deserializer") {
-
     SUBCASE("Single dataset") {
         Deserializer deserializer{from_json, json_single};
 
@@ -358,7 +357,6 @@ TEST_CASE("Deserializer") {
 }
 
 TEST_CASE("Deserializer with error") {
-
     SUBCASE("Error in meta data") {
         constexpr std::string_view no_version = R"({})";
         check_error(no_version, "Position of error: version");
