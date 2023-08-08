@@ -388,6 +388,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
 
     SUBCASE("Source, sym output") {
         main_model.output_result<true, Source>(res, state.sym_source.begin());
+        main_model.output_result<true, Node>(res, state.sym_node.begin());
 
         CHECK(state.sym_source[0].i == doctest::Approx(state.i));
         CHECK(state.sym_source[1].i == doctest::Approx(0.0));
@@ -429,9 +430,9 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         auto const& output = state.sym_shunt[0];
         CHECK(output.i == doctest::Approx(state.i_shunt));
         CHECK(output.p == doctest::Approx(sqrt3 * state.i_shunt * state.sym_node[2].u));
-        CHECK(output.q == doctest::Approx(0.F));
+        CHECK(output.q == doctest::Approx(0.0));
         CHECK(output.s == doctest::Approx(output.p));
-        CHECK(output.pf == doctest::Approx(1.F));
+        CHECK(output.pf == doctest::Approx(1.0));
     }
 
     SUBCASE("SymVoltageSensor, sym output") {
