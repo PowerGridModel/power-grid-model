@@ -23,8 +23,8 @@
 // generate of meta data
 namespace power_grid_model::meta_data {
 
-using DatasetMap = std::map<std::string, MetaComponent>;
-using AllDatasetMap = std::map<std::string, DatasetMap>;
+using DatasetMap = std::map<std::string, MetaComponent, std::less<>>;
+using AllDatasetMap = std::map<std::string, DatasetMap, std::less<>>;
 
 // template function to add meta data
 template <class CT> void add_meta_data(AllDatasetMap& meta) {
