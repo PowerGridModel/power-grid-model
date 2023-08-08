@@ -23,8 +23,8 @@
 // as array and map
 namespace power_grid_model::meta_data {
 // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
-auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
+inline auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
+inline auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 } // namespace power_grid_model::meta_data
 
@@ -40,7 +40,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             if (o.type != msgpack::type::ARRAY) {
                 throw msgpack::type_error();
             }
-            if (o.via.array.size != 3) {
+            if (as_array(o).size != 3) {
                 throw msgpack::type_error();
             }
             for (int8_t i = 0; i != 3; ++i) {
