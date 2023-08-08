@@ -18,7 +18,7 @@ Currently, it supports the following calculations:
 
 * Power Flow
 * State Estimation
-* Short circuit
+* Short Circuit
 
 For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
