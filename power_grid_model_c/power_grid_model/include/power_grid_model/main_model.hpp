@@ -172,7 +172,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // update all components
     template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos = 0,
-                          std::map<std::string, std::vector<Idx2D>> const& sequence_idx_map = {}) {
+                          std::map<std::string, std::vector<Idx2D>, std::less<>> const& sequence_idx_map = {}) {
         static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
                                                                    DataPointer<true> const& data_ptr, Idx position,
                                                                    std::vector<Idx2D> const& sequence_idx) {
@@ -391,7 +391,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // get sequence idx map for fast caching of component sequences
     // only applicable for independent update dataset
-    std::map<std::string, std::vector<Idx2D>> get_sequence_idx_map(ConstDataset const& update_data) const {
+    std::map<std::string, std::vector<Idx2D>, std::less<>> get_sequence_idx_map(ConstDataset const& update_data) const {
         // function pointer array to get cached idx
         static constexpr std::array<GetSeqIdxFunc, n_types> get_seq_idx{
             [](MainModelImpl const& model, ConstDataPointer const& component_update) -> std::vector<Idx2D> {
@@ -411,7 +411,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }...};
 
         // fill in the map per component type
-        std::map<std::string, std::vector<Idx2D>> sequence_idx_map;
+        std::map<std::string, std::vector<Idx2D>, std::less<>> sequence_idx_map;
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = update_data.find(entry.name);
             // skip if component does not exist
@@ -473,9 +473,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         MainModelImpl const& base_model = *this;
 
         // cache component update order if possible
-        std::map<std::string, std::vector<Idx2D>> const sequence_idx_map =
-            MainModelImpl::is_update_independent(update_data) ? get_sequence_idx_map(update_data)
-                                                              : std::map<std::string, std::vector<Idx2D>>{};
+        std::map<std::string, std::vector<Idx2D>, std::less<>> const sequence_idx_map =
+            MainModelImpl::is_update_independent(update_data)
+                ? get_sequence_idx_map(update_data)
+                : std::map<std::string, std::vector<Idx2D>, std::less<>>{};
 
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
