@@ -140,7 +140,7 @@ template <class StructType> struct MetaComponentImpl {
     static void destroy_buffer(RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); }
     static void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) {
         static StructType const nan_value = get_component_nan<StructType>{}();
-        StructType* ptr = reinterpret_cast<StructType*>(buffer_ptr);
+        auto ptr = reinterpret_cast<StructType*>(buffer_ptr);
         std::fill(ptr + pos, ptr + pos + size, nan_value);
     }
 };

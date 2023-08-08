@@ -28,7 +28,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
-        DerivedSolver& derived_solver = static_cast<DerivedSolver&>(*this);
+        auto derived_solver = static_cast<DerivedSolver&>(*this);
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         std::vector<double> const& phase_shift = *phase_shift_;
 

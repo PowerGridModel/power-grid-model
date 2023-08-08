@@ -312,13 +312,13 @@ class Topology {
             // add edges
             for (GraphIdx i = 0; i != n_cycle_node; ++i) {
                 // loop all edges of vertex i
-                GraphIdx const global_i = (GraphIdx)cyclic_node[i];
+                auto const global_i = (GraphIdx)cyclic_node[i];
                 BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
                     // skip if j is not part of cyclic sub graph
                     if (node_status_[global_j] == -1) {
                         continue;
                     }
-                    GraphIdx const j = (GraphIdx)node_status_[global_j];
+                    auto const j = (GraphIdx)node_status_[global_j];
                     if (!boost::edge(i, j, g).second) {
                         boost::add_edge(i, j, g);
                     }
@@ -388,7 +388,7 @@ class Topology {
             }
         }
         // offset fill-in indices by n_node - n_cycle_node
-        Idx const offset = (Idx)(dfs_node.size() - n_cycle_node);
+        auto const offset = (Idx)(dfs_node.size() - n_cycle_node);
         std::for_each(fill_in.begin(), fill_in.end(), [offset](BranchIdx& b) {
             b[0] += offset;
             b[1] += offset;
@@ -424,7 +424,7 @@ class Topology {
             BranchIdx const branch_idx{i_status ? assert(m == i_math.group), i_math.pos : -1,
                                        j_status ? assert(m == j_math.group), j_math.pos : -1};
             // current branch position index in math model
-            Idx const branch_pos = (Idx)math_topology_[m].n_branch();
+            auto const branch_pos = (Idx)math_topology_[m].n_branch();
             // push back
             math_topology_[m].branch_bus_idx.push_back(branch_idx);
             // set branch idx in coupling
@@ -471,7 +471,7 @@ class Topology {
                 // connect i side if i_status is true
                 BranchIdx const branch_idx{i_status[n] ? assert(i_math[n].group == m), i_math[n].pos : -1, j_math.pos};
                 // current branch position index in math model
-                Idx const branch_pos = (Idx)math_topology_[m].n_branch();
+                auto const branch_pos = (Idx)math_topology_[m].n_branch();
                 // push back
                 math_topology_[m].branch_bus_idx.push_back(branch_idx);
                 // set branch idx in coupling

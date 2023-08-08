@@ -98,7 +98,7 @@ struct YBusStructure {
     explicit YBusStructure(MathModelTopology const& topo) {
         Idx const n_bus = topo.n_bus();
         Idx const n_branch = topo.n_branch();
-        Idx const n_fill_in = (Idx)topo.fill_in.size();
+        auto const n_fill_in = (Idx)topo.fill_in.size();
         // allocate element vector
         std::vector<YBusElementMap> vec_map_element;
         Idx const total_number_entries = 4 * n_branch + n_bus + 2 * n_fill_in;
