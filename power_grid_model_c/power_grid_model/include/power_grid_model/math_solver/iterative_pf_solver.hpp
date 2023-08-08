@@ -19,10 +19,7 @@
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
-namespace power_grid_model {
-
-// hide implementation in inside namespace
-namespace math_model_impl {
+namespace power_grid_model::math_model_impl {
 
 // solver
 template <bool sym, typename DerivedSolver> class IterativePFSolver {
@@ -168,8 +165,6 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };
 
-} // namespace math_model_impl
-
-} // namespace power_grid_model
+} // namespace power_grid_model::math_model_impl
 
 #endif
