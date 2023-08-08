@@ -204,8 +204,8 @@ constexpr std::string_view json_batch = R"(
 
 namespace {
 
-std::map<std::string, Deserializer::Buffer> get_buffer_map(Deserializer const& deserializer) {
-    std::map<std::string, Deserializer::Buffer> map;
+std::map<std::string, Deserializer::Buffer, std::less<>> get_buffer_map(Deserializer const& deserializer) {
+    std::map<std::string, Deserializer::Buffer, std::less<>> map;
     for (Idx i = 0; i != deserializer.n_components(); ++i) {
         auto const& buffer = deserializer.get_buffer_info(i);
         map[buffer.component->name] = buffer;

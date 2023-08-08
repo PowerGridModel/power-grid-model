@@ -161,7 +161,7 @@ class Deserializer {
     std::string version_;
     bool is_batch_{};
     MetaDataset const* dataset_{};
-    std::map<std::string, std::vector<MetaAttribute const*>> attributes_;
+    std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
     Idx batch_size_{}; // for single dataset, the batch size is one
     std::vector<Buffer> buffers_;
     // attributes to track the movement of the position
