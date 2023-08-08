@@ -10,7 +10,6 @@
 #include "power_grid_model.hpp"
 
 #include <exception>
-#include <format>
 #include <string>
 
 namespace power_grid_model {
@@ -27,50 +26,47 @@ class PowerGridError : public std::exception {
 template <typename T> class MissingCaseForEnumError : public PowerGridError {
   public:
     MissingCaseForEnumError(const std::string& method, const T& value) {
-        append_msg(std::format("{} is not implemented for {}  #{} !\n", method, typeid(T).name(),
-                               std::to_string(IntS(value))));
+        append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
     }
 };
 
 class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
-        append_msg(std::format(
-            "Conflicting voltage for line {} \n voltage at from node {} is {} \n voltage at to node {} is {} \n",
-            std::to_string(id), std::to_string(id1), std::to_string(u1), std::to_string(id2), std::to_string(u2)));
+        append_msg("Conflicting voltage for line " + std::to_string(id) + "\n voltage at from node " +
+                   std::to_string(id1) + " is " + std::to_string(u1) + "\n voltage at to node " + std::to_string(id2) +
+                   " is " + std::to_string(u2) + '\n');
     }
 };
 
 class InvalidBranch : public PowerGridError {
   public:
     InvalidBranch(ID branch_id, ID node_id) {
-        append_msg(std::format("Branch {} has the same from- and to-node {},\n This is not allowed!\n",
-                               std::to_string(branch_id), std::to_string(node_id)));
+        append_msg("Branch " + std::to_string(branch_id) + " has the same from- and to-node " +
+                   std::to_string(node_id) + ",\n This is not allowed!\n");
     }
 };
 
 class InvalidBranch3 : public PowerGridError {
   public:
     InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id) {
-        append_msg(std::format(
-            "Branch3 {} is connected to the same node at least twice. Node 1/2/3: {}/{}/{},\n This is not allowed!\n",
-            std::to_string(branch3_id), std::to_string(node_1_id), std::to_string(node_2_id),
-            std::to_string(node_3_id)));
+        append_msg("Branch3 " + std::to_string(branch3_id) +
+                   " is connected to the same node at least twice. Node 1/2/3: " + std::to_string(node_1_id) + "/" +
+                   std::to_string(node_2_id) + "/" + std::to_string(node_3_id) + ",\n This is not allowed!\n");
     }
 };
 
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock) {
-        append_msg(
-            std::format("Invalid clock for transformer {}, clock  {}\n", std::to_string(id), std::to_string(clock)));
+        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock  " + std::to_string(clock) + '\n');
     }
 };
 
 class SparseMatrixError : public PowerGridError {
   public:
     SparseMatrixError(Idx err, std::string const& msg = "") {
-        append_msg(std::format("Sparse matrix error with error code #{} (possibly singular)\n", std::to_string(err)));
+        append_msg("Sparse matrix error with error code #" + std::to_string(err) + " (possibly singular)\n");
         if (!msg.empty()) {
             append_msg(msg + "\n");
         }
@@ -87,20 +83,19 @@ class SparseMatrixError : public PowerGridError {
 class IterationDiverge : public PowerGridError {
   public:
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
-        append_msg(
-            std::format("Iteration failed to converge after {} iterations! Max deviation: {}, error tolerance: {}.\n",
-                        std::to_string(num_iter), std::to_string(max_dev), std::to_string(err_tol)));
+        append_msg("Iteration failed to converge after " + std::to_string(num_iter) + " iterations! Max deviation: " +
+                   std::to_string(max_dev) + ", error tolerance: " + std::to_string(err_tol) + ".\n");
     }
 };
 
 class ConflictID : public PowerGridError {
   public:
-    explicit ConflictID(ID id) { append_msg(std::format("Conflicting id detected: {}\n", std::to_string(id))); }
+    explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + std::to_string(id) + '\n'); }
 };
 
 class IDNotFound : public PowerGridError {
   public:
-    explicit IDNotFound(ID id) { append_msg(std::format("The id cannot be found: {}\n", std::to_string(id))); }
+    explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + std::to_string(id) + '\n'); }
 };
 
 class InvalidMeasuredObject : public PowerGridError {
@@ -112,7 +107,7 @@ class InvalidMeasuredObject : public PowerGridError {
 
 class IDWrongType : public PowerGridError {
   public:
-    explicit IDWrongType(ID id) { append_msg(std::format("Wrong type for object with id {}\n", std::to_string(id))); }
+    explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + std::to_string(id) + '\n'); }
 };
 
 class CalculationError : public PowerGridError {
@@ -150,21 +145,21 @@ class UnknownAttributeName : public PowerGridError {
 class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
-        append_msg(std::format("The short circuit type ({}) is invalid!\n",
-                               std::to_string(static_cast<IntS>(short_circuit_type))));
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") is invalid!\n");
     }
     InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
-        append_msg(std::format("The short circuit type ({}) does not match the calculation type (symmetric={})\n",
-                               std::to_string(static_cast<IntS>(short_circuit_type)), std::to_string(sym)));
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") does not match the calculation type (symmetric=" + std::to_string(sym) + ")\n");
     }
 };
 
 class InvalidShortCircuitPhases : public PowerGridError {
   public:
     InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
-        append_msg(std::format("The short circuit phases ({}) do not match the short circuit type ({})\n",
-                               std::to_string(static_cast<IntS>(short_circuit_phases)),
-                               std::to_string(static_cast<IntS>(short_circuit_type))));
+        append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
+                   ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ")\n");
     }
 };
 
