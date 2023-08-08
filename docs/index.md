@@ -18,6 +18,7 @@ Currently, it supports the following calculations:
 
 * Symmetric and asymmetric power flow calculation with Newton-Raphson method, iterative current method and linear method
 * Symmetric and asymmetric state estimation with iterative linear method
+* Short circuit calculations as per IEC 60909
 
 For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
