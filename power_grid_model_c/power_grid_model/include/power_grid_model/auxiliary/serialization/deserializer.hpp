@@ -20,26 +20,35 @@
 #include <sstream>
 #include <string_view>
 
+// as array and map
+namespace power_grid_model::meta_data {
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
+auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
+auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)
+} // namespace power_grid_model::meta_data
+
 // converter for double[3]
 namespace msgpack {
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
+
     template <> struct convert<power_grid_model::RealValue<false>> {
         msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
+            using power_grid_model::meta_data::as_array;
+
             if (o.type != msgpack::type::ARRAY) {
                 throw msgpack::type_error();
             }
-            // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
             if (o.via.array.size != 3) {
                 throw msgpack::type_error();
             }
             for (int8_t i = 0; i != 3; ++i) {
-                if (o.via.array.ptr[i].is_nil()) {
+                if (as_array(o).ptr[i].is_nil()) {
                     continue;
                 }
-                o.via.array.ptr[i] >> v(i);
+                as_array(o).ptr[i] >> v(i);
             }
-            // NOLINTEND(cppcoreguidelines-pro-type-union-access)
             return o;
         }
     };
@@ -48,13 +57,14 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         requires(std::same_as<T, msgpack::object> || std::same_as<T, msgpack::object_kv>)
     struct convert<std::span<const T>> {
         msgpack::object const& operator()(msgpack::object const& o, std::span<const T>& span) const {
-            // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
+            using power_grid_model::meta_data::as_array;
+            using power_grid_model::meta_data::as_map;
+
             if constexpr (std::same_as<T, msgpack::object>) {
-                span = {o.via.array.ptr, o.via.array.size};
+                span = {as_array(o).ptr, as_array(o).size};
             } else {
-                span = {o.via.map.ptr, o.via.map.size};
+                span = {as_map(o).ptr, as_map(o).size};
             }
-            // NOLINTEND(cppcoreguidelines-pro-type-union-access)
             return o;
         }
     };
@@ -202,7 +212,7 @@ class Deserializer {
         if (idx < 0) {
             throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!\n"};
         }
-        msgpack::object const& obj = map.via.map.ptr[idx].val; // NOLINT(cppcoreguidelines-pro-type-union-access)
+        msgpack::object const& obj = as_map(map).ptr[idx].val;
         if (obj.type != type) {
             throw SerializationError{"Wrong data type for key " + std::string(key) +
                                      " in the root level dictionary!\n"};
@@ -251,10 +261,8 @@ class Deserializer {
         // pointer to array (or single value) of msgpack objects to the data
         ArraySpan batch_data;
         if (is_batch_) {
-            // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-            batch_size_ = static_cast<Idx>(obj.via.array.size);
-            batch_data = {obj.via.array.ptr, obj.via.array.size};
-            // NOLINTEND(cppcoreguidelines-pro-type-union-access)
+            batch_size_ = static_cast<Idx>(as_array(obj).size);
+            batch_data = {as_array(obj).ptr, as_array(obj).size};
         } else {
             batch_size_ = 1;
             batch_data = {&obj, 1};
@@ -290,13 +298,11 @@ class Deserializer {
             msgpack::object const& scenario = batch_data[scenario_number_];
             Idx const found_component_idx = find_key_from_map(scenario, component.name);
             if (found_component_idx >= 0) {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
-                msgpack::object const& element_array = scenario.via.map.ptr[found_component_idx].val;
+                msgpack::object const& element_array = as_map(scenario).ptr[found_component_idx].val;
                 if (element_array.type != msgpack::type::ARRAY) {
                     throw SerializationError{"Each entry of component per scenario should be a list!\n"};
                 }
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
-                counter[scenario_number_] = static_cast<Idx>(element_array.via.array.size);
+                counter[scenario_number_] = static_cast<Idx>(as_array(element_array).size);
                 element_array >> msg_data[scenario_number_];
             }
         }
