@@ -45,7 +45,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install sonar-scanner and build-wrapper
-        uses: SonarSource/sonarcloud-github-c-cpp@v1
+        uses: SonarSource/sonarcloud-github-c-cpp@v2.0.1
         
       - name: Python test and coverage
         run: |
