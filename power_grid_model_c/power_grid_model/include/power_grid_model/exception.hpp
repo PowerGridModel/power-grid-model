@@ -16,7 +16,7 @@ namespace power_grid_model {
 
 class PowerGridError : public std::exception {
   public:
-    void append_msg(std::string const& msg) { msg_ += msg; }
+    void append_msg(std::string_view msg) { msg_ += msg; }
     char const* what() const noexcept final { return msg_.c_str(); }
 
   private:
