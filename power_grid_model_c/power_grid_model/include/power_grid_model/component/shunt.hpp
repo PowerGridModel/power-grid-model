@@ -83,7 +83,7 @@ class Shunt : public Appliance {
         return changed;
     }
 
-    constexpr bool update_param(double const& value, double& target) {
+    bool update_param(double const& value, double& target) {
         if (is_nan(value) || value == target) {
             return false;
         }
