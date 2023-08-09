@@ -62,7 +62,7 @@ class Timer {
         }
     }
 
-    static std::string make_key(int code, const std::string& name) {
+    static std::string make_key(int code, std::string_view name) {
         std::stringstream ss;
         ss << std::setw(4) << std::setfill('0') << code << ".";
         auto key = ss.str();
