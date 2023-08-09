@@ -14,6 +14,13 @@ on:
   # run pipeline on pull request
   pull_request:
 
+  workflow_dispatch:
+    inputs:
+      target:
+        type: string
+        default: power_grid_model_c  # only build the C API by default
+        required: true
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -46,4 +53,4 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json doctest
       - name: Build and test
-        run: ./build.sh -p ${{ env.PRESET }}
+        run: ./build.sh -p ${{ env.PRESET }} --target ${{ github.event.inputs.target }}
