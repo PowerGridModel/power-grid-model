@@ -60,7 +60,7 @@ jobs:
       - name: Override build target in case of workflow dispatch
         if: github.event_name == 'workflow_dispatch'
         run: |
-          echo "TARGET=${{ github.event.inputs }}"
+          echo "TARGET=${{ github.event.inputs.target }}"
 
       - name: Build
         run: |
