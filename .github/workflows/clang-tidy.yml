@@ -39,18 +39,29 @@ jobs:
       CXX: clang++-14
       CLANG_TIDY: clang-tidy-14
       PRESET: ci-clang-tidy-${{ matrix.build-option }}
+      TARGET: power_grid_model_c
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Install packages
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build
+
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json doctest
-      - name: Build and test
-        run: ./build.sh -p ${{ env.PRESET }} --target ${{ github.event.inputs.target }}
+
+      - name: Override build target in case of workflow dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "TARGET=${{ github.event.inputs }}"
+
+      - name: Build
+        run: |
+          cmake --preset ${{ env.PRESET }} --target ${{ env.TARGET }}
