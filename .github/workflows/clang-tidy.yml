@@ -62,7 +62,7 @@ jobs:
           brew install boost eigen nlohmann-json doctest
 
       - name: Set build target in case of push
-        if: github.event_name == 'push'
+        if: github.event_name != 'workflow_dispatch'
         run: |
           echo "TARGET=power_grid_model_c" >> $GITHUB_ENV
 
