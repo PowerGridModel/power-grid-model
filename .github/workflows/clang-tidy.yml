@@ -43,7 +43,7 @@ jobs:
       CXX: clang++-14
       CLANG_TIDY: clang-tidy-14
       PRESET: ci-clang-tidy-${{ matrix.build-option }}
-      TARGET: power_grid_model_c
+      TARGET: nonexistant
 
     steps:
       - uses: actions/checkout@v3
@@ -62,9 +62,9 @@ jobs:
           brew install boost eigen nlohmann-json doctest
 
       - name: Override build target in case of workflow dispatch
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch'
         run: |
-          echo "TARGET=${{ github.event.inputs.target }}"
+          echo "TARGET=power_grid_model_c"
 
       - name: Configure
         run: |
