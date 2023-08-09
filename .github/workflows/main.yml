@@ -19,6 +19,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   aquire-python-version-build-sdist:
@@ -157,14 +161,20 @@ jobs:
   build-and-test-python:
     strategy:
       matrix:
-        platform: [ linux, macos, windows ]
+        platform: [ linux-x64, linux-aarch64, macos, windows ]
         include:
-          - platform: linux
+          - platform: linux-x64
             os: ubuntu-latest
+            cibw_build: "*_x86_64"
+          - platform: linux-aarch64
+            os: ubuntu-latest
+            cibw_build: "*_aarch64"
           - platform: macos
             os: macos-latest
+            cibw_build: "*"
           - platform: windows
             os: windows-latest
+            cibw_build: "*"
 
     runs-on: ${{ matrix.os }}
     needs: [aquire-python-version-build-sdist]
@@ -178,7 +188,7 @@ jobs:
           path: .
 
       - name: Set up QEMU
-        if: matrix.platform == 'linux'
+        if: matrix.os == 'ubuntu-latest'
         uses: docker/setup-qemu-action@v2
 
       - name: Build wheels
@@ -187,6 +197,7 @@ jobs:
         env:
           # pass GitHub runner info into Linux container
           CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
+          CIBW_BUILD: ${{ matrix.cibw_build }}
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v3
