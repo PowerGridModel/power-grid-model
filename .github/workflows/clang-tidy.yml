@@ -17,8 +17,12 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        type: string
-        default: power_grid_model_c  # only build the C API by default
+        type: choice
+        description: The CMake target to run
+        default: power_grid_model_c
+        options:
+          - all
+          - power_grid_model_c
         required: true
 
 concurrency:
@@ -62,7 +66,7 @@ jobs:
         run: |
           echo "TARGET=${{ github.event.inputs.target }}"
 
-      - name: Build
+      - name: Configure
         run: |
           cmake --preset ${{ env.PRESET }}
           cmake --build --preset ${{ env.PRESET }} --target ${{ env.TARGET }}
