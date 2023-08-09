@@ -186,7 +186,7 @@ struct PGM_MetaComponent {
         return attributes[found];
     }
 
-    Idx find_attribute(std::string const& attribute_name) const {
+    Idx find_attribute(std::string_view attribute_name) const {
         for (Idx i = 0; i != n_attributes(); ++i) {
             if (attributes[i].name == attribute_name) {
                 return i;
