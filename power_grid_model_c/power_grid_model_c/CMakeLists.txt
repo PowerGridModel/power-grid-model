@@ -42,7 +42,7 @@ add_library(power_grid_model_c SHARED
   "src/model.cpp"
   "src/options.cpp"
   "src/dataset_definitions.cpp"
-)
+  "src/serialization.cpp")
 
 target_include_directories(power_grid_model_c PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
