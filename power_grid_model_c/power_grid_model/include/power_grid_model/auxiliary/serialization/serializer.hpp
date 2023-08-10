@@ -178,14 +178,43 @@ class Serializer {
             packer_.pack_array(static_cast<uint32_t>(batch_size_));
         }
         // pack scenarios
-        for (auto const& buffer : scenario_buffers_) {
-            pack_scenario(buffer);
+        for (auto const& scenario_buffer : scenario_buffers_) {
+            pack_scenario(scenario_buffer);
         }
     }
 
-    void pack_scenario(ScenarioBuffer const& buffer) {
-        packer_.pack_map(static_cast<uint32_t>(buffer.component_buffers.size()));
+    void pack_scenario(ScenarioBuffer const& scenario_buffer) {
+        packer_.pack_map(static_cast<uint32_t>(scenario_buffer.component_buffers.size()));
+        for (auto const& component_buffer : scenario_buffer.component_buffers) {
+            pack_component(component_buffer);
+        }
     }
+
+    void pack_component(ComponentBuffer const& component_buffer) {
+        packer_.pack(component_buffer.component);
+        packer_.pack_array(static_cast<uint32_t>(component_buffer.size));
+        bool const use_compact_list = use_compact_list_;
+        auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
+            if (use_compact_list) {
+                return {};
+            }
+            auto const found = attributes_.find(component_buffer.component);
+            assert(found != attributes_.cend());
+            return found->second;
+        }();
+        for (Idx element = 0; element != component_buffer.size; ++element) {
+            void const* element_ptr = component_buffer.component->advance_ptr(component_buffer.data, element);
+            if (use_compact_list) {
+                pack_element_in_list(element_ptr, attributes);
+            } else {
+                pack_element_in_dict(element_ptr, component_buffer);
+            }
+        }
+    }
+
+    void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {}
+
+    void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {}
 };
 
 } // namespace power_grid_model::meta_data
