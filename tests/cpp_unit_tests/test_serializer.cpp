@@ -28,10 +28,10 @@ TEST_CASE("Serializer") {
     asym_load_gen[0].p_specified = {10.0, 11.0, 12.0};
     asym_load_gen[1].p_specified = {15.0, nan, 16.0};
     // nan for asym_load_gen[2].p_specified
-    Idx const n_components = 1;
 
     SUBCASE("Single dataset") {
         std::array components{"asym_load"};
+        Idx const n_components = 1;
         Idx const n_elements = 3;
         std::array data{(void const*)asym_load_gen.data()};
         Serializer serializer{"update", false, 1, n_components, components.data(), &n_elements, nullptr, data.data()};
