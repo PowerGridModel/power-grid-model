@@ -227,7 +227,7 @@ class Serializer {
         packer_.pack_array(static_cast<uint32_t>(component_buffer.size));
         bool const use_compact_list = use_compact_list_;
         auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
-            if (use_compact_list) {
+            if (!use_compact_list) {
                 return {};
             }
             auto const found = attributes_.find(component_buffer.component);
