@@ -64,7 +64,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 ### Build System for CMake Project
 
-This repository uses [CMake](https://cmake.org/) and [Ninja](https://ninja-build.org/) as C++ build system.
+This repository uses [CMake](https://cmake.org/) (version 3.23 or later) and [Ninja](https://ninja-build.org/) as C++ build system.
 
 ### Build Dependencies
 
@@ -121,7 +121,7 @@ library `power_grid_model`. There are four sub-projects defined in the root cmak
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. It is also possible to use
-the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.19+). Supported presets
+the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.23+). Supported presets
 for your development platform can be listed using `cmake --list-presets`.
 
 ## Visual Studio Code Support
@@ -176,7 +176,7 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang make cmake gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
 ```
 
 ### C++ packages
@@ -187,7 +187,7 @@ Go to its website to follow the installation instruction.
 Install the C++ dependencies
 
 ```shell
-brew install boost eigen nlohmann-json doctest
+brew install boost eigen nlohmann-json doctest cmake
 ```
 
 ### Build Python Library from Source
