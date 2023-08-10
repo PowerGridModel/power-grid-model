@@ -109,6 +109,19 @@ class Serializer {
         pack_data();
     }
 
+    std::span<char const> get_msgpack() {
+        if (msgpack_buffer_.size() == 0) {
+            serialize(true);
+        }
+        return {msgpack_buffer_.data(), msgpack_buffer_.size()};
+    }
+
+    std::string const& get_json(Idx indent) {
+        auto const json_document = nlohmann::json::from_msgpack(get_msgpack());
+        json_buffer_ = json_document.dump(static_cast<int>(indent));
+        return json_buffer_;
+    }
+
   private:
     MetaDataset const* dataset_;
     bool is_batch_;
@@ -121,6 +134,8 @@ class Serializer {
     msgpack::packer<msgpack::sbuffer> packer_;
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
+    // json
+    std::string json_buffer_;
 
     void store_buffers(char const** components, Idx const* elements_per_scenario, Idx const** indptrs,
                        void const** data) {
