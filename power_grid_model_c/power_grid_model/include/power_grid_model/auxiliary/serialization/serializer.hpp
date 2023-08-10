@@ -47,7 +47,8 @@ class Serializer {
         : dataset_{&meta_data().get_dataset(dataset)},
           is_batch_{is_batch},
           batch_size_{batch_size},
-          n_components_{n_components} {
+          n_components_{n_components},
+          packer_{msgpack_buffer_} {
         if (!is_batch_ && (batch_size_ != 1)) {
             throw SerializationError{"For non-batch dataset, batch size should be one!\n"};
         }
@@ -61,6 +62,9 @@ class Serializer {
     Idx n_components_;
     std::vector<ScenarioBuffer> scenario_buffers_;   // list of scenarios, then list of components, omit empty
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
+    // msgpack pakcer
+    msgpack::sbuffer msgpack_buffer_{};
+    msgpack::packer<msgpack::sbuffer> packer_;
 
     void store_buffers(char const** components, Idx const* elements_per_scenario, Idx const** indptrs,
                        void const** data) {
