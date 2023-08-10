@@ -15,9 +15,13 @@ namespace power_grid_model::meta_data {
 namespace {
 constexpr std::string_view single_dataset_dict =
     R"({"attributes":{},"data":{"asym_load":[{"id":5,"p_specified":[10,11,12]},{"id":6,"p_specified":[15,null,16]},{"id":7}]},"is_batch":false,"type":"update","version":"1.0"})";
-}
 constexpr std::string_view single_dataset_list =
     R"({"attributes":{"asym_load":["id","p_specified"]},"data":{"asym_load":[[5,[10,11,12]],[6,[15,null,16]],[7,null]]},"is_batch":false,"type":"update","version":"1.0"})";
+constexpr std::string_view batch_dataset_list =
+    R"({"attributes":{},"data":[{"asym_load":[{"id":5,"p_specified":[10,11,12]}]},{"asym_gen":[{"id":7}],"asym_load":[{"id":6,"p_specified":[15,null,16]}]}],"is_batch":true,"type":"update","version":"1.0"})";
+constexpr std::string_view batch_dataset_dict =
+    R"({"attributes":{"asym_gen":["id"],"asym_load":["id","p_specified"]},"data":[{"asym_load":[[5,[10,11,12]]]},{"asym_gen":[[7]],"asym_load":[[6,[15,null,16]]]}],"is_batch":true,"type":"update","version":"1.0"})";
+} // namespace
 
 TEST_CASE("Serializer") {
     std::vector<AsymLoadGenUpdate> asym_load_gen(3);
@@ -39,6 +43,22 @@ TEST_CASE("Serializer") {
         CHECK(serializer.get_json(-1) == single_dataset_dict);
         serializer.serialize(true);
         CHECK(serializer.get_json(-1) == single_dataset_list);
+    }
+
+    SUBCASE("Batch dataset") {
+        std::array components{"asym_load", "asym_gen"};
+        Idx const n_components = 2;
+        Idx const batch_size = 2;
+        std::array<Idx, 2> const n_elements{1, -1};
+        std::array<Idx, 3> const indptr_gen{0, 0, 1};
+        std::array<Idx const*, 3> indptrs{nullptr, indptr_gen.data()};
+        std::array<void const*, 2> data{asym_load_gen.data(), asym_load_gen.data() + 2};
+        Serializer serializer{"update",          true,           batch_size, n_components, components.data(),
+                              n_elements.data(), indptrs.data(), data.data()};
+        serializer.serialize(false);
+        CHECK(serializer.get_json(-1) == batch_dataset_list);
+        serializer.serialize(true);
+        CHECK(serializer.get_json(-1) == batch_dataset_dict);
     }
 }
 
