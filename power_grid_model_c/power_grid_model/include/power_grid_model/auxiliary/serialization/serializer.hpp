@@ -59,31 +59,36 @@ class Serializer {
     bool is_batch_;
     Idx batch_size_;
     Idx n_components_;
-    std::vector<ScenarioBuffer> buffers_;
+    std::vector<ScenarioBuffer> scenario_buffers_;   // list of scenarios, then list of components, omit empty
+    std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
 
     void store_buffers(char const** components, Idx const* elements_per_scenario, Idx const** indptrs,
                        void const** data) {
-        buffers_.resize(batch_size_);
+        scenario_buffers_.resize(batch_size_);
         for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
-            buffers_[scenario] =
-                create_scenario_buffer_view(scenario, components, elements_per_scenario, indptrs, data);
+            scenario_buffers_[scenario] =
+                create_scenario_buffer_view(components, elements_per_scenario, indptrs, data, scenario);
         }
+        component_buffers_ =
+            create_scenario_buffer_view(components, elements_per_scenario, indptrs, data).component_buffers;
     }
 
-    ScenarioBuffer create_scenario_buffer_view(Idx scenario, char const** components, Idx const* elements_per_scenario,
-                                               Idx const** indptrs, void const** data) {
+    ScenarioBuffer create_scenario_buffer_view(char const** components, Idx const* elements_per_scenario,
+                                               Idx const** indptrs, void const** data, Idx scenario = -1) {
         ScenarioBuffer scenario_buffer{};
+        Idx const begin_scenario = scenario < 0 ? 0 : scenario;
+        Idx const end_scenario = scenario < 0 ? batch_size_ : begin_scenario + 1;
         for (Idx component = 0; component != n_components_; ++component) {
             ComponentBuffer component_buffer{};
             component_buffer.component = &dataset_->get_component(components[component]);
             if (elements_per_scenario[component] < 0) {
                 component_buffer.data =
-                    component_buffer.component->advance_ptr(data[component], indptrs[component][scenario]);
-                component_buffer.size = indptrs[component][scenario + 1] - indptrs[component][scenario];
+                    component_buffer.component->advance_ptr(data[component], indptrs[component][begin_scenario]);
+                component_buffer.size = indptrs[component][end_scenario] - indptrs[component][begin_scenario];
             } else {
                 component_buffer.data = component_buffer.component->advance_ptr(
-                    data[component], elements_per_scenario[component] * scenario);
-                component_buffer.size = elements_per_scenario[component];
+                    data[component], elements_per_scenario[component] * begin_scenario);
+                component_buffer.size = elements_per_scenario[component] * (end_scenario - begin_scenario);
             }
             // only store the view if it is non-empty
             if (component_buffer.size > 0) {
