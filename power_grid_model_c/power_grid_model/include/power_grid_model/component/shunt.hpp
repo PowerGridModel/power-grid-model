@@ -25,8 +25,8 @@ class Shunt : public Appliance {
     static constexpr char const* name = "shunt";
     ComponentType math_model_type() const final { return ComponentType::shunt; }
 
-    explicit Shunt(ShuntInput const& shunt_input, double u) : Appliance{shunt_input, u} {
-        base_y_ = base_i() / (u / sqrt3);
+    explicit Shunt(ShuntInput const& shunt_input, double u)
+        : Appliance{shunt_input, u}, base_y_{base_i() / (u / sqrt3)} {
         update_params(shunt_input);
     }
 
@@ -83,7 +83,7 @@ class Shunt : public Appliance {
         return changed;
     }
 
-    bool update_param(double const& value, double& target) {
+    static bool update_param(double const& value, double& target) {
         if (is_nan(value) || value == target) {
             return false;
         }
