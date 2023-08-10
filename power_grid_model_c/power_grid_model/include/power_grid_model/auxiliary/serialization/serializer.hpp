@@ -40,7 +40,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p,
                                             power_grid_model::RealValue<false> const& o) const {
             p.pack_array(3);
-            for (size_t i = 0; i != 3; ++i) {
+            for (int8_t i = 0; i != 3; ++i) {
                 if (power_grid_model::is_nan(o(i))) {
                     p.pack_nil();
                 } else {
@@ -246,7 +246,7 @@ class Serializer {
 
     void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {
         packer_.pack_array(static_cast<uint32_t>(attributes.size()));
-        for (auto const attribute : attributes) {
+        for (auto const* const attribute : attributes) {
             if (check_nan(element_ptr, *attribute)) {
                 packer_.pack_nil();
             } else {
