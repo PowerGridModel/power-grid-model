@@ -13,9 +13,11 @@ namespace {}
 namespace power_grid_model::meta_data {
 
 namespace {
-constexpr std::string_view single_dataset_list =
+constexpr std::string_view single_dataset_dict =
     R"({"attributes":{},"data":{"asym_load":[{"id":5,"p_specified":[10,11,12]},{"id":6,"p_specified":[15,null,16]},{"id":7}]},"is_batch":false,"type":"update","version":"1.0"})";
 }
+constexpr std::string_view single_dataset_list =
+    R"({"attributes":{"asym_load":["id","p_specified"]},"data":{"asym_load":[[5,[10,11,12]],[6,[15,null,16]],[7,null]]},"is_batch":false,"type":"update","version":"1.0"})";
 
 TEST_CASE("Serializer") {
     std::vector<AsymLoadGenUpdate> asym_load_gen(3);
@@ -34,9 +36,9 @@ TEST_CASE("Serializer") {
         std::array data{(void const*)asym_load_gen.data()};
         Serializer serializer{"update", false, 1, n_components, components.data(), &n_elements, nullptr, data.data()};
         serializer.serialize(false);
-        CHECK(serializer.get_json(-1) == single_dataset_list);
+        CHECK(serializer.get_json(-1) == single_dataset_dict);
         serializer.serialize(true);
-        std::cout << serializer.get_json(2);
+        CHECK(serializer.get_json(-1) == single_dataset_list);
     }
 }
 
