@@ -77,9 +77,9 @@ class Serializer {
     // not copyable
     Serializer(Serializer const&) = delete;
     Serializer& operator=(Serializer const&) = delete;
-    // movable
-    Serializer(Serializer&&) = default;
-    Serializer& operator=(Serializer&&) = default;
+    // not movable
+    Serializer(Serializer&&) = delete;
+    Serializer& operator=(Serializer&&) = delete;
     // destructor
     ~Serializer() = default;
 
