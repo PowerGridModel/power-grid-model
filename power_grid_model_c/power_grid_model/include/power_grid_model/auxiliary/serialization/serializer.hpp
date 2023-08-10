@@ -84,6 +84,8 @@ class Serializer {
         use_compact_list_ = use_compact_list;
         if (use_compact_list_) {
             check_attributes();
+        } else {
+            attributes_ = {};
         }
         pack_root_dict();
         pack_attributes();
@@ -169,7 +171,21 @@ class Serializer {
         packer_.pack(attributes_);
     }
 
-    void pack_data() {}
+    void pack_data() {
+        packer_.pack("data");
+        // as an array for batch
+        if (is_batch_) {
+            packer_.pack_array(static_cast<uint32_t>(batch_size_));
+        }
+        // pack scenarios
+        for (auto const& buffer : scenario_buffers_) {
+            pack_scenario(buffer);
+        }
+    }
+
+    void pack_scenario(ScenarioBuffer const& buffer) {
+        packer_.pack_map(static_cast<uint32_t>(buffer.component_buffers.size()));
+    }
 };
 
 } // namespace power_grid_model::meta_data
