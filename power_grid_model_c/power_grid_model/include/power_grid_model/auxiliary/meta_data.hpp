@@ -71,6 +71,9 @@ template <class StructType, auto member_ptr> struct MetaAttributeImpl {
     static bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) {
         return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
     }
+    static bool check_all_nan(RawDataConstPtr buffer_ptr, Idx size) {
+        return std::all_of(IdxCount{0}, IdxCount{size}, [buffer_ptr](Idx i) { return check_nan(buffer_ptr, i); });
+    }
     static void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) {
         (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr = *reinterpret_cast<ValueType const*>(value_ptr);
     }
@@ -112,6 +115,7 @@ struct PGM_MetaAttribute {
           size{sizeof(ValueType)},
           component_size{sizeof(StructType)},
           check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
+          check_all_nan{MetaAttributeImpl<StructType, member_ptr>::check_all_nan},
           set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
           get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
           compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
@@ -125,6 +129,7 @@ struct PGM_MetaAttribute {
 
     // function pointers
     std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_nan{};
+    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_all_nan{};
     std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value{};
     std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value{};
     std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value{};
