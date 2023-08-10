@@ -18,6 +18,26 @@
 #include <span>
 #include <string_view>
 
+// custom packers
+namespace msgpack {
+MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
+    namespace adaptor {
+
+    // pack name of component and attribute
+    template <class T>
+        requires(std::same_as<T, PGM_MetaComponent> || std::same_as<T, PGM_MetaAttribute>)
+    struct pack<T const*> {
+        template <typename Stream>
+        msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p, T const* const& o) const {
+            p.pack(o->name);
+            return p;
+        }
+    };
+
+    } // namespace adaptor
+} // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
+} // namespace msgpack
+
 namespace power_grid_model::meta_data {
 
 class Serializer {
@@ -144,7 +164,10 @@ class Serializer {
         packer_.pack(is_batch_);
     }
 
-    void pack_attributes() {}
+    void pack_attributes() {
+        packer_.pack("attributes");
+        packer_.pack(attributes_);
+    }
 
     void pack_data() {}
 };
