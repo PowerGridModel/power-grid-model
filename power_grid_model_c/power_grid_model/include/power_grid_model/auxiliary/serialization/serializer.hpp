@@ -34,6 +34,23 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         }
     };
 
+    // pack double[3]
+    template <> struct pack<power_grid_model::RealValue<false>> {
+        template <typename Stream>
+        msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p,
+                                            power_grid_model::RealValue<false> const& o) const {
+            p.pack_array(3);
+            for (size_t i = 0; i != 3; ++i) {
+                if (power_grid_model::is_nan(o(i))) {
+                    p.pack_nil();
+                } else {
+                    p.pack(o(i));
+                }
+            }
+            return p;
+        }
+    };
+
     } // namespace adaptor
 } // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
 } // namespace msgpack
@@ -212,7 +229,16 @@ class Serializer {
         }
     }
 
-    void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {}
+    void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {
+        packer_.pack_array(static_cast<uint32_t>(attributes.size()));
+        for (auto const attribute : attributes) {
+            if (check_nan(element_ptr, *attribute)) {
+                packer_.pack_nil();
+            } else {
+                pack_attribute(element_ptr, *attribute);
+            }
+        }
+    }
 
     void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {}
 
@@ -233,6 +259,25 @@ class Serializer {
 
     template <class T> static bool check_nan_impl(void const* element_ptr, MetaAttribute const& attribute) {
         return is_nan(attribute.get_attribute<T const>(element_ptr));
+    }
+
+    void pack_attribute(void const* element_ptr, MetaAttribute const& attribute) {
+        switch (attribute.ctype) {
+        case CType::c_double:
+            return pack_attribute_impl<double>(element_ptr, attribute);
+        case CType::c_double3:
+            return pack_attribute_impl<RealValue<false>>(element_ptr, attribute);
+        case CType::c_int8:
+            return pack_attribute_impl<int8_t>(element_ptr, attribute);
+        case CType::c_int32:
+            return pack_attribute_impl<int32_t>(element_ptr, attribute);
+        default:
+            throw SerializationError{"Unknown data type for attriute!\n"};
+        }
+    }
+
+    template <class T> void pack_attribute_impl(void const* element_ptr, MetaAttribute const& attribute) {
+        packer_.pack(attribute.get_attribute<T const>(element_ptr));
     }
 };
 
