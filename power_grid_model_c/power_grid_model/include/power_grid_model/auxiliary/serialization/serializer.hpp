@@ -240,7 +240,19 @@ class Serializer {
         }
     }
 
-    void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {}
+    void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {
+        uint32_t valid_attributes_count = 0;
+        for (auto const& attribute : component_buffer.component->attributes) {
+            valid_attributes_count += check_nan(element_ptr, attribute);
+        }
+        packer_.pack_map(valid_attributes_count);
+        for (auto const& attribute : component_buffer.component->attributes) {
+            if (!check_nan(element_ptr, attribute)) {
+                packer_.pack(attribute.name);
+                pack_attribute(element_ptr, attribute);
+            }
+        }
+    }
 
     static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
         switch (attribute.ctype) {
