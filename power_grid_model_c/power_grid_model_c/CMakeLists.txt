@@ -32,7 +32,7 @@ target_link_libraries(power_grid_model_c
   PRIVATE power_grid_model
 )
 
-target_sources(power_grid_model_c PRIVATE 
+target_sources(power_grid_model_c PUBLIC 
   FILE_SET pgm_public_headers 
   TYPE HEADERS 
   BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include/" 
