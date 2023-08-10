@@ -33,6 +33,10 @@ class Serializer {
     };
 
   public:
+    static constexpr std::string_view version = "1.0";
+    // top dict: version, type, is_batch, attributes, data
+    static constexpr size_t size_top_dict = 5;
+
     // not copyable
     Serializer(Serializer const&) = delete;
     Serializer& operator=(Serializer const&) = delete;
@@ -55,6 +59,17 @@ class Serializer {
         store_buffers(components, elements_per_scenario, indptrs, data);
     }
 
+    void serialize(bool use_compact_list) {
+        msgpack_buffer_.clear();
+        use_compact_list_ = use_compact_list;
+        if (use_compact_list_) {
+            check_attributes();
+        }
+        pack_root_dict();
+        pack_attributes();
+        pack_data();
+    }
+
   private:
     MetaDataset const* dataset_;
     bool is_batch_;
@@ -65,6 +80,8 @@ class Serializer {
     // msgpack pakcer
     msgpack::sbuffer msgpack_buffer_{};
     msgpack::packer<msgpack::sbuffer> packer_;
+    bool use_compact_list_{};
+    std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
 
     void store_buffers(char const** components, Idx const* elements_per_scenario, Idx const** indptrs,
                        void const** data) {
@@ -101,6 +118,27 @@ class Serializer {
         }
         return scenario_buffer;
     }
+
+    void check_attributes() {
+        attributes_ = {};
+        for (auto const& buffer : component_buffers_) {
+            std::vector<MetaAttribute const*> attributes;
+            for (auto const& attribute : buffer.component->attributes) {
+                // if not all the values of an attribute are nan
+                // add this attribute to the list
+                if (!attribute.check_all_nan(buffer.data, buffer.size)) {
+                    attributes.push_back(&attribute);
+                }
+            }
+            attributes_[buffer.component] = attributes;
+        }
+    }
+
+    void pack_root_dict() {}
+
+    void pack_attributes() {}
+
+    void pack_data() {}
 };
 
 } // namespace power_grid_model::meta_data
