@@ -134,7 +134,15 @@ class Serializer {
         }
     }
 
-    void pack_root_dict() {}
+    void pack_root_dict() {
+        packer_.pack_map(size_top_dict);
+        packer_.pack("version");
+        packer_.pack(version);
+        packer_.pack("type");
+        packer_.pack(dataset_->name);
+        packer_.pack("is_batch");
+        packer_.pack(is_batch_);
+    }
 
     void pack_attributes() {}
 
