@@ -137,7 +137,8 @@ struct PGM_MetaAttribute {
     // get attribute by offsetting the pointer
     template <class T> T& get_attribute(std::conditional_t<std::is_const_v<T>, RawDataConstPtr, RawDataPtr> ptr) const {
         assert(ctype_v<std::remove_cv_t<T>> == ctype);
-        return *reinterpret_cast<T*>(reinterpret_cast<char*>(ptr) + offset);
+        using CharType = std::conditional_t<std::is_const_v<T>, char const*, char*>;
+        return *reinterpret_cast<T*>(reinterpret_cast<CharType>(ptr) + offset);
     }
 };
 

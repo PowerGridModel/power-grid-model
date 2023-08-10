@@ -215,6 +215,25 @@ class Serializer {
     void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {}
 
     void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {}
+
+    static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
+        switch (attribute.ctype) {
+        case CType::c_double:
+            return check_nan_impl<double>(element_ptr, attribute);
+        case CType::c_double3:
+            return check_nan_impl<RealValue<false>>(element_ptr, attribute);
+        case CType::c_int8:
+            return check_nan_impl<int8_t>(element_ptr, attribute);
+        case CType::c_int32:
+            return check_nan_impl<int32_t>(element_ptr, attribute);
+        default:
+            throw SerializationError{"Unknown data type for attriute!\n"};
+        }
+    }
+
+    template <class T> static bool check_nan_impl(void const* element_ptr, MetaAttribute const& attribute) {
+        return is_nan(attribute.get_attribute<T const>(element_ptr));
+    }
 };
 
 } // namespace power_grid_model::meta_data
