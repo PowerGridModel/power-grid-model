@@ -8,7 +8,14 @@
 
 #include <iostream>
 
+namespace {}
+
 namespace power_grid_model::meta_data {
+
+namespace {
+constexpr std::string_view single_dataset_list =
+    R"({"attributes":{},"data":{"asym_load":[{"id":5,"p_specified":[10,11,12]},{"id":6,"p_specified":[15,null,16]},{"id":7}]},"is_batch":false,"type":"update","version":"1.0"})";
+}
 
 TEST_CASE("Serializer") {
     std::vector<AsymLoadGenUpdate> asym_load_gen(3);
@@ -27,6 +34,8 @@ TEST_CASE("Serializer") {
         std::array data{(void const*)asym_load_gen.data()};
         Serializer serializer{"update", false, 1, n_components, components.data(), &n_elements, nullptr, data.data()};
         serializer.serialize(false);
+        CHECK(serializer.get_json(-1) == single_dataset_list);
+        serializer.serialize(true);
         std::cout << serializer.get_json(2);
     }
 }
