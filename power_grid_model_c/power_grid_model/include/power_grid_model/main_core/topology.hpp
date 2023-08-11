@@ -88,7 +88,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
     detail::register_topo_components<Component>(
         state, comp_topo.load_gen_node_idx,
         [&state](GenericLoadGen const& load_gen) { return detail::get_seq<Node>(state, load_gen.node()); });
-    comp_topo.load_gen_type.resize(state.components.template size<GenericLoadGen>());
+
     detail::register_topo_components<Component>(state, comp_topo.load_gen_type,
                                                 [](GenericLoadGen const& load_gen) { return load_gen.type(); });
 }
@@ -133,6 +133,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
                                               power_sensor.get_terminal_type());
             }
         });
+
     detail::register_topo_components<Component>(
         state, comp_topo.power_sensor_terminal_type,
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
