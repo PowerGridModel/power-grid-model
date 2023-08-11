@@ -99,7 +99,7 @@ struct State {
     // update vector
     std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, true}, 1.0e6, nan}};
     std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, false}, RealValue<false>{nan}, RealValue<false>{nan}}};
-    std::vector<ApplianceUpdate> shunt_update{{{9}, false}};
+    std::vector<ShuntUpdate> shunt_update{{{{9}, false}, nan, 0.02, nan, 0.02}};
     std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, true, false}};
     std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
@@ -388,6 +388,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
 
     SUBCASE("Source, sym output") {
         main_model.output_result<true, Source>(res, state.sym_source.begin());
+        main_model.output_result<true, Node>(res, state.sym_node.begin());
 
         CHECK(state.sym_source[0].i == doctest::Approx(state.i));
         CHECK(state.sym_source[1].i == doctest::Approx(0.0));
@@ -424,15 +425,14 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     }
 
     SUBCASE("Shunt, sym output") {
+        main_model.output_result<true, Node>(res, state.sym_node.begin());
         main_model.output_result<true, Shunt>(res, state.sym_shunt.begin());
-
-        CHECK(state.sym_shunt[0].i == doctest::Approx(state.i_shunt));
-        /*
-        TODO
-        - p
-        - q
-        - s
-        */
+        auto const& output = state.sym_shunt[0];
+        CHECK(output.i == doctest::Approx(state.i_shunt));
+        CHECK(output.p == doctest::Approx(sqrt3 * state.i_shunt * state.sym_node[2].u));
+        CHECK(output.q == doctest::Approx(0.0));
+        CHECK(output.s == doctest::Approx(output.p));
+        CHECK(output.pf == doctest::Approx(1.0));
     }
 
     SUBCASE("SymVoltageSensor, sym output") {

@@ -85,12 +85,57 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("test change") {
-        auto changed = shunt.update(ApplianceUpdate{{1}, true});
-        CHECK(!changed.topo);
-        CHECK(!changed.param);
-        changed = shunt.update(ApplianceUpdate{{1}, false});
-        CHECK(!changed.topo);
-        CHECK(changed.param);
+        SUBCASE("status") {
+            auto changed = shunt.update(ShuntUpdate{{{1}, true}, nan, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{{{1}, false}, nan, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{{{1}, true}, 1.0, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{{{1}, true}, 10.0, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{{{1}, true}, nan, 2.0, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{{{1}, true}, nan, 20.0, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{{{1}, true}, nan, nan, 3.0, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{{{1}, true}, nan, nan, 30.0, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{{{1}, true}, nan, nan, nan, 4.0});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{{{1}, true}, nan, nan, nan, 40.0});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("all or none") {
+            auto changed_ = shunt.update(ShuntUpdate{{{1}, true}, 1.0, 2.0, 3.0, 4.0});
+            CHECK(!changed_.topo);
+            CHECK(!changed_.param);
+            changed_ = shunt.update(ShuntUpdate{{{1}, false}, 10.0, 20.0, 30.0, 40.0});
+            CHECK(!changed_.topo);
+            CHECK(changed_.param);
+            changed_ = shunt.update(ShuntUpdate{{{1}, na_IntS}, nan, nan, nan, nan});
+            CHECK(!changed_.topo);
+            CHECK(!changed_.param);
+        }
     }
 }
 
