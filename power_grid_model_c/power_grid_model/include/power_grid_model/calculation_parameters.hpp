@@ -163,6 +163,36 @@ struct ShortCircuitInput {
     ComplexVector source; // Complex u_ref of each source
 };
 
+template <typename T>
+concept symmetric_calculation_input_type =
+    std::same_as<T, PowerFlowInput<true>> || std::same_as<T, StateEstimationInput<true>>;
+
+static_assert(symmetric_calculation_input_type<PowerFlowInput<true>>);
+static_assert(symmetric_calculation_input_type<StateEstimationInput<true>>);
+static_assert(!symmetric_calculation_input_type<PowerFlowInput<false>>);
+static_assert(!symmetric_calculation_input_type<StateEstimationInput<false>>);
+static_assert(!symmetric_calculation_input_type<ShortCircuitInput>);
+
+template <typename T>
+concept asymmetric_calculation_input_type =
+    std::same_as<T, PowerFlowInput<false>> || std::same_as<T, StateEstimationInput<false>> ||
+    std::same_as<T, ShortCircuitInput>;
+
+static_assert(!asymmetric_calculation_input_type<PowerFlowInput<true>>);
+static_assert(!asymmetric_calculation_input_type<StateEstimationInput<true>>);
+static_assert(asymmetric_calculation_input_type<PowerFlowInput<false>>);
+static_assert(asymmetric_calculation_input_type<StateEstimationInput<false>>);
+static_assert(asymmetric_calculation_input_type<ShortCircuitInput>);
+
+template <typename T>
+concept calculation_input_type = symmetric_calculation_input_type<T> || asymmetric_calculation_input_type<T>;
+
+static_assert(calculation_input_type<PowerFlowInput<true>>);
+static_assert(calculation_input_type<StateEstimationInput<true>>);
+static_assert(calculation_input_type<PowerFlowInput<false>>);
+static_assert(calculation_input_type<StateEstimationInput<false>>);
+static_assert(calculation_input_type<ShortCircuitInput>);
+
 template <bool sym> struct MathOutput {
     std::vector<ComplexValue<sym>> u;
     std::vector<ComplexValue<sym>> bus_injection;
