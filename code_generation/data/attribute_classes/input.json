@@ -318,7 +318,7 @@
                         "rx_ratio",
                         "z01_ratio"
                     ],
-                    "description": "short circuitl capacity"
+                    "description": "short circuit capacity"
                 }
             ]
         },

@@ -104,6 +104,28 @@
             ]
         },
         {
+            "name": "ShuntUpdate",
+            "base": "ApplianceUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g1",
+                        "b1"
+                    ],
+                    "description": "positive sequence admittance"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g0",
+                        "b0"
+                    ],
+                    "description": "zero sequence admittance"
+                }
+            ]
+        },
+        {
             "name": "VoltageSensorUpdate",
             "base": "BaseUpdate",
             "is_template": true,
