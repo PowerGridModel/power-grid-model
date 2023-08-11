@@ -720,18 +720,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // TODO(mgovers): remove this functionality
-    template <bool sym, typename Component, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutput<sym>> const& math_output, ResIt res_it) {
-        return output_result<Component, MathOutput<sym>, ResIt>(math_output, res_it);
-    }
-
-    // TODO(mgovers): remove this functionality
-    template <bool sym>
-    void output_result(std::vector<MathOutput<sym>> const& math_output, Dataset const& result_data, Idx pos = 0) {
-        return output_result<MathOutput<sym>>(math_output, result_data, pos);
-    }
-
     CalculationInfo calculation_info() { return calculation_info_; }
 
   private:
