@@ -28,6 +28,7 @@
 // main model implementation
 #include "main_core/input.hpp"
 #include "main_core/output.hpp"
+#include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
 // threading
@@ -214,84 +215,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-        // set component topo
-        ComponentTopology comp_topo;
-        comp_topo.n_node = state_.components.template size<Node>();
-        // fill topology data
-        comp_topo.branch_node_idx.resize(state_.components.template size<Branch>());
-        std::transform(state_.components.template citer<Branch>().begin(),
-                       state_.components.template citer<Branch>().end(), comp_topo.branch_node_idx.begin(),
-                       [this](Branch const& branch) {
-                           return BranchIdx{state_.components.template get_seq<Node>(branch.from_node()),
-                                            state_.components.template get_seq<Node>(branch.to_node())};
-                       });
-        comp_topo.branch3_node_idx.resize(state_.components.template size<Branch3>());
-        std::transform(state_.components.template citer<Branch3>().begin(),
-                       state_.components.template citer<Branch3>().end(), comp_topo.branch3_node_idx.begin(),
-                       [this](Branch3 const& branch3) {
-                           return Branch3Idx{state_.components.template get_seq<Node>(branch3.node_1()),
-                                             state_.components.template get_seq<Node>(branch3.node_2()),
-                                             state_.components.template get_seq<Node>(branch3.node_3())};
-                       });
-        comp_topo.source_node_idx.resize(state_.components.template size<Source>());
-        std::transform(
-            state_.components.template citer<Source>().begin(), state_.components.template citer<Source>().end(),
-            comp_topo.source_node_idx.begin(),
-            [this](Source const& source) { return state_.components.template get_seq<Node>(source.node()); });
-        comp_topo.shunt_node_idx.resize(state_.components.template size<Shunt>());
-        std::transform(state_.components.template citer<Shunt>().begin(),
-                       state_.components.template citer<Shunt>().end(), comp_topo.shunt_node_idx.begin(),
-                       [this](Shunt const& shunt) { return state_.components.template get_seq<Node>(shunt.node()); });
-        comp_topo.load_gen_node_idx.resize(state_.components.template size<GenericLoadGen>());
-        std::transform(state_.components.template citer<GenericLoadGen>().begin(),
-                       state_.components.template citer<GenericLoadGen>().end(), comp_topo.load_gen_node_idx.begin(),
-                       [this](GenericLoadGen const& load_gen) {
-                           return state_.components.template get_seq<Node>(load_gen.node());
-                       });
-        comp_topo.load_gen_type.resize(state_.components.template size<GenericLoadGen>());
-        std::transform(state_.components.template citer<GenericLoadGen>().begin(),
-                       state_.components.template citer<GenericLoadGen>().end(), comp_topo.load_gen_type.begin(),
-                       [](GenericLoadGen const& load_gen) { return load_gen.type(); });
-        comp_topo.voltage_sensor_node_idx.resize(state_.components.template size<GenericVoltageSensor>());
-        std::transform(state_.components.template citer<GenericVoltageSensor>().begin(),
-                       state_.components.template citer<GenericVoltageSensor>().end(),
-                       comp_topo.voltage_sensor_node_idx.begin(), [this](GenericVoltageSensor const& voltage_sensor) {
-                           return state_.components.template get_seq<Node>(voltage_sensor.measured_object());
-                       });
-        comp_topo.power_sensor_object_idx.resize(state_.components.template size<GenericPowerSensor>());
-        std::transform(state_.components.template citer<GenericPowerSensor>().begin(),
-                       state_.components.template citer<GenericPowerSensor>().end(),
-                       comp_topo.power_sensor_object_idx.begin(), [this](GenericPowerSensor const& power_sensor) {
-                           switch (power_sensor.get_terminal_type()) {
-                               using enum MeasuredTerminalType;
+        construct_topology();
+    }
 
-                           case branch_from:
-                           case branch_to:
-                               return state_.components.template get_seq<Branch>(power_sensor.measured_object());
-                           case source:
-                               return state_.components.template get_seq<Source>(power_sensor.measured_object());
-                           case shunt:
-                               return state_.components.template get_seq<Shunt>(power_sensor.measured_object());
-                           case load:
-                           case generator:
-                               return state_.components.template get_seq<GenericLoadGen>(
-                                   power_sensor.measured_object());
-                           case branch3_1:
-                           case branch3_2:
-                           case branch3_3:
-                               return state_.components.template get_seq<Branch3>(power_sensor.measured_object());
-                           case node:
-                               return state_.components.template get_seq<Node>(power_sensor.measured_object());
-                           default:
-                               throw MissingCaseForEnumError("Power sensor idx to seq transformation",
-                                                             power_sensor.get_terminal_type());
-                           }
-                       });
-        comp_topo.power_sensor_terminal_type.resize(state_.components.template size<GenericPowerSensor>());
-        std::transform(state_.components.template citer<GenericPowerSensor>().begin(),
-                       state_.components.template citer<GenericPowerSensor>().end(),
-                       comp_topo.power_sensor_terminal_type.begin(),
-                       [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
+    void construct_topology() {
+        ComponentTopology comp_topo;
+        main_core::register_topology_components<Node>(state_, comp_topo);
+        main_core::register_topology_components<Branch>(state_, comp_topo);
+        main_core::register_topology_components<Branch3>(state_, comp_topo);
+        main_core::register_topology_components<Source>(state_, comp_topo);
+        main_core::register_topology_components<Shunt>(state_, comp_topo);
+        main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
+        main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
+        main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
         state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
     }
 
