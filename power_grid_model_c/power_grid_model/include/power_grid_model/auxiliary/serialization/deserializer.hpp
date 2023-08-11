@@ -434,7 +434,7 @@ class Deserializer {
         }
     };
 
-    void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) const {
+    static void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) {
         // skip for none
         if (obj.is_nil()) {
             return;
