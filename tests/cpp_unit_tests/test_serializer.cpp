@@ -36,9 +36,10 @@ TEST_CASE("Serializer") {
     SUBCASE("Single dataset") {
         std::array components{"asym_load"};
         Idx const n_components = 1;
-        Idx const n_elements = 3;
+        std::vector<Idx> const n_elements{3};
         std::array data{(void const*)asym_load_gen.data()};
-        Serializer serializer{"update", false, 1, n_components, components.data(), &n_elements, nullptr, data.data()};
+        Serializer serializer{"update",          false,   1,          n_components, components.data(),
+                              n_elements.data(), nullptr, data.data()};
         serializer.serialize(false);
         CHECK(serializer.get_json(-1) == single_dataset_dict);
         serializer.serialize(true);
