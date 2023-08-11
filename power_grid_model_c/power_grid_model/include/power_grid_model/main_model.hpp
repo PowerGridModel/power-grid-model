@@ -805,8 +805,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      *  3. Fill the calculation parameters of the right math model.
      *
      *  @tparam CalcStructOut
-     *      The struct (soa) for the desired calculation (e.g. PowerFlowInput<sym> or StateEstimationInput<sym>).
-     *      Should be a calculation_input_type
+     *      The calculation input type (soa) for the desired calculation (e.g. PowerFlowInput<sym> or
+     *StateEstimationInput<sym>).
      *
      * @tparam CalcParamOut
      *      The data type for the desired calculation for the given ComponentIn (e.g. SourceCalcParam<sym> or
@@ -846,11 +846,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 Idx2D const math_idx = components[i];
                 if (math_idx.group != -1) {
                     auto const& component = state_.components.template get_item_by_seq<ComponentIn>(i);
-                    CalcParamOut const calc_param =
-                        calculate_param<symmetric_calculation_input_type<CalcStructOut>>(component);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
-                    math_model_input_vect[math_idx.pos] = calc_param;
+                    math_model_input_vect[math_idx.pos] = calculate_param<CalcStructOut>(component);
                 }
             }
         }
@@ -867,17 +865,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 Idx2D const math_idx = components[i];
                 if (math_idx.group != -1) {
                     auto const& component = state_.components.template get_item_by_seq<ComponentIn>(i);
-                    CalcParamOut const calc_param = calculate_param<symmetric_calculation_input_type<CalcStructOut>>(
-                        component, extra_args(component));
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
-                    math_model_input_vect[math_idx.pos] = calc_param;
+                    math_model_input_vect[math_idx.pos] =
+                        calculate_param<CalcStructOut>(component, extra_args(component));
                 }
             }
         }
     }
 
-    template <bool sym> auto calculate_param(auto const& c, auto const&... extra_args) {
+    template <calculation_input_type CalcInputType> auto calculate_param(auto const& c, auto const&... extra_args) {
+        static constexpr bool sym{symmetric_calculation_input_type<CalcInputType>};
         if constexpr (requires {
                           { c.calc_param(extra_args...) };
                       }) {
