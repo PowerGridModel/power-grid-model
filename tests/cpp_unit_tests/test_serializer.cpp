@@ -40,10 +40,8 @@ TEST_CASE("Serializer") {
         std::array data{(void const*)asym_load_gen.data()};
         Serializer serializer{"update",          false,   1,          n_components, components.data(),
                               n_elements.data(), nullptr, data.data()};
-        serializer.serialize(false);
-        CHECK(serializer.get_json(-1) == single_dataset_dict);
-        serializer.serialize(true);
-        CHECK(serializer.get_json(-1) == single_dataset_list);
+        CHECK(serializer.get_json(false, -1) == single_dataset_dict);
+        CHECK(serializer.get_json(true, -1) == single_dataset_list);
     }
 
     SUBCASE("Batch dataset") {
@@ -56,10 +54,8 @@ TEST_CASE("Serializer") {
         std::array<void const*, 2> data{asym_load_gen.data(), asym_load_gen.data() + 2};
         Serializer serializer{"update",          true,           batch_size, n_components, components.data(),
                               n_elements.data(), indptrs.data(), data.data()};
-        serializer.serialize(false);
-        CHECK(serializer.get_json(-1) == batch_dataset_list);
-        serializer.serialize(true);
-        CHECK(serializer.get_json(-1) == batch_dataset_dict);
+        CHECK(serializer.get_json(false, -1) == batch_dataset_list);
+        CHECK(serializer.get_json(true, -1) == batch_dataset_dict);
     }
 }
 

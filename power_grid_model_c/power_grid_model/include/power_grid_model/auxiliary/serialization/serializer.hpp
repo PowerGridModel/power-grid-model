@@ -96,29 +96,19 @@ class Serializer {
         store_buffers(components, elements_per_scenario, indptrs, data);
     }
 
-    void serialize(bool use_compact_list) {
-        msgpack_buffer_.clear();
-        use_compact_list_ = use_compact_list;
-        if (use_compact_list_) {
-            check_attributes();
-        } else {
-            attributes_ = {};
-        }
-        pack_root_dict();
-        pack_attributes();
-        pack_data();
-    }
-
-    std::span<char const> get_msgpack() {
-        if (msgpack_buffer_.size() == 0) {
-            serialize(true);
+    std::span<char const> get_msgpack(bool use_compact_list) {
+        if ((msgpack_buffer_.size() == 0) || (use_compact_list_ != use_compact_list)) {
+            serialize(use_compact_list);
         }
         return {msgpack_buffer_.data(), msgpack_buffer_.size()};
     }
 
-    std::string const& get_json(Idx indent) {
-        auto const json_document = nlohmann::json::from_msgpack(get_msgpack());
-        json_buffer_ = json_document.dump(static_cast<int>(indent));
+    std::string const& get_json(bool use_compact_list, Idx indent) {
+        if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
+            auto const json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
+            json_indent_ = indent;
+            json_buffer_ = json_document.dump(static_cast<int>(indent));
+        }
         return json_buffer_;
     }
 
@@ -135,6 +125,7 @@ class Serializer {
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
     // json
+    Idx json_indent_{-1};
     std::string json_buffer_;
 
     void store_buffers(char const** components, Idx const* elements_per_scenario, Idx const** indptrs,
@@ -186,6 +177,19 @@ class Serializer {
             }
             attributes_[buffer.component] = attributes;
         }
+    }
+
+    void serialize(bool use_compact_list) {
+        msgpack_buffer_.clear();
+        use_compact_list_ = use_compact_list;
+        if (use_compact_list_) {
+            check_attributes();
+        } else {
+            attributes_ = {};
+        }
+        pack_root_dict();
+        pack_attributes();
+        pack_data();
     }
 
     void pack_root_dict() {
