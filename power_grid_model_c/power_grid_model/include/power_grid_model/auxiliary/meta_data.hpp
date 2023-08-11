@@ -51,6 +51,23 @@ template <class T>
 struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
 template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 
+// function selector based on ctype
+// intantiate the functor template with relevant type
+template <template <class> class Functor, class... Args> auto ctype_func_selector(CType ctype, Args&&... args) {
+    switch (ctype) {
+    case CType::c_double:
+        return Functor<double>{}(std::forward<Args>(args)...);
+    case CType::c_double3:
+        return Functor<RealValue<false>>{}(std::forward<Args>(args)...);
+    case CType::c_int8:
+        return Functor<int8_t>{}(std::forward<Args>(args)...);
+    case CType::c_int32:
+        return Functor<int32_t>{}(std::forward<Args>(args)...);
+    default:
+        throw MissingCaseForEnumError{"CType selector", ctype};
+    }
+}
+
 // set nan
 inline void set_nan(double& x) { x = nan; }
 inline void set_nan(IntS& x) { x = na_IntS; }

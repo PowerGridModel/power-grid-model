@@ -276,42 +276,24 @@ class Serializer {
         }
     }
 
-    static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
-        switch (attribute.ctype) {
-        case CType::c_double:
-            return check_nan_impl<double>(element_ptr, attribute);
-        case CType::c_double3:
-            return check_nan_impl<RealValue<false>>(element_ptr, attribute);
-        case CType::c_int8:
-            return check_nan_impl<int8_t>(element_ptr, attribute);
-        case CType::c_int32:
-            return check_nan_impl<int32_t>(element_ptr, attribute);
-        default:
-            throw SerializationError{"Unknown data type for attriute!\n"};
+    template <class T> struct check_nan_impl {
+        bool operator()(void const* element_ptr, MetaAttribute const& attribute) {
+            return is_nan(attribute.get_attribute<T const>(element_ptr));
         }
+    };
+
+    static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
+        return ctype_func_selector<check_nan_impl>(attribute.ctype, element_ptr, attribute);
     }
 
-    template <class T> static bool check_nan_impl(void const* element_ptr, MetaAttribute const& attribute) {
-        return is_nan(attribute.get_attribute<T const>(element_ptr));
-    }
+    template <class T> struct pack_attribute_impl {
+        void operator()(Serializer& s, void const* element_ptr, MetaAttribute const& attribute) {
+            s.packer_.pack(attribute.get_attribute<T const>(element_ptr));
+        }
+    };
 
     void pack_attribute(void const* element_ptr, MetaAttribute const& attribute) {
-        switch (attribute.ctype) {
-        case CType::c_double:
-            return pack_attribute_impl<double>(element_ptr, attribute);
-        case CType::c_double3:
-            return pack_attribute_impl<RealValue<false>>(element_ptr, attribute);
-        case CType::c_int8:
-            return pack_attribute_impl<int8_t>(element_ptr, attribute);
-        case CType::c_int32:
-            return pack_attribute_impl<int32_t>(element_ptr, attribute);
-        default:
-            throw SerializationError{"Unknown data type for attriute!\n"};
-        }
-    }
-
-    template <class T> void pack_attribute_impl(void const* element_ptr, MetaAttribute const& attribute) {
-        packer_.pack(attribute.get_attribute<T const>(element_ptr));
+        ctype_func_selector<pack_attribute_impl>(attribute.ctype, *this, element_ptr, attribute);
     }
 };
 
