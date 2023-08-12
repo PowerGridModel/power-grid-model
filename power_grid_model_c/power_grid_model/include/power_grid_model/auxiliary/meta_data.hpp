@@ -57,13 +57,13 @@ template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 template <class Functor, class... Args> auto ctype_func_selector(CType ctype, Functor f, Args&&... args) {
     switch (ctype) {
     case CType::c_double:
-        return f.operator()<double>(std::forward<Args>(args)...);
+        return f.template operator()<double>(std::forward<Args>(args)...);
     case CType::c_double3:
-        return f.operator()<RealValue<false>>(std::forward<Args>(args)...);
+        return f.template operator()<RealValue<false>>(std::forward<Args>(args)...);
     case CType::c_int8:
-        return f.operator()<int8_t>(std::forward<Args>(args)...);
+        return f.template operator()<int8_t>(std::forward<Args>(args)...);
     case CType::c_int32:
-        return f.operator()<int32_t>(std::forward<Args>(args)...);
+        return f.template operator()<int32_t>(std::forward<Args>(args)...);
     default:
         throw MissingCaseForEnumError{"CType selector", ctype};
     }
