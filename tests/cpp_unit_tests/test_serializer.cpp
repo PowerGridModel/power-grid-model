@@ -6,10 +6,6 @@
 
 #include <doctest/doctest.h>
 
-#include <iostream>
-
-namespace {}
-
 namespace power_grid_model::meta_data {
 
 namespace {
