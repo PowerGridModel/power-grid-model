@@ -54,7 +54,7 @@ template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 // function selector based on ctype
 // the operator() of the functor should have a single template parameter
 // the selector will instantiate the operator() with relevant type
-template <class Functor, class... Args> auto ctype_func_selector(CType ctype, Functor f, Args&&... args) {
+template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor f, Args&&... args) {
     switch (ctype) {
     case CType::c_double:
         return f.template operator()<double>(std::forward<Args>(args)...);
