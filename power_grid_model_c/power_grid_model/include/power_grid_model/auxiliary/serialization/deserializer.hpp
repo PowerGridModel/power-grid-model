@@ -428,19 +428,13 @@ class Deserializer {
         attribute_key_ = "";
     }
 
-    template <class T> struct parse_attribute_per_type {
-        void operator()(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) {
-            obj >> attribute.get_attribute<T>(element_pointer);
-        }
-    };
-
     static void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) {
         // skip for none
         if (obj.is_nil()) {
             return;
         }
         // call relevant parser
-        ctype_func_selector<parse_attribute_per_type>(attribute.ctype, element_pointer, obj, attribute);
+        ctype_func_selector(attribute.ctype, [&]<class T> { obj >> attribute.get_attribute<T>(element_pointer); });
     }
 
     void handle_error(std::exception& e) {

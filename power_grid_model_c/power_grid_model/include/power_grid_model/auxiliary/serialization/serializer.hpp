@@ -276,24 +276,14 @@ class Serializer {
         }
     }
 
-    template <class T> struct check_nan_impl {
-        bool operator()(void const* element_ptr, MetaAttribute const& attribute) {
-            return is_nan(attribute.get_attribute<T const>(element_ptr));
-        }
-    };
-
     static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
-        return ctype_func_selector<check_nan_impl>(attribute.ctype, element_ptr, attribute);
+        return ctype_func_selector(attribute.ctype,
+                                   [&]<class T> { return is_nan(attribute.get_attribute<T const>(element_ptr)); });
     }
 
-    template <class T> struct pack_attribute_impl {
-        void operator()(Serializer& s, void const* element_ptr, MetaAttribute const& attribute) {
-            s.packer_.pack(attribute.get_attribute<T const>(element_ptr));
-        }
-    };
-
     void pack_attribute(void const* element_ptr, MetaAttribute const& attribute) {
-        ctype_func_selector<pack_attribute_impl>(attribute.ctype, *this, element_ptr, attribute);
+        ctype_func_selector(attribute.ctype,
+                            [&]<class T> { packer_.pack(attribute.get_attribute<T const>(element_ptr)); });
     }
 };
 
