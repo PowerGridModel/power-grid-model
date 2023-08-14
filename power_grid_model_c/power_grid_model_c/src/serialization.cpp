@@ -16,6 +16,10 @@ struct PGM_Deserializer : public Deserializer {
     using Deserializer::Deserializer;
 };
 
+struct PGM_Serializer : public Serializer {
+    using Serializer::Serializer;
+};
+
 PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size) {
     try {
         return new PGM_Deserializer{from_msgpack, {data, static_cast<size_t>(size)}};
@@ -78,3 +82,41 @@ void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* dese
 }
 
 void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
+
+PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch, PGM_Idx batch_size,
+                                      PGM_Idx n_components, char const** components,
+                                      PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
+                                      void const** data) {
+    try {
+        return new PGM_Serializer{dataset,    static_cast<bool>(is_batch), batch_size, n_components,
+                                  components, elements_per_scenario,       indptrs,    data};
+    } catch (std::exception const& e) {
+        handle->err_code = PGM_serialization_error;
+        handle->err_msg = e.what();
+        return nullptr;
+    }
+}
+
+void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, char const** data,
+                     PGM_Idx* size) {
+    try {
+        auto const msgpack_data = serializer->get_msgpack(static_cast<bool>(use_compact_list));
+        *data = msgpack_data.data();
+        *size = static_cast<PGM_Idx>(msgpack_data.size());
+    } catch (std::exception const& e) {
+        handle->err_code = PGM_serialization_error;
+        handle->err_msg = e.what();
+    }
+}
+
+char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, PGM_Idx indent) {
+    try {
+        return serializer->get_json(static_cast<bool>(use_compact_list), indent).c_str();
+    } catch (std::exception const& e) {
+        handle->err_code = PGM_serialization_error;
+        handle->err_msg = e.what();
+        return nullptr;
+    }
+}
+
+void PGM_destroy_serializer(PGM_Serializer* serializer) { delete serializer; }
