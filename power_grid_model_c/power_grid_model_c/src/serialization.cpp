@@ -6,6 +6,7 @@
 #include "power_grid_model_c/serialization.h"
 #include "handle.hpp"
 #include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/handle.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
@@ -21,6 +22,7 @@ struct PGM_Serializer : public Serializer {
 };
 
 PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size) {
+    PGM_clear_error(handle);
     try {
         return new PGM_Deserializer{from_msgpack, {data, static_cast<size_t>(size)}};
     } catch (std::exception const& e) {
@@ -31,6 +33,7 @@ PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char 
 }
 
 PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char const* json_string) {
+    PGM_clear_error(handle);
     try {
         return new PGM_Deserializer{from_json, json_string};
     } catch (std::exception const& e) {
@@ -44,34 +47,30 @@ char const* PGM_deserializer_dataset_name(PGM_Handle*, PGM_Deserializer* deseria
     return deserializer->dataset_name().c_str();
 }
 
-PGM_Idx PGM_deserializer_is_batch(PGM_Handle* handle, PGM_Deserializer* deserializer) {
-    return deserializer->is_batch();
-}
+PGM_Idx PGM_deserializer_is_batch(PGM_Handle*, PGM_Deserializer* deserializer) { return deserializer->is_batch(); }
 
-PGM_Idx PGM_deserializer_batch_size(PGM_Handle* handle, PGM_Deserializer* deserializer) {
-    return deserializer->batch_size();
-}
+PGM_Idx PGM_deserializer_batch_size(PGM_Handle*, PGM_Deserializer* deserializer) { return deserializer->batch_size(); }
 
-PGM_Idx PGM_deserializer_n_components(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+PGM_Idx PGM_deserializer_n_components(PGM_Handle*, PGM_Deserializer* deserializer) {
     return deserializer->n_components();
 }
 
-char const* PGM_deserializer_component_name(PGM_Handle* handle, PGM_Deserializer* deserializer, PGM_Idx component_idx) {
+char const* PGM_deserializer_component_name(PGM_Handle*, PGM_Deserializer* deserializer, PGM_Idx component_idx) {
     return deserializer->get_buffer_info(component_idx).component->name.c_str();
 }
 
-PGM_Idx PGM_deserializer_component_elements_per_scenario(PGM_Handle* handle, PGM_Deserializer* deserializer,
+PGM_Idx PGM_deserializer_component_elements_per_scenario(PGM_Handle*, PGM_Deserializer* deserializer,
                                                          PGM_Idx component_idx) {
     return deserializer->get_buffer_info(component_idx).elements_per_scenario;
 }
 
-PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle* handle, PGM_Deserializer* deserializer,
-                                                  PGM_Idx component_idx) {
+PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle*, PGM_Deserializer* deserializer, PGM_Idx component_idx) {
     return deserializer->get_buffer_info(component_idx).total_elements;
 }
 
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer, char const** components,
                                       void** data, PGM_Idx** indptrs) {
+    PGM_clear_error(handle);
     try {
         deserializer->set_buffer(components, data, indptrs);
         deserializer->parse();
@@ -87,6 +86,7 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, P
                                       PGM_Idx n_components, char const** components,
                                       PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
                                       void const** data) {
+    PGM_clear_error(handle);
     try {
         return new PGM_Serializer{dataset,    static_cast<bool>(is_batch), batch_size, n_components,
                                   components, elements_per_scenario,       indptrs,    data};
@@ -99,6 +99,7 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, P
 
 void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, char const** data,
                      PGM_Idx* size) {
+    PGM_clear_error(handle);
     try {
         auto const msgpack_data = serializer->get_msgpack(static_cast<bool>(use_compact_list));
         *data = msgpack_data.data();
@@ -110,6 +111,7 @@ void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use
 }
 
 char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, PGM_Idx indent) {
+    PGM_clear_error(handle);
     try {
         return serializer->get_json(static_cast<bool>(use_compact_list), indent).c_str();
     } catch (std::exception const& e) {
