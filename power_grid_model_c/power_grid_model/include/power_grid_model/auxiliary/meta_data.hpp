@@ -51,6 +51,24 @@ template <class T>
 struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
 template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 
+// function selector based on ctype
+// the operator() of the functor should have a single template parameter
+// the selector will instantiate the operator() with relevant type
+template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor f, Args&&... args) {
+    switch (ctype) {
+    case CType::c_double:
+        return f.template operator()<double>(std::forward<Args>(args)...);
+    case CType::c_double3:
+        return f.template operator()<RealValue<false>>(std::forward<Args>(args)...);
+    case CType::c_int8:
+        return f.template operator()<int8_t>(std::forward<Args>(args)...);
+    case CType::c_int32:
+        return f.template operator()<int32_t>(std::forward<Args>(args)...);
+    default:
+        throw MissingCaseForEnumError{"CType selector", ctype};
+    }
+}
+
 // set nan
 inline void set_nan(double& x) { x = nan; }
 inline void set_nan(IntS& x) { x = na_IntS; }
@@ -70,6 +88,9 @@ template <class StructType, auto member_ptr> struct MetaAttributeImpl {
     using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
     static bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) {
         return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
+    }
+    static bool check_all_nan(RawDataConstPtr buffer_ptr, Idx size) {
+        return std::all_of(IdxCount{0}, IdxCount{size}, [buffer_ptr](Idx i) { return check_nan(buffer_ptr, i); });
     }
     static void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) {
         (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr = *reinterpret_cast<ValueType const*>(value_ptr);
@@ -112,6 +133,7 @@ struct PGM_MetaAttribute {
           size{sizeof(ValueType)},
           component_size{sizeof(StructType)},
           check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
+          check_all_nan{MetaAttributeImpl<StructType, member_ptr>::check_all_nan},
           set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
           get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
           compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
@@ -125,6 +147,7 @@ struct PGM_MetaAttribute {
 
     // function pointers
     std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_nan{};
+    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_all_nan{};
     std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value{};
     std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value{};
     std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value{};
@@ -132,7 +155,8 @@ struct PGM_MetaAttribute {
     // get attribute by offsetting the pointer
     template <class T> T& get_attribute(std::conditional_t<std::is_const_v<T>, RawDataConstPtr, RawDataPtr> ptr) const {
         assert(ctype_v<std::remove_cv_t<T>> == ctype);
-        return *reinterpret_cast<T*>(reinterpret_cast<char*>(ptr) + offset);
+        using CharType = std::conditional_t<std::is_const_v<T>, char const*, char*>;
+        return *reinterpret_cast<T*>(reinterpret_cast<CharType>(ptr) + offset);
     }
 };
 

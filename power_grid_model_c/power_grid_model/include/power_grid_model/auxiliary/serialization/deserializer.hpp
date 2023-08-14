@@ -428,30 +428,13 @@ class Deserializer {
         attribute_key_ = "";
     }
 
-    void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) const {
+    static void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) {
         // skip for none
         if (obj.is_nil()) {
             return;
         }
         // call relevant parser
-        switch (attribute.ctype) {
-        case CType::c_double:
-            return parse_attribute_per_type<double>(element_pointer, obj, attribute);
-        case CType::c_double3:
-            return parse_attribute_per_type<RealValue<false>>(element_pointer, obj, attribute);
-        case CType::c_int8:
-            return parse_attribute_per_type<int8_t>(element_pointer, obj, attribute);
-        case CType::c_int32:
-            return parse_attribute_per_type<int32_t>(element_pointer, obj, attribute);
-        default:
-            throw SerializationError{"Unknown data type for attriute!\n"};
-        }
-    }
-
-    template <class T>
-    void parse_attribute_per_type(void* element_pointer, msgpack::object const& obj,
-                                  MetaAttribute const& attribute) const {
-        obj >> attribute.get_attribute<T>(element_pointer);
+        ctype_func_selector(attribute.ctype, [&]<class T> { obj >> attribute.get_attribute<T>(element_pointer); });
     }
 
     void handle_error(std::exception& e) {
