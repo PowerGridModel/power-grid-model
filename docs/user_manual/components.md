@@ -381,10 +381,10 @@ load/generator with type `const_impedance`.
 
 | name | data type | unit        | description                         |                 required                 |  update  |
 | ---- | --------- | ----------- | ----------------------------------- | :--------------------------------------: | :------: |
-| `g1` | `double`  | siemens (S) | positive-sequence shunt conductance |                 &#10004;                 | &#10060; |
-| `b1` | `double`  | siemens (S) | positive-sequence shunt susceptance |                 &#10004;                 | &#10060; |
-| `g0` | `double`  | siemens (S) | zero-sequence shunt conductance     | &#10024; only for asymmetric calculation | &#10060; |
-| `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10060; |
+| `g1` | `double`  | siemens (S) | positive-sequence shunt conductance |                 &#10004;                 | &#10004; |
+| `b1` | `double`  | siemens (S) | positive-sequence shunt susceptance |                 &#10004;                 | &#10004; |
+| `g0` | `double`  | siemens (S) | zero-sequence shunt conductance     | &#10024; only for asymmetric calculation | &#10004; |
+| `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
 
 ```{note}
 In case of short circuit calculations, the zero-sequence parameters are required only

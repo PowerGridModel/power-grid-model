@@ -2,39 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-# The detailed headers
-add_library(power_grid_model_c_headers INTERFACE)
-
-target_include_directories(power_grid_model_c_headers INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-
-set(PGM_PUBLIC_HEADERS
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/basics.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/buffer.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/handle.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/meta_data.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/model.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/options.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/dataset_definitions.h"
-)
-
-set_target_properties(power_grid_model_c_headers PROPERTIES
-  VERSION ${PGM_VERSION}
-  SOVERSION ${PGM_VERSION}
-  PUBLIC_HEADER "${PGM_PUBLIC_HEADERS}"
-  INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
-  INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
-)
-
-install(TARGETS power_grid_model_c_headers
-  EXPORT power_grid_modelTargets
-  COMPONENT power_grid_model
-  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/power_grid_model_c"
-)
-
-# The actual implementation
+# C API library
 add_library(power_grid_model_c SHARED 
   "src/buffer.cpp"
   "src/handle.cpp"
@@ -49,15 +17,31 @@ target_include_directories(power_grid_model_c PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+set(PGM_PUBLIC_HEADERS
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/basics.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/buffer.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/handle.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/meta_data.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/model.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/options.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/dataset_definitions.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c.h"
+)
+
 target_link_libraries(power_grid_model_c
-  PUBLIC power_grid_model_c_headers
   PRIVATE power_grid_model
 )
+
+target_sources(power_grid_model_c PUBLIC 
+  FILE_SET pgm_public_headers 
+  TYPE HEADERS 
+  BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include/" 
+  FILES "${PGM_PUBLIC_HEADERS}"
+  )
 
 set_target_properties(power_grid_model_c PROPERTIES
   VERSION ${PGM_VERSION}
   SOVERSION ${PGM_VERSION}
-  PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c.h"
   INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
   INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
 )
@@ -65,5 +49,5 @@ set_target_properties(power_grid_model_c PROPERTIES
 install(TARGETS power_grid_model_c
   EXPORT power_grid_modelTargets
   COMPONENT power_grid_model
-  PUBLIC_HEADER
+  FILE_SET pgm_public_headers
 )

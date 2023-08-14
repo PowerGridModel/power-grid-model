@@ -160,9 +160,9 @@ struct ShuntInput : ApplianceInput {
 struct SourceInput : ApplianceInput {
     double u_ref;  // reference voltage
     double u_ref_angle;  // reference voltage
-    double sk;  // short circuitl capacity
-    double rx_ratio;  // short circuitl capacity
-    double z01_ratio;  // short circuitl capacity
+    double sk;  // short circuit capacity
+    double rx_ratio;  // short circuit capacity
+    double z01_ratio;  // short circuit capacity
 };
 
 struct GenericVoltageSensorInput : SensorInput {
