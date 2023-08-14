@@ -35,3 +35,33 @@ PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char con
         return nullptr;
     }
 }
+
+char const* PGM_deserializer_dataset_name(PGM_Handle*, PGM_Deserializer* deserializer) {
+    return deserializer->dataset_name().c_str();
+}
+
+PGM_Idx PGM_deserializer_is_batch(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+    return deserializer->is_batch();
+}
+
+PGM_Idx PGM_deserializer_batch_size(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+    return deserializer->batch_size();
+}
+
+PGM_Idx PGM_deserializer_n_components(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+    return deserializer->n_components();
+}
+
+char const* PGM_deserializer_component_name(PGM_Handle* handle, PGM_Deserializer* deserializer, PGM_Idx component_idx) {
+    return deserializer->get_buffer_info(component_idx).component->name.c_str();
+}
+
+PGM_Idx PGM_deserializer_component_elements_per_scenario(PGM_Handle* handle, PGM_Deserializer* deserializer,
+                                                         PGM_Idx component_idx) {
+    return deserializer->get_buffer_info(component_idx).elements_per_scenario;
+}
+
+PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle* handle, PGM_Deserializer* deserializer,
+                                                  PGM_Idx component_idx) {
+    return deserializer->get_buffer_info(component_idx).total_elements;
+}

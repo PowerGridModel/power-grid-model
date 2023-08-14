@@ -40,7 +40,8 @@ PGM_API PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, 
  * @brief Get the name of the dataset
  * @param handle
  * @param deserializer pointer to deserializer
- * @return a pointer to null null-terminated string of the dataset name
+ * @return a pointer to null null-terminated string of the dataset name. 
+ *     The pointer has the same lifetime as the deserializer.
  */
 PGM_API char const* PGM_deserializer_dataset_name(PGM_Handle* handle, PGM_Deserializer* deserializer);
 
@@ -74,6 +75,7 @@ PGM_API PGM_Idx PGM_deserializer_n_components(PGM_Handle* handle, PGM_Deserializ
  * @param deserializer pointer to deserializer
  * @param component_idx idx number of the component
  * @return a pointer to null-terminated string of the component name
+ *     The pointer has the same lifetime as the deserializer.
  */
 PGM_API char const* PGM_deserializer_component_name(PGM_Handle* handle, PGM_Deserializer* deserializer,
                                                     PGM_Idx component_idx);
