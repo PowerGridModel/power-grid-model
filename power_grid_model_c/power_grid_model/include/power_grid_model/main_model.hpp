@@ -685,6 +685,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     CalculationInfo calculation_info() { return calculation_info_; }
 
   private:
+    CalculationInfo calculation_info_; // needs to be first due to padding override
+
     double system_frequency_;
 
     MainModelState state_;
@@ -696,7 +698,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_sym_parameter_up_to_date_{false};
     bool is_asym_parameter_up_to_date_{false};
     UpdateChange cached_state_changes_{};
-    CalculationInfo calculation_info_;
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};

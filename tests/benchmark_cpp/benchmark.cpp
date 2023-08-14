@@ -87,7 +87,7 @@ struct PowerGridBenchmark {
 } // namespace power_grid_model::benchmark
 
 int main(int, char**) {
-    using power_grid_model::CalculationMethod;
+    using enum power_grid_model::CalculationMethod;
     power_grid_model::benchmark::PowerGridBenchmark benchmarker{};
     power_grid_model::benchmark::Option option{};
 
@@ -104,23 +104,26 @@ int main(int, char**) {
     option.n_lv_feeder = 10;
     option.n_connection_per_lv_feeder = 100;
 #endif
-    option.has_mv_ring = false;
-    option.has_lv_ring = false;
 
     // radial
-    benchmarker.run_benchmark<true>(option, CalculationMethod::newton_raphson, 5000);
-    benchmarker.run_benchmark<true>(option, CalculationMethod::newton_raphson, 5000, 6);
-    // benchmarker.run_benchmark(option, true, CalculationMethod::linear);
-    // benchmarker.run_benchmark(option, true, CalculationMethod::iterative_current);
-    // benchmarker.run_benchmark<false>(option, CalculationMethod::newton_raphson);
-    // benchmarker.run_benchmark(option, false, CalculationMethod::linear);
-    // benchmarker.run_benchmark(option, false, CalculationMethod::iterative_current);
-    //// with meshed ring
-    // benchmarker.run_benchmark(n_node, true, CalculationMethod::newton_raphson, true);
-    // benchmarker.run_benchmark(n_node, true, CalculationMethod::linear, true);
-    // benchmarker.run_benchmark(n_node, true, CalculationMethod::iterative_current, true);
-    // benchmarker.run_benchmark(n_node, false, CalculationMethod::newton_raphson, true);
-    // benchmarker.run_benchmark(n_node, false, CalculationMethod::linear, true);
-    // benchmarker.run_benchmark(n_node, false, CalculationMethod::iterative_current, true);
+    option.has_mv_ring = false;
+    option.has_lv_ring = false;
+    benchmarker.run_benchmark<true>(option, newton_raphson, 5000);
+    benchmarker.run_benchmark<true>(option, newton_raphson, 5000, 6);
+    benchmarker.run_benchmark<true>(option, linear);
+    benchmarker.run_benchmark<true>(option, iterative_current);
+    benchmarker.run_benchmark<false>(option, newton_raphson);
+    benchmarker.run_benchmark<false>(option, linear);
+    benchmarker.run_benchmark<false>(option, iterative_current);
+    // with meshed ring
+
+    option.has_mv_ring = true;
+    option.has_lv_ring = true;
+    benchmarker.run_benchmark<true>(option, newton_raphson);
+    benchmarker.run_benchmark<true>(option, linear);
+    benchmarker.run_benchmark<true>(option, iterative_current);
+    benchmarker.run_benchmark<false>(option, newton_raphson);
+    benchmarker.run_benchmark<false>(option, linear);
+    benchmarker.run_benchmark<false>(option, iterative_current);
     return 0;
 }
