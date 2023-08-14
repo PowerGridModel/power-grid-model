@@ -197,9 +197,9 @@ struct PowerGridBenchmark {
         auto const math_output = main_model.calculate_power_flow<sym>(1e-8, 20, calculation_method);
         {
             Timer const t_output(info, 3000, "Calculate output");
-            main_model.output_result<sym, Node>(math_output, node.begin());
-            main_model.output_result<sym, Branch>(math_output, branch.begin());
-            main_model.output_result<sym, Appliance>(math_output, appliance.begin());
+            main_model.output_result<Node>(math_output, node.begin());
+            main_model.output_result<Branch>(math_output, branch.begin());
+            main_model.output_result<Appliance>(math_output, appliance.begin());
         }
         CalculationInfo info_extra = main_model.calculation_info();
         info.merge(info_extra);
