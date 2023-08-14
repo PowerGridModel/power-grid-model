@@ -112,7 +112,7 @@ repair-wheel-command = "auditwheel repair --plat ${AUDITWHEEL_PLAT//2_28/2_24} -
 environment = { CC="gcc", CXX="g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
-musllinux-x86_64-image = "quay.io/pypa/musllinux_1_2_x86_64"
+musllinux-x86_64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
