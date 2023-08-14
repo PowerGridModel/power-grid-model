@@ -101,6 +101,16 @@ typedef struct PGM_Handle PGM_Handle;
  */
 typedef struct PGM_Options PGM_Options;
 
+/**
+ * @brief Opaque struct for the serializer class
+ */
+typedef struct PGM_Serializer PGM_Serializer;
+
+/**
+ * @brief Opaque struct for the deserializer class
+ */
+typedef struct PGM_Deserializer PGM_Deserializer;
+
 // enums
 /**
  * @brief Enumeration for calculation type
@@ -131,9 +141,10 @@ enum PGM_CalculationMethod {
  *
  */
 enum PGM_ErrorCode {
-    PGM_no_error = 0,      /**< no error occurred */
-    PGM_regular_error = 1, /**< some error occurred which is not in the batch calculation */
-    PGM_batch_error = 2    /**< some error occurred which is in the batch calculation */
+    PGM_no_error = 0,           /**< no error occurred */
+    PGM_regular_error = 1,      /**< some error occurred which is not in the batch calculation */
+    PGM_batch_error = 2,        /**< some error occurred which is in the batch calculation */
+    PGM_serialization_error = 3 /**< some error occurred which is in the (de)serialization process */
 };
 
 /**
