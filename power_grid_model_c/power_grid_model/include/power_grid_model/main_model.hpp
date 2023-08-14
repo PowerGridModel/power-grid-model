@@ -804,12 +804,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      *
      *  3. Fill the calculation parameters of the right math model.
      *
-     *
-     *  @tparam sym
-     *      Use symmetric vs Asymmetric calculation parameters
-     *
      *  @tparam CalcStructOut
-     *      The struct (soa) for the desired calculation (e.g. PowerFlowInput<sym> or StateEstimationInput<sym>)
+     *      The calculation input type (soa) for the desired calculation (e.g. PowerFlowInput<sym> or
+     *StateEstimationInput<sym>).
      *
      * @tparam CalcParamOut
      *      The data type for the desired calculation for the given ComponentIn (e.g. SourceCalcParam<sym> or
@@ -838,7 +835,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      *      A lambda function (Idx i -> bool) which returns true if the component at Idx i should be included.
      * 	    The default lambda `include_all` always returns `true`.
      */
-    template <bool sym, class CalcStructOut, typename CalcParamOut,
+    template <calculation_input_type CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
@@ -849,16 +846,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 Idx2D const math_idx = components[i];
                 if (math_idx.group != -1) {
                     auto const& component = state_.components.template get_item_by_seq<ComponentIn>(i);
-                    CalcParamOut const calc_param = calculate_param<sym>(component);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
-                    math_model_input_vect[math_idx.pos] = calc_param;
+                    math_model_input_vect[math_idx.pos] = calculate_param<CalcStructOut>(component);
                 }
             }
         }
     }
 
-    template <bool sym, class CalcStructOut, typename CalcParamOut,
+    template <calculation_input_type CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
@@ -869,16 +865,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 Idx2D const math_idx = components[i];
                 if (math_idx.group != -1) {
                     auto const& component = state_.components.template get_item_by_seq<ComponentIn>(i);
-                    CalcParamOut const calc_param = calculate_param<sym>(component, extra_args(component));
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
-                    math_model_input_vect[math_idx.pos] = calc_param;
+                    math_model_input_vect[math_idx.pos] =
+                        calculate_param<CalcStructOut>(component, extra_args(component));
                 }
             }
         }
     }
 
-    template <bool sym> auto calculate_param(auto const& c, auto const&... extra_args) {
+    template <calculation_input_type CalcInputType> auto calculate_param(auto const& c, auto const&... extra_args) {
+        static constexpr bool sym{symmetric_calculation_input_type<CalcInputType>};
         if constexpr (requires {
                           { c.calc_param(extra_args...) };
                       }) {
@@ -911,10 +908,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             pf_input[i].s_injection.resize(state_.math_topology[i]->n_load_gen());
             pf_input[i].source.resize(state_.math_topology[i]->n_source());
         }
-        prepare_input<sym, PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
+        prepare_input<PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
             state_.topo_comp_coup->source, pf_input);
 
-        prepare_input<sym, PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
+        prepare_input<PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
             state_.topo_comp_coup->load_gen, pf_input);
 
         return pf_input;
@@ -945,24 +942,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(state_.topo_comp_coup->source,
                                                                                      se_input);
 
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_voltage, GenericVoltageSensor>(
-            state_.topo_comp_coup->voltage_sensor, se_input);
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>, &StateEstimationInput<sym>::measured_voltage,
+                      GenericVoltageSensor>(state_.topo_comp_coup->voltage_sensor, se_input);
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_source_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input,
             [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_load_gen_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_shunt_power, GenericPowerSensor>(
-            state_.topo_comp_coup->power_sensor, se_input,
-            [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>, &StateEstimationInput<sym>::measured_shunt_power,
+                      GenericPowerSensor>(state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
+            return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt;
+        });
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
@@ -971,12 +967,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
             });
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
             });
-        prepare_input<sym, StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input,
             [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
@@ -1020,11 +1016,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
 
-        prepare_input<sym, ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
+        prepare_input<ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
             state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
                 return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
             });
-        prepare_input<sym, ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
+        prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
             state_.topo_comp_coup->source, sc_input);
 
         return sc_input;
