@@ -437,7 +437,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         // run batches sequential or parallel
-        auto const hardware_thread = (Idx)std::thread::hardware_concurrency();
+        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         // run sequential if
         //    specified threading < 0
         //    use hardware threads, but it is either unknown (0) or only has one thread (1)

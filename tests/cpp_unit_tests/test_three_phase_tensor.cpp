@@ -85,7 +85,7 @@ TEST_CASE("Three phase tensor") {
         CHECK((mat4 == mat).all());
         CHECK(diag_mult(1.0, 2.0, 3.0) == 6.0);
         // test layout
-        auto* arr = (double*)&mat1;
+        auto* arr = reinterpret_cast<double*>(&mat1);
         CHECK(arr[0] == 1);
         CHECK(arr[2] == 7);
         CHECK(arr[6] == 3);
