@@ -65,3 +65,16 @@ PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle* handle, PGM_Deseri
                                                   PGM_Idx component_idx) {
     return deserializer->get_buffer_info(component_idx).total_elements;
 }
+
+void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer, char const** components,
+                                      void** data, PGM_Idx** indptrs) {
+    try {
+        deserializer->set_buffer(components, data, indptrs);
+        deserializer->parse();
+    } catch (std::exception const& e) {
+        handle->err_code = PGM_serialization_error;
+        handle->err_msg = e.what();
+    }
+}
+
+void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
