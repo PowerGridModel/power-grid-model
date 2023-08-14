@@ -73,7 +73,7 @@ PGM_API PGM_Idx PGM_deserializer_n_components(PGM_Handle* handle, PGM_Deserializ
  * @param handle
  * @param deserializer pointer to deserializer
  * @param component_idx idx number of the component
- * @return a pointer to null null-terminated string of the component name
+ * @return a pointer to null-terminated string of the component name
  */
 PGM_API char const* PGM_deserializer_component_name(PGM_Handle* handle, PGM_Deserializer* deserializer,
                                                     PGM_Idx component_idx);
@@ -92,7 +92,7 @@ PGM_API PGM_Idx PGM_deserializer_component_elements_per_scenario(PGM_Handle* han
 /**
  * @brief Get the total number of elements for the i-th component
  * @param handle
- * @param deserializer deserializer pointer to deserializer
+ * @param deserializer pointer to deserializer
  * @param component_idx idx number of the component * @param component_idx
  * @return Total number of elements of that component
  *     If the number of elements per scenario is uniform,
@@ -102,17 +102,27 @@ PGM_API PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle* handle, PG
                                                           PGM_Idx component_idx);
 
 /**
- * @brief
+ * @brief Parse the dataset and write to the user-provided buffers
  * @param handle
- * @param deserializer
- * @param components
- * @param data
- * @param indptrs
- * @return
+ * @param deserializer pointer to deserializer
+ * @param components pointer to array of component names
+ *     components[i] is a pointer to null-terminated string of i-th component name
+ * @param data pointer to array of void pointers of buffers
+ *     data[i] is a void pointer to the buffer of i-th component
+ * @param indptrs pointer to array of indptrs per component
+ *     if i-th component is not uniform, indptrs[i] points to an array of length batch_size + 1
+ *     if i-th component is uniform, indptrs[i] should be NULL
+ *     if all components are uniform, indptrs itself should be NULL
+ * @return The parsed data are written into the buffer. Check handle for possible errors.
  */
 PGM_API void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer,
                                               char const** components, void** data, PGM_Idx** indptrs);
 
+/**
+ * @brief Destory deserializer
+ * @param deserializer pointer to deserializer
+ * @return 
+*/
 PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
 
 #ifdef __cplusplus
