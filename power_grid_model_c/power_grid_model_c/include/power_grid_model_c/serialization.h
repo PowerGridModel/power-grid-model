@@ -110,10 +110,8 @@ PGM_API PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle* handle, PG
  * @param indptrs
  * @return
  */
-PGM_API void PGM_deserializer_set_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer, char const** components,
-                                         void** data, PGM_Idx** indptrs);
-
-PGM_API void PGM_deserializer_parse(PGM_Handle* handle, PGM_Deserializer* deserializer);
+PGM_API void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer,
+                                              char const** components, void** data, PGM_Idx** indptrs);
 
 PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
 
