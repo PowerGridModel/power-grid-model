@@ -1,0 +1,428 @@
+﻿{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "Base",
+      "description": "Base for all presets.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cpp_build/${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}",
+      "environment": {
+        "PLATFORM_C_FLAGS": "",
+        "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",
+        "COMPILER_C_FLAGS": "",
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
+        "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
+        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
+        "LDFLAGS": "$env{SANITIZER_FLAGS}"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "hidden": true
+    },
+    {
+      "name": "release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "hidden": true
+    },
+    {
+      "name": "debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "hidden": true
+    },
+    {
+      "name": "unix-base",
+      "description": "Target Unix platform.",
+      "hidden": true,
+      "environment": {
+        "PLATFORM_C_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-deprecated-declarations",
+        "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS} -Wno-deprecated-copy"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base"
+    },
+    {
+      "name": "windows-base",
+      "description": "Target Windows platform.",
+      "hidden": true,
+      "environment": {
+        "PreferredToolArchitecture": "x64",
+        "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W3 /WX /GR /EHsc /utf-8 /bigobj /FC"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base",
+      "vendor": {
+        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+        }
+      }
+    },
+    {
+      "name": "msvc-base",
+      "description": "Target Windows using the MSVC compiler.",
+      "hidden": true,
+      "environment": {
+        "CC": "cl.exe",
+        "CXX": "cl.exe"
+      },
+      "inherits": "windows-base"
+    },
+    {
+      "name": "clang-cl-base",
+      "description": "Target Windows using Clang with CL-like command line.",
+      "hidden": true,
+      "environment": {
+        "CC": "clang-cl.exe",
+        "CXX": "clang-cl.exe",
+        "CXXFLAGS": "$penv{CXXFLAGS} -Wno-uninitialized-const-reference"
+      },
+      "inherits": "windows-base"
+    },
+    {
+      "name": "unix-coverage",
+      "environment": {
+        "COVERAGE_FLAGS": "-fprofile-arcs -ftest-coverage"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "unix-sanitizer",
+      "environment": {
+        "SANITIZER_FLAGS": "-fsanitize=address"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "clang-tidy-windows-base",
+      "cacheVariables": {
+        "CMAKE_C_CLANG_TIDY": "clang-tidy.exe;--extra-arg=/EHsc",
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy.exe;--extra-arg=/EHsc"
+      },
+      "inherits": "windows-base",
+      "hidden": true
+    },
+    {
+      "name": "clang-tidy-unix-base",
+      "cacheVariables": {
+        "CMAKE_C_CLANG_TIDY": "$env{CLANG_TIDY}",
+        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "msvc-debug",
+      "displayName": "Debug (MSVC)",
+      "inherits": [
+        "msvc-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "msvc-release",
+      "displayName": "Release (MSVC)",
+      "inherits": [
+        "msvc-base",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-cl-debug",
+      "displayName": "Debug (Clang CL)",
+      "inherits": [
+        "clang-cl-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "clang-cl-release",
+      "displayName": "Release (Clang CL)",
+      "inherits": [
+        "clang-cl-base",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-debug",
+      "inherits": [
+        "debug",
+        "unix-sanitizer"
+      ]
+    },
+    {
+      "name": "clang-release",
+      "inherits": [
+        "release",
+        "unix-sanitizer"
+      ]
+    },
+    {
+      "name": "clang-tidy-debug",
+      "inherits": [
+        "debug",
+        "clang-tidy-unix-base"
+      ]
+    },
+    {
+      "name": "clang-tidy-release",
+      "inherits": [
+        "release",
+        "clang-tidy-unix-base"
+      ]
+    },
+    {
+      "name": "clang-tidy-windows-debug",
+      "displayName": "Debug (Clang CL + Clang Tidy)",
+      "inherits": [
+        "debug",
+        "clang-tidy-windows-base"
+      ]
+    },
+    {
+      "name": "clang-tidy-windows-release",
+      "displayName": "Release (Clang CL + Clang Tidy)",
+      "inherits": [
+        "release",
+        "clang-tidy-windows-base"
+      ]
+    },
+    {
+      "name": "gcc-base",
+      "environment": {
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "inherits": "unix-sanitizer",
+      "hidden": true
+    },
+    {
+      "name": "gcc-debug",
+      "inherits": [
+        "debug",
+        "gcc-base"
+      ]
+    },
+    {
+      "name": "gcc-release",
+      "inherits": [
+        "release",
+        "gcc-base"
+      ]
+    },
+    {
+      "name": "ci-clang-debug",
+      "inherits": [
+        "clang-debug",
+        "unix-coverage"
+      ]
+    },
+    {
+      "name": "ci-clang-release",
+      "inherits": "clang-release"
+    },
+    {
+      "name": "ci-gcc-debug",
+      "environment": {
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "inherits": [
+        "gcc-debug",
+        "unix-coverage"
+      ]
+    },
+    {
+      "name": "ci-gcc-release",
+      "inherits": [
+        "gcc-release",
+        "unix-coverage"
+      ]
+    },
+    {
+      "name": "ci-sonar",
+      "inherits": [
+        "unix-coverage",
+        "debug"
+      ]
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "inherits": "clang-tidy-debug"
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "inherits": "clang-tidy-release"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug"
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "msvc-release"
+    },
+    {
+      "name": "clang-cl-debug",
+      "configurePreset": "clang-cl-debug"
+    },
+    {
+      "name": "clang-cl-release",
+      "configurePreset": "clang-cl-release"
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    },
+    {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
+    },
+    {
+      "name": "clang-tidy-windows-debug",
+      "configurePreset": "clang-tidy-windows-debug"
+    },
+    {
+      "name": "clang-tidy-windows-release",
+      "configurePreset": "clang-tidy-windows-release"
+    },
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
+    },
+    {
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
+    },
+    {
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
+    },
+    {
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
+    },
+    {
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
+    },
+    {
+      "name": "ci-sonar",
+      "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug"
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "msvc-release"
+    },
+    {
+      "name": "clang-cl-debug",
+      "configurePreset": "clang-cl-debug"
+    },
+    {
+      "name": "clang-cl-release",
+      "configurePreset": "clang-cl-release"
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    },
+    {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
+    },
+    {
+      "name": "clang-tidy-windows-debug",
+      "configurePreset": "clang-tidy-windows-debug"
+    },
+    {
+      "name": "clang-tidy-windows-release",
+      "configurePreset": "clang-tidy-windows-release"
+    },
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
+    },
+    {
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
+    },
+    {
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
+    },
+    {
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
+    },
+    {
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
+    },
+    {
+      "name": "ci-sonar",
+      "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
+    }
+  ]
+}

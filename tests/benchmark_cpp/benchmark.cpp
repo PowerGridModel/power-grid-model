@@ -12,8 +12,7 @@
 namespace power_grid_model::benchmark {
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{50.0} {
-    }
+    PowerGridBenchmark() : main_model{50.0} {}
 
     template <bool sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
@@ -39,20 +38,18 @@ struct PowerGridBenchmark {
         title += sym ? "symmetric, " : "asymmetric, ";
         if (calculation_method == CalculationMethod::newton_raphson) {
             title += "Newton-Raphson method";
-        }
-        else if (calculation_method == CalculationMethod::linear) {
+        } else if (calculation_method == CalculationMethod::linear) {
             title += "Linear method";
-        }
-        else {
+        } else {
             title += "Iterative current method";
         }
         std::cout << "=============" << title << "=============\n";
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer t_total(info, 0000, "Total");
+            Timer const t_total(info, 0000, "Total");
             {
-                Timer t_build(info, 1000, "Build model");
+                Timer const t_build(info, 1000, "Build model");
                 main_model.emplace(50.0, input.get_dataset());
             }
             run_pf<sym>(calculation_method, info);
@@ -61,7 +58,7 @@ struct PowerGridBenchmark {
         info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer t_total(info, 0000, "Total");
+            Timer const t_total(info, 0000, "Total");
             run_pf<sym>(calculation_method, info);
         }
         print(info);
@@ -69,7 +66,7 @@ struct PowerGridBenchmark {
         if (batch_size > 0) {
             info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
-            Timer t_total(info, 0000, "Total");
+            Timer const t_total(info, 0000, "Total");
             run_pf<sym>(calculation_method, info, batch_size, threading);
         }
         print(info);
@@ -77,7 +74,7 @@ struct PowerGridBenchmark {
         std::cout << "\n\n";
     }
 
-    void print(CalculationInfo const& info) {
+    static void print(CalculationInfo const& info) {
         for (auto const& [key, val] : info) {
             std::cout << key << ": " << val << '\n';
         }
@@ -87,7 +84,7 @@ struct PowerGridBenchmark {
     FictionalGridGenerator generator;
 };
 
-}  // namespace power_grid_model::benchmark
+} // namespace power_grid_model::benchmark
 
 int main(int, char**) {
     using power_grid_model::CalculationMethod;

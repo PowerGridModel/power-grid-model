@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/link.hpp"
+#include <power_grid_model/component/link.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
@@ -23,6 +24,12 @@ TEST_CASE("Test link") {
     DoubleComplex const i1t = (u1t - u1f) * y_link * base_i_to;
     DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
     DoubleComplex const s_t = conj(i1t) * u1t * 50e3 * sqrt3;
+
+    // Short circuit results
+    DoubleComplex const if_sc{1.0, 1.0};
+    DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
+    ComplexValue<false> const if_sc_asym{1.0 + 1.0i};
+    ComplexValue<false> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
 
     CHECK(link.math_model_type() == ComponentType::branch);
 
@@ -83,6 +90,27 @@ TEST_CASE("Test link") {
         CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
         CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
     }
+
+    SUBCASE("Short circuit asym results") {
+        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        CHECK(asym_output.id == 1);
+        CHECK(asym_output.energized);
+        CHECK(asym_output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i_from));
+        CHECK(asym_output.i_to(1) == doctest::Approx(cabs(it_sc) * base_i_to));
+        CHECK(asym_output.i_from_angle(1) == doctest::Approx(pi / 4 - 2 * pi / 3));
+        CHECK(asym_output.i_to_angle(2) == doctest::Approx(pi));
+    }
+
+    SUBCASE("Short circuit sym results") {
+        BranchShortCircuitOutput sym_output = branch.get_sc_output(if_sc, it_sc);
+        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        CHECK(sym_output.id == asym_output.id);
+        CHECK(sym_output.energized == asym_output.energized);
+        CHECK(sym_output.i_from(0) == doctest::Approx(asym_output.i_from(0)));
+        CHECK(sym_output.i_to(1) == doctest::Approx(asym_output.i_to(1)));
+        CHECK(sym_output.i_from_angle(1) == doctest::Approx(asym_output.i_from_angle(1)));
+        CHECK(sym_output.i_to_angle(2) == doctest::Approx(asym_output.i_to_angle(2)));
+    }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

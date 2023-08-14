@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/calculation_parameters.hpp"
-#include "power_grid_model/component/sensor.hpp"
-#include "power_grid_model/component/voltage_sensor.hpp"
-#include "power_grid_model/power_grid_model.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/component/sensor.hpp>
+#include <power_grid_model/component/voltage_sensor.hpp>
+#include <power_grid_model/power_grid_model.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -23,7 +24,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test Sensor math_model_type") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -31,7 +32,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test get_null_output") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         voltage_sensor_input.id = 12;
         double const u_rated = 10.0e3;
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
@@ -41,10 +42,14 @@ TEST_CASE("Test voltage sensor") {
         CHECK(vs_output.energized == 0);
         CHECK(vs_output.u_residual == doctest::Approx(0.0));
         CHECK(vs_output.u_angle_residual == doctest::Approx(0.0));
+
+        SensorShortCircuitOutput vs_sc_output = voltage_sensor.get_null_sc_output();
+        CHECK(vs_sc_output.id == 12);
+        CHECK(vs_sc_output.energized == 0);
     }
 
     SUBCASE("Test voltage sensor update - sym") {
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> const voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<true> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -62,10 +67,20 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<true> param = voltage_sensor.calc_param<true>();
         CHECK(param.variance == doctest::Approx(2.25));
         CHECK(param.value == expected_param_value);
+
+        // update with nan
+        vs_update.u_measured = nan;
+        vs_update.u_angle_measured = nan;
+        vs_update.u_sigma = nan;
+
+        voltage_sensor.update(vs_update);
+        param = voltage_sensor.calc_param<true>();
+        CHECK(param.variance == doctest::Approx(2.25));
+        CHECK(param.value == expected_param_value);
     }
 
     SUBCASE("Test voltage sensor update - asym") {
-        VoltageSensorInput<false> voltage_sensor_input;
+        VoltageSensorInput<false> const voltage_sensor_input{};
         double const u_rated = 2.0;
         VoltageSensor<false> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -81,8 +96,21 @@ TEST_CASE("Test voltage sensor") {
         SensorCalcParam<false> param = voltage_sensor.calc_param<false>();
         CHECK(param.variance == doctest::Approx(6.75));
 
-        ComplexValue<false> const expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
-                                                       0.6 * sqrt(3) * exp(1i * 2.2)};
+        ComplexValue<false> expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
+                                                 0.6 * sqrt(3) * exp(1i * 2.2)};
+        CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
+        CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
+        CHECK(cabs(param.value[2]) == doctest::Approx(cabs(expected_param_value[2])));
+
+        // update with nan's
+        vs_update.u_measured = {3.0, nan, 3.2};
+        vs_update.u_angle_measured = {4.0, 4.1, nan};
+
+        update = voltage_sensor.update(vs_update);
+        param = voltage_sensor.calc_param<false>();
+        expected_param_value = {1.5 * sqrt(3) * exp(1i * 4.0), 0.55 * sqrt(3) * exp(1i * 4.1),
+                                1.6 * sqrt(3) * exp(1i * 2.2)};
+
         CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
         CHECK(cabs(param.value[2]) == doctest::Approx(cabs(expected_param_value[2])));
@@ -94,7 +122,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -130,7 +158,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<true> voltage_sensor_input;
+        VoltageSensorInput<true> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -166,7 +194,7 @@ TEST_CASE("Test voltage sensor") {
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<false> voltage_sensor_input;
+        VoltageSensorInput<false> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -200,11 +228,12 @@ TEST_CASE("Test voltage sensor") {
 
     SUBCASE("Test sym/asym calc_param for asymmetric voltage sensor, angle = nan") {
         RealValue<false> const u_measured{10.1e3 / sqrt3, 10.2e3 / sqrt3, 10.3e3 / sqrt3};
-        RealValue<false> const u_angle_measured{nan, nan, nan};
+        // if one of the angle is nan, the whole measurment is treated as no angle value
+        RealValue<false> const u_angle_measured{1.0, 2.0, nan};
         double const u_sigma = 1.0;
         double const u_rated = 10.0e3;
 
-        VoltageSensorInput<false> voltage_sensor_input;
+        VoltageSensorInput<false> voltage_sensor_input{};
         voltage_sensor_input.id = 0;
         voltage_sensor_input.measured_object = 1;
         voltage_sensor_input.u_sigma = u_sigma;
@@ -241,7 +270,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<true> voltage_sensor_input;
+            VoltageSensorInput<true> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -279,7 +308,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<true> voltage_sensor_input;
+            VoltageSensorInput<true> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -317,7 +346,7 @@ TEST_CASE("Test voltage sensor") {
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<true> voltage_sensor_input;
+            VoltageSensorInput<true> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -354,12 +383,12 @@ TEST_CASE("Test voltage sensor") {
         SUBCASE("With angle") {
             RealValue<false> const u_measured{
                 10.1e3 / sqrt3, 10.2e3 / sqrt3,
-                10.3e3 / sqrt3};  // Asym voltage sensor measures line-ground voltage, hence /sqrt3
+                10.3e3 / sqrt3}; // Asym voltage sensor measures line-ground voltage, hence /sqrt3
             RealValue<false> const u_angle_measured{0.1, 0.2, 0.3};
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<false> voltage_sensor_input;
+            VoltageSensorInput<false> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -396,12 +425,12 @@ TEST_CASE("Test voltage sensor") {
         SUBCASE("Angle = nan") {
             RealValue<false> const u_measured{
                 10.1e3 / sqrt3, 10.2e3 / sqrt3,
-                10.3e3 / sqrt3};  // Asym voltage sensor measures line-ground voltage, hence /sqrt3
+                10.3e3 / sqrt3}; // Asym voltage sensor measures line-ground voltage, hence /sqrt3
             RealValue<false> const u_angle_measured{nan, nan, nan};
             double const u_sigma = 1.0;
             double const u_rated = 10.0e3;
 
-            VoltageSensorInput<false> voltage_sensor_input;
+            VoltageSensorInput<false> voltage_sensor_input{};
             voltage_sensor_input.id = 0;
             voltage_sensor_input.measured_object = 1;
             voltage_sensor_input.u_sigma = u_sigma;
@@ -435,4 +464,4 @@ TEST_CASE("Test voltage sensor") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

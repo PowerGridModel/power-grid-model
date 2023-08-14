@@ -3,16 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 Language: Cpp
-BasedOnStyle: Google
+BasedOnStyle: LLVM
 ColumnLimit: 120
 IndentWidth: 4
 
-AllowShortFunctionsOnASingleLine: None
-AllowShortLambdasOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
+# New settings
 
-BreakBeforeBraces: Custom
-BraceWrapping:
-  BeforeCatch: true
-  BeforeElse: true
+AlwaysBreakTemplateDeclarations: MultiLine
+PackConstructorInitializers: NextLine
+PointerAlignment: Left

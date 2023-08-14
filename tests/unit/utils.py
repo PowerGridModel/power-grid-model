@@ -22,57 +22,109 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 )
 
 
+def get_output_type(calculation_type: str, sym: bool) -> str:
+    if calculation_type == "short_circuit":
+        if sym:
+            raise AssertionError(f"Unsupported validation case: calculation_type={calculation_type}, sym={sym}")
+        return "sc_output"
+
+    if sym:
+        return "sym_output"
+
+    return "asym_output"
+
+
+def get_test_case_paths(calculation_type: str, test_cases: Optional[List[str]] = None) -> Dict[str, Path]:
+    """get a list of all cases, directories in validation datasets"""
+    calculation_type_dir = DATA_PATH / calculation_type
+    test_case_paths = {
+        str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
+        for item in calculation_type_dir.glob("**/")
+        if (item.is_dir() and (item / "params.json").is_file())
+    }
+    if test_cases is not None:
+        test_case_paths = {key: value for key, value in test_case_paths.items() if key in test_cases}
+
+    return test_case_paths
+
+
+def add_case(
+    case_name: str,
+    case_dir: Path,
+    params: dict,
+    calculation_type: str,
+    is_batch: bool,
+    calculation_method: str,
+    sym: bool,
+):
+    output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
+    batch_suffix = "_batch" if is_batch else ""
+
+    # only generate a case if sym or asym output exists
+    if (case_dir / f"{output_prefix}{batch_suffix}.json").exists():
+        # Build a recognizable case ID
+        case_id = case_name
+        case_id += "-sym" if sym else "-asym"
+        case_id += "-" + calculation_method
+        if is_batch:
+            case_id += "-batch"
+        pytest_param = [
+            case_id,
+            case_dir,
+            sym,
+            calculation_type,
+            calculation_method,
+            params["rtol"],
+            params["atol"],
+        ]
+        kwargs = {}
+        if "fail" in params:
+            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
+        yield pytest.param(*pytest_param, **kwargs, id=case_id)
+
+
+def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
+    with open(case_dir / "params.json") as f:
+        params = json.load(f)
+
+    # retrieve calculation method, can be a string or list of strings
+    calculation_methods = params["calculation_method"]
+    if not isinstance(calculation_methods, list):
+        calculation_methods = [calculation_methods]
+
+    # loop for sym or asym scenario
+    for calculation_method in calculation_methods:
+        for sym in [True, False]:
+            if calculation_type == "short_circuit" and sym:
+                continue  # only asym short circuit calculations are supported
+
+            for calculation_method in calculation_methods:
+                yield from add_case(
+                    case_dir=case_dir,
+                    params=params,
+                    calculation_type=calculation_type,
+                    calculation_method=calculation_method,
+                    sym=sym,
+                    **kwargs,
+                )
+
+
 def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[List[str]] = None):
     if data_dir is not None:
         relevant_calculations = [data_dir]
     else:
-        # default both calculation type
-        relevant_calculations = ["power_flow", "state_estimation"]
-    batch_suffix = "_batch" if get_batch_cases else ""
+        relevant_calculations = ["power_flow", "state_estimation", "short_circuit"]
+
     for calculation_type in relevant_calculations:
-        # list of all cases, directories in validation datasets
-        calculation_type_dir = DATA_PATH / calculation_type
-        test_cases_paths = {
-            str(item.relative_to(DATA_PATH)).replace("\\", "/"): item
-            for item in calculation_type_dir.glob("**/")
-            if (item.is_dir() and (item / "params.json").is_file())
-        }
-        if test_cases is not None:
-            test_cases_paths = {key: value for key, value in test_cases_paths.items() if key in test_cases}
-        for case_name, case_dir in test_cases_paths.items():
-            with open(case_dir / "params.json") as f:
-                params = json.load(f)
-            # retrieve calculation method, can be a string or list of strings
-            calculation_methods = params["calculation_method"]
-            if not isinstance(calculation_methods, list):
-                calculation_methods = [calculation_methods]
-            # loop for sym or asym scenario
-            for sym in [True, False]:
-                output_prefix = "sym_output" if sym else "asym_output"
-                for calculation_method in calculation_methods:
-                    # only generate a case if sym or asym output exists
-                    if (case_dir / f"{output_prefix}{batch_suffix}.json").exists():
-                        # Build a recognizable case ID
-                        case_id = case_name
-                        case_id += "-sym" if sym else "-asym"
-                        case_id += "-" + calculation_method
-                        if get_batch_cases:
-                            case_id += "-batch"
-                        pytest_param = [
-                            case_id,
-                            case_dir,
-                            sym,
-                            calculation_type,
-                            calculation_method,
-                            params["rtol"],
-                            params["atol"],
-                        ]
-                        if get_batch_cases:
-                            pytest_param += [params["independent"], params["cache_topology"]]
-                        kwargs = {}
-                        if "fail" in params:
-                            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
-                        yield pytest.param(*pytest_param, **kwargs, id=case_id)
+        test_case_paths = get_test_case_paths(calculation_type=calculation_type, test_cases=test_cases)
+
+        for case_name, case_dir in test_case_paths.items():
+            yield from _add_cases(
+                case_name=case_name,
+                case_dir=case_dir,
+                calculation_type=calculation_type,
+                is_batch=get_batch_cases,
+            )
 
 
 def bool_params(true_id: str, false_id: Optional[str] = None, **kwargs):
@@ -87,18 +139,20 @@ def dict_params(params: Dict[Any, str], **kwargs):
         yield pytest.param(value, **kwargs, id=param_id)
 
 
-def import_case_data(data_path: Path, sym: bool):
-    output_prefix = "sym_output" if sym else "asym_output"
+def import_case_data(data_path: Path, calculation_type: str, sym: bool):
+    output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
     return_dict = {
-        "input": import_json_data(data_path / "input.json", "input"),
+        "input": import_json_data(data_path / "input.json", "input", ignore_extra=True),
     }
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
-        return_dict["output"] = import_json_data(data_path / f"{output_prefix}.json", output_prefix)
+        return_dict["output"] = import_json_data(data_path / f"{output_prefix}.json", output_prefix, ignore_extra=True)
     # import update and output batch if relevant
     if (data_path / "update_batch.json").exists():
-        return_dict["update_batch"] = import_json_data(data_path / "update_batch.json", "update")
-        return_dict["output_batch"] = import_json_data(data_path / f"{output_prefix}_batch.json", output_prefix)
+        return_dict["update_batch"] = import_json_data(data_path / "update_batch.json", "update", ignore_extra=True)
+        return_dict["output_batch"] = import_json_data(
+            data_path / f"{output_prefix}_batch.json", output_prefix, ignore_extra=True
+        )
     return return_dict
 
 
@@ -141,12 +195,13 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                     # set the u_angle of 0-th entry to zero
                     actual_col = actual_col - actual_col.ravel()[0]
                     expected_col = expected_col - expected_col.ravel()[0]
-                    # convert to unity complex number, to avoid under and over flows
-                    actual_col = np.exp(1j * actual_col)
-                    expected_col = np.exp(1j * expected_col)
-                    # convert to radians
-                    actual_col = np.angle(actual_col)
-                    expected_col = np.angle(expected_col)
+
+                if col_name.endswith("_angle"):
+                    magnitude_name = col_name[: -len("_angle")]
+                    if np.all(np.isnan(expected_data[magnitude_name])):
+                        continue
+                    actual_col = actual[key][magnitude_name] * np.exp(1j * actual_col)
+                    expected_col = expected_data[magnitude_name] * np.exp(1j * expected_col)
 
                 # Define the absolute tolerance based on the field name
                 p = "default"
@@ -160,11 +215,10 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                 else:
                     a = atol
 
-                if not np.allclose(actual_col, expected_col, rtol=rtol, atol=a):
-                    msg = f"Not all values match for {key}.{col_name} (rtol={rtol}, atol={a}, pattern={p})"
-                    print(f"\n{msg}")
-                    print("Actual:     ", actual_col)
-                    print("Expected:   ", expected_col)
-                    print("Difference: ", actual_col - expected_col)
-                    print("Matches:    ", np.isclose(actual_col, expected_col, rtol=rtol, atol=a))
-                    raise AssertionError(msg)
+                assert np.allclose(actual_col, expected_col, rtol=rtol, atol=a), (
+                    f"Not all values match for {key}.{col_name} (rtol={rtol}, atol={a}, pattern={p})"
+                    f"\nActual:     {actual_col}"
+                    f"\nExpected:   {expected_col}"
+                    f"\nDifference: {actual_col - expected_col}"
+                    f"\nMatches:    {np.isclose(actual_col, expected_col, rtol=rtol, atol=a)}"
+                )

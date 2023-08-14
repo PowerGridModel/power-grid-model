@@ -6,13 +6,11 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file
 """
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
-# When we're dropping python 3.8, we should introduce
-#  SingleArray = np.ndarray (ndim=1)
-#  DenseBatchArray = np.ndarray (ndim=2)
+# When we're dropping python 3.8, we should introduce proper NumPy type hinting
 
 SparseBatchArray = Dict[str, np.ndarray]
 """
@@ -67,7 +65,7 @@ is actually a batch. The batch list is intended as an intermediate data type, du
 Example: [{"node": <1d-array>, "line": <1d-array>}, {"node": <1d-array>, "line": <1d-array>}]
 """
 
-Nominal = int
+NominalValue = int
 """
 Nominal values can be IDs, booleans, enums, tap pos
 
@@ -88,24 +86,23 @@ Asymmetrical values are three-phase values like p or u_measured.
 Example: (10400.0, 10500.0, 10600.0)
 """
 
-AttributeValue = Union[Nominal, RealValue, AsymValue]
+AttributeValue = Union[RealValue, NominalValue, AsymValue]
 """
 When representing a grid as a native python structure, each attribute (u_rated etc) is either a nominal value,
 a real value, or a tuple of three real values.
 
 Examples:
-    nominal: 123
     real:    10500.0
+    nominal: 123
     asym:    (10400.0, 10500.0, 10600.0)
-
 """
 
-Component = Dict[str, AttributeValue]
+Component = Dict[str, Union[AttributeValue, str]]
 """
 A component, when represented in native python format, is a dictionary, where the keys are the attributes and the values
-are the corresponding values.
+are the corresponding values. It is allowed to add extra fields, containing either an AttributeValue or a string.
 
-Example: {"id": 1, "u_rated": 10500.0}
+Example: {"id": 1, "u_rated": 10500.0, "original_id": "Busbar #1"}
 """
 
 ComponentList = List[Component]
@@ -165,17 +162,4 @@ Examples:
                 "line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],
             }
         ]
-"""
-
-ExtraInfo = Dict[int, Any]
-"""
-Extra info is a dictionary that contains information about the objects. It is indexed on the object IDs and the
-actual information can be anything.
-
-Example:
-    {
-        1: "First Node",
-        2: "Second Node",
-        3: {"name": "Cable", "material": "Aluminum"}
-    }
 """

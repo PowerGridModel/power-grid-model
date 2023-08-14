@@ -2,21 +2,26 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from itertools import product
+from typing import List, Union
+from unittest.mock import ANY, MagicMock, patch
+
 import numpy as np
 import pytest
 
-from power_grid_model import initialize_array, power_grid_meta_data
-from power_grid_model.enum import CalculationType
+from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
+from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
+    validate_generic_power_sensor,
     validate_ids_exist,
     validate_required_values,
     validate_unique_ids_across_components,
     validate_values,
 )
 
-NaN = power_grid_meta_data["input"]["node"]["nans"]["id"]
+NaN = power_grid_meta_data["input"]["node"].nans["id"]
 
 
 def test_assert_valid_data_structure():
@@ -130,6 +135,7 @@ def test_validate_ids_exist():
         pytest.param(None, id="no calculation type specified"),
         pytest.param(CalculationType.power_flow, id="power_flow"),
         pytest.param(CalculationType.state_estimation, id="state_estimation"),
+        pytest.param(CalculationType.short_circuit, id="short_circuit"),
     ],
 )
 @pytest.mark.parametrize("symmetric", [pytest.param(True, id="symmetric"), pytest.param(False, id="asymmetric")])
@@ -156,6 +162,8 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     asym_power_sensor["p_measured"] = [[np.nan, 2.0, 1.0]]
     asym_power_sensor["q_measured"] = [[2.0, 1.0, np.nan]]
 
+    fault = initialize_array("input", "fault", 1)
+
     data = {
         "node": node,
         "line": line,
@@ -172,11 +180,13 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
         "asym_voltage_sensor": asym_voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
         "asym_power_sensor": asym_power_sensor,
+        "fault": fault,
     }
     required_values_errors = validate_required_values(data=data, calculation_type=calculation_type, symmetric=symmetric)
 
     pf_dependent = calculation_type == CalculationType.power_flow or calculation_type is None
     se_dependent = calculation_type == CalculationType.state_estimation or calculation_type is None
+    sc_dependent = calculation_type == CalculationType.short_circuit or calculation_type is None
     asym_dependent = not symmetric
 
     assert MissingValueError("node", "id", [NaN]) in required_values_errors
@@ -191,11 +201,13 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("line", "x1", [NaN]) in required_values_errors
     assert MissingValueError("line", "c1", [NaN]) in required_values_errors
     assert MissingValueError("line", "tan1", [NaN]) in required_values_errors
-    assert MissingValueError("line", "i_n", [NaN]) in required_values_errors
     assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "x0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "c0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "tan0", [NaN]) in required_values_errors) == asym_dependent
+
+    # i_n made optional later in lines
+    assert MissingValueError("line", "i_n", [NaN]) not in required_values_errors
 
     assert MissingValueError("link", "id", [NaN]) in required_values_errors
     assert MissingValueError("link", "from_node", [NaN]) in required_values_errors
@@ -321,6 +333,10 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert (MissingValueError("asym_power_sensor", "p_measured", [NaN]) in required_values_errors) == se_dependent
     assert (MissingValueError("asym_power_sensor", "q_measured", [NaN]) in required_values_errors) == se_dependent
 
+    assert MissingValueError("fault", "id", [NaN]) in required_values_errors
+    assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
+    assert (MissingValueError("fault", "fault_type", [NaN]) in required_values_errors) == sc_dependent
+
 
 def test_validate_required_values_asym_calculation():
     line = initialize_array("input", "line", 1)
@@ -338,6 +354,29 @@ def test_validate_required_values_asym_calculation():
     assert MissingValueError("shunt", "b0", [NaN]) in required_values_errors
 
 
+@pytest.mark.parametrize("fault_types", product(list(FaultType), list(FaultType)))
+def test_validate_fault_sc_calculation(fault_types):
+    line = initialize_array("input", "line", 1)
+    shunt = initialize_array("input", "shunt", 1)
+    fault = initialize_array("input", "fault", 2)
+    fault["fault_type"] = fault_types
+
+    data = {"line": line, "shunt": shunt, "fault": fault}
+    required_values_errors = validate_required_values(data=data, calculation_type=CalculationType.short_circuit)
+
+    asym_sc_calculation = np.any(
+        list(fault_type not in (FaultType.three_phase, FaultType.nan) for fault_type in fault_types)
+    )
+
+    assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "x0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "c0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "tan0", [NaN]) in required_values_errors) == asym_sc_calculation
+
+    assert (MissingValueError("shunt", "g0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("shunt", "b0", [NaN]) in required_values_errors) == asym_sc_calculation
+
+
 def test_validate_values():
     # Create invalid nodes and lines
     node = initialize_array("input", "node", 3)
@@ -352,3 +391,66 @@ def test_validate_values():
 
     # The errors should add up (in this simple case)
     assert both_errors == node_errors + line_errors
+
+
+def test_validate_values__calculation_types():
+    # Create invalid sensor
+    sym_voltage_sensor = initialize_array("input", "sym_voltage_sensor", 3)
+    all_errors = validate_values({"sym_voltage_sensor": sym_voltage_sensor})
+    power_flow_errors = validate_values(
+        {"sym_voltage_sensor": sym_voltage_sensor}, calculation_type=CalculationType.power_flow
+    )
+    state_estimation_errors = validate_values(
+        {"sym_voltage_sensor": sym_voltage_sensor}, calculation_type=CalculationType.state_estimation
+    )
+
+    assert not power_flow_errors
+    assert all_errors == state_estimation_errors
+
+
+@pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
+@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_ids")
+def test_validate_generic_power_sensor__all_terminal_types(
+    all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_power_sensor(data={}, component="")
+
+    # Assert
+    all_valid_ids.assert_any_call(
+        ANY, ANY, field=ANY, ref_components=ANY, measured_terminal_type=measured_terminal_type
+    )
+
+
+@pytest.mark.parametrize(
+    ("ref_component", "measured_terminal_type"),
+    [
+        (["line", "transformer"], MeasuredTerminalType.branch_from),
+        (["line", "transformer"], MeasuredTerminalType.branch_to),
+        ("source", MeasuredTerminalType.source),
+        ("shunt", MeasuredTerminalType.shunt),
+        (["sym_load", "asym_load"], MeasuredTerminalType.load),
+        (["sym_gen", "asym_gen"], MeasuredTerminalType.generator),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_1),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_2),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_3),
+        ("node", MeasuredTerminalType.node),
+    ],
+)
+@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation.validation.all_valid_ids")
+def test_validate_generic_power_sensor__terminal_types(
+    all_valid_ids: MagicMock, ref_component: Union[str, List[str]], measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_power_sensor(data={}, component="")
+
+    # Assert
+    all_valid_ids.assert_any_call(
+        ANY, ANY, field=ANY, ref_components=ref_component, measured_terminal_type=measured_terminal_type
+    )

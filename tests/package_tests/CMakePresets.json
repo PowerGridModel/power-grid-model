@@ -1,0 +1,198 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "Package Test Base",
+      "description": "Base for all package integration tests.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}",
+      "environment": {
+        "PLATFORM_C_FLAGS": "",
+        "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",
+        "COMPILER_C_FLAGS": "",
+        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
+        "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
+        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "power_grid_model_DIR": "${sourceDir}/../../install/${presetName}/lib/cmake/power_grid_model"
+      },
+      "hidden": true
+    },
+    {
+      "name": "release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "hidden": true
+    },
+    {
+      "name": "debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "hidden": true
+    },
+    {
+      "name": "unix-base",
+      "description": "Target Unix platform.",
+      "hidden": true,
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base"
+    },
+    {
+      "name": "windows-base",
+      "description": "Target Windows platform.",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "inherits": "base"
+    },
+    {
+      "name": "ci-unix",
+      "environment": {
+        "SANITIZER_FLAGS": "-fsanitize=address"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
+      "name": "msvc-base",
+      "description": "Target Windows using the MSVC compiler.",
+      "hidden": true,
+      "environment": {
+        "CC": "cl.exe",
+        "CXX": "cl.exe"
+      },
+      "inherits": "windows-base"
+    },
+    {
+      "name": "clang-cl-base",
+      "description": "Target Windows using Clang with CL-like command line.",
+      "hidden": true,
+      "environment": {
+        "CC": "clang-cl.exe",
+        "CXX": "clang-cl.exe"
+      },
+      "inherits": "windows-base"
+    },
+    {
+      "name": "msvc-debug",
+      "displayName": "Debug (MSVC)",
+      "inherits": [
+        "msvc-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "msvc-release",
+      "displayName": "Release (MSVC)",
+      "inherits": [
+        "msvc-base",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-cl-debug",
+      "displayName": "Debug (Clang CL)",
+      "inherits": [
+        "clang-cl-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "clang-cl-release",
+      "displayName": "Release (Clang CL)",
+      "inherits": [
+        "clang-cl-base",
+        "release"
+      ]
+    },
+    {
+      "name": "ci-clang-debug",
+      "inherits": [
+        "ci-unix",
+        "debug"
+      ]
+    },
+    {
+      "name": "ci-clang-release",
+      "inherits": [
+        "ci-unix",
+        "release"
+      ]
+    },
+    {
+      "name": "ci-gcc-debug",
+      "inherits": [
+        "ci-unix",
+        "debug"
+      ]
+    },
+    {
+      "name": "ci-gcc-release",
+      "inherits": [
+        "ci-unix",
+        "release"
+      ]
+    },
+    {
+      "name": "ci-sonar",
+      "inherits": [
+        "unix-base",
+        "debug"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug"
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "msvc-release"
+    },
+    {
+      "name": "clang-cl-debug",
+      "configurePreset": "clang-cl-debug"
+    },
+    {
+      "name": "clang-cl-release",
+      "configurePreset": "clang-cl-release"
+    },
+    {
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
+    },
+    {
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
+    },
+    {
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
+    },
+    {
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
+    },
+    {
+      "name": "ci-sonar",
+      "configurePreset": "ci-sonar"
+    }
+  ]
+}

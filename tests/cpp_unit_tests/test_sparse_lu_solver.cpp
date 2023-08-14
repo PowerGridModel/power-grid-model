@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/math_solver/sparse_lu_solver.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <power_grid_model/math_solver/sparse_lu_solver.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
@@ -19,14 +20,12 @@ static_assert(lu_trait_tensor::is_block);
 static_assert(lu_trait_tensor::block_size == 3);
 static_assert(std::is_same_v<lu_trait_tensor::Scalar, DoubleComplex>);
 
-template <class T>
-void check_result(std::vector<T> const& x, std::vector<T> const& x_solver) {
+template <class T> void check_result(std::vector<T> const& x, std::vector<T> const& x_solver) {
     CHECK(x.size() == x_solver.size());
     for (size_t i = 0; i < x.size(); i++) {
-        if constexpr (check_scalar_v<T>) {
+        if constexpr (scalar_value<T>) {
             CHECK(cabs(x[i] - x_solver[i]) < numerical_tolerance);
-        }
-        else {
+        } else {
             CHECK((cabs(x[i] - x_solver[i]) < numerical_tolerance).all());
         }
     }
@@ -51,12 +50,12 @@ TEST_CASE("Test Sparse LU solver") {
         //  3 7 f     * [-1]   =  [ 2 ]
         //  2 f 6]       2          18
         std::vector<double> data = {
-            4, 1, 5,  // row 0
-            3, 7, 0,  // row 1
-            2, 0, 6   // row 2
+            4, 1, 5, // row 0
+            3, 7, 0, // row 1
+            2, 0, 6  // row 2
         };
-        std::vector<double> rhs = {21, 2, 18};
-        std::vector<double> x_ref = {3, -1, 2};
+        std::vector<double> const rhs = {21, 2, 18};
+        std::vector<double> const x_ref = {3, -1, 2};
         std::vector<double> x(3, 0.0);
         SparseLUSolver<double, double, double> solver{row_indptr, col_indices, diag_lu};
         SparseLUSolver<double, double, double>::BlockPermArray block_perm{};
@@ -96,18 +95,18 @@ TEST_CASE("Test Sparse LU solver") {
 
         //  2 f 6]        2          18
         std::vector<Tensor> data = {
-            {{0, 1}, {100, 0}},  // 0, 0
-            {{1, 2}, {7, -1}},   // 0, 1
-            {{3, 4}, {5, 6}},    // 0, 2
-            {{1, 2}, {-3, 4}},   // 1, 0
-            {{0, 200}, {3, 1}},  // 1, 1
-            {{0, 0}, {0, 0}},    // 1, 2
-            {{5, 6}, {-7, 8}},   // 2, 0
-            {{0, 0}, {0, 0}},    // 2, 1
-            {{1, 0}, {0, 100}},  // 2, 2
+            {{0, 1}, {100, 0}}, // 0, 0
+            {{1, 2}, {7, -1}},  // 0, 1
+            {{3, 4}, {5, 6}},   // 0, 2
+            {{1, 2}, {-3, 4}},  // 1, 0
+            {{0, 200}, {3, 1}}, // 1, 1
+            {{0, 0}, {0, 0}},   // 1, 2
+            {{5, 6}, {-7, 8}},  // 2, 0
+            {{0, 0}, {0, 0}},   // 2, 1
+            {{1, 0}, {0, 100}}, // 2, 2
         };
-        std::vector<Array> rhs = {{38, 356}, {-389, 2}, {44, 611}};
-        std::vector<Array> x_ref = {{3, 4}, {-1, -2}, {5, 6}};
+        std::vector<Array> const rhs = {{38, 356}, {-389, 2}, {44, 611}};
+        std::vector<Array> const x_ref = {{3, 4}, {-1, -2}, {5, 6}};
         std::vector<Array> x(3, Array::Zero());
         SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu};
         SparseLUSolver<Tensor, Array, Array>::BlockPermArray block_perm(3);
@@ -129,4 +128,4 @@ TEST_CASE("Test Sparse LU solver") {
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

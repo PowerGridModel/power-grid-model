@@ -4,14 +4,15 @@
 
 """Power Grid Model"""
 
-# pylint: disable=no-name-in-module
-
-from power_grid_model._power_grid_core import PowerGridModel, initialize_array, power_grid_meta_data
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
+from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
     CalculationMethod,
     CalculationType,
+    FaultPhase,
+    FaultType,
     LoadGenType,
     MeasuredTerminalType,
     WindingType,

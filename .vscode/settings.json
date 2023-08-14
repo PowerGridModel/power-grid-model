@@ -1,0 +1,28 @@
+// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+//
+// SPDX-License-Identifier: MPL-2.0
+{
+    "cmake.buildDirectory": "${workspaceFolder}/cpp_build/${buildType}",
+    "C_Cpp.autoAddFileAssociations": false,
+    "cmake.configureOnOpen": true,
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "POWER_GRID_MODEL_SANITIZER": 1
+    },
+    "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests",
+    "doxdocgen.generic.filteredKeywords": ["PGM_API"],
+    "doxdocgen.generic.includeTypeAtReturn": false,
+    "python.testing.pytestArgs": [
+        "tests",
+        "--no-cov"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "sonarlint.pathToCompileCommands": "${command:cmake.buildDirectory}/compile_commands.json",
+    "sonarlint.connectedMode.project": {
+        "connectionId": "powergridmodel",
+        "projectKey": "PowerGridModel_power-grid-model"
+    },
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.clang_format_fallbackStyle": "LLVM"
+}

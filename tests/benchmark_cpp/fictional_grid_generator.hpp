@@ -4,22 +4,22 @@
 
 #pragma once
 
-#include <random>
-
 #include "power_grid_model/main_model.hpp"
-#include "power_grid_model/timer.hpp"
+
+#include <algorithm>
+#include <random>
 
 namespace power_grid_model::benchmark {
 
 struct Option {
-    Idx n_node_total_specified;  // rough specification of total nodes
-    Idx n_mv_feeder;             // n mv feeder will be changed it is too small
+    Idx n_node_total_specified; // rough specification of total nodes
+    Idx n_mv_feeder;            // n mv feeder will be changed it is too small
     Idx n_node_per_mv_feeder;
     Idx n_lv_feeder;
-    Idx n_connection_per_lv_feeder;    // per connection: one node for connection joint, one node for actual house
-    Idx n_parallel_hv_mv_transformer;  // will be calculated
-    Idx n_lv_grid;                     // will be calculated
-    double ratio_lv_grid;              // ratio when lv grid will be generated
+    Idx n_connection_per_lv_feeder;   // per connection: one node for connection joint, one node for actual house
+    Idx n_parallel_hv_mv_transformer; // will be calculated
+    Idx n_lv_grid;                    // will be calculated
+    double ratio_lv_grid;             // ratio when lv grid will be generated
     bool has_mv_ring;
     bool has_lv_ring;
 };
@@ -35,19 +35,18 @@ struct InputData {
 
     ConstDataset get_dataset() const {
         ConstDataset dataset;
-        dataset.try_emplace("node", node.data(), (Idx)node.size());
-        dataset.try_emplace("transformer", transformer.data(), (Idx)transformer.size());
-        dataset.try_emplace("line", line.data(), (Idx)line.size());
-        dataset.try_emplace("source", source.data(), (Idx)source.size());
-        dataset.try_emplace("sym_load", sym_load.data(), (Idx)sym_load.size());
-        dataset.try_emplace("asym_load", asym_load.data(), (Idx)asym_load.size());
-        dataset.try_emplace("shunt", shunt.data(), (Idx)shunt.size());
+        dataset.try_emplace("node", node.data(), static_cast<Idx>(node.size()));
+        dataset.try_emplace("transformer", transformer.data(), static_cast<Idx>(transformer.size()));
+        dataset.try_emplace("line", line.data(), static_cast<Idx>(line.size()));
+        dataset.try_emplace("source", source.data(), static_cast<Idx>(source.size()));
+        dataset.try_emplace("sym_load", sym_load.data(), static_cast<Idx>(sym_load.size()));
+        dataset.try_emplace("asym_load", asym_load.data(), static_cast<Idx>(asym_load.size()));
+        dataset.try_emplace("shunt", shunt.data(), static_cast<Idx>(shunt.size()));
         return dataset;
     }
 };
 
-template <bool sym>
-struct OutputData {
+template <bool sym> struct OutputData {
     std::vector<NodeOutput<sym>> node;
     std::vector<BranchOutput<sym>> transformer;
     std::vector<BranchOutput<sym>> line;
@@ -59,13 +58,14 @@ struct OutputData {
 
     Dataset get_dataset() {
         Dataset dataset;
-        dataset.try_emplace("node", node.data(), batch_size, (Idx)(node.size() / batch_size));
-        dataset.try_emplace("transformer", transformer.data(), batch_size, (Idx)(transformer.size() / batch_size));
-        dataset.try_emplace("line", line.data(), batch_size, (Idx)(line.size() / batch_size));
-        dataset.try_emplace("source", source.data(), batch_size, (Idx)(source.size() / batch_size));
-        dataset.try_emplace("sym_load", sym_load.data(), batch_size, (Idx)(sym_load.size() / batch_size));
-        dataset.try_emplace("asym_load", asym_load.data(), batch_size, (Idx)(asym_load.size() / batch_size));
-        dataset.try_emplace("shunt", shunt.data(), batch_size, (Idx)(shunt.size() / batch_size));
+        dataset.try_emplace("node", node.data(), batch_size, static_cast<Idx>(node.size()) / batch_size);
+        dataset.try_emplace("transformer", transformer.data(), batch_size,
+                            static_cast<Idx>(transformer.size()) / batch_size);
+        dataset.try_emplace("line", line.data(), batch_size, static_cast<Idx>(line.size()) / batch_size);
+        dataset.try_emplace("source", source.data(), batch_size, static_cast<Idx>(source.size()) / batch_size);
+        dataset.try_emplace("sym_load", sym_load.data(), batch_size, static_cast<Idx>(sym_load.size()) / batch_size);
+        dataset.try_emplace("asym_load", asym_load.data(), batch_size, static_cast<Idx>(asym_load.size()) / batch_size);
+        dataset.try_emplace("shunt", shunt.data(), batch_size, static_cast<Idx>(shunt.size()) / batch_size);
         return dataset;
     }
 };
@@ -80,20 +80,17 @@ struct BatchData {
         if (batch_size == 0) {
             return dataset;
         }
-        dataset.try_emplace("sym_load", sym_load.data(), batch_size, (Idx)(sym_load.size() / batch_size));
-        dataset.try_emplace("asym_load", asym_load.data(), batch_size, (Idx)(asym_load.size() / batch_size));
+        dataset.try_emplace("sym_load", sym_load.data(), batch_size, static_cast<Idx>(sym_load.size()) / batch_size);
+        dataset.try_emplace("asym_load", asym_load.data(), batch_size, static_cast<Idx>(asym_load.size()) / batch_size);
         return dataset;
     }
 };
 
 class FictionalGridGenerator {
-   public:
-    FictionalGridGenerator() {
-    }
+  public:
+    FictionalGridGenerator() {}
 
-    void generate_grid(Option const& option) {
-        generate_grid(option, std::random_device{}());
-    }
+    void generate_grid(Option const& option) { generate_grid(option, std::random_device{}()); }
 
     void generate_grid(Option const& option, std::random_device::result_type seed) {
         // initialization
@@ -110,8 +107,7 @@ class FictionalGridGenerator {
             option_.n_lv_grid = 0;
             option_.n_mv_feeder = (option_.n_node_total_specified - 2) / option_.n_node_per_mv_feeder;
             total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder;
-        }
-        else {
+        } else {
             option_.n_lv_grid = (option_.n_node_total_specified - total_mv_connection) / node_per_lv_grid;
         }
         if (option_.n_lv_grid > total_mv_connection) {
@@ -125,13 +121,10 @@ class FictionalGridGenerator {
         generate_mv_grid();
     }
 
-    InputData const& input_data() const {
-        return input_;
-    }
+    InputData const& input_data() const { return input_; }
 
-    template <bool sym>
-    OutputData<sym> generate_output_data(Idx batch_size = 1) const {
-        batch_size = std::max(batch_size, 1);
+    template <bool sym> OutputData<sym> generate_output_data(Idx batch_size = 1) const {
+        batch_size = std::max(batch_size, Idx{1});
         OutputData<sym> output{};
         output.batch_size = batch_size;
         output.node.resize(input_.node.size() * batch_size);
@@ -144,12 +137,10 @@ class FictionalGridGenerator {
         return output;
     }
 
-    BatchData generate_batch_input(Idx batch_size) {
-        return generate_batch_input(batch_size, std::random_device{}());
-    }
+    BatchData generate_batch_input(Idx batch_size) { return generate_batch_input(batch_size, std::random_device{}()); }
 
     BatchData generate_batch_input(Idx batch_size, std::random_device::result_type seed) {
-        batch_size = std::max(batch_size, 0);
+        batch_size = std::max(batch_size, Idx{0});
         gen_ = std::mt19937_64{seed};
         BatchData batch_data{};
         batch_data.batch_size = batch_size;
@@ -158,24 +149,24 @@ class FictionalGridGenerator {
         return batch_data;
     }
 
-   private:
+  private:
     Option option_{};
     std::mt19937_64 gen_;
-    Idx id_gen_;
+    ID id_gen_;
     InputData input_;
     std::vector<Idx> mv_ring_;
     std::vector<Idx> lv_ring_;
 
     void generate_mv_grid() {
         // source node
-        Idx const id_source_node = id_gen_++;
+        ID const id_source_node = id_gen_++;
         NodeInput const source_node{{id_source_node}, 150.0e3};
         input_.node.push_back(source_node);
         SourceInput const source{{{id_gen_++}, id_source_node, true}, 1.05, nan, 2000e6, nan, nan};
         input_.source.push_back(source);
 
         // transformer and mv busbar
-        Idx const id_mv_busbar = id_gen_++;
+        ID const id_mv_busbar = id_gen_++;
         NodeInput const mv_busbar{{id_mv_busbar}, 10.5e3};
         input_.node.push_back(mv_busbar);
         for (Idx i = 0; i != option_.n_parallel_hv_mv_transformer; ++i) {
@@ -228,11 +219,11 @@ class FictionalGridGenerator {
 
         // loop all feeder
         for (Idx i = 0; i < option_.n_mv_feeder; i++) {
-            Idx prev_node_id = id_mv_busbar;
+            ID prev_node_id = id_mv_busbar;
             // loop all mv connection
             for (Idx j = 0; j < option_.n_node_per_mv_feeder; ++j) {
                 // node
-                Idx const current_node_id = id_gen_++;
+                ID const current_node_id = id_gen_++;
                 NodeInput node = mv_node;
                 node.id = current_node_id;
                 input_.node.push_back(node);
@@ -246,8 +237,7 @@ class FictionalGridGenerator {
                 // generate lv grid
                 if (lv_gen(gen_)) {
                     generate_lv_grid(current_node_id, 10.0 / option_.n_node_per_mv_feeder);
-                }
-                else {
+                } else {
                     // generate mv sym load
                     SymLoadGenInput sym_load = mv_sym_load;
                     sym_load.id = id_gen_++;
@@ -285,8 +275,8 @@ class FictionalGridGenerator {
         }
     }
 
-    void generate_lv_grid(Idx mv_node, double mv_base_load) {
-        Idx const id_lv_busbar = id_gen_++;
+    void generate_lv_grid(ID mv_node, double mv_base_load) {
+        ID const id_lv_busbar = id_gen_++;
         NodeInput const lv_busbar{{id_lv_busbar}, 400.0};
         input_.node.push_back(lv_busbar);
         // transformer, 1500 kVA or mv base load, uk=6%, pk=8.8kW
@@ -344,16 +334,16 @@ class FictionalGridGenerator {
 
         // loop feeders
         for (Idx i = 0; i < option_.n_lv_feeder; ++i) {
-            Idx prev_main_node_id = id_lv_busbar;
+            ID prev_main_node_id = id_lv_busbar;
             // loop all LV connection
             for (Idx j = 0; j < option_.n_connection_per_lv_feeder; ++j) {
                 // main node
-                Idx const current_main_node_id = id_gen_++;
+                ID const current_main_node_id = id_gen_++;
                 NodeInput main_node = lv_node;
                 main_node.id = current_main_node_id;
                 input_.node.push_back(main_node);
                 // connection node
-                Idx const connection_node_id = id_gen_++;
+                ID const connection_node_id = id_gen_++;
                 NodeInput connection_node = lv_node;
                 connection_node.id = connection_node_id;
                 input_.node.push_back(connection_node);
@@ -435,4 +425,4 @@ class FictionalGridGenerator {
     }
 };
 
-}  // namespace power_grid_model::benchmark
+} // namespace power_grid_model::benchmark

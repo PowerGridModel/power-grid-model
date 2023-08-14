@@ -62,18 +62,19 @@ def assert_list_of_dicts_of_numpy_arrays_equal(expected, actual):
 
 
 def test_update_input_data():
-    input_test = np.array(
-        [(4, 4.0, 4.1), (5, 5.0, 5.1), (6, 6.0, 6.1), (1, 1.0, np.nan), (2, 2.0, np.nan), (3, 3.0, np.nan)],
-        dtype=[("id", "i4"), ("foo", "f8"), ("bar", "f8")],
-    )
+    input_test = initialize_array("input", "sym_load", 6)
+    input_test["id"] = [4, 5, 6, 1, 2, 3]
+    input_test["p_specified"] = [4.0, 5.0, 6.0, 1.0, 2.0, 3.0]
+    input_test["q_specified"] = [4.1, 5.1, 6.1, np.nan, np.nan, np.nan]
 
-    update_test = np.array([(6, np.nan), (5, 5.2), (2, np.nan), (3, 3.2)], dtype=[("id", "i4"), ("bar", "f8")])
+    update_test = initialize_array("update", "sym_load", 4)
+    update_test["id"] = [6, 5, 2, 3]
+    update_test["q_specified"] = [np.nan, 5.2, np.nan, 3.2]
 
-    merged = update_input_data(input_data={"test": input_test}, update_data={"test": update_test})
-
-    np.testing.assert_array_equal(merged["test"]["id"], [4, 5, 6, 1, 2, 3])
-    np.testing.assert_array_equal(merged["test"]["foo"], [4.0, 5.0, 6.0, 1.0, 2.0, 3.0])
-    np.testing.assert_array_equal(merged["test"]["bar"], [4.1, 5.2, 6.1, np.nan, np.nan, 3.2])
+    merged = update_input_data(input_data={"sym_load": input_test}, update_data={"sym_load": update_test})
+    np.testing.assert_array_equal(merged["sym_load"]["id"], [4, 5, 6, 1, 2, 3])
+    np.testing.assert_array_equal(merged["sym_load"]["p_specified"], [4.0, 5.0, 6.0, 1.0, 2.0, 3.0])
+    np.testing.assert_array_equal(merged["sym_load"]["q_specified"], [4.1, 5.2, 6.1, np.nan, np.nan, 3.2])
 
 
 def test_update_input_data_int_nan():
@@ -101,14 +102,8 @@ def test_update_input_data_asym_nans():
 
     merged = update_input_data(input_data={"asym_load": input_load}, update_data={"asym_load": update_load})
 
-    # The desired result would be to update all non-NaN values individually:
-    # np.testing.assert_array_equal(
-    #     merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [2.1, np.nan, 5.3], [6.1, 6.2, 6.3]]
-    # )
-
-    # The current C++ implementation updates the entire 3-phase value is one of the elements is non-NaN:
     np.testing.assert_array_equal(
-        merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [np.nan, np.nan, 5.3], [6.1, 6.2, 6.3]]
+        merged["asym_load"]["p_specified"], [[1.1, 1.2, 1.3], [2.1, np.nan, 5.3], [6.1, 6.2, 6.3]]
     )
 
 

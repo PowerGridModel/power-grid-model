@@ -1,0 +1,203 @@
+{
+    "name": "update",
+    "include_guard": "UPDATE",
+    "classes": [
+        {
+            "name": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "id",
+                    "description": "ID of the object"
+                }
+            ]
+        },
+        {
+            "name": "BranchUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": [
+                        "from_status",
+                        "to_status"
+                    ],
+                    "description": "whether the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3Update",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": [
+                        "status_1",
+                        "status_2",
+                        "status_3"
+                    ],
+                    "description": "whether the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "whether the appliance is connected"
+                }
+            ]
+        },
+        {
+            "name": "TransformerUpdate",
+            "base": "BranchUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "tap_pos",
+                    "description": "tap changer parameters"
+                }
+            ]
+        },
+        {
+            "name": "ThreeWindingTransformerUpdate",
+            "base": "Branch3Update",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "tap_pos",
+                    "description": "tap changer parameters"
+                }
+            ]
+        },
+        {
+            "name": "LoadGenUpdate",
+            "base": "ApplianceUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_specified",
+                        "q_specified"
+                    ],
+                    "description": "specified active/reactive power"
+                }
+            ]
+        },
+        {
+            "name": "SourceUpdate",
+            "base": "ApplianceUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u_ref",
+                        "u_ref_angle"
+                    ],
+                    "description": "reference voltage"
+                }
+            ]
+        },
+        {
+            "name": "ShuntUpdate",
+            "base": "ApplianceUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g1",
+                        "b1"
+                    ],
+                    "description": "positive sequence admittance"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g0",
+                        "b0"
+                    ],
+                    "description": "zero sequence admittance"
+                }
+            ]
+        },
+        {
+            "name": "VoltageSensorUpdate",
+            "base": "BaseUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_sigma",
+                    "description": "sigma of error margin of voltage measurement"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "u_measured",
+                        "u_angle_measured"
+                    ],
+                    "description": "measured voltage magnitude and angle"
+                }
+            ]
+        },
+        {
+            "name": "PowerSensorUpdate",
+            "base": "BaseUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "power_sigma",
+                    "description": "sigma of error margin of power measurement"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_measured",
+                        "q_measured"
+                    ],
+                    "description": "measured active/reactive power"
+                }
+            ]
+        },
+        {
+            "name": "FaultUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "whether the fault is connected"
+                },
+                {
+                    "data_type": "FaultType",
+                    "names": "fault_type",
+                    "description": "type of the fault"
+                },
+                {
+                    "data_type": "FaultPhase",
+                    "names": "fault_phase",
+                    "description": "phase(s) of the fault"
+                },
+                {
+                    "data_type": "ID",
+                    "names": "fault_object",
+                    "description": "ID of the faulted object"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r_f",
+                        "x_f"
+                    ],
+                    "description": "short circuit impedance"
+                }
+            ]
+        }
+    ]
+}

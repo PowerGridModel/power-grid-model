@@ -2,13 +2,27 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/exception.hpp"
-#include "power_grid_model/math_solver/math_solver.hpp"
-#include "power_grid_model/math_solver/newton_raphson_pf_solver.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+// In this unit test the powerflow and state estimation solvers are tested
+
+#include <power_grid_model/exception.hpp>
+#include <power_grid_model/math_solver/math_solver.hpp>
+#include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
+#include <power_grid_model/three_phase_tensor.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+using CalculationMethod::iterative_current;
+using CalculationMethod::iterative_linear;
+using CalculationMethod::linear;
+using CalculationMethod::linear_current;
+using CalculationMethod::newton_raphson;
+using FaultType::single_phase_to_ground;
+using FaultType::three_phase;
+using FaultType::two_phase;
+using FaultType::two_phase_to_ground;
+} // namespace
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {
@@ -25,7 +39,7 @@ TEST_CASE("Test block") {
 
     SUBCASE("Asymmetric") {
         math_model_impl::PFJacBlock<false> b{};
-        RealTensor<false> h{1.0}, n{2.0}, m{3.0}, l{4.0};
+        RealTensor<false> const h{1.0}, n{2.0}, m{3.0}, l{4.0};
         b.h() += h;
         b.n() += n;
         b.m() += m;
@@ -37,49 +51,80 @@ TEST_CASE("Test block") {
     }
 }
 
-#define CHECK_CLOSE(x, y)                             \
-    if constexpr (sym)                                \
-        CHECK(cabs((x) - (y)) < numerical_tolerance); \
-    else                                              \
-        CHECK((cabs((x) - (y)) < numerical_tolerance).all());
+namespace {
+
+#define CHECK_CLOSE(x, y, tolerance)                                                                                   \
+    do {                                                                                                               \
+        if constexpr (sym) {                                                                                           \
+            CHECK(cabs((x) - (y)) < (tolerance));                                                                      \
+        } else {                                                                                                       \
+            CHECK((cabs((x) - (y)) < (tolerance)).all());                                                              \
+        }                                                                                                              \
+    } while (false)
 
 template <bool sym>
-void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false) {
+void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
+                   double tolerance = numerical_tolerance) {
     DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
     for (size_t i = 0; i != output.u.size(); ++i) {
-        CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset);
+        CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset, tolerance);
+    }
+    for (size_t i = 0; i != output.bus_injection.size(); ++i) {
+        CHECK_CLOSE(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
     }
     for (size_t i = 0; i != output.branch.size(); ++i) {
-        CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f);
-        CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t);
-        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset);
-        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset);
+        CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
+        CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
+        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
+        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.source.size(); ++i) {
-        CHECK_CLOSE(output.source[i].s, output_ref.source[i].s);
-        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset);
+        CHECK_CLOSE(output.source[i].s, output_ref.source[i].s, tolerance);
+        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.load_gen.size(); ++i) {
-        CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s);
-        CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset);
+        CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
+        CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.shunt.size(); ++i) {
-        CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s);
-        CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset);
+        CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
+        CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
+    }
+}
+
+template <bool sym>
+void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
+                      double tolerance = numerical_tolerance) {
+    for (size_t i = 0; i != output.u_bus.size(); ++i) {
+        CHECK_CLOSE(output.u_bus[i], output_ref.u_bus[i], tolerance);
+    }
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f, tolerance);
+    }
+    for (size_t i = 0; i != output.branch.size(); ++i) {
+        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t, tolerance);
+    }
+    for (size_t i = 0; i != output.fault.size(); ++i) {
+        CHECK_CLOSE(output.fault[i].i_fault, output_ref.fault[i].i_fault, tolerance);
+    }
+    for (size_t i = 0; i != output.source.size(); ++i) {
+        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i, tolerance);
     }
 }
 
 #undef CHECK_CLOSE
 
+} // namespace
+
 TEST_CASE("Test math solver") {
     /*
-    network, m means measured, mm means double measured
+    network, v means voltage measured, p means power measured, pp means double measured
     variance always 1.0
-                                                          shunt0 (ys) (m)
-     (mm)                     (y0, ys0)           (y1)         |
-    source --yref-- bus0(m) -m-branch0-mm- bus1 --branch1-m-  bus2(mm)
+                                                          shunt0 (ys) (p)
+     (pp)                     (y0, ys0)           (y1)         |
+    source --yref-- bus0(vp) -p-branch0-pp- bus1 --branch1-p-  bus2(vv)
                      |                      |                   |
-                  load012                load345 (m)          load6 (not connected) (m, rubbish value)
+                  load012                load345 (p)          load6 (not connected) (p, rubbish value)
                                           for const z,
                                        rubbish value for load3/4
 
@@ -100,9 +145,10 @@ TEST_CASE("Test math solver") {
     topo.load_gen_type = {
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
-        LoadGenType::const_pq  // not connected
+        LoadGenType::const_pq // not connected
     };
     topo.voltage_sensor_indptr = {0, 1, 1, 3};
+    topo.bus_power_sensor_indptr = {0, 1, 1, 1};
     topo.source_power_sensor_indptr = {0, 2};
     topo.load_gen_power_sensor_indptr = {0, 0, 0, 0, 1, 2, 3, 4};
     topo.shunt_power_sensor_indptr = {0, 1};
@@ -146,27 +192,33 @@ TEST_CASE("Test math solver") {
     output_ref.source[0].i = yref * (uref - u0);
     output_ref.source[0].s = conj(output_ref.source[0].i) * u0;
     // injection of bus0 and bus1
-    DoubleComplex const i0_inj = -output_ref.source[0].i + output_ref.branch[0].i_f;
-    DoubleComplex const i1_inj = output_ref.branch[0].i_t + output_ref.branch[1].i_f;
-    DoubleComplex const s0_inj = conj(i0_inj) * u0;
-    DoubleComplex const s1_inj = conj(i1_inj) * u1;
+    DoubleComplex const i0_load_inj = -output_ref.source[0].i + output_ref.branch[0].i_f;
+    DoubleComplex const i1_load_inj = output_ref.branch[0].i_t + output_ref.branch[1].i_f;
+    DoubleComplex const s0_load_inj = conj(i0_load_inj) * u0;
+    DoubleComplex const s1_load_inj = conj(i1_load_inj) * u1;
     // injection of shunt0 at bus2
-    DoubleComplex const i2_inj = output_ref.branch[1].i_t;
+    DoubleComplex const i2_shunt_inj = output_ref.branch[1].i_t;
     // shunt param and result
-    DoubleComplex const ys = -i2_inj / u2;
+    DoubleComplex const ys = -i2_shunt_inj / u2;
     param.shunt_param = {ys};
-    output_ref.shunt = {{conj(i2_inj) * u2, i2_inj}};
+    output_ref.shunt = {{conj(i2_shunt_inj) * u2, i2_shunt_inj}};
     // load input and result, load6 is disconnected
-    pf_input.s_injection = {s0_inj / 3.0, s0_inj / 3.0 / v0, s0_inj / 3.0 / v0 / v0,
-                            s1_inj / 3.0, s1_inj / 3.0 / v1, s1_inj / 3.0 / v1 / v1,
+    pf_input.s_injection = {s0_load_inj / 3.0,
+                            s0_load_inj / 3.0 / v0,
+                            s0_load_inj / 3.0 / v0 / v0,
+                            s1_load_inj / 3.0,
+                            s1_load_inj / 3.0 / v1,
+                            s1_load_inj / 3.0 / v1 / v1,
                             0.0};
-    output_ref.load_gen = {{s0_inj / 3.0, i0_inj / 3.0},
-                           {s0_inj / 3.0, i0_inj / 3.0},
-                           {s0_inj / 3.0, i0_inj / 3.0},
-                           {s1_inj / 3.0, i1_inj / 3.0},
-                           {s1_inj / 3.0, i1_inj / 3.0},
-                           {s1_inj / 3.0, i1_inj / 3.0},
+    output_ref.load_gen = {{s0_load_inj / 3.0, i0_load_inj / 3.0},
+                           {s0_load_inj / 3.0, i0_load_inj / 3.0},
+                           {s0_load_inj / 3.0, i0_load_inj / 3.0},
+                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
+                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
+                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
                            {0.0, 0.0}};
+    // bus injection
+    output_ref.bus_injection = {output_ref.branch[0].s_f, output_ref.branch[0].s_t + output_ref.branch[1].s_f, 0};
 
     // const z
     PowerFlowInput<true> pf_input_z = pf_input;
@@ -176,8 +228,7 @@ TEST_CASE("Test math solver") {
             pf_input_z.s_injection[i] *= 3.0;
             output_ref_z.load_gen[i].i *= 3.0;
             output_ref_z.load_gen[i].s *= 3.0;
-        }
-        else {
+        } else {
             pf_input_z.s_injection[i] = 0.0;
             output_ref_z.load_gen[i] = {};
         }
@@ -190,7 +241,7 @@ TEST_CASE("Test math solver") {
     DoubleComplex const y0_0 = 0.5 + 0.5i;
     ComplexTensor<false> y0a{2.0 * y0 + y0_0, y0_0 - y0};
     y0a /= 3.0;
-    ComplexTensor<false> ys0a{ys0, 0.0};
+    ComplexTensor<false> const ys0a{ys0, 0.0};
     ComplexTensor<false> y1_1{2.0 * y1, -y1};
     y1_1 /= 3.0;
     ComplexTensor<false> y1_3;
@@ -228,6 +279,10 @@ TEST_CASE("Test math solver") {
         output_ref_asym.branch[i].i_f = ComplexValue<false>{output_ref.branch[i].i_f};
         output_ref_asym.branch[i].i_t = ComplexValue<false>{output_ref.branch[i].i_t};
     }
+    output_ref_asym.bus_injection.resize(output_ref.bus_injection.size());
+    for (size_t i = 0; i != output_ref.bus_injection.size(); ++i) {
+        output_ref_asym.bus_injection[i] = output_ref.bus_injection[i] * RealValue<false>{1.0};
+    }
     output_ref_asym.source.resize(output_ref.source.size());
     for (size_t i = 0; i != output_ref.source.size(); ++i) {
         output_ref_asym.source[i].s = output_ref.source[i].s * RealValue<false>{1.0};
@@ -252,8 +307,7 @@ TEST_CASE("Test math solver") {
             pf_input_asym_z.s_injection[i] *= 3.0;
             output_ref_asym_z.load_gen[i].i *= 3.0;
             output_ref_asym_z.load_gen[i].s *= 3.0;
-        }
-        else {
+        } else {
             pf_input_asym_z.s_injection[i] = ComplexValue<false>{0.0};
             output_ref_asym_z.load_gen[i] = {};
         }
@@ -271,6 +325,8 @@ TEST_CASE("Test math solver") {
     se_input_angle.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
     se_input_angle.source_status = {1};
     se_input_angle.measured_voltage = {{output_ref.u[0], 1.0}, {output_ref.u[2], 1.0}, {output_ref.u[2], 1.0}};
+    se_input_angle.measured_bus_injection = {
+        {output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s, 1.0}};
     se_input_angle.measured_source_power = {{output_ref.source[0].s, 1.0}, {output_ref.source[0].s, 1.0}};
     se_input_angle.measured_load_gen_power = {
         {output_ref.load_gen[3].s, 1.0},
@@ -312,6 +368,10 @@ TEST_CASE("Test math solver") {
     se_input_asym_angle.measured_voltage = {{ComplexValue<false>{output_ref.u[0]}, 1.0},
                                             {ComplexValue<false>{output_ref.u[2]}, 1.0},
                                             {ComplexValue<false>{output_ref.u[2]}, 1.0}};
+    se_input_asym_angle.measured_bus_injection = {
+        {(output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s) *
+             RealValue<false>{1.0},
+         1.0}};
     se_input_asym_angle.measured_source_power = {{output_ref.source[0].s * RealValue<false>{1.0}, 1.0},
                                                  {output_ref.source[0].s * RealValue<false>{1.0}, 1.0}};
     se_input_asym_angle.measured_load_gen_power = {
@@ -350,18 +410,18 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref);
         // copy
         MathSolver<true> solver2{solver};
         solver2.clear_solver();
-        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref);
         // move
         MathSolver<true> solver3{std::move(solver)};
-        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref);
     }
@@ -369,19 +429,28 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_current);
+        MathOutput<true> const output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current);
         // verify
         assert_output(output, output_ref);
+    }
+
+    SUBCASE("Test symmetric linear current pf solver") {
+        // low precision
+        constexpr auto error_tolerance{5e-3};
+        constexpr auto result_tolerance{5e-2};
+
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        CalculationInfo info;
+        MathOutput<true> const output = solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current);
+        // verify
+        assert_output(output, output_ref, false, result_tolerance);
     }
 
     SUBCASE("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::iterative_linear),
-                        InvalidCalculationMethod);
-        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, CalculationMethod::linear),
-                        InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_linear), InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, linear), InvalidCalculationMethod);
     }
 
     SUBCASE("Test const z pf solver") {
@@ -389,7 +458,7 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
 
         // const z
-        MathOutput<true> output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, CalculationMethod::linear);
+        MathOutput<true> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -398,27 +467,30 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         pf_input.s_injection[6] = 1e6;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson),
-                        IterationDiverge);
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson), IterationDiverge);
     }
 
     SUBCASE("Test singular ybus") {
+        std::vector<CalculationMethod> const methods{linear, newton_raphson, linear_current, iterative_current};
+
         param.branch_param[0] = BranchCalcParam<true>{};
         param.branch_param[1] = BranchCalcParam<true>{};
         param.shunt_param[0] = 0.0;
         MathSolver<true> solver{topo_ptr, std::make_shared<MathModelParam<true> const>(param)};
         CalculationInfo info;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, CalculationMethod::newton_raphson),
-                        SparseMatrixError);
+
+        for (auto method : methods) {
+            CAPTURE(method);
+            CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method), SparseMatrixError);
+        }
     }
 
     SUBCASE("Test asymmetric pf solver") {
-        MathSolver<true> solver_sym{topo_ptr, param_ptr};
+        MathSolver<true> const solver_sym{topo_ptr, param_ptr};
         // construct from existing y bus struct
         MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::newton_raphson);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -426,8 +498,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test iterative current asymmetric pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, CalculationMethod::iterative_current);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -436,7 +507,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         // const z
-        MathOutput<false> output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, CalculationMethod::linear);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -444,8 +515,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_state_estimation(se_input_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<true> const output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref);
     }
@@ -453,8 +523,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se without angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<true> const output =
+            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref, true);
     }
@@ -462,8 +532,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle, const z") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output =
-            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<true> const output =
+            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -471,8 +541,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<false> const output =
+            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -480,8 +550,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se without angle") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output =
-            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, CalculationMethod::iterative_linear);
+        MathOutput<false> const output =
+            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear);
         // verify
         assert_output(output, output_ref_asym, true);
     }
@@ -489,19 +559,461 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle, const z") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
-                                                               CalculationMethod::iterative_linear);
+        MathOutput<false> const output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
+
+                                                                     iterative_linear);
         // verify
         assert_output(output, output_ref_asym_z);
     }
 }
 
+namespace {
+
+ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_phase, DoubleComplex const& y_fault,
+                                       double const vref, IdxVector const& fault_bus_indptr) {
+    ShortCircuitInput sc_input;
+    sc_input.fault_bus_indptr = fault_bus_indptr;
+    sc_input.source = {vref};
+    sc_input.faults = {{y_fault, fault_type, fault_phase}};
+    return sc_input;
+}
+
+template <bool sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref, DoubleComplex c_factor) {
+    ShortCircuitMathOutput<sym> sc_output;
+    sc_output.u_bus = {ComplexValue<sym>(vref * c_factor), ComplexValue<sym>(vref * c_factor)};
+    sc_output.fault = {{ComplexValue<sym>{}}};
+    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = {ComplexValue<sym>{}}, .i_t = {ComplexValue<sym>{}}}};
+    sc_output.source = {{ComplexValue<sym>{}}};
+    return sc_output;
+}
+
+template <bool sym>
+constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
+                                                            ComplexValue<sym> if_abc) {
+    ShortCircuitMathOutput<sym> sc_output;
+    sc_output.u_bus = {u0, u1};
+    sc_output.fault = {{if_abc}};
+    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = if_abc, .i_t = -if_abc}};
+    sc_output.source = {{if_abc}};
+    return sc_output;
+}
+
+template <bool sym>
+ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
+                                                  DoubleComplex const& z0, DoubleComplex const& z0_0, double const vref,
+                                                  DoubleComplex const& zref, double c_factor) {
+    DoubleComplex const cvref = c_factor * vref;
+
+    if constexpr (sym) {
+        DoubleComplex const if_abc = cvref / (z0 + zref + z_fault);
+        DoubleComplex const u0 = cvref - if_abc * zref;
+        DoubleComplex const u1 = u0 - if_abc * z0;
+        return create_math_sc_output<true>(u0, u1, if_abc);
+    } else {
+        ComplexValue<false> if_abc{};
+        switch (fault_type) {
+        case three_phase: {
+            DoubleComplex const if_3ph = cvref / (z0 + zref + z_fault);
+            if_abc = ComplexValue<false>(if_3ph);
+            break;
+        }
+        case single_phase_to_ground: {
+            DoubleComplex const if_1phg = cvref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
+            if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
+            break;
+        }
+        case two_phase: {
+            DoubleComplex const if_2ph = (-1i * sqrt3) * cvref / (2.0 * (zref + z0) + z_fault);
+            if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
+            break;
+        }
+        case two_phase_to_ground: {
+            DoubleComplex const y2phg_0 = 1.0 / (zref + z0_0 + 3.0 * z_fault);
+            DoubleComplex const y2phg_12 = 1.0 / (zref + z0);
+            DoubleComplex const y2phg_sum = 2.0 * y2phg_12 + y2phg_0;
+            DoubleComplex const i_0 = cvref * (-y2phg_0 * y2phg_12 / y2phg_sum);
+            DoubleComplex const i_1 = cvref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
+            DoubleComplex const i_2 = cvref * (-y2phg_12 * y2phg_12 / y2phg_sum);
+            if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
+            break;
+        }
+        default:
+            throw InvalidShortCircuitType{false, fault_type};
+        }
+        ComplexValue<false> const cvref_asym{cvref};
+        ComplexValue<false> const u0 = cvref_asym - if_abc * zref;
+        DoubleComplex const z_self{(2.0 * z0 + z0_0) / 3.0};
+        DoubleComplex const z_mutual{(z0_0 - z0) / 3.0};
+        ComplexValue<false> const u_drop{
+            if_abc(0) * z_self + (if_abc(1) + if_abc(2)) * z_mutual,
+            if_abc(1) * z_self + (if_abc(0) + if_abc(2)) * z_mutual,
+            if_abc(2) * z_self + (if_abc(0) + if_abc(1)) * z_mutual,
+        };
+        ComplexValue<false> const u1 = u0 - u_drop;
+        return create_math_sc_output<false>(u0, u1, if_abc);
+    }
+}
+
+} // namespace
+
+TEST_CASE("Short circuit solver") {
+    // Test case grid
+    // source -- bus --- line -- bus -- fault(type varying as per subcase)
+
+    // Grid for short circuit
+    MathModelTopology topo_sc;
+    topo_sc.slack_bus_ = 0;
+    topo_sc.phase_shift = {0.0, 0.0};
+    topo_sc.branch_bus_idx = {{0, 1}};
+    topo_sc.source_bus_indptr = {0, 1, 1};
+    topo_sc.shunt_bus_indptr = {0, 0, 0};
+    topo_sc.load_gen_bus_indptr = {0, 0, 0};
+    IdxVector const fault_bus_indptr{0, 0, 1};
+
+    // Impedance / admittances
+    // source
+    double const vref = 1.1;
+    DoubleComplex const yref{10.0 - 50.0i};
+    DoubleComplex const zref{1.0 / yref};
+    // line
+    DoubleComplex const y0{1.0 - 2.0i};
+    DoubleComplex const y0_0{0.5 + 0.5i};
+    DoubleComplex const z0{1.0 / y0};
+    DoubleComplex const z0_0{1.0 / y0_0};
+    // fault
+    DoubleComplex const z_fault{1.0 + 1.0i};
+    DoubleComplex const y_fault{1.0 / z_fault};
+    DoubleComplex const z_fault_solid{0.0 + 0.0i};
+    DoubleComplex const y_fault_solid{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
+    // c factor
+    double const c_factor = 1.2;
+
+    // params sym
+    MathModelParam<true> param_sc_sym;
+    param_sc_sym.branch_param = {{y0, -y0, -y0, y0}};
+    param_sc_sym.source_param = {yref};
+
+    // params asym
+    MathModelParam<false> param_sc_asym;
+    ComplexTensor<false> const y0a{(2.0 * y0 + y0_0) / 3.0, (y0_0 - y0) / 3.0};
+    param_sc_asym.branch_param = {{y0a, -y0a, -y0a, y0a}};
+    ComplexTensor<false> const yref_asym{yref};
+    param_sc_asym.source_param = {yref_asym};
+
+    // topo and param ptr
+    auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
+    auto param_sym_ptr = std::make_shared<MathModelParam<true> const>(param_sc_sym);
+    auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_sc_asym);
+
+    SUBCASE("Test short circuit solver 3ph") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 3ph solid fault") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 3ph sym params") {
+        MathSolver<true> solver{topo_sc_ptr, param_sym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<true>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 3ph sym params solid fault") {
+        MathSolver<true> solver{topo_sc_ptr, param_sym_ptr};
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<true>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 1phg") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref =
+            create_sc_test_output<false>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 1phg solid fault") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input =
+            create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref =
+            create_sc_test_output<false>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 2ph") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 2ph solid fault") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver 2phg") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
+        auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+
+        auto sc_input_default =
+            create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, c_factor, info, CalculationMethod::iec60909),
+                        InvalidShortCircuitPhaseOrType);
+    }
+
+    SUBCASE("Test short circuit solver 2phg solid") {
+        MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
+        auto sc_input =
+            create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_output_ref =
+            create_sc_test_output<false>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref, c_factor);
+        CalculationInfo info;
+        auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(output, sc_output_ref);
+    }
+
+    SUBCASE("Test short circuit solver no faults") {
+        MathSolver<false> solver_asym{topo_sc_ptr, param_asym_ptr};
+        ShortCircuitInput sc_input;
+        sc_input.source = {vref};
+        auto asym_sc_output_ref = blank_sc_output<false>(vref, c_factor);
+        CalculationInfo info;
+        auto asym_output = solver_asym.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<false>(asym_output, asym_sc_output_ref);
+
+        MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
+        auto sym_sc_output_ref = blank_sc_output<true>(vref, c_factor);
+        auto sym_output = solver_sym.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+        assert_sc_output<true>(sym_output, sym_sc_output_ref);
+    }
+
+    SUBCASE("Test fault on source bus") {
+        // Grid for short circuit
+        MathModelTopology topo_comp;
+        topo_sc.slack_bus_ = 0;
+        topo_comp.phase_shift = {0.0};
+        topo_comp.branch_bus_idx = {};
+        topo_comp.source_bus_indptr = {0, 1};
+        topo_comp.shunt_bus_indptr = {0, 0};
+        topo_comp.load_gen_bus_indptr = {0, 0};
+        IdxVector const fault_bus_indptr_2 = {0, 1};
+        // params source injection
+        MathModelParam<false> asym_param_comp;
+        asym_param_comp.source_param = {yref_asym};
+        MathModelParam<true> sym_param_comp;
+        sym_param_comp.source_param = {yref};
+        // topo and param ptr
+        auto topo_comp_ptr = std::make_shared<MathModelTopology const>(topo_comp);
+        auto asym_param_comp_ptr = std::make_shared<MathModelParam<false> const>(asym_param_comp);
+        auto sym_param_comp_ptr = std::make_shared<MathModelParam<true> const>(sym_param_comp);
+        MathSolver<false> solver{topo_comp_ptr, asym_param_comp_ptr};
+        MathSolver<true> sym_solver{topo_comp_ptr, sym_param_comp_ptr};
+
+        DoubleComplex const cvref = c_factor * vref;
+        DoubleComplex const if_comp = cvref / (zref + z_fault);
+        DoubleComplex const uf_comp = cvref - if_comp * zref;
+        DoubleComplex const if_comp_solid = cvref / (zref + z_fault_solid);
+        DoubleComplex const uf_comp_solid = cvref - if_comp_solid * zref;
+
+        DoubleComplex const if_b_comp = (cvref * (a * a - a)) / (2.0 * zref + z_fault);
+        DoubleComplex const uf_b_comp = cvref * a * a - if_b_comp * zref;
+        DoubleComplex const uf_c_comp = cvref * a + if_b_comp * zref;
+
+        DoubleComplex const if_b_comp_solid = (cvref * (a * a - a)) / (2.0 * zref + z_fault_solid);
+        DoubleComplex const uf_b_comp_solid = cvref * a * a - if_b_comp_solid * zref;
+        DoubleComplex const uf_c_comp_solid = cvref * a + if_b_comp_solid * zref;
+
+        DoubleComplex const uf_b_2phg = (cvref * (a * a + a)) * z_fault / (zref + 2.0 * z_fault);
+        DoubleComplex const if_b_2phg = (cvref * a * a - uf_b_2phg) / zref;
+        DoubleComplex const if_c_2phg = (cvref * a - uf_b_2phg) / zref;
+        DoubleComplex const uf_b_2phg_solid = 0.0 + 0.0i;
+        DoubleComplex const if_b_2phg_solid = cvref * a * a / zref;
+        DoubleComplex const if_c_2phg_solid = cvref * a / zref;
+
+        SUBCASE("Source on 3ph sym fault") {
+            ShortCircuitMathOutput<true> sc_output_ref;
+            sc_output_ref.u_bus = {uf_comp};
+            sc_output_ref.fault = {{if_comp}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{if_comp}};
+
+            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = sym_solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<true>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 3ph sym solid fault") {
+            ShortCircuitMathOutput<true> sc_output_ref;
+            sc_output_ref.u_bus = {DoubleComplex{uf_comp_solid}};
+            sc_output_ref.fault = {{if_comp_solid}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{if_comp_solid}};
+
+            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = sym_solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<true>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 3ph fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{uf_comp}};
+            sc_output_ref.fault = {{ComplexValue<false>{if_comp}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{if_comp}}};
+
+            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 1phg fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{uf_comp, cvref * a * a, cvref * a}};
+            sc_output_ref.fault = {{ComplexValue<false>{if_comp, 0, 0}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{if_comp, 0, 0}}};
+
+            auto sc_input =
+                create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 1phg solid fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{uf_comp_solid, cvref * a * a, cvref * a}};
+            sc_output_ref.fault = {{ComplexValue<false>{if_comp_solid, 0, 0}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{if_comp_solid, 0, 0}}};
+
+            auto sc_input =
+                create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 2ph fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{cvref, uf_b_comp, uf_c_comp}};
+            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_comp, -if_b_comp}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_comp, -if_b_comp}}};
+
+            auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 2ph solid fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{cvref, uf_b_comp_solid, uf_c_comp_solid}};
+            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
+
+            auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 2phg fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{cvref, uf_b_2phg, uf_b_2phg}};
+            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_2phg, if_c_2phg}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_2phg, if_c_2phg}}};
+
+            auto sc_input =
+                create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+
+        SUBCASE("Source on 2phg solid fault") {
+            ShortCircuitMathOutput<false> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<false>{cvref, uf_b_2phg_solid, uf_b_2phg_solid}};
+            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
+            sc_output_ref.branch = {};
+            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
+
+            auto sc_input =
+                create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr_2);
+            CalculationInfo info;
+            auto output = solver.run_short_circuit(sc_input, c_factor, info, CalculationMethod::iec60909);
+            assert_sc_output<false>(output, sc_output_ref);
+        }
+    }
+}
+
+#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance)
+
 TEST_CASE("Math solver, zero variance test") {
     /*
-    network, m means measured, mm means double measured
+    network, v means voltage measured
     variance always 1.0
 
-    bus_1 --branch0-- bus_0(m) --yref-- source
+    bus_1 --branch0-- bus_0(v) --yref-- source
     bus_1 = bus_0 = 1.0
     */
     MathModelTopology topo;
@@ -512,6 +1024,7 @@ TEST_CASE("Math solver, zero variance test") {
     topo.shunt_bus_indptr = {0, 0, 0};
     topo.load_gen_bus_indptr = {0, 0, 0};
     topo.voltage_sensor_indptr = {0, 0, 1};
+    topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.source_power_sensor_indptr = {0, 0};
     topo.load_gen_power_sensor_indptr = {0};
     topo.shunt_power_sensor_indptr = {0};
@@ -528,12 +1041,245 @@ TEST_CASE("Math solver, zero variance test") {
 
     MathSolver<true> solver{topo_ptr, param_ptr};
     CalculationInfo info;
-    MathOutput<true> output =
-        solver.run_state_estimation(se_input, 1e-10, 20, info, CalculationMethod::iterative_linear);
+    MathOutput<true> output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
 
     // check both voltage
-    CHECK(cabs(output.u[0] - 1.0) < numerical_tolerance);
-    CHECK(cabs(output.u[1] - 1.0) < numerical_tolerance);
+    CHECK_CLOSE(output.u[0], 1.0);
+    CHECK_CLOSE(output.u[1], 1.0);
 }
 
-}  // namespace power_grid_model
+TEST_CASE("Math solver, measurements") {
+    /*
+    network
+
+     bus_0 --branch_0-- bus_1
+        |                    |
+    source_0               load_0
+
+    */
+    MathModelTopology topo;
+    topo.slack_bus_ = 0;
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}};
+    topo.source_bus_indptr = {0, 1, 1};
+    topo.shunt_bus_indptr = {0, 0, 0};
+    topo.load_gen_bus_indptr = {0, 0, 1};
+
+    topo.voltage_sensor_indptr = {0, 1, 1};
+    topo.bus_power_sensor_indptr = {0, 0, 0};
+    topo.source_power_sensor_indptr = {0, 0};
+    topo.load_gen_power_sensor_indptr = {0, 0};
+    topo.shunt_power_sensor_indptr = {0};
+    topo.branch_from_power_sensor_indptr = {0, 0};
+    topo.branch_to_power_sensor_indptr = {0, 0};
+
+    MathModelParam<true> param;
+    param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
+
+    StateEstimationInput<true> se_input;
+    se_input.source_status = {1};
+    se_input.load_gen_status = {1};
+    se_input.measured_voltage = {{1.0, 0.1}};
+
+    CalculationInfo info;
+    MathOutput<true> output;
+
+    SUBCASE("Source and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) -(p)-branch_0-- bus_1
+            |                       |
+        source_0(p)               load_0
+
+        */
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.branch_from_power_sensor_indptr = {0, 1};
+
+        se_input.measured_source_power = {{1.93, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+        CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+    }
+
+    SUBCASE("Load and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-(p)- bus_1
+           |                        |
+        source_0                 load_0(p)
+
+        */
+        topo.load_gen_power_sensor_indptr = {0, 1};
+        topo.branch_to_power_sensor_indptr = {0, 1};
+
+        se_input.measured_load_gen_power = {{-1.93, 0.1}};
+        se_input.measured_branch_to_power = {{-1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-1.95));
+    }
+
+    SUBCASE("Node injection and source") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.bus_power_sensor_indptr = {0, 1, 1};
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.branch_from_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{2.2, 0.2}};
+        se_input.measured_source_power = {{1.93, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
+    SUBCASE("Node injection, source and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.bus_power_sensor_indptr = {0, 1, 1};
+        topo.source_power_sensor_indptr = {0, 1};
+        topo.branch_from_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{2.2, 0.2}};
+        se_input.measured_source_power = {{1.93, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
+    SUBCASE("Node injection, load and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-(p)- bus_1(p)
+           |                        |
+        source_0                 load_0(p)
+
+        */
+        topo.bus_power_sensor_indptr = {0, 0, 1};
+        topo.load_gen_power_sensor_indptr = {0, 1};
+        topo.branch_to_power_sensor_indptr = {0, 1};
+
+        se_input.measured_bus_injection = {{-2.2, 0.2}};
+        se_input.measured_load_gen_power = {{-1.93, 0.1}};
+        se_input.measured_branch_to_power = {{-1.97, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
+    }
+
+    SUBCASE("Load and gen") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+
+        */
+
+        topo.load_gen_bus_indptr = {0, 0, 2};
+        topo.load_gen_power_sensor_indptr = {0, 1, 2};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-3.0, 0.1}, {1.0, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-3.0));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(1.0));
+    }
+
+    SUBCASE("Node injection, load and gen") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1(p)
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+        */
+
+        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.load_gen_bus_indptr = {0, 0, 2};
+        topo.load_gen_power_sensor_indptr = {0, 1, 2};
+        topo.bus_power_sensor_indptr = {0, 0, 1};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-1.8, 0.1}, {0.9, 0.1}};
+        se_input.measured_bus_injection = {{-1.1, 0.2}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        MathSolver<true> solver{topo_ptr, param_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(0.85));
+    }
+
+    // We may have multiple load/gens, let's sum their powers
+    using namespace std::placeholders;
+    const ComplexValue<true> load_gen_s =
+        std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
+                        bind(std::plus<ComplexValue<true>>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
+
+    CHECK(output.bus_injection[0] == output.branch[0].s_f);
+    CHECK(output.bus_injection[0] == output.source[0].s);
+    CHECK(output.bus_injection[1] == output.branch[0].s_t);
+    CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
+}
+
+} // namespace power_grid_model

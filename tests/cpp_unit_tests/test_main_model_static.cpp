@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/main_model.hpp"
+#include <power_grid_model/main_model.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
@@ -18,7 +19,7 @@ TEST_CASE("Test main model static") {
         {{{0}, na_IntS}, 1.0, nan},
     };
 
-    Idx batches = 3;
+    Idx const batches = 3;
     std::array<Idx, 4> const link_indptr = {0, 2, 4, 6};
     std::array<Idx, 4> const source_indptr = {0, 1, 2, 3};
     // dependent dataset
@@ -30,31 +31,9 @@ TEST_CASE("Test main model static") {
     update_data_independent["link"] = ConstDataPointer{link.data(), link_indptr.data(), batches - 1};
     update_data_independent["source"] = ConstDataPointer{source.data(), source_indptr.data(), batches - 1};
 
-    SUBCASE("Independent update data") {
-        CHECK(MainModel::is_update_independent(update_data_independent) == true);
-    }
+    SUBCASE("Independent update data") { CHECK(MainModel::is_update_independent(update_data_independent) == true); }
 
-    SUBCASE("Dependent update data") {
-        CHECK(MainModel::is_update_independent(update_data_dependent) == false);
-    }
-
-    SUBCASE("Cacheable topology") {
-        REQUIRE(is_nan(na_IntS));
-        CHECK(MainModel::is_topology_cacheable(update_data_dependent) == true);
-        CHECK(MainModel::is_topology_cacheable(update_data_independent) == true);
-    }
-
-    SUBCASE("Non-cacheable topology") {
-        link[1].from_status = true;
-        CHECK(MainModel::is_topology_cacheable(update_data_dependent) == false);
-        CHECK(MainModel::is_topology_cacheable(update_data_independent) == false);
-    }
-
-    SUBCASE("Non-cacheable topology source") {
-        source[1].status = true;
-        CHECK(MainModel::is_topology_cacheable(update_data_dependent) == false);
-        CHECK(MainModel::is_topology_cacheable(update_data_independent) == false);
-    }
+    SUBCASE("Dependent update data") { CHECK(MainModel::is_update_independent(update_data_dependent) == false); }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

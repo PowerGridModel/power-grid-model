@@ -1,0 +1,19 @@
+{
+  "calculation_method": "newton_raphson",
+  "rtol": 1e-4,
+  "atol": {
+    "default": 1.0e-4,
+    "u":       0.5,
+    "p_from":  0.5e3,
+    "q_from":  0.5e3,
+    "i_from":  0.5,
+    "s_from":  0.5e3,
+    "p_to":    0.5e3,
+    "q_to":    0.5e3,
+    "i_to":    0.5,
+    "s_to":    0.5e3,
+    "p":    0.5e3,
+    "q":    0.5e3,
+    "i":    0.5,
+    "s":    0.5e3}
+}

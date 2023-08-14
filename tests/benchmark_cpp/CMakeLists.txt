@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-project (power_grid_model_benchmark_cpp)
-
 set(PROJECT_SOURCES 
 	benchmark.cpp
 )
@@ -13,4 +11,3 @@ target_link_libraries(power_grid_model_benchmark_cpp
 	PRIVATE power_grid_model 
 )
 # set_target_properties(power_grid_model_benchmark_cpp PROPERTIES LINK_WHAT_YOU_USE TRUE)
-

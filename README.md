@@ -4,32 +4,41 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 [![PyPI version](https://badge.fury.io/py/power-grid-model.svg)](https://badge.fury.io/py/power-grid-model)
-[![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/alliander-opensource/power-grid-model/blob/main/LICENSE)
-[![Build and Test C++ and Python](https://github.com/alliander-opensource/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/main.yml)
-[![Check Code Quality](https://github.com/alliander-opensource/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/check-code-quality.yml)
-[![REUSE Compliance Check](https://github.com/alliander-opensource/power-grid-model/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model/actions/workflows/reuse-compliance.yml)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg)](https://anaconda.org/conda-forge/power-grid-model)
+[![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
+[![Build and Test C++ and Python](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml)
+[![Check Code Quality](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml)
+[![Clang Tidy](https://github.com/PowerGridModel/power-grid-model/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/clang-tidy.yml)
+[![REUSE Compliance Check](https://github.com/PowerGridModel/power-grid-model/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/reuse-compliance.yml)
+[![docs](https://readthedocs.org/projects/power-grid-model/badge/)](https://power-grid-model.readthedocs.io/en/stable/)
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
+[![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
 
 # Power Grid Model
 
-`power-grid-model` is a Python library for steady-state distribution power system analysis.
+`power-grid-model` is a library for steady-state distribution power system analysis distributed for Python and C.
 The core of the library is written in C++.
 Currently, it supports the following calculations:
 
-* Symmetric and asymmetric power flow calculation with Newton-Raphson method and linear method
-* Symmetric and asymmetric state estimation with iterative linear method
+* Power Flow
+* State Estimation
+* Short Circuit
 
-# Installation
+See the [power-grid-model documentation](https://power-grid-model.readthedocs.io/en/stable/) for more information.
+For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
-## Install from PyPI
+## Installation
+
+### Install from PyPI
 
 You can directly install the package from PyPI.
 
@@ -37,149 +46,66 @@ You can directly install the package from PyPI.
 pip install power-grid-model
 ```
 
-## Build and install from Source
+### Install from Conda
 
-To install the library from source, refer to the [Build Guide](docs/build-guide.md).
-
-# Quick Start
-
-In this quick start a simple 10kV network as below is calculated.
-A line connects two nodes. One node has a source. One node has a symmetric load.
-The code in the quick start is in [quick_example.py](scripts/quick_example.py).
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
 
 ```
-node_1 ---line_3--- node_2
- |                    |
-source_5            sym_load_4
+conda install -c conda-forge power-grid-model
 ```
 
-The library uses a graph data model to represent the physical components and their attributes,
-see [Graph Data Model](docs/graph-data-model.md).
+### Build and install from Source
 
-Firstly, import the main model class
-as well as some helper functions for enumerations and meta data.
+To install the library from source, refer to the [Build Guide](https://power-grid-model.readthedocs.io/en/stable/advanced_documentation/build-guide.html).
 
-```python
-from power_grid_model import LoadGenType
-from power_grid_model import PowerGridModel
-from power_grid_model import initialize_array
-```
+## Examples
 
-## Input Data
+Please refer to [Examples](https://github.com/PowerGridModel/power-grid-model-workshop/tree/main/examples) for more detailed examples for power flow and state estimation. 
+Notebooks for validating the input data and exporting input/output data are also included.
 
-The library uses dictionary of
-[numpy structured arrays](https://numpy.org/doc/stable/user/basics.rec.html)
-as the main (input and output) data exchange format between Python and C++ core.
-The documentation [Native Data Interface](docs/native-data-interface.md)
-explains the detailed design of this interface.
+## License
 
-The helper function `initialize_array` can be used to
-easily generate an array of the correct format.
+This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE) for details.
 
-```python
-# node
-node = initialize_array('input', 'node', 2)
-node['id'] = [1, 2]
-node['u_rated'] = [10.5e3, 10.5e3]
-```
+## Licenses third-party libraries
 
-The code above generates a node input array with two nodes,
-and assigns the attributes of the nodes to the array.
-Similarly, we can create input arrays for line, load, and generation.
-
-```python
-# line
-line = initialize_array('input', 'line', 1)
-line['id'] = [3]
-line['from_node'] = [1]
-line['to_node'] = [2]
-line['from_status'] = [1]
-line['to_status'] = [1]
-line['r1'] = [0.25]
-line['x1'] = [0.2]
-line['c1'] = [10e-6]
-line['tan1'] = [0.0]
-line['i_n'] = [1000]
-# load
-sym_load = initialize_array('input', 'sym_load', 1)
-sym_load['id'] = [4]
-sym_load['node'] = [2]
-sym_load['status'] = [1]
-sym_load['type'] = [LoadGenType.const_power]
-sym_load['p_specified'] = [2e6]
-sym_load['q_specified'] = [0.5e6]
-# source
-source = initialize_array('input', 'source', 1)
-source['id'] = [5]
-source['node'] = [1]
-source['status'] = [1]
-source['u_ref'] = [1.0]
-# all
-input_data = {
-    'node': node,
-    'line': line,
-    'sym_load': sym_load,
-    'source': source
-}
-```
-
-## Instantiate Model
-
-We can instantiate the model by calling the constructor of `PowerGridModel`
-
-```python
-model = PowerGridModel(input_data, system_frequency=50.0)
-```
-
-## Power Flow Calculation
-
-To calculate power flow, call the method `calculate_power_flow`.
-This method has many optional arguments, see [Python API Reference](docs/python-api-reference.md)
-for a detailed explanation.
-
-```python
-result = model.calculate_power_flow()
-```
-
-Both input and output data are dictionaries of structured `numpy` arrays.
-We can use `pandas` to convert them to data frames and print them.
-
-```python
-print('Node Input')
-print(pd.DataFrame(input_data['node']))
-print('Node Result')
-print(pd.DataFrame(result['node']))
-```
-
-You can print the data in tables.
-
-```
-Node Input
-   id  u_rated
-0   1  10500.0
-1   2  10500.0
-Node Result
-   id  energized      u_pu             u   u_angle
-0   1          1  0.999964  10499.619561 -0.000198
-1   2          1  0.994801  10445.415523 -0.003096
-```
-
-# Examples
-
-Please refer to [Examples](examples) for more detailed examples for power flow and state estimation.
-
-# License
-This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
-
-# Licenses third-party libraries
 This project includes third-party libraries, 
 which are licensed under their own respective Open-Source licenses.
 SPDX-License-Identifier headers are used to show which license is applicable. 
-The concerning license files can be found in the LICENSES directory.
+The concerning license files can be found in the [LICENSES](https://github.com/PowerGridModel/power-grid-model/tree/main/LICENSES) directory.
 
-# Contributing
-Please read [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) and [CONTRIBUTING](CONTRIBUTING.md) for details on the process 
+## Contributing
+
+Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/main/CODE_OF_CONDUCT.md), [CONTRIBUTING](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md), [PROJECT GOVERNANCE](https://github.com/PowerGridModel/.github/blob/main/GOVERNANCE.md) and [RELEASE](https://github.com/PowerGridModel/.github/blob/main/RELEASE.md) for details on the process 
 for submitting pull requests to us.
 
-# Contact
-Please read [SUPPORT](SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.
+Visit [Contribute](https://github.com/PowerGridModel/power-grid-model/contribute) for a list of good first issues in this repo.
+
+## Citations
+
+If you are using Power Grid Model in your research work, please consider citing our library using the following references.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
+
+```bibtex
+@software{Xiang_PowerGridModel_power-grid-model,
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
+  doi = {10.5281/zenodo.8054429},
+  license = {MPL-2.0},
+  title = {{PowerGridModel/power-grid-model}},
+  url = {https://github.com/PowerGridModel/power-grid-model}
+}
+@inproceedings{Xiang2023,
+  author = {Xiang, Yu and Salemink, Peter and Stoeller, Bram and Bharambe, Nitish and van Westering, Werner},
+  booktitle = {CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution},
+  title = {Power grid model: A high-performance distribution grid calculation library},
+  year = {2023},
+  volume={2023},
+  number = {},
+  pages={1-5}
+}
+```
+
+## Contact
+
+Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.

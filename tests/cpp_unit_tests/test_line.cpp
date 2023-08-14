@@ -2,15 +2,16 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/line.hpp"
+#include <power_grid_model/component/line.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
 using namespace std::complex_literals;
 
 TEST_CASE("Test line") {
-    LineInput input{{{1}, 2, 3, true, true}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
+    LineInput const input{{{1}, 2, 3, true, true}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
     Line line{input, 50.0, 10.0e3, 10.0e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_i * base_i / base_power_1p;
@@ -27,9 +28,9 @@ TEST_CASE("Test line") {
     DoubleComplex const yff0 = y0_series + 0.5 * y0_shunt;
     DoubleComplex const yft0 = -y0_series;
     DoubleComplex const ys0 = 0.5 * y0_shunt + 1.0 / (1.0 / y0_series + 2.0 / y0_shunt);
-    ComplexTensor<false> yffa{(2.0 * yff1 + yff0) / 3.0, (yff0 - yff1) / 3.0};
-    ComplexTensor<false> yfta{(2.0 * yft1 + yft0) / 3.0, (yft0 - yft1) / 3.0};
-    ComplexTensor<false> ysa{(2.0 * ys1 + ys0) / 3.0, (ys0 - ys1) / 3.0};
+    ComplexTensor<false> const yffa{(2.0 * yff1 + yff0) / 3.0, (yff0 - yff1) / 3.0};
+    ComplexTensor<false> const yfta{(2.0 * yft1 + yft0) / 3.0, (yft0 - yft1) / 3.0};
+    ComplexTensor<false> const ysa{(2.0 * ys1 + ys0) / 3.0, (ys0 - ys1) / 3.0};
 
     DoubleComplex const u1f = 1.0;
     DoubleComplex const u1t = 0.9;
@@ -39,13 +40,17 @@ TEST_CASE("Test line") {
     DoubleComplex const i1t = (yft1 * u1f + yff1 * u1t) * base_i;
     DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
     DoubleComplex const s_t = conj(i1t) * u1t * 10e3 * sqrt3;
-    double loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
+    double const loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
+
+    // Short circuit results
+    DoubleComplex const if_sc{1.0, 1.0};
+    DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
+    ComplexValue<false> const if_sc_asym{1.0 + 1.0i};
+    ComplexValue<false> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
 
     CHECK(line.math_model_type() == ComponentType::branch);
 
-    SUBCASE("Voltge error") {
-        CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage);
-    }
+    SUBCASE("Voltge error") { CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage); }
 
     SUBCASE("General") {
         CHECK(branch.from_node() == 2);
@@ -163,6 +168,16 @@ TEST_CASE("Test line") {
         CHECK(output.q_to(1) == 0.0);
     }
 
+    SUBCASE("No source short circuit results") {
+        BranchShortCircuitOutput output = branch.get_null_sc_output();
+        CHECK(output.id == 1);
+        CHECK(!output.energized);
+        CHECK(output.i_from(0) == 0.0);
+        CHECK(output.i_to(1) == 0.0);
+        CHECK(output.i_from_angle(0) == 0.0);
+        CHECK(output.i_to_angle(1) == 0.0);
+    }
+
     SUBCASE("Asymmetric results") {
         BranchOutput<false> output = branch.get_output<false>(uaf, uat);
         CHECK(output.id == 1);
@@ -177,6 +192,35 @@ TEST_CASE("Test line") {
         CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
         CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
     }
+
+    SUBCASE("Asym short circuit results") {
+        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        CHECK(asym_output.id == 1);
+        CHECK(asym_output.energized);
+        CHECK(asym_output.i_from(1) == doctest::Approx(cabs(if_sc) * base_i));
+        CHECK(asym_output.i_from(2) == doctest::Approx(cabs(if_sc) * base_i));
+        CHECK(asym_output.i_to(0) == doctest::Approx(cabs(it_sc) * base_i));
+        CHECK(asym_output.i_to(1) == doctest::Approx(cabs(it_sc) * base_i));
+        CHECK(asym_output.i_from_angle(0) == doctest::Approx(pi / 4));
+        CHECK(asym_output.i_from_angle(2) == doctest::Approx(pi / 4 + deg_120));
+        CHECK(asym_output.i_to_angle(1) == doctest::Approx(pi / 3 - deg_120));
+        CHECK(asym_output.i_to_angle(2) == doctest::Approx(pi / 3 + deg_120));
+        CHECK(asym_output.id == 1);
+    }
+
+    SUBCASE("Sym short circuit results") {
+        BranchShortCircuitOutput sym_output = branch.get_sc_output(if_sc, it_sc);
+        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        CHECK(sym_output.energized == asym_output.energized);
+        CHECK(sym_output.i_from(1) == doctest::Approx(asym_output.i_from(1)));
+        CHECK(sym_output.i_from(2) == doctest::Approx(asym_output.i_from(2)));
+        CHECK(sym_output.i_to(0) == doctest::Approx(asym_output.i_to(0)));
+        CHECK(sym_output.i_to(1) == doctest::Approx(asym_output.i_to(1)));
+        CHECK(sym_output.i_from_angle(0) == doctest::Approx(asym_output.i_from_angle(0)));
+        CHECK(sym_output.i_from_angle(2) == doctest::Approx(asym_output.i_from_angle(2)));
+        CHECK(sym_output.i_to_angle(1) == doctest::Approx(asym_output.i_to_angle(1)));
+        CHECK(sym_output.i_to_angle(2) == doctest::Approx(asym_output.i_to_angle(2)));
+    }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

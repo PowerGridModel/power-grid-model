@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+---
+Checks: '
+-*,
+boost-*,
+bugprone-*,
+-bugprone-easily-swappable-parameters,
+-bugprone-exception-escape,
+cert-*,
+-cert-err58-cpp,
+clang-analyzer-*,
+-clang-analyzer-deadcode.DeadStores,
+concurrency-*,
+cppcoreguidelines-*,
+-cppcoreguidelines-avoid-c-arrays,
+-cppcoreguidelines-avoid-magic-numbers,
+-cppcoreguidelines-init-variables,
+-cppcoreguidelines-macro-usage,
+-cppcoreguidelines-no-malloc,
+-cppcoreguidelines-non-private-member-variables-in-classes,
+-cppcoreguidelines-owning-memory,
+-cppcoreguidelines-pro-bounds-constant-array-index,
+-cppcoreguidelines-pro-type-cstyle-cast,
+-cppcoreguidelines-pro-type-member-init,
+-cppcoreguidelines-pro-bounds-pointer-arithmetic,
+-cppcoreguidelines-pro-type-reinterpret-cast,
+darwin-*,
+hiccp-*,
+llvm-*,
+-llvm-else-after-return,
+-llvm-header-guard,
+google-*,
+-google-build-using-namespace,
+-google-explicit-constructor,
+-google-readability-braces-around-statements,
+-google-readability-todo,
+-google-readability-casting,
+-google-default-arguments,
+misc-*,
+-misc-confusable-identifiers,
+-misc-no-recursion,
+-misc-non-private-member-variables-in-classes,
+modernize-*,
+-modernize-avoid-bind,
+-modernize-avoid-c-arrays,
+-modernize-concat-nested-namespaces,
+-modernize-loop-convert,
+-modernize-pass-by-value,
+-modernize-use-auto,
+-modernize-use-default-member-init,
+-modernize-use-emplace,
+-modernize-use-nodiscard,
+-modernize-use-trailing-return-type,
+-modernize-use-transparent-functors,
+-modernize-use-using,
+performance-*,
+portability-*,
+readability-*,
+-readability-function-cognitive-complexity,
+-readability-identifier-length,
+-readability-implicit-bool-conversion,
+-readability-isolate-declaration,
+-readability-make-member-function-const,
+-readability-named-parameter,
+-readability-magic-numbers,
+'
+
+WarningsAsErrors: '*'
+
+
+HeaderFilterRegex: '.*'
+
+FormatStyle: file
+...

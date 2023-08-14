@@ -20,6 +20,7 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+CMakeUserPresets.json
 
 # User-specific files
 *.rsuser
@@ -363,6 +364,7 @@ healthchecksdb
 
 # C extensions
 *.so
+*.dll
 
 # Distribution / packaging
 .Python
@@ -486,9 +488,11 @@ dmypy.json
 .pyre/
 
 # build
-.vscode/
 src/power_grid_model/**/*.cpp
 cpp_build*/
+
+# install
+install/
 
 # clion
 cmake-build-*/
@@ -506,3 +510,14 @@ cpp_coverage.xml
 
 # generated version file
 PYPI_VERSION
+
+# docs builds
+docs/make.bat
+docs/Makefile
+
+# VSCode configurations
+# it is ignored by default so the user does not accidentally change the configuration
+# if you want to changes the JSON file in .vscode folder
+# please type
+#    git add .vscode/ --force
+.vscode/

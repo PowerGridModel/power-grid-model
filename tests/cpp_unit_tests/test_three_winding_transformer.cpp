@@ -2,65 +2,62 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/three_winding_transformer.hpp"
-#include "power_grid_model/component/transformer.hpp"
+#include <power_grid_model/component/three_winding_transformer.hpp>
+#include <power_grid_model/component/transformer.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
 using namespace std::complex_literals;
 
 TEST_CASE("Test three winding transformer") {
-    ThreeWindingTransformerInputBasics input_basics{
-        {{1}, 2, 3, 4, true, true, true},  // Create branch3 {{id}, node_1, node_2, node_3, status_1, status_2,
-                                           // status_3}
-        138e3,                             // u1
-        69e3,                              // u2
-        13.8e3,                            // u3
-        60e6,                              // s1
-        50e6,                              // s2
-        10e6,                              // s3
-        0.09,                              // uk12
-        0.06,                              // uk13
-        0.03,                              // uk23
-        200e3,                             // pk_12
-        150e3,                             // pk_13
-        100e3,                             // pk_23
-        0.1,                               // i0
-        50e3,                              // p0
-        WindingType::wye_n,                // winding_12
-        WindingType::delta,                // winding_13
-        WindingType::delta,                // winding_23
-        1,                                 // clock_12
-        1,                                 // clock_13
-        Branch3Side::side_1,               // tap side
-        2,                                 // tap_pos
-        -8,                                // tap_min
-        10,                                // tap_max
-        0,                                 // tap_nom
-        1380                               // tap size
-    };
-
     ThreeWindingTransformerInput input{
-        input_basics,
-        nan,  // uk_12_min
-        nan,  // uk_12_max
-        nan,  // uk_13_min
-        nan,  // uk_13_max
-        nan,  // uk_23_min
-        nan,  // uk_23_max
-        nan,  // pk_12_min
-        nan,  // pk_12_max
-        nan,  // pk_13_min
-        nan,  // pk_13_max
-        nan,  // pk_23_min
-        nan,  // pk_23_max
-        1.0,  // r1_grounding
-        4.0,  // x1_grounding
-        nan,  // r2_grounding
-        nan,  // x2_grounding
-        nan,  // r3_grounding
-        nan   // x3_grounding
+        {{1}, 2, 3, 4, true, true, true}, // Create branch3 {{id}, node_1, node_2, node_3, status_1, status_2,
+                                          // status_3}
+        138e3,                            // u1
+        69e3,                             // u2
+        13.8e3,                           // u3
+        60e6,                             // s1
+        50e6,                             // s2
+        10e6,                             // s3
+        0.09,                             // uk12
+        0.06,                             // uk13
+        0.03,                             // uk23
+        200e3,                            // pk_12
+        150e3,                            // pk_13
+        100e3,                            // pk_23
+        0.1,                              // i0
+        50e3,                             // p0
+        WindingType::wye_n,               // winding_12
+        WindingType::delta,               // winding_13
+        WindingType::delta,               // winding_23
+        1,                                // clock_12
+        1,                                // clock_13
+        Branch3Side::side_1,              // tap side
+        2,                                // tap_pos
+        -8,                               // tap_min
+        10,                               // tap_max
+        0,                                // tap_nom
+        1380,                             // tap size
+        nan,                              // uk_12_min
+        nan,                              // uk_12_max
+        nan,                              // uk_13_min
+        nan,                              // uk_13_max
+        nan,                              // uk_23_min
+        nan,                              // uk_23_max
+        nan,                              // pk_12_min
+        nan,                              // pk_12_max
+        nan,                              // pk_13_min
+        nan,                              // pk_13_max
+        nan,                              // pk_23_min
+        nan,                              // pk_23_max
+        1.0,                              // r1_grounding
+        4.0,                              // x1_grounding
+        nan,                              // r2_grounding
+        nan,                              // x2_grounding
+        nan,                              // r3_grounding
+        nan                               // x3_grounding
     };
 
     // Check what transformers should be tested
@@ -110,7 +107,7 @@ TEST_CASE("Test three winding transformer") {
     input.pk_23_max = 120e3;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
 
-    for (ThreeWindingTransformer& transformer3 : vec) {
+    for (ThreeWindingTransformer const& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
     }
 
@@ -134,89 +131,89 @@ TEST_CASE("Test three winding transformer") {
     // Add test for grounding too
 
     TransformerInput T1_input{
-        {{2}, 0, 1, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        u_t1,                     // u1
-        u_t1,                     // u2
-        60e6,                     // sn
-        uk_t1,                    // uk
-        pk_t1,                    // pk
-        0.1,                      // i0
-        50e3,                     // p0
-        WindingType::wye_n,       // winding_from
-        WindingType::wye_n,       // winding_to
-        0,                        // clock
-        BranchSide::from,         // tap_side
-        0,                        // tap_pos
-        0,                        // tap_min
-        0,                        // tap_max
-        0,                        // tap_nom
-        0.0,                      // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        1.0,                      // r_grounding_from
-        4.0,                      // x_grounding_from
-        0,                        // r_grounding_to
-        0                         // x_grounding_to
+        {{2}, 0, 1, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        u_t1,                    // u1
+        u_t1,                    // u2
+        60e6,                    // sn
+        uk_t1,                   // uk
+        pk_t1,                   // pk
+        0.1,                     // i0
+        50e3,                    // p0
+        WindingType::wye_n,      // winding_from
+        WindingType::wye_n,      // winding_to
+        0,                       // clock
+        BranchSide::from,        // tap_side
+        0,                       // tap_pos
+        0,                       // tap_min
+        0,                       // tap_max
+        0,                       // tap_nom
+        0.0,                     // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        1.0,                     // r_grounding_from
+        4.0,                     // x_grounding_from
+        0,                       // r_grounding_to
+        0                        // x_grounding_to
     };
     TransformerInput T2_input{
-        {{2}, 0, 1, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        69e3,                     // u1
-        u_t1,                     // u2
-        50e6,                     // sn
-        uk_t2,                    // uk
-        pk_t2,                    // pk
-        0.0,                      // i0
-        0.0,                      // p0
-        WindingType::delta,       // winding_from
-        WindingType::wye_n,       // winding_to
-        11,                       // clock, reversed
-        BranchSide::from,         // tap_side
-        0,                        // tap_pos
-        0,                        // tap_min
-        0,                        // tap_max
-        0,                        // tap_nom
-        0.0,                      // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        0,                        // r_grounding_from
-        0,                        // x_grounding_from
-        0,                        // r_grounding_to
-        0                         // x_grounding_to
+        {{2}, 0, 1, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        69e3,                    // u1
+        u_t1,                    // u2
+        50e6,                    // sn
+        uk_t2,                   // uk
+        pk_t2,                   // pk
+        0.0,                     // i0
+        0.0,                     // p0
+        WindingType::delta,      // winding_from
+        WindingType::wye_n,      // winding_to
+        11,                      // clock, reversed
+        BranchSide::from,        // tap_side
+        0,                       // tap_pos
+        0,                       // tap_min
+        0,                       // tap_max
+        0,                       // tap_nom
+        0.0,                     // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        0,                       // r_grounding_from
+        0,                       // x_grounding_from
+        0,                       // r_grounding_to
+        0                        // x_grounding_to
     };
     TransformerInput T3_input{
-        {{2}, 0, 1, true, true},  // {{id}, from_node, to_node, from_status, to_status}
-        13.8e3,                   // u1
-        u_t1,                     // u2
-        10e6,                     // sn
-        uk_t3,                    // uk
-        pk_t3,                    // pk
-        0.0,                      // i0
-        0.0,                      // p0
-        WindingType::delta,       // winding_from
-        WindingType::wye_n,       // winding_to
-        11,                       // clock, reversed
-        BranchSide::from,         // tap_side
-        0,                        // tap_pos
-        0,                        // tap_min
-        0,                        // tap_max
-        0,                        // tap_nom
-        0.0,                      // tap_size
-        nan,                      // uk_min
-        nan,                      // uk_max
-        nan,                      // pk_min
-        nan,                      // pk_max
-        0,                        // r_grounding_from
-        0,                        // x_grounding_from
-        0,                        // r_grounding_to
-        0                         // x_grounding_to
+        {{2}, 0, 1, true, true}, // {{id}, from_node, to_node, from_status, to_status}
+        13.8e3,                  // u1
+        u_t1,                    // u2
+        10e6,                    // sn
+        uk_t3,                   // uk
+        pk_t3,                   // pk
+        0.0,                     // i0
+        0.0,                     // p0
+        WindingType::delta,      // winding_from
+        WindingType::wye_n,      // winding_to
+        11,                      // clock, reversed
+        BranchSide::from,        // tap_side
+        0,                       // tap_pos
+        0,                       // tap_min
+        0,                       // tap_max
+        0,                       // tap_nom
+        0.0,                     // tap_size
+        nan,                     // uk_min
+        nan,                     // uk_max
+        nan,                     // pk_min
+        nan,                     // pk_max
+        0,                       // r_grounding_from
+        0,                       // x_grounding_from
+        0,                       // r_grounding_to
+        0                        // x_grounding_to
     };
 
     auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
-        Transformer t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
+        Transformer const t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
         return std::array<Transformer, 3>{t1, t2, t3};
     };
 
@@ -300,11 +297,10 @@ TEST_CASE("Test three winding transformer") {
 
     SUBCASE("Check output of branch 3") {
         // TODO asym output check
-        BranchMathOutput<true> b1_output, b2_output, b3_output;
         // Branch initialization: s_f, s_t, i_f, i_t
-        b1_output = {(1.0 - 2.0i), (2.0 - 3.0i), (1.5 - 2.5i), (2.5 - 3.5i)};
-        b2_output = {(2.0 - 3.0i), (-3.0 + 2.0i), (1.5 - 2.5i), (-4.0 + 1.5i)};
-        b3_output = {(3.0 + 1.0i), (1.0 + 1.0i), (1.5 - 2.5i), (1.5 + 2.0i)};
+        BranchMathOutput<true> const b1_output{(1.0 - 2.0i), (2.0 - 3.0i), (1.5 - 2.5i), (2.5 - 3.5i)};
+        BranchMathOutput<true> const b2_output{(2.0 - 3.0i), (-3.0 + 2.0i), (1.5 - 2.5i), (-4.0 + 1.5i)};
+        BranchMathOutput<true> const b3_output{(3.0 + 1.0i), (1.0 + 1.0i), (1.5 - 2.5i), (1.5 + 2.0i)};
 
         Branch3Output<true> sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
 
@@ -341,19 +337,18 @@ TEST_CASE("Test three winding transformer") {
         CHECK(sym_output.s_3 == doctest::Approx(out_s_3));
         CHECK(sym_output.loading == doctest::Approx(out_loading));
 
-        BranchMathOutput<false> asym_b1_output, asym_b2_output, asym_b3_output;
-        asym_b1_output = {{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
-                          {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
-                          {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                          {(2.5 - 3.5i), (2.5 - 3.5i), (2.5 - 3.5i)}};
-        asym_b2_output = {{(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
-                          {(-3.0 + 2.0i), (-3.0 + 2.0i), (-3.0 + 2.0i)},
-                          {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                          {(-4.0 + 1.5i), (-4.0 + 1.5i), (-4.0 + 1.5i)}};
-        asym_b3_output = {{(3.0 + 1.0i), (3.0 + 1.0i), (3.0 + 1.0i)},
-                          {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
-                          {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                          {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
+        BranchMathOutput<false> const asym_b1_output{{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
+                                                     {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
+                                                     {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                     {(2.5 - 3.5i), (2.5 - 3.5i), (2.5 - 3.5i)}};
+        BranchMathOutput<false> const asym_b2_output{{(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
+                                                     {(-3.0 + 2.0i), (-3.0 + 2.0i), (-3.0 + 2.0i)},
+                                                     {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                     {(-4.0 + 1.5i), (-4.0 + 1.5i), (-4.0 + 1.5i)}};
+        BranchMathOutput<false> const asym_b3_output{{(3.0 + 1.0i), (3.0 + 1.0i), (3.0 + 1.0i)},
+                                                     {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
+                                                     {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                     {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
 
         Branch3Output<false> asym_output = vec[0].get_output(asym_b1_output, asym_b2_output, asym_b3_output);
 
@@ -374,6 +369,57 @@ TEST_CASE("Test three winding transformer") {
         CHECK(asym_output.loading == doctest::Approx(out_loading));
     }
 
+    SUBCASE("Check asym short circuit output of branch 3") {
+        ComplexValue<true> const i_1{1.5 - 2.5i};
+        ComplexValue<true> const i_2{1.0 - 2.2i};
+        ComplexValue<true> const i_3{1.3 - 2.1i};
+        ComplexValue<false> const i_1_asym{1.5 - 2.5i};
+        ComplexValue<false> const i_2_asym{1.0 - 2.2i};
+        ComplexValue<false> const i_3_asym{1.3 - 2.1i};
+
+        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(i_1_asym, i_2_asym, i_3_asym);
+
+        CHECK(asym_sc_output.id == 1);
+        CHECK(asym_sc_output.energized == 1);
+        CHECK(asym_sc_output.i_1(2) == doctest::Approx(cabs(i_1) * base_i_1));
+        CHECK(asym_sc_output.i_2(0) == doctest::Approx(cabs(i_2) * base_i_2));
+        CHECK(asym_sc_output.i_3(1) == doctest::Approx(cabs(i_3) * base_i_3));
+        CHECK(asym_sc_output.i_1_angle(2) == doctest::Approx(arg(i_1) + deg_120));
+        CHECK(asym_sc_output.i_2_angle(0) == doctest::Approx(arg(i_2)));
+        CHECK(asym_sc_output.i_3_angle(1) == doctest::Approx(arg(i_3) - deg_120));
+    }
+
+    SUBCASE("Check sym short circuit output of branch 3") {
+        ComplexValue<true> const i_1{1.5 - 2.5i};
+        ComplexValue<true> const i_2{1.0 - 2.2i};
+        ComplexValue<true> const i_3{1.3 - 2.1i};
+
+        BranchShortCircuitMathOutput<true> const sym_b1_output{i_1, ComplexValue<true>{}};
+        BranchShortCircuitMathOutput<true> const sym_b2_output{i_2, ComplexValue<true>{}};
+        BranchShortCircuitMathOutput<true> const sym_b3_output{i_3, ComplexValue<true>{}};
+
+        Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output(sym_b1_output, sym_b2_output, sym_b3_output);
+
+        ComplexValue<false> const i_1_asym{1.5 - 2.5i};
+        ComplexValue<false> const i_2_asym{1.0 - 2.2i};
+        ComplexValue<false> const i_3_asym{1.3 - 2.1i};
+
+        BranchShortCircuitMathOutput<false> const asym_b1_output{i_1_asym, ComplexValue<false>{}};
+        BranchShortCircuitMathOutput<false> const asym_b2_output{i_2_asym, ComplexValue<false>{}};
+        BranchShortCircuitMathOutput<false> const asym_b3_output{i_3_asym, ComplexValue<false>{}};
+
+        Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(asym_b1_output, asym_b2_output, asym_b3_output);
+
+        CHECK(sym_sc_output.id == asym_sc_output.id);
+        CHECK(sym_sc_output.energized == asym_sc_output.energized);
+        CHECK(sym_sc_output.i_1(2) == doctest::Approx(asym_sc_output.i_1(2)));
+        CHECK(sym_sc_output.i_2(0) == doctest::Approx(asym_sc_output.i_2(0)));
+        CHECK(sym_sc_output.i_3(1) == doctest::Approx(asym_sc_output.i_3(1)));
+        CHECK(sym_sc_output.i_1_angle(2) == doctest::Approx(asym_sc_output.i_1_angle(2)));
+        CHECK(sym_sc_output.i_2_angle(0) == doctest::Approx(asym_sc_output.i_2_angle(0)));
+        CHECK(sym_sc_output.i_3_angle(1) == doctest::Approx(asym_sc_output.i_3_angle(1)));
+    }
+
     SUBCASE("No source results") {
         Branch3Output<false> output = vec[0].get_null_output<false>();
         CHECK(output.id == 1);
@@ -391,6 +437,18 @@ TEST_CASE("Test three winding transformer") {
         CHECK(output.i_3(1) == 0);
         CHECK(output.s_3(2) == 0);
         CHECK(output.loading == 0);
+    }
+
+    SUBCASE("No source short circuit results") {
+        Branch3ShortCircuitOutput output = vec[0].get_null_sc_output();
+        CHECK(output.id == 1);
+        CHECK(!output.energized);
+        CHECK(output.i_1(2) == 0);
+        CHECK(output.i_2(0) == 0);
+        CHECK(output.i_3(1) == 0);
+        CHECK(output.i_1_angle(2) == 0);
+        CHECK(output.i_2_angle(0) == 0);
+        CHECK(output.i_3_angle(1) == 0);
     }
 
     SUBCASE("invalid input") {
@@ -442,6 +500,6 @@ TEST_CASE("Test three winding transformer") {
             CHECK(!changed.param);
         }
     }
-}
+} // namespace power_grid_model
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

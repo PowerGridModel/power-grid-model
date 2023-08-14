@@ -1,0 +1,417 @@
+{
+    "name": "input",
+    "include_guard": "INPUT",
+    "classes": [
+        {
+            "name": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "id",
+                    "description": "ID of the object"
+                }
+            ]
+        },
+        {
+            "name": "NodeInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_rated",
+                    "description": "rated line-line voltage"
+                }
+            ]
+        },
+        {
+            "name": "BranchInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": [
+                        "from_node",
+                        "to_node"
+                    ],
+                    "description": "node IDs to which this branch is connected at both sides"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": [
+                        "from_status",
+                        "to_status"
+                    ],
+                    "description": "whether the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3Input",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": [
+                        "node_1",
+                        "node_2",
+                        "node_3"
+                    ],
+                    "description": "node IDs to which this branch3 is connected at three sides"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": [
+                        "status_1",
+                        "status_2",
+                        "status_3"
+                    ],
+                    "description": "whether the branch is connected at each side"
+                }
+            ]
+        },
+        {
+            "name": "SensorInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "measured_object",
+                    "description": "ID of the measured object"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "node",
+                    "description": "node ID to which this appliance is connected"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "whether the appliance is connected"
+                }
+            ]
+        },
+        {
+            "name": "LineInput",
+            "base": "BranchInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r1",
+                        "x1",
+                        "c1",
+                        "tan1"
+                    ],
+                    "description": "positive sequence parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r0",
+                        "x0",
+                        "c0",
+                        "tan0"
+                    ],
+                    "description": "zero sequence parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": "i_n",
+                    "description": "rated current"
+                }
+            ]
+        },
+        {
+            "name": "LinkInput",
+            "base": "BranchInput",
+            "attributes": []
+        },
+        {
+            "name": "TransformerInput",
+            "base": "BranchInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u1",
+                        "u2"
+                    ],
+                    "description": "rated voltage at both side"
+                },
+                {
+                    "data_type": "double",
+                    "names": "sn",
+                    "description": "rated power"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk", "pk", "i0", "p0"],
+                    "description": "short circuit and open testing parameters"
+                },
+                {
+                    "data_type": "WindingType",
+                    "names": ["winding_from", "winding_to"],
+                    "description": "winding type at each side"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "clock",
+                    "description": "clock number"
+                },
+                {
+                    "data_type": "BranchSide",
+                    "names": "tap_side",
+                    "description": "side of tap changer"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["tap_pos", "tap_min", "tap_max", "tap_nom"],
+                    "description": "tap changer parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": "tap_size",
+                    "description": "size of each tap"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk_min", "uk_max", "pk_min", "pk_max"],
+                    "description": "tap dependent short circuit parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["r_grounding_from", "x_grounding_from", "r_grounding_to", "x_grounding_to"],
+                    "description": "grounding information"
+                }
+            ]
+        },
+        {
+            "name": "ThreeWindingTransformerInput",
+            "base": "Branch3Input",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u1",
+                        "u2",
+                        "u3"
+                    ],
+                    "description": "rated voltage at three sides"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["sn_1", "sn_2", "sn_3"],
+                    "description": "rated power at each side"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk_12", "uk_13", "uk_23", "pk_12", "pk_13", "pk_23", "i0", "p0"],
+                    "description": "short circuit and open testing parameters"
+                },
+                {
+                    "data_type": "WindingType",
+                    "names": ["winding_1", "winding_2", "winding_3"],
+                    "description": "winding type at each side"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["clock_12", "clock_13"],
+                    "description": "clock numbers"
+                },
+                {
+                    "data_type": "Branch3Side",
+                    "names": "tap_side",
+                    "description": "side of tap changer"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": ["tap_pos", "tap_min", "tap_max", "tap_nom"],
+                    "description": "tap changer parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": "tap_size",
+                    "description": "size of each tap"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["uk_12_min", "uk_12_max", "uk_13_min", "uk_13_max", "uk_23_min", "uk_23_max", "pk_12_min", "pk_12_max", "pk_13_min", "pk_13_max", "pk_23_min", "pk_23_max"],
+                    "description": "tap dependent short circuit parameters"
+                },
+                {
+                    "data_type": "double",
+                    "names": ["r_grounding_1", "x_grounding_1", "r_grounding_2", "x_grounding_2", "r_grounding_3", "x_grounding_3"],
+                    "description": "grounding information"
+                }
+            ]
+        },
+        {
+            "name": "GenericLoadGenInput",
+            "base": "ApplianceInput",
+            "attributes": [
+                {
+                    "data_type": "LoadGenType",
+                    "names": "type",
+                    "description": "type of the load_gen"
+                }
+            ]
+        },
+        {
+            "name": "LoadGenInput",
+            "base": "GenericLoadGenInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_specified",
+                        "q_specified"
+                    ],
+                    "description": "specified active/reactive power"
+                }
+            ]
+        },
+        {
+            "name": "ShuntInput",
+            "base": "ApplianceInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g1",
+                        "b1"
+                    ],
+                    "description": "positive sequence admittance"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g0",
+                        "b0"
+                    ],
+                    "description": "zero sequence admittance"
+                }
+            ]
+        },
+        {
+            "name": "SourceInput",
+            "base": "ApplianceInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u_ref",
+                        "u_ref_angle"
+                    ],
+                    "description": "reference voltage"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "sk",
+                        "rx_ratio",
+                        "z01_ratio"
+                    ],
+                    "description": "short circuit capacity"
+                }
+            ]
+        },
+        {
+            "name": "GenericVoltageSensorInput",
+            "base": "SensorInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_sigma",
+                    "description": "sigma of error margin of voltage measurement"
+                }
+            ]
+        },
+        {
+            "name": "VoltageSensorInput",
+            "base": "GenericVoltageSensorInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "u_measured",
+                        "u_angle_measured"
+                    ],
+                    "description": "measured voltage magnitude and angle"
+                }
+            ]
+        },
+        {
+            "name": "GenericPowerSensorInput",
+            "base": "SensorInput",
+            "attributes": [
+                {
+                    "data_type": "MeasuredTerminalType",
+                    "names": "measured_terminal_type",
+                    "description": "type of measured terminal"
+                },
+                {
+                    "data_type": "double",
+                    "names": "power_sigma",
+                    "description": "sigma of error margin of power measurement"
+                }
+            ]
+        },
+        {
+            "name": "PowerSensorInput",
+            "base": "GenericPowerSensorInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_measured",
+                        "q_measured"
+                    ],
+                    "description": "measured active/reactive power"
+                }
+            ]
+        },
+        {
+            "name": "FaultInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "whether the appliance is connected"
+                },
+                {
+                    "data_type": "FaultType",
+                    "names": "fault_type",
+                    "description": "type of the fault"
+                },
+                {
+                    "data_type": "FaultPhase",
+                    "names": "fault_phase",
+                    "description": "phase(s) of the fault"
+                },
+                {
+                    "data_type": "ID",
+                    "names": "fault_object",
+                    "description": "ID of the faulty object"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r_f",
+                        "x_f"
+                    ],
+                    "description": "short circuit impedance"
+                }
+            ]
+        }
+    ]
+}
