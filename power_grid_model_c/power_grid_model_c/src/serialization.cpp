@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+#include "power_grid_model_c/serialization.h"
 #include "power_grid_model_c/basics.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>

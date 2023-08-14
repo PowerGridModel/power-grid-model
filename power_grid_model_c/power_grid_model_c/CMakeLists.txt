@@ -25,6 +25,7 @@ set(PGM_PUBLIC_HEADERS
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/model.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/options.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/dataset_definitions.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/serialization.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c.h"
 )
 

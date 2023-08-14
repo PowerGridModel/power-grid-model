@@ -14,6 +14,7 @@
  *     - power_grid_model_c/meta_data.h: functions with meta data
  *     - power_grid_model_c/model.h: functions with create, release, run calculation of model
  *     - power_grid_model_c/options.h: functions with setting the calculation options
+ *     - power_grid_model_c/serialization.h: functions with serialization functions
  *     - power_grid_model_c/dataset_definitions.h: external pointer variables to all datasets, components, and
  *       attributes. You have to include this header separately. It is not included by power_grid_model_c.h.
  */
@@ -28,5 +29,6 @@
 #include "power_grid_model_c/meta_data.h"
 #include "power_grid_model_c/model.h"
 #include "power_grid_model_c/options.h"
+#include "power_grid_model_c/serialization.h"
 
 #endif // POWER_GRID_MODEL_C_H
