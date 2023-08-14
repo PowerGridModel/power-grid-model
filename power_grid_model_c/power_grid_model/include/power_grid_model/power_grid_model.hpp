@@ -91,7 +91,7 @@ constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
 #else
 constexpr size_t cache_line_size = 64;
 #endif
-class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double> {};
+class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double, std::less<>> {};
 
 using Clock = std::chrono::high_resolution_clock;
 using Duration = std::chrono::duration<double>;

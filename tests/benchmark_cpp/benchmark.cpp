@@ -16,14 +16,18 @@ struct PowerGridBenchmark {
 
     template <bool sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
-        OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
-        BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
-        // calculate
-        main_model.value().calculate_power_flow<sym>(1e-8, 20, calculation_method, output.get_dataset(),
-                                                     batch_data.get_dataset(), threading);
-        CalculationInfo info_extra = main_model.value().calculation_info();
-        info.merge(info_extra);
-        std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
+        try {
+            OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
+            BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
+            // calculate
+            main_model.value().calculate_power_flow<sym>(1e-8, 20, calculation_method, output.get_dataset(),
+                                                         batch_data.get_dataset(), threading);
+            CalculationInfo info_extra = main_model.value().calculation_info();
+            info.merge(info_extra);
+            std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
+        } catch (std::exception const& e) {
+            std::cout << "\nAn exception was raised during execution: " << e.what() << '\n';
+        }
     }
 
     template <bool sym>
@@ -88,22 +92,23 @@ struct PowerGridBenchmark {
 
 int main(int, char**) {
     using enum power_grid_model::CalculationMethod;
+
     power_grid_model::benchmark::PowerGridBenchmark benchmarker{};
     power_grid_model::benchmark::Option option{};
 
-#ifndef NDEBUG
-    option.n_node_total_specified = 200;
-    option.n_mv_feeder = 3;
-    option.n_node_per_mv_feeder = 6;
-    option.n_lv_feeder = 2;
-    option.n_connection_per_lv_feeder = 4;
-#else
+    // #ifndef NDEBUG
+    //     option.n_node_total_specified = 200;
+    //     option.n_mv_feeder = 3;
+    //     option.n_node_per_mv_feeder = 6;
+    //     option.n_lv_feeder = 2;
+    //     option.n_connection_per_lv_feeder = 4;
+    // #else
     option.n_node_total_specified = 2000;
     option.n_mv_feeder = 40;
     option.n_node_per_mv_feeder = 30;
     option.n_lv_feeder = 10;
     option.n_connection_per_lv_feeder = 100;
-#endif
+    // #endif
 
     // radial
     option.has_mv_ring = false;
@@ -115,8 +120,8 @@ int main(int, char**) {
     benchmarker.run_benchmark<false>(option, newton_raphson);
     benchmarker.run_benchmark<false>(option, linear);
     benchmarker.run_benchmark<false>(option, iterative_current);
-    // with meshed ring
 
+    // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
     benchmarker.run_benchmark<true>(option, newton_raphson);

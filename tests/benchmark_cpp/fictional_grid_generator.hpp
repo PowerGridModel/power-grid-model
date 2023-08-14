@@ -154,8 +154,8 @@ class FictionalGridGenerator {
     std::mt19937_64 gen_;
     ID id_gen_;
     InputData input_;
-    std::vector<Idx> mv_ring_;
-    std::vector<Idx> lv_ring_;
+    std::vector<ID> mv_ring_;
+    std::vector<ID> lv_ring_;
 
     void generate_mv_grid() {
         // source node
