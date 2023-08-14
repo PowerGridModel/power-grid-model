@@ -34,7 +34,8 @@ struct PowerGridBenchmark {
         // source node
         ID const id_source_node = 0;
         NodeInput const source_node{{id_source_node}, 150.0e3};
-        NodeInput const cycle_node_1{{id_source_node + 1}, 150.0e3}, cycle_node_2{{id_source_node + 2}, 150.0e3};
+        NodeInput const cycle_node_1{{id_source_node + 1}, 150.0e3};
+        NodeInput const cycle_node_2{{id_source_node + 2}, 150.0e3};
         LinkInput const link_1{{{3}, 0, 1, true, true}};
         LinkInput const link_2{{{4}, 1, 2, true, true}};
         LinkInput const link_3{{{5}, 2, 0, true, true}};
@@ -137,7 +138,8 @@ struct PowerGridBenchmark {
                 sym_load_s.q_specified *= sym_scale;
                 double const asym_scale = real_gen(gen);
                 Idx const phase = load_type_gen(gen);
-                std::array<double, 3> p{}, q{};
+                std::array<double, 3> p{};
+                std::array<double, 3> q{};
                 p[phase] = asym_scale * sym_load.p_specified;
                 q[phase] = asym_scale * sym_load.q_specified;
                 asym_load_s.p_specified << p[0], p[1], p[2];

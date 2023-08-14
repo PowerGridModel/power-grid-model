@@ -66,7 +66,8 @@ class Topology {
         // accumulate phase shift
         // assign predecessor
         void tree_edge(GlobalGraph::edge_descriptor e, GlobalGraph const& g) {
-            GraphIdx const source = boost::source(e, g), target = boost::target(e, g);
+            GraphIdx const source = boost::source(e, g);
+            GraphIdx const target = boost::target(e, g);
             phase_shift_[target] = phase_shift_[source] + g[e].phase_shift;
             predecessors_[target] = source;
         }
@@ -78,7 +79,8 @@ class Topology {
 
         // back edge, judge if it forms a cycle
         void back_edge(GlobalGraph::edge_descriptor e, GlobalGraph const& g) {
-            GraphIdx const source = boost::source(e, g), target = boost::target(e, g);
+            GraphIdx const source = boost::source(e, g);
+            GraphIdx const target = boost::target(e, g);
             // if this edge matches in the current tree as target->source
             // it does not form a cycle, but an anti-parallel edge
             // else it forms a cycle
@@ -328,8 +330,10 @@ class Topology {
         ReorderGraph meshed_graph{n_cycle_node};
         build_graph(meshed_graph);
         // start minimum degree ordering
-        std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node), inverse_perm(n_cycle_node), degree(n_cycle_node),
-            supernode_sizes(n_cycle_node, 1);
+        std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node);
+        std::vector<std::make_signed_t<GraphIdx>> inverse_perm(n_cycle_node);
+        std::vector<std::make_signed_t<GraphIdx>> degree(n_cycle_node);
+        std::vector<std::make_signed_t<GraphIdx>> supernode_sizes(n_cycle_node, 1);
         boost::vec_adj_list_vertex_id_map<boost::no_property, std::make_signed_t<GraphIdx>> const id{};
         int const delta = 0;
         boost::minimum_degree_ordering(meshed_graph, boost::make_iterator_property_map(degree.begin(), id),
