@@ -274,7 +274,7 @@ struct PowerGridBenchmark {
 
 } // namespace power_grid_model
 
-int main(int, char**) {
+int main(int /*unused*/, char** /*unused*/) {
 #ifndef NDEBUG
     constexpr power_grid_model::Idx n_node = 100;
 #else

@@ -39,7 +39,7 @@ class Line final : public Branch {
     // override getter
     double base_i_from() const final { return base_i_; }
     double base_i_to() const final { return base_i_; }
-    double loading(double, double max_i) const final { return max_i / i_n_; };
+    double loading(double /*max_s*/, double max_i) const final { return max_i / i_n_; };
     double phase_shift() const final { return 0.0; }
     bool is_param_mutable() const final { return false; }
 

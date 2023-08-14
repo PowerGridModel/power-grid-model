@@ -23,7 +23,7 @@ template <class Tensor, class RHSVector, class XVector>
 concept scalar_value_lu = scalar_value<Tensor> && std::same_as<Tensor, RHSVector> && std::same_as<Tensor, XVector>;
 
 // TODO(mgovers) improve this concept
-template <class Derived> int check_array_base(Eigen::ArrayBase<Derived> const&) { return 0; }
+template <class Derived> int check_array_base(Eigen::ArrayBase<Derived> const& /*unused*/) { return 0; }
 template <class ArrayLike>
 concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>; // should be an eigen array
 

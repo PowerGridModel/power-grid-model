@@ -68,7 +68,7 @@ class Transformer : public Branch {
     // override getter
     double base_i_from() const final { return base_i_from_; }
     double base_i_to() const final { return base_i_to_; }
-    double loading(double max_s, double) const final { return max_s / sn_; };
+    double loading(double max_s, double /*max_i*/) const final { return max_s / sn_; };
     // phase shift is theta_from - theta_to
     double phase_shift() const final { return clock_ * deg_30; }
     bool is_param_mutable() const final { return true; }

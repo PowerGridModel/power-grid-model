@@ -91,7 +91,7 @@ class Topology {
 
         // assign node to math group
         // append node to dfs list
-        void discover_vertex(GlobalGraph::vertex_descriptor u, GlobalGraph const&) {
+        void discover_vertex(GlobalGraph::vertex_descriptor u, GlobalGraph const& /*unused*/) {
             node_coupling_[u].group = (Idx)math_group_;
             dfs_node_.push_back((Idx)u);
         }

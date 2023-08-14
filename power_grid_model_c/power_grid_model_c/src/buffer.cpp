@@ -17,7 +17,7 @@ using meta_data::RawDataPtr;
 } // namespace
 
 // buffer control
-RawDataPtr PGM_create_buffer(PGM_Handle*, PGM_MetaComponent const* component, PGM_Idx size) {
+RawDataPtr PGM_create_buffer(PGM_Handle* /*unused*/, PGM_MetaComponent const* component, PGM_Idx size) {
 #ifdef _WIN32
     return _aligned_malloc(component->size * size, component->alignment);
 #else
@@ -31,7 +31,7 @@ void PGM_destroy_buffer(RawDataPtr ptr) {
     std::free(ptr);
 #endif
 }
-void PGM_buffer_set_nan(PGM_Handle*, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
+void PGM_buffer_set_nan(PGM_Handle* /*unused*/, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
                         PGM_Idx size) {
     component->set_nan(ptr, buffer_offset, size);
 }
@@ -56,11 +56,11 @@ void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_p
     }
 }
 } // namespace
-void PGM_buffer_set_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
+void PGM_buffer_set_value(PGM_Handle* /*unused*/, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
                           RawDataConstPtr src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride) {
     buffer_get_set_value<false>(attribute, buffer_ptr, src_ptr, buffer_offset, size, src_stride);
 }
-void PGM_buffer_get_value(PGM_Handle*, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
+void PGM_buffer_get_value(PGM_Handle* /*unused*/, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
                           RawDataPtr dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride) {
     buffer_get_set_value<true>(attribute, buffer_ptr, dest_ptr, buffer_offset, size, dest_stride);
 }
