@@ -874,19 +874,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <calculation_input_type CalcInputType> auto calculate_param(auto const& c, auto const&... extra_args) {
-        static constexpr bool sym{symmetric_calculation_input_type<CalcInputType>};
-        if constexpr (requires {
-                          { c.calc_param(extra_args...) };
-                      }) {
-            return c.calc_param(extra_args...);
-        } else if constexpr (requires {
-                                 { c.template calc_param<sym>(extra_args...) };
-                             }) {
-            return c.template calc_param<sym>(extra_args...);
-        } else {
-            return;
-        }
+    template <calculation_input_type CalcInputType>
+    auto calculate_param(auto const& c, auto const&... extra_args)
+        requires requires {
+                     { c.calc_param(extra_args...) };
+                 }
+    {
+        return c.calc_param(extra_args...);
+    }
+    template <calculation_input_type CalcInputType>
+    auto calculate_param(auto const& c, auto const&... extra_args)
+        requires requires {
+                     { c.template calc_param<symmetric_calculation_input_type<CalcInputType>>(extra_args...) };
+                 }
+    {
+        return c.template calc_param<symmetric_calculation_input_type<CalcInputType>>(extra_args...);
     }
 
     template <bool sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
