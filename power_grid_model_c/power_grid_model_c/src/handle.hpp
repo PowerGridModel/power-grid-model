@@ -14,6 +14,8 @@
 
 #include <power_grid_model/power_grid_model.hpp>
 
+#include <string_view>
+
 // context handle
 struct PGM_Handle {
     power_grid_model::Idx err_code;
@@ -23,5 +25,18 @@ struct PGM_Handle {
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
 };
+
+template <class Exception = std::exception, class Functor>
+auto call_with_catch(PGM_Handle* handle, Functor func, PGM_Idx error_code, std::string_view extra_msg = {})
+    -> std::invoke_result_t<Functor> {
+    static std::remove_cvref_t<std::invoke_result_t<Functor>> const empty{};
+    try {
+        return func();
+    } catch (Exception const& e) {
+        handle->err_code = error_code;
+        handle->err_msg = std::string(e.what()) + std::string(extra_msg);
+        return empty;
+    }
+}
 
 #endif
