@@ -105,11 +105,11 @@ int main(int, char**) {
     option.n_connection_per_lv_feeder = 4;
     power_grid_model::Idx batch_size = 10;
 #else
-    option.n_node_total_specified = 2000;
-    option.n_mv_feeder = 40;
-    option.n_node_per_mv_feeder = 30;
+    option.n_node_total_specified = 1500;
+    option.n_mv_feeder = 20;
+    option.n_node_per_mv_feeder = 10;
     option.n_lv_feeder = 10;
-    option.n_connection_per_lv_feeder = 100;
+    option.n_connection_per_lv_feeder = 40;
     power_grid_model::Idx batch_size = 1000;
 #endif
 
@@ -122,7 +122,7 @@ int main(int, char**) {
     benchmarker.run_benchmark<true>(option, iterative_current);
     benchmarker.run_benchmark<false>(option, newton_raphson);
     benchmarker.run_benchmark<false>(option, linear);
-    benchmarker.run_benchmark<false>(option, iterative_current);
+    // benchmarker.run_benchmark<false>(option, iterative_current);
 
     // with meshed ring
     option.has_mv_ring = true;
@@ -132,6 +132,6 @@ int main(int, char**) {
     benchmarker.run_benchmark<true>(option, iterative_current);
     benchmarker.run_benchmark<false>(option, newton_raphson);
     benchmarker.run_benchmark<false>(option, linear);
-    benchmarker.run_benchmark<false>(option, iterative_current);
+    // benchmarker.run_benchmark<false>(option, iterative_current);
     return 0;
 }
