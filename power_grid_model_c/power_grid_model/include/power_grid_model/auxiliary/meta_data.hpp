@@ -195,7 +195,9 @@ struct PGM_MetaComponent {
         return -1;
     }
 
-    Idx has_attribute(std::string const& attribute_name) const { return find_attribute(attribute_name) >= 0; }
+    Idx has_attribute(std::string const& attribute_name) const {
+        return static_cast<PGM_MetaComponent::Idx>(find_attribute(attribute_name) >= 0);
+    }
 };
 
 namespace power_grid_model::meta_data {
