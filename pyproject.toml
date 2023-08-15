@@ -4,7 +4,7 @@
 
 [build-system]
 requires = [
-    "setuptools",
+    "setuptools>=v68.0.0",
     "wheel",
     "pybuild-header-dependency",
 ]
