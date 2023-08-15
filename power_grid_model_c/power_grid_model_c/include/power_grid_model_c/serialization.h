@@ -22,8 +22,8 @@ extern "C" {
  * @param handle
  * @param data pointer to the byte stream
  * @param size of the byte stream
- * @return a pointer to the deserializer instance. Should be freed by PGM_destroy_deserializer()
- *     Or NULL if errors occured. Check the handle for error information.
+ * @return a pointer to the deserializer instance (should be freed by PGM_destroy_deserializer());
+ *     or NULL if errors occured (check the handle for error information)
  */
 PGM_API PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size);
 
@@ -46,7 +46,7 @@ PGM_API PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, 
 PGM_API char const* PGM_deserializer_dataset_name(PGM_Handle* handle, PGM_Deserializer* deserializer);
 
 /**
- * @brief Get if the dataset is a batch dataset
+ * @brief Get the flag whether the dataset is a batch dataset
  * @param handle
  * @param deserializer pointer to deserializer
  * @return 1 if the dataset is a batch, 0 if it is not.
@@ -138,7 +138,7 @@ PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
  *     components[i] is a pointer to null-terminated string of i-th component name
  * @param elements_per_scenario pointer to array of numbers of the elements per scenario for all components
  *     If i-th component is uniform, elements_per_scenario[i] is the number of elements per scenario for i-th component
- *     If i-th component is not uniform, elements_per_scenario[i] should be one
+ *     If i-th component is not uniform, elements_per_scenario[i] must be one
  * @param indptrs indptrs pointer to array of indptrs per component
  *     If i-th component is not uniform, indptrs[i] points to an array of length batch_size + 1
  *     If i-th component is uniform, indptrs[i] should be NULL
