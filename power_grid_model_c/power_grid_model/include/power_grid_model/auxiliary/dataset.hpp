@@ -61,7 +61,7 @@ template <bool is_const> class DataPointer {
         return std::make_pair(ptr + elements_per_scenario_ * pos, ptr + elements_per_scenario_ * (pos + 1));
     }
 
-    Idx batch_size() const { return (Idx)batch_size_; }
+    Idx batch_size() const { return batch_size_; }
 
     Idx elements_per_scenario(Idx pos) const {
         assert(pos >= 0);
