@@ -221,7 +221,7 @@ template <bool sym> class ShortCircuitSolver {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
-            double const infinite_admittance_fault_counter_bus =
+            auto const infinite_admittance_fault_counter_bus =
                 static_cast<double>(infinite_admittance_fault_counter[bus_number]);
 
             if (!input.faults.empty()) {
@@ -342,7 +342,7 @@ template <bool sym> class ShortCircuitSolver {
                         if constexpr (!sym) {
                             if ((fault_type == FaultType::two_phase_to_ground) &&
                                 (infinite_admittance_fault_counter_bus == 0.0)) {
-                                double const finite_admittance_fault_counter_bus = static_cast<double>(
+                                auto const finite_admittance_fault_counter_bus = static_cast<double>(
                                     input.fault_bus_indptr[bus_number + 1] - input.fault_bus_indptr[bus_number]);
                                 // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2 - u_12 * y_fault
                                 // i_fault_2_p = i_inj_1 + u_12 * y_fault

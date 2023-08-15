@@ -51,7 +51,7 @@ struct SparseMapping {
 };
 
 inline SparseMapping build_sparse_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
-    Idx const n_A = (Idx)idx_B_in_A.size();
+    auto const n_A = static_cast<Idx>(idx_B_in_A.size());
     using SparseEntry = std::pair<Idx, Idx>;
     std::vector<SparseEntry> entries(n_A);
     std::transform(idx_B_in_A.cbegin(), idx_B_in_A.cend(), IdxCount{0}, entries.begin(), [](Idx j_B, Idx i_A) {
