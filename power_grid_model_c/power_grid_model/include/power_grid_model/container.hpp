@@ -77,9 +77,9 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             throw ConflictID{id};
         }
         // find group and position
-        Idx const group = static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
+        auto const group = static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
         std::vector<Storageable>& vec = std::get<std::vector<Storageable>>(vectors_);
-        Idx const pos = static_cast<Idx>(vec.size());
+        auto const pos = static_cast<Idx>(vec.size());
         // create object
         vec.emplace_back(std::forward<Args>(args)...);
         // insert idx to map
