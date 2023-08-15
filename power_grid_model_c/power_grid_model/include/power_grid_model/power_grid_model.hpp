@@ -85,8 +85,7 @@ constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
 
 // calculation info
-constexpr size_t cache_line_size = 64;
-class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double, std::less<>> {};
+class CalculationInfo : public std::map<std::string, double, std::less<>> {};
 
 using Clock = std::chrono::high_resolution_clock;
 using Duration = std::chrono::duration<double>;
