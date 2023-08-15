@@ -23,24 +23,22 @@ struct PGM_Serializer : public Serializer {
 
 PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size) {
     PGM_clear_error(handle);
-    try {
-        return new PGM_Deserializer{from_msgpack, {data, static_cast<size_t>(size)}};
-    } catch (std::exception const& e) {
-        handle->err_code = PGM_serialization_error;
-        handle->err_msg = e.what();
-        return nullptr;
-    }
+    return call_with_catch(
+        handle,
+        [&] {
+            return new PGM_Deserializer{from_msgpack, {data, static_cast<size_t>(size)}};
+        },
+        PGM_serialization_error);
 }
 
 PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char const* json_string) {
     PGM_clear_error(handle);
-    try {
-        return new PGM_Deserializer{from_json, json_string};
-    } catch (std::exception const& e) {
-        handle->err_code = PGM_serialization_error;
-        handle->err_msg = e.what();
-        return nullptr;
-    }
+    return call_with_catch(
+        handle,
+        [&] {
+            return new PGM_Deserializer{from_json, json_string};
+        },
+        PGM_serialization_error);
 }
 
 char const* PGM_deserializer_dataset_name(PGM_Handle*, PGM_Deserializer* deserializer) {
@@ -71,13 +69,13 @@ PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle*, PGM_Deserializer*
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer, char const** components,
                                       void** data, PGM_Idx** indptrs) {
     PGM_clear_error(handle);
-    try {
-        deserializer->set_buffer(components, data, indptrs);
-        deserializer->parse();
-    } catch (std::exception const& e) {
-        handle->err_code = PGM_serialization_error;
-        handle->err_msg = e.what();
-    }
+    call_with_catch(
+        handle,
+        [&] {
+            deserializer->set_buffer(components, data, indptrs);
+            deserializer->parse();
+        },
+        PGM_serialization_error);
 }
 
 void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
@@ -87,38 +85,33 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, P
                                       PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
                                       void const** data) {
     PGM_clear_error(handle);
-    try {
-        return new PGM_Serializer{dataset,    static_cast<bool>(is_batch), batch_size, n_components,
-                                  components, elements_per_scenario,       indptrs,    data};
-    } catch (std::exception const& e) {
-        handle->err_code = PGM_serialization_error;
-        handle->err_msg = e.what();
-        return nullptr;
-    }
+    return call_with_catch(
+        handle,
+        [&] {
+            return new PGM_Serializer{dataset,    static_cast<bool>(is_batch), batch_size, n_components,
+                                      components, elements_per_scenario,       indptrs,    data};
+        },
+        PGM_serialization_error);
 }
 
 void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, char const** data,
                      PGM_Idx* size) {
     PGM_clear_error(handle);
-    try {
-        auto const msgpack_data = serializer->get_msgpack(static_cast<bool>(use_compact_list));
-        *data = msgpack_data.data();
-        *size = static_cast<PGM_Idx>(msgpack_data.size());
-    } catch (std::exception const& e) {
-        handle->err_code = PGM_serialization_error;
-        handle->err_msg = e.what();
-    }
+    call_with_catch(
+        handle,
+        [&] {
+            auto const msgpack_data = serializer->get_msgpack(static_cast<bool>(use_compact_list));
+            *data = msgpack_data.data();
+            *size = static_cast<PGM_Idx>(msgpack_data.size());
+        },
+        PGM_serialization_error);
 }
 
 char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, PGM_Idx indent) {
     PGM_clear_error(handle);
-    try {
-        return serializer->get_json(static_cast<bool>(use_compact_list), indent).c_str();
-    } catch (std::exception const& e) {
-        handle->err_code = PGM_serialization_error;
-        handle->err_msg = e.what();
-        return nullptr;
-    }
+    return call_with_catch(
+        handle, [&] { return serializer->get_json(static_cast<bool>(use_compact_list), indent).c_str(); },
+        PGM_serialization_error);
 }
 
 void PGM_destroy_serializer(PGM_Serializer* serializer) { delete serializer; }
