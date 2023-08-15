@@ -48,7 +48,7 @@ template <bool is_const> class DataPointer {
 
     template <class T> std::pair<ptr_t<T>, ptr_t<T>> get_iterators(Idx pos) const {
         assert(pos < batch_size_);
-        ptr_t<T> const ptr = reinterpret_cast<ptr_t<T>>(ptr_);
+        auto* const ptr = reinterpret_cast<ptr_t<T>>(ptr_);
         if (indptr_) {
             if (pos < 0) {
                 return std::make_pair(ptr, ptr + indptr_[batch_size_]);
