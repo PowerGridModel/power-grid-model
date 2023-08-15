@@ -28,7 +28,6 @@ struct PGM_PowerGridModel : public MainModel {
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
                                      char const** components, PGM_Idx const* component_sizes,
                                      RawDataConstPtr* input_data) {
-    PGM_clear_error(handle);
     ConstDataset dataset{};
     for (Idx i = 0; i != n_components; ++i) {
         dataset[components[i]] = ConstDataPointer{input_data[i], component_sizes[i]};
@@ -44,7 +43,6 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components, char const** components,
                       PGM_Idx const* component_sizes, RawDataConstPtr* update_data) {
-    PGM_clear_error(handle);
     ConstDataset dataset{};
     for (Idx i = 0; i != n_components; ++i) {
         dataset[components[i]] = ConstDataPointer{update_data[i], component_sizes[i]};

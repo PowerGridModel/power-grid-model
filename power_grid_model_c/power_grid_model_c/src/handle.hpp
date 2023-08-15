@@ -29,6 +29,9 @@ struct PGM_Handle {
 template <class Exception = std::exception, class Functor>
 auto call_with_catch(PGM_Handle* handle, Functor func, PGM_Idx error_code, std::string_view extra_msg = {})
     -> std::invoke_result_t<Functor> {
+    if (handle) {
+        PGM_clear_error(handle);
+    }
     using ReturnValueType = std::remove_cvref_t<std::invoke_result_t<Functor>>;
     static std::conditional_t<std::is_void_v<ReturnValueType>, int, ReturnValueType> const empty{};
     try {

@@ -22,7 +22,6 @@ struct PGM_Serializer : public Serializer {
 };
 
 PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size) {
-    PGM_clear_error(handle);
     return call_with_catch(
         handle,
         [&] {
@@ -32,7 +31,6 @@ PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char 
 }
 
 PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char const* json_string) {
-    PGM_clear_error(handle);
     return call_with_catch(
         handle,
         [&] {
@@ -68,7 +66,6 @@ PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle*, PGM_Deserializer*
 
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer, char const** components,
                                       void** data, PGM_Idx** indptrs) {
-    PGM_clear_error(handle);
     call_with_catch(
         handle,
         [&] {
@@ -84,7 +81,6 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, P
                                       PGM_Idx n_components, char const** components,
                                       PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
                                       void const** data) {
-    PGM_clear_error(handle);
     return call_with_catch(
         handle,
         [&] {
@@ -96,7 +92,6 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, P
 
 void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, char const** data,
                      PGM_Idx* size) {
-    PGM_clear_error(handle);
     call_with_catch(
         handle,
         [&] {
@@ -108,7 +103,6 @@ void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use
 }
 
 char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, PGM_Idx indent) {
-    PGM_clear_error(handle);
     return call_with_catch(
         handle, [&] { return serializer->get_json(static_cast<bool>(use_compact_list), indent).c_str(); },
         PGM_serialization_error);
