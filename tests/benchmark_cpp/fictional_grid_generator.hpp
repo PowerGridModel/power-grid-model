@@ -88,8 +88,6 @@ struct BatchData {
 
 class FictionalGridGenerator {
   public:
-    FictionalGridGenerator() {}
-
     void generate_grid(Option const& option) { generate_grid(option, std::random_device{}()); }
 
     void generate_grid(Option const& option, std::random_device::result_type seed) {
@@ -114,9 +112,10 @@ class FictionalGridGenerator {
             option_.n_mv_feeder = option_.n_lv_grid / option_.n_node_per_mv_feeder + 1;
         }
         total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder;
-        option_.ratio_lv_grid = (double)option_.n_lv_grid / (double)total_mv_connection;
+        option_.ratio_lv_grid = static_cast<double>(option_.n_lv_grid) / static_cast<double>(total_mv_connection);
         // each mv feeder 10 MVA, each transformer 60 MVA, scaled up by 10%
-        option_.n_parallel_hv_mv_transformer = (int)((double)option.n_mv_feeder * 10.0 * 1.1 / 60.0) + 1;
+        option_.n_parallel_hv_mv_transformer =
+            static_cast<Idx>(static_cast<double>(option.n_mv_feeder) * 10.0 * 1.1 / 60.0) + 1;
         // start generating grid
         generate_mv_grid();
     }
@@ -242,7 +241,7 @@ class FictionalGridGenerator {
                     SymLoadGenInput sym_load = mv_sym_load;
                     sym_load.id = id_gen_++;
                     sym_load.node = current_node_id;
-                    sym_load.type = static_cast<LoadGenType>((IntS)load_type_gen(gen_));
+                    sym_load.type = static_cast<LoadGenType>(load_type_gen(gen_));
                     double const sym_scale = scaling_gen(gen_);
                     sym_load.p_specified *= sym_scale;
                     sym_load.q_specified *= sym_scale;
@@ -365,7 +364,7 @@ class FictionalGridGenerator {
                 AsymLoadGenInput asym_load = lv_asym_load;
                 asym_load.id = id_gen_++;
                 asym_load.node = connection_node_id;
-                asym_load.type = static_cast<LoadGenType>((IntS)load_type_gen(gen_));
+                asym_load.type = static_cast<LoadGenType>(load_type_gen(gen_));
                 Idx const phase = load_phase_gen(gen_);
                 double const apparent_power = load_scaling_gen(gen_);
                 asym_load.p_specified(phase) = apparent_power * 0.8;
@@ -411,9 +410,9 @@ class FictionalGridGenerator {
     void generate_load_series(std::vector<T> const& input, std::vector<U>& load_series, Idx batch_size) {
         std::uniform_real_distribution<double> load_scaling_gen{0.0, 1.0};
         load_series.resize(input.size() * batch_size);
-        ptrdiff_t const n_object = (ptrdiff_t)input.size();
+        auto const n_object = static_cast<ptrdiff_t>(input.size());
         for (ptrdiff_t batch = 0; batch < batch_size; ++batch) {
-            for (ptrdiff_t object = 0; object < (ptrdiff_t)input.size(); ++object) {
+            for (ptrdiff_t object = 0; object < n_object; ++object) {
                 T const& input_obj = input[object];
                 U& update_obj = load_series[batch * n_object + object];
                 update_obj.id = input_obj.id;
