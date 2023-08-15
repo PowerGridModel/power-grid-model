@@ -29,6 +29,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#ifdef POWER_GRID_MODEL_CPP_BENCHMARK
+#include <new>
+#endif
 
 namespace power_grid_model {
 
@@ -85,7 +88,16 @@ constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
 
 // calculation info
-class CalculationInfo : public std::map<std::string, double, std::less<>> {};
+#ifdef POWER_GRID_MODEL_CPP_BENCHMARK
+#if defined(__cpp_lib_hardware_interference_size)
+constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
+#else
+constexpr size_t cache_line_size = 64;
+#endif
+class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double, std::less<>> {};
+#else
+using CalculationInfo = std::map<std::string, double, std::less<>>;
+#endif
 
 using Clock = std::chrono::high_resolution_clock;
 using Duration = std::chrono::duration<double>;

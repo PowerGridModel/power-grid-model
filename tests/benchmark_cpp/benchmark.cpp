@@ -96,25 +96,27 @@ int main(int, char**) {
     power_grid_model::benchmark::PowerGridBenchmark benchmarker{};
     power_grid_model::benchmark::Option option{};
 
-    // #ifndef NDEBUG
-    //     option.n_node_total_specified = 200;
-    //     option.n_mv_feeder = 3;
-    //     option.n_node_per_mv_feeder = 6;
-    //     option.n_lv_feeder = 2;
-    //     option.n_connection_per_lv_feeder = 4;
-    // #else
+#ifndef NDEBUG
+    option.n_node_total_specified = 200;
+    option.n_mv_feeder = 3;
+    option.n_node_per_mv_feeder = 6;
+    option.n_lv_feeder = 2;
+    option.n_connection_per_lv_feeder = 4;
+    power_grid_model::Idx batch_size = 10;
+#else
     option.n_node_total_specified = 2000;
     option.n_mv_feeder = 40;
-    option.n_node_per_mv_feeder = 30;
-    option.n_lv_feeder = 10;
-    option.n_connection_per_lv_feeder = 100;
-    // #endif
+    option.n_node_per_mv_feeder = 10;
+    option.n_lv_feeder = 20;
+    option.n_connection_per_lv_feeder = 50;
+    power_grid_model::Idx batch_size = 1000;
+#endif
 
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    benchmarker.run_benchmark<true>(option, newton_raphson, 5000);
-    benchmarker.run_benchmark<true>(option, newton_raphson, 5000, 6);
+    benchmarker.run_benchmark<true>(option, newton_raphson, batch_size);
+    benchmarker.run_benchmark<true>(option, newton_raphson, batch_size, 6);
     benchmarker.run_benchmark<true>(option, linear);
     benchmarker.run_benchmark<true>(option, iterative_current);
     benchmarker.run_benchmark<false>(option, newton_raphson);
