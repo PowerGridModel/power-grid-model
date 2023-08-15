@@ -16,15 +16,16 @@ struct PowerGridBenchmark {
 
     template <bool sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
+        OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
+        BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
+        std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
+        Idx const max_iter = (calculation_method == CalculationMethod::iterative_current) ? 100 : 20;
         try {
-            OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
-            BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
             // calculate
-            main_model.value().calculate_power_flow<sym>(1e-8, 20, calculation_method, output.get_dataset(),
+            main_model.value().calculate_power_flow<sym>(1e-8, max_iter, calculation_method, output.get_dataset(),
                                                          batch_data.get_dataset(), threading);
             CalculationInfo info_extra = main_model.value().calculation_info();
             info.merge(info_extra);
-            std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
         } catch (std::exception const& e) {
             std::cout << "\nAn exception was raised during execution: " << e.what() << '\n';
         }
@@ -106,9 +107,9 @@ int main(int, char**) {
 #else
     option.n_node_total_specified = 2000;
     option.n_mv_feeder = 40;
-    option.n_node_per_mv_feeder = 10;
-    option.n_lv_feeder = 20;
-    option.n_connection_per_lv_feeder = 50;
+    option.n_node_per_mv_feeder = 30;
+    option.n_lv_feeder = 10;
+    option.n_connection_per_lv_feeder = 100;
     power_grid_model::Idx batch_size = 1000;
 #endif
 
