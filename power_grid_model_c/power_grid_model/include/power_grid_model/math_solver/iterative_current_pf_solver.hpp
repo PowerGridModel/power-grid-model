@@ -83,7 +83,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const& /*unused*/) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const& /* output */) {
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.lu_diag();
