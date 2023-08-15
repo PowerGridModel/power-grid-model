@@ -103,7 +103,8 @@ test-command = "pytest {package}/tests"
 #    PyPy
 #    musllinux when python < 3.9
 #    musllinux in aarch64
-skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
+#    python == 3.12 (until numpy supports python 3.12)
+skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64", "cp312-*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
