@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "power_grid_model/main_model.hpp"
+#include <power_grid_model/main_model.hpp>
 
 #include <algorithm>
 #include <random>
@@ -86,6 +86,8 @@ struct BatchData {
     }
 };
 
+// Deliberately use default seed for reproducability
+// NOLINTNEXTLINE(cert-msc32-c, cert-msc51-cpp)
 class FictionalGridGenerator {
   public:
     void generate_grid(Option const& option) { generate_grid(option, std::random_device{}()); }
@@ -212,8 +214,9 @@ class FictionalGridGenerator {
         // scaling factor: (from 0.8 to 1.2) * 10.0 / n_node_per_feeder
         // this will result in total length of the cable for about 10.0 km
         //    and total load for about 10 MVA
-        std::uniform_real_distribution<double> scaling_gen{0.8 * 10.0 / option_.n_node_per_mv_feeder,
-                                                           1.2 * 10.0 / option_.n_node_per_mv_feeder};
+        std::uniform_real_distribution<double> scaling_gen{
+            0.8 * 10.0 / static_cast<double>(option_.n_node_per_mv_feeder),
+            1.2 * 10.0 / static_cast<double>(option_.n_node_per_mv_feeder)};
         std::bernoulli_distribution lv_gen{option_.ratio_lv_grid};
 
         // loop all feeder
@@ -235,7 +238,7 @@ class FictionalGridGenerator {
                 input_.line.push_back(line);
                 // generate lv grid
                 if (lv_gen(gen_)) {
-                    generate_lv_grid(current_node_id, 10.0 / option_.n_node_per_mv_feeder);
+                    generate_lv_grid(current_node_id, 10.0 / static_cast<double>(option_.n_node_per_mv_feeder));
                 } else {
                     // generate mv sym load
                     SymLoadGenInput sym_load = mv_sym_load;
@@ -321,12 +324,14 @@ class FictionalGridGenerator {
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
         std::uniform_int_distribution<Idx> load_phase_gen{0, 2};
         // mv_base_load in total, divided by all users, scale down by 20%
-        double const base_load = mv_base_load / option_.n_lv_feeder / option_.n_connection_per_lv_feeder / 1.2;
+        double const base_load =
+            mv_base_load / static_cast<double>(option_.n_lv_feeder * option_.n_connection_per_lv_feeder) / 1.2;
         std::uniform_real_distribution<double> load_scaling_gen{0.8 * base_load, 1.2 * base_load};
         // main cable length generation
         // total length 0.2 km +/- 20%
-        std::uniform_real_distribution<double> main_cable_gen{0.8 * 0.2 / option_.n_connection_per_lv_feeder,
-                                                              1.2 * 0.2 / option_.n_connection_per_lv_feeder};
+        std::uniform_real_distribution<double> main_cable_gen{
+            0.8 * 0.2 / static_cast<double>(option_.n_connection_per_lv_feeder),
+            1.2 * 0.2 / static_cast<double>(option_.n_connection_per_lv_feeder)};
         // connection cable length generation
         // length 5 m - 20 m
         std::uniform_real_distribution<double> connection_cable_gen{5e-3, 20e-3};
