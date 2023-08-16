@@ -25,7 +25,8 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 
     // pack name of component and attribute
     template <class T>
-        requires(std::same_as<T, PGM_MetaComponent> || std::same_as<T, PGM_MetaAttribute>)
+        requires(std::same_as<T, power_grid_model::meta_data::MetaComponent> ||
+                 std::same_as<T, power_grid_model::meta_data::MetaAttribute>)
     struct pack<T const*> {
         template <typename Stream>
         msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p, T const* const& o) const {
