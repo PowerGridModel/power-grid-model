@@ -47,6 +47,7 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
   * Version 11.x tested in CI
 * Clang >= 14.0
   * Version 14.x tested in CI
+  * Version 15.x tested in CI with code quality checks
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
