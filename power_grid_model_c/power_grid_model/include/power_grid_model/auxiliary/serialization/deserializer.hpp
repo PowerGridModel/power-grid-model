@@ -8,6 +8,7 @@
 
 #include "../../exception.hpp"
 #include "../../power_grid_model.hpp"
+#include "../dataset_handler.hpp"
 #include "../meta_data.hpp"
 #include "../meta_data_gen.hpp"
 
