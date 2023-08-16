@@ -23,31 +23,35 @@ TEST_CASE("C API Meta Data") {
         // check dataset
         CHECK(PGM_meta_n_datasets(hl) == meta.n_datasets());
         for (Idx idx_dataset = 0; idx_dataset != meta.n_datasets(); ++idx_dataset) {
-            MetaDataset const* const dataset = PGM_meta_get_dataset_by_idx(hl, idx_dataset);
+            PGM_MetaDataset const* const dataset = PGM_meta_get_dataset_by_idx(hl, idx_dataset);
             char const* const dataset_name = PGM_meta_dataset_name(hl, dataset);
             CHECK(PGM_meta_get_dataset_by_name(hl, dataset_name) == dataset);
             CHECK(dataset_name == meta.datasets[idx_dataset].name);
 
             // check component
-            CHECK(PGM_meta_n_components(hl, dataset) == dataset->n_components());
-            for (Idx idx_component = 0; idx_component != dataset->n_components(); ++idx_component) {
-                MetaComponent const* const component = PGM_meta_get_component_by_idx(hl, dataset, idx_component);
+            MetaDataset const& cpp_dataset = meta.get_dataset(dataset_name);
+            CHECK(PGM_meta_n_components(hl, dataset) == cpp_dataset.n_components());
+            for (Idx idx_component = 0; idx_component != cpp_dataset.n_components(); ++idx_component) {
+                PGM_MetaComponent const* const component = PGM_meta_get_component_by_idx(hl, dataset, idx_component);
                 char const* const component_name = PGM_meta_component_name(hl, component);
                 CHECK(PGM_meta_get_component_by_name(hl, dataset_name, component_name) == component);
-                CHECK(component_name == dataset->components[idx_component].name);
-                CHECK(PGM_meta_component_size(hl, component) == component->size);
-                CHECK(PGM_meta_component_alignment(hl, component) == component->alignment);
+                MetaComponent const& cpp_component = cpp_dataset.components[idx_component];
+                CHECK(component_name == cpp_component.name);
+                CHECK(PGM_meta_component_size(hl, component) == cpp_component.size);
+                CHECK(PGM_meta_component_alignment(hl, component) == cpp_component.alignment);
 
                 // check attribute
-                CHECK(PGM_meta_n_attributes(hl, component) == component->n_attributes());
-                for (Idx idx_attribute = 0; idx_attribute != component->n_attributes(); ++idx_attribute) {
-                    MetaAttribute const* const attribute = PGM_meta_get_attribute_by_idx(hl, component, idx_attribute);
+                CHECK(PGM_meta_n_attributes(hl, component) == cpp_component.n_attributes());
+                for (Idx idx_attribute = 0; idx_attribute != cpp_component.n_attributes(); ++idx_attribute) {
+                    PGM_MetaAttribute const* const attribute =
+                        PGM_meta_get_attribute_by_idx(hl, component, idx_attribute);
                     char const* const attribute_name = PGM_meta_attribute_name(hl, attribute);
                     CHECK(PGM_meta_get_attribute_by_name(hl, dataset_name, component_name, attribute_name) ==
                           attribute);
-                    CHECK(attribute_name == component->attributes[idx_attribute].name);
-                    CHECK(PGM_meta_attribute_ctype(hl, attribute) == static_cast<Idx>(attribute->ctype));
-                    CHECK(PGM_meta_attribute_offset(hl, attribute) == attribute->offset);
+                    MetaAttribute const& cpp_attribute = cpp_component.attributes[idx_attribute];
+                    CHECK(attribute_name == cpp_attribute.name);
+                    CHECK(PGM_meta_attribute_ctype(hl, attribute) == static_cast<Idx>(cpp_attribute.ctype));
+                    CHECK(PGM_meta_attribute_offset(hl, attribute) == cpp_attribute.offset);
                 }
             }
         }
