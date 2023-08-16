@@ -18,7 +18,7 @@ static_assert(std::is_same_v<PGM_ID, ID>);
 
 constexpr std::string_view bound_error_msg = "\n You supplied wrong name and/or index!\n";
 
-auto meta_catch = [](PGM_Handle* handle, auto func) -> decltype(auto) {
+auto const meta_catch = [](PGM_Handle* handle, auto func) -> decltype(auto) {
     return call_with_catch<std::out_of_range>(handle, func, PGM_regular_error, bound_error_msg);
 };
 
