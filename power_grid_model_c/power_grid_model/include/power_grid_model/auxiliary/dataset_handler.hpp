@@ -11,7 +11,6 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "meta_data.hpp"
-#include "meta_data_gen.hpp"
 
 #include <span>
 #include <string_view>
@@ -63,9 +62,25 @@ struct DatasetHandler {
         buffers.back().data = data;
         buffers.back().indptr = {indptr, static_cast<size_t>(description.batch_size + 1)};
     }
+
+    void set_buffer(std::string_view component, Indptr* indptr, Data* data) {
+        MetaComponent const* const component_ptr = &description.dataset->get_component(component);
+        auto const found = std::find_if(description.component_info.cbegin(), description.component_info.cend(),
+                                        [component_ptr](auto const& x) { return x.component == component_ptr; });
+        if (found == description.component_info.cend()) {
+            throw DatasetError{"Cannot find component to set buffer!\n"};
+        }
+        Idx const idx = std::distance(description.component_info.cbegin(), found);
+        buffers[idx].data = data;
+        buffers[idx].indptr = {indptr, static_cast<size_t>(description.batch_size + 1)};
+    }
 };
 
-template struct DatasetHandler<false, false>;
+template struct DatasetHandler<true, true>;
+
+using ConstDatasetHandler = DatasetHandler<false, false>;
+using MutableDatasetHandler = DatasetHandler<true, false>;
+using WritableDatasetHandler = DatasetHandler<true, true>;
 
 } // namespace power_grid_model::meta_data
 
