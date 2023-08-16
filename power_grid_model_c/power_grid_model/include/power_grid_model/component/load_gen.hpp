@@ -113,17 +113,19 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     template <bool sym_calc> ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
         using enum LoadGenType;
 
-        ComplexValue<sym_calc> s = this->template calc_param<sym_calc>();
-        switch (this->type()) {
-        case const_pq:
-            return s;
-        case const_y:
-            return s * abs2(u);
-        case const_i:
-            return s * cabs(u);
-        default:
-            throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
-        }
+        auto const scaling_factor = [this]() {
+            switch (this->type()) {
+            case const_pq:
+                return 1.0;
+            case const_y:
+                return abs2(u);
+            case const_i:
+                return cabs(u);
+            default:
+                throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
+            }
+        }();
+        return this->template calc_param<sym_calc>() * scaling_factor;
     }
 };
 
