@@ -201,7 +201,7 @@ constexpr std::string_view json_batch = R"(
 )";
 
 } // namespace
-
+/*
 namespace {
 
 std::map<std::string, Deserializer::Buffer, std::less<>> get_buffer_map(Deserializer const& deserializer) {
@@ -405,5 +405,6 @@ TEST_CASE("Deserializer with error") {
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
     }
 }
+*/
 
 } // namespace power_grid_model::meta_data

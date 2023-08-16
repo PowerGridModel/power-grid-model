@@ -20,12 +20,13 @@ namespace power_grid_model::meta_data {
 struct DatasetDescription {
     struct ComponentInfo {
         MetaComponent const* component;
+        // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
         Idx elements_per_scenario;
         Idx total_elements;
     };
 
     bool is_batch;
-    Idx batch_size;
+    Idx batch_size; // for single dataset, the batch size is one
     MetaDataset const* dataset;
     std::vector<ComponentInfo> component_info;
 };
@@ -37,10 +38,11 @@ struct DatasetHandler {
     using Indptr = std::conditional_t<indptr_mutable, Idx, Idx const>;
     struct Buffer {
         Data* data;
+        // for uniform buffer, indptr is empty
         std::span<Indptr> indptr;
     };
 
-    DatasetDescription description;
+    DatasetDescription description{};
     std::vector<Buffer> buffers;
 
     Idx n_component() const { return static_cast<Idx>(buffers.size()); }
