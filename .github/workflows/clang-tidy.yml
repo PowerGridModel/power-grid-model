@@ -39,9 +39,9 @@ jobs:
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CC: clang-14
-      CXX: clang++-14
-      CLANG_TIDY: clang-tidy-14
+      CC: clang-15
+      CXX: clang++-15
+      CLANG_TIDY: clang-tidy-15
       PRESET: ci-clang-tidy-${{ matrix.build-option }}
       TARGET: nonexistent  # will be overwritten later in this action
 
@@ -51,7 +51,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build
+          sudo apt-get install -y ninja-build clang-15 clang-tidy-15
 
       - name: Enable brew
         run: |

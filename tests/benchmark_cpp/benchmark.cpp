@@ -2,29 +2,35 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "fictional_grid_generator.hpp"
+
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/timer.hpp>
+
 #include <iostream>
 #include <random>
-
-#include "fictional_grid_generator.hpp"
-#include "power_grid_model/main_model.hpp"
-#include "power_grid_model/timer.hpp"
 
 namespace power_grid_model::benchmark {
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{50.0} {}
+    PowerGridBenchmark() : main_model{std::make_unique<MainModel>(50.0)} {}
 
     template <bool sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
+        if (!main_model) {
+            std::cout << "\nNo main model available: skipping benchmark.\n";
+            return;
+        }
+
         OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
         BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
         std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
         Idx const max_iter = (calculation_method == CalculationMethod::iterative_current) ? 100 : 20;
         try {
             // calculate
-            main_model.value().calculate_power_flow<sym>(1e-8, max_iter, calculation_method, output.get_dataset(),
-                                                         batch_data.get_dataset(), threading);
-            CalculationInfo info_extra = main_model.value().calculation_info();
+            main_model->calculate_power_flow<sym>(1e-8, max_iter, calculation_method, output.get_dataset(),
+                                                  batch_data.get_dataset(), threading);
+            CalculationInfo info_extra = main_model->calculation_info();
             info.merge(info_extra);
         } catch (std::exception const& e) {
             std::cout << "\nAn exception was raised during execution: " << e.what() << '\n';
@@ -55,7 +61,7 @@ struct PowerGridBenchmark {
             Timer const t_total(info, 0000, "Total");
             {
                 Timer const t_build(info, 1000, "Build model");
-                main_model.emplace(50.0, input.get_dataset());
+                main_model = std::make_unique<MainModel>(50.0, input.get_dataset());
             }
             run_pf<sym>(calculation_method, info);
         }
@@ -85,7 +91,7 @@ struct PowerGridBenchmark {
         }
     }
 
-    std::optional<MainModel> main_model;
+    std::unique_ptr<MainModel> main_model;
     FictionalGridGenerator generator;
 };
 
@@ -103,14 +109,14 @@ int main(int, char**) {
     option.n_node_per_mv_feeder = 6;
     option.n_lv_feeder = 2;
     option.n_connection_per_lv_feeder = 4;
-    power_grid_model::Idx batch_size = 10;
+    power_grid_model::Idx constexpr batch_size = 10;
 #else
     option.n_node_total_specified = 1500;
     option.n_mv_feeder = 20;
     option.n_node_per_mv_feeder = 10;
     option.n_lv_feeder = 10;
     option.n_connection_per_lv_feeder = 40;
-    power_grid_model::Idx batch_size = 1000;
+    power_grid_model::Idx constexpr batch_size = 1000;
 #endif
 
     // radial
