@@ -97,7 +97,7 @@ Buffer parse_single_type(json const& j, MetaComponent const& meta) {
     size_t const length = j.size();
     size_t const obj_size = meta.size;
     buffer.ptr = create_buffer(obj_size, length);
-    meta.set_nan(buffer.ptr.get(), 0, static_cast<PGM_MetaComponent::Idx>(length));
+    meta.set_nan(buffer.ptr.get(), 0, static_cast<Idx>(length));
     for (Idx position = 0; position != static_cast<Idx>(length); ++position) {
         parse_single_object(buffer.ptr.get(), j[position], meta, position);
     }

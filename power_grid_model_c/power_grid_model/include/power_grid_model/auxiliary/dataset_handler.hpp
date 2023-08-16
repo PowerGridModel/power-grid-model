@@ -13,46 +13,41 @@
 #include "meta_data.hpp"
 #include "meta_data_gen.hpp"
 
+#include <span>
 #include <string_view>
 
 namespace power_grid_model::meta_data {
 
-class DatasetHandler {
-  public:
-    DatasetHandler(bool data_mutable, bool indptr_mutable, bool is_batch, Idx batch_size, std::string_view dataset)
-        : data_mutable_{data_mutable},
-          indptr_mutable_{indptr_mutable},
-          is_batch_{is_batch},
-          batch_size_{batch_size},
-          dataset_{&meta_data().get_dataset(dataset)} {}
-
-    bool is_batch() { return is_batch_; }
-    Idx batch_size() { return batch_size_; }
-
-    void set_mutable_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements,
-                            Idx const* indptr, void* data);
-    void set_const_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                          void const* data);
-
-    // void set_buffer_to_be_parsed(std::string_view component, Idx* indptr, void* data);
-
-  private:
+struct DatasetDescription {
     struct ComponentInfo {
-        PGM_MetaComponent const* component;
+        MetaComponent const* component;
         Idx elements_per_scenario;
         Idx total_elements;
     };
 
-    bool data_mutable_;
-    bool indptr_mutable_;
-    bool is_batch_;
-    Idx batch_size_;
-    PGM_MetaDataset const* dataset_;
-    std::vector<ComponentInfo> component_info_;
-    std::vector<void*> mutable_data_;
-    std::vector<Idx*> mutable_indptr_;
-    std::vector<void const*> const_data_;
-    std::vector<Idx const*> const_indptr_;
+    bool is_batch;
+    Idx batch_size;
+    MetaDataset const* dataset;
+    std::vector<ComponentInfo> component_info;
+};
+
+template <bool data_mutable, bool indptr_mutable>
+    requires(data_mutable || !indptr_mutable)
+struct DatasetHandler {
+    using Data = std::conditional_t<data_mutable, void, void const>;
+    using Indptr = std::conditional_t<indptr_mutable, Idx, Idx const>;
+    struct Buffer {
+        Data* data;
+        std::span<Indptr> indptr;
+    };
+
+    DatasetDescription description;
+    std::vector<Buffer> buffers;
+
+    Idx n_component() const { return static_cast<Idx>(buffers.size()); }
+
+    void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
+                    void const* data);
 };
 
 } // namespace power_grid_model::meta_data
