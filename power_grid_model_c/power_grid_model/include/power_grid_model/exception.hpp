@@ -175,6 +175,11 @@ class SerializationError : public PowerGridError {
     SerializationError(std::string const& msg) { append_msg(msg); }
 };
 
+class DatasetError : public PowerGridError {
+  public:
+    DatasetError(std::string const& msg) { append_msg(msg); }
+};
+
 } // namespace power_grid_model
 
 #endif

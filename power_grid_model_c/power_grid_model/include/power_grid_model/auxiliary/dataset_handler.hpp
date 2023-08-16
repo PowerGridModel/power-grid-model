@@ -46,9 +46,26 @@ struct DatasetHandler {
 
     Idx n_component() const { return static_cast<Idx>(buffers.size()); }
 
-    void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    void const* data);
+    void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
+        MetaComponent const* const component_ptr = &description.dataset->get_component(component);
+        auto const found = std::find_if(description.component_info.cbegin(), description.component_info.cend(),
+                                        [component_ptr](auto const& x) { return x.component == component_ptr; });
+        if (found != description.component_info.cend()) {
+            throw DatasetError{"Cannot have duplicated components!\n"};
+        }
+        description.component_info.push_back({component_ptr, elements_per_scenario, total_elements});
+        buffers.push_back(Buffer{});
+    }
+
+    void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
+                    Data* data) {
+        add_component_info(component, elements_per_scenario, total_elements);
+        buffers.back().data = data;
+        buffers.back().indptr = {indptr, static_cast<size_t>(description.batch_size + 1)};
+    }
 };
+
+template struct DatasetHandler<false, false>;
 
 } // namespace power_grid_model::meta_data
 

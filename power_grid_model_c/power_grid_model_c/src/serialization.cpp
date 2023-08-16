@@ -69,6 +69,8 @@ void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* dese
         PGM_serialization_error);
 }
 
+// false warning from clang-tidy
+// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
 void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
 
 PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch, PGM_Idx batch_size,
