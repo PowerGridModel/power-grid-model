@@ -62,6 +62,25 @@ typedef int32_t PGM_ID;
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 
 /**
+ * @brief Opaque struct for the handle class
+ *
+ * The handle class is used to store error and information
+ *
+ */
+typedef struct PGM_Handle PGM_Handle;
+
+/**
+ * @brief Opaque struct for the option class
+ *
+ * The option class is used to set calculation options like calculation method.
+ *
+ */
+typedef struct PGM_Options PGM_Options;
+
+// Only enable the opaque struct definition if this header is consumed by the C-API user
+// If this header is included when compiling the C-API, the structs below are decleared/defined in the C++ files
+#ifndef PGM_DLL_EXPORTS
+/**
  * @brief Opaque struct for the attribute meta class
  *
  * The attribute class contains all the meta information of a single attribute.
@@ -86,22 +105,6 @@ typedef struct PGM_MetaComponent PGM_MetaComponent;
 typedef struct PGM_MetaDataset PGM_MetaDataset;
 
 /**
- * @brief Opaque struct for the handle class
- *
- * The handle class is used to store error and information
- *
- */
-typedef struct PGM_Handle PGM_Handle;
-
-/**
- * @brief Opaque struct for the option class
- *
- * The option class is used to set calculation options like calculation method.
- *
- */
-typedef struct PGM_Options PGM_Options;
-
-/**
  * @brief Opaque struct for the serializer class
  */
 typedef struct PGM_Serializer PGM_Serializer;
@@ -110,6 +113,7 @@ typedef struct PGM_Serializer PGM_Serializer;
  * @brief Opaque struct for the deserializer class
  */
 typedef struct PGM_Deserializer PGM_Deserializer;
+#endif
 
 // enums
 /**

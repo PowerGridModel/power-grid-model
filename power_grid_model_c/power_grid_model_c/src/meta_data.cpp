@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+#include "forward_declaration.hpp"
+
 #include "power_grid_model_c/meta_data.h"
 
 #include "handle.hpp"

@@ -3,23 +3,17 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
-#include "power_grid_model_c/serialization.h"
+#include "forward_declaration.hpp"
+
 #include "handle.hpp"
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/serialization.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 
 using namespace power_grid_model::meta_data;
-
-struct PGM_Deserializer : public Deserializer {
-    using Deserializer::Deserializer;
-};
-
-struct PGM_Serializer : public Serializer {
-    using Serializer::Serializer;
-};
 
 PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size) {
     return call_with_catch(

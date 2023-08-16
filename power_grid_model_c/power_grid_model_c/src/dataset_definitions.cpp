@@ -7,6 +7,7 @@
 // clang-format off
 
 #define PGM_DLL_EXPORTS
+#include "forward_declaration.hpp"
 #include "power_grid_model_c/dataset_definitions.h"
 #include "power_grid_model_c/meta_data.h"
 
