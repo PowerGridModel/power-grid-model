@@ -108,7 +108,7 @@ class Deserializer {
         }
     }
 
-    WritableDatasetHandler& get_dataset_info(Idx i) { return dataset_handler_; }
+    WritableDatasetHandler& get_dataset_info() { return dataset_handler_; }
 
     void parse() {
         root_key_ = "data";

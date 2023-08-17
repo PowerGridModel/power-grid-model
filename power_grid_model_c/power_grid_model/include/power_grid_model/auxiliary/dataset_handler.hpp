@@ -45,7 +45,7 @@ struct DatasetHandler {
     DatasetDescription description{};
     std::vector<Buffer> buffers;
 
-    Idx n_component() const { return static_cast<Idx>(buffers.size()); }
+    Idx n_components() const { return static_cast<Idx>(buffers.size()); }
 
     Idx find_component(std::string_view component, bool throw_not_found = false) const {
         auto const found = std::find_if(description.component_info.cbegin(), description.component_info.cend(),
@@ -60,11 +60,11 @@ struct DatasetHandler {
         return std::distance(description.component_info.cbegin(), found);
     }
 
-    ComponentInfo const& get_component_info(std::string_view component) {
+    ComponentInfo const& get_component_info(std::string_view component) const {
         return description.component_info[find_component(component, true)];
     }
 
-    Buffer const& get_buffer(std::string_view component) { return buffers[find_component(component, true)]; }
+    Buffer const& get_buffer(std::string_view component) const { return buffers[find_component(component, true)]; }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
         if (find_component(component) >= 0) {
