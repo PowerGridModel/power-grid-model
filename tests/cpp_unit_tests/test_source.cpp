@@ -65,6 +65,21 @@ TEST_CASE("Test source") {
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 
+    SUBCASE("Test calc_param for short circuit") {
+        source.set_u_ref(2.0, 2.5);
+        auto voltage_scaling_parameters = std::pair{1000.0, ShortCircuitVoltageScaling::min};
+        ComplexValue<true> u_ref = source.calc_param<true>(voltage_scaling_parameters);
+        CHECK(cabs(u_ref - 0.95 * std::exp(2.5i)) < numerical_tolerance);
+
+        voltage_scaling_parameters.first = 1001.0;
+        u_ref = source.calc_param<true>(voltage_scaling_parameters);
+        CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
+
+        voltage_scaling_parameters.second = ShortCircuitVoltageScaling::max;
+        u_ref = source.calc_param<true>(voltage_scaling_parameters);
+        CHECK(cabs(u_ref - 1.1 * std::exp(2.5i)) < numerical_tolerance);
+    }
+
     SUBCASE("test source sym results; u as input") {
         ApplianceOutput<true> const sym_result = source.get_output<true>(u);
         CHECK(sym_result.id == 1);
