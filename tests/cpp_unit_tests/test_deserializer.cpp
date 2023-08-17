@@ -294,7 +294,7 @@ TEST_CASE("Deserializer") {
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().description.dataset->name == "update");
-            CHECK(!deserializer.get_dataset_info().description.is_batch);
+            CHECK(deserializer.get_dataset_info().description.is_batch);
             CHECK(deserializer.get_dataset_info().description.batch_size == 3);
             CHECK(deserializer.get_dataset_info().n_components() == 2);
         }

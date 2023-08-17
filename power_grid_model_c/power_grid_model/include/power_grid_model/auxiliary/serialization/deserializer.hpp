@@ -113,7 +113,7 @@ class Deserializer {
     void parse() {
         root_key_ = "data";
         try {
-            for (Idx i = 0; i != dataset_handler_.description.batch_size; ++i) {
+            for (Idx i = 0; i != dataset_handler_.n_components(); ++i) {
                 parse_component(i);
             }
         } catch (std::exception& e) {
