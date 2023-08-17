@@ -99,8 +99,10 @@ class Deserializer {
     Deserializer(from_json_t, std::string_view json_string)
         : Deserializer{from_msgpack, json_to_msgpack(json_string)} {}
 
-    Deserializer(from_msgpack_t, std::span<char const> msgpack_data) {
-        handle_ = msgpack::unpack(msgpack_data.data(), msgpack_data.size());
+    Deserializer(from_msgpack_t, std::span<char const> msgpack_data)
+        : handle_{msgpack::unpack(msgpack_data.data(), msgpack_data.size())},
+          version_{get_value_from_root("version", msgpack::type::STR).as<std::string>()},
+          dataset_handler_{create_dataset_handler()} {
         try {
             post_serialization();
         } catch (std::exception& e) {
@@ -122,12 +124,6 @@ class Deserializer {
     }
 
   private:
-    msgpack::object_handle handle_{};
-    std::string version_;
-    WritableDatasetHandler dataset_handler_{};
-    std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
-    // vector of components of spans of msgpack object of each batch
-    std::vector<std::vector<ArraySpan>> msg_views_;
     // attributes to track the movement of the position
     // for error report purpose
     std::string_view root_key_;
@@ -136,6 +132,13 @@ class Deserializer {
     Idx scenario_number_{-1};
     Idx element_number_{-1};
     Idx attribute_number_{-1};
+    // class members
+    msgpack::object_handle handle_;
+    std::string version_;
+    WritableDatasetHandler dataset_handler_;
+    std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
+    // vector of components of spans of msgpack object of each batch
+    std::vector<std::vector<ArraySpan>> msg_views_;
 
     static std::vector<char> json_to_msgpack(std::string_view json_string) {
         nlohmann::json const json_document = nlohmann::json::parse(json_string);
@@ -152,14 +155,15 @@ class Deserializer {
         }
     }
 
+    WritableDatasetHandler create_dataset_handler() {
+        auto const dataset = get_value_from_root("type", msgpack::type::STR).as<std::string_view>();
+        auto const is_batch = get_value_from_root("is_batch", msgpack::type::BOOLEAN).as<bool>();
+        msgpack::object const& obj = get_value_from_root("data", is_batch ? msgpack::type::ARRAY : msgpack::type::MAP);
+        Idx const batch_size = is_batch ? static_cast<Idx>(as_array(obj).size) : 1;
+        return WritableDatasetHandler{is_batch, batch_size, dataset};
+    }
+
     void post_serialization() {
-        if (handle_.get().type != msgpack::type::MAP) {
-            throw SerializationError{"The root level object should be a dictionary!\n"};
-        }
-        get_value_from_root("version", msgpack::type::STR) >> version_;
-        dataset_handler_.description.dataset =
-            &meta_data().get_dataset(get_value_from_root("type", msgpack::type::STR).as<std::string_view>());
-        get_value_from_root("is_batch", msgpack::type::BOOLEAN) >> dataset_handler_.description.is_batch;
         read_predefined_attributes();
         count_data();
         root_key_ = "";
@@ -167,6 +171,9 @@ class Deserializer {
 
     msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
         msgpack::object const& root = handle_.get();
+        if (root.type != msgpack::type::MAP) {
+            throw SerializationError{"The root level object should be a dictionary!\n"};
+        }
         root_key_ = key;
         return get_value_from_map(root, key, type);
     }
@@ -198,7 +205,7 @@ class Deserializer {
     void read_predefined_attributes() {
         for (auto const& kv : get_value_from_root("attributes", msgpack::type::MAP).as<MapSpan>()) {
             component_key_ = key_to_string(kv);
-            MetaComponent const& component = dataset_handler_.description.dataset->get_component(component_key_);
+            MetaComponent const& component = dataset_handler_.dataset().get_component(component_key_);
             attributes_[component.name] = read_component_attributes(component, kv.val);
         }
         component_key_ = "";
@@ -221,17 +228,11 @@ class Deserializer {
     }
 
     void count_data() {
-        msgpack::object const& obj = get_value_from_root(
-            "data", dataset_handler_.description.is_batch ? msgpack::type::ARRAY : msgpack::type::MAP);
+        msgpack::object const& obj =
+            get_value_from_root("data", dataset_handler_.is_batch() ? msgpack::type::ARRAY : msgpack::type::MAP);
         // pointer to array (or single value) of msgpack objects to the data
-        ArraySpan batch_data;
-        if (dataset_handler_.description.is_batch) {
-            dataset_handler_.description.batch_size = static_cast<Idx>(as_array(obj).size);
-            batch_data = {as_array(obj).ptr, as_array(obj).size};
-        } else {
-            dataset_handler_.description.batch_size = 1;
-            batch_data = {&obj, 1};
-        }
+        auto const batch_data =
+            dataset_handler_.is_batch() ? ArraySpan{as_array(obj).ptr, as_array(obj).size} : ArraySpan{&obj, 1};
 
         // get set of all components
         std::set<MetaComponent const*> all_components;
@@ -242,7 +243,7 @@ class Deserializer {
             }
             for (msgpack::object_kv const& kv : scenario.as<MapSpan>()) {
                 component_key_ = key_to_string(kv);
-                all_components.insert(&dataset_handler_.description.dataset->get_component(component_key_));
+                all_components.insert(&dataset_handler_.dataset().get_component(component_key_));
             }
             component_key_ = "";
         }
@@ -256,7 +257,7 @@ class Deserializer {
 
     void count_component(ArraySpan batch_data, MetaComponent const& component) {
         component_key_ = component.name;
-        Idx const batch_size = dataset_handler_.description.batch_size;
+        Idx const batch_size = dataset_handler_.batch_size();
         // count number of element of all scenarios
         IdxVector counter(batch_size);
         std::vector<ArraySpan> msg_data(batch_size);
@@ -284,7 +285,7 @@ class Deserializer {
     }
 
     bool check_uniform(IdxVector const& counter) {
-        if (dataset_handler_.description.batch_size < 2) {
+        if (dataset_handler_.batch_size() < 2) {
             return true;
         }
         return std::transform_reduce(counter.cbegin(), counter.cend() - 1, counter.cbegin() + 1, true,
@@ -295,17 +296,17 @@ class Deserializer {
         if (!check_uniform(counter)) {
             return -1;
         }
-        if (dataset_handler_.description.batch_size == 0) {
+        if (dataset_handler_.batch_size() == 0) {
             return 0;
         }
         return counter.front();
     }
 
     void parse_component(Idx i) {
-        auto const& buffer = dataset_handler_.buffers[i];
-        auto const& info = dataset_handler_.description.component_info[i];
+        auto const& buffer = dataset_handler_.get_buffer(i);
+        auto const& info = dataset_handler_.get_component_info(i);
         auto const& msg_data = msg_views_[i];
-        Idx const batch_size = dataset_handler_.description.batch_size;
+        Idx const batch_size = dataset_handler_.batch_size();
         component_key_ = info.component->name;
         // handle indptr
         if (info.elements_per_scenario < 0) {
@@ -409,7 +410,7 @@ class Deserializer {
             ss << "Position of error: " << root_key_;
             root_key_ = "";
         }
-        if (dataset_handler_.description.is_batch && scenario_number_ >= 0) {
+        if (dataset_handler_.is_batch() && scenario_number_ >= 0) {
             ss << "/" << scenario_number_;
             scenario_number_ = -1;
         }

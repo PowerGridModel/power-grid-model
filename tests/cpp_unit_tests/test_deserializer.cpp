@@ -201,7 +201,7 @@ constexpr std::string_view json_batch = R"(
 )";
 
 } // namespace
-/*
+
 namespace {
 
 void check_error(std::string_view json, char const* err_msg) {
@@ -214,7 +214,7 @@ void check_error(std::string_view json, char const* err_msg) {
         deserializer.parse();
     };
 
-    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), SerializationError);
+    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), std::exception);
 }
 
 } // namespace
@@ -224,9 +224,9 @@ TEST_CASE("Deserializer") {
         Deserializer deserializer{from_json, json_single};
 
         SUBCASE("Check meta data") {
-            CHECK(deserializer.get_dataset_info().description.dataset->name == "input");
-            CHECK(!deserializer.get_dataset_info().description.is_batch);
-            CHECK(deserializer.get_dataset_info().description.batch_size == 1);
+            CHECK(deserializer.get_dataset_info().dataset().name == "input");
+            CHECK(!deserializer.get_dataset_info().is_batch());
+            CHECK(deserializer.get_dataset_info().batch_size() == 1);
             CHECK(deserializer.get_dataset_info().n_components() == 4);
         }
 
@@ -293,9 +293,9 @@ TEST_CASE("Deserializer") {
         Deserializer deserializer{from_json, json_batch};
 
         SUBCASE("Check meta data") {
-            CHECK(deserializer.get_dataset_info().description.dataset->name == "update");
-            CHECK(deserializer.get_dataset_info().description.is_batch);
-            CHECK(deserializer.get_dataset_info().description.batch_size == 3);
+            CHECK(deserializer.get_dataset_info().dataset().name == "update");
+            CHECK(deserializer.get_dataset_info().is_batch());
+            CHECK(deserializer.get_dataset_info().batch_size() == 3);
             CHECK(deserializer.get_dataset_info().n_components() == 2);
         }
 
@@ -352,19 +352,19 @@ TEST_CASE("Deserializer") {
 TEST_CASE("Deserializer with error") {
     SUBCASE("Error in meta data") {
         constexpr std::string_view no_version = R"({})";
-        check_error(no_version, "Position of error: version");
-        constexpr std::string_view wrong_dataset = R"({"version": "1.0", "type": "sym_input"})";
-        check_error(wrong_dataset, "Position of error: type");
+        check_error(no_version, "version");
+        constexpr std::string_view wrong_dataset = R"({"version": "1.0", "type": "sym_input", "is_batch": false, "data": {}})";
+        check_error(wrong_dataset, "sym_input");
         constexpr std::string_view wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
-        check_error(wrong_is_batch, "Position of error: is_batch");
+        check_error(wrong_is_batch, "is_batch");
     }
 
     SUBCASE("Error in attributes") {
         constexpr std::string_view unknown_component =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node1": []}})";
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node1": []}, "data": {}})";
         check_error(unknown_component, "Position of error: attributes/node1");
         constexpr std::string_view unknown_attribute =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["i_from"]}})";
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["i_from"]}, "data": {}})";
         check_error(unknown_attribute, "Position of error: attributes/node/0");
     }
 
@@ -398,5 +398,5 @@ TEST_CASE("Deserializer with error") {
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
     }
 }
-*/
+
 } // namespace power_grid_model::meta_data

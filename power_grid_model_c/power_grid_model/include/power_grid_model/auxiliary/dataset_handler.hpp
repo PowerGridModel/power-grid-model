@@ -11,6 +11,7 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "meta_data.hpp"
+#include "meta_data_gen.hpp"
 
 #include <span>
 #include <string_view>
@@ -43,9 +44,15 @@ class DatasetHandler {
         std::span<Indptr> indptr;
     };
 
+    DatasetHandler(bool is_batch, Idx batch_size, std::string_view dataset)
+        : description_{.is_batch = is_batch,
+                       .batch_size = batch_size,
+                       .dataset = &meta_data().get_dataset(dataset),
+                       .component_info = {}} {}
+
     bool is_batch() const { return description_.is_batch; }
     Idx batch_size() const { return description_.batch_size; }
-    MetaDataset const* dataset() const { return description_.dataset; }
+    MetaDataset const& dataset() const { return *description_.dataset; }
     Idx n_components() const { return static_cast<Idx>(buffers_.size()); }
     DatasetDescription const& get_description() const { return description_; }
     ComponentInfo const& get_component_info(Idx i) const { return description_.component_info[i]; }
@@ -96,7 +103,6 @@ class DatasetHandler {
     std::vector<Buffer> buffers_;
 };
 
-template class DatasetHandler<true, true>;
 using ConstDatasetHandler = DatasetHandler<false, false>;
 using MutableDatasetHandler = DatasetHandler<true, false>;
 using WritableDatasetHandler = DatasetHandler<true, true>;
