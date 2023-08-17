@@ -17,14 +17,14 @@
 
 namespace power_grid_model::meta_data {
 
-struct DatasetDescription {
-    struct ComponentInfo {
-        MetaComponent const* component;
-        // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
-        Idx elements_per_scenario;
-        Idx total_elements;
-    };
+struct ComponentInfo {
+    MetaComponent const* component;
+    // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
+    Idx elements_per_scenario;
+    Idx total_elements;
+};
 
+struct DatasetDescription {
     bool is_batch;
     Idx batch_size; // for single dataset, the batch size is one
     MetaDataset const* dataset;
@@ -47,14 +47,31 @@ struct DatasetHandler {
 
     Idx n_component() const { return static_cast<Idx>(buffers.size()); }
 
-    void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
-        MetaComponent const* const component_ptr = &description.dataset->get_component(component);
+    Idx find_component(std::string_view component, bool throw_not_found = false) const {
         auto const found = std::find_if(description.component_info.cbegin(), description.component_info.cend(),
-                                        [component_ptr](auto const& x) { return x.component == component_ptr; });
-        if (found != description.component_info.cend()) {
+                                        [component](ComponentInfo const& x) { return x.component->name == component; });
+        if (found == description.component_info.cend()) {
+            if (throw_not_found) {
+                throw DatasetError{"Cannot find component!\n"};
+            } else {
+                return -1;
+            }
+        }
+        return std::distance(description.component_info.cbegin(), found);
+    }
+
+    ComponentInfo const& get_component_info(std::string_view component) {
+        return description.component_info[find_component(component, true)];
+    }
+
+    Buffer const& get_buffer(std::string_view component) { return buffers[find_component(component, true)]; }
+
+    void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
+        if (find_component(component) >= 0) {
             throw DatasetError{"Cannot have duplicated components!\n"};
         }
-        description.component_info.push_back({component_ptr, elements_per_scenario, total_elements});
+        description.component_info.push_back(
+            {&description.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers.push_back(Buffer{});
     }
 
@@ -66,13 +83,7 @@ struct DatasetHandler {
     }
 
     void set_buffer(std::string_view component, Indptr* indptr, Data* data) {
-        MetaComponent const* const component_ptr = &description.dataset->get_component(component);
-        auto const found = std::find_if(description.component_info.cbegin(), description.component_info.cend(),
-                                        [component_ptr](auto const& x) { return x.component == component_ptr; });
-        if (found == description.component_info.cend()) {
-            throw DatasetError{"Cannot find component to set buffer!\n"};
-        }
-        Idx const idx = std::distance(description.component_info.cbegin(), found);
+        Idx const idx = find_component(component, true);
         buffers[idx].data = data;
         buffers[idx].indptr = {indptr, static_cast<size_t>(description.batch_size + 1)};
     }
