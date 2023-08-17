@@ -74,6 +74,26 @@ class Source : public Appliance {
     }
     // getter for u_ref for calc_param
     template <bool sym> DoubleComplex calc_param() const { return u_ref_ * std::exp(1.0i * u_ref_angle_); }
+    template <bool sym> DoubleComplex calc_param(std::pair<double, ShortCircuitVoltageScaling>& data) const {
+        // This function receives the nominal voltage of the node and a min/max scaling enum
+        // and returns the reference voltage based on the voltage scaling factor c.
+        // the scaling factor is determined according to the IEC 60909 standard, which is shown in the table below:
+        //                          |   c_max   |   c_min   |
+        //        Unom <= 1000V     |   1.10    |   0.95    |
+        // 1kV  < Unom <= 35kV      |   1.10    |   1.00    |
+        // 35kV < Unom <= 230kV     |   1.10    |   1.00    |
+        // NOTE that for low voltage there is a difference in c for systems with a voltage tolerance of 6% or 10%.
+        // Here, a voltage tolerance of 10% is assumed.
+        double voltage_scaling_c{1.0};
+        if (data.second == ShortCircuitVoltageScaling::min) {
+            if (data.first <= 1000.0) {
+                voltage_scaling_c = 0.95;
+            }
+        } else {
+            voltage_scaling_c = 1.10;
+        }
+        return voltage_scaling_c * std::exp(1.0i * u_ref_angle_);
+    }
 
     // update for source
     UpdateChange update(SourceUpdate const& update) {
