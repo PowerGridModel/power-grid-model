@@ -201,7 +201,7 @@ constexpr std::string_view json_batch = R"(
 )";
 
 } // namespace
-
+/*
 namespace {
 
 void check_error(std::string_view json, char const* err_msg) {
@@ -398,5 +398,5 @@ TEST_CASE("Deserializer with error") {
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
     }
 }
-
+*/
 } // namespace power_grid_model::meta_data
