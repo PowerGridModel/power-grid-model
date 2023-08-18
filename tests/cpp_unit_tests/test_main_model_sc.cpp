@@ -13,14 +13,14 @@ TEST_CASE("Test main model - short circuit") {
     SUBCASE("Single node + source") {
         double const u_rated = 10e3;
         double const u_ref = 1.0;
-        double const c_factor = 1.0;
+        ShortCircuitVoltageScaling voltage_scaling = ShortCircuitVoltageScaling::max;
         double const sk = 100e6;
         double const rx_ratio = 0.1;
         double const z_ref_abs = u_rated * u_rated / sk;
         double const x_ref = z_ref_abs / sqrt(rx_ratio * rx_ratio + 1.0);
         double const r_ref = x_ref * rx_ratio;
         DoubleComplex const z_ref{r_ref, x_ref};
-        double const u_source = u_rated * u_ref * c_factor / sqrt3;
+        double const u_source = u_rated * u_ref / sqrt3;
         double const r_f = 0.1;
         double const x_f = 0.1;
         DoubleComplex const z_f{r_f, x_f};
@@ -40,7 +40,7 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Symmetric Calculation") {
                 std::vector<ShortCircuitMathOutput<true>> const math_output =
-                    main_model.calculate_short_circuit<true>(c_factor, CalculationMethod::iec60909);
+                    main_model.calculate_short_circuit<true>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
@@ -54,7 +54,7 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Asymmetric Calculation") {
                 std::vector<ShortCircuitMathOutput<false>> const math_output =
-                    main_model.calculate_short_circuit<false>(c_factor, CalculationMethod::iec60909);
+                    main_model.calculate_short_circuit<false>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
@@ -78,7 +78,7 @@ TEST_CASE("Test main model - short circuit") {
             main_model.set_construction_complete();
 
             std::vector<ShortCircuitMathOutput<false>> const math_output =
-                main_model.calculate_short_circuit<false>(1.0, CalculationMethod::iec60909);
+                main_model.calculate_short_circuit<false>(ShortCircuitVoltageScaling::max, CalculationMethod::iec60909);
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
             main_model.output_result<Fault>(math_output, fault_output.begin());
@@ -118,7 +118,7 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
         Dataset result_data;
         result_data["node"] = DataPointer<false>{node_output.data(), static_cast<Idx>(node_output.size())};
 
-        model.calculate_short_circuit(1.0, CalculationMethod::iec60909, result_data);
+        model.calculate_short_circuit(ShortCircuitVoltageScaling::max, CalculationMethod::iec60909, result_data);
 
         CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0)); // influenced by fault
         CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0)); // fault location

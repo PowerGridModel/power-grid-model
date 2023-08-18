@@ -320,13 +320,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
-    template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(double voltage_scaling_factor_c,
+    template <bool sym> // TODO: change inputs at all places where function is called
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling,
                                                                       CalculationMethod calculation_method) {
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, ShortCircuitInput>(
-            [this] { return prepare_short_circuit_input<sym>(); },
-            [this, voltage_scaling_factor_c, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
-                return solver.run_short_circuit(y, voltage_scaling_factor_c, calculation_info_, calculation_method);
+            [this, voltage_scaling] { return prepare_short_circuit_input<sym>(voltage_scaling); },
+            [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
+                return solver.run_short_circuit(y, calculation_info_, calculation_method);
             });
     }
 
@@ -616,34 +616,34 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single short circuit calculation, returning short circuit math output results
     template <bool sym>
-    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(double voltage_scaling_factor_c,
+    std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
                                                                      CalculationMethod calculation_method) {
-        return calculate_short_circuit_<sym>(voltage_scaling_factor_c, calculation_method);
+        return calculate_short_circuit_<sym>(voltage_scaling, calculation_method);
     }
 
     // Single short circuit calculation, propagating the results to result_data
-    void calculate_short_circuit(double voltage_scaling_factor_c, CalculationMethod calculation_method,
+    void calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method,
                                  Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         if (std::all_of(state_.components.template citer<Fault>().begin(),
                         state_.components.template citer<Fault>().end(),
                         [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
-            auto const math_output = calculate_short_circuit_<true>(voltage_scaling_factor_c, calculation_method);
+            auto const math_output = calculate_short_circuit_<true>(voltage_scaling, calculation_method);
             output_result(math_output, result_data, pos);
         } else {
-            auto const math_output = calculate_short_circuit_<false>(voltage_scaling_factor_c, calculation_method);
+            auto const math_output = calculate_short_circuit_<false>(voltage_scaling, calculation_method);
             output_result(math_output, result_data, pos);
         }
     }
 
     // Batch short circuit calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(double voltage_scaling_factor_c, CalculationMethod calculation_method,
-                                           Dataset const& result_data, ConstDataset const& update_data,
-                                           Idx threading = -1) {
+    BatchParameter calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
+                                           CalculationMethod calculation_method, Dataset const& result_data,
+                                           ConstDataset const& update_data, Idx threading = -1) {
         return batch_calculation_(
-            [voltage_scaling_factor_c, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [voltage_scaling, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
                 if (pos != ignore_output) {
-                    model.calculate_short_circuit(voltage_scaling_factor_c, calculation_method, target_data, pos);
+                    model.calculate_short_circuit(voltage_scaling, calculation_method, target_data, pos);
                 }
             },
             result_data, update_data, threading);
@@ -1007,7 +1007,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return se_input;
     }
 
-    template <bool sym> std::vector<ShortCircuitInput> prepare_short_circuit_input() {
+    template <bool sym>
+    std::vector<ShortCircuitInput> prepare_short_circuit_input(ShortCircuitVoltageScaling voltage_scaling) {
         assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
 
         std::vector<IdxVector> topo_fault_indices(state_.math_topology.size());

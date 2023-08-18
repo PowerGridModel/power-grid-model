@@ -380,7 +380,7 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
 
     constexpr auto err_tol{1e-8};
     constexpr auto max_iter{20};
-    constexpr auto c_factor{1.1};
+    constexpr auto voltage_scaling{ShortCircuitVoltageScaling::max};
 
     if (calculation_type == "power_flow"s) {
         return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
@@ -407,7 +407,8 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
     if (calculation_type == "short_circuit"s) {
         return [](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
                   ConstDataset const& update_dataset, Idx threading) {
-            return model.calculate_short_circuit(c_factor, calculation_method, dataset, update_dataset, threading);
+            return model.calculate_short_circuit(voltage_scaling, calculation_method, dataset, update_dataset,
+                                                 threading);
         };
     }
     throw UnsupportedValidationCase{calculation_type, sym};
