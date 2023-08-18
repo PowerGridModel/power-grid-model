@@ -286,13 +286,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_info_ = CalculationInfo{};
         // prepare
         auto const& input = [this, &prepare_input] {
-            Timer const timer(calculation_info_, 2100, "Prepare");
+            Timer timer(calculation_info_, 2100, "Prepare");
             prepare_solvers<sym>();
             return prepare_input();
         }();
         // calculate
         return [this, &input, &solve] {
-            Timer const timer(calculation_info_, 2200, "Math Calculation");
+            Timer timer(calculation_info_, 2200, "Math Calculation");
             std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
             std::vector<MathOutputType> math_output(n_math_solvers_);
             std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(), solve);
@@ -426,24 +426,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // lambda for sub batch calculation
         auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
                           &sequence_idx_map, n_batch](Idx start, Idx stride) {
-            Timer const t_total(infos[start], 0000, "Total in thread");
+            Timer t_total(infos[start], 0000, "Total in thread");
 
             auto model = [&base_model, &infos, start] {
-                Timer const t_copy_model(infos[start], 1100, "Copy model");
+                Timer t_copy_model(infos[start], 1100, "Copy model");
                 return MainModelImpl{base_model};
             }();
 
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
-                Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
+                Timer t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
                 // try to update model and run calculation
                 try {
                     {
-                        Timer const t_update_model(infos[batch_number], 1200, "Update model");
+                        Timer t_update_model(infos[batch_number], 1200, "Update model");
                         model.template update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
                     }
                     calculation_fn(model, result_data, batch_number);
                     {
-                        Timer const t_update_model(infos[batch_number], 1201, "Restore model");
+                        Timer t_update_model(infos[batch_number], 1201, "Restore model");
                         model.restore_components();
                     }
                 } catch (std::exception const& ex) {
@@ -670,7 +670,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 model.output_result<ComponentType>(math_output_, begin);
             }...};
 
-        Timer const t_output(calculation_info_, 3000, "Produce output");
+        Timer t_output(calculation_info_, 3000, "Produce output");
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = result_data.find(entry.name);
             // skip if component does not exist
@@ -1049,6 +1049,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
         prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
             state_.topo_comp_coup->source, sc_input);
+        // prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
+        //     state_.topo_comp_coup->source, sc_input,
+        //     std::pair{
+        //         [this](Source const& source) {
+        //             return state_.components.template get_item<Node>(source.node()).u_rated();
+        //         }, ShortCircuitVoltageScaling::max  // TODO: receive scaling min/max through function call
+        //     });
 
         return sc_input;
     }
