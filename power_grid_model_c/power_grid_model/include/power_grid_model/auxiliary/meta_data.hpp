@@ -156,7 +156,7 @@ struct PGM_MetaComponent {
     using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
 
     template <class StructType>
-    PGM_MetaComponent(MetaComponentImpl<StructType> /* tag */, std::string const& comp_name)
+    PGM_MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string const& comp_name)
         : name{comp_name},
           size{sizeof(StructType)},
           alignment{alignof(StructType)},
