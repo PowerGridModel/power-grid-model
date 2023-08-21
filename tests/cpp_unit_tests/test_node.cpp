@@ -21,7 +21,8 @@ TEST_CASE("Test node") {
     CHECK(sym_res.q == 0.0);
     CHECK(sym_res.id == 1);
 
-    ComplexValue<false> u, s;
+    ComplexValue<false> u;
+    ComplexValue<false> s;
     u << 1.0, a2, a;
     s << 0.0, DoubleComplex(2.1, 2.2), DoubleComplex(3.1, 3.2);
     DoubleComplex const u_sym = 1.0;

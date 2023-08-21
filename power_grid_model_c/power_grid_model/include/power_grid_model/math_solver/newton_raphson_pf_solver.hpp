@@ -213,7 +213,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> const& output) {
+    void initialize_derived_solver(YBus<sym> const& /* y_bus */, MathOutput<sym> const& output) {
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
