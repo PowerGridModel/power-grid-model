@@ -9,18 +9,19 @@
 namespace power_grid_model {
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
+    ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::max;
+    double const voltage_scaling_c = 1.1; // 1.1 for ShortCircuitVoltageScaling::max
 
     SUBCASE("Single node + source") {
         double const u_rated = 10e3;
         double const u_ref = 1.0;
-        ShortCircuitVoltageScaling voltage_scaling = ShortCircuitVoltageScaling::max;
         double const sk = 100e6;
         double const rx_ratio = 0.1;
         double const z_ref_abs = u_rated * u_rated / sk;
         double const x_ref = z_ref_abs / sqrt(rx_ratio * rx_ratio + 1.0);
         double const r_ref = x_ref * rx_ratio;
         DoubleComplex const z_ref{r_ref, x_ref};
-        double const u_source = u_rated * u_ref / sqrt3;
+        double const u_source = u_rated * voltage_scaling_c / sqrt3;
         double const r_f = 0.1;
         double const x_f = 0.1;
         DoubleComplex const z_f{r_f, x_f};
@@ -78,21 +79,21 @@ TEST_CASE("Test main model - short circuit") {
             main_model.set_construction_complete();
 
             std::vector<ShortCircuitMathOutput<false>> const math_output =
-                main_model.calculate_short_circuit<false>(ShortCircuitVoltageScaling::max, CalculationMethod::iec60909);
+                main_model.calculate_short_circuit<false>(voltage_scaling, CalculationMethod::iec60909);
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
             main_model.output_result<Fault>(math_output, fault_output.begin());
-            CHECK(fault_output[0].i_f(0) == doctest::Approx(10e4 / sqrt3));
+            CHECK(fault_output[0].i_f(0) == doctest::Approx(voltage_scaling_c * 10e4 / sqrt3));
 
             std::vector<NodeShortCircuitOutput> node_output(2);
             main_model.output_result<Node>(math_output, node_output.begin());
-            CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0)); // influenced by fault
-            CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0)); // fault location
+            CHECK(node_output[0].u_pu(0) != doctest::Approx(voltage_scaling_c)); // influenced by fault
+            CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0));               // fault location
 
-            CHECK(node_output[0].u_pu(1) == doctest::Approx(1.0));
-            CHECK(node_output[0].u_pu(2) == doctest::Approx(1.0));
-            CHECK(node_output[1].u_pu(1) == doctest::Approx(1.0));
-            CHECK(node_output[1].u_pu(2) == doctest::Approx(1.0));
+            CHECK(node_output[0].u_pu(1) == doctest::Approx(voltage_scaling_c));
+            CHECK(node_output[0].u_pu(2) == doctest::Approx(voltage_scaling_c));
+            CHECK(node_output[1].u_pu(1) == doctest::Approx(voltage_scaling_c));
+            CHECK(node_output[1].u_pu(2) == doctest::Approx(voltage_scaling_c));
         }
     }
 }
