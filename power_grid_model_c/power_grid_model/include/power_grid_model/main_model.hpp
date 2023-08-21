@@ -902,16 +902,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcInputType>
-    auto calculate_param(auto const& c, auto const&... extra_args) requires {
-                                                                       { c.calc_param(extra_args...) };
-                                                                   } {
+    auto calculate_param(auto const& c, auto const&... extra_args)
+        requires requires {
+                     { c.calc_param(extra_args...) };
+                 }
+    {
         return c.calc_param(extra_args...);
     }
 
     template <calculation_input_type CalcInputType>
-    auto calculate_param(auto const& c, auto const&... extra_args) requires {
-                                                                       { c.template calc_param<sym>(extra_args...) };
-                                                                   } {
+    auto calculate_param(auto const& c, auto const&... extra_args)
+        requires requires {
+                     { c.template calc_param<symmetric_calculation_input_type<CalcInputType>>(extra_args...) };
+                 }
+    {
         static constexpr bool sym{symmetric_calculation_input_type<CalcInputType>};
         return c.template calc_param<sym>(extra_args...);
     }
