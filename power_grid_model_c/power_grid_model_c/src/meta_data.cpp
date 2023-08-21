@@ -30,7 +30,7 @@ template <class Functor> auto call_with_bound(PGM_Handle* handle, Functor func) 
 
 // retrieve meta data
 // dataset
-PGM_Idx PGM_meta_n_datasets(const PGM_Handle* /* handle */) { return meta_data::meta_data().n_datasets(); }
+PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return meta_data::meta_data().n_datasets(); }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
     return call_with_bound(handle, [idx]() -> decltype(auto) { return &meta_data::meta_data().datasets.at(idx); });
 }
@@ -38,11 +38,11 @@ PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char con
     return call_with_bound(handle,
                            [dataset]() -> decltype(auto) { return &meta_data::meta_data().get_dataset(dataset); });
 }
-char const* PGM_meta_dataset_name(const PGM_Handle* /* handle */, PGM_MetaDataset const* dataset) {
+char const* PGM_meta_dataset_name(PGM_Handle* /* handle */, PGM_MetaDataset const* dataset) {
     return dataset->name.c_str();
 }
 // component
-PGM_Idx PGM_meta_n_components(const PGM_Handle* /* handle */, PGM_MetaDataset const* dataset) {
+PGM_Idx PGM_meta_n_components(PGM_Handle* /* handle */, PGM_MetaDataset const* dataset) {
     return dataset->n_components();
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
@@ -55,17 +55,15 @@ PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char
         return &meta_data::meta_data().get_dataset(dataset).get_component(component);
     });
 }
-char const* PGM_meta_component_name(const PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
+char const* PGM_meta_component_name(PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
     return component->name.c_str();
 }
-size_t PGM_meta_component_size(const PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
-    return component->size;
-}
-size_t PGM_meta_component_alignment(const PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
+size_t PGM_meta_component_size(PGM_Handle* /* handle */, PGM_MetaComponent const* component) { return component->size; }
+size_t PGM_meta_component_alignment(PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
     return component->alignment;
 }
 // attributes
-PGM_Idx PGM_meta_n_attributes(const PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
+PGM_Idx PGM_meta_n_attributes(PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
     return component->n_attributes();
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
@@ -78,13 +76,13 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char
         return &meta_data::meta_data().get_dataset(dataset).get_component(component).get_attribute(attribute);
     });
 }
-char const* PGM_meta_attribute_name(const PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
+char const* PGM_meta_attribute_name(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
     return attribute->name.c_str();
 }
-PGM_Idx PGM_meta_attribute_ctype(const PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
+PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
     return static_cast<PGM_Idx>(attribute->ctype);
 }
-size_t PGM_meta_attribute_offset(const PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
+size_t PGM_meta_attribute_offset(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
     return attribute->offset;
 }
-int PGM_is_little_endian(const PGM_Handle* /* handle */) { return meta_data::is_little_endian(); }
+int PGM_is_little_endian(PGM_Handle* /* handle */) { return meta_data::is_little_endian(); }
