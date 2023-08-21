@@ -30,7 +30,7 @@ class Sensor : public Base {
     ID measured_object() const { return measured_object_; };
 
     // sensor always energized
-    bool energized(bool /*is_connected_to_source*/) const final { return true; }
+    bool energized(bool /* is_connected_to_source */) const final { return true; }
     ComponentType math_model_type() const final { return ComponentType::sensor; }
 
     // getter for calculation param
