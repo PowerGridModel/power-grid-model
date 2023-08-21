@@ -104,7 +104,7 @@ struct PGM_MetaAttribute {
 
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    PGM_MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* MetaAttribute */, std::string const& attr_name)
+    PGM_MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string const& attr_name)
         : name{attr_name},
           ctype{ctype_v<ValueType>},
           offset{power_grid_model::meta_data::get_offset<StructType, member_ptr>()},
