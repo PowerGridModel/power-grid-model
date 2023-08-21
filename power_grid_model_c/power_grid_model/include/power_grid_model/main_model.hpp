@@ -1048,15 +1048,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
                 return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
             });
-        prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
-            state_.topo_comp_coup->source, sc_input);
         // prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
-        //     state_.topo_comp_coup->source, sc_input,
-        //     std::pair{
-        //         [this](Source const& source) {
-        //             return state_.components.template get_item<Node>(source.node()).u_rated();
-        //         }, ShortCircuitVoltageScaling::max  // TODO: receive scaling min/max through function call
-        //     });
+        //     state_.topo_comp_coup->source, sc_input);
+        prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
+            state_.topo_comp_coup->source, sc_input, [this, voltage_scaling](Source const& source) {
+                return std::pair{state_.components.template get_item<Node>(source.node()).u_rated(), voltage_scaling};
+            });
 
         return sc_input;
     }
