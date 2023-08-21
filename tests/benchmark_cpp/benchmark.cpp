@@ -36,18 +36,18 @@ struct PowerGridBenchmark {
         NodeInput const source_node{{id_source_node}, 150.0e3};
         NodeInput const cycle_node_1{{id_source_node + 1}, 150.0e3};
         NodeInput const cycle_node_2{{id_source_node + 2}, 150.0e3};
-        LinkInput const link_1{{{3}, 0, 1, true, true}};
-        LinkInput const link_2{{{4}, 1, 2, true, true}};
-        LinkInput const link_3{{{5}, 2, 0, true, true}};
+        LinkInput const link_1{{{3}, 0, 1, 1, 1}};
+        LinkInput const link_2{{{4}, 1, 2, 1, 1}};
+        LinkInput const link_3{{{5}, 2, 0, 1, 1}};
 
-        SourceInput const source{{{6}, 0, true}, 1.05, nan, 1e20, nan, nan};
+        SourceInput const source{{{6}, 0, 1}, 1.05, nan, 1e20, nan, nan};
         // template input
         NodeInput const node{{0}, 10.0e3};
-        SymLoadGenInput const sym_load{{{{0}, 0, true}, LoadGenType::const_i}, 0.4e6, 0.3e6};
+        SymLoadGenInput const sym_load{{{{0}, 0, 1}, LoadGenType::const_i}, 0.4e6, 0.3e6};
         AsymLoadGenInput const asym_load{
-            {{{0}, 0, true}, LoadGenType::const_i}, RealValue<false>{0.0}, RealValue<false>{0.0}};
+            {{{0}, 0, 1}, LoadGenType::const_i}, RealValue<false>{0.0}, RealValue<false>{0.0}};
         // transformer, 150/10.5kV, 30MVA, uk=20.3%
-        TransformerInput const tranformer{{{0}, 0, 0, true, true},
+        TransformerInput const tranformer{{{0}, 0, 0, 1, 1},
                                           150.0e3,
                                           10.5e3,
                                           30.0e6,
@@ -73,7 +73,7 @@ struct PowerGridBenchmark {
                                           nan,
                                           nan};
         // cable 630Al XLPE 10kV with neutral conductor, 1 km
-        LineInput const line{{{0}, 0, 0, true, true}, 0.063, 0.103, 0.4e-6, 0.0, 0.156, 0.1, 0.66e-6, 0.0, 1e3};
+        LineInput const line{{{0}, 0, 0, 1, 1}, 0.063, 0.103, 0.4e-6, 0.0, 0.156, 0.1, 0.66e-6, 0.0, 1e3};
 
         // random generator
         std::random_device rd;

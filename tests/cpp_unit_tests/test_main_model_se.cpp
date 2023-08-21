@@ -17,7 +17,7 @@ TEST_CASE("Test main model - state estimation") {
     SUBCASE("State Estimation") {
         SUBCASE("Single Node + Source") {
             main_model.add_component<Node>({{{1}, 10e3}});
-            main_model.add_component<Source>({{{{2}, 1, true}, 1.0, nan, nan, nan, nan}});
+            main_model.add_component<Source>({{{{2}, 1, 1}, 1.0, nan, nan, nan, nan}});
             SUBCASE("Symmetric Voltage Sensor") {
                 main_model.add_component<SymVoltageSensor>({{{{{3}, 1}, 1e2}, 12.345e3, 0.1}});
                 main_model.set_construction_complete();
@@ -66,12 +66,12 @@ TEST_CASE("Test main model - state estimation") {
 
         SUBCASE("Node Injection") {
             main_model.add_component<Node>({{{1}, 10e3}, {{2}, 10e3}});
-            main_model.add_component<Link>({{{{3}, 1, 2, true, true}}});
-            main_model.add_component<Source>({{{{4}, 1, true}, 1.0, nan, nan, nan, nan}});
+            main_model.add_component<Link>({{{{3}, 1, 2, 1, 1}}});
+            main_model.add_component<Source>({{{{4}, 1, 1}, 1.0, nan, nan, nan, nan}});
             main_model.add_component<AsymGenerator>(
-                {{{{{5}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
+                {{{{{5}, 2, 1}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
             main_model.add_component<AsymLoad>(
-                {{{{{6}, 2, true}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
+                {{{{{6}, 2, 1}, LoadGenType::const_pq}, {nan, nan, nan}, {nan, nan, nan}}});
             main_model.add_component<SymVoltageSensor>({{{{{11}, 1}, 1e2}, 10.0e3, 0.0}});
             SUBCASE("Symmetric Power Sensor - Symmetric Calculation") {
                 main_model.add_component<SymPowerSensor>(
@@ -147,7 +147,7 @@ TEST_CASE("Test main model - state estimation") {
 
         SUBCASE("Forbid Link Power Measurements") {
             main_model.add_component<Node>({{{1}, 10e3}, {{2}, 10e3}});
-            main_model.add_component<Link>({{{{3}, 1, 2, true, true}}});
+            main_model.add_component<Link>({{{{3}, 1, 2, 1, 1}}});
             CHECK_THROWS_AS(
                 main_model.add_component<SymPowerSensor>({{{{{4}, 3}, MeasuredTerminalType::branch_from, 0}, 0, 0}}),
                 InvalidMeasuredObject);
@@ -169,12 +169,12 @@ TEST_CASE("Test main model - state estimation") {
     SUBCASE("Test incomplete input but complete update dataset") {
         std::vector<NodeInput> node_input{{{{1}, 10e3}}};
 
-        std::vector<SourceInput> incomplete_source_input{{{{{2}, 1, true}, nan, nan, nan, nan, nan}}};
+        std::vector<SourceInput> incomplete_source_input{{{{{2}, 1, 1}, nan, nan, nan, nan, nan}}};
         std::vector<SymVoltageSensorInput> incomplete_sym_sensor_input{{{{{{3}, 1}, 1e2}, nan, nan}}};
         std::vector<AsymVoltageSensorInput> incomplete_asym_sensor_input{
             {{{{{4}, 1}, 1e2}, RealValue<false>{nan}, RealValue<false>{nan}}}};
 
-        std::vector<SourceUpdate> complete_source_update{{{{2}, true}, 1.0, nan}};
+        std::vector<SourceUpdate> complete_source_update{{{{2}, 1}, 1.0, nan}};
         std::vector<SymVoltageSensorUpdate> complete_sym_sensor_update{{{3}, 1.0, 12.345e3, 0.1}};
         std::vector<AsymVoltageSensorUpdate> complete_asym_sensor_update{
             {{4}, 1.0, RealValue<false>{12.345e3}, RealValue<false>{0.1}}};
