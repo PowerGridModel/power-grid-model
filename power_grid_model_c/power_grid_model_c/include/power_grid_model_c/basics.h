@@ -147,6 +147,15 @@ enum PGM_CType {
     PGM_double3 = 3, /**< double[3] */
 };
 
+/**
+ * @brief Enumeration of short circuit voltage scaling
+ *
+ */
+enum ShortCircuitVoltageScaling {
+    PGM_sc_voltage_scaling_minimum = 0, /**< voltage scaling for minimum short circuit currents */
+    PGM_sc_voltage_scaling_maximum = 1, /**< voltage scaling for maximum short circuit currents */
+};
+
 #ifdef __cplusplus
 }
 #endif
