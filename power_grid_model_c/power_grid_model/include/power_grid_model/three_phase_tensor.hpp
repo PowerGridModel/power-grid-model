@@ -48,7 +48,7 @@ template <scalar_value T> class Vector : public Eigen3Vector<T> {
     }
     // piecewise constructor of single value
     // for both real and complex number, the value is repeated three times (without rotation)
-    explicit Vector(std::piecewise_construct_t /*unused*/, T const& x) { (*this) << x, x, x; }
+    explicit Vector(std::piecewise_construct_t /* tag */, T const& x) { (*this) << x, x, x; }
     // constructor of three values
     Vector(T const& x1, T const& x2, T const& x3) { (*this) << x1, x2, x3; }
 };
