@@ -34,7 +34,7 @@ class GenericPowerSensor : public Sensor {
 
     template <bool sym> PowerSensorOutput<sym> get_null_output() const { return {{id(), false}, {}, {}}; }
 
-    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), false}}; }
+    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), 0}}; }
 
   protected:
     double convert_direction() const {

@@ -60,7 +60,7 @@ struct Buffer {
 void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& meta, Idx position) {
     for (auto const& it : j.items()) {
         // Allow and skip unknown attributes
-        if (!meta.has_attribute(it.key())) {
+        if (meta.has_attribute(it.key()) == 0) {
             continue;
         }
         MetaAttribute const& attr = meta.get_attribute(it.key());
@@ -261,7 +261,10 @@ template <bool sym>
 bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
                                 MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
                                 double rtol, Idx obj) {
-    RealValue<sym> mag{}, mag_ref{}, angle{}, angle_ref{};
+    RealValue<sym> mag{};
+    RealValue<sym> mag_ref{};
+    RealValue<sym> angle{};
+    RealValue<sym> angle_ref{};
     mag_attr.get_value(result_ptr, &mag, obj);
     mag_attr.get_value(reference_result_ptr, &mag_ref, obj);
     angle_attr.get_value(result_ptr, &angle, obj);

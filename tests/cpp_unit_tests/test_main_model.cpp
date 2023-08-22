@@ -18,14 +18,14 @@ struct cached_update {
 
 struct State {
     std::vector<NodeInput> node_input{{{1}, 10e3}, {{2}, 10e3}, {{3}, 10e3}};
-    std::vector<LineInput> line_input{{{{4}, 1, 2, true, true}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
-    std::vector<LinkInput> link_input{{{{5}, 2, 3, true, true}}};
-    std::vector<SourceInput> source_input{{{{6}, 1, true}, 1.05, nan, 1e12, nan, nan},
-                                          {{{10}, 3, false}, 1.05, 0.0, 1e12, nan, nan}};
-    std::vector<SymLoadGenInput> sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, 0.5e6, 0.0}};
+    std::vector<LineInput> line_input{{{{4}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
+    std::vector<LinkInput> link_input{{{{5}, 2, 3, 1, 1}}};
+    std::vector<SourceInput> source_input{{{{6}, 1, 1}, 1.05, nan, 1e12, nan, nan},
+                                          {{{10}, 3, 0}, 1.05, 0.0, 1e12, nan, nan}};
+    std::vector<SymLoadGenInput> sym_load_input{{{{{7}, 3, 1}, LoadGenType::const_y}, 0.5e6, 0.0}};
     std::vector<AsymLoadGenInput> asym_load_input{
-        {{{{8}, 3, true}, LoadGenType::const_y}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
-    std::vector<ShuntInput> shunt_input{{{{9}, 3, true}, 0.015, 0.0, 0.015, 0.0}};
+        {{{{8}, 3, 1}, LoadGenType::const_y}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
+    std::vector<ShuntInput> shunt_input{{{{9}, 3, 1}, 0.015, 0.0, 0.015, 0.0}};
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<SymPowerSensorInput> sym_power_sensor_input{
@@ -97,12 +97,12 @@ struct State {
     std::vector<PowerSensorOutput<false>> sym_power_sensor_asym_output = std::vector<PowerSensorOutput<false>>(7);
 
     // update vector
-    std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, true}, 1.0e6, nan}};
-    std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, false}, RealValue<false>{nan}, RealValue<false>{nan}}};
-    std::vector<ShuntUpdate> shunt_update{{{{9}, false}, nan, 0.02, nan, 0.02}};
-    std::vector<SourceUpdate> source_update{{{{10}, true}, u1, nan}};
-    std::vector<BranchUpdate> link_update{{{5}, true, false}};
-    std::vector<FaultUpdate> fault_update{{{30}, true, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
+    std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, 1}, 1.0e6, nan}};
+    std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, 0}, RealValue<false>{nan}, RealValue<false>{nan}}};
+    std::vector<ShuntUpdate> shunt_update{{{{9}, 0}, nan, 0.02, nan, 0.02}};
+    std::vector<SourceUpdate> source_update{{{{10}, 1}, u1, nan}};
+    std::vector<BranchUpdate> link_update{{{5}, 1, 0}};
+    std::vector<FaultUpdate> fault_update{{{30}, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
 };
 
 auto default_model(State const& state) -> MainModel {
@@ -1001,7 +1001,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         Dataset dependent_result_data;
 
         std::vector<SymLoadGenUpdate> sym_load_update_2{
-            {{{7}, true}, nan, 1.0e7}, {{{7}, true}, 1.0e3, nan}, {{{7}, true}, 1.0e3, 1.0e7}};
+            {{{7}, 1}, nan, 1.0e7}, {{{7}, 1}, 1.0e3, nan}, {{{7}, 1}, 1.0e3, 1.0e7}};
         dependent_update_data["sym_load"] =
             DataPointer<true>{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
 
@@ -1032,11 +1032,11 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     State state;
     auto main_model = default_model(state);
 
-    std::vector<SourceInput> const incomplete_source_input{{{{6}, 1, true}, nan, nan, 1e12, nan, nan},
-                                                           {{{10}, 3, true}, nan, nan, 1e12, nan, nan}};
-    std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, true}, LoadGenType::const_y}, nan, nan}};
+    std::vector<SourceInput> const incomplete_source_input{{{{6}, 1, 1}, nan, nan, 1e12, nan, nan},
+                                                           {{{10}, 3, 1}, nan, nan, 1e12, nan, nan}};
+    std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, 1}, LoadGenType::const_y}, nan, nan}};
     std::vector<AsymLoadGenInput> incomplete_asym_load_input{
-        {{{{8}, 3, true}, LoadGenType::const_y}, RealValue<false>{nan}, RealValue<false>{nan}}};
+        {{{{8}, 3, 1}, LoadGenType::const_y}, RealValue<false>{nan}, RealValue<false>{nan}}};
 
     ConstDataset input_data;
     input_data["node"] = DataPointer<true>{state.node_input.data(), static_cast<Idx>(state.node_input.size())};
@@ -1049,10 +1049,10 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
         DataPointer<true>{incomplete_asym_load_input.data(), static_cast<Idx>(incomplete_asym_load_input.size())};
     input_data["shunt"] = DataPointer<true>{state.shunt_input.data(), static_cast<Idx>(state.shunt_input.size())};
 
-    std::vector<SourceUpdate> complete_source_update{{{{6}, true}, 1.05, nan}, {{{10}, true}, 1.05, 0}};
-    std::vector<SymLoadGenUpdate> complete_sym_load_update{{{{7}, true}, 0.5e6, 0.0}};
+    std::vector<SourceUpdate> complete_source_update{{{{6}, 1}, 1.05, nan}, {{{10}, 1}, 1.05, 0}};
+    std::vector<SymLoadGenUpdate> complete_sym_load_update{{{{7}, 1}, 0.5e6, 0.0}};
     std::vector<AsymLoadGenUpdate> complete_asym_load_update{
-        {{{8}, true}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
+        {{{8}, 1}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
 
     ConstDataset update_data;
     update_data["source"] =
