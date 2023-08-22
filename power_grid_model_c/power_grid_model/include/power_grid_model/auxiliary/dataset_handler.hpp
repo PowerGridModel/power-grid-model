@@ -48,7 +48,11 @@ class DatasetHandler {
         : description_{.is_batch = is_batch,
                        .batch_size = batch_size,
                        .dataset = &meta_data().get_dataset(dataset),
-                       .component_info = {}} {}
+                       .component_info = {}} {
+        if (!description_.is_batch && (description_.batch_size != 1)) {
+            throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
+        }
+    }
 
     bool is_batch() const { return description_.is_batch; }
     Idx batch_size() const { return description_.batch_size; }
