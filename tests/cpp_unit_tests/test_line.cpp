@@ -11,7 +11,7 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test line") {
-    LineInput const input{{{1}, 2, 3, true, true}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
+    LineInput const input{{{1}, 2, 3, 1, 1}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
     Line line{input, 50.0, 10.0e3, 10.0e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_i * base_i / base_power_1p;

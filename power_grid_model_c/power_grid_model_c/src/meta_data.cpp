@@ -82,4 +82,4 @@ PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* /* handle */, PGM_MetaAttribute con
 size_t PGM_meta_attribute_offset(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {
     return attribute->offset;
 }
-int PGM_is_little_endian(PGM_Handle* /* handle */) { return meta_data::is_little_endian(); }
+int PGM_is_little_endian(PGM_Handle* /* handle */) { return static_cast<int>(meta_data::is_little_endian()); }
