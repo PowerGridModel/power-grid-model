@@ -114,7 +114,7 @@ template <class StructType, auto member_ptr> struct MetaAttributeImpl {
 struct MetaAttribute {
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    MetaAttribute(MetaAttributeImpl<StructType, member_ptr>, std::string const& attr_name)
+    MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string const& attr_name)
         : name{attr_name},
           ctype{ctype_v<ValueType>},
           offset{get_offset<StructType, member_ptr>()},
@@ -161,7 +161,7 @@ template <class StructType> struct MetaComponentImpl {
 
 struct MetaComponent {
     template <class StructType>
-    MetaComponent(MetaComponentImpl<StructType>, std::string const& comp_name)
+    MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string const& comp_name)
         : name{comp_name},
           size{sizeof(StructType)},
           alignment{alignof(StructType)},

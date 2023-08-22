@@ -541,7 +541,8 @@ template <bool sym> class IterativeLinearSESolver {
     MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
                                          Idx max_iter, CalculationInfo& calculation_info) {
         // prepare
-        Timer main_timer, sub_timer;
+        Timer main_timer;
+        Timer sub_timer;
         MathOutput<sym> output;
         output.u.resize(n_bus_);
         output.bus_injection.resize(n_bus_);
