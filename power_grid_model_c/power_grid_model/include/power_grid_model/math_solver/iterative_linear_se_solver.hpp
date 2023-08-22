@@ -434,12 +434,13 @@ template <bool sym> class MeasuredValues {
                 accumulated_value += measurement.value * inv_variance;
             }
         }
-        if (std::isnormal(accumulated_inverse_variance)) {
-            return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
-                                        1.0 / accumulated_inverse_variance};
-        } else {
+
+        if (!std::isnormal(accumulated_inverse_variance)) {
             return SensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
         }
+
+        return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
+                                    1.0 / accumulated_inverse_variance};
     }
 
     // process objects in batch for shunt, load_gen, source
