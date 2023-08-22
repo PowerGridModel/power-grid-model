@@ -25,7 +25,7 @@ struct ComponentInfo {
     Idx total_elements;
 };
 
-struct DatasetDescription {
+struct DatasetInfo {
     bool is_batch;
     Idx batch_size; // for single dataset, the batch size is one
     MetaDataset const* dataset;
@@ -45,47 +45,47 @@ class DatasetHandler {
     };
 
     DatasetHandler(bool is_batch, Idx batch_size, std::string_view dataset)
-        : description_{.is_batch = is_batch,
-                       .batch_size = batch_size,
-                       .dataset = &meta_data().get_dataset(dataset),
-                       .component_info = {}} {
-        if (!description_.is_batch && (description_.batch_size != 1)) {
+        : dataset_info_{.is_batch = is_batch,
+                        .batch_size = batch_size,
+                        .dataset = &meta_data().get_dataset(dataset),
+                        .component_info = {}} {
+        if (!dataset_info_.is_batch && (dataset_info_.batch_size != 1)) {
             throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
         }
     }
 
-    bool is_batch() const { return description_.is_batch; }
-    Idx batch_size() const { return description_.batch_size; }
-    MetaDataset const& dataset() const { return *description_.dataset; }
+    bool is_batch() const { return dataset_info_.is_batch; }
+    Idx batch_size() const { return dataset_info_.batch_size; }
+    MetaDataset const& dataset() const { return *dataset_info_.dataset; }
     Idx n_components() const { return static_cast<Idx>(buffers_.size()); }
-    DatasetDescription const& get_description() const { return description_; }
-    ComponentInfo const& get_component_info(Idx i) const { return description_.component_info[i]; }
+    DatasetInfo const& get_description() const { return dataset_info_; }
+    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
     Idx find_component(std::string_view component, bool throw_not_found = false) const {
-        auto const found = std::find_if(description_.component_info.cbegin(), description_.component_info.cend(),
+        auto const found = std::find_if(dataset_info_.component_info.cbegin(), dataset_info_.component_info.cend(),
                                         [component](ComponentInfo const& x) { return x.component->name == component; });
-        if (found == description_.component_info.cend()) {
+        if (found == dataset_info_.component_info.cend()) {
             if (throw_not_found) {
                 throw DatasetError{"Cannot find component!\n"};
             } else {
                 return -1;
             }
         }
-        return std::distance(description_.component_info.cbegin(), found);
+        return std::distance(dataset_info_.component_info.cbegin(), found);
     }
 
     ComponentInfo const& get_component_info(std::string_view component) const {
-        return description_.component_info[find_component(component, true)];
+        return dataset_info_.component_info[find_component(component, true)];
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
         if (find_component(component) >= 0) {
             throw DatasetError{"Cannot have duplicated components!\n"};
         }
-        description_.component_info.push_back(
-            {&description_.dataset->get_component(component), elements_per_scenario, total_elements});
+        dataset_info_.component_info.push_back(
+            {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers_.push_back(Buffer{});
         check_uniform_integrity(elements_per_scenario, total_elements);
     }
@@ -104,7 +104,7 @@ class DatasetHandler {
 
     void set_buffer(std::string_view component, Indptr* indptr, Data* data) {
         Idx const idx = find_component(component, true);
-        ComponentInfo const& info = description_.component_info[idx];
+        ComponentInfo const& info = dataset_info_.component_info[idx];
         check_non_uniform_integrity<false>(info.elements_per_scenario, info.total_elements, indptr);
         buffers_[idx].data = data;
         if (indptr) {
@@ -115,7 +115,7 @@ class DatasetHandler {
     }
 
   private:
-    DatasetDescription description_;
+    DatasetInfo dataset_info_;
     std::vector<Buffer> buffers_;
 
     void check_uniform_integrity(Idx elements_per_scenario, Idx total_elements) {

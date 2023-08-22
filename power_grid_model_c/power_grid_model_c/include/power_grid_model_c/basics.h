@@ -113,6 +113,28 @@ typedef struct PGM_Serializer PGM_Serializer;
  * @brief Opaque struct for the deserializer class
  */
 typedef struct PGM_Deserializer PGM_Deserializer;
+
+/**
+ * @brief Opaque struct for the const dataset class
+ */
+typedef struct PGM_ConstDataset PGM_ConstDataset;
+
+/**
+ * @brief Opaque struct for the multable dataset class
+ * The mutable dataset is meant for the user to provide buffers to store the output of calculations.
+ */
+typedef struct PGM_MutableDataset PGM_MutableDataset;
+
+/**
+ * @brief Opaque struct for the writable dataset class
+ * The writable dataset is meant for the user to provide buffers for the deserializer
+ */
+typedef struct PGM_WritableDataset PGM_WritableDataset;
+
+/**
+ * @brief Opaque struct for the information of the dataset
+ */
+typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 #endif
 
 // enums

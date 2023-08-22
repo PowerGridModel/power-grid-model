@@ -26,6 +26,8 @@ template <bool data_mutable, bool indptr_mutable>
     requires(data_mutable || !indptr_mutable)
 class DatasetHandler;
 
+struct DatasetInfo;
+
 } // namespace meta_data
 
 } // namespace power_grid_model
