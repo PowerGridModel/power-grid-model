@@ -140,7 +140,8 @@ TEST_CASE("Three phase tensor") {
         RealTensor<false> mat2;
         mat2 << -3, 2, 3, 4, -5, 6, 7, 8, -9;
         CHECK((mat1 == mat2).all());
-        double x = 5, y = 10;
+        double x = 5;
+        double const y = 10;
         add_diag(x, -y);
         CHECK(x == -5);
     }

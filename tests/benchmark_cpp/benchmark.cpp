@@ -97,7 +97,7 @@ struct PowerGridBenchmark {
 
 } // namespace power_grid_model::benchmark
 
-int main(int, char**) {
+int main(int /* argc */, char** /* argv */) {
     using enum power_grid_model::CalculationMethod;
 
     power_grid_model::benchmark::PowerGridBenchmark benchmarker{};
