@@ -13,9 +13,7 @@
 // forward declare all referenced struct/class in C++ core
 // alias them in the root namespace
 
-namespace power_grid_model {
-
-namespace meta_data {
+namespace power_grid_model::meta_data {
 
 struct MetaAttribute;
 struct MetaComponent;
@@ -28,9 +26,7 @@ class DatasetHandler;
 
 struct DatasetInfo;
 
-} // namespace meta_data
-
-} // namespace power_grid_model
+} // namespace power_grid_model::meta_data
 
 using PGM_MetaAttribute = power_grid_model::meta_data::MetaAttribute;
 using PGM_MetaComponent = power_grid_model::meta_data::MetaComponent;
@@ -40,5 +36,6 @@ using PGM_Deserializer = power_grid_model::meta_data::Deserializer;
 using PGM_ConstDatasetHandler = power_grid_model::meta_data::DatasetHandler<false, false>;
 using PGM_MutableDatasetHandler = power_grid_model::meta_data::DatasetHandler<true, false>;
 using PGM_WritableDatasetHandler = power_grid_model::meta_data::DatasetHandler<true, true>;
+using PGM_DatasetInfo = power_grid_model::meta_data::DatasetInfo;
 
 #endif
