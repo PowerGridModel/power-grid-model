@@ -11,7 +11,7 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test link") {
-    LinkInput input{{{1}, 2, 3, true, true}};
+    LinkInput input{{{1}, 2, 3, 1, 1}};
     Link link{input, 10e3, 50e3};
     Branch& branch = link;
     double const base_i_from = base_power_1p / (10.0e3 / sqrt3);

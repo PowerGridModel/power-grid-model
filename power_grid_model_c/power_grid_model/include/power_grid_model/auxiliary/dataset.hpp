@@ -66,7 +66,7 @@ template <bool is_const> class DataPointer {
     Idx elements_per_scenario(Idx pos) const {
         assert(pos >= 0);
         assert(pos < batch_size_);
-        if (indptr_) {
+        if (indptr_ != nullptr) {
             return indptr_[pos + 1] - indptr_[pos];
         }
         return (Idx)elements_per_scenario_;
@@ -77,7 +77,7 @@ template <bool is_const> class DataPointer {
     // check if the dataset is one empty batch
     // the length of data should be zero
     bool is_empty() const {
-        if (indptr_) {
+        if (indptr_ != nullptr) {
             return (indptr_[batch_size_] == 0);
         }
         return batch_size_ == 0 || elements_per_scenario_ == 0;
