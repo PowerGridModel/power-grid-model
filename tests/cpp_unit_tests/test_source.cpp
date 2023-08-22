@@ -44,18 +44,18 @@ TEST_CASE("Test source") {
 
     SUBCASE("Test source parameters") {
         // uref
-        ComplexValue<true> u_ref = source.calc_param<true>();
+        DoubleComplex u_ref = source.calc_param();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
         source.set_u_ref(nan, nan);
-        u_ref = source.calc_param<true>();
+        u_ref = source.calc_param();
         CHECK(cabs(u_ref - u_input) < numerical_tolerance);
         source.set_u_ref(1.0, nan);
-        u_ref = source.calc_param<true>();
+        u_ref = source.calc_param();
         CHECK(cabs(u_ref - 1.0) < numerical_tolerance);
 
         // uref with angle
         source.set_u_ref(nan, 2.5);
-        u_ref = source.calc_param<true>();
+        u_ref = source.calc_param();
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         // yref
@@ -68,15 +68,15 @@ TEST_CASE("Test source") {
     SUBCASE("Test calc_param for short circuit") {
         source.set_u_ref(2.0, 2.5);
         auto voltage_scaling_parameters = std::pair{1000.0, ShortCircuitVoltageScaling::minimum};
-        ComplexValue<true> u_ref = source.calc_param<true>(voltage_scaling_parameters);
+        ComplexValue<true> u_ref = source.calc_param(voltage_scaling_parameters);
         CHECK(cabs(u_ref - 0.95 * std::exp(2.5i)) < numerical_tolerance);
 
         voltage_scaling_parameters.first = 1001.0;
-        u_ref = source.calc_param<true>(voltage_scaling_parameters);
+        u_ref = source.calc_param(voltage_scaling_parameters);
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         voltage_scaling_parameters.second = ShortCircuitVoltageScaling::maximum;
-        u_ref = source.calc_param<true>(voltage_scaling_parameters);
+        u_ref = source.calc_param(voltage_scaling_parameters);
         CHECK(cabs(u_ref - 1.1 * std::exp(2.5i)) < numerical_tolerance);
     }
 
