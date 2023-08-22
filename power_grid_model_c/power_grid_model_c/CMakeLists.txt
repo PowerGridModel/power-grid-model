@@ -10,7 +10,9 @@ add_library(power_grid_model_c SHARED
   "src/model.cpp"
   "src/options.cpp"
   "src/dataset_definitions.cpp"
-  "src/serialization.cpp")
+  # "src/serialization.cpp"
+  "src/dataset.cpp"
+)
 
 target_include_directories(power_grid_model_c PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -26,6 +28,7 @@ set(PGM_PUBLIC_HEADERS
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/options.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/dataset_definitions.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/serialization.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c/dataset.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_c.h"
 )
 
