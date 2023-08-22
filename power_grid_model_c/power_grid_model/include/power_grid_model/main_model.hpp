@@ -26,6 +26,7 @@
 #include "math_solver/math_solver.hpp"
 
 // main model implementation
+#include "main_core/calculation_info.hpp"
 #include "main_core/input.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
@@ -284,15 +285,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
-        Timer timer(calculation_info_, 2100, "Prepare");
-        prepare_solvers<sym>();
-        auto const& input = prepare_input();
+        auto const& input = [this, &prepare_input] {
+            Timer const timer(calculation_info_, 2100, "Prepare");
+            prepare_solvers<sym>();
+            return prepare_input();
+        }();
         // calculate
-        timer = Timer(calculation_info_, 2200, "Math Calculation");
-        std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
-        std::vector<MathOutputType> math_output(n_math_solvers_);
-        std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(), solve);
-        return math_output;
+        return [this, &input, &solve] {
+            Timer const timer(calculation_info_, 2200, "Math Calculation");
+            std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
+            std::vector<MathOutputType> math_output(n_math_solvers_);
+            std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(), solve);
+            return math_output;
+        }();
     }
 
     template <bool sym>
@@ -416,28 +421,43 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
+        std::vector<CalculationInfo> infos(n_batch);
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &calculation_fn, &result_data, &update_data, &sequence_idx_map,
-                          n_batch](Idx start, Idx stride) {
-            // copy base model
-            MainModelImpl model{base_model};
+        auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
+                          &sequence_idx_map, n_batch](Idx start, Idx stride) {
+            Timer const t_total(infos[start], 0000, "Total in thread");
+
+            auto model = [&base_model, &infos, start] {
+                Timer const t_copy_model(infos[start], 1100, "Copy model");
+                return MainModelImpl{base_model};
+            }();
+
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
+                Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
                 // try to update model and run calculation
                 try {
-                    model.update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
+                    {
+                        Timer const t_update_model(infos[batch_number], 1200, "Update model");
+                        model.template update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
+                    }
                     calculation_fn(model, result_data, batch_number);
-                    model.restore_components();
+                    {
+                        Timer const t_update_model(infos[batch_number], 1201, "Restore model");
+                        model.restore_components();
+                    }
                 } catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
                 } catch (...) {
                     exceptions[batch_number] = "unknown exception";
                 }
+
+                infos[batch_number].merge(model.calculation_info_);
             }
         };
 
         // run batches sequential or parallel
-        auto const hardware_thread = (Idx)std::thread::hardware_concurrency();
+        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         // run sequential if
         //    specified threading < 0
         //    use hardware threads, but it is either unknown (0) or only has one thread (1)
@@ -447,10 +467,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             sub_batch(0, 1);
         } else {
             // create parallel threads
-            Idx const n_thread = threading == 0 ? hardware_thread : threading;
+            Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_batch);
             std::vector<std::thread> threads;
             threads.reserve(n_thread);
-            for (Idx thread_number = 0; thread_number != n_thread; ++thread_number) {
+            for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
                 // compute each sub batch with stride
                 threads.emplace_back(sub_batch, thread_number, n_thread);
             }
@@ -459,11 +479,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         }
 
-        // handle exception message
+        handle_batch_exceptions(exceptions);
+        calculation_info_ = main_core::merge_calculation_info(infos);
+
+        return BatchParameter{};
+    }
+
+    static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
         std::string combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
-        for (Idx batch = 0; batch != n_batch; ++batch) {
+        for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
                 combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
@@ -474,8 +500,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (!combined_error_message.empty()) {
             throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
         }
-
-        return BatchParameter{};
     }
 
   public:
@@ -645,6 +669,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         .first;
                 model.output_result<ComponentType>(math_output_, begin);
             }...};
+
+        Timer const t_output(calculation_info_, 3000, "Produce output");
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             auto const found = result_data.find(entry.name);
             // skip if component does not exist
@@ -659,6 +685,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     CalculationInfo calculation_info() { return calculation_info_; }
 
   private:
+    CalculationInfo calculation_info_; // needs to be first due to padding override
+
     double system_frequency_;
 
     MainModelState state_;
@@ -670,7 +698,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_sym_parameter_up_to_date_{false};
     bool is_asym_parameter_up_to_date_{false};
     UpdateChange cached_state_changes_{};
-    CalculationInfo calculation_info_;
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
