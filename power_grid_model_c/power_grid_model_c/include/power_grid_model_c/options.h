@@ -105,7 +105,7 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  *
  * @param handle
  * @param opt pointer to option instance
- * @param sc_voltage_scaling See #ShortCircuitVoltageScaling
+ * @param sc_voltage_scaling See #PGM_ShortCircuitVoltageScaling
  */
 PGM_API void PGM_set_sc_voltage_scaling(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sc_voltage_scaling);
 
