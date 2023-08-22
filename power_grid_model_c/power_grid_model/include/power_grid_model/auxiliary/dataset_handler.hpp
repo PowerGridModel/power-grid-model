@@ -87,13 +87,13 @@ class DatasetHandler {
         description_.component_info.push_back(
             {&description_.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers_.push_back(Buffer{});
-        check_integrity<false, false>(elements_per_scenario, total_elements);
+        check_uniform_integrity(elements_per_scenario, total_elements);
     }
 
     void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
                     Data* data) {
         add_component_info(component, elements_per_scenario, total_elements);
-        check_integrity<true, true>(elements_per_scenario, total_elements, indptr);
+        check_non_uniform_integrity<true>(elements_per_scenario, total_elements, indptr);
         buffers_.back().data = data;
         if (indptr) {
             buffers_.back().indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
@@ -105,7 +105,7 @@ class DatasetHandler {
     void set_buffer(std::string_view component, Indptr* indptr, Data* data) {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = description_.component_info[idx];
-        check_integrity<true, false>(info.elements_per_scenario, info.total_elements, indptr);
+        check_non_uniform_integrity<false>(info.elements_per_scenario, info.total_elements, indptr);
         buffers_[idx].data = data;
         if (indptr) {
             buffers_[idx].indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
@@ -118,27 +118,28 @@ class DatasetHandler {
     DatasetDescription description_;
     std::vector<Buffer> buffers_;
 
-    template <bool check_indptr_pointer, bool check_indptr_value>
-    void check_integrity(Idx elements_per_scenario, Idx total_elements, Indptr* indptr = nullptr) {
+    void check_uniform_integrity(Idx elements_per_scenario, Idx total_elements) {
+        if ((elements_per_scenario >= 0) && (elements_per_scenario * batch_size() != total_elements)) {
+            throw DatasetError{
+                "For a uniform buffer, totoal_element should be equal to elements_per_scenario * batch_size !\n"};
+        }
+    }
+
+    template <bool check_indptr_content>
+    void check_non_uniform_integrity(Idx elements_per_scenario, Idx total_elements, Indptr* indptr) {
         if (elements_per_scenario < 0) {
-            if constexpr (check_indptr_pointer) {
-                if (!indptr) {
-                    throw DatasetError{"For a non-uniform buffer, indptr should be supplied !\n"};
-                }
-                if constexpr (check_indptr_value) {
-                    if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
-                        throw DatasetError{
-                            "For a non-uniform buffer, indptr begin with 0 and end with total_elements !\n"};
-                    }
+            if (!indptr) {
+                throw DatasetError{"For a non-uniform buffer, indptr should be supplied !\n"};
+            }
+            if constexpr (check_indptr_content) {
+                if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
+                    throw DatasetError{
+                        "For a non-uniform buffer, indptr should begin with 0 and end with total_elements !\n"};
                 }
             }
         } else {
             if (indptr) {
                 throw DatasetError{"For a uniform buffer, indptr should be nullptr !\n"};
-            }
-            if (elements_per_scenario * batch_size() != total_elements) {
-                throw DatasetError{
-                    "For a uniform buffer, totoal_element should be equal to elements_per_scenario * batch_size !\n"};
             }
         }
     }
