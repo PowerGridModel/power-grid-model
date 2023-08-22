@@ -127,7 +127,7 @@ template <bool sym> class MeasuredValues {
     // for magnitude and angle measurement, the measured phasor is returned
     ComplexValueVector<sym> voltage(ComplexValueVector<sym> const& current_u) const {
         ComplexValueVector<sym> u(current_u.size());
-        for (Idx bus = 0; bus != (Idx)current_u.size(); ++bus) {
+        for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
             // no measurement
             if (idx_voltage_[bus] == unmeasured) {
                 u[bus] = current_u[bus];
@@ -275,7 +275,7 @@ template <bool sym> class MeasuredValues {
                 if (begin == end) {
                     idx_voltage_[bus] = unmeasured;
                 } else {
-                    idx_voltage_[bus] = (Idx)main_value_.size();
+                    idx_voltage_[bus] = static_cast<Idx>(main_value_.size());
                     // check if there is nan
                     if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
                                     [](auto const& x) { return is_nan(imag(x.value)); })) {
@@ -301,73 +301,77 @@ template <bool sym> class MeasuredValues {
             process_bus_objects(bus, topo.source_bus_indptr, topo.source_power_sensor_indptr, input.source_status,
                                 input.measured_source_power, extra_value_, idx_source_power_);
 
-            // combine load_gen/source to injection measurement
-            {
-                // if all the connected load_gen/source are measured, their sum can be considered as an injection
-                // measurement. zero injection (no connected appliances) is also considered as measured
-                Idx n_unmeasured = 0;
-                SensorCalcParam<sym> appliance_injection_measurement{};
-
-                for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1];
-                     ++load_gen) {
-                    if (idx_load_gen_power_[load_gen] == unmeasured) {
-                        ++n_unmeasured;
-                        continue;
-                    }
-                    if (idx_load_gen_power_[load_gen] == disconnected) {
-                        continue;
-                    }
-                    appliance_injection_measurement.value += extra_value_[idx_load_gen_power_[load_gen]].value;
-                    appliance_injection_measurement.variance += extra_value_[idx_load_gen_power_[load_gen]].variance;
-                }
-
-                for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
-                    if (idx_source_power_[source] == unmeasured) {
-                        ++n_unmeasured;
-                        continue;
-                    }
-                    if (idx_source_power_[source] == disconnected) {
-                        continue;
-                    }
-                    appliance_injection_measurement.value += extra_value_[idx_source_power_[source]].value;
-                    appliance_injection_measurement.variance += extra_value_[idx_source_power_[source]].variance;
-                }
-                bus_appliance_injection_[bus] = appliance_injection_measurement;
-                bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
-
-                // get direct bus injection measurement, it will has infinite variance if there is no direct bus
-                // injection measurement
-                SensorCalcParam<sym> const direct_injection_measurement =
-                    combine_measurements(input.measured_bus_injection, topo.bus_power_sensor_indptr[bus],
-                                         topo.bus_power_sensor_indptr[bus + 1]);
-
-                // combine valid appliance_injection_measurement and direct_injection_measurement
-                // three scenarios, check if we have valid injection measurement
-                if (n_unmeasured == 0 || !std::isinf(direct_injection_measurement.variance)) {
-                    bus_injection_[bus].idx_bus_injection = (Idx)main_value_.size();
-                    if (n_unmeasured > 0) {
-                        // only direct injection
-                        main_value_.push_back(direct_injection_measurement);
-                    } else if (std::isinf(direct_injection_measurement.variance) ||
-                               appliance_injection_measurement.variance == 0.0) {
-                        // only appliance injection if
-                        //    there is no direct injection measurement,
-                        //    or we have zero injection
-                        main_value_.push_back(appliance_injection_measurement);
-                    } else {
-                        // both valid, we combine again
-                        main_value_.push_back(combine_measurements(
-                            {direct_injection_measurement, appliance_injection_measurement}, 0, 2));
-                    }
-                } else {
-                    bus_injection_[bus].idx_bus_injection = unmeasured;
-                }
-            }
+            combine_appliances_to_injection_measurements(input, topo, bus);
         }
         // assign a meaningful mean angle shift, if at least one voltage has angle measurement
         if (n_angle_ > 0) {
             mean_angle_shift_ = angle_cum / n_angle_;
         }
+    }
+
+    void combine_appliances_to_injection_measurements(StateEstimationInput<sym> const& input,
+                                                      MathModelTopology const& topo, Idx const bus) {
+        Idx n_unmeasured = 0;
+        SensorCalcParam<sym> appliance_injection_measurement{};
+
+        for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1]; ++load_gen) {
+            add_appliance_measurements(idx_load_gen_power_[load_gen], appliance_injection_measurement, n_unmeasured);
+        }
+
+        for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
+            add_appliance_measurements(idx_source_power_[source], appliance_injection_measurement, n_unmeasured);
+        }
+
+        bus_appliance_injection_[bus] = appliance_injection_measurement;
+        bus_injection_[bus].n_unmeasured_appliances = n_unmeasured;
+
+        // get direct bus injection measurement. It has infinite variance if there is no direct bus injection
+        // measurement
+        SensorCalcParam<sym> const direct_injection_measurement = combine_measurements(
+            input.measured_bus_injection, topo.bus_power_sensor_indptr[bus], topo.bus_power_sensor_indptr[bus + 1]);
+
+        // combine valid appliance_injection_measurement and direct_injection_measurement
+        // three scenarios; check if we have valid injection measurement
+        if (n_unmeasured == 0 || !std::isinf(direct_injection_measurement.variance)) {
+            bus_injection_[bus].idx_bus_injection = static_cast<Idx>(main_value_.size());
+            if (n_unmeasured > 0) {
+                // only direct injection
+                main_value_.push_back(direct_injection_measurement);
+            } else if (std::isinf(direct_injection_measurement.variance) ||
+                       appliance_injection_measurement.variance == 0.0) {
+                // only appliance injection if
+                //    there is no direct injection measurement,
+                //    or we have zero injection
+                main_value_.push_back(appliance_injection_measurement);
+            } else {
+                // both valid, we combine again
+                main_value_.push_back(
+                    combine_measurements({direct_injection_measurement, appliance_injection_measurement}, 0, 2));
+            }
+        } else {
+            bus_injection_[bus].idx_bus_injection = unmeasured;
+        }
+    }
+
+    // if all the connected load_gen/source are measured, their sum can be considered as an injection
+    // measurement. zero injection (no connected appliances) is also considered as measured
+    // invalid measurements (infinite sigma) are considered unmeasured
+    void add_appliance_measurements(Idx const appliance_idx, SensorCalcParam<sym>& measurements, Idx& n_unmeasured) {
+        if (appliance_idx == unmeasured) {
+            ++n_unmeasured;
+            return;
+        }
+        if (appliance_idx == disconnected) {
+            return;
+        }
+
+        auto const& appliance_measurement = extra_value_[appliance_idx];
+        if (std::isinf(appliance_measurement.variance)) {
+            ++n_unmeasured;
+            return;
+        }
+        measurements.value += appliance_measurement.value;
+        measurements.variance += appliance_measurement.variance;
     }
 
     void process_branch_measurements(StateEstimationInput<sym> const& input) {
@@ -410,25 +414,32 @@ template <bool sym> class MeasuredValues {
     template <bool only_magnitude = false>
     static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data, Idx begin,
                                                      Idx end) {
-        double accumulated_inverse_variance = 0.0;
+        double accumulated_inverse_variance{};
         ComplexValue<sym> accumulated_value{};
         for (Idx pos = begin; pos != end; ++pos) {
-            accumulated_inverse_variance += 1.0 / data[pos].variance;
+            auto const& measurement = data[pos];
+            auto const inv_variance = std::isfinite(measurement.variance) ? 1.0 / measurement.variance : 0.0;
+
+            accumulated_inverse_variance += inv_variance;
             if constexpr (only_magnitude) {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                if (is_nan(imag(data[pos].value))) {
-                    abs_value += real(data[pos].value); // only keep real part
+                if (is_nan(imag(measurement.value))) {
+                    abs_value += real(measurement.value); // only keep real part
                 } else {
-                    abs_value += cabs(data[pos].value); // get abs of the value
+                    abs_value += cabs(measurement.value); // get abs of the value
                 }
-                accumulated_value += abs_value / data[pos].variance;
+                accumulated_value += abs_value * inv_variance;
             } else {
                 // accumulate value
-                accumulated_value += data[pos].value / data[pos].variance;
+                accumulated_value += measurement.value * inv_variance;
             }
         }
-        return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
-                                    1.0 / accumulated_inverse_variance};
+        if (std::isnormal(accumulated_inverse_variance)) {
+            return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
+                                        1.0 / accumulated_inverse_variance};
+        } else {
+            return SensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
+        }
     }
 
     // process objects in batch for shunt, load_gen, source
@@ -457,7 +468,7 @@ template <bool sym> class MeasuredValues {
             return unmeasured;
         }
         result_data.push_back(combine_measurements(input_data, begin, end));
-        return (Idx)result_data.size() - 1;
+        return static_cast<Idx>(result_data.size()) - 1;
     }
 
     // normalize the variance in the main value
