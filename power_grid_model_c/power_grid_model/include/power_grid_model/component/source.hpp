@@ -85,7 +85,7 @@ class Source : public Appliance {
         // NOTE that for low voltage there is a difference in c for systems with a voltage tolerance of 6% or 10%.
         // Here, a voltage tolerance of 10% is assumed.
         double voltage_scaling_c{1.0};
-        if (data.second == ShortCircuitVoltageScaling::min) {
+        if (data.second == ShortCircuitVoltageScaling::minimum) {
             if (data.first <= 1000.0) {
                 voltage_scaling_c = 0.95;
             }

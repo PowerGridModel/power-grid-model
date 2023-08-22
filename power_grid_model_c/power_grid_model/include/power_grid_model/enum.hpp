@@ -94,7 +94,7 @@ enum class FaultPhase : IntS {
     nan = na_IntS
 };
 
-enum class ShortCircuitVoltageScaling : IntS { min = 0, max = 1 };
+enum class ShortCircuitVoltageScaling : IntS { minimum = 0, maximum = 1 };
 
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 

@@ -9,8 +9,8 @@
 namespace power_grid_model {
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
-    ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::max;
-    double const voltage_scaling_c = 1.1; // 1.1 for ShortCircuitVoltageScaling::max
+    ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
+    double const voltage_scaling_c = 1.1; // 1.1 for ShortCircuitVoltageScaling::maximum
 
     SUBCASE("Single node + source") {
         double const u_rated = 10e3;
@@ -119,7 +119,7 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
         Dataset result_data;
         result_data["node"] = DataPointer<false>{node_output.data(), static_cast<Idx>(node_output.size())};
 
-        model.calculate_short_circuit(ShortCircuitVoltageScaling::max, CalculationMethod::iec60909, result_data);
+        model.calculate_short_circuit(ShortCircuitVoltageScaling::maximum, CalculationMethod::iec60909, result_data);
 
         CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0)); // influenced by fault
         CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0)); // fault location

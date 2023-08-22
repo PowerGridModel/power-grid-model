@@ -383,7 +383,7 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
 
     constexpr auto err_tol{1e-8};
     constexpr auto max_iter{20};
-    constexpr auto voltage_scaling{ShortCircuitVoltageScaling::max};
+    constexpr auto voltage_scaling{ShortCircuitVoltageScaling::maximum};
 
     if (calculation_type == "power_flow"s) {
         return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,

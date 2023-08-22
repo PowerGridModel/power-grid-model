@@ -136,7 +136,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             break;
         case PGM_short_circuit: {
             ShortCircuitVoltageScaling voltage_scaling{
-                ShortCircuitVoltageScaling::max}; // TODO: reveice this value from API call
+                ShortCircuitVoltageScaling::maximum}; // TODO: reveice this value from API call
             handle->batch_parameter = model->calculate_short_circuit(voltage_scaling, calculation_method,
                                                                      output_dataset, update_dataset, opt->threading);
             break;

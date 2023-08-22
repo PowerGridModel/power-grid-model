@@ -67,7 +67,7 @@ TEST_CASE("Test source") {
 
     SUBCASE("Test calc_param for short circuit") {
         source.set_u_ref(2.0, 2.5);
-        auto voltage_scaling_parameters = std::pair{1000.0, ShortCircuitVoltageScaling::min};
+        auto voltage_scaling_parameters = std::pair{1000.0, ShortCircuitVoltageScaling::minimum};
         ComplexValue<true> u_ref = source.calc_param<true>(voltage_scaling_parameters);
         CHECK(cabs(u_ref - 0.95 * std::exp(2.5i)) < numerical_tolerance);
 
@@ -75,7 +75,7 @@ TEST_CASE("Test source") {
         u_ref = source.calc_param<true>(voltage_scaling_parameters);
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
-        voltage_scaling_parameters.second = ShortCircuitVoltageScaling::max;
+        voltage_scaling_parameters.second = ShortCircuitVoltageScaling::maximum;
         u_ref = source.calc_param<true>(voltage_scaling_parameters);
         CHECK(cabs(u_ref - 1.1 * std::exp(2.5i)) < numerical_tolerance);
     }
