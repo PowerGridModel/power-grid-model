@@ -213,7 +213,9 @@ TEST_CASE("Test three winding transformer") {
     };
 
     auto make_trafos = [](TransformerInput T1, TransformerInput T2, TransformerInput T3) {
-        Transformer const t1{T1, 138e3, 138e3}, t2{T2, 69e3, 138e3}, t3{T3, 13.8e3, 138e3};
+        Transformer const t1{T1, 138e3, 138e3};
+        Transformer const t2{T2, 69e3, 138e3};
+        Transformer const t3{T3, 13.8e3, 138e3};
         return std::array<Transformer, 3>{t1, t2, t3};
     };
 
@@ -264,7 +266,8 @@ TEST_CASE("Test three winding transformer") {
 
     // sym admittances of converted 3 2wdg transformers of 3wdg transformer vector
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
-        std::array<BranchCalcParam<true>, 3> calc_params, test_params = vec[trafo].calc_param<true>();
+        std::array<BranchCalcParam<true>, 3> calc_params = vec[trafo].calc_param<true>();
+        std::array<BranchCalcParam<true>, 3> test_params = vec[trafo].calc_param<true>();
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<true>();
         }
@@ -276,7 +279,8 @@ TEST_CASE("Test three winding transformer") {
     }
     // asym admittance
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
-        std::array<BranchCalcParam<false>, 3> calc_params, test_params = vec[trafo].calc_param<false>();
+        std::array<BranchCalcParam<false>, 3> calc_params = vec[trafo].calc_param<false>();
+        std::array<BranchCalcParam<false>, 3> test_params = vec[trafo].calc_param<false>();
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<false>();
         }

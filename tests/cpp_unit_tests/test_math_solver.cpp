@@ -39,7 +39,10 @@ TEST_CASE("Test block") {
 
     SUBCASE("Asymmetric") {
         math_model_impl::PFJacBlock<false> b{};
-        RealTensor<false> const h{1.0}, n{2.0}, m{3.0}, l{4.0};
+        RealTensor<false> const h{1.0};
+        RealTensor<false> const n{2.0};
+        RealTensor<false> const m{3.0};
+        RealTensor<false> const l{4.0};
         b.h() += h;
         b.n() += n;
         b.m() += m;
@@ -160,7 +163,10 @@ TEST_CASE("Test math solver") {
     PowerFlowInput<true> pf_input;
     MathOutput<true> output_ref;
     // voltage
-    double const vref = 1.1, v0 = 1.08, v1 = 0.97, v2 = 0.90;
+    double const vref = 1.1;
+    double const v0 = 1.08;
+    double const v1 = 0.97;
+    double const v2 = 0.90;
     constexpr double deg = deg_30 / 30.0;
     DoubleComplex const u0 = v0 * std::exp(-1.0i * deg);
     DoubleComplex const u1 = v1 * std::exp(-4.0i * deg);

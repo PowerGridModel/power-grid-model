@@ -30,7 +30,7 @@ class Link final : public Branch {
     // override getter
     double base_i_from() const final { return base_i_from_; }
     double base_i_to() const final { return base_i_to_; }
-    double loading(double, double) const final { return 0.0; };
+    double loading(double /* max_s */, double /* max_i */) const final { return 0.0; };
     double phase_shift() const final { return 0.0; }
     bool is_param_mutable() const final { return false; }
 
