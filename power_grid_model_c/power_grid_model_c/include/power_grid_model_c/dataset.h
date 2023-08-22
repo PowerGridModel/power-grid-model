@@ -83,6 +83,40 @@ PGM_API PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_D
  */
 PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx);
 
+/**
+ * @brief create an instance of PGM_ConstDataset
+ * @param handle
+ * @param dataset name of the dataset
+ * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single
+ * @param batch_size size of the batch, for single dataset, this should be one
+ * @return a pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
+ *    The instance should be freed by PGM_destroy_const_dataset()
+ */
+PGM_API PGM_ConstDataset* PGM_create_const_dataset(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
+                                                   PGM_Idx batch_size);
+
+/**
+ * @brief destroy an instance of PGM_ConstDataset
+ * @param dataset a pointer to the PGM_ConstDataset created by PGM_create_const_dataset()
+ * @return
+ */
+PGM_API void PGM_destroy_const_dataset(PGM_ConstDataset* dataset);
+
+/**
+ * @brief Add a component buffer to an instance of PGM_ConstDataset
+ * @param handle 
+ * @param dataset a pointer to the PGM_ConstDataset
+ * @param component name of the component
+ * @param elements_per_scenario 
+ * @param total_elements 
+ * @param indptr 
+ * @param data 
+ * @return 
+*/
+PGM_API void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
+                                          PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
+                                          void* data);
+
 #ifdef __cplusplus
 }
 #endif

@@ -33,9 +33,9 @@ using PGM_MetaComponent = power_grid_model::meta_data::MetaComponent;
 using PGM_MetaDataset = power_grid_model::meta_data::MetaDataset;
 using PGM_Serializer = power_grid_model::meta_data::Serializer;
 using PGM_Deserializer = power_grid_model::meta_data::Deserializer;
-using PGM_ConstDatasetHandler = power_grid_model::meta_data::DatasetHandler<false, false>;
-using PGM_MutableDatasetHandler = power_grid_model::meta_data::DatasetHandler<true, false>;
-using PGM_WritableDatasetHandler = power_grid_model::meta_data::DatasetHandler<true, true>;
+using PGM_ConstDataset = power_grid_model::meta_data::DatasetHandler<false, false>;
+using PGM_MutableDataset = power_grid_model::meta_data::DatasetHandler<true, false>;
+using PGM_WritableDataset = power_grid_model::meta_data::DatasetHandler<true, true>;
 using PGM_DatasetInfo = power_grid_model::meta_data::DatasetInfo;
 
 #endif
