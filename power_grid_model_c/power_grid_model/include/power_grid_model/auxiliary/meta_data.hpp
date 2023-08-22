@@ -196,7 +196,7 @@ struct PGM_MetaComponent {
     }
 
     Idx has_attribute(std::string const& attribute_name) const {
-        return static_cast<PGM_MetaComponent::Idx>(find_attribute(attribute_name) >= 0);
+        return static_cast<Idx>(find_attribute(attribute_name) >= 0);
     }
 };
 
