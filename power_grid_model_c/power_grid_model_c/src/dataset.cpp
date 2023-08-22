@@ -46,3 +46,11 @@ PGM_ConstDataset* PGM_create_const_dataset(PGM_Handle* handle, char const* datas
 }
 
 void PGM_destroy_const_dataset(PGM_ConstDataset* dataset) { delete dataset; }
+
+void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
+                                  PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
+                                  void const* data) {
+    call_with_catch(
+        handle, [&]() { dataset->add_buffer(component, elements_per_scenario, total_elements, indptr, data); },
+        PGM_regular_error);
+}

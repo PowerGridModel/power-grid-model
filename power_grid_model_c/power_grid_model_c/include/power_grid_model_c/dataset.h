@@ -79,7 +79,7 @@ PGM_API PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_D
  * @param component_idx idx number of the component
  * @return Total number of elements of that component
  *     If the number of elements per scenario is uniform,
- *     this value should equal to PGM_dataset_info_component_name() * PGM_dataset_info_elements_per_scenario()
+ *     this value must equal to PGM_dataset_info_component_name() * PGM_dataset_info_elements_per_scenario()
  */
 PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx);
 
@@ -88,9 +88,9 @@ PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetI
  * @param handle
  * @param dataset name of the dataset
  * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single
- * @param batch_size size of the batch, for single dataset, this should be one
+ * @param batch_size size of the batch, for single dataset, this must be one
  * @return a pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
- *    The instance should be freed by PGM_destroy_const_dataset()
+ *    The instance must be freed by PGM_destroy_const_dataset()
  */
 PGM_API PGM_ConstDataset* PGM_create_const_dataset(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                    PGM_Idx batch_size);
@@ -104,18 +104,25 @@ PGM_API void PGM_destroy_const_dataset(PGM_ConstDataset* dataset);
 
 /**
  * @brief Add a component buffer to an instance of PGM_ConstDataset
- * @param handle 
+ * @param handle
  * @param dataset a pointer to the PGM_ConstDataset
  * @param component name of the component
- * @param elements_per_scenario 
- * @param total_elements 
- * @param indptr 
- * @param data 
- * @return 
-*/
+ * @param elements_per_scenario numbers of the elements per scenario
+ *     If the component is uniform, elements_per_scenario must be >= 0
+ *     If the component is not uniform, elements_per_scenario must be -1
+ * @param total_elements total number of elements for all scenarios
+ *     If elements_per_scenario >= 0, we must have elements_per_scenario * batch_size = total_elements
+ * @param indptr pointer to array of indptr of a non-uniform component
+ *     If the component is uniform, indptr must be NULL.
+ *     If the component is not uniform, indptr must point to an array of size (batch_size + 1)
+ *         The values in the array must be not decreasing.
+ *         And we must have indptr[0] = 0, indptr[batch_size] = total_elements
+ * @param data void pointer to the buffer data
+ * @return
+ */
 PGM_API void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                           PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
-                                          void* data);
+                                          void const* data);
 
 #ifdef __cplusplus
 }
