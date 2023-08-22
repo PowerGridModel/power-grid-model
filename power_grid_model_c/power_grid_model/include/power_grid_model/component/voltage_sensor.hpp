@@ -44,7 +44,7 @@ class GenericVoltageSensor : public Sensor {
 
     template <bool sym> VoltageSensorOutput<sym> get_null_output() const { return {{id(), false}, {}, {}}; }
 
-    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), false}}; }
+    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), 0}}; }
 
   private:
     virtual VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const = 0;

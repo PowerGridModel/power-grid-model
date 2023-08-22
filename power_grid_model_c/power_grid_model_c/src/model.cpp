@@ -117,7 +117,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
         switch (opt->calculation_type) {
         case PGM_power_flow:
-            if (opt->symmetric) {
+            if (opt->symmetric != 0) {
                 handle->batch_parameter = model->calculate_power_flow<true>(
                     opt->err_tol, opt->max_iter, calculation_method, output_dataset, update_dataset, opt->threading);
             } else {
@@ -126,7 +126,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             }
             break;
         case PGM_state_estimation:
-            if (opt->symmetric) {
+            if (opt->symmetric != 0) {
                 handle->batch_parameter = model->calculate_state_estimation<true>(
                     opt->err_tol, opt->max_iter, calculation_method, output_dataset, update_dataset, opt->threading);
             } else {
