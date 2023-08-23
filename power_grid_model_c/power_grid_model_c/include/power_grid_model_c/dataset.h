@@ -142,6 +142,20 @@ PGM_API PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle* handle, PG
  */
 PGM_API PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset);
 
+/**
+ * @brief Set buffer into the instance PGM_WritableDataset
+ * @param handle
+ * @param dataset a pointer to the PGM_WritableDataset
+ * @param component name of the component
+ * @param indptr pointer to array of indptr of a non-uniform component
+ *     If the component is uniform, indptr must be NULL.
+ *     If the component is not uniform, indptr must point to an array of size (batch_size + 1)
+ * @param data void pointer to the buffer data
+ * @return
+ */
+PGM_API void PGM_writable_dataset_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
+                                             PGM_Idx* indptr, void* data);
+
 #ifdef __cplusplus
 }
 #endif

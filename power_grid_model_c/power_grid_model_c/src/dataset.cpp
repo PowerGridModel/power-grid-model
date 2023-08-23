@@ -62,3 +62,9 @@ PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle*, PGM_ConstDataset 
 PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle*, PGM_WritableDataset const* dataset) {
     return &dataset->get_description();
 }
+
+void PGM_writable_dataset_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
+                                     PGM_Idx* indptr, void* data) {
+    call_with_catch(
+        handle, [&]() { dataset->set_buffer(component, indptr, data); }, PGM_regular_error);
+}
