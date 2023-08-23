@@ -27,19 +27,19 @@ TEST_CASE("Serialization") {
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
     std::vector<NodeInput> node{{{5}, nan}};
-    std::array components{"node"};
-    std::array<Idx, 1> elements_per_scenario{1};
-    char const* dataset = "input";
     Idx const n_components = 1;
     Idx const batch_size = 1;
     Idx const is_batch = 0;
+    Idx const elements_per_scenario = 1;
+    Idx const total_elements = 1;
 
     SUBCASE("Serializer") {
-        Idx const** indptrs = nullptr;
-        std::array<void const*, 1> data{node.data()};
-        SerializerPtr unique_serializer{PGM_create_serializer(hl, dataset, is_batch, batch_size, n_components,
-                                                              components.data(), elements_per_scenario.data(), indptrs,
-                                                              data.data())};
+        ConstDatasetPtr unique_dataset{PGM_create_const_dataset(hl, "input", is_batch, batch_size)};
+        CHECK(PGM_error_code(hl) == PGM_no_error);
+        auto const dataset = unique_dataset.get();
+        PGM_const_dataset_add_buffer(hl, dataset, "node", elements_per_scenario, total_elements, nullptr, node.data());
+        CHECK(PGM_error_code(hl) == PGM_no_error);
+        SerializerPtr unique_serializer{PGM_create_serializer(hl, dataset)};
         auto const serializer = unique_serializer.get();
         CHECK(PGM_error_code(hl) == PGM_no_error);
         std::string json_result = PGM_get_json(hl, serializer, 0, -1);
@@ -57,9 +57,6 @@ TEST_CASE("Serialization") {
     }
 
     SUBCASE("Deserializer") {
-        std::array<void*, 1> data{node.data()};
-        Idx** indptrs = nullptr;
-
         // msgpack data
         auto const json_document = nlohmann::json::parse(json_data);
         std::vector<char> msgpack_data;
@@ -71,19 +68,26 @@ TEST_CASE("Serialization") {
             PGM_create_deserializer_from_msgpack(hl, msgpack_data.data(), static_cast<Idx>(msgpack_data.size())));
         CHECK(PGM_error_code(hl) == PGM_no_error);
 
-        for (PGM_Deserializer* const ptr : {unique_deserializer_json.get(), unique_deserializer_msgpack.get()}) {
+        for (PGM_Deserializer* const deserializer :
+             {unique_deserializer_json.get(), unique_deserializer_msgpack.get()}) {
             // reset data
             node[0] = {};
+            // get dataset
+            auto const dataset = PGM_deserializer_get_dataset(hl, deserializer);
+            auto const info = PGM_writable_dataset_get_info(hl, dataset);
             // check meta data
-            CHECK(PGM_deserializer_dataset_name(hl, ptr) == "input"s);
-            CHECK(PGM_deserializer_is_batch(hl, ptr) == 0);
-            CHECK(PGM_deserializer_batch_size(hl, ptr) == 1);
-            CHECK(PGM_deserializer_n_components(hl, ptr) == 1);
-            CHECK(PGM_deserializer_component_name(hl, ptr, 0) == "node"s);
-            CHECK(PGM_deserializer_component_elements_per_scenario(hl, ptr, 0) == elements_per_scenario[0]);
-            CHECK(PGM_deserializer_component_total_elements(hl, ptr, 0) == 1);
+            CHECK(PGM_dataset_info_name(hl, info) == "input"s);
+            CHECK(PGM_dataset_info_is_batch(hl, info) == 0);
+            CHECK(PGM_dataset_info_batch_size(hl, info) == 1);
+            CHECK(PGM_dataset_info_n_components(hl, info) == 1);
+            CHECK(PGM_dataset_info_component_name(hl, info, 0) == "node"s);
+            CHECK(PGM_dataset_info_elements_per_scenario(hl, info, 0) == elements_per_scenario);
+            CHECK(PGM_dataset_info_total_elements(hl, info, 0) == total_elements);
+            // set buffer
+            PGM_writable_dataset_set_buffer(hl, dataset, "node", nullptr, node.data());
+            CHECK(PGM_error_code(hl) == PGM_no_error);
             // parse
-            PGM_deserializer_parse_to_buffer(hl, ptr, components.data(), data.data(), indptrs);
+            PGM_deserializer_parse_to_buffer(hl, deserializer);
             // check
             CHECK(node[0].id == 5);
             CHECK(is_nan(node[0].u_rated));

@@ -20,7 +20,7 @@ PGM_Idx PGM_dataset_info_is_batch(PGM_Handle*, PGM_DatasetInfo const* info) { re
 PGM_Idx PGM_dataset_info_batch_size(PGM_Handle*, PGM_DatasetInfo const* info) { return info->batch_size; }
 
 PGM_Idx PGM_dataset_info_n_components(PGM_Handle*, PGM_DatasetInfo const* info) {
-    return info->dataset->n_components();
+    return static_cast<PGM_Idx>(info->component_info.size());
 }
 
 char const* PGM_dataset_info_component_name(PGM_Handle*, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
