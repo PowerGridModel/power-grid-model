@@ -13,25 +13,31 @@
 
 using namespace power_grid_model::meta_data;
 
-char const* PGM_dataset_info_name(PGM_Handle*, PGM_DatasetInfo const* info) { return info->dataset->name.c_str(); }
+char const* PGM_dataset_info_name(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) {
+    return info->dataset->name.c_str();
+}
 
-PGM_Idx PGM_dataset_info_is_batch(PGM_Handle*, PGM_DatasetInfo const* info) { return info->is_batch; }
+PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) {
+    return static_cast<PGM_Idx>(info->is_batch);
+}
 
-PGM_Idx PGM_dataset_info_batch_size(PGM_Handle*, PGM_DatasetInfo const* info) { return info->batch_size; }
+PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) { return info->batch_size; }
 
-PGM_Idx PGM_dataset_info_n_components(PGM_Handle*, PGM_DatasetInfo const* info) {
+PGM_Idx PGM_dataset_info_n_components(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) {
     return static_cast<PGM_Idx>(info->component_info.size());
 }
 
-char const* PGM_dataset_info_component_name(PGM_Handle*, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
+char const* PGM_dataset_info_component_name(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info,
+                                            PGM_Idx component_idx) {
     return info->component_info[component_idx].component->name.c_str();
 }
 
-PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle*, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
+PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info,
+                                               PGM_Idx component_idx) {
     return info->component_info[component_idx].elements_per_scenario;
 }
 
-PGM_Idx PGM_dataset_info_total_elements(PGM_Handle*, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
+PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
     return info->component_info[component_idx].total_elements;
 }
 
@@ -55,11 +61,11 @@ void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
         PGM_regular_error);
 }
 
-PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle*, PGM_ConstDataset const* dataset) {
+PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle* /*unused*/, PGM_ConstDataset const* dataset) {
     return &dataset->get_description();
 }
 
-PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle*, PGM_WritableDataset const* dataset) {
+PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle* /*unused*/, PGM_WritableDataset const* dataset) {
     return &dataset->get_description();
 }
 

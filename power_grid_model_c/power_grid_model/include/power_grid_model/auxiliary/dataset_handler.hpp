@@ -69,9 +69,8 @@ class DatasetHandler {
         if (found == dataset_info_.component_info.cend()) {
             if (throw_not_found) {
                 throw DatasetError{"Cannot find component!\n"};
-            } else {
-                return -1;
             }
+            return -1;
         }
         return std::distance(dataset_info_.component_info.cbegin(), found);
     }

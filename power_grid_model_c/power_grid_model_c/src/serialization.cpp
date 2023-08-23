@@ -33,7 +33,7 @@ PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char con
         PGM_serialization_error);
 }
 
-PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle*, PGM_Deserializer* deserializer) {
+PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* /*unused*/, PGM_Deserializer* deserializer) {
     return &deserializer->get_dataset_info();
 }
 
