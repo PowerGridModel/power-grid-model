@@ -46,18 +46,9 @@ void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* dese
 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
 void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
 
-/*
-PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch, PGM_Idx batch_size,
-                                      PGM_Idx n_components, char const** components,
-                                      PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
-                                      void const** data) {
+PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset) {
     return call_with_catch(
-        handle,
-        [&] {
-            return new PGM_Serializer{dataset,    static_cast<bool>(is_batch), batch_size, n_components,
-                                      components, elements_per_scenario,       indptrs,    data};
-        },
-        PGM_serialization_error);
+        handle, [&] { return new PGM_Serializer{*dataset}; }, PGM_serialization_error);
 }
 
 void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, char const** data,
@@ -79,4 +70,3 @@ char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx
 }
 
 void PGM_destroy_serializer(PGM_Serializer* serializer) { delete serializer; }
-*/

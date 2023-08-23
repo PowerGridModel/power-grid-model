@@ -64,30 +64,13 @@ PGM_API void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializ
 PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
 
 /**
- * @brief Create a serializer object based on the buffer data
+ * @brief Create a serializer object based on input dataset, the buffers must be set in advance.
  * @param handle
- * @param dataset pointer to null-terminated string of dataset name
- * @param is_batch 1 for batch dataset, 0 for single dataset
- * @param batch_size size of the batch. For single dataset, this should be one.
- * @param n_components number of components in the dataset.
- * @param components components pointer to array of component names
- *     components[i] is a pointer to null-terminated string of i-th component name
- * @param elements_per_scenario pointer to array of numbers of the elements per scenario for all components
- *     If i-th component is uniform, elements_per_scenario[i] is the number of elements per scenario for i-th component
- *     If i-th component is not uniform, elements_per_scenario[i] must be one
- * @param indptrs indptrs pointer to array of indptrs per component
- *     If i-th component is not uniform, indptrs[i] points to an array of length batch_size + 1
- *     If i-th component is uniform, indptrs[i] should be NULL
- *     If all components are uniform, indptrs itself should be NULL
- * @param data data pointer to array of void pointers of buffers
- *     data[i] is a void pointer to the buffer of i-th component
+ * @param dataset pointer to an instance of PGM_ConstDataset
  * @return pointer to a serializer object, should be freed by PGM_destroy_serializer()
  *     If errors occur, return NULL. Check handle for error.
  */
-PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
-                                              PGM_Idx batch_size, PGM_Idx n_components, char const** components,
-                                              PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
-                                              void const** data);
+PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset);
 
 /**
  * @brief Serialize the dataset into msgpack format.
