@@ -19,9 +19,7 @@
 #include <iostream>
 #include <regex>
 
-namespace power_grid_model {
-
-namespace meta_data {
+namespace power_grid_model::meta_data {
 
 namespace {
 
@@ -681,5 +679,4 @@ TEST_CASE("Validation test batch") {
     }
 }
 
-} // namespace meta_data
-} // namespace power_grid_model
+} // namespace power_grid_model::meta_data
