@@ -38,7 +38,7 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
             state.components.template cache_item<Component>(sequence_single.pos);
         }
 
-        Component& comp = state.components.template get_item<Component>(sequence_single);
+        auto& comp = state.components.template get_item<Component>(sequence_single);
 
         changed = changed || comp.update(*it);
     }
