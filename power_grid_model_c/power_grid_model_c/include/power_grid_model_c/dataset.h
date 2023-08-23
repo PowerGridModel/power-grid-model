@@ -128,10 +128,19 @@ PGM_API void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* 
  * @brief Get the dataset info of the instance PGM_ConstDataset
  * @param handle
  * @param dataset a pointer to the PGM_ConstDataset
- * @return pointer to the instance of PGM_DatasetInfo. 
+ * @return pointer to the instance of PGM_DatasetInfo.
  *     The pointer has the same lifetime as the input dataset pointer.
  */
 PGM_API PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset);
+
+/**
+ * @brief Get the dataset info of the instance PGM_WritableDataset
+ * @param handle
+ * @param dataset a pointer to the PGM_WritableDataset
+ * @return pointer to the instance of PGM_DatasetInfo.
+ *     The pointer has the same lifetime as the input dataset pointer.
+ */
+PGM_API PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset);
 
 #ifdef __cplusplus
 }

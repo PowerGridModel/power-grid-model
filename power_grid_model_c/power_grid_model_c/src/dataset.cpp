@@ -58,3 +58,7 @@ void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
 PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle*, PGM_ConstDataset const* dataset) {
     return &dataset->get_description();
 }
+
+PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle*, PGM_WritableDataset const* dataset) {
+    return &dataset->get_description();
+}
