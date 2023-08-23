@@ -77,9 +77,9 @@ TEST_CASE("Serialization") {
             auto const info = PGM_writable_dataset_get_info(hl, dataset);
             // check meta data
             CHECK(PGM_dataset_info_name(hl, info) == "input"s);
-            CHECK(PGM_dataset_info_is_batch(hl, info) == 0);
-            CHECK(PGM_dataset_info_batch_size(hl, info) == 1);
-            CHECK(PGM_dataset_info_n_components(hl, info) == 1);
+            CHECK(PGM_dataset_info_is_batch(hl, info) == is_batch);
+            CHECK(PGM_dataset_info_batch_size(hl, info) == batch_size);
+            CHECK(PGM_dataset_info_n_components(hl, info) == n_components);
             CHECK(PGM_dataset_info_component_name(hl, info, 0) == "node"s);
             CHECK(PGM_dataset_info_elements_per_scenario(hl, info, 0) == elements_per_scenario);
             CHECK(PGM_dataset_info_total_elements(hl, info, 0) == total_elements);

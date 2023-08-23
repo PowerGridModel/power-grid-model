@@ -200,7 +200,7 @@ struct MetaComponent {
         return -1;
     }
 
-    Idx has_attribute(std::string_view attribute_name) const { return find_attribute(attribute_name) >= 0; }
+    bool has_attribute(std::string_view attribute_name) const { return find_attribute(attribute_name) >= 0; }
 
     RawDataPtr advance_ptr(RawDataPtr ptr, Idx difference) const {
         return reinterpret_cast<char*>(ptr) + difference * size;

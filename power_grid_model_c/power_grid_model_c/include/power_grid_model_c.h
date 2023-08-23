@@ -26,11 +26,11 @@
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/buffer.h"
+#include "power_grid_model_c/dataset.h"
 #include "power_grid_model_c/handle.h"
 #include "power_grid_model_c/meta_data.h"
 #include "power_grid_model_c/model.h"
 #include "power_grid_model_c/options.h"
 #include "power_grid_model_c/serialization.h"
-#include "power_grid_model_c/dataset.h"
 
 #endif // POWER_GRID_MODEL_C_H

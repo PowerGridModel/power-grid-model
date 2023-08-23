@@ -353,7 +353,8 @@ TEST_CASE("Deserializer with error") {
     SUBCASE("Error in meta data") {
         constexpr std::string_view no_version = R"({})";
         check_error(no_version, "version");
-        constexpr std::string_view wrong_dataset = R"({"version": "1.0", "type": "sym_input", "is_batch": false, "data": {}})";
+        constexpr std::string_view wrong_dataset =
+            R"({"version": "1.0", "type": "sym_input", "is_batch": false, "data": {}})";
         check_error(wrong_dataset, "sym_input");
         constexpr std::string_view wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
         check_error(wrong_is_batch, "is_batch");
