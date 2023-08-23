@@ -205,7 +205,6 @@ constexpr std::string_view json_batch = R"(
 namespace {
 
 void check_error(std::string_view json, char const* err_msg) {
-    std::array components{"node"};
     std::vector<NodeInput> node(1);
 
     auto const run = [&]() {
