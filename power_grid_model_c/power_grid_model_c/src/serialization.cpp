@@ -33,46 +33,20 @@ PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char con
         PGM_serialization_error);
 }
 
-char const* PGM_deserializer_dataset_name(PGM_Handle*, PGM_Deserializer* deserializer) {
-    return deserializer->dataset_name().c_str();
+PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle*, PGM_Deserializer* deserializer) {
+    return &deserializer->get_dataset_info();
 }
 
-PGM_Idx PGM_deserializer_is_batch(PGM_Handle*, PGM_Deserializer* deserializer) { return deserializer->is_batch(); }
-
-PGM_Idx PGM_deserializer_batch_size(PGM_Handle*, PGM_Deserializer* deserializer) { return deserializer->batch_size(); }
-
-PGM_Idx PGM_deserializer_n_components(PGM_Handle*, PGM_Deserializer* deserializer) {
-    return deserializer->n_components();
-}
-
-char const* PGM_deserializer_component_name(PGM_Handle*, PGM_Deserializer* deserializer, PGM_Idx component_idx) {
-    return deserializer->get_buffer_info(component_idx).component->name.c_str();
-}
-
-PGM_Idx PGM_deserializer_component_elements_per_scenario(PGM_Handle*, PGM_Deserializer* deserializer,
-                                                         PGM_Idx component_idx) {
-    return deserializer->get_buffer_info(component_idx).elements_per_scenario;
-}
-
-PGM_Idx PGM_deserializer_component_total_elements(PGM_Handle*, PGM_Deserializer* deserializer, PGM_Idx component_idx) {
-    return deserializer->get_buffer_info(component_idx).total_elements;
-}
-
-void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer, char const** components,
-                                      void** data, PGM_Idx** indptrs) {
+void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) {
     call_with_catch(
-        handle,
-        [&] {
-            deserializer->set_buffer(components, data, indptrs);
-            deserializer->parse();
-        },
-        PGM_serialization_error);
+        handle, [&] { deserializer->parse(); }, PGM_serialization_error);
 }
 
 // false warning from clang-tidy
 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
 void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
 
+/*
 PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch, PGM_Idx batch_size,
                                       PGM_Idx n_components, char const** components,
                                       PGM_Idx const* elements_per_scenario, PGM_Idx const** indptrs,
@@ -105,3 +79,4 @@ char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx
 }
 
 void PGM_destroy_serializer(PGM_Serializer* serializer) { delete serializer; }
+*/

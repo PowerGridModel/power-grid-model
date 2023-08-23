@@ -10,7 +10,7 @@ add_library(power_grid_model_c SHARED
   "src/model.cpp"
   "src/options.cpp"
   "src/dataset_definitions.cpp"
-  # "src/serialization.cpp"
+  "src/serialization.cpp"
   "src/dataset.cpp"
 )
 
