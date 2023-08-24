@@ -25,7 +25,7 @@ from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import IDPtr, IdxPtr, ModelPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.enum import CalculationMethod, CalculationType
+from power_grid_model.enum import CalculationMethod, CalculationType, ShortCircuitVoltageScaling
 
 
 class PowerGridModel:
@@ -460,6 +460,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum
     ) -> Dict[str, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
@@ -517,6 +518,7 @@ class PowerGridModel:
             symmetric=symmetric,
             calculation_method=calculation_method,
             threading=threading,
+            sc_voltage_scaling=short_circuit_voltage_scaling,
         )
         return self._calculate_impl(
             calculation_type=calculation_type,
