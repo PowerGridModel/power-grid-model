@@ -271,6 +271,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def set_sc_voltage_scaling(self, opt: OptionsPtr, sc_voltage_scaling: int):  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def set_symmetric(self, opt: OptionsPtr, sym: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
