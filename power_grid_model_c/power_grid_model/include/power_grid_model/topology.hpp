@@ -401,7 +401,7 @@ class Topology {
     }
 
     void couple_branch() {
-        auto const get_group_pos_if = [](Idx math_group, bool status, Idx2D const& math_idx) {
+        auto const get_group_pos_if = []([[maybe_unused]] Idx math_group, bool status, Idx2D const& math_idx) {
             if (status == 0) {
                 return Idx{-1};
             }
