@@ -463,7 +463,7 @@ class Topology {
                 return group;
             }();
             // skip if no math model connected
-            if (m == -1) {
+            if (math_group == -1) {
                 assert(j_math.group == -1);
                 continue;
             }
@@ -480,9 +480,9 @@ class Topology {
                 // connect i side if i_status is true
                 BranchIdx const branch_idx{get_group_pos_if(math_group, i_status[n], i_math[n]), j_math.pos};
                 // current branch position index in math model
-                auto const branch_pos = static_cast<Idx>(math_topology_[m].n_branch());
+                auto const branch_pos = static_cast<Idx>(math_topology_[math_group].n_branch());
                 // push back
-                math_topology_[m].branch_bus_idx.push_back(branch_idx);
+                math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
                 // set branch idx in coupling
                 idx_branch3.pos[n] = branch_pos;
             }
