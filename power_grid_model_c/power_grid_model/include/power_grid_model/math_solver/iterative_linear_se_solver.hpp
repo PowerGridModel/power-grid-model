@@ -418,7 +418,7 @@ template <bool sym> class MeasuredValues {
         ComplexValue<sym> accumulated_value{};
         for (Idx pos = begin; pos != end; ++pos) {
             auto const& measurement = data[pos];
-            auto const inv_variance = std::isfinite(measurement.variance) ? 1.0 / measurement.variance : 0.0;
+            auto const inv_variance = 1.0 / measurement.variance;
 
             accumulated_inverse_variance += inv_variance;
             if constexpr (only_magnitude) {
