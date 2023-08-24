@@ -389,8 +389,8 @@ template <bool sym> class MeasuredValues {
         main_value_. The power values in main_value_ can be found using idx_branch_to_power_/idx_branch_from_power_.
         */
         MathModelTopology const& topo = math_topology();
-        static constexpr auto branch_from_checker = [](BranchIdx x) -> bool { return x[0] != -1; };
-        static constexpr auto branch_to_checker = [](BranchIdx x) -> bool { return x[1] != -1; };
+        static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
+        static constexpr auto branch_to_checker = [](BranchIdx x) { return x[1] != -1; };
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
             idx_branch_from_power_[branch] =
