@@ -96,10 +96,10 @@ class Deserializer {
     // destructor
     ~Deserializer() = default;
 
-    Deserializer(from_json_t /*unused*/, std::string_view json_string)
+    Deserializer(from_json_t /* tag */, std::string_view json_string)
         : Deserializer{from_msgpack, json_to_msgpack(json_string)} {}
 
-    Deserializer(from_msgpack_t /*unused*/, std::span<char const> msgpack_data)
+    Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data)
         : handle_{msgpack::unpack(msgpack_data.data(), msgpack_data.size())},
           version_{get_value_from_root("version", msgpack::type::STR).as<std::string>()},
           dataset_handler_{create_dataset_handler()} {

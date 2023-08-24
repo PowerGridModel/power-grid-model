@@ -63,12 +63,13 @@ class DatasetHandler {
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
-    Idx find_component(std::string_view component, bool throw_not_found = false) const {
+    Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::find_if(dataset_info_.component_info.cbegin(), dataset_info_.component_info.cend(),
                                         [component](ComponentInfo const& x) { return x.component->name == component; });
         if (found == dataset_info_.component_info.cend()) {
-            if (throw_not_found) {
-                throw DatasetError{"Cannot find component!\n"};
+            if (required) {
+                using namespace std::string_literals;
+                throw DatasetError{"Cannot find component '"s + std::string{component} + "'!\n"s};
             }
             return -1;
         }
@@ -120,7 +121,7 @@ class DatasetHandler {
     void check_uniform_integrity(Idx elements_per_scenario, Idx total_elements) {
         if ((elements_per_scenario >= 0) && (elements_per_scenario * batch_size() != total_elements)) {
             throw DatasetError{
-                "For a uniform buffer, totoal_element should be equal to elements_per_scenario * batch_size !\n"};
+                "For a uniform buffer, total_elements should be equal to elements_per_scenario * batch_size !\n"};
         }
     }
 
