@@ -163,7 +163,7 @@ class Deserializer {
     WritableDatasetHandler create_dataset_handler() {
         auto const dataset = get_value_from_root("type", msgpack_string).as<std::string_view>();
         auto const is_batch = get_value_from_root("is_batch", msgpack_bool).as<bool>();
-        msgpack::object const& obj = get_value_from_root("data", is_batch ? msgpack_array : msgpack_map);
+        auto const& obj = get_data_handle(is_batch);
         Idx const batch_size = is_batch ? static_cast<Idx>(as_array(obj).size) : 1;
         return WritableDatasetHandler{is_batch, batch_size, dataset};
     }
@@ -172,6 +172,10 @@ class Deserializer {
         read_predefined_attributes();
         count_data();
         root_key_ = "";
+    }
+
+    msgpack::object const& get_data_handle(bool is_batch) {
+        return get_value_from_root("data", is_batch ? msgpack_array : msgpack_map);
     }
 
     msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
@@ -233,8 +237,7 @@ class Deserializer {
     }
 
     void count_data() {
-        msgpack::object const& obj =
-            get_value_from_root("data", dataset_handler_.is_batch() ? msgpack_array : msgpack_map);
+        auto const& obj = get_data_handle(dataset_handler_.is_batch());
         // pointer to array (or single value) of msgpack objects to the data
         auto const batch_data =
             dataset_handler_.is_batch() ? ArraySpan{as_array(obj).ptr, as_array(obj).size} : ArraySpan{&obj, 1};
