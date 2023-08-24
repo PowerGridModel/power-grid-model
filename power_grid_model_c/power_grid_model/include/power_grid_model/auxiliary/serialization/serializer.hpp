@@ -182,7 +182,7 @@ class Serializer {
     }
 
     void pack_root_dict() {
-        packer_.pack_map(size_top_dict);
+        pack_map(size_top_dict);
 
         packer_.pack("version");
         packer_.pack(version);
@@ -203,11 +203,7 @@ class Serializer {
         packer_.pack("data");
         // as an array for batch
         if (dataset_handler_.is_batch()) {
-            if (!std::in_range<uint32_t>(dataset_handler_.batch_size())) {
-                throw SerializationError{"Batch data set is too large to pack ("s +
-                                         std::to_string(dataset_handler_.batch_size()) + " scenarios)"};
-            }
-            packer_.pack_array(static_cast<uint32_t>(dataset_handler_.batch_size()));
+            pack_array(dataset_handler_.batch_size());
         }
         // pack scenarios
         for (auto const& scenario_buffer : scenario_buffers_) {
@@ -216,7 +212,7 @@ class Serializer {
     }
 
     void pack_scenario(ScenarioBuffer const& scenario_buffer) {
-        packer_.pack_map(static_cast<uint32_t>(scenario_buffer.component_buffers.size()));
+        pack_map(scenario_buffer.component_buffers.size());
         for (auto const& component_buffer : scenario_buffer.component_buffers) {
             pack_component(component_buffer);
         }
@@ -224,7 +220,7 @@ class Serializer {
 
     void pack_component(ComponentBuffer const& component_buffer) {
         packer_.pack(component_buffer.component);
-        packer_.pack_array(static_cast<uint32_t>(component_buffer.size));
+        pack_array(component_buffer.size);
         bool const use_compact_list = use_compact_list_;
         auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
             if (!use_compact_list) {
@@ -245,7 +241,7 @@ class Serializer {
     }
 
     void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {
-        packer_.pack_array(static_cast<uint32_t>(attributes.size()));
+        pack_array(attributes.size());
         for (auto const* const attribute : attributes) {
             if (check_nan(element_ptr, *attribute)) {
                 packer_.pack_nil();
@@ -260,13 +256,31 @@ class Serializer {
         for (auto const& attribute : component_buffer.component->attributes) {
             valid_attributes_count += static_cast<uint32_t>(!check_nan(element_ptr, attribute));
         }
-        packer_.pack_map(valid_attributes_count);
+        pack_map(valid_attributes_count);
         for (auto const& attribute : component_buffer.component->attributes) {
             if (!check_nan(element_ptr, attribute)) {
                 packer_.pack(attribute.name);
                 pack_attribute(element_ptr, attribute);
             }
         }
+    }
+
+    void pack_array(std::integral auto count) {
+        if (!std::in_range<uint32_t>(count)) {
+            using namespace std::string_literals;
+
+            throw SerializationError{"Too many objects to pack in array ("s + std::to_string(count) + ")"s};
+        }
+        packer_.pack_array(static_cast<uint32_t>(count));
+    }
+
+    void pack_map(std::integral auto count) {
+        if (!std::in_range<uint32_t>(count)) {
+            using namespace std::string_literals;
+
+            throw SerializationError{"Too many objects to pack in map ("s + std::to_string(count) + ")"s};
+        }
+        packer_.pack_map(static_cast<uint32_t>(count));
     }
 
     static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
