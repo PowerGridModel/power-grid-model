@@ -213,7 +213,7 @@ class Topology {
 
     void dfs_search() {
         // m as math solver sequence number
-        Idx m = 0;
+        Idx math_solver_idx = 0;
         // loop all source as k
         for (Idx k = 0; k != static_cast<Idx>(comp_topo_.source_node_idx.size()); ++k) {
             // skip disconnected source
@@ -233,7 +233,7 @@ class Topology {
             // start dfs search
             boost::depth_first_visit(
                 global_graph_, (GraphIdx)source_node,
-                GlobalDFSVisitor{m, comp_coup_.node, phase_shift_, dfs_node, predecessors_, back_edges},
+                GlobalDFSVisitor{math_solver_idx, comp_coup_.node, phase_shift_, dfs_node, predecessors_, back_edges},
                 boost::get(&GlobalVertex::color, global_graph_));
 
             // begin to construct math topology
@@ -258,15 +258,15 @@ class Topology {
                 comp_coup_.node[current_node].pos = i;
                 // assign phase shift
                 math_topo_single.phase_shift[i] = phase_shift_[current_node];
-                assert(comp_coup_.node[current_node].group == m);
+                assert(comp_coup_.node[current_node].group == math_solver_idx);
             }
             assert(i == math_topo_single.n_bus());
             // assign slack bus as the source node
             math_topo_single.slack_bus_ = comp_coup_.node[source_node].pos;
             math_topology_.emplace_back(std::move(math_topo_single));
             // iterate math model sequence number
-            ++m;
-            assert(math_topology_.size() == (size_t)m);
+            ++math_solver_idx;
+            assert(math_solver_idx == static_cast<Idx>(math_topology_.size()));
         }
     }
 
@@ -401,6 +401,13 @@ class Topology {
     }
 
     void couple_branch() {
+        auto const get_group_pos_if = [](Idx math_group, bool status, Idx2D const& math_idx) {
+            if (status == 0) {
+                return Idx{-1};
+            }
+            assert(math_group == math_idx.group);
+            return math_idx.pos;
+        };
         // k as branch number for 2-way branch
         for (Idx k = 0; k != static_cast<Idx>(comp_topo_.branch_node_idx.size()); ++k) {
             auto const [i, j] = comp_topo_.branch_node_idx[k];
@@ -408,7 +415,6 @@ class Topology {
             IntS const j_status = comp_conn_.branch_connected[k][1];
             Idx2D const i_math = comp_coup_.node[i];
             Idx2D const j_math = comp_coup_.node[j];
-            // m as math model group number
             Idx const math_group = [&]() {
                 Idx group = -1;
                 if (i_status != 0 && i_math.group != -1) {
@@ -425,14 +431,8 @@ class Topology {
             }
             assert(i_status || j_status);
             // get and set branch idx in math model
-            auto const get_pos_if = [math_group](bool status, Idx2D const& math_idx) {
-                if (status == 0) {
-                    return Idx{-1};
-                }
-                assert(math_group == math_idx.group);
-                return math_idx.pos;
-            };
-            BranchIdx const branch_idx{get_pos_if(i_status, i_math), get_pos_if(j_status, j_math)};
+            BranchIdx const branch_idx{get_group_pos_if(math_group, i_status, i_math),
+                                       get_group_pos_if(math_group, j_status, j_math)};
             // current branch position index in math model
             auto const branch_pos = static_cast<Idx>(math_topology_[math_group].n_branch());
             // push back
@@ -452,8 +452,7 @@ class Topology {
             // internal node number as j
             Idx const j = comp_topo_.n_node + k;
             Idx2D const j_math = comp_coup_.node[j];
-            // m as math model group number
-            Idx const m = [&]() {
+            Idx const math_group = [&]() {
                 Idx group = -1;
                 // loop 3 way as indices n
                 for (size_t n = 0; n != 3; ++n) {
@@ -469,18 +468,17 @@ class Topology {
                 continue;
             }
             assert(i_status[0] || i_status[1] || i_status[2]);
-            assert(j_math.group == m);
+            assert(j_math.group == math_group);
             // branch3
             // TODO make this const
             Idx2DBranch3 idx_branch3{};
-            idx_branch3.group = m;
+            idx_branch3.group = math_group;
             // loop 3 way as indices n
             for (size_t n = 0; n != 3; ++n) {
                 // get and set branch idx in math model
                 // j side is always connected
                 // connect i side if i_status is true
-                BranchIdx const branch_idx{i_status[n] != 0 ? assert(i_math[n].group == m), i_math[n].pos : -1,
-                                           j_math.pos};
+                BranchIdx const branch_idx{get_group_pos_if(math_group, i_status[n], i_math[n]), j_math.pos};
                 // current branch position index in math model
                 auto const branch_pos = static_cast<Idx>(math_topology_[m].n_branch());
                 // push back
