@@ -32,8 +32,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = sym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -57,7 +55,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::generator);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::generator);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<true> sym_power_sensor_update{};
@@ -69,7 +67,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::generator);
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -125,8 +123,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = sym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -150,7 +146,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::branch_from);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_from);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<true> sym_power_sensor_update{};
@@ -162,10 +158,10 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
-
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
+
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_from);
 
         // Check symmetric output for symmetric parameters
         CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
@@ -218,8 +214,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = sym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -243,7 +237,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::branch_to);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_to);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<true> sym_power_sensor_update{};
@@ -255,7 +249,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_to);
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -311,8 +305,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = sym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -336,7 +328,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.0 * 1e2 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.0 * 1e2 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::source);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::source);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<true> sym_power_sensor_update{};
@@ -348,7 +340,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::source);
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -404,8 +396,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = sym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -429,7 +419,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.9 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.5 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::shunt);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::shunt);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<true> sym_power_sensor_update{};
@@ -441,7 +431,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::shunt);
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -497,8 +487,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = sym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
@@ -522,7 +510,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(1.9 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.5 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::load);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::load);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<true> sym_power_sensor_update{};
@@ -534,7 +522,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = sym_power_sensor.calc_param<true>();
         asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-        terminal_type = sym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::load);
 
         sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -612,8 +600,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = asym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -637,7 +623,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::generator);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::generator);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<false> asym_power_sensor_update{};
@@ -649,7 +635,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::generator);
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -706,8 +692,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = asym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -731,7 +715,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::branch_from);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_from);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<false> asym_power_sensor_update{};
@@ -743,7 +727,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_from);
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -800,8 +784,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = asym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -825,7 +807,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::branch_to);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_to);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<false> asym_power_sensor_update{};
@@ -837,7 +819,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::branch_to);
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -894,8 +876,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = asym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -919,7 +899,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(2.1 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(1.7 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::source);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::source);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<false> asym_power_sensor_update{};
@@ -931,7 +911,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::source);
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -988,8 +968,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = asym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -1013,7 +991,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.1 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::shunt);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::shunt);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<false> asym_power_sensor_update{};
@@ -1025,7 +1003,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::shunt);
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -1082,8 +1060,6 @@ TEST_CASE("Test power sensor") {
         SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
         SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        MeasuredTerminalType terminal_type = asym_power_sensor.get_terminal_type();
-
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
@@ -1107,7 +1083,7 @@ TEST_CASE("Test power sensor") {
         CHECK(sym_sensor_output_asym_param.p_residual[0] == doctest::Approx(3.9 * 1e3 / 3.0));
         CHECK(sym_sensor_output_asym_param.q_residual[1] == doctest::Approx(3.1 * 1e3 / 3.0));
 
-        CHECK(terminal_type == MeasuredTerminalType::load);
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::load);
 
         // -------- Update power sensor --------
         PowerSensorUpdate<false> asym_power_sensor_update{};
@@ -1119,7 +1095,7 @@ TEST_CASE("Test power sensor") {
         sym_sensor_param = asym_power_sensor.calc_param<true>();
         asym_sensor_param = asym_power_sensor.calc_param<false>();
 
-        terminal_type = asym_power_sensor.get_terminal_type();
+        CHECK(sym_power_sensor.get_terminal_type() == MeasuredTerminalType::load);
 
         sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
