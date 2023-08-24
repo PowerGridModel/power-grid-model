@@ -434,7 +434,7 @@ class Topology {
             BranchIdx const branch_idx{get_group_pos_if(math_group, i_status, i_math),
                                        get_group_pos_if(math_group, j_status, j_math)};
             // current branch position index in math model
-            auto const branch_pos = static_cast<Idx>(math_topology_[math_group].n_branch());
+            auto const branch_pos = math_topology_[math_group].n_branch();
             // push back
             math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
             // set branch idx in coupling
@@ -480,7 +480,7 @@ class Topology {
                 // connect i side if i_status is true
                 BranchIdx const branch_idx{get_group_pos_if(math_group, i_status[n], i_math[n]), j_math.pos};
                 // current branch position index in math model
-                auto const branch_pos = static_cast<Idx>(math_topology_[math_group].n_branch());
+                auto const branch_pos = math_topology_[math_group].n_branch();
                 // push back
                 math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
                 // set branch idx in coupling
