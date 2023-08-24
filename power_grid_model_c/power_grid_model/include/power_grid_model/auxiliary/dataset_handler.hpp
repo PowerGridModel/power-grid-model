@@ -83,16 +83,16 @@ class DatasetHandler {
         if (find_component(component) >= 0) {
             throw DatasetError{"Cannot have duplicated components!\n"};
         }
+        check_uniform_integrity(elements_per_scenario, total_elements);
         dataset_info_.component_info.push_back(
             {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers_.push_back(Buffer{});
-        check_uniform_integrity(elements_per_scenario, total_elements);
     }
 
     void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
                     Data* data) {
-        add_component_info(component, elements_per_scenario, total_elements);
         check_non_uniform_integrity<true>(elements_per_scenario, total_elements, indptr);
+        add_component_info(component, elements_per_scenario, total_elements);
         buffers_.back().data = data;
         if (indptr) {
             buffers_.back().indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
