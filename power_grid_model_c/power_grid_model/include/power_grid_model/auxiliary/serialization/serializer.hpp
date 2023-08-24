@@ -203,6 +203,10 @@ class Serializer {
         packer_.pack("data");
         // as an array for batch
         if (dataset_handler_.is_batch()) {
+            if (!std::in_range<uint32_t>(dataset_handler_.batch_size())) {
+                throw SerializationError{"Batch data set is too large to pack ("s +
+                                         std::to_string(dataset_handler_.batch_size()) + " scenarios)"};
+            }
             packer_.pack_array(static_cast<uint32_t>(dataset_handler_.batch_size()));
         }
         // pack scenarios
