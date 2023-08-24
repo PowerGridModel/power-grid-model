@@ -152,8 +152,8 @@ enum PGM_CType {
  *
  */
 enum PGM_ShortCircuitVoltageScaling {
-    PGM_sc_voltage_scaling_minimum = 0, /**< voltage scaling for minimum short circuit currents */
-    PGM_sc_voltage_scaling_maximum = 1, /**< voltage scaling for maximum short circuit currents */
+    PGM_short_circuit_voltage_scaling_minimum = 0, /**< voltage scaling for minimum short circuit currents */
+    PGM_short_circuit_voltage_scaling_maximum = 1, /**< voltage scaling for maximum short circuit currents */
 };
 
 #ifdef __cplusplus

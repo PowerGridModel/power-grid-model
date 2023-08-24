@@ -23,7 +23,7 @@ struct PGM_Options {
     double err_tol{1e-8};
     Idx max_iter{20};
     Idx threading{-1};
-    Idx short_circuit_voltage_scaling{PGM_sc_voltage_scaling_maximum};
+    Idx short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
 };
 
 #endif

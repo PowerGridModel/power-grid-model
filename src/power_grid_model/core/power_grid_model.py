@@ -7,7 +7,7 @@
 Main power grid model class
 """
 from enum import IntEnum
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Optional, Set, Union, Type
 
 import numpy as np
 
@@ -200,10 +200,14 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        if "calculation_method" in kwargs:
-            calculation_method = kwargs["calculation_method"]
-            if isinstance(calculation_method, str):
-                kwargs["calculation_method"] = CalculationMethod[calculation_method]
+        def replace_to_enum(key: str, type_: Type):
+            if key in kwargs:
+                value = kwargs[key]
+                if isinstance(value, str):
+                    kwargs[key] = type_[value]
+
+        replace_to_enum("calculation_method", CalculationMethod)
+        replace_to_enum("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
 
         opt = Options()
         for key, value in kwargs.items():
@@ -518,7 +522,7 @@ class PowerGridModel:
             symmetric=symmetric,
             calculation_method=calculation_method,
             threading=threading,
-            sc_voltage_scaling=short_circuit_voltage_scaling,
+            short_circuit_voltage_scaling=short_circuit_voltage_scaling,
         )
         return self._calculate_impl(
             calculation_type=calculation_type,

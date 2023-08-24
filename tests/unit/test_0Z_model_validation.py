@@ -49,6 +49,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
             "threading",
             "output_component_types",
             "continue_on_batch_error",
+            "short_circuit_voltage_scaling"
         ],
     ),
 }
@@ -59,11 +60,11 @@ def supported_kwargs(kwargs, supported: List[str]):
 
 
 @pytest.mark.parametrize(
-    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol"],
+    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol", "params"],
     pytest_cases(get_batch_cases=False),
 )
 def test_single_validation(
-    case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float
+    case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float, params: Dict
 ):
     # Initialization
     case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
@@ -100,11 +101,11 @@ def test_single_validation(
 
 
 @pytest.mark.parametrize(
-    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol"],
+    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol", "params"],
     pytest_cases(get_batch_cases=True),
 )
 def test_batch_validation(
-    case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float
+    case_id: str, case_path: Path, sym: bool, calculation_type: str, calculation_method: str, rtol: float, atol: float, params: Dict
 ):
     # Initialization
     case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
@@ -120,6 +121,8 @@ def test_batch_validation(
         model_copy.update(update_data=update_data)
         calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
         kwargs = {"symmetric": sym, "calculation_method": calculation_method}
+        if calculation_method == "iec60909":
+            kwargs["short_circuit_voltage_scaling"] = params["short_circuit_voltage_scaling"]
         result = calculation_function(model_copy, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
         compare_result(result, reference_result, rtol, atol)
 
