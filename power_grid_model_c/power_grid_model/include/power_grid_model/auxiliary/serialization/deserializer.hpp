@@ -83,6 +83,11 @@ struct from_json_t {};
 constexpr from_json_t from_json;
 
 class Deserializer {
+    static constexpr auto msgpack_string = msgpack::type::STR;
+    static constexpr auto msgpack_bool = msgpack::type::BOOLEAN;
+    static constexpr auto msgpack_array = msgpack::type::ARRAY;
+    static constexpr auto msgpack_map = msgpack::type::MAP;
+
   public:
     using ArraySpan = std::span<msgpack::object const>;
     using MapSpan = std::span<msgpack::object_kv const>;
@@ -101,7 +106,7 @@ class Deserializer {
 
     Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data)
         : handle_{msgpack::unpack(msgpack_data.data(), msgpack_data.size())},
-          version_{get_value_from_root("version", msgpack::type::STR).as<std::string>()},
+          version_{get_value_from_root("version", msgpack_string).as<std::string>()},
           dataset_handler_{create_dataset_handler()} {
         try {
             post_serialization();
@@ -156,9 +161,9 @@ class Deserializer {
     }
 
     WritableDatasetHandler create_dataset_handler() {
-        auto const dataset = get_value_from_root("type", msgpack::type::STR).as<std::string_view>();
-        auto const is_batch = get_value_from_root("is_batch", msgpack::type::BOOLEAN).as<bool>();
-        msgpack::object const& obj = get_value_from_root("data", is_batch ? msgpack::type::ARRAY : msgpack::type::MAP);
+        auto const dataset = get_value_from_root("type", msgpack_string).as<std::string_view>();
+        auto const is_batch = get_value_from_root("is_batch", msgpack_bool).as<bool>();
+        msgpack::object const& obj = get_value_from_root("data", is_batch ? msgpack_array : msgpack_map);
         Idx const batch_size = is_batch ? static_cast<Idx>(as_array(obj).size) : 1;
         return WritableDatasetHandler{is_batch, batch_size, dataset};
     }
@@ -171,7 +176,7 @@ class Deserializer {
 
     msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
         msgpack::object const& root = handle_.get();
-        if (root.type != msgpack::type::MAP) {
+        if (root.type != msgpack_map) {
             throw SerializationError{"The root level object should be a dictionary!\n"};
         }
         root_key_ = key;
@@ -203,7 +208,7 @@ class Deserializer {
     }
 
     void read_predefined_attributes() {
-        for (auto const& kv : get_value_from_root("attributes", msgpack::type::MAP).as<MapSpan>()) {
+        for (auto const& kv : get_value_from_root("attributes", msgpack_map).as<MapSpan>()) {
             component_key_ = key_to_string(kv);
             MetaComponent const& component = dataset_handler_.dataset().get_component(component_key_);
             attributes_[component.name] = read_component_attributes(component, kv.val);
@@ -213,7 +218,7 @@ class Deserializer {
 
     std::vector<MetaAttribute const*> read_component_attributes(MetaComponent const& component,
                                                                 msgpack::object const& attribute_list) {
-        if (attribute_list.type != msgpack::type::ARRAY) {
+        if (attribute_list.type != msgpack_array) {
             throw SerializationError{
                 "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
         }
@@ -229,7 +234,7 @@ class Deserializer {
 
     void count_data() {
         msgpack::object const& obj =
-            get_value_from_root("data", dataset_handler_.is_batch() ? msgpack::type::ARRAY : msgpack::type::MAP);
+            get_value_from_root("data", dataset_handler_.is_batch() ? msgpack_array : msgpack_map);
         // pointer to array (or single value) of msgpack objects to the data
         auto const batch_data =
             dataset_handler_.is_batch() ? ArraySpan{as_array(obj).ptr, as_array(obj).size} : ArraySpan{&obj, 1};
@@ -238,7 +243,7 @@ class Deserializer {
         std::set<MetaComponent const*> all_components;
         for (scenario_number_ = 0; scenario_number_ != static_cast<Idx>(batch_data.size()); ++scenario_number_) {
             msgpack::object const& scenario = batch_data[scenario_number_];
-            if (scenario.type != msgpack::type::MAP) {
+            if (scenario.type != msgpack_map) {
                 throw SerializationError{"The data object of each scenario should be a dictionary!\n"};
             }
             for (msgpack::object_kv const& kv : scenario.as<MapSpan>()) {
@@ -266,7 +271,7 @@ class Deserializer {
             Idx const found_component_idx = find_key_from_map(scenario, component.name);
             if (found_component_idx >= 0) {
                 msgpack::object const& element_array = as_map(scenario).ptr[found_component_idx].val;
-                if (element_array.type != msgpack::type::ARRAY) {
+                if (element_array.type != msgpack_array) {
                     throw SerializationError{"Each entry of component per scenario should be a list!\n"};
                 }
                 counter[scenario_number_] = static_cast<Idx>(as_array(element_array).size);
@@ -357,9 +362,9 @@ class Deserializer {
         for (element_number_ = 0; element_number_ != static_cast<Idx>(msg_data.size()); ++element_number_) {
             void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
             msgpack::object const& obj = msg_data[element_number_];
-            if (obj.type == msgpack::type::ARRAY) {
+            if (obj.type == msgpack_array) {
                 parse_array_element(element_pointer, obj, attributes);
-            } else if (obj.type == msgpack::type::MAP) {
+            } else if (obj.type == msgpack_map) {
                 parse_map_element(element_pointer, obj, component);
             } else {
                 throw SerializationError{"An element can only be a list or dictionary!\n"};
