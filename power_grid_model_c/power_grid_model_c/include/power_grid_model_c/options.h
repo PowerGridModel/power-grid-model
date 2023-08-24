@@ -101,7 +101,7 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
 PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
 
 /**
- * @brief Specify type of calculation
+ * @brief Specify the voltage scaling min/max for short circuit calculations
  *
  * @param handle
  * @param opt pointer to option instance

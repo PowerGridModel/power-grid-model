@@ -78,10 +78,9 @@ class Source : public Appliance {
         // This function receives the nominal voltage of the node and a min/max scaling enum
         // and returns the reference voltage based on the voltage scaling factor c.
         // the scaling factor is determined according to the IEC 60909 standard, which is shown in the table below:
-        //                          |   c_max   |   c_min   |
-        //        Unom <= 1000V     |   1.10    |   0.95    |
-        // 1kV  < Unom <= 35kV      |   1.10    |   1.00    |
-        // 35kV < Unom <= 230kV     |   1.10    |   1.00    |
+        //                   |   c_max   |   c_min   |
+        // Unom <= 1000V     |   1.10    |   0.95    |
+        // Unom > 1kV        |   1.10    |   1.00    |
         // NOTE that for low voltage there is a difference in c for systems with a voltage tolerance of 6% or 10%.
         // Here, a voltage tolerance of 10% is assumed.
         double voltage_scaling_c{1.0};
