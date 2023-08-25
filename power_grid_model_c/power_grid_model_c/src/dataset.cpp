@@ -45,7 +45,7 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
                                            PGM_Idx batch_size) {
     return call_with_catch(
         handle,
-        [&]() {
+        [dataset, is_batch, batch_size]() {
             return new ConstDatasetHandler{static_cast<bool>(is_batch), batch_size, dataset};
         },
         PGM_regular_error);
@@ -57,7 +57,10 @@ void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
                                   PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
                                   void const* data) {
     call_with_catch(
-        handle, [&]() { dataset->add_buffer(component, elements_per_scenario, total_elements, indptr, data); },
+        handle,
+        [dataset, component, elements_per_scenario, total_elements, indptr, data]() {
+            dataset->add_buffer(component, elements_per_scenario, total_elements, indptr, data);
+        },
         PGM_regular_error);
 }
 
@@ -72,5 +75,6 @@ PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* /*unused*/, PGM
 void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
                                      PGM_Idx* indptr, void* data) {
     call_with_catch(
-        handle, [&]() { dataset->set_buffer(component, indptr, data); }, PGM_regular_error);
+        handle, [dataset, component, indptr, data]() { dataset->set_buffer(component, indptr, data); },
+        PGM_regular_error);
 }

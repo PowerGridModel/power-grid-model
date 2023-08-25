@@ -322,10 +322,10 @@ class Deserializer {
         return counter.front();
     }
 
-    void parse_component(Idx i) {
-        auto const& buffer = dataset_handler_.get_buffer(i);
-        auto const& info = dataset_handler_.get_component_info(i);
-        auto const& msg_data = msg_views_[i];
+    void parse_component(Idx component_idx) {
+        auto const& buffer = dataset_handler_.get_buffer(component_idx);
+        auto const& info = dataset_handler_.get_component_info(component_idx);
+        auto const& msg_data = msg_views_[component_idx];
         Idx const batch_size = dataset_handler_.batch_size();
         component_key_ = info.component->name;
         // handle indptr
@@ -338,8 +338,8 @@ class Deserializer {
             // std::transform_inclusive_scan(msg_data.cbegin(), msg_data.cend(),
             //                               buffer.indptr.begin() + 1,
             //                               std::plus{}, [](auto const& x) { return static_cast<Idx>(x.size()); });
-            for (Idx i = 0; i != batch_size; ++i) {
-                buffer.indptr[i + 1] = buffer.indptr[i] + static_cast<Idx>(msg_data[i].size());
+            for (Idx batch_idx = 0; batch_idx != batch_size; ++batch_idx) {
+                buffer.indptr[batch_idx + 1] = buffer.indptr[batch_idx] + static_cast<Idx>(msg_data[batch_idx].size());
             }
         }
         // set nan
@@ -420,7 +420,9 @@ class Deserializer {
             return;
         }
         // call relevant parser
-        ctype_func_selector(attribute.ctype, [&]<class T> { obj >> attribute.get_attribute<T>(element_pointer); });
+        ctype_func_selector(attribute.ctype, [element_pointer, &obj, &attribute]<class T> {
+            obj >> attribute.get_attribute<T>(element_pointer);
+        });
     }
 
     static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
