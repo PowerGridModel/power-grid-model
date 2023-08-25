@@ -434,7 +434,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }();
 
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
-                Timer t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
+                Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
                 // try to update model and run calculation
                 try {
                     {
