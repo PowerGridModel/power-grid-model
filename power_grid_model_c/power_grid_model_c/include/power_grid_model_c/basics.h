@@ -56,32 +56,32 @@ typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
 
 /**
- * @brief Opaque struct for the PowerGridModel class
+ * @brief Opaque struct for the PowerGridModel class.
  *
  */
 typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 
 /**
- * @brief Opaque struct for the handle class
+ * @brief Opaque struct for the handle class.
  *
- * The handle class is used to store error and information
+ * The handle class is used to store error and information.
  *
  */
 typedef struct PGM_Handle PGM_Handle;
 
 /**
- * @brief Opaque struct for the option class
+ * @brief Opaque struct for the option class.
  *
  * The option class is used to set calculation options like calculation method.
  *
  */
 typedef struct PGM_Options PGM_Options;
 
-// Only enable the opaque struct definition if this header is consumed by the C-API user
-// If this header is included when compiling the C-API, the structs below are decleared/defined in the C++ files
+// Only enable the opaque struct definition if this header is consumed by the C-API user.
+// If this header is included when compiling the C-API, the structs below are decleared/defined in the C++ files.
 #ifndef PGM_DLL_EXPORTS
 /**
- * @brief Opaque struct for the attribute meta class
+ * @brief Opaque struct for the attribute meta class.
  *
  * The attribute class contains all the meta information of a single attribute.
  *
@@ -89,7 +89,7 @@ typedef struct PGM_Options PGM_Options;
 typedef struct PGM_MetaAttribute PGM_MetaAttribute;
 
 /**
- * @brief Opaque struct for the component meta class
+ * @brief Opaque struct for the component meta class.
  *
  * The component class contains all the meta information of a single component.
  *
@@ -105,41 +105,41 @@ typedef struct PGM_MetaComponent PGM_MetaComponent;
 typedef struct PGM_MetaDataset PGM_MetaDataset;
 
 /**
- * @brief Opaque struct for the serializer class
+ * @brief Opaque struct for the serializer class.
  */
 typedef struct PGM_Serializer PGM_Serializer;
 
 /**
- * @brief Opaque struct for the deserializer class
+ * @brief Opaque struct for the deserializer class.
  */
 typedef struct PGM_Deserializer PGM_Deserializer;
 
 /**
- * @brief Opaque struct for the const dataset class
+ * @brief Opaque struct for the const dataset class.
  */
 typedef struct PGM_ConstDataset PGM_ConstDataset;
 
 /**
- * @brief Opaque struct for the multable dataset class
+ * @brief Opaque struct for the multable dataset class.
  * The mutable dataset is meant for the user to provide buffers to store the output of calculations.
  */
 typedef struct PGM_MutableDataset PGM_MutableDataset;
 
 /**
- * @brief Opaque struct for the writable dataset class
- * The writable dataset is meant for the user to provide buffers for the deserializer
+ * @brief Opaque struct for the writable dataset class.
+ * The writable dataset is meant for the user to provide buffers for the deserializer.
  */
 typedef struct PGM_WritableDataset PGM_WritableDataset;
 
 /**
- * @brief Opaque struct for the information of the dataset
+ * @brief Opaque struct for the information of the dataset.
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 #endif
 
 // enums
 /**
- * @brief Enumeration for calculation type
+ * @brief Enumeration for calculation type.
  *
  */
 enum PGM_CalculationType {
@@ -149,7 +149,7 @@ enum PGM_CalculationType {
 };
 
 /**
- * @brief Enumeration for calculation method
+ * @brief Enumeration for calculation method.
  *
  */
 enum PGM_CalculationMethod {
@@ -163,7 +163,7 @@ enum PGM_CalculationMethod {
 };
 
 /**
- * @brief Enumeration of error codes
+ * @brief Enumeration of error codes.
  *
  */
 enum PGM_ErrorCode {
@@ -174,7 +174,7 @@ enum PGM_ErrorCode {
 };
 
 /**
- * @brief Enumeration of C basic data types
+ * @brief Enumeration of C basic data types.
  *
  */
 enum PGM_CType {

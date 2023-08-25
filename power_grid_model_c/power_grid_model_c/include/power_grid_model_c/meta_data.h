@@ -18,167 +18,167 @@ extern "C" {
 #endif
 
 /**
- * @brief Get number of datasets
+ * @brief Get number of datasets.
  *
  * @param handle
- * @return  The number of datasets
+ * @return The number of datasets.
  */
 PGM_API PGM_Idx PGM_meta_n_datasets(PGM_Handle* handle);
 
 /**
- * @brief Get pointer of idx-th dataset
+ * @brief Get pointer of idx-th dataset.
  *
  * @param handle
- * @param idx the sequence number, should be between [0, PGM_meta_n_datasets())
- * @return  The pointer to the idx-th dataset. The pointer is permanantly valid.
+ * @param idx The sequence number, should be between [0, PGM_meta_n_datasets()).
+ * @return The pointer to the idx-th dataset. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx);
 
 /**
- * @brief Get pointer of dataset by name
+ * @brief Get pointer of dataset by name.
  *
  * @param handle
- * @param dataset name of the dataset
- * @return  The pointer to the dataset with that name. The pointer is permanantly valid.
+ * @param dataset The name of the dataset.
+ * @return The pointer to the dataset with that name. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset);
 
 /**
- * @brief Get name of the dataset
+ * @brief Get name of the dataset.
  *
  * @param handle
- * @param dataset pointer to a dataset object
+ * @param dataset The pointer to a dataset object.
  * @return The name of the dataset in a char const*. The pointer is permanantly valid.
  */
 PGM_API char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset const* dataset);
 
 /**
- * @brief Get the number of components for a dataset
+ * @brief Get the number of components for a dataset.
  *
  * @param handle
- * @param dataset pointer to the dataset
- * @return  Number of components
+ * @param dataset The pointer to the dataset.
+ * @return Number of components.
  */
 PGM_API PGM_Idx PGM_meta_n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset);
 
 /**
- * @brief Get pointer of idx-th component of a dataset
+ * @brief Get pointer of idx-th component of a dataset.
  *
  * @param handle
- * @param dataset pointer to the dataset
- * @param idx the sequence number, should be between [0, PGM_meta_n_components())
- * @return  The pointer to the idx-th component. The pointer is permanantly valid.
+ * @param dataset The pointer to the dataset.
+ * @param idx The sequence number, should be between [0, PGM_meta_n_components()).
+ * @return The pointer to the idx-th component. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
                                                                PGM_Idx idx);
 /**
- * @brief Get pointer of a component by name
+ * @brief Get pointer of a component by name.
  *
  * @param handle
- * @param dataset name of the dataset
- * @param component name of the component
- * @return  The pointer to the component with that name. The pointer is permanantly valid.
+ * @param dataset The name of the dataset.
+ * @param component The name of the component.
+ * @return The pointer to the component with that name. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
                                                                 char const* component);
 
 /**
- * @brief Get name of component
+ * @brief Get name of component.
  *
  * @param handle
- * @param component pointer to the component
- * @return  The name of the component in a char const*. The pointer is permanantly valid.
+ * @param component The pointer to the component.
+ * @return The name of the component in a char const*. The pointer is permanantly valid.
  */
 PGM_API char const* PGM_meta_component_name(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
- * @brief Get size of the component
+ * @brief Get size of the component.
  *
  * @param handle
- * @param component pointer to the component
- * @return  Size of the component.
+ * @param component The pointer to the component.
+ * @return Size of the component.
  */
 PGM_API size_t PGM_meta_component_size(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
- * @brief Get alignment of the component
+ * @brief Get alignment of the component.
  *
  * @param handle
- * @param component pointer to the component
- * @return  Alignment of the component.
+ * @param component The pointer to the component.
+ * @return Alignment of the component.
  */
 PGM_API size_t PGM_meta_component_alignment(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
- * @brief Get number of attributes of the component
+ * @brief Get number of attributes of the component.
  *
  * @param handle
- * @param component component pointer
- * @return  Number of attributes.
+ * @param component The pointer to the component.
+ * @return Number of attributes.
  */
 PGM_API PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, PGM_MetaComponent const* component);
 
 /**
- * @brief Get pointer of idx-th attribute of a component
+ * @brief Get pointer of idx-th attribute of a component.
  *
  * @param handle
- * @param component pointer to the component
- * @param idx the sequence number, should be between [0, PGM_meta_n_attributes())
- * @return  The pointer to the idx-th attribute. The pointer is permanantly valid.
+ * @param component The pointer to the component.
+ * @param idx The sequence number, should be between [0, PGM_meta_n_attributes())
+ * @return The pointer to the idx-th attribute. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
                                                                PGM_Idx idx);
 /**
- * @brief Get pointer of a attribute by name
+ * @brief Get pointer of a attribute by name.
  *
  * @param handle
- * @param dataset name of the dataset
- * @param component name of the component
- * @param attribute name of the attribute
- * @return  The pointer to the component with that name. The pointer is permanantly valid.
+ * @param dataset The name of the dataset.
+ * @param component The name of the component.
+ * @param attribute The name of the attribute.
+ * @return The pointer to the component with that name. The pointer is permanantly valid.
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset,
                                                                 char const* component, char const* attribute);
 
 /**
- * @brief Get attribute name
+ * @brief Get attribute name.
  *
  * @param handle
- * @param attribute pointer to attribute
- * @return  Name of the attribute in char const*. The pointer is permanantly valid.
+ * @param attribute The pointer to attribute.
+ * @return The name of the attribute in char const*. The pointer is permanantly valid.
  */
 PGM_API char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
- * @brief Get the type of an attribute
+ * @brief Get the type of an attribute.
  *
  * @param handle
- * @param attribute pointer to attribute
- * @return  Type of the attribute as in enum PGM_CType.
+ * @param attribute The pointer to attribute.
+ * @return The type of the attribute as in enum PGM_CType.
  *
  */
 PGM_API PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
- * @brief Get the ofsset of an attribute in a component
+ * @brief Get the offset of an attribute in a component.
  *
  * @param handle
- * @param attribute pointer to attribute
- * @return  Offset of this attribute.
+ * @param attribute The pointer to attribute.
+ * @return The offset of this attribute.
  */
 PGM_API size_t PGM_meta_attribute_offset(PGM_Handle* handle, PGM_MetaAttribute const* attribute);
 
 /**
- * @brief Get if the system is little endian
+ * @brief Get whether the system is little endian.
  *
  * @param handle
- * @return  One if the system is litten endian. Zero if the system is big endian.
+ * @return 1 if the system is litten endian; 0 if the system is big endian.
  */
 PGM_API int PGM_is_little_endian(PGM_Handle* handle);
 

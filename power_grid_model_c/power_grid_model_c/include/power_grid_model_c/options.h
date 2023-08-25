@@ -30,41 +30,41 @@ extern "C" {
  *   - threading: -1
  *
  * @param handle
- * @return a pointer to the option instance. Should be freed by PGM_destroy_options()
+ * @return The pointer to the option instance. Should be freed by PGM_destroy_options().
  */
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
 
 /**
- * @brief Free the option instance
+ * @brief Free an option instance.
  *
- * @param opt pointer to an option instance created by PGM_create_options()
+ * @param opt The pointer to the option instance created by PGM_create_options().
  */
 PGM_API void PGM_destroy_options(PGM_Options* opt);
 
 /**
- * @brief Specify type of calculation
+ * @brief Specify type of calculation.
  *
  * @param handle
- * @param opt pointer to option instance
- * @param type See #PGM_CalculationType
+ * @param opt The pointer to the option instance.
+ * @param type See #PGM_CalculationType.
  */
 PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type);
 
 /**
- * @brief Specify method of calculation
+ * @brief Specify method of calculation.
  *
  * @param handle
- * @param opt pointer to option instance
- * @param method See #PGM_CalculationMethod
+ * @param opt The pointer to the option instance.
+ * @param method Ssee #PGM_CalculationMethod.
  */
 PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method);
 
 /**
- * @brief Specify if we are calculating symmetrically or asymmetrically
+ * @brief Specify if we are calculating symmetrically or asymmetrically.
  *
  * @param handle
- * @param opt pointer to option instance
- * @param sym One for symmetric calculation. Zero for asymmetric calculation
+ * @param opt The pointer to the option instance.
+ * @param sym 1 for symmetric calculation; 0 for asymmetric calculation.
  */
 PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym);
 
@@ -74,8 +74,8 @@ PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym
  * It is in terms of voltage deviation per iteration in p.u.
  *
  * @param handle
- * @param opt pointer to option instance
- * @param err_tol Relative votlage deviation tolerance
+ * @param opt The pointer to the option instance.
+ * @param err_tol The relative votlage deviation tolerance.
  */
 PGM_API void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_tol);
 
@@ -83,8 +83,8 @@ PGM_API void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_to
  * @brief Specify maximum number of iterations. Only applicable if using iterative method.
  *
  * @param handle
- * @param opt pointer to option instance
- * @param max_iter Maximum number of iterations
+ * @param opt The pointer to the option instance.
+ * @param max_iter The maximum number of iterations.
  */
 PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_iter);
 
@@ -92,11 +92,11 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
  * @brief Specify the multi-threading strategy. Only applicable for batch calculation.
  *
  * @param handle
- * @param opt pointer to option instance
- * @param threading Threading option. See below
- *   - -1: No multi-threading, calculate sequentially
- *   - 0: use number of machine available threads
- *   - >0: specify number of threads you want to calculate in parallel
+ * @param opt The pointer to the option instance.
+ * @param threading The value of the threading setting. See below:
+ *   - -1: No multi-threading, calculate sequentially.
+ *   - 0: use number of machine available threads.
+ *   - >0: specify number of threads you want to calculate in parallel.
  */
 PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
 
