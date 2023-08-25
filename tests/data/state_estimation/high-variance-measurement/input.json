@@ -62,14 +62,6 @@
       "measured_terminal_type": 4,
       "p_measured": 2e6,
       "q_measured": 0.0,
-      "power_sigma": 1e3
-    },
-    {
-      "id": 63,
-      "measured_object": 31,
-      "measured_terminal_type": 4,
-      "p_measured": 2e6,
-      "q_measured": 0.0,
       "power_sigma": 1e200
     }
   ]

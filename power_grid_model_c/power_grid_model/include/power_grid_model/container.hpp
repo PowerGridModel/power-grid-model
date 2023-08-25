@@ -22,7 +22,7 @@ namespace power_grid_model {
 namespace container_impl {
 
 // get index of the first true in bool array
-template <size_t N> inline constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx = 0) {
+template <size_t N> constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx = 0) {
     if (idx == N) {
         return N;
     }
