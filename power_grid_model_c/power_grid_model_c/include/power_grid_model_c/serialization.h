@@ -67,10 +67,12 @@ PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
  * @brief Create a serializer object based on input dataset, the buffers must be set in advance.
  * @param handle
  * @param dataset A pointer to an instance of PGM_ConstDataset
+ * @param serialization_format The desired data format of the serialization. See #PGM_SerializationFormat .
  * @return A pointer to the new serializer object. Should be freed by PGM_destroy_serializer()
  *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset);
+PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset,
+                                              PGM_Idx serialization_format);
 
 /**
  * @brief Serialize the dataset into a binary buffer format.

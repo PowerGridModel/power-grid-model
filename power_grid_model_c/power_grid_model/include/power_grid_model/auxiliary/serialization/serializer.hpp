@@ -85,36 +85,64 @@ class Serializer {
     // destructor
     ~Serializer() = default;
 
-    Serializer(ConstDatasetHandler const& dataset_handler)
-        : dataset_handler_{dataset_handler}, packer_{msgpack_buffer_} {
+    Serializer(ConstDatasetHandler const& dataset_handler, SerializationFormat serialization_format)
+        : dataset_handler_{dataset_handler}, packer_{msgpack_buffer_}, serialization_format_{serialization_format} {
+        switch (serialization_format_) {
+        case SerializationFormat::json:
+            [[fallthrough]];
+        case SerializationFormat::msgpack:
+            break;
+        default: {
+            using namespace std::string_literals;
+            throw SerializationError("Unsupported serialization format: "s +
+                                     std::to_string(static_cast<IntS>(serialization_format_)));
+        }
+        };
+
         store_buffers();
     }
 
-    std::span<char const> get_msgpack(bool use_compact_list) {
-        if ((msgpack_buffer_.size() == 0) || (use_compact_list_ != use_compact_list)) {
-            serialize(use_compact_list);
+    std::span<char const> get_binary_buffer(bool use_compact_list) {
+        switch (serialization_format_) {
+        case SerializationFormat::json:
+            return get_json(use_compact_list, -1);
+        case SerializationFormat::msgpack:
+            return get_msgpack(use_compact_list);
+        default:
+            using namespace std::string_literals;
+            throw SerializationError("Serialization format "s +
+                                     std::to_string(static_cast<IntS>(serialization_format_)) +
+                                     " does not support binary buffer output");
         }
-        return {msgpack_buffer_.data(), msgpack_buffer_.size()};
     }
 
-    std::string const& get_json(bool use_compact_list, Idx indent) {
-        if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
-            auto const json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
-            json_indent_ = indent;
-            json_buffer_ = json_document.dump(static_cast<int>(indent));
+    std::string const& get_string(bool use_compact_list, Idx indent) {
+        switch (serialization_format_) {
+        case SerializationFormat::json:
+            return get_json(use_compact_list, indent);
+        case SerializationFormat::msgpack:
+            [[fallthrough]];
+        default:
+            using namespace std::string_literals;
+            throw SerializationError("Serialization format "s +
+                                     std::to_string(static_cast<IntS>(serialization_format_)) +
+                                     " does not support string output");
         }
-        return json_buffer_;
     }
 
   private:
+    SerializationFormat serialization_format_{};
+
     ConstDatasetHandler dataset_handler_;
     std::vector<ScenarioBuffer> scenario_buffers_;   // list of scenarios, then list of components, omit empty
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
+
     // msgpack pakcer
     msgpack::sbuffer msgpack_buffer_{};
     msgpack::packer<msgpack::sbuffer> packer_;
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
+
     // json
     Idx json_indent_{-1};
     std::string json_buffer_;
@@ -166,6 +194,22 @@ class Serializer {
             }
             attributes_[buffer.component] = attributes;
         }
+    }
+
+    std::span<char const> get_msgpack(bool use_compact_list) {
+        if ((msgpack_buffer_.size() == 0) || (use_compact_list_ != use_compact_list)) {
+            serialize(use_compact_list);
+        }
+        return {msgpack_buffer_.data(), msgpack_buffer_.size()};
+    }
+
+    std::string const& get_json(bool use_compact_list, Idx indent) {
+        if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
+            auto const json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
+            json_indent_ = indent;
+            json_buffer_ = json_document.dump(static_cast<int>(indent));
+        }
+        return json_buffer_;
     }
 
     void serialize(bool use_compact_list) {

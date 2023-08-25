@@ -46,7 +46,7 @@ PGM_API void PGM_destroy_options(PGM_Options* opt);
  *
  * @param handle
  * @param opt The pointer to the option instance.
- * @param type See #PGM_CalculationType.
+ * @param type See #PGM_CalculationType .
  */
 PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type);
 
@@ -55,7 +55,7 @@ PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_
  *
  * @param handle
  * @param opt The pointer to the option instance.
- * @param method Ssee #PGM_CalculationMethod.
+ * @param method Ssee #PGM_CalculationMethod .
  */
 PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method);
 

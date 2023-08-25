@@ -32,9 +32,9 @@ TEST_CASE("Serializer") {
     SUBCASE("Single dataset") {
         ConstDatasetHandler handler{false, 1, "update"};
         handler.add_buffer("asym_load", 3, 3, nullptr, asym_load_gen.data());
-        Serializer serializer{handler};
-        CHECK(serializer.get_json(false, -1) == single_dataset_dict);
-        CHECK(serializer.get_json(true, -1) == single_dataset_list);
+        Serializer serializer{handler, SerializationFormat::json};
+        CHECK(serializer.get_string(false, -1) == single_dataset_dict);
+        CHECK(serializer.get_string(true, -1) == single_dataset_list);
     }
 
     SUBCASE("Batch dataset") {
@@ -42,9 +42,9 @@ TEST_CASE("Serializer") {
         std::array<Idx, 3> const indptr_gen{0, 0, 1};
         handler.add_buffer("asym_load", 1, 2, nullptr, asym_load_gen.data());
         handler.add_buffer("asym_gen", -1, 1, indptr_gen.data(), asym_load_gen.data() + 2);
-        Serializer serializer{handler};
-        CHECK(serializer.get_json(false, -1) == batch_dataset_list);
-        CHECK(serializer.get_json(true, -1) == batch_dataset_dict);
+        Serializer serializer{handler, SerializationFormat::json};
+        CHECK(serializer.get_string(false, -1) == batch_dataset_list);
+        CHECK(serializer.get_string(true, -1) == batch_dataset_dict);
     }
 }
 

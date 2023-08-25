@@ -184,6 +184,15 @@ enum PGM_CType {
     PGM_double3 = 3, /**< double[3] */
 };
 
+/**
+ * @brief Enumeration of serialization types.
+ *
+ */
+enum PGM_SerializationFormat {
+    PGM_json = 0,    /**< JSON serialization format */
+    PGM_msgpack = 1, /**< msgpack serialization format */
+};
+
 #ifdef __cplusplus
 }
 #endif

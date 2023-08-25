@@ -39,21 +39,41 @@ TEST_CASE("Serialization") {
         auto const dataset = unique_dataset.get();
         PGM_dataset_const_add_buffer(hl, dataset, "node", elements_per_scenario, total_elements, nullptr, node.data());
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        SerializerPtr unique_serializer{PGM_create_serializer(hl, dataset)};
-        auto const serializer = unique_serializer.get();
-        CHECK(PGM_error_code(hl) == PGM_no_error);
-        std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
-        CHECK(PGM_error_code(hl) == PGM_no_error);
-        CHECK(json_result == json_data);
 
-        // msgpack round trip
-        char const* msgpack_data{};
-        Idx msgpack_size{};
-        PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
-        CHECK(PGM_error_code(hl) == PGM_no_error);
-        auto const json_document = nlohmann::json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
-        json_result = json_document.dump(-1);
-        CHECK(json_result == json_data);
+        SUBCASE("json") {
+            SerializerPtr json_serializer{
+                PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::json))};
+            auto const serializer = json_serializer.get();
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+
+            // to string
+            std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+            CHECK(json_result == json_data);
+
+            // to buffer
+            char const* buffer_data{};
+            Idx buffer_size{};
+            PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &buffer_data, &buffer_size);
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+            std::string const json_string{buffer_data, static_cast<size_t>(buffer_size)};
+            CHECK(json_result == json_string);
+        }
+
+        SUBCASE("msgpack") {
+            SerializerPtr msgpack_serializer{
+                PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::msgpack))};
+            auto const serializer = msgpack_serializer.get();
+
+            // round trip
+            char const* msgpack_data{};
+            Idx msgpack_size{};
+            PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+            auto const json_document = nlohmann::json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
+            auto const json_result = json_document.dump(-1);
+            CHECK(json_result == json_data);
+        }
     }
 
     SUBCASE("Deserializer") {

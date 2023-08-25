@@ -96,6 +96,8 @@ enum class FaultPhase : IntS {
 
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 
+enum class SerializationFormat : IntS { json = 0, msgpack = 1 };
+
 } // namespace power_grid_model
 
 #endif
