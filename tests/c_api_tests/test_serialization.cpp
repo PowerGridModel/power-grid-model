@@ -42,14 +42,14 @@ TEST_CASE("Serialization") {
         SerializerPtr unique_serializer{PGM_create_serializer(hl, dataset)};
         auto const serializer = unique_serializer.get();
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        std::string json_result = PGM_get_json(hl, serializer, 0, -1);
+        std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(json_result == json_data);
 
         // msgpack round trip
         char const* msgpack_data{};
         Idx msgpack_size{};
-        PGM_get_msgpack(hl, serializer, 0, &msgpack_data, &msgpack_size);
+        PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
         CHECK(PGM_error_code(hl) == PGM_no_error);
         auto const json_document = nlohmann::json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
         json_result = json_document.dump(-1);

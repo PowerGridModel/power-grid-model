@@ -51,8 +51,8 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
         handle, [&] { return new PGM_Serializer{*dataset}; }, PGM_serialization_error);
 }
 
-void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, char const** data,
-                     PGM_Idx* size) {
+void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list,
+                                         char const** data, PGM_Idx* size) {
     call_with_catch(
         handle,
         [&] {
@@ -63,7 +63,8 @@ void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use
         PGM_serialization_error);
 }
 
-char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list, PGM_Idx indent) {
+char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM_Serializer* serializer,
+                                                         PGM_Idx use_compact_list, PGM_Idx indent) {
     return call_with_catch(
         handle, [&] { return serializer->get_json(static_cast<bool>(use_compact_list), indent).c_str(); },
         PGM_serialization_error);

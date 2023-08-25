@@ -73,19 +73,20 @@ PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
 PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset);
 
 /**
- * @brief Serialize the dataset into msgpack format.
+ * @brief Serialize the dataset into a binary buffer format.
  * @param handle
  * @param serializer A pointer to an existing serializer.
  * @param use_compact_list 1 for use compact list per element of serialization; 0 for use dictionary per element.
- * @param data Output argument: the data pointer of msgpack bytes will be written to *data.
- * @param size Output argument: the length of the msgpack bytes will be written to *size.
+ * @param data Output argument: the data pointer of the packed buffer will be written to *data.
+ * @param size Output argument: the length of the packed buffer will be written to *size.
  * @return No return value; check handle for error.
  */
-PGM_API void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list,
-                             char const** data, PGM_Idx* size);
+PGM_API void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* serializer,
+                                                 PGM_Idx use_compact_list, char const** data, PGM_Idx* size);
 
 /**
- * @brief Serialize the dataset into json format.
+ * @brief Serialize the dataset into a zero terminated C string.
+ *     Only supported for uncompressed data formats.
  * @param handle
  * @param serializer A pointer to an existing serializer.
  * @param use_compact_list 1 for use compact list per element of serialization; 0 for use dictionary per element.
@@ -93,8 +94,8 @@ PGM_API void PGM_get_msgpack(PGM_Handle* handle, PGM_Serializer* serializer, PGM
  * @return A NULL-terminated json string.
  *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API char const* PGM_get_json(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list,
-                                 PGM_Idx indent);
+PGM_API char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM_Serializer* serializer,
+                                                                 PGM_Idx use_compact_list, PGM_Idx indent);
 
 /**
  * @brief Destroy serializer.
