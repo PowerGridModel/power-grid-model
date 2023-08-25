@@ -34,10 +34,10 @@ TEST_CASE("Serialization") {
     Idx const total_elements = 1;
 
     SUBCASE("Serializer") {
-        ConstDatasetPtr unique_dataset{PGM_create_const_dataset(hl, "input", is_batch, batch_size)};
+        ConstDatasetPtr unique_dataset{PGM_create_dataset_const(hl, "input", is_batch, batch_size)};
         CHECK(PGM_error_code(hl) == PGM_no_error);
         auto const dataset = unique_dataset.get();
-        PGM_const_dataset_add_buffer(hl, dataset, "node", elements_per_scenario, total_elements, nullptr, node.data());
+        PGM_dataset_const_add_buffer(hl, dataset, "node", elements_per_scenario, total_elements, nullptr, node.data());
         CHECK(PGM_error_code(hl) == PGM_no_error);
         SerializerPtr unique_serializer{PGM_create_serializer(hl, dataset)};
         auto const serializer = unique_serializer.get();
@@ -74,7 +74,7 @@ TEST_CASE("Serialization") {
             node[0] = {};
             // get dataset
             auto const dataset = PGM_deserializer_get_dataset(hl, deserializer);
-            auto const info = PGM_writable_dataset_get_info(hl, dataset);
+            auto const info = PGM_dataset_writable_get_info(hl, dataset);
             // check meta data
             CHECK(PGM_dataset_info_name(hl, info) == "input"s);
             CHECK(PGM_dataset_info_is_batch(hl, info) == is_batch);
@@ -84,7 +84,7 @@ TEST_CASE("Serialization") {
             CHECK(PGM_dataset_info_elements_per_scenario(hl, info, 0) == elements_per_scenario);
             CHECK(PGM_dataset_info_total_elements(hl, info, 0) == total_elements);
             // set buffer
-            PGM_writable_dataset_set_buffer(hl, dataset, "node", nullptr, node.data());
+            PGM_dataset_writable_set_buffer(hl, dataset, "node", nullptr, node.data());
             CHECK(PGM_error_code(hl) == PGM_no_error);
             // parse
             PGM_deserializer_parse_to_buffer(hl, deserializer);

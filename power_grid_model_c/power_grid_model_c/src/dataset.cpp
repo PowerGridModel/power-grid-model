@@ -41,7 +41,7 @@ PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* /*unused*/, PGM_DatasetInfo 
     return info->component_info[component_idx].total_elements;
 }
 
-PGM_ConstDataset* PGM_create_const_dataset(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
+PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                            PGM_Idx batch_size) {
     return call_with_catch(
         handle,
@@ -51,9 +51,9 @@ PGM_ConstDataset* PGM_create_const_dataset(PGM_Handle* handle, char const* datas
         PGM_regular_error);
 }
 
-void PGM_destroy_const_dataset(PGM_ConstDataset* dataset) { delete dataset; }
+void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) { delete dataset; }
 
-void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
+void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                   PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
                                   void const* data) {
     call_with_catch(
@@ -61,15 +61,15 @@ void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
         PGM_regular_error);
 }
 
-PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle* /*unused*/, PGM_ConstDataset const* dataset) {
+PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* /*unused*/, PGM_ConstDataset const* dataset) {
     return &dataset->get_description();
 }
 
-PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle* /*unused*/, PGM_WritableDataset const* dataset) {
+PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* /*unused*/, PGM_WritableDataset const* dataset) {
     return &dataset->get_description();
 }
 
-void PGM_writable_dataset_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
+void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
                                      PGM_Idx* indptr, void* data) {
     call_with_catch(
         handle, [&]() { dataset->set_buffer(component, indptr, data); }, PGM_regular_error);

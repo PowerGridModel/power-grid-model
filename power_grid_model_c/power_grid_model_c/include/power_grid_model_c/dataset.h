@@ -90,17 +90,17 @@ PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetI
  * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single.
  * @param batch_size The size of the batch. For single datasets, this must be 1.
  * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_const_dataset().
+ *    The instance must be freed by PGM_destroy_dataset_const().
  */
-PGM_API PGM_ConstDataset* PGM_create_const_dataset(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
+PGM_API PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                    PGM_Idx batch_size);
 
 /**
  * @brief Destroy an instance of PGM_ConstDataset.
- * @param dataset The pointer to the PGM_ConstDataset created by PGM_create_const_dataset().
+ * @param dataset The pointer to the PGM_ConstDataset created by PGM_create_dataset_const().
  * @return
  */
-PGM_API void PGM_destroy_const_dataset(PGM_ConstDataset* dataset);
+PGM_API void PGM_destroy_dataset_const(PGM_ConstDataset* dataset);
 
 /**
  * @brief Add a component buffer to an instance of PGM_ConstDataset.
@@ -120,7 +120,7 @@ PGM_API void PGM_destroy_const_dataset(PGM_ConstDataset* dataset);
  * @param data A void pointer to the buffer data.
  * @return
  */
-PGM_API void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
+PGM_API void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                           PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
                                           void const* data);
 
@@ -131,7 +131,7 @@ PGM_API void PGM_const_dataset_add_buffer(PGM_Handle* handle, PGM_ConstDataset* 
  * @return A pointer to the instance of PGM_DatasetInfo.
  *     The pointer has the same lifetime as the input dataset pointer.
  */
-PGM_API PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset);
+PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset);
 
 /**
  * @brief Get the dataset info of the instance PGM_WritableDataset.
@@ -140,7 +140,7 @@ PGM_API PGM_DatasetInfo const* PGM_const_dataset_get_info(PGM_Handle* handle, PG
  * @return A pointer to the instance of PGM_DatasetInfo.
  *     The pointer has the same lifetime as the input dataset pointer.
  */
-PGM_API PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset);
+PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset);
 
 /**
  * @brief Set buffer into the instance PGM_WritableDataset.
@@ -153,7 +153,7 @@ PGM_API PGM_DatasetInfo const* PGM_writable_dataset_get_info(PGM_Handle* handle,
  * @param data A void pointer to the buffer data.
  * @return
  */
-PGM_API void PGM_writable_dataset_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
+PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
                                              PGM_Idx* indptr, void* data);
 
 #ifdef __cplusplus
