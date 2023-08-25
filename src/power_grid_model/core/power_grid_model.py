@@ -7,7 +7,7 @@
 Main power grid model class
 """
 from enum import IntEnum
-from typing import Dict, List, Optional, Set, Union, Type
+from typing import Dict, List, Optional, Set, Type, Union
 
 import numpy as np
 
@@ -464,7 +464,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
-        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum
+        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.

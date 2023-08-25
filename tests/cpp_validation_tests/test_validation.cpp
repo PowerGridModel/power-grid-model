@@ -376,10 +376,8 @@ std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"iec60909", CalculationMethod::iec60909},
 };
 std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
-    {"minimum", ShortCircuitVoltageScaling::minimum}, 
-    {"maximum", ShortCircuitVoltageScaling::maximum}
-};
-    using CalculationFunc =
+    {"minimum", ShortCircuitVoltageScaling::minimum}, {"maximum", ShortCircuitVoltageScaling::maximum}};
+using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, Dataset const&, ConstDataset const&, Idx)>;
 
 // case parameters
@@ -435,9 +433,9 @@ CalculationFunc calculation_func(CaseParam const& param) {
     }
     if (calculation_type == "short_circuit"s) {
         return [voltage_scaling](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                  ConstDataset const& update_dataset, Idx threading) {
-            return model.calculate_short_circuit(sc_voltage_scaling_mapping.at(voltage_scaling), calculation_method, dataset, update_dataset,
-                                                 threading);
+                                 ConstDataset const& update_dataset, Idx threading) {
+            return model.calculate_short_circuit(sc_voltage_scaling_mapping.at(voltage_scaling), calculation_method,
+                                                 dataset, update_dataset, threading);
         };
     }
     throw UnsupportedValidationCase{calculation_type, sym};
