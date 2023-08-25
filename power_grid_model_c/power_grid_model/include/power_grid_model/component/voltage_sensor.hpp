@@ -141,4 +141,5 @@ using SymVoltageSensor = VoltageSensor<true>;
 using AsymVoltageSensor = VoltageSensor<false>;
 
 } // namespace power_grid_model
+
 #endif

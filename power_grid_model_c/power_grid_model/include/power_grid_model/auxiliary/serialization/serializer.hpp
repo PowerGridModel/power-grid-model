@@ -8,6 +8,7 @@
 
 #include "../../exception.hpp"
 #include "../../power_grid_model.hpp"
+#include "../dataset_handler.hpp"
 #include "../meta_data.hpp"
 #include "../meta_data_gen.hpp"
 
@@ -25,7 +26,8 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 
     // pack name of component and attribute
     template <class T>
-        requires(std::same_as<T, PGM_MetaComponent> || std::same_as<T, PGM_MetaAttribute>)
+        requires(std::same_as<T, power_grid_model::meta_data::MetaComponent> ||
+                 std::same_as<T, power_grid_model::meta_data::MetaAttribute>)
     struct pack<T const*> {
         template <typename Stream>
         msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p, T const* const& o) const {
@@ -83,78 +85,93 @@ class Serializer {
     // destructor
     ~Serializer() = default;
 
-    Serializer(std::string_view dataset, bool is_batch, Idx batch_size, Idx n_components, char const** components,
-               Idx const* elements_per_scenario, Idx const** indptrs, void const** data)
-        : dataset_{&meta_data().get_dataset(dataset)},
-          is_batch_{is_batch},
-          batch_size_{batch_size},
-          n_components_{n_components},
-          packer_{msgpack_buffer_} {
-        if (!is_batch_ && (batch_size_ != 1)) {
-            throw SerializationError{"For non-batch dataset, batch size should be one!\n"};
+    Serializer(ConstDatasetHandler const& dataset_handler, SerializationFormat serialization_format)
+        : serialization_format_{serialization_format}, dataset_handler_{dataset_handler}, packer_{msgpack_buffer_} {
+        switch (serialization_format_) {
+        case SerializationFormat::json:
+            [[fallthrough]];
+        case SerializationFormat::msgpack:
+            break;
+        default: {
+            using namespace std::string_literals;
+            throw SerializationError("Unsupported serialization format: "s +
+                                     std::to_string(static_cast<IntS>(serialization_format_)));
         }
-        store_buffers(components, elements_per_scenario, indptrs, data);
+        };
+
+        store_buffers();
     }
 
-    std::span<char const> get_msgpack(bool use_compact_list) {
-        if ((msgpack_buffer_.size() == 0) || (use_compact_list_ != use_compact_list)) {
-            serialize(use_compact_list);
+    std::span<char const> get_binary_buffer(bool use_compact_list) {
+        switch (serialization_format_) {
+        case SerializationFormat::json:
+            return get_json(use_compact_list, -1);
+        case SerializationFormat::msgpack:
+            return get_msgpack(use_compact_list);
+        default:
+            using namespace std::string_literals;
+            throw SerializationError("Serialization format "s +
+                                     std::to_string(static_cast<IntS>(serialization_format_)) +
+                                     " does not support binary buffer output");
         }
-        return {msgpack_buffer_.data(), msgpack_buffer_.size()};
     }
 
-    std::string const& get_json(bool use_compact_list, Idx indent) {
-        if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
-            auto const json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
-            json_indent_ = indent;
-            json_buffer_ = json_document.dump(static_cast<int>(indent));
+    std::string const& get_string(bool use_compact_list, Idx indent) {
+        switch (serialization_format_) {
+        case SerializationFormat::json:
+            return get_json(use_compact_list, indent);
+        case SerializationFormat::msgpack:
+            [[fallthrough]];
+        default:
+            using namespace std::string_literals;
+            throw SerializationError("Serialization format "s +
+                                     std::to_string(static_cast<IntS>(serialization_format_)) +
+                                     " does not support string output");
         }
-        return json_buffer_;
     }
 
   private:
-    MetaDataset const* dataset_;
-    bool is_batch_;
-    Idx batch_size_;
-    Idx n_components_;
+    SerializationFormat serialization_format_{};
+
+    ConstDatasetHandler dataset_handler_;
     std::vector<ScenarioBuffer> scenario_buffers_;   // list of scenarios, then list of components, omit empty
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
+
     // msgpack pakcer
     msgpack::sbuffer msgpack_buffer_{};
     msgpack::packer<msgpack::sbuffer> packer_;
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
+
     // json
     Idx json_indent_{-1};
     std::string json_buffer_;
 
-    void store_buffers(char const** components, Idx const* elements_per_scenario, Idx const** indptrs,
-                       void const** data) {
-        scenario_buffers_.resize(batch_size_);
-        for (Idx scenario = 0; scenario != batch_size_; ++scenario) {
-            scenario_buffers_[scenario] =
-                create_scenario_buffer_view(components, elements_per_scenario, indptrs, data, scenario);
+    void store_buffers() {
+        scenario_buffers_.resize(dataset_handler_.batch_size());
+        for (Idx scenario = 0; scenario != dataset_handler_.batch_size(); ++scenario) {
+            scenario_buffers_[scenario] = create_scenario_buffer_view(scenario);
         }
-        component_buffers_ =
-            create_scenario_buffer_view(components, elements_per_scenario, indptrs, data).component_buffers;
+        component_buffers_ = create_scenario_buffer_view().component_buffers;
     }
 
-    ScenarioBuffer create_scenario_buffer_view(char const** components, Idx const* elements_per_scenario,
-                                               Idx const** indptrs, void const** data, Idx scenario = -1) {
+    ScenarioBuffer create_scenario_buffer_view(Idx scenario = -1) {
         ScenarioBuffer scenario_buffer{};
         Idx const begin_scenario = scenario < 0 ? 0 : scenario;
-        Idx const end_scenario = scenario < 0 ? batch_size_ : begin_scenario + 1;
-        for (Idx component = 0; component != n_components_; ++component) {
+        Idx const end_scenario = scenario < 0 ? dataset_handler_.batch_size() : begin_scenario + 1;
+        for (Idx component = 0; component != dataset_handler_.n_components(); ++component) {
             ComponentBuffer component_buffer{};
-            component_buffer.component = &dataset_->get_component(components[component]);
-            if (elements_per_scenario[component] < 0) {
+            ComponentInfo const& info = dataset_handler_.get_component_info(component);
+            ConstDatasetHandler::Buffer const& buffer = dataset_handler_.get_buffer(component);
+            component_buffer.component = info.component;
+            if (info.elements_per_scenario < 0) {
                 component_buffer.data =
-                    component_buffer.component->advance_ptr(data[component], indptrs[component][begin_scenario]);
-                component_buffer.size = indptrs[component][end_scenario] - indptrs[component][begin_scenario];
+                    component_buffer.component->advance_ptr(buffer.data, buffer.indptr[begin_scenario]);
+                component_buffer.size = buffer.indptr[end_scenario] - buffer.indptr[begin_scenario];
             } else {
-                component_buffer.data = component_buffer.component->advance_ptr(
-                    data[component], elements_per_scenario[component] * begin_scenario);
-                component_buffer.size = elements_per_scenario[component] * (end_scenario - begin_scenario);
+                component_buffer.data =
+                    component_buffer.component->advance_ptr(buffer.data, info.elements_per_scenario * begin_scenario);
+                component_buffer.size = info.elements_per_scenario * (end_scenario - begin_scenario);
             }
             // only store the view if it is non-empty
             if (component_buffer.size > 0) {
@@ -179,6 +196,22 @@ class Serializer {
         }
     }
 
+    std::span<char const> get_msgpack(bool use_compact_list) {
+        if ((msgpack_buffer_.size() == 0) || (use_compact_list_ != use_compact_list)) {
+            serialize(use_compact_list);
+        }
+        return {msgpack_buffer_.data(), msgpack_buffer_.size()};
+    }
+
+    std::string const& get_json(bool use_compact_list, Idx indent) {
+        if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
+            auto const json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
+            json_indent_ = indent;
+            json_buffer_ = json_document.dump(static_cast<int>(indent));
+        }
+        return json_buffer_;
+    }
+
     void serialize(bool use_compact_list) {
         msgpack_buffer_.clear();
         use_compact_list_ = use_compact_list;
@@ -193,16 +226,16 @@ class Serializer {
     }
 
     void pack_root_dict() {
-        packer_.pack_map(size_top_dict);
+        pack_map(size_top_dict);
 
         packer_.pack("version");
         packer_.pack(version);
 
         packer_.pack("type");
-        packer_.pack(dataset_->name);
+        packer_.pack(dataset_handler_.dataset().name);
 
         packer_.pack("is_batch");
-        packer_.pack(is_batch_);
+        packer_.pack(dataset_handler_.is_batch());
     }
 
     void pack_attributes() {
@@ -213,8 +246,8 @@ class Serializer {
     void pack_data() {
         packer_.pack("data");
         // as an array for batch
-        if (is_batch_) {
-            packer_.pack_array(static_cast<uint32_t>(batch_size_));
+        if (dataset_handler_.is_batch()) {
+            pack_array(dataset_handler_.batch_size());
         }
         // pack scenarios
         for (auto const& scenario_buffer : scenario_buffers_) {
@@ -223,7 +256,7 @@ class Serializer {
     }
 
     void pack_scenario(ScenarioBuffer const& scenario_buffer) {
-        packer_.pack_map(static_cast<uint32_t>(scenario_buffer.component_buffers.size()));
+        pack_map(scenario_buffer.component_buffers.size());
         for (auto const& component_buffer : scenario_buffer.component_buffers) {
             pack_component(component_buffer);
         }
@@ -231,7 +264,7 @@ class Serializer {
 
     void pack_component(ComponentBuffer const& component_buffer) {
         packer_.pack(component_buffer.component);
-        packer_.pack_array(static_cast<uint32_t>(component_buffer.size));
+        pack_array(component_buffer.size);
         bool const use_compact_list = use_compact_list_;
         auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
             if (!use_compact_list) {
@@ -252,7 +285,7 @@ class Serializer {
     }
 
     void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {
-        packer_.pack_array(static_cast<uint32_t>(attributes.size()));
+        pack_array(attributes.size());
         for (auto const* const attribute : attributes) {
             if (check_nan(element_ptr, *attribute)) {
                 packer_.pack_nil();
@@ -265,15 +298,33 @@ class Serializer {
     void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {
         uint32_t valid_attributes_count = 0;
         for (auto const& attribute : component_buffer.component->attributes) {
-            valid_attributes_count += !check_nan(element_ptr, attribute);
+            valid_attributes_count += static_cast<uint32_t>(!check_nan(element_ptr, attribute));
         }
-        packer_.pack_map(valid_attributes_count);
+        pack_map(valid_attributes_count);
         for (auto const& attribute : component_buffer.component->attributes) {
             if (!check_nan(element_ptr, attribute)) {
                 packer_.pack(attribute.name);
                 pack_attribute(element_ptr, attribute);
             }
         }
+    }
+
+    void pack_array(std::integral auto count) {
+        if (!std::in_range<uint32_t>(count)) {
+            using namespace std::string_literals;
+
+            throw SerializationError{"Too many objects to pack in array ("s + std::to_string(count) + ")"s};
+        }
+        packer_.pack_array(static_cast<uint32_t>(count));
+    }
+
+    void pack_map(std::integral auto count) {
+        if (!std::in_range<uint32_t>(count)) {
+            using namespace std::string_literals;
+
+            throw SerializationError{"Too many objects to pack in map ("s + std::to_string(count) + ")"s};
+        }
+        packer_.pack_map(static_cast<uint32_t>(count));
     }
 
     static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {

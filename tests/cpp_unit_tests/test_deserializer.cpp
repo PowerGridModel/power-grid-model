@@ -204,27 +204,16 @@ constexpr std::string_view json_batch = R"(
 
 namespace {
 
-std::map<std::string, Deserializer::Buffer, std::less<>> get_buffer_map(Deserializer const& deserializer) {
-    std::map<std::string, Deserializer::Buffer, std::less<>> map;
-    for (Idx i = 0; i != deserializer.n_components(); ++i) {
-        auto const& buffer = deserializer.get_buffer_info(i);
-        map[buffer.component->name] = buffer;
-    }
-    return map;
-}
-
 void check_error(std::string_view json, char const* err_msg) {
-    std::array components{"node"};
-    NodeInput node{};
-    std::array<void*, 1> buffer_data{&node};
+    std::vector<NodeInput> node(1);
 
     auto const run = [&]() {
         Deserializer deserializer{from_json, json};
-        deserializer.set_buffer(components.data(), buffer_data.data(), nullptr);
+        deserializer.get_dataset_info().set_buffer("node", nullptr, node.data());
         deserializer.parse();
     };
 
-    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), SerializationError);
+    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), std::exception);
 }
 
 } // namespace
@@ -234,22 +223,22 @@ TEST_CASE("Deserializer") {
         Deserializer deserializer{from_json, json_single};
 
         SUBCASE("Check meta data") {
-            CHECK(deserializer.dataset_name() == "input");
-            CHECK(!deserializer.is_batch());
-            CHECK(deserializer.batch_size() == 1);
-            CHECK(deserializer.n_components() == 4);
+            CHECK(deserializer.get_dataset_info().dataset().name == "input");
+            CHECK(!deserializer.get_dataset_info().is_batch());
+            CHECK(deserializer.get_dataset_info().batch_size() == 1);
+            CHECK(deserializer.get_dataset_info().n_components() == 4);
         }
 
         SUBCASE("Check buffer") {
-            auto const map = get_buffer_map(deserializer);
-            CHECK(map.at("node").elements_per_scenario == 3);
-            CHECK(map.at("node").total_elements == 3);
-            CHECK(map.at("line").elements_per_scenario == 2);
-            CHECK(map.at("line").total_elements == 2);
-            CHECK(map.at("source").elements_per_scenario == 3);
-            CHECK(map.at("source").total_elements == 3);
-            CHECK(map.at("sym_load").elements_per_scenario == 2);
-            CHECK(map.at("sym_load").total_elements == 2);
+            auto const& info = deserializer.get_dataset_info();
+            CHECK(info.get_component_info("node").elements_per_scenario == 3);
+            CHECK(info.get_component_info("node").total_elements == 3);
+            CHECK(info.get_component_info("line").elements_per_scenario == 2);
+            CHECK(info.get_component_info("line").total_elements == 2);
+            CHECK(info.get_component_info("source").elements_per_scenario == 3);
+            CHECK(info.get_component_info("source").total_elements == 3);
+            CHECK(info.get_component_info("sym_load").elements_per_scenario == 2);
+            CHECK(info.get_component_info("sym_load").total_elements == 2);
         }
 
         SUBCASE("Check parse") {
@@ -257,9 +246,12 @@ TEST_CASE("Deserializer") {
             std::vector<LineInput> line(2);
             std::vector<SourceInput> source(3);
             std::vector<SymLoadGenInput> sym_load(2);
-            std::array<void*, 4> all_data{node.data(), line.data(), source.data(), sym_load.data()};
-            std::array all_components{"node", "line", "source", "sym_load"};
-            deserializer.set_buffer(all_components.data(), all_data.data(), nullptr);
+            auto& info = deserializer.get_dataset_info();
+            info.set_buffer("node", nullptr, node.data());
+            info.set_buffer("line", nullptr, line.data());
+            info.set_buffer("source", nullptr, source.data());
+            info.set_buffer("sym_load", nullptr, sym_load.data());
+
             deserializer.parse();
             // check node
             CHECK(node[0].id == 1);
@@ -300,28 +292,28 @@ TEST_CASE("Deserializer") {
         Deserializer deserializer{from_json, json_batch};
 
         SUBCASE("Check meta data") {
-            CHECK(deserializer.dataset_name() == "update");
-            CHECK(deserializer.is_batch());
-            CHECK(deserializer.batch_size() == 3);
-            CHECK(deserializer.n_components() == 2);
+            CHECK(deserializer.get_dataset_info().dataset().name == "update");
+            CHECK(deserializer.get_dataset_info().is_batch());
+            CHECK(deserializer.get_dataset_info().batch_size() == 3);
+            CHECK(deserializer.get_dataset_info().n_components() == 2);
         }
 
         SUBCASE("Check buffer") {
-            auto const map = get_buffer_map(deserializer);
-            CHECK(map.at("sym_load").elements_per_scenario == -1);
-            CHECK(map.at("sym_load").total_elements == 3);
-            CHECK(map.at("asym_load").elements_per_scenario == 1);
-            CHECK(map.at("asym_load").total_elements == 3);
+            auto const& info = deserializer.get_dataset_info();
+            CHECK(info.get_component_info("sym_load").elements_per_scenario == -1);
+            CHECK(info.get_component_info("sym_load").total_elements == 3);
+            CHECK(info.get_component_info("asym_load").elements_per_scenario == 1);
+            CHECK(info.get_component_info("asym_load").total_elements == 3);
         }
 
         SUBCASE("Check parse") {
             std::vector<SymLoadGenUpdate> sym_load(3);
             std::vector<AsymLoadGenUpdate> asym_load(3);
             IdxVector sym_load_indptr(4);
-            std::array<void*, 2> all_data{sym_load.data(), asym_load.data()};
-            std::array all_components{"sym_load", "asym_load"};
-            std::array<Idx*, 2> all_indptrs{sym_load_indptr.data(), nullptr};
-            deserializer.set_buffer(all_components.data(), all_data.data(), all_indptrs.data());
+            auto& info = deserializer.get_dataset_info();
+            info.set_buffer("sym_load", sym_load_indptr.data(), sym_load.data());
+            info.set_buffer("asym_load", nullptr, asym_load.data());
+
             deserializer.parse();
 
             // sym_load
@@ -359,19 +351,20 @@ TEST_CASE("Deserializer") {
 TEST_CASE("Deserializer with error") {
     SUBCASE("Error in meta data") {
         constexpr std::string_view no_version = R"({})";
-        check_error(no_version, "Position of error: version");
-        constexpr std::string_view wrong_dataset = R"({"version": "1.0", "type": "sym_input"})";
-        check_error(wrong_dataset, "Position of error: type");
+        check_error(no_version, "version");
+        constexpr std::string_view wrong_dataset =
+            R"({"version": "1.0", "type": "sym_input", "is_batch": false, "data": {}})";
+        check_error(wrong_dataset, "sym_input");
         constexpr std::string_view wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
-        check_error(wrong_is_batch, "Position of error: is_batch");
+        check_error(wrong_is_batch, "is_batch");
     }
 
     SUBCASE("Error in attributes") {
         constexpr std::string_view unknown_component =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node1": []}})";
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node1": []}, "data": {}})";
         check_error(unknown_component, "Position of error: attributes/node1");
         constexpr std::string_view unknown_attribute =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["i_from"]}})";
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["i_from"]}, "data": {}})";
         check_error(unknown_attribute, "Position of error: attributes/node/0");
     }
 

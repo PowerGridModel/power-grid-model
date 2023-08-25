@@ -22,6 +22,9 @@ using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<&PGM_destroy_handle
 using OptionPtr = std::unique_ptr<PGM_Options, DeleterFunctor<&PGM_destroy_options>>;
 using ModelPtr = std::unique_ptr<PGM_PowerGridModel, DeleterFunctor<&PGM_destroy_model>>;
 using BufferPtr = std::unique_ptr<void, DeleterFunctor<&PGM_destroy_buffer>>;
+using SerializerPtr = std::unique_ptr<PGM_Serializer, DeleterFunctor<&PGM_destroy_serializer>>;
+using DeserializerPtr = std::unique_ptr<PGM_Deserializer, DeleterFunctor<&PGM_destroy_deserializer>>;
+using ConstDatasetPtr = std::unique_ptr<PGM_ConstDataset, DeleterFunctor<&PGM_destroy_dataset_const>>;
 
 } // namespace power_grid_model
 

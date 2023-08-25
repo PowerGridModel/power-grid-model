@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+#include "forward_declarations.hpp"
+
 #include "power_grid_model_c/model.h"
 
 #include "handle.hpp"
@@ -28,56 +30,40 @@ struct PGM_PowerGridModel : public MainModel {
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency, PGM_Idx n_components,
                                      char const** components, PGM_Idx const* component_sizes,
                                      RawDataConstPtr* input_data) {
-    PGM_clear_error(handle);
     ConstDataset dataset{};
     for (Idx i = 0; i != n_components; ++i) {
         dataset[components[i]] = ConstDataPointer{input_data[i], component_sizes[i]};
     }
-    try {
-        return new PGM_PowerGridModel{system_frequency, dataset, 0};
-    } catch (std::exception& e) {
-        handle->err_code = PGM_regular_error;
-        handle->err_msg = e.what();
-        return nullptr;
-    }
+    return call_with_catch(
+        handle,
+        [&] {
+            return new PGM_PowerGridModel{system_frequency, dataset, 0};
+        },
+        PGM_regular_error);
 }
 
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_components, char const** components,
                       PGM_Idx const* component_sizes, RawDataConstPtr* update_data) {
-    PGM_clear_error(handle);
     ConstDataset dataset{};
     for (Idx i = 0; i != n_components; ++i) {
         dataset[components[i]] = ConstDataPointer{update_data[i], component_sizes[i]};
     }
-    try {
-        model->update_component<MainModel::permanent_update_t>(dataset);
-    } catch (std::exception& e) {
-        handle->err_code = PGM_regular_error;
-        handle->err_msg = e.what();
-    }
+    call_with_catch(
+        handle, [&] { model->update_component<MainModel::permanent_update_t>(dataset); }, PGM_regular_error);
 }
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
-    try {
-        return new PGM_PowerGridModel{*model};
-    } catch (std::exception& e) {
-        handle->err_code = PGM_regular_error;
-        handle->err_msg = e.what();
-        return nullptr;
-    }
+    return call_with_catch(
+        handle, [&] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
 }
 
 // get indexer
 void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
                      PGM_ID const* ids, PGM_Idx* indexer) {
-    try {
-        model->get_indexer(component, ids, size, indexer);
-    } catch (std::exception& e) {
-        handle->err_code = PGM_regular_error;
-        handle->err_msg = e.what();
-    }
+    call_with_catch(
+        handle, [&] { model->get_indexer(component, ids, size, indexer); }, PGM_regular_error);
 }
 
 // run calculation
