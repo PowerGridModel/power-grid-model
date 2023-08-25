@@ -19,7 +19,7 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
                                                              PGM_Idx serialization_format) {
     return call_with_catch(
         handle,
-        [&] {
+        [data, size, serialization_format] {
             return new PGM_Deserializer{from_buffer,
                                         {data, static_cast<size_t>(size)},
                                         static_cast<power_grid_model::SerializationFormat>(serialization_format)};
@@ -31,7 +31,7 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
                                                                       PGM_Idx serialization_format) {
     return call_with_catch(
         handle,
-        [&] {
+        [data_string, serialization_format] {
             return new PGM_Deserializer{from_string, data_string,
                                         static_cast<power_grid_model::SerializationFormat>(serialization_format)};
         },
@@ -44,7 +44,7 @@ PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* /*unused*/, PGM_De
 
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) {
     call_with_catch(
-        handle, [&] { deserializer->parse(); }, PGM_serialization_error);
+        handle, [deserializer] { deserializer->parse(); }, PGM_serialization_error);
 }
 
 // false warning from clang-tidy
@@ -55,7 +55,7 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
                                       PGM_Idx serialization_format) {
     return call_with_catch(
         handle,
-        [&] {
+        [dataset, serialization_format] {
             return new PGM_Serializer{*dataset,
                                       static_cast<power_grid_model::SerializationFormat>(serialization_format)};
         },
@@ -66,7 +66,7 @@ void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* ser
                                          char const** data, PGM_Idx* size) {
     call_with_catch(
         handle,
-        [&] {
+        [serializer, use_compact_list, data, size] {
             auto const buffer_data = serializer->get_binary_buffer(static_cast<bool>(use_compact_list));
             *data = buffer_data.data();
             *size = static_cast<PGM_Idx>(buffer_data.size());
@@ -77,7 +77,10 @@ void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* ser
 char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM_Serializer* serializer,
                                                          PGM_Idx use_compact_list, PGM_Idx indent) {
     return call_with_catch(
-        handle, [&] { return serializer->get_string(static_cast<bool>(use_compact_list), indent).c_str(); },
+        handle,
+        [serializer, use_compact_list, indent] {
+            return serializer->get_string(static_cast<bool>(use_compact_list), indent).c_str();
+        },
         PGM_serialization_error);
 }
 

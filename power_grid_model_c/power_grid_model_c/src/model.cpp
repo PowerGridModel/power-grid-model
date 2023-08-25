@@ -36,7 +36,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     }
     return call_with_catch(
         handle,
-        [&] {
+        [system_frequency, &dataset] {
             return new PGM_PowerGridModel{system_frequency, dataset, 0};
         },
         PGM_regular_error);
@@ -50,20 +50,22 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Idx n_c
         dataset[components[i]] = ConstDataPointer{update_data[i], component_sizes[i]};
     }
     call_with_catch(
-        handle, [&] { model->update_component<MainModel::permanent_update_t>(dataset); }, PGM_regular_error);
+        handle, [model, &dataset] { model->update_component<MainModel::permanent_update_t>(dataset); },
+        PGM_regular_error);
 }
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
     return call_with_catch(
-        handle, [&] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
+        handle, [model] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
 }
 
 // get indexer
 void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
                      PGM_ID const* ids, PGM_Idx* indexer) {
     call_with_catch(
-        handle, [&] { model->get_indexer(component, ids, size, indexer); }, PGM_regular_error);
+        handle, [model, component, size, ids, indexer] { model->get_indexer(component, ids, size, indexer); },
+        PGM_regular_error);
 }
 
 // run calculation

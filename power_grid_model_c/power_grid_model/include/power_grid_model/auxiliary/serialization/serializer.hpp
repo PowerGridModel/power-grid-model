@@ -60,10 +60,11 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 namespace power_grid_model::meta_data {
 
 class Serializer {
+    using RawElementPtr = void const*;
 
     struct ComponentBuffer {
         MetaComponent const* component;
-        void const* data;
+        RawElementPtr data;
         Idx size;
     };
 
@@ -97,7 +98,7 @@ class Serializer {
             throw SerializationError("Unsupported serialization format: "s +
                                      std::to_string(static_cast<IntS>(serialization_format_)));
         }
-        };
+        }
 
         store_buffers();
     }
@@ -108,11 +109,12 @@ class Serializer {
             return get_json(use_compact_list, -1);
         case SerializationFormat::msgpack:
             return get_msgpack(use_compact_list);
-        default:
+        default: {
             using namespace std::string_literals;
             throw SerializationError("Serialization format "s +
                                      std::to_string(static_cast<IntS>(serialization_format_)) +
-                                     " does not support binary buffer output");
+                                     " does not support binary buffer output"s);
+        }
         }
     }
 
@@ -122,11 +124,12 @@ class Serializer {
             return get_json(use_compact_list, indent);
         case SerializationFormat::msgpack:
             [[fallthrough]];
-        default:
+        default: {
             using namespace std::string_literals;
             throw SerializationError("Serialization format "s +
                                      std::to_string(static_cast<IntS>(serialization_format_)) +
-                                     " does not support string output");
+                                     " does not support string output"s);
+        }
         }
     }
 
@@ -155,7 +158,7 @@ class Serializer {
         component_buffers_ = create_scenario_buffer_view().component_buffers;
     }
 
-    ScenarioBuffer create_scenario_buffer_view(Idx scenario = -1) {
+    ScenarioBuffer create_scenario_buffer_view(Idx scenario = -1) const {
         ScenarioBuffer scenario_buffer{};
         Idx const begin_scenario = scenario < 0 ? 0 : scenario;
         Idx const end_scenario = scenario < 0 ? dataset_handler_.batch_size() : begin_scenario + 1;
@@ -275,7 +278,7 @@ class Serializer {
             return found->second;
         }();
         for (Idx element = 0; element != component_buffer.size; ++element) {
-            void const* element_ptr = component_buffer.component->advance_ptr(component_buffer.data, element);
+            RawElementPtr element_ptr = component_buffer.component->advance_ptr(component_buffer.data, element);
             if (use_compact_list) {
                 pack_element_in_list(element_ptr, attributes);
             } else {
@@ -284,7 +287,7 @@ class Serializer {
         }
     }
 
-    void pack_element_in_list(void const* element_ptr, std::span<MetaAttribute const* const> attributes) {
+    void pack_element_in_list(RawElementPtr element_ptr, std::span<MetaAttribute const* const> attributes) {
         pack_array(attributes.size());
         for (auto const* const attribute : attributes) {
             if (check_nan(element_ptr, *attribute)) {
@@ -295,7 +298,7 @@ class Serializer {
         }
     }
 
-    void pack_element_in_dict(void const* element_ptr, ComponentBuffer const& component_buffer) {
+    void pack_element_in_dict(RawElementPtr element_ptr, ComponentBuffer const& component_buffer) {
         uint32_t valid_attributes_count = 0;
         for (auto const& attribute : component_buffer.component->attributes) {
             valid_attributes_count += static_cast<uint32_t>(!check_nan(element_ptr, attribute));
@@ -327,14 +330,16 @@ class Serializer {
         packer_.pack_map(static_cast<uint32_t>(count));
     }
 
-    static bool check_nan(void const* element_ptr, MetaAttribute const& attribute) {
-        return ctype_func_selector(attribute.ctype,
-                                   [&]<class T> { return is_nan(attribute.get_attribute<T const>(element_ptr)); });
+    static bool check_nan(RawElementPtr element_ptr, MetaAttribute const& attribute) {
+        return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
+            return is_nan(attribute.get_attribute<T const>(element_ptr));
+        });
     }
 
-    void pack_attribute(void const* element_ptr, MetaAttribute const& attribute) {
-        ctype_func_selector(attribute.ctype,
-                            [&]<class T> { packer_.pack(attribute.get_attribute<T const>(element_ptr)); });
+    void pack_attribute(RawElementPtr element_ptr, MetaAttribute const& attribute) {
+        ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<class T> {
+            packer_.pack(attribute.get_attribute<T const>(element_ptr));
+        });
     }
 };
 
