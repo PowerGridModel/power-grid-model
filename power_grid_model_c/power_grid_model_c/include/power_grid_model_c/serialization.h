@@ -18,23 +18,28 @@ extern "C" {
 #endif
 
 /**
- * @brief Create a deserializer from msgpack byte stream.
+ * @brief Create a deserializer from binary buffer/byte stream.
  * @param handle
  * @param data The pointer to the byte stream.
  * @param size The size of the byte stream.
+ * @param serialization_format The desired data format of the serialization. See #PGM_SerializationFormat .
  * @return A pointer to the deserializer instance. Should be freed by PGM_destroy_deserializer().
  *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size);
+PGM_API PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle, char const* data, PGM_Idx size,
+                                                                     PGM_Idx serialization_format);
 
 /**
- * @brief Create a deserializer from msgpack byte stream.
+ * @brief Create a deserializer from a null terminated C string.
  * @param handle
- * @param json_string pointer to a null-terminated json string
+ * @param data_string The pointer to the null-terminated C string.
+ * @param serialization_format The desired data format of the serialization. See #PGM_SerializationFormat .
  * @return A pointer to the deserializer instance. Should be freed by PGM_destroy_deserializer().
  *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char const* json_string);
+PGM_API PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle,
+                                                                              char const* data_string,
+                                                                              PGM_Idx serialization_format);
 
 /**
  * @brief Get the PGM_WritableDataset object from the deserializer.

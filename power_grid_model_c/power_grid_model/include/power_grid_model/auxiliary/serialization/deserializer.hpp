@@ -76,6 +76,12 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 
 namespace power_grid_model::meta_data {
 
+struct from_string_t {};
+constexpr from_string_t from_string;
+
+struct from_buffer_t {};
+constexpr from_buffer_t from_buffer;
+
 struct from_msgpack_t {};
 constexpr from_msgpack_t from_msgpack;
 
@@ -100,6 +106,12 @@ class Deserializer {
     Deserializer& operator=(Deserializer&&) = default;
     // destructor
     ~Deserializer() = default;
+
+    Deserializer(from_string_t /* tag */, std::string_view data_string, SerializationFormat serialization_format)
+        : Deserializer{create_from_format(data_string, serialization_format)} {}
+
+    Deserializer(from_buffer_t /* tag */, std::span<char const> data_buffer, SerializationFormat serialization_format)
+        : Deserializer{create_from_format(data_buffer, serialization_format)} {}
 
     Deserializer(from_json_t /* tag */, std::string_view json_string)
         : Deserializer{from_msgpack, json_to_msgpack(json_string)} {}
@@ -409,6 +421,34 @@ class Deserializer {
         }
         // call relevant parser
         ctype_func_selector(attribute.ctype, [&]<class T> { obj >> attribute.get_attribute<T>(element_pointer); });
+    }
+
+    static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
+        switch (serialization_format) {
+        case SerializationFormat::json:
+            return Deserializer(from_json, data_string);
+        case SerializationFormat::msgpack:
+            [[fallthrough]];
+        default: {
+            using namespace std::string_literals;
+            throw SerializationError("String data input not supported for serialization format "s +
+                                     std::to_string(static_cast<IntS>(serialization_format)));
+        }
+        }
+    }
+
+    static Deserializer create_from_format(std::span<char const> buffer, SerializationFormat serialization_format) {
+        switch (serialization_format) {
+        case SerializationFormat::json:
+            return Deserializer{from_json, std::string_view{buffer.data(), buffer.size()}};
+        case SerializationFormat::msgpack:
+            return Deserializer{from_msgpack, buffer};
+        default: {
+            using namespace std::string_literals;
+            throw SerializationError("Buffer data input not supported for serialization format "s +
+                                     std::to_string(static_cast<IntS>(serialization_format)));
+        }
+        }
     }
 
     void handle_error(std::exception& e) {

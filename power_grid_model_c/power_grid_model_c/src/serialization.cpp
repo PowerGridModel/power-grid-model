@@ -15,20 +15,25 @@
 
 using namespace power_grid_model::meta_data;
 
-PGM_Deserializer* PGM_create_deserializer_from_msgpack(PGM_Handle* handle, char const* data, PGM_Idx size) {
+PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle, char const* data, PGM_Idx size,
+                                                             PGM_Idx serialization_format) {
     return call_with_catch(
         handle,
         [&] {
-            return new PGM_Deserializer{from_msgpack, {data, static_cast<size_t>(size)}};
+            return new PGM_Deserializer{from_buffer,
+                                        {data, static_cast<size_t>(size)},
+                                        static_cast<power_grid_model::SerializationFormat>(serialization_format)};
         },
         PGM_serialization_error);
 }
 
-PGM_Deserializer* PGM_create_deserializer_from_json(PGM_Handle* handle, char const* json_string) {
+PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle, char const* data_string,
+                                                                      PGM_Idx serialization_format) {
     return call_with_catch(
         handle,
         [&] {
-            return new PGM_Deserializer{from_json, json_string};
+            return new PGM_Deserializer{from_string, data_string,
+                                        static_cast<power_grid_model::SerializationFormat>(serialization_format)};
         },
         PGM_serialization_error);
 }

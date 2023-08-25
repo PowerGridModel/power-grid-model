@@ -82,10 +82,12 @@ TEST_CASE("Serialization") {
         std::vector<char> msgpack_data;
         nlohmann::json::to_msgpack(json_document, msgpack_data);
 
-        DeserializerPtr unique_deserializer_json(PGM_create_deserializer_from_json(hl, json_data));
+        DeserializerPtr unique_deserializer_json(PGM_create_deserializer_from_null_terminated_string(
+            hl, json_data, static_cast<PGM_Idx>(SerializationFormat::json)));
         CHECK(PGM_error_code(hl) == PGM_no_error);
         DeserializerPtr unique_deserializer_msgpack(
-            PGM_create_deserializer_from_msgpack(hl, msgpack_data.data(), static_cast<Idx>(msgpack_data.size())));
+            PGM_create_deserializer_from_binary_buffer(hl, msgpack_data.data(), static_cast<Idx>(msgpack_data.size()),
+                                                       static_cast<PGM_Idx>(SerializationFormat::msgpack)));
         CHECK(PGM_error_code(hl) == PGM_no_error);
 
         for (PGM_Deserializer* const deserializer :
