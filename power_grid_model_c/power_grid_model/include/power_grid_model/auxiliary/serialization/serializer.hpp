@@ -86,7 +86,7 @@ class Serializer {
     ~Serializer() = default;
 
     Serializer(ConstDatasetHandler const& dataset_handler, SerializationFormat serialization_format)
-        : dataset_handler_{dataset_handler}, packer_{msgpack_buffer_}, serialization_format_{serialization_format} {
+        : serialization_format_{serialization_format}, dataset_handler_{dataset_handler}, packer_{msgpack_buffer_} {
         switch (serialization_format_) {
         case SerializationFormat::json:
             [[fallthrough]];
