@@ -426,7 +426,7 @@ class Deserializer {
     static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
         switch (serialization_format) {
         case SerializationFormat::json:
-            return Deserializer(from_json, data_string);
+            return {from_json, data_string};
         case SerializationFormat::msgpack:
             [[fallthrough]];
         default: {
@@ -440,9 +440,9 @@ class Deserializer {
     static Deserializer create_from_format(std::span<char const> buffer, SerializationFormat serialization_format) {
         switch (serialization_format) {
         case SerializationFormat::json:
-            return Deserializer{from_json, std::string_view{buffer.data(), buffer.size()}};
+            return {from_json, std::string_view{buffer.data(), buffer.size()}};
         case SerializationFormat::msgpack:
-            return Deserializer{from_msgpack, buffer};
+            return {from_msgpack, buffer};
         default: {
             using namespace std::string_literals;
             throw SerializationError("Buffer data input not supported for serialization format "s +
