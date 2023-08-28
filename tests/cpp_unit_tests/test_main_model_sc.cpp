@@ -9,8 +9,6 @@
 namespace power_grid_model {
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
-    ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
-    double voltage_scaling_c = 1.1; // for ShortCircuitVoltageScaling::maximum
 
     SUBCASE("Single node + source") {
         double const u_rated = 10e3;
@@ -21,7 +19,6 @@ TEST_CASE("Test main model - short circuit") {
         double const x_ref = z_ref_abs / sqrt(rx_ratio * rx_ratio + 1.0);
         double const r_ref = x_ref * rx_ratio;
         DoubleComplex const z_ref{r_ref, x_ref};
-        double u_source = u_rated * voltage_scaling_c / sqrt3;
         double const r_f = 0.1;
         double const x_f = 0.1;
         DoubleComplex const z_f{r_f, x_f};
@@ -29,17 +26,20 @@ TEST_CASE("Test main model - short circuit") {
         main_model.add_component<Node>({{{1}, u_rated}});
         main_model.add_component<Source>({{{{2}, 1, 1}, u_ref, nan, sk, rx_ratio, nan}});
 
-        SUBCASE("three phase fault") {
+        SUBCASE("three phase fault - maximum voltage scaling") {
+            ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
+            constexpr double voltage_scaling_c = 1.1;
             main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
             main_model.set_construction_complete();
 
-            DoubleComplex i_f = u_source / (z_ref + z_f);
-            double i_f_abs = cabs(i_f);
-            DoubleComplex u_node = i_f * z_f;
-            double u_node_abs = cabs(u_node);
-            double u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
+            double const u_source = u_rated * voltage_scaling_c / sqrt3;
+            DoubleComplex const i_f = u_source / (z_ref + z_f);
+            double const i_f_abs = cabs(i_f);
+            DoubleComplex const u_node = i_f * z_f;
+            double const u_node_abs = cabs(u_node);
+            double const u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
 
-            SUBCASE("Symmetric Calculation - maximum voltage scaling") {
+            SUBCASE("Symmetric Calculation") {
                 std::vector<ShortCircuitMathOutput<true>> const math_output =
                     main_model.calculate_short_circuit<true>(voltage_scaling, CalculationMethod::iec60909);
 
@@ -53,16 +53,35 @@ TEST_CASE("Test main model - short circuit") {
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
 
-            SUBCASE("Symmetric Calculation - minimum voltage scaling") {
-                voltage_scaling_c = 1.0;
-                u_source = u_rated * voltage_scaling_c / sqrt3;
-                i_f = u_source / (z_ref + z_f);
-                i_f_abs = cabs(i_f);
-                u_node = i_f * z_f;
-                u_node_abs = cabs(u_node);
-                u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
-                std::vector<ShortCircuitMathOutput<true>> const math_output = main_model.calculate_short_circuit<true>(
-                    ShortCircuitVoltageScaling::minimum, CalculationMethod::iec60909);
+            SUBCASE("Asymmetric Calculation") {
+                std::vector<ShortCircuitMathOutput<false>> const math_output =
+                    main_model.calculate_short_circuit<false>(voltage_scaling, CalculationMethod::iec60909);
+
+                std::vector<FaultShortCircuitOutput> fault_output(1);
+                main_model.output_result<Fault>(math_output, fault_output.begin());
+                CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
+
+                std::vector<NodeShortCircuitOutput> node_output(1);
+                main_model.output_result<Node>(math_output, node_output.begin());
+                CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
+            }
+        }
+        SUBCASE("three phase fault - minimum voltage scaling") {
+            ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::minimum;
+            constexpr double voltage_scaling_c = 1.0;
+            main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
+            main_model.set_construction_complete();
+
+            double const u_source = u_rated * voltage_scaling_c / sqrt3;
+            DoubleComplex const i_f = u_source / (z_ref + z_f);
+            double const i_f_abs = cabs(i_f);
+            DoubleComplex const u_node = i_f * z_f;
+            double const u_node_abs = cabs(u_node);
+            double const u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
+
+            SUBCASE("Symmetric Calculation") {
+                std::vector<ShortCircuitMathOutput<true>> const math_output =
+                    main_model.calculate_short_circuit<true>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(math_output, fault_output.begin());
@@ -90,6 +109,9 @@ TEST_CASE("Test main model - short circuit") {
     }
 
     SUBCASE("Two nodes + branch + source") {
+        ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
+        constexpr double voltage_scaling_c = 1.1;
+
         main_model.add_component<Node>({{{1}, 10e4}, {{2}, 10e4}});
         main_model.add_component<Line>({{{{3}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}});
         main_model.add_component<Source>({{{{4}, 1, 1}, 1.0, nan, nan, nan, nan}});
