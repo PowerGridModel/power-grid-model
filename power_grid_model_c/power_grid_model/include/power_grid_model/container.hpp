@@ -22,7 +22,7 @@ namespace power_grid_model {
 namespace container_impl {
 
 // get index of the first true in bool array
-template <size_t N> inline constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx = 0) {
+template <size_t N> constexpr size_t get_index_bool_array(std::array<bool, N> arr, size_t idx = 0) {
     if (idx == N) {
         return N;
     }
@@ -64,7 +64,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // reserve space
     template <class Storageable> void reserve(size_t size) {
-        std::vector<Storageable>& vec = std::get<std::vector<Storageable>>(vectors_);
+        auto& vec = std::get<std::vector<Storageable>>(vectors_);
         vec.reserve(size);
     }
 
@@ -78,7 +78,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         // find group and position
         auto const group = static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
-        std::vector<Storageable>& vec = std::get<std::vector<Storageable>>(vectors_);
+        auto& vec = std::get<std::vector<Storageable>>(vectors_);
         auto const pos = static_cast<Idx>(vec.size());
         // create object
         vec.emplace_back(std::forward<Args>(args)...);
