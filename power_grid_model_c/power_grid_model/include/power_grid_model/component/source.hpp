@@ -83,14 +83,15 @@ class Source : public Appliance {
     // NOTE: for low voltage there is a difference in c for systems with a voltage tolerance of 6% or 10%.
     // Here, a voltage tolerance of 10% is assumed.
     DoubleComplex calc_param(std::pair<double, ShortCircuitVoltageScaling> const& data) const {
-        double voltage_scaling_c{1.0};
-        if (data.second == ShortCircuitVoltageScaling::minimum) {
-            if (data.first <= 1000.0) {
-                voltage_scaling_c = 0.95;
+        double const voltage_scaling_c = [&data] {
+            if (data.second == ShortCircuitVoltageScaling::maximum) {
+                return 1.1;
             }
-        } else {
-            voltage_scaling_c = 1.10;
-        }
+            if (data.first <= 1000.0) {
+                return 0.95;
+            }
+            return 1.0;
+        }();
         return voltage_scaling_c * std::exp(1.0i * u_ref_angle_);
     }
 
