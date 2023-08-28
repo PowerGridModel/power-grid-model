@@ -1280,7 +1280,7 @@ TEST_CASE("Math solver, measurements") {
     using namespace std::placeholders;
     const ComplexValue<true> load_gen_s =
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
-                        bind(std::plus<ComplexValue<true>>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
+                        bind(std::plus<>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
 
     CHECK(output.bus_injection[0] == output.branch[0].s_f);
     CHECK(output.bus_injection[0] == output.source[0].s);
