@@ -32,8 +32,7 @@ template <bool sym> class ShortCircuitSolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
 
-    ShortCircuitMathOutput<sym> run_short_circuit(double voltage_scaling_factor_c, YBus<sym> const& y_bus,
-                                                  ShortCircuitInput const& input) {
+    ShortCircuitMathOutput<sym> run_short_circuit(YBus<sym> const& y_bus, ShortCircuitInput const& input) {
         check_input_valid(input);
 
         auto [fault_type, fault_phase] = extract_fault_type_phase(input.faults);
@@ -73,8 +72,8 @@ template <bool sym> class ShortCircuitSolver {
                  ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                 diagonal_element += y_source; // add y_source to the diagonal of Ybus
-                u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number] *
-                                                         voltage_scaling_factor_c}); // rhs += Y_source * U_source * c
+                u_bus +=
+                    dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source * c
             }
             // skip if no fault
             if (!input.faults.empty()) {
@@ -197,8 +196,7 @@ template <bool sym> class ShortCircuitSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
 
         // post processing
-        calculate_result(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2,
-                         voltage_scaling_factor_c);
+        calculate_result(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
 
         return output;
     }
@@ -217,7 +215,7 @@ template <bool sym> class ShortCircuitSolver {
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
-                          int const phase_1, int const phase_2, double const voltage_scaling_factor_c) const {
+                          int const phase_1, int const phase_2) const {
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
@@ -297,7 +295,7 @@ template <bool sym> class ShortCircuitSolver {
                      source_number != (*source_bus_indptr_)[bus_number + 1]; ++source_number) {
                     ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                     ComplexValue<sym> const i_source_inject_single =
-                        dot(y_source, ComplexValue<sym>{input.source[source_number] * voltage_scaling_factor_c});
+                        dot(y_source, ComplexValue<sym>{input.source[source_number]});
                     output.source[source_number].i = i_source_inject_single - dot(y_source, output.u_bus[bus_number]);
                     i_source_bus += output.source[source_number].i;
                     i_source_inject += i_source_inject_single;

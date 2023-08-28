@@ -24,3 +24,7 @@ void PGM_set_symmetric(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx sym) 
 void PGM_set_err_tol(PGM_Handle* /* handle */, PGM_Options* opt, double err_tol) { opt->err_tol = err_tol; }
 void PGM_set_max_iter(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx max_iter) { opt->max_iter = max_iter; }
 void PGM_set_threading(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx threading) { opt->threading = threading; }
+void PGM_set_short_circuit_voltage_scaling(PGM_Handle* /* handle */, PGM_Options* opt,
+                                           PGM_Idx short_circuit_voltage_scaling) {
+    opt->short_circuit_voltage_scaling = short_circuit_voltage_scaling;
+}

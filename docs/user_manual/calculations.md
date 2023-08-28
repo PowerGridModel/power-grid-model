@@ -77,13 +77,14 @@ a faulty outcome instead of raising a singular matrix error.
 #### Short Circuit Calculations
 
 
-Short circuit calculation is carried out to analyze a worse case scenario where a fault has occurred.
+Short circuit calculation is carried out to analyze the worst case scenario when a fault has occurred.
 The currents flowing through branches and node voltages are calculated.
-Some typical use-cases are selection or design of components like conductors or breakers and power system protection, eg. relay co-ordination.
+Some typical use-cases are selection or design of components like conductors or breakers and power system protection, e.g. relay co-ordination.
 
 Input:
 - Network data: topology + component attributes
 - Fault type and impedance.
+- In the API call: choose between `minimum` and `maximum` voltage scaling to calculate the minimum or maximum short circuit currents (according to IEC 60909).
 
 Output:
 - Node voltage magnitude and angle
@@ -427,20 +428,30 @@ Algorithm call: `CalculationMethod.iterative_linear`
 
 ### Short circuit algorithms
 
-Short circuit calculation is solving of following equations with border conditions of fault added as constraints. 
+In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
 
 $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 
 This gives the initial symmetrical short circuit current ($I_k^{\prime\prime}$) for a fault.
 This quantity is then used to derive almost all further calculations of short circuit studies applications.
 
-The assumptions used for calculations in power-grid-model are aligned to ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
+The assumptions used for calculations in power-grid-model are aligned to the ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
 
 - The state of grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
-- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. Currently, the value is assumed to be `1.1` in the power-grid-model. 
-A detailed table for its selection is mentioned in IEC 60909.
 - The pre-fault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
 - The calculations are assumed to be time-independent. (Voltages are sine throughout with the fault occurring at a zero crossing of the voltage, the complexity of rotating machines and harmonics are neglected, etc.)
+- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. 
+The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents. 
+The table to derive `c` according to IEC 60909 is shown below. 
+
+| Algorithm      | c_max | c_min |
+|----------------|-------|-------|
+| `U_nom` <= 1kV | 1.10  | 0.95  |
+| `U_nom` > 1kV  | 1.10  | 1.00  |
+
+```{note}
+In the IEC 609090 standard, there is a difference in `c` (for `U_nom` <= 1kV) for systems with a voltage tolerance of 6% and 10%. In power-grid-model we only use the value for a 10% voltage tolerance.
+```
 
 There are 4 types of fault situations that can occur in the grid, along with the following possible combinations of the associated phases:
 
