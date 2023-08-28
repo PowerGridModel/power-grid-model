@@ -320,7 +320,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
-    template <bool sym> // TODO: change inputs at all places where function is called
+    template <bool sym>
     std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling,
                                                                       CalculationMethod calculation_method) {
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, ShortCircuitInput>(

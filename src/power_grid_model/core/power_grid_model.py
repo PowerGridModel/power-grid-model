@@ -200,7 +200,7 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        def replace_to_enum(key: str, type_: Type):
+        def replace_to_enum(key: str, type_: Type[IntEnum]):
             if key in kwargs:
                 value = kwargs[key]
                 if isinstance(value, str):
