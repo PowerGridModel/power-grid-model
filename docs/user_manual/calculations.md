@@ -443,13 +443,15 @@ The assumptions used for calculations in power-grid-model are aligned to the one
 - To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. 
 The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents. 
 The table to derive `c` according to IEC 60909 is shown below. 
-NOTE: In the IEC standard there is a difference in `c` (for `U_nom` <= 1kV) for systems with a voltage tolerance of 6% and 10%. In power-grid-model we only use the value for a 10% voltage tolerance.
 
 | Algorithm      | c_max | c_min |
 |----------------|-------|-------|
 | `U_nom` <= 1kV | 1.10  | 0.95  |
 | `U_nom` > 1kV  | 1.10  | 1.00  |
 
+```{note}
+In the IEC 609090 standard, there is a difference in `c` (for `U_nom` <= 1kV) for systems with a voltage tolerance of 6% and 10%. In power-grid-model we only use the value for a 10% voltage tolerance.
+```
 
 There are 4 types of fault situations that can occur in the grid, along with the following possible combinations of the associated phases:
 
