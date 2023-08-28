@@ -428,7 +428,7 @@ Algorithm call: `CalculationMethod.iterative_linear`
 
 ### Short circuit algorithms
 
- In the short circuit calculation the following equations are solved with border conditions of faults added as constraints. 
+In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
 
 $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 
