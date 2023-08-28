@@ -203,6 +203,7 @@ The test grid is as follows:
 :align: center
 ```
 There are 4 cases for the 4 types of fault: three_phase, single_phase_ground, two_phase, two_phase_ground.
+Each case is tested for `minimum` and `maximum` voltage scaling.
 Each case has multiple scenarios. They are combinations of following situations:
 
 - Valid phase combinations: abc, a, b, c, ab, bc, ac
