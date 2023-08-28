@@ -92,7 +92,6 @@ template <bool sym> class MeasuredValues {
           idx_shunt_power_(math_topology().n_shunt()),
           idx_load_gen_power_(math_topology().n_load_gen()),
           idx_source_power_(math_topology().n_source()),
-          n_angle_{},
           // default angle shift
           // sym: 0
           // asym: 0, -120deg, -240deg
@@ -229,7 +228,7 @@ template <bool sym> class MeasuredValues {
     IdxVector idx_load_gen_power_;
     IdxVector idx_source_power_;
     // number of angle measurement
-    Idx n_angle_;
+    Idx n_angle_{};
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
