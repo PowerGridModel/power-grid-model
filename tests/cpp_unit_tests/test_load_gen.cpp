@@ -9,9 +9,9 @@
 namespace power_grid_model {
 
 TEST_CASE("Test load generator") {
-    LoadGenInput<true> sym_load_gen_input{{{{1}, 2, true}, LoadGenType::const_pq}, 3e6, 3e6};
+    LoadGenInput<true> sym_load_gen_input{{{{1}, 2, 1}, LoadGenType::const_pq}, 3e6, 3e6};
     LoadGenInput<false> asym_load_gen_input{
-        {{{1}, 2, true}, LoadGenType::const_pq}, RealValue<false>{1e6}, RealValue<false>{1e6}};
+        {{{1}, 2, 1}, LoadGenType::const_pq}, RealValue<false>{1e6}, RealValue<false>{1e6}};
     SymGenerator sym_gen_pq{sym_load_gen_input, 10e3};
     AsymLoad asym_load_pq{asym_load_gen_input, 10e3};
     sym_load_gen_input.type = LoadGenType::const_i;

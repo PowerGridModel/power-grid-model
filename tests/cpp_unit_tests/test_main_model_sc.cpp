@@ -27,7 +27,7 @@ TEST_CASE("Test main model - short circuit") {
         DoubleComplex const z_f{r_f, x_f};
 
         main_model.add_component<Node>({{{1}, u_rated}});
-        main_model.add_component<Source>({{{{2}, 1, true}, u_ref, nan, sk, rx_ratio, nan}});
+        main_model.add_component<Source>({{{{2}, 1, 1}, u_ref, nan, sk, rx_ratio, nan}});
 
         SUBCASE("three phase fault") {
             main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
@@ -91,8 +91,8 @@ TEST_CASE("Test main model - short circuit") {
 
     SUBCASE("Two nodes + branch + source") {
         main_model.add_component<Node>({{{1}, 10e4}, {{2}, 10e4}});
-        main_model.add_component<Line>({{{{3}, 1, 2, true, true}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}});
-        main_model.add_component<Source>({{{{4}, 1, true}, 1.0, nan, nan, nan, nan}});
+        main_model.add_component<Line>({{{{3}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}});
+        main_model.add_component<Source>({{{{4}, 1, 1}, 1.0, nan, nan, nan, nan}});
 
         SUBCASE("single phase to ground fault") {
             main_model.add_component<Fault>(
@@ -122,8 +122,8 @@ TEST_CASE("Test main model - short circuit") {
 TEST_CASE("Test main model - short circuit - Dataset input") {
     SUBCASE("Two nodes + branch + source") {
         std::vector<NodeInput> node_input{{{1}, 10e4}, {{2}, 10e4}};
-        std::vector<LineInput> line_input{{{{3}, 1, 2, true, true}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
-        std::vector<SourceInput> source_input{{{{4}, 1, true}, 1.0, nan, nan, nan, nan}};
+        std::vector<LineInput> line_input{{{{3}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
+        std::vector<SourceInput> source_input{{{{4}, 1, 1}, 1.0, nan, nan, nan, nan}};
         std::vector<FaultInput> fault_input{
             {{5}, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}};
 
