@@ -542,9 +542,9 @@ template <bool sym> class IterativeLinearSESolver {
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
   public:
-    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
         : n_bus_{y_bus.size()},
-          math_topo_{topo_ptr},
+          math_topo_{std::move(topo_ptr)},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
