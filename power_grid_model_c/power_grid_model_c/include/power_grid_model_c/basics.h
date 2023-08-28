@@ -51,6 +51,8 @@
 extern "C" {
 #endif
 
+// NOLINTBEGIN(modernize-use-using)
+
 // index type
 typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
@@ -100,6 +102,8 @@ typedef struct PGM_Handle PGM_Handle;
  *
  */
 typedef struct PGM_Options PGM_Options;
+
+// NOLINTEND(modernize-use-using)
 
 // enums
 /**
