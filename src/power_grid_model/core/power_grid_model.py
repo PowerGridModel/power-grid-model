@@ -7,7 +7,7 @@
 Main power grid model class
 """
 from enum import IntEnum
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Optional, Set, Type, Union
 
 import numpy as np
 
@@ -25,7 +25,7 @@ from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import IDPtr, IdxPtr, ModelPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.enum import CalculationMethod, CalculationType
+from power_grid_model.enum import CalculationMethod, CalculationType, ShortCircuitVoltageScaling
 
 
 class PowerGridModel:
@@ -200,10 +200,14 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        if "calculation_method" in kwargs:
-            calculation_method = kwargs["calculation_method"]
-            if isinstance(calculation_method, str):
-                kwargs["calculation_method"] = CalculationMethod[calculation_method]
+        def as_enum_value(key: str, type_: Type[IntEnum]):
+            if key in kwargs:
+                value = kwargs[key]
+                if isinstance(value, str):
+                    kwargs[key] = type_[value]
+
+        as_enum_value("calculation_method", CalculationMethod)
+        as_enum_value("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
 
         opt = Options()
         for key, value in kwargs.items():
@@ -460,6 +464,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
@@ -517,6 +522,7 @@ class PowerGridModel:
             symmetric=symmetric,
             calculation_method=calculation_method,
             threading=threading,
+            short_circuit_voltage_scaling=short_circuit_voltage_scaling,
         )
         return self._calculate_impl(
             calculation_type=calculation_type,
