@@ -200,14 +200,14 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        def replace_to_enum(key: str, type_: Type[IntEnum]):
+        def as_enum_value(key: str, type_: Type[IntEnum]):
             if key in kwargs:
                 value = kwargs[key]
                 if isinstance(value, str):
                     kwargs[key] = type_[value]
 
-        replace_to_enum("calculation_method", CalculationMethod)
-        replace_to_enum("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
+        as_enum_value("calculation_method", CalculationMethod)
+        as_enum_value("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
 
         opt = Options()
         for key, value in kwargs.items():
