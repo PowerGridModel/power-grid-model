@@ -10,7 +10,7 @@ namespace power_grid_model {
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0};
     ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
-    double voltage_scaling_c = 1.1; // 1.1 for ShortCircuitVoltageScaling::maximum
+    double voltage_scaling_c = 1.1; // for ShortCircuitVoltageScaling::maximum
 
     SUBCASE("Single node + source") {
         double const u_rated = 10e3;
