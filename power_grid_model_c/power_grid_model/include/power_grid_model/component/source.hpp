@@ -80,7 +80,7 @@ class Source : public Appliance {
     //                   |   c_max   |   c_min   |
     // Unom <= 1000V     |   1.10    |   0.95    |
     // Unom > 1kV        |   1.10    |   1.00    |
-    // NOTE that for low voltage there is a difference in c for systems with a voltage tolerance of 6% or 10%.
+    // NOTE: for low voltage there is a difference in c for systems with a voltage tolerance of 6% or 10%.
     // Here, a voltage tolerance of 10% is assumed.
     DoubleComplex calc_param(std::pair<double, ShortCircuitVoltageScaling> const& data) const {
         double voltage_scaling_c{1.0};
