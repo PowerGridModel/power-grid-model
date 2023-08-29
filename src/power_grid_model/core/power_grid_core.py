@@ -26,7 +26,7 @@ VoidDoublePtr = POINTER(c_void_p)
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {str: c_char_p, int: IdxC, float: c_double}
+_ARGS_TYPE_MAPPING = {bytes: c_char_p, str: c_char_p, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
 # pylint: disable=too-few-public-methods
@@ -65,6 +65,18 @@ class ComponentPtr(c_void_p):
 class AttributePtr(c_void_p):
     """
     Pointer to attribute
+    """
+
+
+class DeserializerPtr(c_void_p):
+    """
+    Pointer to deserializer
+    """
+
+
+class SerializerPtr(c_void_p):
+    """
+    Pointer to serializer
     """
 
 
@@ -130,8 +142,8 @@ def make_c_binding(func: Callable):
         else:
             c_inputs = [self._handle]  # pylint: disable=protected-access
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
-        for arg, arg_type in zip(args, c_argtypes):
-            if arg_type == c_char_p:
+        for arg in args:
+            if isinstance(arg, str):
                 c_inputs.append(arg.encode())
             else:
                 c_inputs.append(arg)
@@ -187,11 +199,11 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]
+    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def batch_errors(self) -> CharDoublePtr:  # type: ignore[empty-body, valid-type]
+    def batch_errors(self) -> CharDoublePtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -309,32 +321,26 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def copy_model(  # type: ignore[empty-body]
-        self,
-        model: ModelPtr,
-    ) -> ModelPtr:
+    def copy_model(self, model: ModelPtr) -> ModelPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def get_indexer(  # type: ignore[empty-body]
+    def get_indexer(
         self,
         model: ModelPtr,
         component: str,
         size: int,
         ids: IDPtr,  # type: ignore[valid-type]
         indexer: IdxPtr,  # type: ignore[valid-type]
-    ) -> None:
+    ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def destroy_model(  # type: ignore[empty-body]
-        self,
-        model: ModelPtr,
-    ) -> None:
+    def destroy_model(self, model: ModelPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def calculate(  # type: ignore[empty-body]
+    def calculate(
         self,
         model: ModelPtr,
         opt: OptionsPtr,
@@ -349,7 +355,23 @@ class PowerGridCore:
         n_component_elements_per_scenario: IdxPtr,  # type: ignore[valid-type]
         indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
-    ) -> None:
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_deserializer_from_binary_buffer(  # type: ignore[empty-body]
+        self, data: bytes, size: int, serialization_format: int
+    ) -> DeserializerPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_deserializer_from_null_terminated_string(  # type: ignore[empty-body]
+        self, data: str, serialization_format: int
+    ) -> DeserializerPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_deserializer(self, deserializer: DeserializerPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
 

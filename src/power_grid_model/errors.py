@@ -26,3 +26,9 @@ class PowerGridBatchError(PowerGridError):
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
     error_messages: List[str]
+
+
+class PowerGridSerializationError(PowerGridError):
+    """
+    Error occurs during (de-)serialization
+    """
