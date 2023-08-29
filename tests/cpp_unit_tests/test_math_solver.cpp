@@ -1269,11 +1269,9 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.load_gen[1].s) == doctest::Approx(0.85));
     }
 
-    // We may have multiple load/gens, let's sum their powers
-    using namespace std::placeholders;
     const ComplexValue<true> load_gen_s =
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
-                        bind(std::plus<>(), _1, bind(&ApplianceMathOutput<true>::s, _2)));
+                        [](auto const& a, auto const& b) { return a + b.s; });
 
     CHECK(output.bus_injection[0] == output.branch[0].s_f);
     CHECK(output.bus_injection[0] == output.source[0].s);
