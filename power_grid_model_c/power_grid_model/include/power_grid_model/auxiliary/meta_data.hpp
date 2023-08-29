@@ -104,8 +104,8 @@ struct PGM_MetaAttribute {
 
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    PGM_MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string const& attr_name)
-        : name{attr_name},
+    PGM_MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string attr_name)
+        : name{std::move(attr_name)},
           ctype{ctype_v<ValueType>},
           offset{power_grid_model::meta_data::get_offset<StructType, member_ptr>()},
           size{sizeof(ValueType)},
@@ -156,8 +156,8 @@ struct PGM_MetaComponent {
     using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
 
     template <class StructType>
-    PGM_MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string const& comp_name)
-        : name{comp_name},
+    PGM_MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string comp_name)
+        : name{std::move(comp_name)},
           size{sizeof(StructType)},
           alignment{alignof(StructType)},
           attributes{power_grid_model::meta_data::get_attributes_list<StructType>{}()},

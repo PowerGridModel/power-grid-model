@@ -92,7 +92,6 @@ template <bool sym> class MeasuredValues {
           idx_shunt_power_(math_topology().n_shunt()),
           idx_load_gen_power_(math_topology().n_load_gen()),
           idx_source_power_(math_topology().n_source()),
-          n_angle_{},
           // default angle shift
           // sym: 0
           // asym: 0, -120deg, -240deg
@@ -229,7 +228,7 @@ template <bool sym> class MeasuredValues {
     IdxVector idx_load_gen_power_;
     IdxVector idx_source_power_;
     // number of angle measurement
-    Idx n_angle_;
+    Idx n_angle_{};
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
@@ -542,9 +541,9 @@ template <bool sym> class IterativeLinearSESolver {
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
   public:
-    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
         : n_bus_{y_bus.size()},
-          math_topo_{topo_ptr},
+          math_topo_{std::move(topo_ptr)},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
