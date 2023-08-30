@@ -8,10 +8,15 @@ Power grid model (de)serialization
 """
 
 from enum import IntEnum
-from typing import Union
+from typing import Dict, Union
 
+import numpy as np
+
+from power_grid_model.core.data_handling import create_dataset_from_info
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_dataset import DatasetInfo
+from power_grid_model.core.power_grid_meta import prepare_cpp_array
 
 
 class SerializationType(IntEnum):
@@ -33,9 +38,31 @@ class Deserializer:
         )
         assert_no_error()
 
+        self._dataset_ptr = pgc.deserializer_get_dataset(self._deserializer)
+        assert_no_error()
+
+        self._info_ptr = pgc.dataset_writable_get_info(self._dataset_ptr)
+        assert_no_error()
+
+        self._info = DatasetInfo(self._info_ptr)
+        assert_no_error()
+
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)
         assert_no_error()
+
+    def load(self) -> Dict[str, np.ndarray]:
+        """Load the deserialized data to a new data set."""
+        dataset = create_dataset_from_info(self._info)
+        self._deserialize(target_dataset=dataset)
+        return dataset
+
+    def _deserialize(self, target_dataset: Dict[str, np.ndarray]):
+        raw_dataset_view = prepare_cpp_array(data_type=self._info.name, array_dict=target_dataset)
+        for component, buffer in raw_dataset_view.dataset.items():
+            pgc.dataset_writable_set_buffer(self._dataset_ptr, component, buffer.indptr, buffer.data)
+
+        pgc.deserializer_parse_to_buffer(self._deserializer)
 
 
 class JsonDeserializer(Deserializer):  # pylint: disable=too-few-public-methods

@@ -19,6 +19,7 @@ from power_grid_model.core.index_integer import IdC, IdxC
 IdxPtr = POINTER(IdxC)
 IdxDoublePtr = POINTER(IdxPtr)
 IDPtr = POINTER(IdC)
+VoidPtr = c_void_p
 # double pointer to char
 CharDoublePtr = POINTER(c_char_p)
 # double pointer to void
@@ -53,6 +54,18 @@ class ModelPtr(c_void_p):
 class DatasetPtr(c_void_p):
     """
     Pointer to dataset
+    """
+
+
+class WritableDatasetPtr(c_void_p):
+    """
+    Pointer to writable dataset
+    """
+
+
+class DatasetInfoPtr(c_void_p):
+    """
+    Pointer to dataset info
     """
 
 
@@ -340,7 +353,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def calculate(
+    def calculate(  # type: ignore[empty-body]
         self,
         model: ModelPtr,
         opt: OptionsPtr,
@@ -355,6 +368,44 @@ class PowerGridCore:
         n_component_elements_per_scenario: IdxPtr,  # type: ignore[valid-type]
         indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_name(self, info: DatasetInfoPtr) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_is_batch(self, info: DatasetInfoPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_batch_size(self, info: DatasetInfoPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_n_components(self, info: DatasetInfoPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_component_name(self, info: DatasetInfoPtr, component_idx: int) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_total_elements(self, info: DatasetInfoPtr, component_idx: int) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_writable_get_info(self, dataset: WritableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_writable_set_buffer(
+        self,
+        dataset: WritableDatasetPtr,
+        component: str,
+        indptr: IdxPtr,  # type: ignore[valid-type]
+        data: VoidPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
@@ -371,7 +422,33 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def deserializer_get_dataset(self, deserializer: DeserializerPtr) -> WritableDatasetPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def deserializer_parse_to_buffer(self, deserializer: DeserializerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def destroy_deserializer(self, deserializer: DeserializerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_serializer(self, data: str, serialization_format: int) -> SerializerPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def serializer_get_to_binary_buffer(  # type: ignore[empty-body]
+        self,
+        serializer: SerializerPtr,
+        use_compact_list: int,
+        data: CharDoublePtr,  # type: ignore[valid-type]
+        size: IdxPtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_serializer(self, serializer: SerializerPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
 
