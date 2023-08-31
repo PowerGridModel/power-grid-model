@@ -277,10 +277,10 @@ def create_dataset_from_info(info: DatasetInfo) -> Dict[str, np.ndarray]:
             in case if some specified components are unknown, a KeyError will be raised.
     """
     return reduce_dataset(
-        dataset=create_dataset(
-            component_types=set(info.component_count.keys()),
+        dataset=create_dataset(  # dense data set
+            component_types=set(info.elements_per_scenario.keys()),
             dataset_type=DatasetType[info.name.upper()],
-            all_component_count=info.component_count,
+            all_component_count=info.elements_per_scenario,
             batch_size=info.batch_size,
         ),
         batch_calculation=info.is_batch,

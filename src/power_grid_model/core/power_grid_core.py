@@ -392,6 +392,12 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def dataset_info_elements_per_scenario(  # type: ignore[empty-body]
+        self, info: DatasetInfoPtr, component_idx: int
+    ) -> int:
+        pass  # pragma: no cover
+
+    @make_c_binding
     def dataset_info_total_elements(self, info: DatasetInfoPtr, component_idx: int) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 

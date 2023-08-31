@@ -7,7 +7,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Dict
+from typing import Dict, List
 
 from power_grid_model.core.power_grid_core import DatasetInfoPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
@@ -21,8 +21,9 @@ class DatasetInfo:  # pylint: disable=too-few-public-methods
     name: str
     is_batch: bool
     batch_size: int
-    component_count: Dict[str, int]
-    """The amount of components per component type"""
+    components: List[str]
+    elements_per_scenario: Dict[str, int]
+    total_elements: Dict[str, int]
 
     def __init__(self, info: DatasetInfoPtr):
         self._info: DatasetInfoPtr = info
@@ -32,7 +33,12 @@ class DatasetInfo:  # pylint: disable=too-few-public-methods
         self.batch_size = pgc.dataset_info_batch_size(self._info)
 
         n_components = pgc.dataset_info_n_components(self._info)
-        self.component_count = {
-            pgc.dataset_info_component_name(self._info, idx): pgc.dataset_info_total_elements(self._info, idx)
-            for idx in range(n_components)
+        self.components = [pgc.dataset_info_component_name(self._info, idx) for idx in range(n_components)]
+        self.elements_per_scenario = {
+            component_name: pgc.dataset_info_elements_per_scenario(self._info, idx)
+            for idx, component_name in enumerate(self.components)
+        }
+        self.total_elements = {
+            component_name: pgc.dataset_info_total_elements(self._info, idx)
+            for idx, component_name in enumerate(self.components)
         }

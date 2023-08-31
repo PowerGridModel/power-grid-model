@@ -13,6 +13,19 @@ from power_grid_model import JsonDeserializer, MsgpackDeserializer
 from power_grid_model.core.error_handling import assert_no_error
 
 
+def to_json(data, raw_buffer: bool):
+    data = json.dumps(data)
+
+    if raw_buffer:
+        data = bytes(data, "utf-8")
+
+    return data
+
+
+def to_msgpack(data):
+    return msgpack.packb(data)
+
+
 def empty_dataset(dataset_type: str = "input"):
     return {"version": "0.0", "type": dataset_type, "is_batch": False, "data": {}, "attributes": {}}
 
@@ -72,17 +85,89 @@ def full_input_dataset():
     return result
 
 
-def to_json(data, raw_buffer: bool):
-    data = json.dumps(data)
+def single_update_dataset():
+    result = empty_dataset("update")
+    result["attributes"] = {
+        "sym_load": ["status", "p_specified", "q_specified"],
+        "source": ["status"],
+    }
+    result["data"] = {
+        "line": [{}, {"from_status": 1, "to_status": 1}],
+        "source": [[1], [0], {"status": 1, "u_ref": 1.03}],
+        "sym_load": [[9, 1.01e6, 0.21e6], [10, 1.02e6, 0.22e6]],
+    }
+    return result
 
-    if raw_buffer:
-        data = bytes(data, "utf-8")
 
-    return data
+def batch_update_dataset():
+    return {
+        "version": "1.0",
+        "type": "update",
+        "is_batch": True,
+        "attributes": {"sym_load": ["id", "p_specified", "q_specified"], "asym_load": ["id", "p_specified"]},
+        "data": [
+            {"sym_load": [[7, 20.0, 50.0]], "asym_load": [[9, [100.0, None, 200.0]]]},
+            {"asym_load": [[9, None]]},
+            {
+                "sym_load": [[7, None, 10.0], {"id": 8, "status": 0}],
+                "asym_load": [{"id": 9, "q_specified": [70.0, 80.0, 90.0]}],
+            },
+        ],
+    }
 
 
-def to_msgpack(data):
-    return msgpack.packb(data)
+def single_sym_output_dataset():
+    result = empty_dataset("sym_output")
+    result["data"] = {
+        "node": [{"id": 1, "energized": 1, "u_pu": 1.01, "u_angle": 0.21, "u": 1.02e3, "p": 1.01e6, "q": 4.1e5}]
+    }
+    return result
+
+
+def batch_sym_output_dataset():
+    result = empty_dataset("sym_output")
+    result["is_batch"] = True
+    result["data"] = [
+        {"node": [{"id": 1, "energized": 1, "u_pu": 1.01, "u_angle": 0.21, "u": 1.02e3, "p": 1.01e6, "q": 4.1e5}]},
+        {"node": [{"id": 1, "energized": 0, "u_pu": 0.0, "u_angle": 0.0, "u": 0.0, "p": 0.0, "q": 0.0}]},
+    ]
+    return result
+
+
+def single_asym_output_dataset():
+    result = empty_dataset("asym_output")
+    result["data"] = {
+        "node": [
+            {
+                "id": 1,
+                "energized": 1,
+                "u_pu": [1.01, 1.06, 0.99],
+                "u_angle": [0.21, 2.01, 4.1],
+                "u": [1.02e3, 1.07e3, 9.9e2],
+                "p": [1.01e6, 1.03e6, 9.8e5],
+                "q": [4.1e5, 4.2e5, 4.0e5],
+            }
+        ]
+    }
+    return result
+
+
+def single_sc_output_dataset():
+    result = empty_dataset("sc_output")
+    result["attributes"] = {"fault": ["id", "i_f"]}
+    result["data"] = {
+        "node": [
+            {
+                "id": 1,
+                "energized": 1,
+                "u_pu": [1.01, 1.06, 0.99],
+                "u_angle": [0.21, 2.01, 4.1],
+                "u": [1.02e3, 1.07e3, 9.9e2],
+            }
+        ],
+        "fault": [{"id": 1, "i_f": [3.0e3, 2.0e3, 3.4e3]}],
+    }
+    return result
 
 
 @pytest.fixture(
@@ -90,14 +175,15 @@ def to_msgpack(data):
         empty_dataset(),
         simple_input_dataset(),
         full_input_dataset(),
-        # single_update_dataset,
-        # batch_update_dataset,
-        # sym_output_dataset,
-        # asym_output_dataset,
-        # sc_dataset,
+        single_update_dataset(),
+        batch_update_dataset(),
+        single_sym_output_dataset(),
+        batch_sym_output_dataset(),
+        single_asym_output_dataset(),
+        single_sc_output_dataset(),
     ]
 )
-def input_data(request):
+def serialized_data(request):
     return request.param
 
 
@@ -140,13 +226,12 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
         np.testing.assert_almost_equal(value, reference)
 
 
-def assert_serialization_correct(result: Dict[str, np.ndarray], input_data: Dict[str, Any]):
-    """Assert the dataset correctly reprensents the input data."""
-    assert result.keys() == input_data["data"].keys()
+def assert_scenario_correct(result: Dict[str, np.ndarray], serialized_data: Dict[str, Any]):
+    assert result.keys() == serialized_data["data"].keys()
     for component, component_result in result.items():
         assert isinstance(component_result, np.ndarray)
 
-        component_input = input_data["data"][component]
+        component_input = serialized_data["data"][component]
         assert len(component_result) == len(component_input)
         for result_entry, input_entry in zip(component_result, component_input):
             if isinstance(input_entry, dict):
@@ -155,15 +240,36 @@ def assert_serialization_correct(result: Dict[str, np.ndarray], input_data: Dict
                     assert_almost_equal(result_entry[attr], values)
             else:
                 assert isinstance(component_input, list)
-                assert component in input_data["attributes"]
-                for attr_idx, attr in enumerate(input_data["attributes"][component]):
+                assert component in serialized_data["attributes"]
+                for attr_idx, attr in enumerate(serialized_data["attributes"][component]):
                     assert attr in result[component].dtype.names
                     assert_almost_equal(result_entry[attr], input_entry[attr_idx])
 
 
+def assert_serialization_correct(result: Dict[str, np.ndarray], serialized_data: Dict[str, Any]):
+    """Assert the dataset correctly reprensents the input data."""
+    if serialized_data["is_batch"]:
+        assert isinstance(serialized_data["data"], list)
+
+        for component_values in result.values():
+            assert len(component_values.shape) == 2
+            assert len(component_values) == len(serialized_data["data"])
+
+        for scenario_idx, scenario in enumerate(serialized_data["data"]):
+            serialized_scenario = {k: v for k, v in serialized_data.items() if k not in ("data", "is_batch")}
+            serialized_scenario["is_batch"] = False
+            serialized_scenario["data"] = scenario
+
+            assert_scenario_correct(
+                {component: component_values[scenario_idx] for component, values in result.items()}, serialized_scenario
+            )
+    else:
+        assert_scenario_correct(result, serialized_data)
+
+
 @pytest.mark.parametrize("raw_buffer", (True, False))
-def test_json_deserializer_create_destroy(input_data, raw_buffer: bool):
-    data = to_json(input_data, raw_buffer=raw_buffer)
+def test_json_deserializer_create_destroy(serialized_data, raw_buffer: bool):
+    data = to_json(serialized_data, raw_buffer=raw_buffer)
 
     deserializer = JsonDeserializer(data)
     assert_no_error()
@@ -172,31 +278,31 @@ def test_json_deserializer_create_destroy(input_data, raw_buffer: bool):
 
 
 @pytest.mark.parametrize("raw_buffer", (True, False))
-def test_json_deserializer_data(input_data, raw_buffer: bool):
-    data = to_json(input_data, raw_buffer=raw_buffer)
+def test_json_deserializer_data(serialized_data, raw_buffer: bool):
+    data = to_json(serialized_data, raw_buffer=raw_buffer)
 
     deserializer = JsonDeserializer(data)
     assert_no_error()
 
     result = deserializer.load()
     assert isinstance(result, dict)
-    assert_serialization_correct(result, input_data)
+    assert_serialization_correct(result, serialized_data)
 
 
-def test_msgpack_deserializer_create_destroy(input_data):
-    data = to_msgpack(input_data)
+def test_msgpack_deserializer_create_destroy(serialized_data):
+    data = to_msgpack(serialized_data)
     deserializer = MsgpackDeserializer(data)
     assert_no_error()
     assert deserializer
     del deserializer
 
 
-def test_msgpack_deserializer_data(input_data):
-    data = to_msgpack(input_data)
+def test_msgpack_deserializer_data(serialized_data):
+    data = to_msgpack(serialized_data)
 
     deserializer = MsgpackDeserializer(data)
     assert_no_error()
 
     result = deserializer.load()
     assert isinstance(result, dict)
-    assert_serialization_correct(result, input_data)
+    assert_serialization_correct(result, serialized_data)
