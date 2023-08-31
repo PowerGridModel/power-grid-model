@@ -28,6 +28,7 @@
 // main model implementation
 #include "main_core/calculation_info.hpp"
 #include "main_core/input.hpp"
+#include "main_core/math_state.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
