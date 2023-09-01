@@ -13,6 +13,7 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 
 import numpy as np
 
+from power_grid_model.core.index_integer import IdxNp
 from power_grid_model.core.power_grid_dataset import DatasetInfo
 from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 from power_grid_model.enum import CalculationType
@@ -136,10 +137,12 @@ def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: Outp
 
 
 def create_dataset(
+    *,
     component_types: Union[Set[str], List[str]],
     dataset_type: DatasetType,
-    all_component_count: Dict[str, int],
     batch_size: int,
+    homogeneous_component_count: Dict[str, int],
+    sparse_component_count: Optional[Dict[str, int]] = None,
 ) -> Dict[str, np.ndarray]:
     """
     Create the dataset that the user can use. always returns batch type dataset.
@@ -147,13 +150,16 @@ def create_dataset(
 
     Args:
         component_types:
-            the output components the user seeks to extract
+            the relevant components requested in the dataset
         dataset_type:
             the type of dataset that the user will see (as per the calculation options)
-        all_component_count:
-            the amount of components in the grid (as per the input data)
         batch_size:
             the batch size
+        homogeneous_component_count:
+            the amount of components in the grid, represented as a homogeneous dataset (as in the input data)
+        sparse_component_count:
+            the components for which to create a sparse data set and their respective total count across all batches;
+            takes precedence over the homogeneous component count
 
     Returns:
         dictionary of results of all components
@@ -171,14 +177,21 @@ def create_dataset(
     if unknown_components:
         raise KeyError(f"You have specified some unknown component types: {unknown_components}")
 
-    all_component_count = {k: v for k, v in all_component_count.items() if k in component_types}
+    homogeneous_component_count = {k: v for k, v in homogeneous_component_count.items() if k in component_types}
 
     # create result dataset
     result_dict = {}
-    for name, count in all_component_count.items():
-        # intialize array
-        arr = initialize_array(dataset_type.value, name, (batch_size, count), empty=True)
-        result_dict[name] = arr
+
+    for name, count in homogeneous_component_count.items():
+        if sparse_component_count is None or name not in sparse_component_count:
+            result_dict[name] = initialize_array(dataset_type.value, name, (batch_size, count), empty=True)
+
+    if sparse_component_count is not None:
+        for name, count in sparse_component_count.items():
+            result_dict[name] = {
+                "indptr": np.empty(shape=batch_size + 1, dtype=IdxNp),
+                "data": initialize_array(dataset_type.value, name, count, empty=True),
+            }
 
     return result_dict
 
@@ -217,8 +230,8 @@ def create_output_data(
     return create_dataset(
         component_types=output_component_types,
         dataset_type=DatasetType[output_type.value.upper()],
-        all_component_count=all_component_count,
         batch_size=batch_size,
+        homogeneous_component_count=all_component_count,
     )
 
 
@@ -276,12 +289,18 @@ def create_dataset_from_info(info: DatasetInfo) -> Dict[str, np.ndarray]:
         Error handling:
             in case if some specified components are unknown, a KeyError will be raised.
     """
+    sparse_component_count = {
+        component: count
+        for component, count in info.total_elements.items()
+        if info.elements_per_scenario.get(component, -1) == -1
+    }
     return reduce_dataset(
         dataset=create_dataset(  # dense data set
             component_types=set(info.elements_per_scenario.keys()),
             dataset_type=DatasetType[info.name.upper()],
-            all_component_count=info.elements_per_scenario,
+            homogeneous_component_count=info.elements_per_scenario,
             batch_size=info.batch_size,
+            sparse_component_count=sparse_component_count,
         ),
         batch_calculation=info.is_batch,
     )

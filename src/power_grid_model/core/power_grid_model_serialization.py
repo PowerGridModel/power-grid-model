@@ -17,6 +17,7 @@ from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_dataset import DatasetInfo
 from power_grid_model.core.power_grid_meta import prepare_cpp_array
+from power_grid_model.errors import PowerGridSerializationError
 
 
 class SerializationType(IntEnum):
@@ -46,6 +47,10 @@ class Deserializer:
 
         self._info = DatasetInfo(self._info_ptr)
         assert_no_error()
+
+        # TODO(mgovers): we do not support sparse batches yet
+        if any(count == -1 for count in self._info.elements_per_scenario.values()):
+            raise PowerGridSerializationError("Sparse batch data sets are not supported.")
 
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)

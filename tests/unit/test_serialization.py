@@ -99,7 +99,24 @@ def single_update_dataset():
     return result
 
 
-def batch_update_dataset():
+def homogeneous_batch_update_dataset():
+    return {
+        "version": "1.0",
+        "type": "update",
+        "is_batch": True,
+        "attributes": {"sym_load": ["id", "p_specified", "q_specified"], "asym_load": ["id", "p_specified"]},
+        "data": [
+            {"sym_load": [[7, 20.0, 50.0]], "asym_load": [[9, [100.0, None, 200.0]]]},
+            {"sym_load": [[7, None, None]], "asym_load": [[9, None]]},
+            {
+                "sym_load": [{"id": 7, "status": 0}],
+                "asym_load": [{"id": 9, "q_specified": [70.0, 80.0, 90.0]}],
+            },
+        ],
+    }
+
+
+def sparse_batch_update_dataset():
     return {
         "version": "1.0",
         "type": "update",
@@ -172,19 +189,22 @@ def single_sc_output_dataset():
 
 @pytest.fixture(
     params=[
-        empty_dataset(),
-        simple_input_dataset(),
-        full_input_dataset(),
-        single_update_dataset(),
-        batch_update_dataset(),
-        single_sym_output_dataset(),
-        batch_sym_output_dataset(),
-        single_asym_output_dataset(),
-        single_sc_output_dataset(),
+        empty_dataset,
+        simple_input_dataset,
+        full_input_dataset,
+        single_update_dataset,
+        homogeneous_batch_update_dataset,
+        sparse_batch_update_dataset,
+        single_sym_output_dataset,
+        batch_sym_output_dataset,
+        single_asym_output_dataset,
+        single_sc_output_dataset,
     ]
 )
 def serialized_data(request):
-    return request.param
+    if request.param is sparse_batch_update_dataset:
+        request.applymarker(pytest.mark.xfail)
+    return request.param()
 
 
 def assert_not_a_value(value: np.ndarray):
@@ -261,7 +281,8 @@ def assert_serialization_correct(result: Dict[str, np.ndarray], serialized_data:
             serialized_scenario["data"] = scenario
 
             assert_scenario_correct(
-                {component: component_values[scenario_idx] for component, values in result.items()}, serialized_scenario
+                {component: component_values[scenario_idx] for component, component_values in result.items()},
+                serialized_scenario,
             )
     else:
         assert_scenario_correct(result, serialized_data)
