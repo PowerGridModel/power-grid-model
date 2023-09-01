@@ -10,10 +10,12 @@
 
 namespace power_grid_model::main_core {
 
-template <bool sym> struct MathState {
+struct MathState {
 
-    std::vector<std::shared_ptr<YBus<sym>>> y_bus_vec;
-    std::vector<MathSolver<sym>> math_solvers;
+    std::vector<std::shared_ptr<YBus<true>>> y_bus_vec_sym;
+    std::vector<std::shared_ptr<YBus<false>>> y_bus_vec_asym;
+    std::vector<MathSolver<true>> math_solvers_sym;
+    std::vector<MathSolver<false>> math_solvers_asym;
 };
 
 } // namespace power_grid_model::main_core

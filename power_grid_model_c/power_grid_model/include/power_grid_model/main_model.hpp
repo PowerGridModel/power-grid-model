@@ -48,6 +48,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // container class
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
+    using MathState = main_core::MathState;
 
     // trait on type list
     // struct of entry
@@ -692,6 +693,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     MainModelState state_;
     // math model
+    MathState math_state_;
     std::vector<MathSolver<true>> sym_solvers_;
     std::vector<MathSolver<false>> asym_solvers_;
     Idx n_math_solvers_{0};
