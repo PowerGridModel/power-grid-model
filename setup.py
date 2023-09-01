@@ -144,7 +144,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pgm_c / pgm_c / "src" / "model.cpp"),
         str(pgm_c / pgm_c / "src" / "options.cpp"),
         str(pgm_c / pgm_c / "src" / "dataset.cpp"),
-        str(pgm_c / pgm_c / "src" / "serialization.cpp")
+        str(pgm_c / pgm_c / "src" / "serialization.cpp"),
     ]
     # macro
     define_macros = [
