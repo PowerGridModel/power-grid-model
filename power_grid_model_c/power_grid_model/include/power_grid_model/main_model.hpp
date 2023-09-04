@@ -694,8 +694,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     MainModelState state_;
     // math model
     MathState math_state_;
-    std::vector<MathSolver<true>> sym_solvers_;
-    std::vector<MathSolver<false>> asym_solvers_;
     Idx n_math_solvers_{0};
     bool is_topology_up_to_date_{false};
     bool is_sym_parameter_up_to_date_{false};
