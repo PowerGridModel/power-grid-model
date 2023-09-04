@@ -308,7 +308,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return calculate_<MathOutput<sym>, MathSolver<sym>, PowerFlowInput<sym>>(
             [this] { return prepare_power_flow_input<sym>(); },
             [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& y) {
-                return solver.run_power_flow(y, err_tol, max_iter, calculation_info_, calculation_method);
+                return solver.run_power_flow(y, err_tol, max_iter, calculation_info_, calculation_method,
+                                             get_y_bus<sym>());
             });
     }
 
@@ -318,7 +319,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return calculate_<MathOutput<sym>, MathSolver<sym>, StateEstimationInput<sym>>(
             [this] { return prepare_state_estimation_input<sym>(); },
             [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, StateEstimationInput<sym> const& y) {
-                return solver.run_state_estimation(y, err_tol, max_iter, calculation_info_, calculation_method);
+                return solver.run_state_estimation(y, err_tol, max_iter, calculation_info_, calculation_method,
+                                                   get_y_bus<sym>());
             });
     }
 
@@ -328,7 +330,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, ShortCircuitInput>(
             [this, voltage_scaling] { return prepare_short_circuit_input<sym>(voltage_scaling); },
             [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
-                return solver.run_short_circuit(y, calculation_info_, calculation_method);
+                return solver.run_short_circuit(y, calculation_info_, calculation_method, get_y_bus<sym>());
             });
     }
 
@@ -720,6 +722,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
+    template <bool sym> std::vector<YBus<sym>>& get_y_bus() {
+        if constexpr (sym) {
+            return math_state_.y_bus_vec_sym;
+        } else {
+            return math_state_.y_bus_vec_asym;
+        }
+    }
+
     void rebuild_topology() {
         assert(construction_complete_);
         // clear old solvers
@@ -1061,6 +1071,30 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return sc_input;
     }
 
+    template <bool sym> void prepare_y_bus() {
+        std::vector<YBus<sym>>& y_bus_vec = get_y_bus<sym>();
+        // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
+        std::vector<YBus<!sym>>& other_y_bus_vec = get_y_bus<!sym>();
+        // If not Ybus exists, build them
+        if (n_math_solvers_ != (Idx)y_bus_vec.size()) {
+            // check if other (sym/asym) Y_bus exists
+            bool const other_y_bus_exist = (n_math_solvers_ == (Idx)other_y_bus_vec.size());
+            assert(y_bus_vec.empty());
+            y_bus_vec.reserve(n_math_solvers_);
+            // get param, will be consumed
+            std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
+            // loop to build
+            for (Idx i = 0; i != n_math_solvers_; ++i) {
+                // if other y_bus exists, construct from existing Y_bus struct
+                if (other_y_bus_exist) {
+                    y_bus_vec.emplace_back(state_.math_topology[i],
+                                           std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
+                                           other_y_bus_vec[i].get_y_bus_struct());
+                }
+            }
+        }
+    }
+
     template <bool sym> void prepare_solvers() {
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
         // also get the vector of other solvers (sym -> asym, or asym -> sym)
@@ -1069,6 +1103,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
+        // prepare Y_bus
+        prepare_y_bus<sym>();
         // if solvers do not exist, build them
         if (n_math_solvers_ != (Idx)solvers.size()) {
             // check if other (sym/asym) solver exist
