@@ -11,7 +11,12 @@ import pytest
 
 from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType, FaultPhase, FaultType
-from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    InfinityError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+)
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
     validate_generic_power_sensor,
@@ -406,6 +411,24 @@ def test_validate_values__calculation_types():
 
     assert not power_flow_errors
     assert all_errors == state_estimation_errors
+
+
+@pytest.mark.parametrize(
+    ("sensor_type", "parameter"),
+    [
+        ("sym_voltage_sensor", "u_sigma"),
+        ("asym_voltage_sensor", "u_sigma"),
+        ("sym_power_sensor", "power_sigma"),
+        ("asym_power_sensor", "power_sigma"),
+    ],
+)
+def test_validate_values__infinite_sigmas(sensor_type, parameter):
+    sensor_array = initialize_array("input", sensor_type, 3)
+    sensor_array[parameter] = np.inf
+    all_errors = validate_values({sensor_type: sensor_array})
+
+    for error in all_errors:
+        assert not isinstance(error, InfinityError)
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)

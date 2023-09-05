@@ -25,6 +25,16 @@ struct NodeInput : BaseInput {
     double u_rated;  // rated line-line voltage
 };
 
+struct NodeInput{
+    ID id;
+    double u_rated;  // rated line-line voltage
+};
+
+struct NodeInput{
+    BaseInput base;
+    double u_rated;  // rated line-line voltage
+};
+
 struct BranchInput : BaseInput {
     ID from_node;  // node IDs to which this branch is connected at both sides
     ID to_node;  // node IDs to which this branch is connected at both sides
