@@ -10,9 +10,8 @@ import msgpack
 import numpy as np
 import pytest
 
-from power_grid_model import JsonDeserializer, MsgpackDeserializer
+from power_grid_model import JsonDeserializer, JsonSerializer, MsgpackDeserializer, MsgpackSerializer
 from power_grid_model.core.error_handling import assert_no_error
-from power_grid_model.core.power_grid_model_serialization import JsonSerializer
 
 
 def to_json(data, raw_buffer: bool, indent: Optional[int] = None):
@@ -27,7 +26,11 @@ def to_json(data, raw_buffer: bool, indent: Optional[int] = None):
 
 
 def to_msgpack(data):
-    return msgpack.packb(data)
+    return msgpack.packb(dict(sorted(data.items())))
+
+
+def from_msgpack(data):
+    return dict(sorted(msgpack.unpackb(data).items()))
 
 
 def empty_dataset(dataset_type: str = "input"):
@@ -356,3 +359,12 @@ def test_json_serializer_empty_dataset(raw_buffer: bool, dataset_type):
             result = serializer.dump_str(use_compact_list=use_compact_list, indent=indent)
             assert isinstance(result, str)
             assert result == reference
+
+
+@pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
+def test_msgpack_serializer_empty_dataset(dataset_type):
+    serializer = MsgpackSerializer(dataset_type, {})
+
+    reference = dict(sorted(empty_dataset(dataset_type).items()))
+    for use_compact_list in (True, False):
+        assert from_msgpack(serializer.dump_bytes(use_compact_list=use_compact_list)) == reference
