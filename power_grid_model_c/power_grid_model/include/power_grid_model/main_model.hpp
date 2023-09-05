@@ -1107,25 +1107,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_y_bus<sym>();
         // if solvers do not exist, build them
         if (n_math_solvers_ != (Idx)solvers.size()) {
-            // check if other (sym/asym) solver exist
-            bool const other_solver_exist = (n_math_solvers_ == (Idx)other_solvers.size());
             assert(solvers.empty());
             solvers.reserve(n_math_solvers_);
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
             // loop to build
             for (Idx i = 0; i != n_math_solvers_; ++i) {
-                // if other solver exists, construct from existing y bus struct
-                if (other_solver_exist) {
-                    solvers.emplace_back(state_.math_topology[i],
-                                         std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
-                                         other_solvers[i].shared_y_bus_struct());
-                }
-                // else construct from scratch
-                else {
-                    solvers.emplace_back(state_.math_topology[i],
-                                         std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
-                }
+                solvers.emplace_back(state_.math_topology[i],
+                                     std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
             }
         }
         // if parameters are not up to date, update them
