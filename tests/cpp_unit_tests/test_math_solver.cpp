@@ -323,6 +323,8 @@ TEST_CASE("Test math solver") {
     auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_asym);
+    YBus<true> y_bus_sym{topo_ptr, param_ptr};
+    YBus<false> y_bus_asym{topo_ptr, param_asym_ptr};
 
     // state estimation input
     // symmetric, with u angle, with u angle and const z, without u angle
@@ -416,18 +418,18 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
+        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         // verify
         assert_output(output, output_ref);
         // copy
         MathSolver<true> solver2{solver};
         solver2.clear_solver();
-        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
+        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         // verify
         assert_output(output, output_ref);
         // move
         MathSolver<true> solver3{std::move(solver)};
-        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson);
+        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         // verify
         assert_output(output, output_ref);
     }
@@ -435,7 +437,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric iterative current pf solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> const output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current);
+        MathOutput<true> const output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current, y_bus_sym);
         // verify
         assert_output(output, output_ref);
     }
@@ -447,7 +449,8 @@ TEST_CASE("Test math solver") {
 
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> const output = solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current);
+        MathOutput<true> const output =
+            solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current, y_bus_sym);
         // verify
         assert_output(output, output_ref, false, result_tolerance);
     }
@@ -455,8 +458,10 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test wrong calculation type") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_linear), InvalidCalculationMethod);
-        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, linear), InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_linear, y_bus_sym),
+                        InvalidCalculationMethod);
+        CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, linear, y_bus_sym),
+                        InvalidCalculationMethod);
     }
 
     SUBCASE("Test const z pf solver") {
@@ -464,7 +469,7 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
 
         // const z
-        MathOutput<true> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear);
+        MathOutput<true> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -473,7 +478,7 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         pf_input.s_injection[6] = 1e6;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson), IterationDiverge);
+        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym), IterationDiverge);
     }
 
     SUBCASE("Test singular ybus") {
@@ -487,16 +492,15 @@ TEST_CASE("Test math solver") {
 
         for (auto method : methods) {
             CAPTURE(method);
-            CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method), SparseMatrixError);
+            CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method, y_bus_sym), SparseMatrixError);
         }
     }
 
     SUBCASE("Test asymmetric pf solver") {
-        MathSolver<true> const solver_sym{topo_ptr, param_ptr};
-        // construct from existing y bus struct
-        MathSolver<false> solver{topo_ptr, param_asym_ptr, solver_sym.shared_y_bus_struct()};
+        MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> const output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson);
+        MathOutput<false> const output =
+            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson, y_bus_asym);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -504,7 +508,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test iterative current asymmetric pf solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
-        MathOutput<false> const output = solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current);
+        MathOutput<false> const output =
+            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current, y_bus_asym);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -513,7 +518,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         // const z
-        MathOutput<false> const output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear);
+        MathOutput<false> const output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear, y_bus_asym);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -521,7 +526,8 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
-        MathOutput<true> const output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear);
+        MathOutput<true> const output =
+            solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         // verify
         assert_output(output, output_ref);
     }
@@ -530,7 +536,7 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> const output =
-            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear);
+            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         // verify
         assert_output(output, output_ref, true);
     }
@@ -539,7 +545,7 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr, param_ptr};
         CalculationInfo info;
         MathOutput<true> const output =
-            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear);
+            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
         // verify
         assert_output(output, output_ref_z);
     }
@@ -548,7 +554,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> const output =
-            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear);
+            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
         // verify
         assert_output(output, output_ref_asym);
     }
@@ -557,7 +563,7 @@ TEST_CASE("Test math solver") {
         MathSolver<false> solver{topo_ptr, param_asym_ptr};
         CalculationInfo info;
         MathOutput<false> const output =
-            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear);
+            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
         // verify
         assert_output(output, output_ref_asym, true);
     }
@@ -567,7 +573,7 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> const output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
 
-                                                                     iterative_linear);
+                                                                     iterative_linear, y_bus_asym);
         // verify
         assert_output(output, output_ref_asym_z);
     }
@@ -707,18 +713,20 @@ TEST_CASE("Short circuit solver") {
     auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
     auto param_sym_ptr = std::make_shared<MathModelParam<true> const>(param_sc_sym);
     auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_sc_asym);
+    YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
+    YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
 
     SUBCASE("Test short circuit solver 3ph") {
         MathSolver<false> solver{topo_sc_ptr, param_asym_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
-        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909),
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
 
@@ -727,7 +735,7 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -736,12 +744,12 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
         assert_sc_output<true>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
-        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909),
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_sym),
                         InvalidShortCircuitPhaseOrType);
     }
 
@@ -750,7 +758,7 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
         assert_sc_output<true>(output, sc_output_ref);
     }
 
@@ -759,12 +767,12 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
-        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909),
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
 
@@ -774,7 +782,7 @@ TEST_CASE("Short circuit solver") {
             create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -783,12 +791,12 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
-        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909),
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
 
@@ -797,7 +805,7 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -806,12 +814,12 @@ TEST_CASE("Short circuit solver") {
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
-        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909),
+        CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
 
@@ -821,7 +829,7 @@ TEST_CASE("Short circuit solver") {
             create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
-        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
     }
 
@@ -831,12 +839,12 @@ TEST_CASE("Short circuit solver") {
         sc_input.source = {vref};
         auto asym_sc_output_ref = blank_sc_output<false>(vref);
         CalculationInfo info;
-        auto asym_output = solver_asym.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto asym_output = solver_asym.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(asym_output, asym_sc_output_ref);
 
         MathSolver<true> solver_sym{topo_sc_ptr, param_sym_ptr};
         auto sym_sc_output_ref = blank_sc_output<true>(vref);
-        auto sym_output = solver_sym.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+        auto sym_output = solver_sym.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
         assert_sc_output<true>(sym_output, sym_sc_output_ref);
     }
 
@@ -891,7 +899,7 @@ TEST_CASE("Short circuit solver") {
 
             auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
             assert_sc_output<true>(output, sc_output_ref);
         }
 
@@ -904,7 +912,7 @@ TEST_CASE("Short circuit solver") {
 
             auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
             assert_sc_output<true>(output, sc_output_ref);
         }
 
@@ -917,7 +925,7 @@ TEST_CASE("Short circuit solver") {
 
             auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
 
@@ -931,7 +939,7 @@ TEST_CASE("Short circuit solver") {
             auto sc_input =
                 create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
 
@@ -945,7 +953,7 @@ TEST_CASE("Short circuit solver") {
             auto sc_input =
                 create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
 
@@ -958,7 +966,7 @@ TEST_CASE("Short circuit solver") {
 
             auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
 
@@ -971,7 +979,7 @@ TEST_CASE("Short circuit solver") {
 
             auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
 
@@ -985,7 +993,7 @@ TEST_CASE("Short circuit solver") {
             auto sc_input =
                 create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
 
@@ -999,7 +1007,7 @@ TEST_CASE("Short circuit solver") {
             auto sc_input =
                 create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr_2);
             CalculationInfo info;
-            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909);
+            auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
         }
     }
@@ -1033,6 +1041,7 @@ TEST_CASE("Math solver, zero variance test") {
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
     auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+    YBus<true> y_bus_sym{topo_ptr, param_ptr};
 
     StateEstimationInput<true> se_input;
     se_input.source_status = {1};
@@ -1040,7 +1049,7 @@ TEST_CASE("Math solver, zero variance test") {
 
     MathSolver<true> solver{topo_ptr, param_ptr};
     CalculationInfo info;
-    MathOutput<true> output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+    MathOutput<true> output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
     // check both voltage
     CHECK_CLOSE(output.u[0], 1.0);
@@ -1100,8 +1109,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
         CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -1125,8 +1135,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
@@ -1152,8 +1163,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -1179,8 +1191,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -1206,8 +1219,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
@@ -1232,8 +1246,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
@@ -1261,8 +1276,9 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr, param_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
