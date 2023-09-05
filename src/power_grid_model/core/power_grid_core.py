@@ -7,7 +7,7 @@ Loader for the dynamic library
 """
 
 import platform
-from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
+from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 from pathlib import Path
@@ -19,15 +19,26 @@ from power_grid_model.core.index_integer import IdC, IdxC
 IdxPtr = POINTER(IdxC)
 IdxDoublePtr = POINTER(IdxPtr)
 IDPtr = POINTER(IdC)
+
+# string data
+CStr = c_char_p
+"""Null terminated string."""
+CStrPtr = POINTER(CStr)
+"""Pointer to null terminated string."""
+CharPtr = POINTER(c_char)
+"""Raw pointer to char."""
+CharDoublePtr = POINTER(CharPtr)
+"""Double pointer to char."""
+
+# raw data
 VoidPtr = c_void_p
-# double pointer to char
-CharDoublePtr = POINTER(c_char_p)
-# double pointer to void
+"""Raw void pointer."""
 VoidDoublePtr = POINTER(c_void_p)
+"""Double pointer to void."""
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {bytes: c_char_p, str: c_char_p, int: IdxC, float: c_double}
+_ARGS_TYPE_MAPPING = {bytes: CStr, str: CStr, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
 # pylint: disable=too-few-public-methods
@@ -169,8 +180,8 @@ def make_c_binding(func: Callable):
 
         # call
         res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
-        # convert to string for c_char_p
-        if c_restype == c_char_p:
+        # convert to string for CStr
+        if c_restype == CStr:
             res = res.decode()
         return res
 
@@ -222,7 +233,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def batch_errors(self) -> CharDoublePtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
+    def batch_errors(self) -> CStrPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -322,7 +333,7 @@ class PowerGridCore:
         self,
         system_frequency: float,
         n_components: int,
-        components: CharDoublePtr,  # type: ignore[valid-type]
+        components: CStrPtr,  # type: ignore[valid-type]
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         input_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> ModelPtr:
@@ -333,7 +344,7 @@ class PowerGridCore:
         self,
         model: ModelPtr,
         n_components: int,
-        components: CharDoublePtr,  # type: ignore[valid-type]
+        components: CStrPtr,  # type: ignore[valid-type]
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> None:
@@ -365,12 +376,12 @@ class PowerGridCore:
         opt: OptionsPtr,
         # output
         n_output_components: int,
-        output_components: CharDoublePtr,  # type: ignore[valid-type]
+        output_components: CStrPtr,  # type: ignore[valid-type]
         output_data: VoidDoublePtr,  # type: ignore[valid-type]
         # update
         n_scenarios: int,
         n_update_components: int,
-        update_components: CharDoublePtr,  # type: ignore[valid-type]
+        update_components: CStrPtr,  # type: ignore[valid-type]
         n_component_elements_per_scenario: IdxPtr,  # type: ignore[valid-type]
         indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
@@ -482,7 +493,7 @@ class PowerGridCore:
         self,
         serializer: SerializerPtr,
         use_compact_list: int,
-        data: CharDoublePtr,  # type: ignore[valid-type]
+        data: CStrPtr,  # type: ignore[valid-type]
         size: IdxPtr,  # type: ignore[valid-type]
     ) -> None:
         pass  # pragma: no cover

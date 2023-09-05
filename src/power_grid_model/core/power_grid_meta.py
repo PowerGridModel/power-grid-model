@@ -6,7 +6,7 @@
 Load meta data from C core and define numpy structured array
 """
 
-from ctypes import Array, c_char_p, c_void_p
+from ctypes import Array
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any, Dict, Mapping, Optional, Union
@@ -15,7 +15,7 @@ import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
+from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, CStr, IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 
@@ -195,7 +195,7 @@ class CBuffer:
     Buffer for a single component
     """
 
-    data: c_void_p
+    data: VoidPtr
     indptr: Optional[IdxPtr]  # type: ignore
     n_elements_per_scenario: int
     batch_size: int
@@ -271,7 +271,7 @@ def prepare_cpp_array(
                 raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
             indptr_c = np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
         # convert data array
-        data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(c_void_p)
+        data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(VoidPtr)
         dataset_dict[component_name] = CBuffer(
             data=data_c, indptr=indptr_c, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
         )
@@ -288,10 +288,10 @@ def prepare_cpp_array(
         dataset=dataset_dict,
         batch_size=batch_size,
         n_components=n_components,
-        components=(c_char_p * n_components)(*(x.encode() for x in dataset_dict)),
+        components=(CStr * n_components)(*(x.encode() for x in dataset_dict)),
         n_component_elements_per_scenario=(IdxC * n_components)(
             *(x.n_elements_per_scenario for x in dataset_dict.values())
         ),
         indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore
-        data_ptrs_per_component=(c_void_p * n_components)(*(x.data for x in dataset_dict.values())),
+        data_ptrs_per_component=(VoidPtr * n_components)(*(x.data for x in dataset_dict.values())),
     )
