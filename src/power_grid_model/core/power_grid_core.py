@@ -17,8 +17,11 @@ from power_grid_model.core.index_integer import IdC, IdxC
 
 # integer index
 IdxPtr = POINTER(IdxC)
+"""Pointer to index."""
 IdxDoublePtr = POINTER(IdxPtr)
+"""Double pointer to index."""
 IDPtr = POINTER(IdC)
+"""Raw pointer to ids."""
 
 # string data
 CStr = c_char_p
@@ -38,7 +41,7 @@ VoidDoublePtr = POINTER(c_void_p)
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {bytes: CStr, str: CStr, int: IdxC, float: c_double}
+_ARGS_TYPE_MAPPING = {bytes: CharPtr, str: CStr, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
 # pylint: disable=too-few-public-methods
@@ -493,7 +496,7 @@ class PowerGridCore:
         self,
         serializer: SerializerPtr,
         use_compact_list: int,
-        data: CStrPtr,  # type: ignore[valid-type]
+        data: CharDoublePtr,  # type: ignore[valid-type]
         size: IdxPtr,  # type: ignore[valid-type]
     ) -> None:
         pass  # pragma: no cover

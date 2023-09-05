@@ -16,7 +16,7 @@ import numpy as np
 from power_grid_model.core.data_handling import create_dataset_from_info
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
-from power_grid_model.core.power_grid_core import CStr, CStrPtr
+from power_grid_model.core.power_grid_core import CharDoublePtr, CharPtr, CStr, CStrPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_dataset import DatasetInfo
 from power_grid_model.core.power_grid_meta import prepare_cpp_array
@@ -146,13 +146,11 @@ class Serializer:
         Returns:
             the raw bytes of the serialization of the datast
         """
-        raw_data = CStr()
-        raw_data_ptr: CStrPtr = byref(raw_data)
+        raw_data = CharPtr()
         size = IdxC()
-        size_ptr: POINTER(IdxC) = byref(size)
-        pgc.serializer_get_to_binary_buffer(self._serializer, int(use_compact_list), raw_data_ptr, size_ptr)
+        pgc.serializer_get_to_binary_buffer(self._serializer, int(use_compact_list), byref(raw_data), byref(size))
         assert_no_error()
-        return bytearray(raw_data.value, size.value)
+        return raw_data[: size.value]
 
     dump = dump_bytes
     """
