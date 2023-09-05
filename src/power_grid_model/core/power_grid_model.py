@@ -495,10 +495,14 @@ class PowerGridModel:
                 - < 0: Sequential
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads
-            output_component_types ({set, list}, optional): List or set of component types you want to be present in
-                the output dict. By default, all component types will be in the output.
-            continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some
-                scenarios fail.
+            output_component_types ({set, list}, optional):
+                List or set of component types you want to be present in the output dict.
+                By default, all component types will be in the output.
+            continue_on_batch_error (bool, optional):
+                If the program continues (instead of throwing error) if some scenarios fail.
+            short_circuit_voltage_scaling ({ShortCircuitVoltageSaling, str}, optional):
+                Whether to use the maximum or minimum voltage scaling.
+                By default, the maximum voltage scaling is used to calculate the short circuit.
 
         Returns:
             Dictionary of results of all components.
