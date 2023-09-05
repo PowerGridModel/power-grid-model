@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import itertools
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import msgpack
 import numpy as np
@@ -11,15 +12,18 @@ import pytest
 
 from power_grid_model import JsonDeserializer, MsgpackDeserializer
 from power_grid_model.core.error_handling import assert_no_error
+from power_grid_model.core.power_grid_model_serialization import JsonSerializer
 
 
-def to_json(data, raw_buffer: bool):
-    data = json.dumps(data)
+def to_json(data, raw_buffer: bool, indent: Optional[int] = None):
+    indent = None if indent is None or indent < 0 else indent
+    separators = (",", ":") if indent is None else None
+    result = json.dumps(dict(sorted(data.items())), indent=indent, separators=separators)
 
     if raw_buffer:
-        data = bytes(data, "utf-8")
+        result = result.encode("utf-8")
 
-    return data
+    return result
 
 
 def to_msgpack(data):
@@ -27,7 +31,7 @@ def to_msgpack(data):
 
 
 def empty_dataset(dataset_type: str = "input"):
-    return {"version": "0.0", "type": dataset_type, "is_batch": False, "data": {}, "attributes": {}}
+    return {"version": "1.0", "type": dataset_type, "is_batch": False, "data": {}, "attributes": {}}
 
 
 def simple_input_dataset():
@@ -237,7 +241,7 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
         assert len(value) == len(reference)
         for attribute in value.dtype.names:
             if attribute in reference:
-                assert_almost_equal(v, reference[attribute])
+                assert_almost_equal(value[attribute], reference[attribute])
             else:
                 assert_not_a_value(reference[attribute])
     elif reference is None:
@@ -305,7 +309,8 @@ def test_json_deserializer_data(serialized_data, raw_buffer: bool):
     deserializer = JsonDeserializer(data)
     assert_no_error()
 
-    result = deserializer.load()
+    result_type, result = deserializer.load()
+    assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data)
 
@@ -324,6 +329,30 @@ def test_msgpack_deserializer_data(serialized_data):
     deserializer = MsgpackDeserializer(data)
     assert_no_error()
 
-    result = deserializer.load()
+    result_type, result = deserializer.load()
+    assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data)
+
+
+@pytest.mark.parametrize("raw_buffer", (True, False))
+@pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
+def test_json_serializer_empty_dataset(raw_buffer: bool, dataset_type):
+    serializer = JsonSerializer(dataset_type, {})
+
+    if raw_buffer:
+        reference = to_json(empty_dataset(dataset_type), raw_buffer=raw_buffer)
+        for use_compact_list in (True, False):
+            assert serializer.dump_bytes(use_compact_list=use_compact_list) == reference
+    else:
+        for use_compact_list, indent in itertools.product((True, False), (-1, 0, 2, 4)):
+            reference = to_json(empty_dataset(dataset_type), raw_buffer=raw_buffer, indent=indent)
+            assert isinstance(reference, str)
+
+            result: Any = serializer.dump(use_compact_list=use_compact_list, indent=indent)
+            assert isinstance(result, str)
+            assert result == reference
+
+            result = serializer.dump_str(use_compact_list=use_compact_list, indent=indent)
+            assert isinstance(result, str)
+            assert result == reference

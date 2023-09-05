@@ -57,6 +57,12 @@ class DatasetPtr(c_void_p):
     """
 
 
+class ConstDatasetPtr(c_void_p):
+    """
+    Pointer to writable dataset
+    """
+
+
 class WritableDatasetPtr(c_void_p):
     """
     Pointer to writable dataset
@@ -402,6 +408,32 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def create_dataset_const(  # type: ignore[empty-body]
+        self, dataset: str, is_batch: int, batch_size: int
+    ) -> ConstDatasetPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_dataset_const(self, dataset: ConstDatasetPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_const_add_buffer(  # type: ignore[empty-body]
+        self,
+        dataset: ConstDatasetPtr,
+        component: str,
+        elements_per_scenario: int,
+        total_elements: int,
+        indptr: IdxPtr,  # type: ignore[valid-type]
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_const_get_info(self, dataset: ConstDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def dataset_writable_get_info(self, dataset: WritableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
@@ -440,7 +472,9 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def create_serializer(self, data: str, serialization_format: int) -> SerializerPtr:  # type: ignore[empty-body]
+    def create_serializer(  # type: ignore[empty-body]
+        self, data: ConstDatasetPtr, serialization_format: int
+    ) -> SerializerPtr:
         pass  # pragma: no cover
 
     @make_c_binding
@@ -451,6 +485,15 @@ class PowerGridCore:
         data: CharDoublePtr,  # type: ignore[valid-type]
         size: IdxPtr,  # type: ignore[valid-type]
     ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def serializer_get_to_zero_terminated_string(  # type: ignore[empty-body]
+        self,
+        serializer: SerializerPtr,
+        use_compact_list: int,
+        indent: int,
+    ) -> str:
         pass  # pragma: no cover
 
     @make_c_binding
