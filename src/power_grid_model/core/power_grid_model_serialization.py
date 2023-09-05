@@ -7,16 +7,16 @@
 Power grid model (de)serialization
 """
 
-from ctypes import POINTER, byref
+from ctypes import byref
 from enum import IntEnum
-from typing import Dict, Mapping, Tuple, Union
+from typing import Callable, Dict, Mapping, Tuple, Union
 
 import numpy as np
 
 from power_grid_model.core.data_handling import create_dataset_from_info
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
-from power_grid_model.core.power_grid_core import CharDoublePtr, CharPtr, CStr, CStrPtr
+from power_grid_model.core.power_grid_core import CharPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_dataset import DatasetInfo
 from power_grid_model.core.power_grid_meta import prepare_cpp_array
@@ -93,19 +93,33 @@ class Serializer:
     ):
         self._data = data
         self._data_type = dataset_type
-        self._is_batch = False if not self._data else next(self._data.values()).ndim > 1
-        self._batch_size = 1 if not self._is_batch else len(next(self._data.values()))
+
+        if not self._data:
+            self._is_batch = False
+            self._batch_size = 1
+        else:
+            first = next(iter(self._data.values()))
+            if isinstance(first, np.ndarray):
+                self._is_batch = first.ndim > 1
+                self._batch_size = len(first)
+            else:
+                raise PowerGridSerializationError("Sparse batch data sets are not supported.")
 
         self._dataset_ptr = pgc.create_dataset_const(self._data_type, self._is_batch, self._batch_size)
         assert_no_error()
 
         raw_dataset_view = prepare_cpp_array(data_type=self._data_type, array_dict=data)
+
         for component, buffer in raw_dataset_view.dataset.items():
+            component_data = self._data[component]
+            if not isinstance(buffer.indptr, IdxPtr):
+                raise PowerGridSerializationError("Data set is invalid")
+
             pgc.dataset_const_add_buffer(
                 self._dataset_ptr,
                 component,
-                -1 if not isinstance(self._data[component]) else self._data[component].shape[-1],
-                buffer.indptr[-1] if not isinstance(self._data[component]) else self._data[component].size,
+                -1 if not isinstance(component_data, np.ndarray) else component_data.shape[-1],
+                buffer.indptr[-1] if not isinstance(component_data, np.ndarray) else component_data.size,
                 buffer.indptr,
                 buffer.data,
             )
@@ -146,13 +160,18 @@ class Serializer:
         Returns:
             the raw bytes of the serialization of the datast
         """
-        raw_data = CharPtr()
-        size = IdxC()
+        raw_data = CharPtr()  # pylint: disable(not-callable)
+        size = IdxC()  # pylint: disable(not-callable)
         pgc.serializer_get_to_binary_buffer(self._serializer, int(use_compact_list), byref(raw_data), byref(size))
         assert_no_error()
-        return raw_data[: size.value]
 
-    dump = dump_bytes
+        result = raw_data[: size.value]
+        if not isinstance(result, bytes):
+            raise PowerGridSerializationError("Invalid output data type")
+
+        return result
+
+    dump: Callable = dump_bytes
     """
     Dump the data in the recommended data format (e.g. str or bytes, depending on the serialization_type).
 

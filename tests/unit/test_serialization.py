@@ -21,7 +21,7 @@ def to_json(data, raw_buffer: bool, indent: Optional[int] = None):
     result = json.dumps(dict(sorted(data.items())), indent=indent, separators=separators)
 
     if raw_buffer:
-        result = result.encode("utf-8")
+        return result.encode("utf-8")
 
     return result
 
