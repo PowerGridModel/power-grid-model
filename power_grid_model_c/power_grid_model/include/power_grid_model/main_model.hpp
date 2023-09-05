@@ -1109,12 +1109,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (n_math_solvers_ != (Idx)solvers.size()) {
             assert(solvers.empty());
             solvers.reserve(n_math_solvers_);
-            // get param, will be consumed
-            std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
             // loop to build
             for (Idx i = 0; i != n_math_solvers_; ++i) {
-                solvers.emplace_back(state_.math_topology[i],
-                                     std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
+                solvers.emplace_back(state_.math_topology[i]);
             }
         }
         // if parameters are not up to date, update them
