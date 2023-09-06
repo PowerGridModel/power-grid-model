@@ -101,7 +101,7 @@ class Serializer:
             first = next(iter(self._data.values()))
             if isinstance(first, np.ndarray):
                 self._is_batch = first.ndim > 1
-                self._batch_size = len(first)
+                self._batch_size = len(first) if self._is_batch else 1
             else:
                 raise PowerGridSerializationError("Sparse batch data sets are not supported.")
 
@@ -185,7 +185,7 @@ class _BytesSerializer(Serializer):
     Base type for serialization to bytes
     """
 
-    dump = Serializer.dump_str
+    dump = Serializer.dump_bytes
 
 
 class _StringSerializer(Serializer):

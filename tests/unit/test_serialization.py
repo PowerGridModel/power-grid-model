@@ -14,10 +14,14 @@ from power_grid_model import JsonDeserializer, JsonSerializer, MsgpackDeserializ
 from power_grid_model.core.error_handling import assert_no_error
 
 
-def to_json(data, raw_buffer: bool, indent: Optional[int] = None):
+def sort_dict(data: Dict):
+    return dict(sorted(data.items()))
+
+
+def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):
     indent = None if indent is None or indent < 0 else indent
     separators = (",", ":") if indent is None else None
-    result = json.dumps(dict(sorted(data.items())), indent=indent, separators=separators)
+    result = json.dumps(sort_dict(data), indent=indent, separators=separators)
 
     if raw_buffer:
         return result.encode("utf-8")
@@ -26,11 +30,11 @@ def to_json(data, raw_buffer: bool, indent: Optional[int] = None):
 
 
 def to_msgpack(data):
-    return msgpack.packb(dict(sorted(data.items())))
+    return msgpack.packb(sort_dict(data))
 
 
 def from_msgpack(data):
-    return dict(sorted(msgpack.unpackb(data).items()))
+    return sort_dict(msgpack.unpackb(data))
 
 
 def empty_dataset(dataset_type: str = "input"):
@@ -253,12 +257,12 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
         np.testing.assert_almost_equal(value, reference)
 
 
-def assert_scenario_correct(result: Dict[str, np.ndarray], serialized_data: Dict[str, Any]):
-    assert result.keys() == serialized_data["data"].keys()
-    for component, component_result in result.items():
+def assert_scenario_correct(deserialized_dataset: Dict[str, np.ndarray], serialized_dataset: Dict[str, Any]):
+    assert deserialized_dataset.keys() == serialized_dataset["data"].keys()
+    for component, component_result in deserialized_dataset.items():
         assert isinstance(component_result, np.ndarray)
 
-        component_input = serialized_data["data"][component]
+        component_input = serialized_dataset["data"][component]
         assert len(component_result) == len(component_input)
         for result_entry, input_entry in zip(component_result, component_input):
             if isinstance(input_entry, dict):
@@ -267,32 +271,35 @@ def assert_scenario_correct(result: Dict[str, np.ndarray], serialized_data: Dict
                     assert_almost_equal(result_entry[attr], values)
             else:
                 assert isinstance(component_input, list)
-                assert component in serialized_data["attributes"]
-                for attr_idx, attr in enumerate(serialized_data["attributes"][component]):
-                    assert attr in result[component].dtype.names
+                assert component in serialized_dataset["attributes"]
+                for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
+                    assert attr in deserialized_dataset[component].dtype.names
                     assert_almost_equal(result_entry[attr], input_entry[attr_idx])
 
 
-def assert_serialization_correct(result: Dict[str, np.ndarray], serialized_data: Dict[str, Any]):
+def assert_serialization_correct(deserialized_dataset: Dict[str, np.ndarray], serialized_dataset: Dict[str, Any]):
     """Assert the dataset correctly reprensents the input data."""
-    if serialized_data["is_batch"]:
-        assert isinstance(serialized_data["data"], list)
+    if serialized_dataset["is_batch"]:
+        assert isinstance(serialized_dataset["data"], list)
 
-        for component_values in result.values():
+        for component_values in deserialized_dataset.values():
             assert len(component_values.shape) == 2
-            assert len(component_values) == len(serialized_data["data"])
+            assert len(component_values) == len(serialized_dataset["data"])
 
-        for scenario_idx, scenario in enumerate(serialized_data["data"]):
-            serialized_scenario = {k: v for k, v in serialized_data.items() if k not in ("data", "is_batch")}
+        for scenario_idx, scenario in enumerate(serialized_dataset["data"]):
+            serialized_scenario = {k: v for k, v in serialized_dataset.items() if k not in ("data", "is_batch")}
             serialized_scenario["is_batch"] = False
             serialized_scenario["data"] = scenario
 
             assert_scenario_correct(
-                {component: component_values[scenario_idx] for component, component_values in result.items()},
+                {
+                    component: component_values[scenario_idx]
+                    for component, component_values in deserialized_dataset.items()
+                },
                 serialized_scenario,
             )
     else:
-        assert_scenario_correct(result, serialized_data)
+        assert_scenario_correct(deserialized_dataset, serialized_dataset)
 
 
 @pytest.mark.parametrize("raw_buffer", (True, False))
@@ -338,9 +345,9 @@ def test_msgpack_deserializer_data(serialized_data):
     assert_serialization_correct(result, serialized_data)
 
 
-@pytest.mark.parametrize("raw_buffer", (True, False))
 @pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
-def test_json_serializer_empty_dataset(raw_buffer: bool, dataset_type):
+@pytest.mark.parametrize("raw_buffer", (True, False))
+def test_json_serializer_empty_dataset(dataset_type, raw_buffer: bool):
     serializer = JsonSerializer(dataset_type, {})
 
     if raw_buffer:
@@ -365,6 +372,47 @@ def test_json_serializer_empty_dataset(raw_buffer: bool, dataset_type):
 def test_msgpack_serializer_empty_dataset(dataset_type):
     serializer = MsgpackSerializer(dataset_type, {})
 
-    reference = dict(sorted(empty_dataset(dataset_type).items()))
+    reference = sort_dict(empty_dataset(dataset_type))
     for use_compact_list in (True, False):
         assert from_msgpack(serializer.dump_bytes(use_compact_list=use_compact_list)) == reference
+
+
+@pytest.mark.parametrize(
+    ("deserializer_type", "serializer_type", "pack"),
+    (
+        (JsonDeserializer, JsonSerializer, to_json),
+        (MsgpackDeserializer, MsgpackSerializer, to_msgpack),
+    ),
+)
+def test_serializer_deserializer_double_round_trip(deserializer_type, serializer_type, serialized_data, pack):
+    """
+    Repeated deserialization and serialization must result in the same deserialized data and serialization string, respectively.
+    """
+    test_data = pack(serialized_data)
+
+    deserializer_a = deserializer_type(test_data)
+    dataset_type_a, deserialized_result_a = deserializer_a.load()
+    serializer_a = serializer_type(dataset_type_a, deserialized_result_a)
+    serialized_result_a = serializer_a.dump()
+
+    deserializer_b = deserializer_type(serialized_result_a)
+    dataset_type_b, deserialized_result_b = deserializer_b.load()
+    serializer_b = serializer_type(dataset_type_b, deserialized_result_b)
+    serialized_result_b = serializer_b.dump()
+
+    assert serialized_result_a == serialized_result_b
+    assert dataset_type_a == dataset_type_b
+    assert list(dataset_type_a) == list(dataset_type_b)
+
+    for component_result_a, component_result_b in zip(deserialized_result_a.values(), deserialized_result_b.values()):
+        assert component_result_a.dtype == component_result_b.dtype
+
+        for field in component_result_a.dtype.names:
+            field_result_a = component_result_a[field]
+            field_result_b = component_result_b[field]
+
+            nan_a = np.isnan(field_result_a)
+            nan_b = np.isnan(field_result_b)
+
+            np.testing.assert_array_equal(nan_a, nan_b)
+            np.testing.assert_array_equal(field_result_a[~nan_a], field_result_b[~nan_b])
