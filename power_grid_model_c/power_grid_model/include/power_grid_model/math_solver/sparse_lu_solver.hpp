@@ -77,14 +77,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
 
-    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr,  // indptr including fill-ins
-                   std::shared_ptr<IdxVector const> const& col_indices, // indices including fill-ins
-                   std::shared_ptr<IdxVector const> const& diag_lu)
+    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr, // indptr including fill-ins
+                   std::shared_ptr<IdxVector const> col_indices,       // indices including fill-ins
+                   std::shared_ptr<IdxVector const> diag_lu)
         : size_{(Idx)row_indptr->size() - 1},
           nnz_{row_indptr->back()},
           row_indptr_{row_indptr},
-          col_indices_{col_indices},
-          diag_lu_{diag_lu} {}
+          col_indices_{std::move(col_indices)},
+          diag_lu_{std::move(diag_lu)} {}
 
     // solve with new matrix data, need to factorize first
     void

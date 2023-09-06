@@ -634,7 +634,7 @@ def all_ids_exist_in_data_set(
     return []
 
 
-def all_finite(data: SingleDataset) -> List[InfinityError]:
+def all_finite(data: SingleDataset, exceptions: Optional[Dict[str, List[str]]] = None) -> List[InfinityError]:
     """
     Check that for all records in all component, the values in all columns are finite value, i.e. float values other
     than inf, or -inf. Nan values are ignored, as in all other comparison functions. You can use non_missing() to
@@ -643,6 +643,8 @@ def all_finite(data: SingleDataset) -> List[InfinityError]:
 
     Args:
         data: The input/update data set for all components
+        exceptions:
+            A dictionary of fields per component type for which infinite values are supported. Defaults to empty.
 
     Returns:
         A list containing zero or one NotBooleanError, listing all ids where the value in the field of interest was not
@@ -653,6 +655,10 @@ def all_finite(data: SingleDataset) -> List[InfinityError]:
         for field, (dtype, _) in array.dtype.fields.items():
             if not np.issubdtype(dtype, np.floating):
                 continue
+
+            if exceptions and field in exceptions.get(component, []):
+                continue
+
             invalid = np.isinf(array[field])
             if invalid.any():
                 ids = data[component]["id"][invalid].flatten().tolist()
