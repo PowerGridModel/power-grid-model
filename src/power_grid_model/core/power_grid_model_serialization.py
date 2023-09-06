@@ -18,7 +18,7 @@ from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import CharPtr, IdxPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.core.power_grid_dataset import DatasetInfo
+from power_grid_model.core.power_grid_dataset import CDatasetInfo
 from power_grid_model.core.power_grid_meta import prepare_cpp_array
 from power_grid_model.errors import PowerGridSerializationError
 
@@ -48,11 +48,12 @@ class Deserializer:
         self._info_ptr = pgc.dataset_writable_get_info(self._dataset_ptr)
         assert_no_error()
 
-        self._info = DatasetInfo(self._info_ptr)
+        self._info = CDatasetInfo(self._info_ptr)
         assert_no_error()
 
         # TODO(mgovers): we do not support sparse batches yet
-        if any(count == -1 for count in self._info.elements_per_scenario.values()):
+        elements_per_scenario = self._info.elements_per_scenario()
+        if any(count == -1 for count in elements_per_scenario.values()):
             raise PowerGridSerializationError("Sparse batch data sets are not supported.")
 
     def __del__(self):
@@ -65,15 +66,15 @@ class Deserializer:
 
         Returns:
             A tuple containing:
-                the name/type of the data set
+                the type of the data set
                 the deserialized data set in Power grid model input format
         """
         dataset = create_dataset_from_info(self._info)
         self._deserialize(target_dataset=dataset)
-        return self._info.name, dataset
+        return self._info.dataset_type(), dataset
 
     def _deserialize(self, target_dataset: Dict[str, np.ndarray]):
-        raw_dataset_view = prepare_cpp_array(data_type=self._info.name, array_dict=target_dataset)
+        raw_dataset_view = prepare_cpp_array(data_type=self._info.dataset_type(), array_dict=target_dataset)
         for component, buffer in raw_dataset_view.dataset.items():
             pgc.dataset_writable_set_buffer(self._dataset_ptr, component, buffer.indptr, buffer.data)
 

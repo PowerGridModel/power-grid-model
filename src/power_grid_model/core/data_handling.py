@@ -14,7 +14,7 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 import numpy as np
 
 from power_grid_model.core.index_integer import IdxNp
-from power_grid_model.core.power_grid_dataset import DatasetInfo
+from power_grid_model.core.power_grid_dataset import CDatasetInfo
 from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 from power_grid_model.enum import CalculationType
 
@@ -270,7 +270,7 @@ def reduce_output_data(output_data: Dict[str, np.ndarray], batch_calculation: bo
     return reduce_dataset(dataset=output_data, batch_calculation=batch_calculation)
 
 
-def create_dataset_from_info(info: DatasetInfo) -> Dict[str, np.ndarray]:
+def create_dataset_from_info(info: CDatasetInfo) -> Dict[str, np.ndarray]:
     """
     Create the dataset that the user can use.
 
@@ -289,18 +289,18 @@ def create_dataset_from_info(info: DatasetInfo) -> Dict[str, np.ndarray]:
         Error handling:
             in case if some specified components are unknown, a KeyError will be raised.
     """
+    total_elements = info.total_elements().items()
+    elements_per_scenario = info.elements_per_scenario()
     sparse_component_count = {
-        component: count
-        for component, count in info.total_elements.items()
-        if info.elements_per_scenario.get(component, -1) == -1
+        component: count for component, count in total_elements if elements_per_scenario.get(component, -1) == -1
     }
     return reduce_dataset(
         dataset=create_dataset(  # dense data set
-            component_types=set(info.elements_per_scenario.keys()),
-            dataset_type=DatasetType[info.name.upper()],
-            homogeneous_component_count=info.elements_per_scenario,
-            batch_size=info.batch_size,
+            component_types=set(elements_per_scenario.keys()),
+            dataset_type=DatasetType[info.dataset_type().upper()],
+            homogeneous_component_count=elements_per_scenario,
+            batch_size=info.batch_size(),
             sparse_component_count=sparse_component_count,
         ),
-        batch_calculation=info.is_batch,
+        batch_calculation=info.is_batch(),
     )

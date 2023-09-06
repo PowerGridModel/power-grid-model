@@ -199,6 +199,7 @@ class CBuffer:
     indptr: Optional[IdxPtr]  # type: ignore
     n_elements_per_scenario: int
     batch_size: int
+    total_elements: int
 
 
 @dataclass
@@ -246,6 +247,7 @@ def prepare_cpp_array(
         if isinstance(entry, np.ndarray):
             data = entry
             ndim = entry.ndim
+            total_elements = entry.size
             indptr_c = IdxPtr()
             if ndim == 1:
                 batch_size = 1
@@ -261,6 +263,7 @@ def prepare_cpp_array(
             indptr: np.ndarray = entry["indptr"]
             batch_size = indptr.size - 1
             n_elements_per_scenario = -1
+            total_elements = len(data)
             if data.ndim != 1:
                 raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
             if indptr.ndim != 1:
@@ -273,7 +276,11 @@ def prepare_cpp_array(
         # convert data array
         data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(VoidPtr)
         dataset_dict[component_name] = CBuffer(
-            data=data_c, indptr=indptr_c, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
+            data=data_c,
+            indptr=indptr_c,
+            n_elements_per_scenario=n_elements_per_scenario,
+            batch_size=batch_size,
+            total_elements=total_elements,
         )
     # total set
     n_components = len(dataset_dict)
