@@ -15,7 +15,7 @@ import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, CStr, IdxPtr, VoidPtr
+from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, CStr, DatasetPtr, IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 
