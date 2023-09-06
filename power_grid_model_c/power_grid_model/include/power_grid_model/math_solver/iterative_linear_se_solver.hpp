@@ -271,21 +271,29 @@ template <bool sym> class MeasuredValues {
             {
                 Idx const begin = topo.voltage_sensor_indptr[bus];
                 Idx const end = topo.voltage_sensor_indptr[bus + 1];
-                if (begin == end) {
+
+                SensorCalcParam<sym> aggregated{ComplexValue<sym>{0.0}, std::numeric_limits<double>::infinity()};
+                bool angle_measured{false};
+
+                // check if there is nan
+                if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
+                                [](auto const& x) { return is_nan(imag(x.value)); })) {
+                    // only keep magnitude
+                    aggregated = combine_measurements<true>(input.measured_voltage, begin, end);
+                } else {
+                    // keep complex number
+                    aggregated = combine_measurements(input.measured_voltage, begin, end);
+                    angle_measured = true;
+                }
+                if (std::isinf(aggregated.variance)) {
                     idx_voltage_[bus] = unmeasured;
                 } else {
                     idx_voltage_[bus] = static_cast<Idx>(main_value_.size());
-                    // check if there is nan
-                    if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
-                                    [](auto const& x) { return is_nan(imag(x.value)); })) {
-                        // only keep magnitude
-                        main_value_.push_back(combine_measurements<true>(input.measured_voltage, begin, end));
-                    } else {
-                        // keep complex number
-                        main_value_.push_back(combine_measurements(input.measured_voltage, begin, end));
+                    main_value_.push_back(aggregated);
+                    if (angle_measured) {
                         ++n_angle_;
                         // accumulate angle, offset by intrinsic phase shift
-                        angle_cum += arg(main_value_.back().value * std::exp(-1.0i * topo.phase_shift[bus]));
+                        angle_cum += arg(aggregated.value * std::exp(-1.0i * topo.phase_shift[bus]));
                     }
                 }
             }
