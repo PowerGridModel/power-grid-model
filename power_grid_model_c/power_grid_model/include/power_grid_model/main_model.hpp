@@ -1118,10 +1118,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         else if (!is_parameter_up_to_date<sym>()) {
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
-            for (Idx i = 0; i != n_math_solvers_; ++i) {
-                // move parameter into a shared ownership for the math solver
-                solvers[i].update_value(std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
-            }
+            main_core::update_math_state(math_state_, math_params, n_math_solvers_);
         }
         // else do nothing, set everything up to date
         is_parameter_up_to_date<sym>() = true;
