@@ -386,7 +386,7 @@ def test_msgpack_serializer_empty_dataset(dataset_type):
 )
 def test_serializer_deserializer_double_round_trip(deserializer_type, serializer_type, serialized_data, pack):
     """
-    Repeated deserialization and serialization must result in the same deserialized data and serialization string, respectively.
+    Repeated deserialization and serialization must result in the same deserialized data and serialization string.
     """
     test_data = pack(serialized_data)
 
