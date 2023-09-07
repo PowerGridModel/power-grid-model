@@ -171,7 +171,7 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
         shape: shape of initialization
             integer, it is a 1-dimensional array
             tuple, it is an N-dimensional (tuple.shape) array
-        empty: if leave the memory block un-initialized
+        empty: if True, leave the memory block un-initialized
 
     Returns:
         np structured array with all entries as null value
