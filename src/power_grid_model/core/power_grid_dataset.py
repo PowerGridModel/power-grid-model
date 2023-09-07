@@ -12,7 +12,7 @@ from typing import Dict, List, Mapping, Tuple, Union
 import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
-from power_grid_model.core.index_integer import IdxNp
+from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, IdxPtr, VoidPtr, WritableDatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_meta import CBuffer, power_grid_meta_data
@@ -466,7 +466,7 @@ class CWritableDataset:
 
     def _create_sparse_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[Dict[str, np.ndarray], CBuffer]:
         data = np.empty(info.n_total_elements, dtype=self._schema[component])
-        indptr = np.empty([0] * info.n_total_elements + [info.batch_size])
+        indptr = np.array([0] * info.n_total_elements + [info.batch_size], dtype=IdxC)
         return {"data": data, "indptr": indptr}, CBuffer(
             data=self._raw_view(component, data),
             indptr=self._get_indptr_view(indptr),

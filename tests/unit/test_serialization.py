@@ -4,7 +4,7 @@
 
 import itertools
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import msgpack
 import numpy as np
@@ -213,8 +213,6 @@ def single_sc_output_dataset():
     ]
 )
 def serialized_data(request):
-    if request.param is sparse_batch_update_dataset:
-        request.applymarker(pytest.mark.xfail)
     return request.param()
 
 
@@ -257,8 +255,13 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
         np.testing.assert_almost_equal(value, reference)
 
 
-def assert_scenario_correct(deserialized_dataset: Dict[str, np.ndarray], serialized_dataset: Dict[str, Any]):
-    assert deserialized_dataset.keys() == serialized_dataset["data"].keys()
+def assert_scenario_correct(
+    deserialized_dataset: Dict[str, np.ndarray], serialized_dataset: Dict[str, Any], sparse_components: List[str]
+):
+    for key in serialized_dataset["data"]:
+        if key not in deserialized_dataset:
+            assert key in sparse_components
+
     for component, component_result in deserialized_dataset.items():
         assert isinstance(component_result, np.ndarray)
 
@@ -277,29 +280,52 @@ def assert_scenario_correct(deserialized_dataset: Dict[str, np.ndarray], seriali
                     assert_almost_equal(result_entry[attr], input_entry[attr_idx])
 
 
-def assert_serialization_correct(deserialized_dataset: Dict[str, np.ndarray], serialized_dataset: Dict[str, Any]):
+def assert_serialization_correct(
+    deserialized_dataset: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]], serialized_dataset: Dict[str, Any]
+):
     """Assert the dataset correctly reprensents the input data."""
     if serialized_dataset["is_batch"]:
         assert isinstance(serialized_dataset["data"], list)
 
         for component_values in deserialized_dataset.values():
-            assert len(component_values.shape) == 2
-            assert len(component_values) == len(serialized_dataset["data"])
+            if isinstance(component_values, np.ndarray):
+                assert len(component_values.shape) == 2
+                assert len(component_values) == len(serialized_dataset["data"])
+            else:
+                assert isinstance(component_values, dict)
+                component_data = component_values["data"]
+                component_indptr = component_values["indptr"]
+                assert isinstance(component_data, np.ndarray)
+                assert isinstance(component_indptr, np.ndarray)
+                assert component_data.ndim == 1
+                assert len(component_indptr) == len(serialized_dataset["data"]) + 1
+                assert len(component_data) == component_indptr[-1]
 
         for scenario_idx, scenario in enumerate(serialized_dataset["data"]):
             serialized_scenario = {k: v for k, v in serialized_dataset.items() if k not in ("data", "is_batch")}
             serialized_scenario["is_batch"] = False
             serialized_scenario["data"] = scenario
 
-            assert_scenario_correct(
-                {
-                    component: component_values[scenario_idx]
-                    for component, component_values in deserialized_dataset.items()
-                },
-                serialized_scenario,
-            )
+            deserialized_scenario = {}
+            sparse_components = []
+            for component, component_values in deserialized_dataset.items():
+                if isinstance(component_values, np.ndarray):
+                    deserialized_scenario[component] = component_values[scenario_idx]
+                else:
+                    sparse_components.append(component)
+                    sparse_component_data = component_values["data"][
+                        component_values["indptr"][scenario_idx] : component_values["indptr"][scenario_idx + 1]
+                    ]
+                    if len(sparse_component_data) > 0:
+                        deserialized_scenario[component] = sparse_component_data
+
+            assert_scenario_correct(deserialized_scenario, serialized_scenario, sparse_components)
     else:
-        assert_scenario_correct(deserialized_dataset, serialized_dataset)
+        assert_scenario_correct(
+            deserialized_dataset,
+            serialized_dataset,
+            [key for key, value in deserialized_dataset.items() if not isinstance(value, np.ndarray)],
+        )
 
 
 @pytest.mark.parametrize("raw_buffer", (True, False))
@@ -407,11 +433,22 @@ def test_serializer_deserializer_double_round_trip(deserializer_type, serializer
     assert list(deserialized_result_b) == list(deserialized_result_a)
 
     for component_result_a, component_result_b in zip(deserialized_result_a.values(), deserialized_result_b.values()):
-        assert component_result_a.dtype == component_result_b.dtype
+        is_uniform = isinstance(component_result_a, np.ndarray)
+        assert is_uniform == isinstance(component_result_b, np.ndarray)
 
-        for field in component_result_a.dtype.names:
-            field_result_a = component_result_a[field]
-            field_result_b = component_result_b[field]
+        if is_uniform:
+            component_data_a = component_result_a
+            component_data_b = component_result_b
+        else:
+            np.testing.assert_array_equal(component_result_a["indptr"], component_result_b["indptr"])
+            component_data_a = component_result_a["data"]
+            component_data_b = component_result_b["data"]
+
+        assert component_data_a.dtype == component_data_b.dtype
+
+        for field in component_data_a.dtype.names:
+            field_result_a = component_data_a[field]
+            field_result_b = component_data_b[field]
 
             nan_a = np.isnan(field_result_a)
             nan_b = np.isnan(field_result_b)

@@ -46,11 +46,6 @@ class Deserializer:
         self._dataset = CWritableDataset(self._dataset_ptr)
         assert_no_error()
 
-        # TODO(mgovers): we do not support sparse batches yet
-        elements_per_scenario = self._dataset.get_info().elements_per_scenario()
-        if any(count == -1 for count in elements_per_scenario.values()):
-            raise PowerGridSerializationError("Sparse batch data sets are not supported.")
-
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)
 
