@@ -85,7 +85,7 @@ class Topology {
             // it does not form a cycle, but an anti-parallel edge
             // else it forms a cycle
             if (predecessors_[source] != target) {
-                back_edges_.push_back({source, target});
+                back_edges_.emplace_back(source, target);
             }
         }
 
@@ -175,10 +175,10 @@ class Topology {
             double const phase_shift = comp_conn_.branch_phase_shift[k];
             if (i_status != 0 && j_status != 0) {
                 // node_j - node_i
-                edges.push_back({(GraphIdx)i, (GraphIdx)j});
+                edges.emplace_back((GraphIdx)i, (GraphIdx)j);
                 edge_props.push_back({-phase_shift});
                 // node_i - node_j
-                edges.push_back({(GraphIdx)j, (GraphIdx)i});
+                edges.emplace_back((GraphIdx)j, (GraphIdx)i);
                 edge_props.push_back({phase_shift});
             }
         }
@@ -194,10 +194,10 @@ class Topology {
             for (Idx m = 0; m != 3; ++m) {
                 if (i_status[m] != 0) {
                     // node_internal - node_i
-                    edges.push_back({(GraphIdx)i[m], (GraphIdx)j_internal});
+                    edges.emplace_back((GraphIdx)i[m], (GraphIdx)j_internal);
                     edge_props.push_back({-phase_shift[m]});
                     // node_i - node_internal
-                    edges.push_back({(GraphIdx)j_internal, (GraphIdx)i[m]});
+                    edges.emplace_back((GraphIdx)j_internal, (GraphIdx)i[m]);
                     edge_props.push_back({phase_shift[m]});
                 }
             }

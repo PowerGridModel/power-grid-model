@@ -426,6 +426,10 @@ def test_all_finite():
     assert len(errors) == 2
     assert InfinityError("foo_test", "foo", [2]) in errors
     assert InfinityError("bar_test", "bar", [6]) in errors
+    errors = all_finite(invalid, {"foo_test": ["foo"]})
+    assert len(errors) == 1
+    assert InfinityError("foo_test", "foo", [2]) not in errors
+    assert InfinityError("bar_test", "bar", [6]) in errors
 
 
 @pytest.mark.skip("No unit tests available for none_missing")

@@ -21,5 +21,6 @@ from power_grid_model.enum import (
     FaultType,
     LoadGenType,
     MeasuredTerminalType,
+    ShortCircuitVoltageScaling,
     WindingType,
 )
