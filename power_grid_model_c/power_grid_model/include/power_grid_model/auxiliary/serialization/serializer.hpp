@@ -41,12 +41,19 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         template <typename Stream>
         msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p,
                                             power_grid_model::RealValue<false> const& o) const {
+            using namespace std::string_view_literals;
+            constexpr auto infinity = "inf"sv;
+            constexpr auto neg_infinity = "-inf"sv;
             p.pack_array(3);
             for (int8_t i = 0; i != 3; ++i) {
                 if (power_grid_model::is_nan(o(i))) {
                     p.pack_nil();
                 } else {
-                    p.pack(o(i));
+                    if (std::isinf(o(i))) {
+                        p.pack(o(i) > 0 ? infinity : neg_infinity);
+                    } else {
+                        p.pack(o(i));
+                    }
                 }
             }
             return p;
@@ -331,14 +338,30 @@ class Serializer {
     }
 
     static bool check_nan(RawElementPtr element_ptr, MetaAttribute const& attribute) {
-        return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
+        return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<typename T> {
             return is_nan(attribute.get_attribute<T const>(element_ptr));
         });
     }
 
     void pack_attribute(RawElementPtr element_ptr, MetaAttribute const& attribute) {
-        ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<class T> {
-            packer_.pack(attribute.get_attribute<T const>(element_ptr));
+        ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<typename T> {
+            // split in two and check if constexpr std floating point then if statement that checks whether it is inf
+            // (isinf)
+            using namespace std::string_view_literals;
+            constexpr auto infinity = "inf"sv;
+            constexpr auto neg_infinity = "-inf"sv;
+
+            auto const& attr = attribute.get_attribute<T const>(element_ptr);
+            if constexpr (std::floating_point<T>) {
+                if (std::isinf(attr)) {
+                    packer_.pack(attr > 0 ? infinity : neg_infinity);
+                } else {
+                    packer_.pack(attr);
+                }
+
+            } else {
+                packer_.pack(attr);
+            }
         });
     }
 };
