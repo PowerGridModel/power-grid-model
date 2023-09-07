@@ -296,7 +296,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return [this, &input, &solve] {
             Timer const timer(calculation_info_, 2200, "Math Calculation");
             std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
+            std::vector<YBus<sym>>& y_bus_vec = get_y_bus<sym>();
             std::vector<MathOutputType> math_output(n_math_solvers_);
+            // TODO: change transform below -> also include Ybus
             std::transform(solvers.begin(), solvers.end(), input.cbegin(), math_output.begin(), solve);
             return math_output;
         }();
@@ -307,9 +309,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                        CalculationMethod calculation_method) {
         return calculate_<MathOutput<sym>, MathSolver<sym>, PowerFlowInput<sym>>(
             [this] { return prepare_power_flow_input<sym>(); },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& y) {
-                return solver.run_power_flow(y, err_tol, max_iter, calculation_info_, calculation_method,
-                                             get_y_bus<sym>());
+            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& y,
+                                                          YBus<sym> y_bus) {
+                return solver.run_power_flow(y, err_tol, max_iter, calculation_info_, calculation_method, y_bus);
             });
     }
 
@@ -318,9 +320,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                              CalculationMethod calculation_method) {
         return calculate_<MathOutput<sym>, MathSolver<sym>, StateEstimationInput<sym>>(
             [this] { return prepare_state_estimation_input<sym>(); },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, StateEstimationInput<sym> const& y) {
-                return solver.run_state_estimation(y, err_tol, max_iter, calculation_info_, calculation_method,
-                                                   get_y_bus<sym>());
+            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, StateEstimationInput<sym> const& y,
+                                                          YBus<sym> y_bus) {
+                return solver.run_state_estimation(y, err_tol, max_iter, calculation_info_, calculation_method, y_bus);
             });
     }
 
@@ -329,8 +331,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                                       CalculationMethod calculation_method) {
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, ShortCircuitInput>(
             [this, voltage_scaling] { return prepare_short_circuit_input<sym>(voltage_scaling); },
-            [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y) {
-                return solver.run_short_circuit(y, calculation_info_, calculation_method, get_y_bus<sym>());
+            [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y, YBus<sym> y_bus) {
+                return solver.run_short_circuit(y, calculation_info_, calculation_method, y_bus);
             });
     }
 
