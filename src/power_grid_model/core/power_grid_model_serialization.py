@@ -16,9 +16,9 @@ import numpy as np
 from power_grid_model.core.data_handling import create_dataset_from_info
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
-from power_grid_model.core.power_grid_core import CharPtr, IdxPtr
+from power_grid_model.core.power_grid_core import CharPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.core.power_grid_dataset import CDatasetInfo
+from power_grid_model.core.power_grid_dataset import CConstDataset, CDatasetInfo
 from power_grid_model.core.power_grid_meta import prepare_cpp_array
 from power_grid_model.errors import PowerGridSerializationError
 
@@ -93,45 +93,21 @@ class Serializer:
         serialization_type: SerializationType,
     ):
         self._data = data
-        self._data_type = dataset_type
+        self._dataset_type = dataset_type
 
-        if not self._data:
-            self._is_batch = False
-            self._batch_size = 1
-        else:
+        if self._data:
             first = next(iter(self._data.values()))
-            if isinstance(first, np.ndarray):
-                self._is_batch = first.ndim > 1
-                self._batch_size = len(first) if self._is_batch else 1
-            else:
+            if not isinstance(first, np.ndarray):
                 raise PowerGridSerializationError("Sparse batch data sets are not supported.")
 
-        self._dataset_ptr = pgc.create_dataset_const(self._data_type, self._is_batch, self._batch_size)
+        self._dataset = CConstDataset(self._dataset_type, self._data)
         assert_no_error()
 
-        raw_dataset_view = prepare_cpp_array(data_type=self._data_type, array_dict=data)
-
-        for component, buffer in raw_dataset_view.dataset.items():
-            component_data = self._data[component]
-            if not isinstance(buffer.indptr, IdxPtr):
-                raise PowerGridSerializationError("Data set is invalid")
-
-            pgc.dataset_const_add_buffer(
-                self._dataset_ptr,
-                component,
-                -1 if not isinstance(component_data, np.ndarray) else component_data.shape[-1],
-                buffer.indptr[-1] if not isinstance(component_data, np.ndarray) else component_data.size,
-                buffer.indptr,
-                buffer.data,
-            )
-        assert_no_error()
-
-        self._serializer = pgc.create_serializer(self._dataset_ptr, serialization_type.value)
+        self._serializer = pgc.create_serializer(self._dataset.get_const_dataset_ptr(), serialization_type.value)
         assert_no_error()
 
     def __del__(self):
         pgc.destroy_serializer(self._serializer)
-        pgc.destroy_dataset_const(self._dataset_ptr)
         assert_no_error()
 
     def dump_str(self, *, use_compact_list: bool = False, indent: int = 2) -> str:

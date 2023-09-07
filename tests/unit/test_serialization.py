@@ -401,8 +401,10 @@ def test_serializer_deserializer_double_round_trip(deserializer_type, serializer
     serialized_result_b = serializer_b.dump()
 
     assert serialized_result_a == serialized_result_b
-    assert dataset_type_a == dataset_type_b
-    assert list(dataset_type_a) == list(dataset_type_b)
+
+    assert dataset_type_a == serialized_data["type"]
+    assert dataset_type_b == serialized_data["type"]
+    assert list(deserialized_result_b) == list(deserialized_result_a)
 
     for component_result_a, component_result_b in zip(deserialized_result_a.values(), deserialized_result_b.values()):
         assert component_result_a.dtype == component_result_b.dtype

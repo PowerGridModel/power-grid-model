@@ -217,7 +217,7 @@ class CDataset:
     data_ptrs_per_component: Array
 
 
-# pylint: disable=R0912
+# pylint: disable=R0912,R0914
 def prepare_cpp_array(
     data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
 ) -> CDataset:

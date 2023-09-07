@@ -7,16 +7,15 @@
 Power grid model raw dataset handler
 """
 
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Union
 
 import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.index_integer import IdxNp
-from power_grid_model.core.power_grid_core import DatasetInfoPtr, IdxPtr, VoidPtr
+from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_meta import CBuffer, power_grid_meta_data
-from power_grid_model.errors import PowerGridError
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -109,6 +108,119 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
+class SubDatasetInfo:  # pylint: disable=too-few-public-methods
+    """Helper class to collect info on the dataset."""
+
+    is_sparse: bool
+    is_batch: bool
+    batch_size: int
+    n_elements_per_scenario: int
+    n_total_elements: int
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self, is_sparse: bool, is_batch: bool, batch_size: int, n_elements_per_scenario: int, n_total_elements: int
+    ):
+        self.is_sparse = is_sparse
+        self.is_batch = is_batch
+        self.batch_size = batch_size
+        self.n_elements_per_scenario = n_elements_per_scenario
+        self.n_total_elements = n_total_elements
+
+
+def get_homogeneous_sub_data_info(data: np.ndarray) -> SubDatasetInfo:
+    """
+    Extract the data of the homogeneous batch dataset component.
+
+    Args:
+        data (np.ndarray): the dataset component.
+
+    Raises:
+        KeyError if the dataset component is not sparse.
+        ValueError if the dataset component contains conflicting or bad data.
+
+    Returns:
+        the details on the dataset component.
+    """
+    is_sparse = False
+
+    if data.ndim not in (1, 2):
+        raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
+
+    is_batch = data.ndim == 2
+    batch_size = data.shape[0] if is_batch else 1
+    n_elements_per_scenario = data.shape[-1]
+    n_total_elements = batch_size * n_elements_per_scenario
+
+    return SubDatasetInfo(
+        is_sparse=is_sparse,
+        is_batch=is_batch,
+        batch_size=batch_size,
+        n_elements_per_scenario=n_elements_per_scenario,
+        n_total_elements=n_total_elements,
+    )
+
+
+def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> SubDatasetInfo:
+    """
+    Extract the data of the sparse batch dataset component.
+
+    Args:
+        data (Mapping[str, np.ndarray]): the sparse dataset component.
+
+    Raises:
+        KeyError if the dataset component is not sparse.
+        ValueError if the dataset component contains conflicting or bad data.
+
+    Returns:
+        SubDatasetInfo: the details on the dataset component.
+    """
+    is_sparse = True
+
+    contents = data["data"]
+    indptr = data["indptr"]
+
+    if contents.ndim != 1:
+        raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
+    if indptr.ndim != 1:
+        raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
+    if indptr[0] != 0 or indptr[-1] != contents.size:
+        raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
+    if np.any(np.diff(indptr) < 0):
+        raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
+
+    is_batch = True
+    batch_size = indptr.size - 1
+    n_elements_per_scenario = -1
+    n_total_elements = len(data)
+
+    return SubDatasetInfo(
+        is_sparse=is_sparse,
+        is_batch=is_batch,
+        batch_size=batch_size,
+        n_elements_per_scenario=n_elements_per_scenario,
+        n_total_elements=n_total_elements,
+    )
+
+
+def get_sub_data_info(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> SubDatasetInfo:
+    """
+    Extract the data of the dataset component
+
+    Args:
+        data (Union[np.ndarray, Mapping[str, np.ndarray]]): the dataset component.
+
+    Raises:
+        ValueError if the dataset component contains conflicting or bad data.
+
+    Returns:
+        SubDatasetInfo: the details on the dataset component.
+    """
+    if isinstance(data, np.ndarray):
+        return get_homogeneous_sub_data_info(data)
+
+    return get_sparse_sub_data_info(data)
+
+
 class CConstDataset:
     """
     A view of a dataset.
@@ -116,22 +228,42 @@ class CConstDataset:
     This may be used to provide a user dataset to the Power Grid Model.
     """
 
-    def __init__(self, dataset_type: str):
+    def __init__(self, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
         self._dataset_type = dataset_type
         self._schema = power_grid_meta_data[self._dataset_type]
 
-        self._is_batch: Optional[bool] = None
-        self._batch_size: Optional[int] = None
+        if data:
+            first_sub_info = get_sub_data_info(next(iter(data.values())))
+            self._is_batch = first_sub_info.is_batch
+            self._batch_size = first_sub_info.batch_size
+
+            if self._is_batch and self._dataset_type == "input":
+                raise ValueError(f"Input datasets cannot be batch dataset type. {VALIDATOR_MSG}")
+        else:
+            self._is_batch = False
+            self._batch_size = 1
 
         self._const_dataset = pgc.create_dataset_const(self._dataset_type, self._is_batch, self._batch_size)
         assert_no_error()
+
+        self.add_data(data)
+        assert_no_error()
+
+    def get_const_dataset_ptr(self) -> ConstDatasetPtr:
+        """
+        Get the raw underlying const dataset pointer.
+
+        Returns:
+            ConstDatasetPtr: the raw underlying const dataset pointer.
+        """
+        return self._const_dataset
 
     def get_info(self) -> CDatasetInfo:
         """
         Get the info for this dataset.
 
         Returns:
-            The dataset info for this dataset
+            The dataset info for this dataset.
         """
         return CDatasetInfo(pgc.dataset_const_get_info(self._const_dataset))
 
@@ -140,7 +272,7 @@ class CConstDataset:
         Add Power Grid Model data to the const dataset view.
 
         Args:
-            data: the data
+            data: the data.
 
         Raises:
             ValueError if the component is unknown and allow_unknown is False.
@@ -172,16 +304,7 @@ class CConstDataset:
             return
 
         buffer = self._get_buffer(component, data)
-
-        pgc.dataset_const_add_buffer(
-            self._const_dataset,
-            component,
-            -1 if not isinstance(data, np.ndarray) else data.shape[-1],
-            buffer.total_elements,
-            buffer.indptr,
-            buffer.data,
-        )
-        assert_no_error()
+        self._add_buffer(component, buffer)
 
     def _get_buffer(self, component: str, data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> CBuffer:
         if isinstance(data, np.ndarray):
@@ -190,76 +313,50 @@ class CConstDataset:
         return self._get_sparse_buffer(component, data)
 
     def _get_homogeneous_buffer(self, component: str, data: np.ndarray):
-        if data.ndim not in (1, 2):
-            raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
-
-        is_batch = data.ndim == 2
-        batch_size = 1 if is_batch else data.shape[0]
-        n_elements_per_scenario = data.shape[-1]
-        n_total_elements = batch_size * n_elements_per_scenario
-
-        self._validate_data_format(is_batch, batch_size, n_elements_per_scenario, n_total_elements)
+        info = get_homogeneous_sub_data_info(data)
+        self._validate_sub_data_format(info)
 
         return CBuffer(
             data=self._raw_view(component, data),
             indptr=IdxPtr(),
-            n_elements_per_scenario=n_elements_per_scenario,
-            batch_size=batch_size,
-            total_elements=n_total_elements,
+            n_elements_per_scenario=info.n_elements_per_scenario,
+            batch_size=info.batch_size,
+            total_elements=info.n_total_elements,
         )
 
     def _get_sparse_buffer(self, component: str, data_mapping: Mapping[str, np.ndarray]) -> CBuffer:
         data = data_mapping["data"]
         indptr = data_mapping["indptr"]
 
-        if data.ndim != 1:
-            raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
-        if indptr.ndim != 1:
-            raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
-        if indptr[0] != 0 or indptr[-1] != data.size:
-            raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
-        if np.any(np.diff(indptr) < 0):
-            raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-
-        is_batch = True
-        batch_size = indptr.size - 1
-        n_elements_per_scenario = -1
-        n_total_elements = len(data)
-
-        self._validate_data_format(is_batch, batch_size, n_elements_per_scenario, n_total_elements)
+        info = get_sparse_sub_data_info(data_mapping)
+        self._validate_sub_data_format(info)
 
         return CBuffer(
             data=self._raw_view(component, data),
             indptr=self._get_indptr_view(indptr),
-            n_elements_per_scenario=n_elements_per_scenario,
-            batch_size=batch_size,
-            total_elements=n_total_elements,
+            n_elements_per_scenario=info.n_elements_per_scenario,
+            batch_size=info.batch_size,
+            total_elements=info.n_total_elements,
         )
 
-    def _validate_data_format(
-        self, is_batch: bool, batch_size: int, n_elements_per_scenario: int, n_total_elements: int
-    ):
-        if self._is_batch is None and self._batch_size is None:
-            # cache
-            self._is_batch = is_batch
-            self._batch_size = batch_size
+    def _add_buffer(self, component, buffer: CBuffer):
+        pgc.dataset_const_add_buffer(
+            self._const_dataset,
+            component,
+            buffer.n_elements_per_scenario,
+            buffer.total_elements,
+            buffer.indptr,
+            buffer.data,
+        )
+        assert_no_error()
 
-        # validate
-        if is_batch != self._is_batch:
+    def _validate_sub_data_format(self, info: SubDatasetInfo):
+        if info.is_batch != self._is_batch:
             raise ValueError(
                 f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
             )
-        if batch_size != self._batch_size:
+        if info.batch_size != self._batch_size:
             raise ValueError(f"Dataset must have a consistent batch size across all components. {VALIDATOR_MSG}")
-        if self._is_batch and self._dataset_type == "input":
-            raise ValueError(f"Input datasets cannot be batch dataset type. {VALIDATOR_MSG}")
-
-        if batch_size != 1 and not is_batch:
-            raise ValueError(f"Dataset must either be a batch dataset or have batch size equal to 1 {VALIDATOR_MSG}")
-        if batch_size < 0:
-            raise ValueError(f"Dataset batch size cannot be negative. {VALIDATOR_MSG}")
-        if n_elements_per_scenario != -1 and n_total_elements != batch_size * n_elements_per_scenario:
-            raise PowerGridError("Internal dataset error. Please file a bug report with the repro case.")
 
     def _raw_view(self, component: str, data: np.ndarray):
         return np.ascontiguousarray(data, dtype=self._schema[component].dtype).ctypes.data_as(VoidPtr)
