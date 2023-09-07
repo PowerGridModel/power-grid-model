@@ -13,28 +13,8 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 
 import numpy as np
 
-from power_grid_model.core.index_integer import IdxNp
-from power_grid_model.core.power_grid_dataset import CDatasetInfo
 from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
 from power_grid_model.enum import CalculationType
-
-
-class DatasetType(Enum):
-    """
-    The different supported dataset types:
-        - input
-        - update
-        - sym_output
-        - asym_output
-        - sc_output
-        ...
-    """
-
-    INPUT = "input"
-    UPDATE = "update"
-    SYM_OUTPUT = "sym_output"
-    ASYM_OUTPUT = "asym_output"
-    SC_OUTPUT = "sc_output"
 
 
 class OutputType(Enum):
@@ -136,66 +116,6 @@ def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: Outp
     return prepare_cpp_array(data_type=output_type.value, array_dict=output_data)
 
 
-def create_dataset(
-    *,
-    component_types: Union[Set[str], List[str]],
-    dataset_type: DatasetType,
-    batch_size: int,
-    homogeneous_component_count: Dict[str, int],
-    sparse_component_count: Optional[Dict[str, int]] = None,
-) -> Dict[str, np.ndarray]:
-    """
-    Create the dataset that the user can use. always returns batch type dataset.
-        Use reduce_output_data to flatten to single scenario output if applicable.
-
-    Args:
-        component_types:
-            the relevant components requested in the dataset
-        dataset_type:
-            the type of dataset that the user will see (as per the calculation options)
-        batch_size:
-            the batch size
-        homogeneous_component_count:
-            the amount of components in the grid, represented as a homogeneous dataset (as in the input data)
-        sparse_component_count:
-            the components for which to create a sparse data set and their respective total count across all batches;
-            takes precedence over the homogeneous component count
-
-    Returns:
-        dictionary of results of all components
-            key: component type name to be updated in batch
-            value:
-                for single calculation: 1D numpy structured array for the results of this component type
-                for batch calculation: 2D numpy structured array for the results of this component type
-                    Dimension 0: each batch
-                    Dimension 1: the result of each element for this component type
-        Error handling:
-            in case if some specified components are unknown, a KeyError will be raised.
-    """
-    # raise error if some specified components are unknown
-    unknown_components = [x for x in component_types if x not in power_grid_meta_data[dataset_type.value]]
-    if unknown_components:
-        raise KeyError(f"You have specified some unknown component types: {unknown_components}")
-
-    homogeneous_component_count = {k: v for k, v in homogeneous_component_count.items() if k in component_types}
-
-    # create result dataset
-    result_dict = {}
-
-    for name, count in homogeneous_component_count.items():
-        if sparse_component_count is None or name not in sparse_component_count:
-            result_dict[name] = initialize_array(dataset_type.value, name, (batch_size, count), empty=True)
-
-    if sparse_component_count is not None:
-        for name, count in sparse_component_count.items():
-            result_dict[name] = {
-                "indptr": np.empty(shape=batch_size + 1, dtype=IdxNp),
-                "data": initialize_array(dataset_type.value, name, count, empty=True),
-            }
-
-    return result_dict
-
-
 def create_output_data(
     output_component_types: Union[Set[str], List[str]],
     output_type: OutputType,
@@ -227,31 +147,20 @@ def create_output_data(
         Error handling:
             in case if some specified components are unknown, a KeyError will be raised.
     """
-    return create_dataset(
-        component_types=output_component_types,
-        dataset_type=DatasetType[output_type.value.upper()],
-        batch_size=batch_size,
-        homogeneous_component_count=all_component_count,
-    )
+    # raise error if some specified components are unknown
+    unknown_components = [x for x in output_component_types if x not in power_grid_meta_data[output_type.value]]
+    if unknown_components:
+        raise KeyError(f"You have specified some unknown component types: {unknown_components}")
 
+    all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
 
-def reduce_dataset(dataset: Dict[str, np.ndarray], batch_calculation: bool) -> Dict[str, np.ndarray]:
-    """
-    Reformat the dataset into the format desired by the user.
+    # create result dataset
+    result_dict = {}
 
-    Args:
-        dataset:
-            the dataset per component in batch format
-        batch_calculation:
-            whether the intended output data format should be in the format returned by a batch calculation
+    for name, count in all_component_count.items():
+        result_dict[name] = initialize_array(output_type.value, name, (batch_size, count), empty=True)
 
-    Returns:
-        the original data, but with the data array per component flattened for normal calculation
-    """
-    if not batch_calculation:
-        dataset = {k: v.ravel() for k, v in dataset.items()}
-
-    return dataset
+    return result_dict
 
 
 def reduce_output_data(output_data: Dict[str, np.ndarray], batch_calculation: bool) -> Dict[str, np.ndarray]:
@@ -267,40 +176,7 @@ def reduce_output_data(output_data: Dict[str, np.ndarray], batch_calculation: bo
     Returns:
         the original data, but with the data array per component flattened for normal calculation
     """
-    return reduce_dataset(dataset=output_data, batch_calculation=batch_calculation)
+    if not batch_calculation:
+        output_data = {k: v.ravel() for k, v in output_data.items()}
 
-
-def create_dataset_from_info(info: CDatasetInfo) -> Dict[str, np.ndarray]:
-    """
-    Create the dataset that the user can use.
-
-    Args:
-        info:
-            the dataset info
-
-    Returns:
-        dictionary of results of all components
-            key: component type name to be updated in batch
-            value:
-                for single calculation: 1D numpy structured array for the results of this component type
-                for batch calculation: 2D numpy structured array for the results of this component type
-                    Dimension 0: each batch
-                    Dimension 1: the result of each element for this component type
-        Error handling:
-            in case if some specified components are unknown, a KeyError will be raised.
-    """
-    total_elements = info.total_elements().items()
-    elements_per_scenario = info.elements_per_scenario()
-    sparse_component_count = {
-        component: count for component, count in total_elements if elements_per_scenario.get(component, -1) == -1
-    }
-    return reduce_dataset(
-        dataset=create_dataset(  # dense data set
-            component_types=set(elements_per_scenario.keys()),
-            dataset_type=DatasetType[info.dataset_type().upper()],
-            homogeneous_component_count=elements_per_scenario,
-            batch_size=info.batch_size(),
-            sparse_component_count=sparse_component_count,
-        ),
-        batch_calculation=info.is_batch(),
-    )
+    return output_data
