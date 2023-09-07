@@ -7,13 +7,13 @@
 Power grid model raw dataset handler
 """
 
-from typing import Dict, List, Mapping, Union
+from typing import Dict, List, Mapping, Tuple, Union
 
 import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.index_integer import IdxNp
-from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, IdxPtr, VoidPtr
+from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, IdxPtr, VoidPtr, WritableDatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_meta import CBuffer, power_grid_meta_data
 
@@ -223,9 +223,11 @@ def get_sub_data_info(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> SubD
 
 class CConstDataset:
     """
-    A view of a dataset.
+    A view of a user-owned dataset.
 
     This may be used to provide a user dataset to the Power Grid Model.
+
+    The dataset will create read-only buffers that the Power Grid Model can use to load data.
     """
 
     def __init__(self, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
@@ -249,7 +251,7 @@ class CConstDataset:
         self.add_data(data)
         assert_no_error()
 
-    def get_const_dataset_ptr(self) -> ConstDatasetPtr:
+    def get_dataset_ptr(self) -> ConstDatasetPtr:
         """
         Get the raw underlying const dataset pointer.
 
@@ -366,3 +368,134 @@ class CConstDataset:
 
     def __del__(self):
         pgc.destroy_dataset_const(self._const_dataset)
+
+
+class CWritableDataset:
+    """
+    A view of a Power Grid Model-owned dataset.
+
+    This may be used to retrieve data from the Power Grid Model.
+
+    This class provides buffers to which the Power Grid Model can write data in an external call.
+    After writing to the buffers, the data contents can be retrieved.
+    """
+
+    def __init__(self, dataset_ptr: WritableDatasetPtr):
+        self._writable_dataset = dataset_ptr
+
+        self._info = self.get_info()
+        self._dataset_type = self._info.dataset_type()
+        self._schema = power_grid_meta_data[self._dataset_type]
+
+        self._component_sub_data_info = self._get_sub_data_info(self._info)
+        self._data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]] = {}
+        self._buffers: Dict[str, CBuffer] = {}
+
+        self._add_buffers(self._component_sub_data_info)
+
+    def get_dataset_ptr(self) -> WritableDatasetPtr:
+        """
+        Get the raw underlying writable dataset pointer.
+
+        Returns:
+            WritableDatasetPtr: the raw underlying writable dataset pointer.
+        """
+        return self._writable_dataset
+
+    def get_info(self) -> CDatasetInfo:
+        """
+        Get the info for this dataset.
+
+        Returns:
+            The dataset info for this dataset.
+        """
+        return CDatasetInfo(pgc.dataset_writable_get_info(self._writable_dataset))
+
+    def get_data(self) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
+        """
+        Retrieve data from the Power Grid Model dataset.
+
+        The Power Grid Model may write to these buffers at a later point in time.
+
+        Returns:
+            The full dataset.
+        """
+        return self._data
+
+    def get_component_data(self, component: str) -> Union[np.ndarray, Dict[str, np.ndarray]]:
+        """
+        Retrieve Power Grid Model data from the dataset for a specific component.
+
+        Args:
+            component: the component.
+
+        Returns:
+            The dataset for the specified component.
+        """
+        return self._data[component]
+
+    def _add_buffers(self, component_sub_data_info: Dict[str, SubDatasetInfo]):
+        for component, component_info in component_sub_data_info.items():
+            self._component_sub_data_info[component] = component_info
+            self._add_buffer(component, component_info)
+
+    def _add_buffer(self, component: str, component_info: SubDatasetInfo):
+        data: Union[np.ndarray, Dict[str, np.ndarray]]
+        buffer: CBuffer
+
+        if component_info.is_sparse:
+            data, buffer = self._create_sparse_buffer(component, component_info)
+        else:
+            data, buffer = self._create_homogeneous_buffer(component, component_info)
+
+        pgc.dataset_writable_set_buffer(self._writable_dataset, component, buffer.indptr, buffer.data)
+        self._data[component] = data
+
+    def _create_homogeneous_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[np.ndarray, CBuffer]:
+        shape: Union[int, Tuple[int, int]] = (
+            (info.batch_size, info.n_elements_per_scenario) if info.is_batch else info.n_elements_per_scenario
+        )
+        data = np.empty(shape=shape, dtype=self._schema[component])
+        return data, CBuffer(
+            data=self._raw_view(component, data),
+            indptr=IdxPtr(),
+            n_elements_per_scenario=info.n_elements_per_scenario,
+            batch_size=info.batch_size,
+            total_elements=info.n_total_elements,
+        )
+
+    def _create_sparse_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[Dict[str, np.ndarray], CBuffer]:
+        data = np.empty(info.n_total_elements, dtype=self._schema[component])
+        indptr = np.empty([0] * info.n_total_elements + [info.batch_size])
+        return {"data": data, "indptr": indptr}, CBuffer(
+            data=self._raw_view(component, data),
+            indptr=self._get_indptr_view(indptr),
+            n_elements_per_scenario=info.n_elements_per_scenario,
+            batch_size=info.batch_size,
+            total_elements=info.n_total_elements,
+        )
+
+    def _raw_view(self, component: str, data: np.ndarray):
+        return np.ascontiguousarray(data, dtype=self._schema[component].dtype).ctypes.data_as(VoidPtr)
+
+    def _get_indptr_view(self, indptr: np.ndarray):
+        return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
+
+    @staticmethod
+    def _get_sub_data_info(info: CDatasetInfo) -> Dict[str, SubDatasetInfo]:
+        is_batch = info.is_batch()
+        batch_size = info.batch_size()
+        components = info.components()
+        n_elements_per_scenario = info.elements_per_scenario()
+        n_total_elements = info.total_elements()
+
+        return {
+            component: SubDatasetInfo(
+                is_sparse=n_elements_per_scenario[component] == -1,
+                is_batch=is_batch,
+                batch_size=batch_size,
+                n_elements_per_scenario=n_elements_per_scenario[component],
+                n_total_elements=n_total_elements[component],
+            )
+            for component in components
+        }

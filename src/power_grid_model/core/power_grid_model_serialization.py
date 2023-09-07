@@ -13,13 +13,11 @@ from typing import Callable, Dict, Mapping, Tuple, Union
 
 import numpy as np
 
-from power_grid_model.core.data_handling import create_dataset_from_info
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import CharPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.core.power_grid_dataset import CConstDataset, CDatasetInfo
-from power_grid_model.core.power_grid_meta import prepare_cpp_array
+from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.errors import PowerGridSerializationError
 
 
@@ -45,20 +43,16 @@ class Deserializer:
         self._dataset_ptr = pgc.deserializer_get_dataset(self._deserializer)
         assert_no_error()
 
-        self._info_ptr = pgc.dataset_writable_get_info(self._dataset_ptr)
-        assert_no_error()
-
-        self._info = CDatasetInfo(self._info_ptr)
+        self._dataset = CWritableDataset(self._dataset_ptr)
         assert_no_error()
 
         # TODO(mgovers): we do not support sparse batches yet
-        elements_per_scenario = self._info.elements_per_scenario()
+        elements_per_scenario = self._dataset.get_info().elements_per_scenario()
         if any(count == -1 for count in elements_per_scenario.values()):
             raise PowerGridSerializationError("Sparse batch data sets are not supported.")
 
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)
-        assert_no_error()
 
     def load(self) -> Tuple[str, Dict[str, np.ndarray]]:
         """
@@ -69,16 +63,8 @@ class Deserializer:
                 the type of the data set
                 the deserialized data set in Power grid model input format
         """
-        dataset = create_dataset_from_info(self._info)
-        self._deserialize(target_dataset=dataset)
-        return self._info.dataset_type(), dataset
-
-    def _deserialize(self, target_dataset: Dict[str, np.ndarray]):
-        raw_dataset_view = prepare_cpp_array(data_type=self._info.dataset_type(), array_dict=target_dataset)
-        for component, buffer in raw_dataset_view.dataset.items():
-            pgc.dataset_writable_set_buffer(self._dataset_ptr, component, buffer.indptr, buffer.data)
-
         pgc.deserializer_parse_to_buffer(self._deserializer)
+        return self._dataset.get_info().dataset_type(), self._dataset.get_data()
 
 
 class Serializer:
@@ -103,12 +89,11 @@ class Serializer:
         self._dataset = CConstDataset(self._dataset_type, self._data)
         assert_no_error()
 
-        self._serializer = pgc.create_serializer(self._dataset.get_const_dataset_ptr(), serialization_type.value)
+        self._serializer = pgc.create_serializer(self._dataset.get_dataset_ptr(), serialization_type.value)
         assert_no_error()
 
     def __del__(self):
         pgc.destroy_serializer(self._serializer)
-        assert_no_error()
 
     def dump_str(self, *, use_compact_list: bool = False, indent: int = 2) -> str:
         """
