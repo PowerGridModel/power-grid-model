@@ -73,12 +73,13 @@ This repository uses [CMake](https://cmake.org/) (version 3.23 or later) and [Ni
 
 The table below shows the C++ build dependencies
 
-| Library name                                      | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                       |
-| ------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| [boost](https://www.boost.org/)                   | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt) |
-| [eigen3](https://eigen.tuxfamily.org/)            | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/) |
-| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)             |
-| [nlohmann-json](https://github.com/nlohmann/json) | None                                 | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)              |
+| Library name                                                        | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                                                      |
+| ------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
+| [boost](https://www.boost.org/)                                     | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt)                                |
+| [eigen3](https://eigen.tuxfamily.org/)                              | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
+| [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
+| [nlohmann-json](https://github.com/nlohmann/json)                   | None                                 | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
+| [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | None                                 | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
 
 #### Python
 
@@ -188,7 +189,7 @@ Go to its website to follow the installation instruction.
 Install the C++ dependencies
 
 ```shell
-brew install boost eigen nlohmann-json doctest cmake
+brew install boost eigen nlohmann-json msgpack-cxx doctest cmake
 ```
 
 ### Build Python Library from Source
@@ -272,7 +273,7 @@ Other toolchains:
 The recommended way to get C++ package is via `conda`. Open a miniconda console.
 
 ```shell
-conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
+conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json msgpack-cxx doctest
 ```
 
 ### Build Python Library from Source
@@ -341,7 +342,7 @@ export CMAKE_PREFIX_PATH=/usr/local
 Install the following packages with [Homebrew](https://brew.sh/).
 
 ```shell
-brew install ninja cmake boost eigen nlohmann-json doctest
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest
 ```
 
 ### Build Python Library from Source

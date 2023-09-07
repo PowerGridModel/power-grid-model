@@ -191,7 +191,7 @@ def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> SubDatasetInfo:
     is_batch = True
     batch_size = indptr.size - 1
     n_elements_per_scenario = -1
-    n_total_elements = len(data)
+    n_total_elements = contents.size
 
     return SubDatasetInfo(
         is_sparse=is_sparse,
