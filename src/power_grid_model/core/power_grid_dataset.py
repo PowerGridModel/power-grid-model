@@ -36,7 +36,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         return pgc.dataset_info_name(self._info)
 
     def dataset_type(self):
-        """ "
+        """
         The name of the dataset type.
 
         Returns:
@@ -45,7 +45,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         return self.name()
 
     def is_batch(self) -> bool:
-        """ "
+        """
         Whether the dataset is a batch dataset.
 
         Returns:
@@ -54,7 +54,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         return bool(pgc.dataset_info_is_batch(self._info))
 
     def batch_size(self) -> int:
-        """ "
+        """
         The size of the dataset.
 
         Returns:
@@ -63,7 +63,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         return pgc.dataset_info_batch_size(self._info)
 
     def n_components(self) -> int:
-        """ "
+        """
         The amount of components in the dataset.
 
         Returns:
@@ -72,7 +72,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         return pgc.dataset_info_n_components(self._info)
 
     def components(self) -> List[str]:
-        """ "
+        """
         The components in the dataset.
 
         Returns:
@@ -81,7 +81,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         return [pgc.dataset_info_component_name(self._info, idx) for idx in range(self.n_components())]
 
     def elements_per_scenario(self) -> Dict[str, int]:
-        """ "
+        """
         The number of elements per scenario in the dataset.
 
         Returns:
@@ -94,7 +94,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
     def total_elements(self) -> Dict[str, int]:
-        """ "
+        """
         The total number of elements in the dataset.
 
         Returns:
