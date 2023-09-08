@@ -11,4 +11,5 @@ dependencies:
   - numpy
   - pytest
   - pytest-cov
+  - nlohmann-json
   - msgpack-cxx
