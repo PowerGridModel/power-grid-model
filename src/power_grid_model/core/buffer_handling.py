@@ -336,45 +336,7 @@ def prepare_cpp_array(
     for component_name, entry in array_dict.items():
         if component_name not in schema:
             continue
-        # homogeneous
-        if isinstance(entry, np.ndarray):
-            data = entry
-            ndim = entry.ndim
-            total_elements = entry.size
-            indptr_c = IdxPtr()
-            if ndim == 1:
-                batch_size = 1
-                n_elements_per_scenario = entry.shape[0]
-            elif ndim == 2:  # (n_batch, n_component)
-                batch_size = entry.shape[0]
-                n_elements_per_scenario = entry.shape[1]
-            else:
-                raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
-        # with indptr
-        else:
-            data = entry["data"]
-            indptr: np.ndarray = entry["indptr"]
-            batch_size = indptr.size - 1
-            n_elements_per_scenario = -1
-            total_elements = len(data)
-            if data.ndim != 1:
-                raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
-            if indptr.ndim != 1:
-                raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
-            if indptr[0] != 0 or indptr[-1] != data.size:
-                raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
-            if np.any(np.diff(indptr) < 0):
-                raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-            indptr_c = np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
-        # convert data array
-        data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(VoidPtr)
-        dataset_dict[component_name] = CBuffer(
-            data=data_c,
-            indptr=indptr_c,
-            n_elements_per_scenario=n_elements_per_scenario,
-            batch_size=batch_size,
-            total_elements=total_elements,
-        )
+        dataset_dict[component_name] = get_buffer_view(entry, schema[component_name])
     # total set
     n_components = len(dataset_dict)
     if n_components == 0:
