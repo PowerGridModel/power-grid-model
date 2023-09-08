@@ -445,6 +445,9 @@ def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False
     Returns:
         A single or batch dataset for power-grid-model
     """
+    # TODO(mgovers): fix
+    # DeprecationWarning
+    # json string -> new json string -> deserialize
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
     return convert_python_to_numpy(data=data, data_type=data_type, ignore_extra=ignore_extra)

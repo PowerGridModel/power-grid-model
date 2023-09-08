@@ -6,12 +6,7 @@
 
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.core.power_grid_model import PowerGridModel
-from power_grid_model.core.power_grid_model_serialization import (
-    JsonDeserializer,
-    JsonSerializer,
-    MsgpackDeserializer,
-    MsgpackSerializer,
-)
+from power_grid_model.core.serialization import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 from power_grid_model.enum import (
     Branch3Side,
     BranchSide,

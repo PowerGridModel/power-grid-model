@@ -10,7 +10,7 @@ import msgpack
 import numpy as np
 import pytest
 
-from power_grid_model import JsonDeserializer, JsonSerializer, MsgpackDeserializer, MsgpackSerializer
+from power_grid_model import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 from power_grid_model.core.error_handling import assert_no_error
 
 
@@ -332,102 +332,61 @@ def assert_serialization_correct(
 
 
 @pytest.mark.parametrize("raw_buffer", (True, False))
-def test_json_deserializer_create_destroy(serialized_data, raw_buffer: bool):
+def test_json_deserialize_data(serialized_data, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
+    result_type, result = json_deserialize(data)
 
-    deserializer = JsonDeserializer(data)
-    assert_no_error()
-    assert deserializer
-    del deserializer
-
-
-@pytest.mark.parametrize("raw_buffer", (True, False))
-def test_json_deserializer_data(serialized_data, raw_buffer: bool):
-    data = to_json(serialized_data, raw_buffer=raw_buffer)
-
-    deserializer = JsonDeserializer(data)
-    assert_no_error()
-
-    result_type, result = deserializer.load()
     assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data)
 
 
-def test_msgpack_deserializer_create_destroy(serialized_data):
+def test_msgpack_deserialize_data(serialized_data):
     data = to_msgpack(serialized_data)
-    deserializer = MsgpackDeserializer(data)
-    assert_no_error()
-    assert deserializer
-    del deserializer
+    result_type, result = msgpack_deserialize(data)
 
-
-def test_msgpack_deserializer_data(serialized_data):
-    data = to_msgpack(serialized_data)
-
-    deserializer = MsgpackDeserializer(data)
-    assert_no_error()
-
-    result_type, result = deserializer.load()
     assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data)
 
 
 @pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
-@pytest.mark.parametrize("raw_buffer", (True, False))
-def test_json_serializer_empty_dataset(dataset_type, raw_buffer: bool):
-    serializer = JsonSerializer(dataset_type, {})
+@pytest.mark.parametrize("use_compact_list", (True, False))
+def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
+    for indent in (-1, 0, 2, 4):
+        reference = to_json(empty_dataset(dataset_type), indent=indent)
+        assert isinstance(reference, str)
 
-    if raw_buffer:
-        reference = to_json(empty_dataset(dataset_type), raw_buffer=raw_buffer)
-        for use_compact_list in (True, False):
-            assert serializer.dump_bytes(use_compact_list=use_compact_list) == reference
-    else:
-        for use_compact_list, indent in itertools.product((True, False), (-1, 0, 2, 4)):
-            reference = to_json(empty_dataset(dataset_type), raw_buffer=raw_buffer, indent=indent)
-            assert isinstance(reference, str)
-
-            result: Any = serializer.dump(use_compact_list=use_compact_list, indent=indent)
-            assert isinstance(result, str)
-            assert result == reference
-
-            result = serializer.dump_str(use_compact_list=use_compact_list, indent=indent)
-            assert isinstance(result, str)
-            assert result == reference
+        result = json_serialize(dataset_type, {}, use_compact_list=use_compact_list, indent=indent)
+        assert isinstance(result, str)
+        assert result == reference
 
 
 @pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
-def test_msgpack_serializer_empty_dataset(dataset_type):
-    serializer = MsgpackSerializer(dataset_type, {})
-
+def test_msgpack_serialize_empty_dataset(dataset_type):
     reference = sort_dict(empty_dataset(dataset_type))
     for use_compact_list in (True, False):
-        assert from_msgpack(serializer.dump_bytes(use_compact_list=use_compact_list)) == reference
+        assert from_msgpack(msgpack_serialize(dataset_type, {}, use_compact_list=use_compact_list)) == reference
 
 
 @pytest.mark.parametrize(
-    ("deserializer_type", "serializer_type", "pack"),
+    ("deserialize", "serialize", "pack"),
     (
-        (JsonDeserializer, JsonSerializer, to_json),
-        (MsgpackDeserializer, MsgpackSerializer, to_msgpack),
+        (json_deserialize, json_serialize, to_json),
+        (msgpack_deserialize, msgpack_serialize, to_msgpack),
     ),
 )
-def test_serializer_deserializer_double_round_trip(deserializer_type, serializer_type, serialized_data, pack):
+def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, pack):
     """
     Repeated deserialization and serialization must result in the same deserialized data and serialization string.
     """
     test_data = pack(serialized_data)
 
-    deserializer_a = deserializer_type(test_data)
-    dataset_type_a, deserialized_result_a = deserializer_a.load()
-    serializer_a = serializer_type(dataset_type_a, deserialized_result_a)
-    serialized_result_a = serializer_a.dump()
+    dataset_type_a, deserialized_result_a = deserialize(test_data)
+    serialized_result_a = serialize(dataset_type_a, deserialized_result_a)
 
-    deserializer_b = deserializer_type(serialized_result_a)
-    dataset_type_b, deserialized_result_b = deserializer_b.load()
-    serializer_b = serializer_type(dataset_type_b, deserialized_result_b)
-    serialized_result_b = serializer_b.dump()
+    dataset_type_b, deserialized_result_b = deserialize(serialized_result_a)
+    serialized_result_b = serialize(dataset_type_b, deserialized_result_b)
 
     assert serialized_result_a == serialized_result_b
 

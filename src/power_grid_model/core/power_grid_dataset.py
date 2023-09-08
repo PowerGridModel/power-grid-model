@@ -21,7 +21,7 @@ from power_grid_model.core.buffer_handling import (
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, WritableDatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
+from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -123,26 +123,38 @@ class CConstDataset:
     The dataset will create read-only buffers that the Power Grid Model can use to load data.
     """
 
-    def __init__(self, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
-        self._dataset_type = dataset_type
-        self._schema = power_grid_meta_data[self._dataset_type]
+    _dataset_type: str
+    _schema: DatasetMetaData
+    _is_batch: bool
+    _batch_size: int
+    _const_dataset: ConstDatasetPtr
+
+    def __new__(cls, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
+        instance = super().__new__(cls)
+
+        instance._dataset_type = dataset_type
+        instance._schema = power_grid_meta_data[instance._dataset_type]
 
         if data:
             first_sub_info = get_buffer_properties(next(iter(data.values())))
-            self._is_batch = first_sub_info.is_batch
-            self._batch_size = first_sub_info.batch_size
+            instance._is_batch = first_sub_info.is_batch
+            instance._batch_size = first_sub_info.batch_size
 
-            if self._is_batch and self._dataset_type == "input":
+            if instance._is_batch and instance._dataset_type == "input":
                 raise ValueError(f"Input datasets cannot be batch dataset type. {VALIDATOR_MSG}")
         else:
-            self._is_batch = False
-            self._batch_size = 1
+            instance._is_batch = False
+            instance._batch_size = 1
 
-        self._const_dataset = pgc.create_dataset_const(self._dataset_type, self._is_batch, self._batch_size)
+        instance._const_dataset = pgc.create_dataset_const(
+            instance._dataset_type, instance._is_batch, instance._batch_size
+        )
         assert_no_error()
 
-        self.add_data(data)
+        instance.add_data(data)
         assert_no_error()
+
+        return instance
 
     def get_dataset_ptr(self) -> ConstDatasetPtr:
         """
