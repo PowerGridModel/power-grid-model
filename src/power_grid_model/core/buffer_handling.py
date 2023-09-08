@@ -311,9 +311,7 @@ def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData
 
 
 # pylint: disable=R0912,R0914
-def prepare_cpp_array(
-    data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
-) -> CDataset:
+def get_dataset_view(data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> CDataset:
     """
     prepare array for cpp pointers
     Args:
@@ -330,22 +328,19 @@ def prepare_cpp_array(
     Returns:
         instance of CDataset ready to be fed into C API
     """
-    # process
     schema = power_grid_meta_data[data_type]
-    dataset_dict = {}
-    for component_name, entry in array_dict.items():
-        if component_name not in schema:
-            continue
-        dataset_dict[component_name] = get_buffer_view(entry, schema[component_name])
-    # total set
+    dataset_dict = {
+        component_name: get_buffer_view(entry, schema[component_name])
+        for component_name, entry in array_dict.items()
+        if component_name in schema
+    }
+
     n_components = len(dataset_dict)
-    if n_components == 0:
-        batch_size = 1
-    else:
-        batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
-        if np.unique(batch_sizes).size > 1:
-            raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
-        batch_size = batch_sizes[0]
+    batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
+    if np.unique(batch_sizes).size > 1:
+        raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
+    batch_size = 1 if batch_sizes.size == 0 else batch_sizes[0]
+
     return CDataset(
         dataset=dataset_dict,
         batch_size=batch_size,

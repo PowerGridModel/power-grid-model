@@ -13,7 +13,7 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 
 import numpy as np
 
-from power_grid_model.core.buffer_handling import CDataset, prepare_cpp_array
+from power_grid_model.core.buffer_handling import CDataset, get_dataset_view
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
 
@@ -79,7 +79,7 @@ def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CDataset:
     Returns:
         instance of CDataset ready to be fed into C API
     """
-    return prepare_cpp_array(data_type="input", array_dict=input_data)
+    return get_dataset_view(data_type="input", array_dict=input_data)
 
 
 def prepare_update_view(
@@ -98,7 +98,7 @@ def prepare_update_view(
     if update_data is None:
         # no update dataset, create one batch with empty set
         update_data = {}
-    return prepare_cpp_array(data_type="update", array_dict=update_data)
+    return get_dataset_view(data_type="update", array_dict=update_data)
 
 
 def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: OutputType) -> CDataset:
@@ -114,7 +114,7 @@ def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: Outp
     Returns:
         instance of CDataset ready to be fed into C API
     """
-    return prepare_cpp_array(data_type=output_type.value, array_dict=output_data)
+    return get_dataset_view(data_type=output_type.value, array_dict=output_data)
 
 
 def create_output_data(
