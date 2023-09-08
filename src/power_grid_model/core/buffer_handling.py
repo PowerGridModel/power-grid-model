@@ -310,7 +310,6 @@ def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData
     return {"data": data, "indptr": indptr}
 
 
-# pylint: disable=R0912,R0914
 def get_dataset_view(data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> CDataset:
     """
     prepare array for cpp pointers
