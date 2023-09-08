@@ -367,7 +367,8 @@ class CConstDataset:
         return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
     def __del__(self):
-        pgc.destroy_dataset_const(self._const_dataset)
+        if hasattr(self, "_const_dataset"):
+            pgc.destroy_dataset_const(self._const_dataset)
 
 
 class CWritableDataset:
