@@ -7,9 +7,10 @@ dependencies:
   - wheel
   - setuptools
   - boost-cpp
+  - nlohmann_json
+  - msgpack-cxx
   - eigen
   - numpy
   - pytest
   - pytest-cov
-  - nlohmann_json
-  - msgpack-cxx
+  - msgpack
