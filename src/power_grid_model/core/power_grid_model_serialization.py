@@ -49,7 +49,7 @@ class Deserializer:
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)
 
-    def load(self) -> Tuple[str, Dict[str, np.ndarray]]:
+    def load(self) -> Tuple[str, Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]:
         """
         Load the deserialized data to a new dataset.
 

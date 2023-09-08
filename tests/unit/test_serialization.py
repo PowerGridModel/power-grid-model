@@ -256,7 +256,7 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
 
 
 def assert_scenario_correct(
-    deserialized_dataset: Dict[str, np.ndarray], serialized_dataset: Dict[str, Any], sparse_components: List[str]
+    deserialized_dataset: Mapping[str, np.ndarray], serialized_dataset: Mapping[str, Any], sparse_components: List[str]
 ):
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset:
@@ -281,7 +281,8 @@ def assert_scenario_correct(
 
 
 def assert_serialization_correct(
-    deserialized_dataset: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]], serialized_dataset: Dict[str, Any]
+    deserialized_dataset: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]],
+    serialized_dataset: Mapping[str, Any],
 ):
     """Assert the dataset correctly reprensents the input data."""
     if serialized_dataset["is_batch"]:
@@ -321,8 +322,10 @@ def assert_serialization_correct(
 
             assert_scenario_correct(deserialized_scenario, serialized_scenario, sparse_components)
     else:
+        assert all(isinstance(value, np.ndarray) for value in deserialized_dataset.values())
+
         assert_scenario_correct(
-            deserialized_dataset,
+            deserialized_dataset,  # type: ignore[arg-type]
             serialized_dataset,
             [key for key, value in deserialized_dataset.items() if not isinstance(value, np.ndarray)],
         )
