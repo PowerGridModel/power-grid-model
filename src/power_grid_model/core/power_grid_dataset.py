@@ -108,7 +108,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-class SubDatasetInfo:  # pylint: disable=too-few-public-methods
+class BufferProperties:  # pylint: disable=too-few-public-methods
     """Helper class to collect info on the dataset."""
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -121,7 +121,7 @@ class SubDatasetInfo:  # pylint: disable=too-few-public-methods
         self.n_total_elements = n_total_elements
 
 
-def get_uniform_sub_data_info(data: np.ndarray) -> SubDatasetInfo:
+def get_uniform_sub_data_info(data: np.ndarray) -> BufferProperties:
     """
     Extract the data of the uniform batch dataset component.
 
@@ -145,7 +145,7 @@ def get_uniform_sub_data_info(data: np.ndarray) -> SubDatasetInfo:
     n_elements_per_scenario = data.shape[-1]
     n_total_elements = batch_size * n_elements_per_scenario
 
-    return SubDatasetInfo(
+    return BufferProperties(
         is_sparse=is_sparse,
         is_batch=is_batch,
         batch_size=batch_size,
@@ -154,7 +154,7 @@ def get_uniform_sub_data_info(data: np.ndarray) -> SubDatasetInfo:
     )
 
 
-def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> SubDatasetInfo:
+def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> BufferProperties:
     """
     Extract the data of the sparse batch dataset component.
 
@@ -166,7 +166,7 @@ def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> SubDatasetInfo:
         ValueError if the dataset component contains conflicting or bad data.
 
     Returns:
-        SubDatasetInfo: the details on the dataset component.
+        BufferProperties: the details on the dataset component.
     """
     is_sparse = True
 
@@ -187,7 +187,7 @@ def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> SubDatasetInfo:
     n_elements_per_scenario = -1
     n_total_elements = contents.size
 
-    return SubDatasetInfo(
+    return BufferProperties(
         is_sparse=is_sparse,
         is_batch=is_batch,
         batch_size=batch_size,
@@ -196,7 +196,7 @@ def get_sparse_sub_data_info(data: Mapping[str, np.ndarray]) -> SubDatasetInfo:
     )
 
 
-def get_sub_data_info(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> SubDatasetInfo:
+def get_sub_data_info(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> BufferProperties:
     """
     Extract the data of the dataset component
 
@@ -207,12 +207,76 @@ def get_sub_data_info(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> SubD
         ValueError if the dataset component contains conflicting or bad data.
 
     Returns:
-        SubDatasetInfo: the details on the dataset component.
+        BufferProperties: the details on the dataset component.
     """
     if isinstance(data, np.ndarray):
         return get_uniform_sub_data_info(data)
 
     return get_sparse_sub_data_info(data)
+
+
+def create_buffer(properties: BufferProperties, dtype: np.dtype) -> Union[np.ndarray, Mapping[str, np.ndarray]]:
+    """
+    Create a buffer with the provided properties and type.
+
+    Args:
+        properties: the desired buffer properties
+        dtype: the data type of the buffer
+
+    Raises:
+        ValueError if the buffer properties are not consistent
+
+    Returns:
+        Union[np.ndarray, Mapping[str, np.ndarray]]: a buffer with the correct properties
+    """
+    if properties.is_sparse:
+        return create_sparse_buffer(properties=properties, dtype=dtype)
+
+    return create_uniform_buffer(properties=properties, dtype=dtype)
+
+
+def create_uniform_buffer(properties: BufferProperties, dtype: np.dtype) -> Tuple[np.ndarray, CBuffer]:
+    """
+    Create a uniform buffer with the provided properties and type.
+
+    Args:
+        properties: the desired buffer properties
+        dtype: the data type of the buffer
+
+    Raises:
+        ValueError if the buffer properties are not uniform
+
+    Returns:
+        A uniform buffer with the correct properties
+    """
+    if properties.is_sparse:
+        raise ValueError(f"A uniform buffer cannot be sparse. {VALIDATOR_MSG}")
+
+    shape: Union[int, Tuple[int, int]] = (
+        (properties.batch_size, properties.n_elements_per_scenario)
+        if properties.is_batch
+        else properties.n_elements_per_scenario
+    )
+    return np.empty(shape=shape, dtype=dtype)
+
+
+def create_sparse_buffer(properties: BufferProperties, dtype: np.dtype) -> Dict[str, np.ndarray]:
+    """
+    Create a sparse buffer with the provided properties and type.
+
+    Args:
+        properties: the desired buffer properties
+        dtype: the data type of the buffer
+
+    Raises:
+        ValueError if the buffer properties are not sparse
+
+    Returns:
+        A sparse buffer with the correct properties
+    """
+    data = np.empty(properties.n_total_elements, dtype=dtype)
+    indptr = np.array([0] * properties.n_total_elements + [properties.batch_size], dtype=IdxC)
+    return {"data": data, "indptr": indptr}
 
 
 class CConstDataset:
@@ -300,7 +364,7 @@ class CConstDataset:
             return
 
         buffer = self._get_buffer(component, data)
-        self._add_buffer(component, buffer)
+        self._register_buffer(component, buffer)
 
     def _get_buffer(self, component: str, data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> CBuffer:
         if isinstance(data, np.ndarray):
@@ -320,33 +384,33 @@ class CConstDataset:
             total_elements=info.n_total_elements,
         )
 
-    def _get_sparse_buffer(self, component: str, data_mapping: Mapping[str, np.ndarray]) -> CBuffer:
-        data = data_mapping["data"]
-        indptr = data_mapping["indptr"]
+    def _get_sparse_buffer(self, component: str, data: Mapping[str, np.ndarray]) -> CBuffer:
+        contents = data["data"]
+        indptr = data["indptr"]
 
-        info = get_sparse_sub_data_info(data_mapping)
+        info = get_sparse_sub_data_info(data)
         self._validate_sub_data_format(info)
 
         return CBuffer(
-            data=self._raw_view(component, data),
+            data=self._raw_view(component, contents),
             indptr=self._get_indptr_view(indptr),
             n_elements_per_scenario=info.n_elements_per_scenario,
             batch_size=info.batch_size,
             total_elements=info.n_total_elements,
         )
 
-    def _add_buffer(self, component, buffer: CBuffer):
+    def _register_buffer(self, component, buffer: CBuffer):
         pgc.dataset_const_add_buffer(
-            self._const_dataset,
-            component,
-            buffer.n_elements_per_scenario,
-            buffer.total_elements,
-            buffer.indptr,
-            buffer.data,
+            dataset=self._const_dataset,
+            component=component,
+            elements_per_scenario=buffer.n_elements_per_scenario,
+            total_elements=buffer.total_elements,
+            indptr=buffer.indptr,
+            data=buffer.data,
         )
         assert_no_error()
 
-    def _validate_sub_data_format(self, info: SubDatasetInfo):
+    def _validate_sub_data_format(self, info: BufferProperties):
         if info.is_batch != self._is_batch:
             raise ValueError(
                 f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
@@ -382,11 +446,11 @@ class CWritableDataset:
         self._dataset_type = info.dataset_type()
         self._schema = power_grid_meta_data[self._dataset_type]
 
-        self._component_sub_data_info = self._get_sub_data_info(info)
+        self._component_buffer_properties = self._get_sub_data_info(info)
         self._data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]] = {}
         self._buffers: Dict[str, CBuffer] = {}
 
-        self._add_buffers(self._component_sub_data_info)
+        self._add_buffers(self._component_buffer_properties)
 
     def get_dataset_ptr(self) -> WritableDatasetPtr:
         """
@@ -429,29 +493,27 @@ class CWritableDataset:
         """
         return self._data[component]
 
-    def _add_buffers(self, component_sub_data_info: Dict[str, SubDatasetInfo]):
-        for component, component_info in component_sub_data_info.items():
-            self._component_sub_data_info[component] = component_info
-            self._add_buffer(component, component_info)
+    def _add_buffers(self, component_buffer_properties: Dict[str, BufferProperties]):
+        for component, buffer_properties in component_buffer_properties.items():
+            self._component_buffer_properties[component] = buffer_properties
+            self._add_buffer(component, buffer_properties)
 
-    def _add_buffer(self, component: str, component_info: SubDatasetInfo):
-        data: Union[np.ndarray, Dict[str, np.ndarray]]
-        buffer: CBuffer
-
-        if component_info.is_sparse:
-            data, buffer = self._create_sparse_buffer(component, component_info)
-        else:
-            data, buffer = self._create_uniform_buffer(component, component_info)
-
-        pgc.dataset_writable_set_buffer(self._writable_dataset, component, buffer.indptr, buffer.data)
+    def _add_buffer(self, component: str, buffer_properties: BufferProperties):
+        data = create_buffer(buffer_properties, self._schema[component])
         self._data[component] = data
 
-    def _create_uniform_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[np.ndarray, CBuffer]:
-        shape: Union[int, Tuple[int, int]] = (
-            (info.batch_size, info.n_elements_per_scenario) if info.is_batch else info.n_elements_per_scenario
-        )
-        data = np.empty(shape=shape, dtype=self._schema[component])
-        return data, CBuffer(
+        buffer = self._get_buffer(component, data)
+        self._register_buffer(component, buffer)
+
+    def _get_buffer(self, component: str, data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> CBuffer:
+        if isinstance(data, np.ndarray):
+            return self._get_uniform_buffer(component, data)
+
+        return self._get_sparse_buffer(component, data)
+
+    def _get_uniform_buffer(self, component: str, data: np.ndarray) -> CBuffer:
+        info = get_uniform_sub_data_info(data)
+        return CBuffer(
             data=self._raw_view(component, data),
             indptr=IdxPtr(),
             n_elements_per_scenario=info.n_elements_per_scenario,
@@ -459,16 +521,24 @@ class CWritableDataset:
             total_elements=info.n_total_elements,
         )
 
-    def _create_sparse_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[Dict[str, np.ndarray], CBuffer]:
-        data = np.empty(info.n_total_elements, dtype=self._schema[component])
-        indptr = np.array([0] * info.n_total_elements + [info.batch_size], dtype=IdxC)
-        return {"data": data, "indptr": indptr}, CBuffer(
-            data=self._raw_view(component, data),
+    def _get_sparse_buffer(self, component: str, data: Mapping[str, np.ndarray]) -> CBuffer:
+        contents = data["data"]
+        indptr = data["indptr"]
+
+        info = get_sparse_sub_data_info(data)
+        return CBuffer(
+            data=self._raw_view(component, contents),
             indptr=self._get_indptr_view(indptr),
             n_elements_per_scenario=info.n_elements_per_scenario,
             batch_size=info.batch_size,
             total_elements=info.n_total_elements,
         )
+
+    def _register_buffer(self, component: str, buffer: CBuffer):
+        pgc.dataset_writable_set_buffer(
+            dataset=self._writable_dataset, component=component, indptr=buffer.indptr, data=buffer.data
+        )
+        assert_no_error()
 
     def _raw_view(self, component: str, data: np.ndarray):
         return np.ascontiguousarray(data, dtype=self._schema[component].dtype).ctypes.data_as(VoidPtr)
@@ -477,7 +547,7 @@ class CWritableDataset:
         return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
     @staticmethod
-    def _get_sub_data_info(info: CDatasetInfo) -> Dict[str, SubDatasetInfo]:
+    def _get_sub_data_info(info: CDatasetInfo) -> Dict[str, BufferProperties]:
         is_batch = info.is_batch()
         batch_size = info.batch_size()
         components = info.components()
@@ -485,7 +555,7 @@ class CWritableDataset:
         n_total_elements = info.total_elements()
 
         return {
-            component: SubDatasetInfo(
+            component: BufferProperties(
                 is_sparse=n_elements_per_scenario[component] == -1,
                 is_batch=is_batch,
                 batch_size=batch_size,
