@@ -299,7 +299,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto& solvers = get_solvers<sym>();
             auto& y_bus_vec = get_y_bus<sym>();
             std::vector<MathOutputType> math_output(n_math_solvers_);
-            for (Idx i; i != n_math_solvers_; ++i) {
+            for (Idx i = 0; i != n_math_solvers_; ++i) {
                 math_output.emplace_back(solve(solvers[i], input[i], y_bus_vec[i]));
             }
             return math_output;
