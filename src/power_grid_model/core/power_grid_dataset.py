@@ -13,6 +13,7 @@ import numpy as np
 
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
+    CBuffer,
     create_buffer,
     get_buffer_properties,
     get_buffer_view,
@@ -20,7 +21,7 @@ from power_grid_model.core.buffer_handling import (
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, WritableDatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.core.power_grid_meta import CBuffer, power_grid_meta_data
+from power_grid_model.core.power_grid_meta import power_grid_meta_data
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods

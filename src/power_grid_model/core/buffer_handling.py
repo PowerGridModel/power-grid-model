@@ -7,15 +7,16 @@ Power grid model buffer handler
 """
 
 
+from ctypes import Array
 from dataclasses import dataclass
-from typing import Dict, Mapping, Tuple, Union
+from typing import Dict, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
-from power_grid_model.core.power_grid_meta import CBuffer, ComponentMetaData
+from power_grid_model.core.power_grid_core import CStr, IdxPtr, VoidPtr
+from power_grid_model.core.power_grid_meta import ComponentMetaData, power_grid_meta_data
 
 
 @dataclass
@@ -27,6 +28,35 @@ class BufferProperties:
     batch_size: int
     n_elements_per_scenario: int
     n_total_elements: int
+
+
+# prepared data for c api
+@dataclass
+class CBuffer:
+    """
+    Buffer for a single component
+    """
+
+    data: VoidPtr
+    indptr: Optional[IdxPtr]  # type: ignore
+    n_elements_per_scenario: int
+    batch_size: int
+    total_elements: int
+
+
+@dataclass
+class CDataset:
+    """
+    Dataset definition
+    """
+
+    dataset: Dict[str, CBuffer]
+    batch_size: int
+    n_components: int
+    components: Array
+    n_component_elements_per_scenario: Array
+    indptrs_per_component: Array
+    data_ptrs_per_component: Array
 
 
 def get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
@@ -278,3 +308,90 @@ def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData
     data = np.empty(properties.n_total_elements, dtype=schema.dtype)
     indptr = np.array([0] * properties.n_total_elements + [properties.batch_size], dtype=IdxC)
     return {"data": data, "indptr": indptr}
+
+
+# pylint: disable=R0912,R0914
+def prepare_cpp_array(
+    data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
+) -> CDataset:
+    """
+    prepare array for cpp pointers
+    Args:
+        data_type: input, update, or symmetric/asymmetric output
+        array_dict:
+            key: component type
+            value:
+                data array: can be 1D or 2D (in batches)
+                or
+                dict with
+                    key:
+                        data -> data array in flat for batches
+                        indptr -> index pointer for variable length input
+    Returns:
+        instance of CDataset ready to be fed into C API
+    """
+    # process
+    schema = power_grid_meta_data[data_type]
+    dataset_dict = {}
+    for component_name, entry in array_dict.items():
+        if component_name not in schema:
+            continue
+        # homogeneous
+        if isinstance(entry, np.ndarray):
+            data = entry
+            ndim = entry.ndim
+            total_elements = entry.size
+            indptr_c = IdxPtr()
+            if ndim == 1:
+                batch_size = 1
+                n_elements_per_scenario = entry.shape[0]
+            elif ndim == 2:  # (n_batch, n_component)
+                batch_size = entry.shape[0]
+                n_elements_per_scenario = entry.shape[1]
+            else:
+                raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
+        # with indptr
+        else:
+            data = entry["data"]
+            indptr: np.ndarray = entry["indptr"]
+            batch_size = indptr.size - 1
+            n_elements_per_scenario = -1
+            total_elements = len(data)
+            if data.ndim != 1:
+                raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
+            if indptr.ndim != 1:
+                raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
+            if indptr[0] != 0 or indptr[-1] != data.size:
+                raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
+            if np.any(np.diff(indptr) < 0):
+                raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
+            indptr_c = np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
+        # convert data array
+        data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(VoidPtr)
+        dataset_dict[component_name] = CBuffer(
+            data=data_c,
+            indptr=indptr_c,
+            n_elements_per_scenario=n_elements_per_scenario,
+            batch_size=batch_size,
+            total_elements=total_elements,
+        )
+    # total set
+    n_components = len(dataset_dict)
+    if n_components == 0:
+        batch_size = 1
+    else:
+        batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
+        if np.unique(batch_sizes).size > 1:
+            raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
+        batch_size = batch_sizes[0]
+    return CDataset(
+        dataset=dataset_dict,
+        batch_size=batch_size,
+        n_components=n_components,
+        components=(CStr * n_components)(*(x.encode() for x in dataset_dict)),
+        n_component_elements_per_scenario=(IdxC * n_components)(
+            *(x.n_elements_per_scenario for x in dataset_dict.values())
+        ),
+        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore
+        data_ptrs_per_component=(VoidPtr * n_components)(*(x.data for x in dataset_dict.values())),
+    )

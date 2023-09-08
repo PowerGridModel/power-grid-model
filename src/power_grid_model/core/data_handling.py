@@ -13,7 +13,8 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 
 import numpy as np
 
-from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
+from power_grid_model.core.buffer_handling import CDataset, prepare_cpp_array
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
 
 
