@@ -111,12 +111,6 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
 class SubDatasetInfo:  # pylint: disable=too-few-public-methods
     """Helper class to collect info on the dataset."""
 
-    is_sparse: bool
-    is_batch: bool
-    batch_size: int
-    n_elements_per_scenario: int
-    n_total_elements: int
-
     def __init__(  # pylint: disable=too-many-arguments
         self, is_sparse: bool, is_batch: bool, batch_size: int, n_elements_per_scenario: int, n_total_elements: int
     ):
@@ -384,11 +378,11 @@ class CWritableDataset:
     def __init__(self, dataset_ptr: WritableDatasetPtr):
         self._writable_dataset = dataset_ptr
 
-        self._info = self.get_info()
-        self._dataset_type = self._info.dataset_type()
+        info = self.get_info()
+        self._dataset_type = info.dataset_type()
         self._schema = power_grid_meta_data[self._dataset_type]
 
-        self._component_sub_data_info = self._get_sub_data_info(self._info)
+        self._component_sub_data_info = self._get_sub_data_info(info)
         self._data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]] = {}
         self._buffers: Dict[str, CBuffer] = {}
 
