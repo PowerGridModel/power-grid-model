@@ -110,7 +110,7 @@ def single_update_dataset():
     return result
 
 
-def homogeneous_batch_update_dataset():
+def uniform_batch_update_dataset():
     return {
         "version": "1.0",
         "type": "update",
@@ -204,7 +204,7 @@ def single_sc_output_dataset():
         simple_input_dataset,
         full_input_dataset,
         single_update_dataset,
-        homogeneous_batch_update_dataset,
+        uniform_batch_update_dataset,
         sparse_batch_update_dataset,
         single_sym_output_dataset,
         batch_sym_output_dataset,

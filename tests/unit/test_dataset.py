@@ -67,7 +67,7 @@ def test_const_dataset__single_data(dataset_type):
 
 
 @pytest.mark.parametrize("batch_size", (0, 1, 3))
-def test_const_dataset__homogeneous_batch_data(dataset_type, batch_size):
+def test_const_dataset__uniform_batch_data(dataset_type, batch_size):
     components = {"node": 3, "sym_load": 2, "asym_load": 4}
     data = {
         component: np.zeros(shape=(batch_size, count), dtype=power_grid_meta_data[dataset_type][component])

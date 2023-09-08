@@ -121,9 +121,9 @@ class SubDatasetInfo:  # pylint: disable=too-few-public-methods
         self.n_total_elements = n_total_elements
 
 
-def get_homogeneous_sub_data_info(data: np.ndarray) -> SubDatasetInfo:
+def get_uniform_sub_data_info(data: np.ndarray) -> SubDatasetInfo:
     """
-    Extract the data of the homogeneous batch dataset component.
+    Extract the data of the uniform batch dataset component.
 
     Args:
         data (np.ndarray): the dataset component.
@@ -210,7 +210,7 @@ def get_sub_data_info(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> SubD
         SubDatasetInfo: the details on the dataset component.
     """
     if isinstance(data, np.ndarray):
-        return get_homogeneous_sub_data_info(data)
+        return get_uniform_sub_data_info(data)
 
     return get_sparse_sub_data_info(data)
 
@@ -304,12 +304,12 @@ class CConstDataset:
 
     def _get_buffer(self, component: str, data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> CBuffer:
         if isinstance(data, np.ndarray):
-            return self._get_homogeneous_buffer(component, data)
+            return self._get_uniform_buffer(component, data)
 
         return self._get_sparse_buffer(component, data)
 
-    def _get_homogeneous_buffer(self, component: str, data: np.ndarray):
-        info = get_homogeneous_sub_data_info(data)
+    def _get_uniform_buffer(self, component: str, data: np.ndarray):
+        info = get_uniform_sub_data_info(data)
         self._validate_sub_data_format(info)
 
         return CBuffer(
@@ -441,12 +441,12 @@ class CWritableDataset:
         if component_info.is_sparse:
             data, buffer = self._create_sparse_buffer(component, component_info)
         else:
-            data, buffer = self._create_homogeneous_buffer(component, component_info)
+            data, buffer = self._create_uniform_buffer(component, component_info)
 
         pgc.dataset_writable_set_buffer(self._writable_dataset, component, buffer.indptr, buffer.data)
         self._data[component] = data
 
-    def _create_homogeneous_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[np.ndarray, CBuffer]:
+    def _create_uniform_buffer(self, component: str, info: SubDatasetInfo) -> Tuple[np.ndarray, CBuffer]:
         shape: Union[int, Tuple[int, int]] = (
             (info.batch_size, info.n_elements_per_scenario) if info.is_batch else info.n_elements_per_scenario
         )
