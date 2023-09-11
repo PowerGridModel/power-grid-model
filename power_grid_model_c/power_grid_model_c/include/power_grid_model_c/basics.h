@@ -51,6 +51,8 @@
 extern "C" {
 #endif
 
+// NOLINTBEGIN(modernize-use-using)
+
 // index type
 typedef int64_t PGM_Idx;
 typedef int32_t PGM_ID;
@@ -137,6 +139,8 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 #endif
 
+// NOLINTEND(modernize-use-using)
+
 // enums
 /**
  * @brief Enumeration for calculation type.
@@ -191,6 +195,15 @@ enum PGM_CType {
 enum PGM_SerializationFormat {
     PGM_json = 0,    /**< JSON serialization format */
     PGM_msgpack = 1, /**< msgpack serialization format */
+};
+
+/**
+ * @brief Enumeration of short circuit voltage scaling
+ *
+ */
+enum PGM_ShortCircuitVoltageScaling {
+    PGM_short_circuit_voltage_scaling_minimum = 0, /**< voltage scaling for minimum short circuit currents */
+    PGM_short_circuit_voltage_scaling_maximum = 1, /**< voltage scaling for maximum short circuit currents */
 };
 
 #ifdef __cplusplus

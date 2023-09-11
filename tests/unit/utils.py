@@ -76,6 +76,7 @@ def add_case(
             calculation_method,
             params["rtol"],
             params["atol"],
+            params,
         ]
         kwargs = {}
         if "fail" in params:

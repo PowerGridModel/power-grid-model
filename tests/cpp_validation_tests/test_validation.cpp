@@ -374,15 +374,39 @@ std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"iterative_linear", CalculationMethod::iterative_linear},
     {"iec60909", CalculationMethod::iec60909},
 };
+std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
+    {"minimum", ShortCircuitVoltageScaling::minimum}, {"maximum", ShortCircuitVoltageScaling::maximum}};
 using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, Dataset const&, ConstDataset const&, Idx)>;
 
-CalculationFunc calculation_func(std::string const& calculation_type, bool const sym) {
-    using namespace std::string_literals;
+// case parameters
+struct CaseParam {
+    std::filesystem::path case_dir;
+    std::string case_name;
+    std::string calculation_type;
+    std::string calculation_method;
+    std::string short_circuit_voltage_scaling;
+    bool sym{};
+    bool is_batch{};
+    double rtol{};
+    bool fail{};
+    [[no_unique_address]] BatchParameter batch_parameter{};
+    std::map<std::string, double> atol;
 
+    static std::string replace_backslash(std::string const& str) {
+        std::string str_out{str};
+        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) { return c == '\\' ? '/' : c; });
+        return str_out;
+    }
+};
+
+CalculationFunc calculation_func(CaseParam const& param) {
+    using namespace std::string_literals;
+    std::string const calculation_type = param.calculation_type;
+    bool const sym = param.sym;
     constexpr auto err_tol{1e-8};
     constexpr auto max_iter{20};
-    constexpr auto c_factor{1.1};
+    std::string const voltage_scaling = param.short_circuit_voltage_scaling;
 
     if (calculation_type == "power_flow"s) {
         return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
@@ -407,33 +431,14 @@ CalculationFunc calculation_func(std::string const& calculation_type, bool const
         };
     }
     if (calculation_type == "short_circuit"s) {
-        return [](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                  ConstDataset const& update_dataset, Idx threading) {
-            return model.calculate_short_circuit(c_factor, calculation_method, dataset, update_dataset, threading);
+        return [voltage_scaling](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
+                                 ConstDataset const& update_dataset, Idx threading) {
+            return model.calculate_short_circuit(sc_voltage_scaling_mapping.at(voltage_scaling), calculation_method,
+                                                 dataset, update_dataset, threading);
         };
     }
     throw UnsupportedValidationCase{calculation_type, sym};
 }
-
-// case parameters
-struct CaseParam {
-    std::filesystem::path case_dir;
-    std::string case_name;
-    std::string calculation_type;
-    std::string calculation_method;
-    bool sym{};
-    bool is_batch{};
-    double rtol{};
-    bool fail{};
-    [[no_unique_address]] BatchParameter batch_parameter{};
-    std::map<std::string, double> atol;
-
-    static std::string replace_backslash(std::string const& str) {
-        std::string str_out{str};
-        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) { return c == '\\' ? '/' : c; });
-        return str_out;
-    }
-};
 
 std::string get_output_type(std::string const& calculation_type, bool sym) {
     using namespace std::string_literals;
@@ -480,6 +485,9 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     }
     if (j.contains("fail")) {
         j.at("fail").get_to(param.fail);
+    }
+    if (calculation_type == "short_circuit") {
+        j.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
@@ -604,7 +612,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create model and run
         MainModel model{50.0, validation_case.input.const_dataset, 0};
-        CalculationFunc const func = calculation_func(param.calculation_type, param.sym);
+        CalculationFunc const func = calculation_func(param);
 
         func(model, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
         assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol,
@@ -623,7 +631,7 @@ void validate_batch_case(CaseParam const& param) {
         // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
         Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
-        CalculationFunc const func = calculation_func(param.calculation_type, param.sym);
+        CalculationFunc const func = calculation_func(param);
 
         // run in loops
         for (Idx batch = 0; batch != n_batch; ++batch) {

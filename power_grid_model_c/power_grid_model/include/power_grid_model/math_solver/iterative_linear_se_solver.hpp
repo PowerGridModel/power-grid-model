@@ -92,7 +92,6 @@ template <bool sym> class MeasuredValues {
           idx_shunt_power_(math_topology().n_shunt()),
           idx_load_gen_power_(math_topology().n_load_gen()),
           idx_source_power_(math_topology().n_source()),
-          n_angle_{},
           // default angle shift
           // sym: 0
           // asym: 0, -120deg, -240deg
@@ -229,7 +228,7 @@ template <bool sym> class MeasuredValues {
     IdxVector idx_load_gen_power_;
     IdxVector idx_source_power_;
     // number of angle measurement
-    Idx n_angle_;
+    Idx n_angle_{};
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
@@ -272,21 +271,29 @@ template <bool sym> class MeasuredValues {
             {
                 Idx const begin = topo.voltage_sensor_indptr[bus];
                 Idx const end = topo.voltage_sensor_indptr[bus + 1];
-                if (begin == end) {
+
+                SensorCalcParam<sym> aggregated{ComplexValue<sym>{0.0}, std::numeric_limits<double>::infinity()};
+                bool angle_measured{false};
+
+                // check if there is nan
+                if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
+                                [](auto const& x) { return is_nan(imag(x.value)); })) {
+                    // only keep magnitude
+                    aggregated = combine_measurements<true>(input.measured_voltage, begin, end);
+                } else {
+                    // keep complex number
+                    aggregated = combine_measurements(input.measured_voltage, begin, end);
+                    angle_measured = true;
+                }
+                if (std::isinf(aggregated.variance)) {
                     idx_voltage_[bus] = unmeasured;
                 } else {
                     idx_voltage_[bus] = static_cast<Idx>(main_value_.size());
-                    // check if there is nan
-                    if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
-                                    [](auto const& x) { return is_nan(imag(x.value)); })) {
-                        // only keep magnitude
-                        main_value_.push_back(combine_measurements<true>(input.measured_voltage, begin, end));
-                    } else {
-                        // keep complex number
-                        main_value_.push_back(combine_measurements(input.measured_voltage, begin, end));
+                    main_value_.push_back(aggregated);
+                    if (angle_measured) {
                         ++n_angle_;
                         // accumulate angle, offset by intrinsic phase shift
-                        angle_cum += arg(main_value_.back().value * std::exp(-1.0i * topo.phase_shift[bus]));
+                        angle_cum += arg(aggregated.value * std::exp(-1.0i * topo.phase_shift[bus]));
                     }
                 }
             }
@@ -542,9 +549,9 @@ template <bool sym> class IterativeLinearSESolver {
     static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
 
   public:
-    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
         : n_bus_{y_bus.size()},
-          math_topo_{topo_ptr},
+          math_topo_{std::move(topo_ptr)},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},

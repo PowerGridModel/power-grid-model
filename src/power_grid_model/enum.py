@@ -164,3 +164,10 @@ class FaultPhase(IntEnum):
     """
     Unspecified fault phase. Needs to be overloaded at the latest in the update_data
     """
+
+
+class ShortCircuitVoltageScaling(IntEnum):
+    """Voltage scaling for short circuit calculations"""
+
+    minimum = 0
+    maximum = 1

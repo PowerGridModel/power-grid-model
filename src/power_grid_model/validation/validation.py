@@ -347,7 +347,17 @@ def validate_values(  # pylint: disable=too-many-branches
         An empty list if all required data is valid, or a list of ValidationErrors.
 
     """
-    errors: List[ValidationError] = list(all_finite(data))
+    errors: List[ValidationError] = list(
+        all_finite(
+            data,
+            {
+                "sym_power_sensor": ["power_sigma"],
+                "asym_power_sensor": ["power_sigma"],
+                "sym_voltage_sensor": ["u_sigma"],
+                "asym_voltage_sensor": ["u_sigma"],
+            },
+        )
+    )
 
     if "node" in data:
         errors += validate_node(data)

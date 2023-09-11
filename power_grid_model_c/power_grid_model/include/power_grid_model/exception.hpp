@@ -11,6 +11,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 
 namespace power_grid_model {
 
@@ -117,9 +118,8 @@ class CalculationError : public PowerGridError {
 
 class BatchCalculationError : public CalculationError {
   public:
-    BatchCalculationError(std::string const& msg, IdxVector const& failed_scenarios,
-                          std::vector<std::string> const& err_msgs)
-        : CalculationError(msg), failed_scenarios_{failed_scenarios}, err_msgs_(err_msgs) {}
+    BatchCalculationError(std::string const& msg, IdxVector failed_scenarios, std::vector<std::string> err_msgs)
+        : CalculationError(msg), failed_scenarios_{std::move(failed_scenarios)}, err_msgs_(std::move(err_msgs)) {}
 
     IdxVector const& failed_scenarios() const { return failed_scenarios_; }
 

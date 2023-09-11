@@ -123,8 +123,9 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             }
             break;
         case PGM_short_circuit: {
-            constexpr double voltage_scaling_factor_c{1.1};
-            handle->batch_parameter = model->calculate_short_circuit(voltage_scaling_factor_c, calculation_method,
+            auto const short_circuit_voltage_scaling =
+                static_cast<ShortCircuitVoltageScaling>(opt->short_circuit_voltage_scaling);
+            handle->batch_parameter = model->calculate_short_circuit(short_circuit_voltage_scaling, calculation_method,
                                                                      output_dataset, update_dataset, opt->threading);
             break;
         }
