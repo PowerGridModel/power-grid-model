@@ -13,6 +13,12 @@ from typing import IO, Any, List, Optional, cast
 import numpy as np
 
 from power_grid_model import initialize_array
+from power_grid_model.core.serialization import (  # pylint: disable=unused-import
+    json_deserialize,
+    json_serialize,
+    msgpack_deserialize,
+    msgpack_serialize,
+)
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,

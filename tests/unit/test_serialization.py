@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import itertools
 import json
 from typing import Any, Dict, List, Mapping, Optional, Union
 
@@ -10,8 +9,7 @@ import msgpack
 import numpy as np
 import pytest
 
-from power_grid_model import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
-from power_grid_model.core.error_handling import assert_no_error
+from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
 def sort_dict(data: Dict):
