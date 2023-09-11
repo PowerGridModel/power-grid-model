@@ -97,12 +97,6 @@ template <bool sym> class MathSolver {
         iterative_linear_se_solver_.reset();
     }
 
-    // void update_value(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
-    //     y_bus_.update_admittance(math_model_param);
-    // }
-
-    // std::shared_ptr<YBusStructure const> shared_y_bus_struct() const { return y_bus_.shared_y_bus_struct(); }
-
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type
