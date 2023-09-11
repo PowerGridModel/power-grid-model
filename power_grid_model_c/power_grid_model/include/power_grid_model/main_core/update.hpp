@@ -47,7 +47,7 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
 }
 
 template <bool sym>
-void update_single_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
+void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
     y_bus.update_admittance(math_model_param);
 }
 
