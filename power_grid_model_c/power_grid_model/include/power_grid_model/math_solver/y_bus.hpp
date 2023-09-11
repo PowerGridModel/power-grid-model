@@ -317,7 +317,7 @@ template <bool sym> class YBus {
     }
     std::shared_ptr<IdxVector const> shared_diag_lu() const { return {y_bus_struct_, &y_bus_struct_->diag_lu}; }
 
-    constexpr auto& get_y_bus_struct() const { return y_bus_struct_; }
+    constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
 
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached parameters

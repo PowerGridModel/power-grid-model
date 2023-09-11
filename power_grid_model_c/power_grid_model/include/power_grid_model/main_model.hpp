@@ -1092,7 +1092,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 if (other_y_bus_exist) {
                     y_bus_vec.emplace_back(state_.math_topology[i],
                                            std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
-                                           other_y_bus_vec[i].get_y_bus_struct());
+                                           other_y_bus_vec[i].get_y_bus_structure());
                 }
             }
         }
