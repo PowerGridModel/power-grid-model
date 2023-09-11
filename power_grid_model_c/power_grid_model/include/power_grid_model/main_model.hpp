@@ -1106,7 +1106,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
-        // prepare Y_bus
         prepare_y_bus<sym>();
         // if solvers do not exist, build them
         if (n_math_solvers_ != (Idx)solvers.size()) {
