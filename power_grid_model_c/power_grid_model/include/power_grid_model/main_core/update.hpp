@@ -52,8 +52,8 @@ void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> c
 }
 
 template <bool sym>
-void update_math_state(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
-                       Idx n_math_solvers) {
+void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
+                  Idx n_math_solvers) {
     for (Idx i = 0; i != n_math_solvers; ++i) {
         if constexpr (sym) {
             update_y_bus(math_state.y_bus_vec_sym[i],

@@ -1120,7 +1120,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         else if (!is_parameter_up_to_date<sym>()) {
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
-            main_core::update_math_state(math_state_, math_params, n_math_solvers_);
+            main_core::update_y_bus(math_state_, math_params, n_math_solvers_);
         }
         // else do nothing, set everything up to date
         is_parameter_up_to_date<sym>() = true;
