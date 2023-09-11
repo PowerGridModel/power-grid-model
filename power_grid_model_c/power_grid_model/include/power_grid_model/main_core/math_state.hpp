@@ -18,6 +18,11 @@ struct MathState {
     std::vector<MathSolver<false>> math_solvers_asym;
 };
 
+constexpr void clear(MathState& math_state) {
+    math_state.math_solvers_sym.clear();
+    math_state.math_solvers_asym.clear();
+}
+
 } // namespace power_grid_model::main_core
 
 #endif

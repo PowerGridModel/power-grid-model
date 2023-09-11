@@ -240,8 +240,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_sym_parameter_up_to_date_ = false;
         is_asym_parameter_up_to_date_ = false;
         n_math_solvers_ = 0;
-        math_state_.math_solvers_sym.clear();
-        math_state_.math_solvers_asym.clear();
+        main_core::clear(math_state_);
         state_.math_topology.clear();
         state_.topo_comp_coup.reset();
         state_.comp_coup = {};
