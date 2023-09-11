@@ -129,3 +129,27 @@ Therefore, it is your choice of trade-off: maximum performance or backwards comp
 
 NOTE: you do not need to call `PGM_buffer_set_nan` on output buffers, 
 because the buffer will be overwritten in the calculation core with the real output data.
+
+## Dataset views
+
+```{warning}
+This feature is still under construction. Not all parts of the C API implement this feature.
+```
+
+For larger datasets that cannot or should not be treated independently,
+`PGM_dataset_*` interfaces are provided.
+Currently implemented are `PGM_dataset_const` and `PGM_dataset_writable`.
+These two dataset types expose a dataset to the power-grid-model with the following permissions on buffers:
+
+| Dataset interface        | power-grid-model permissions | User permissions    | Treat as        |
+| ------------------------ | ---------------------------- | ------------------- | --------------- |
+| `PGM_dataset_const_*`    | Read                         | Create, read, write | `const * const` |
+| `PGM_dataset_writable_*` | Read, write                  | Create, read        | `* const`       |
+
+A constant dataset is completely user-owned.
+The user is responsible for creating and destroying both the dataset and its buffers.
+This dataset is perfect for input and update datasets.
+
+A writable dataset, instead, cannot be created by the user, but will be provided by the power-grid-model.
+The user can then provide buffers to which the power-grid-model can output its data.
+This dataset type is perfect for output data.
