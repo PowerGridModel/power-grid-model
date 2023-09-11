@@ -4,6 +4,7 @@
 
 set(PROJECT_SOURCES
     "test_implicit_conversion.cpp"
+    "test_intellisense.cpp"
     # "test_all_components.cpp"
     "test_entry_point.cpp"
     # "test_main_model_sc.cpp"

@@ -32,7 +32,7 @@ TEST_CASE("Test implicit conversion - mutable") {
     CHECK(derived.id == 1);
     CHECK(derived.id == base_ref.id);
 
-    base_ref.id = 1;
-    CHECK(derived.id == 1);
+    base_ref.id = 2;
+    CHECK(derived.id == 2);
     CHECK(derived.id == base_ref.id);
 }
