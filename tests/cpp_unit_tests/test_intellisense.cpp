@@ -10,17 +10,15 @@
 
 namespace {
 using power_grid_model::test_intellisense::base_input_c;
-using power_grid_model::test_intellisense::derived_input_c;
 using power_grid_model::test_intellisense::Derived;
+using power_grid_model::test_intellisense::derived_input_c;
 using power_grid_model::test_intellisense::ID;
 
-void update_base(base_input_c auto& base) {
-    base.id;
-}
+void update_base(base_input_c auto& base) { base.id; }
 
 void update_derived(derived_input_c auto& derived) {
     ++derived.id;
-    derived.u_rated;
+    derived.u_rated += 1.0;
 }
 } // namespace
 

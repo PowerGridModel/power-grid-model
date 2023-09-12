@@ -13,13 +13,13 @@ using ID = int;
 
 template <typename T>
 concept base_input_c = requires(T t) {
-    { t.id } -> std::same_as<ID&>;
-};
+                           { t.id } -> std::same_as<ID&>;
+                       };
 
 template <typename T>
 concept derived_input_c = base_input_c<T> && requires(T t) {
-    { t.u_rated } -> std::same_as<double&>;
-};
+                                                 { t.u_rated } -> std::same_as<double&>;
+                                             };
 
 struct Derived {
     ID id{};
