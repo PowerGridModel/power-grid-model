@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <doctest/doctest.h>
-#include <power_grid_model/main_core/sparse_idx_vector.hpp>
+#include <power_grid_model/sparse_idx_vector.hpp>
 
 namespace power_grid_model {
+
+namespace detail {
 
 TEST_CASE("Sparse idx data strucuture for topology") {
     IdxVector const sample_indptr{0, 3, 6, 7};
@@ -13,21 +15,38 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     Idx const location{1};
     IdxVector const expected_elements_at_1{13, 14, 15};
 
-    main_core::SparseIdxVector sparseidxvector{sample_indptr};
-    main_core::SparseVectorData<Idx> sparsevectordata{data};
+    SparseIdxVector sparse_idx_vector{sample_indptr};
+    SparseVectorData<Idx> sparse_vector_data{data};
 
-    IdxVector actual_elements_at_1{};
-    auto location_size = sparseidxvector.subset(location);
-    auto sparsevectordata_range = sparsevectordata.subset_data(location_size);
-    for (auto i : sparsevectordata_range) {
-        actual_elements_at_1.push_back(i);
+    SUBCASE("sparse idx vector functionalities") {
+
+        auto location_size = sparse_idx_vector.subset(location);
+        auto sparse_vector_data_range = sparse_vector_data.subset_data(location_size);
+        IdxVector actual_elements_at_1{};
+        for (auto i : sparse_vector_data_range) {
+            actual_elements_at_1.push_back(i);
+        }
+
+        CHECK(actual_elements_at_1 == expected_elements_at_1);
+        CHECK(sparse_vector_data_range[1] == 14);
+        CHECK(sparse_vector_data_range.size() == 3);
     }
 
-    CHECK(actual_elements_at_1 == expected_elements_at_1);
-    CHECK(sparsevectordata_range[1] == 14);
-    CHECK(sparsevectordata_range.size() == 3);
-    CHECK(sparsevectordata[4] == 14);
-    CHECK(sparsevectordata.at(4) == 14);
+    SUBCASE("Vector functionalities") {
+        IdxVector actual_complete_data{};
+        for (auto i : sparse_vector_data) {
+            actual_complete_data.push_back(i);
+        }
+
+        // original vector functionalities
+        CHECK(sparse_vector_data[4] == 14);
+        CHECK(sparse_vector_data.at(4) == 14);
+        CHECK(sparse_idx_vector[1] == 3);
+        CHECK(sparse_idx_vector.at(1) == 3);
+        CHECK(data == actual_complete_data);
+    }
 }
+
+} // namespace detail
 
 } // namespace power_grid_model

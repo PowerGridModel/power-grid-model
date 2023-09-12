@@ -3,19 +3,29 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_TOPOLOGY_INDEX_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_TOPOLOGY_INDEX_HPP
+#ifndef POWER_GRID_MODEL_MAIN_CORE_SPARSE_IDX_VECTOR_HPP
+#define POWER_GRID_MODEL_MAIN_CORE_SPARSE_IDX_VECTOR_HPP
 
-#include "../power_grid_model.hpp"
+#include "power_grid_model.hpp"
 
 #include <boost/range.hpp>
 
-namespace power_grid_model::main_core {
+namespace power_grid_model {
+
+namespace detail {
 
 class SparseIdxVector {
 
   public:
     SparseIdxVector(IdxVector const& data) : data_(data) {}
+
+    auto begin() { return data_.begin(); }
+    auto cbegin() const { return data_.cbegin(); }
+    auto end() { return data_.end(); }
+    auto cend() const { return data_.cend(); }
+    auto size() { return data_.size(); }
+    auto operator[](const Idx& sub_location) { return data_[sub_location]; }
+    auto at(const Idx& sub_location) { return data_.at(sub_location); }
 
     auto subset(Idx location) { return std::pair<Idx, size_t>{data_[location], data_[location + 1] - data_[location]}; }
 
@@ -30,7 +40,9 @@ template <class T> class SparseVectorData {
     using iterator_category = std::forward_iterator_tag;
 
     auto begin() { return data_.begin(); }
+    auto cbegin() const { return data_.cbegin(); }
     auto end() { return data_.end(); }
+    auto cend() const { return data_.cend(); }
     auto size() { return data_.size(); }
     auto operator[](const Idx& sub_location) { return data_[sub_location]; }
     auto at(const Idx& sub_location) { return data_.at(sub_location); }
@@ -45,6 +57,8 @@ template <class T> class SparseVectorData {
     std::vector<T> data_{};
 };
 
-} // namespace power_grid_model::main_core
+} // namespace detail
+
+} // namespace power_grid_model
 
 #endif
