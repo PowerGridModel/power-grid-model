@@ -306,7 +306,7 @@ def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData
         A sparse buffer with the correct properties
     """
     data = np.empty(properties.n_total_elements, dtype=schema.dtype)
-    indptr = np.array([0] * properties.n_total_elements + [properties.batch_size], dtype=IdxC)
+    indptr = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
     return {"data": data, "indptr": indptr}
 
 

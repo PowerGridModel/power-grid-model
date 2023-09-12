@@ -7,6 +7,7 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
+import warnings
 from pathlib import Path
 from typing import IO, Any, List, Optional, cast
 
@@ -30,6 +31,7 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchArray,
 )
+from power_grid_model.errors import PowerGridSerializationError
 
 
 def is_nan(data) -> bool:
@@ -113,7 +115,6 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: b
 
     Returns:
         A single or batch dataset for power-grid-model
-
     """
 
     # If the input data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
@@ -146,7 +147,6 @@ def convert_python_single_dataset_to_single_dataset(
 
     Returns:
         A single dataset for power-grid-model
-
     """
 
     dataset: SingleDataset = {}
@@ -172,7 +172,6 @@ def convert_component_list_to_numpy(
 
     Returns:
         A single numpy array
-
     """
 
     # We'll initialize an 1d-array with NaN values for all the objects of this component type
@@ -337,7 +336,6 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: str
 
     Returns:
         A list with a single numpy structured array per batch
-
     """
 
     for key in ["indptr", "data"]:
@@ -383,7 +381,6 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     Returns:
         A python dict for single dataset
         A python list for batch dataset
-
     """
 
     # Check if the dataset is a single dataset or batch dataset
@@ -439,37 +436,73 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     }
 
 
-def import_json_data(json_file: Path, data_type: str, ignore_extra: bool = False) -> Dataset:
+_DEPRECATED_JSON_DESERIALIZATION_MSG = "This method is deprecated. Please use json_deserialize."
+_DEPRECATED_JSON_SERIALIZATION_MSG = "This method is deprecated. Please use json_serialize."
+
+
+def _compatibility_deprecated_import_json_data(json_file: Path, data_type: str):
+    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
+        data = json.load(file_pointer)
+
+    if "version" not in data:  # convert old format to version 1.0
+        data = {
+            "attributes": {},
+            "data": data,
+            "is_batch": isinstance(data, list),
+            "type": data_type,
+            "version": "1.0",
+        }
+
+    result_dataset_type, result = json_deserialize(json.dumps(data))
+    if result_dataset_type != data_type:
+        raise PowerGridSerializationError("An internal error occured during deserialization")
+
+    return result
+
+
+def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Dataset:
     """
-    import json data
+    [deprecated] import json data.
+
+    This method is deprecated. Please use json_deserialize instead (requires loading the file yourself).
 
     Args:
         json_file: path to the json file
         data_type: type of data: input, update, sym_output, or asym_output
-        ignore_extra: Allow (and ignore) extra attributes in the json file
+        args [deprecated]: All extra positional arguments are ignored
+        kwargs [deprecated]: All extra keyword arguments are ignored
 
     Returns:
         A single or batch dataset for power-grid-model
     """
-    # TODO(mgovers): fix
-    # DeprecationWarning
-    # json string -> new json string -> deserialize
-    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
-        data = json.load(file_pointer)
-    return convert_python_to_numpy(data=data, data_type=data_type, ignore_extra=ignore_extra)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    if args:
+        warnings.warn(
+            "Provided positional arguments at index 2 and following are deprecated.", DeprecationWarning, stacklevel=2
+        )
+    if kwargs:
+        warnings.warn(
+            f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning, stacklevel=2
+        )
+
+    return _compatibility_deprecated_import_json_data(json_file=json_file, data_type=data_type)
 
 
 def import_input_data(json_file: Path) -> SingleDataset:
     """
-    import input json data
+    [deprecated] import input json data
+
+    This method is deprecated. Please use json_deserialize instead (requires loading the file yourself).
 
     Args:
         json_file: path to the json file
 
     Returns:
-         A single dataset for power-grid-model
+        A single dataset for power-grid-model
     """
-    data = import_json_data(json_file=json_file, data_type="input")
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+
+    data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type="input")
     assert isinstance(data, dict)
     assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
     return cast(SingleDataset, data)
@@ -477,20 +510,26 @@ def import_input_data(json_file: Path) -> SingleDataset:
 
 def import_update_data(json_file: Path) -> BatchDataset:
     """
-    import update json data
+    [deprecated] import update json data
+
+    This method is deprecated. Please use json_deserialize instead (requires loading the file yourself).
 
     Args:
         json_file: path to the json file
 
     Returns:
-         A batch dataset for power-grid-model
+        A batch dataset for power-grid-model
     """
-    return cast(BatchDataset, import_json_data(json_file=json_file, data_type="update"))
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+
+    return cast(BatchDataset, _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"))
 
 
 def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False):
     """
-    export json data
+    [deprecated] export json data
+
+    This method is deprecated. Please use json_serialize instead (requires opening the file yourself).
 
     Args:
         json_file: path to json file
@@ -501,15 +540,20 @@ def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, 
     Returns:
         Save to file
     """
-    json_data = convert_dataset_to_python_dataset(data)
+    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
 
+    return _compatibility_deprecated_export_json_data(json_file=json_file, data=data, indent=indent, compact=compact)
+
+
+def _compatibility_deprecated_export_json_data(
+    json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False
+):
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
-        if compact and indent:
-            is_batch_data = isinstance(json_data, list)
-            max_level = 4 if is_batch_data else 3
-            compact_json_dump(json_data, file_pointer, indent=indent, max_level=max_level)
-        else:
-            json.dump(json_data, file_pointer, indent=indent)
+        file_pointer.write(
+            json_serialize(
+                dataset_type="update", data=data, indent=0 if indent is None else indent, use_compact_list=compact
+            )
+        )
 
 
 def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):
@@ -529,7 +573,15 @@ def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int
     The function is being called recursively, starting at level 0 and recursing until max_level is reached. It is
     basically a full json writer, but for efficiency reasons, on the last levels the native json.dump method is used.
     """
+    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    return _compatibility_deprecated_compact_json_dump(
+        data=data, io_stream=io_stream, indent=indent, max_level=max_level, level=level
+    )
 
+
+def _compatibility_deprecated_compact_json_dump(
+    data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0
+):
     # Let's define a 'tab' indent, depending on the level
     tab = " " * level * indent
 

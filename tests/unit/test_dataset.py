@@ -30,6 +30,13 @@ def dataset_type(request):
     return request.param
 
 
+# def test_get_dataset_type(dataset_type):
+#     power_grid_meta_data[dataset_type]
+#     for component, component_dataset_type in dataset_types.items():
+#         for shape in (3, (3, 2)):
+#             assert get_dataset_type(np.zeros(shape=shape, dtype=component_dataset_type) == dataset_type)
+
+
 def test_const_dataset__empty_dataset(dataset_type):
     dataset = CConstDataset(dataset_type, {})
     info = dataset.get_info()
