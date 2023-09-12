@@ -10,14 +10,12 @@
 
 #include <boost/range.hpp>
 
-namespace power_grid_model {
-
-namespace detail {
+namespace power_grid_model::detail {
 
 class SparseIdxVector {
 
   public:
-    SparseIdxVector(IdxVector const& data) : data_(data) {}
+    explicit SparseIdxVector(IdxVector const& data) : data_(data) {}
 
     auto begin() { return data_.begin(); }
     auto cbegin() const { return data_.cbegin(); }
@@ -35,7 +33,7 @@ class SparseIdxVector {
 
 template <class T> class SparseVectorData {
   public:
-    SparseVectorData(std::vector<T> const& data) : data_(data) {}
+    explicit SparseVectorData(std::vector<T> const& data) : data_(data) {}
 
     using iterator_category = std::forward_iterator_tag;
 
@@ -57,8 +55,6 @@ template <class T> class SparseVectorData {
     std::vector<T> data_{};
 };
 
-} // namespace detail
-
-} // namespace power_grid_model
+} // namespace power_grid_model::detail
 
 #endif

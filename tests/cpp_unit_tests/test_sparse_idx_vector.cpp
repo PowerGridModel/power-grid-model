@@ -5,9 +5,7 @@
 #include <doctest/doctest.h>
 #include <power_grid_model/sparse_idx_vector.hpp>
 
-namespace power_grid_model {
-
-namespace detail {
+namespace power_grid_model::detail {
 
 TEST_CASE("Sparse idx data strucuture for topology") {
     IdxVector const sample_indptr{0, 3, 6, 7};
@@ -16,7 +14,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     IdxVector const expected_elements_at_1{13, 14, 15};
 
     SparseIdxVector sparse_idx_vector{sample_indptr};
-    SparseVectorData<Idx> sparse_vector_data{data};
+    SparseVectorData sparse_vector_data{data};
 
     SUBCASE("sparse idx vector functionalities") {
 
@@ -47,6 +45,4 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     }
 }
 
-} // namespace detail
-
-} // namespace power_grid_model
+} // namespace power_grid_model::detail
