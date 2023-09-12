@@ -244,9 +244,7 @@ def get_buffer_view(data: Union[np.ndarray, Mapping[str, np.ndarray]], schema: C
     return get_sparse_buffer_view(data, schema)
 
 
-def create_buffer(
-    properties: BufferProperties, schema: ComponentMetaData
-) -> Union[np.ndarray, Mapping[str, np.ndarray]]:
+def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Union[np.ndarray, Dict[str, np.ndarray]]:
     """
     Create a buffer with the provided properties and type.
 
@@ -258,7 +256,7 @@ def create_buffer(
         ValueError if the buffer properties are not consistent
 
     Returns:
-        Union[np.ndarray, Mapping[str, np.ndarray]]: a buffer with the correct properties
+        Union[np.ndarray, Dict[str, np.ndarray]]: a buffer with the correct properties
     """
     if properties.is_sparse:
         return create_sparse_buffer(properties=properties, schema=schema)

@@ -87,7 +87,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         """
         return [pgc.dataset_info_component_name(self._info, idx) for idx in range(self.n_components())]
 
-    def elements_per_scenario(self) -> Dict[str, int]:
+    def elements_per_scenario(self) -> Mapping[str, int]:
         """
         The number of elements per scenario in the dataset.
 
@@ -100,7 +100,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             for idx, component_name in enumerate(self.components())
         }
 
-    def total_elements(self) -> Dict[str, int]:
+    def total_elements(self) -> Mapping[str, int]:
         """
         The total number of elements in the dataset.
 
@@ -115,7 +115,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def deduce_dataset_type(data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> str:
+def deduce_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> str:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -174,7 +174,11 @@ class CConstDataset:
     _batch_size: int
     _const_dataset: ConstDatasetPtr
 
-    def __new__(cls, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]], dataset_type: Optional[str] = None):
+    def __new__(
+        cls,
+        data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
+        dataset_type: Optional[str] = None,
+    ):
         instance = super().__new__(cls)
 
         instance._dataset_type = dataset_type if isinstance(dataset_type, str) else deduce_dataset_type(data)
@@ -219,7 +223,9 @@ class CConstDataset:
         """
         return CDatasetInfo(pgc.dataset_const_get_info(self._const_dataset))
 
-    def add_data(self, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
+    def add_data(
+        self, data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]
+    ):
         """
         Add Power Grid Model data to the const dataset view.
 
@@ -301,8 +307,8 @@ class CWritableDataset:
         self._schema = power_grid_meta_data[self._dataset_type]
 
         self._component_buffer_properties = self._get_buffer_properties(info)
-        self._data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]] = {}
-        self._buffers: Dict[str, CBuffer] = {}
+        self._data: Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]] = {}
+        self._buffers: Mapping[str, CBuffer] = {}
 
         self._add_buffers()
         assert_no_error()
@@ -365,7 +371,7 @@ class CWritableDataset:
         assert_no_error()
 
     @staticmethod
-    def _get_buffer_properties(info: CDatasetInfo) -> Dict[str, BufferProperties]:
+    def _get_buffer_properties(info: CDatasetInfo) -> Mapping[str, BufferProperties]:
         is_batch = info.is_batch()
         batch_size = info.batch_size()
         components = info.components()
