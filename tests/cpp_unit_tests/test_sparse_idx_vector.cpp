@@ -28,6 +28,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
         CHECK(actual_elements_at_1 == expected_elements_at_1);
         CHECK(sparse_vector_data_range[1] == 14);
         CHECK(sparse_vector_data_range.size() == 3);
+        CHECK(sparse_idx_vector.data_size() == 3);
     }
 
     SUBCASE("Vector functionalities") {

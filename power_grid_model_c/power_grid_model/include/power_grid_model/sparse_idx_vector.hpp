@@ -24,6 +24,7 @@ class SparseIdxVector {
     auto size() { return data_.size(); }
     auto operator[](const Idx& sub_location) { return data_[sub_location]; }
     auto at(const Idx& sub_location) { return data_.at(sub_location); }
+    auto data_size() { return data_.back(); }
 
     auto subset(Idx location) { return std::pair<Idx, size_t>{data_[location], data_[location + 1] - data_[location]}; }
 
