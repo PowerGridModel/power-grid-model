@@ -159,7 +159,7 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock):
     convert_mock.return_value = '{"foo": [{"val": 123}]}'
     data: Dataset = {}  # type: ignore
     export_json_data(json_file=Path("output.json"), data=data, indent=2)
-    convert_mock.assert_called_once_with(dataset_type="update", data={}, use_compact_list=False, indent=2)
+    convert_mock.assert_called_once_with(data={}, use_compact_list=False, indent=2)
     handle = open_mock()
     handle.write.assert_called_once_with(convert_mock.return_value)
 

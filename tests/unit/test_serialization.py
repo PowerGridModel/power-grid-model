@@ -332,7 +332,7 @@ def assert_serialization_correct(
 @pytest.mark.parametrize("raw_buffer", (True, False))
 def test_json_deserialize_data(serialized_data, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
-    result_type, result = json_deserialize(data)
+    result, result_type = json_deserialize(data)
 
     assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
@@ -341,7 +341,7 @@ def test_json_deserialize_data(serialized_data, raw_buffer: bool):
 
 def test_msgpack_deserialize_data(serialized_data):
     data = to_msgpack(serialized_data)
-    result_type, result = msgpack_deserialize(data)
+    result, result_type = msgpack_deserialize(data)
 
     assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
@@ -355,16 +355,40 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
         reference = to_json(empty_dataset(dataset_type), indent=indent)
         assert isinstance(reference, str)
 
-        result = json_serialize(dataset_type, {}, use_compact_list=use_compact_list, indent=indent)
+        result = json_serialize({}, dataset_type, use_compact_list=use_compact_list, indent=indent)
         assert isinstance(result, str)
         assert result == reference
+
+        with pytest.raises(ValueError):
+            json_serialize({}, use_compact_list=use_compact_list, indent=indent)
 
 
 @pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
 def test_msgpack_serialize_empty_dataset(dataset_type):
     reference = sort_dict(empty_dataset(dataset_type))
     for use_compact_list in (True, False):
-        assert from_msgpack(msgpack_serialize(dataset_type, {}, use_compact_list=use_compact_list)) == reference
+        assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
+
+        with pytest.raises(ValueError):
+            json_serialize({}, use_compact_list=use_compact_list)
+
+
+@pytest.mark.parametrize(
+    ("deserialize", "serialize", "pack"),
+    (
+        (json_deserialize, json_serialize, to_json),
+        (msgpack_deserialize, msgpack_serialize, to_msgpack),
+    ),
+)
+def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, pack):
+    deserialized_data, dataset_type = deserialize(pack(serialized_data))
+    full_result = serialize(deserialized_data, dataset_type)
+
+    if serialized_data["data"]:
+        assert serialize(deserialized_data) == full_result
+    else:
+        with pytest.raises(ValueError):
+            serialize(deserialized_data)
 
 
 @pytest.mark.parametrize(
@@ -380,11 +404,11 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
     """
     test_data = pack(serialized_data)
 
-    dataset_type_a, deserialized_result_a = deserialize(test_data)
-    serialized_result_a = serialize(dataset_type_a, deserialized_result_a)
+    deserialized_result_a, dataset_type_a = deserialize(test_data)
+    serialized_result_a = serialize(deserialized_result_a, dataset_type_a)
 
-    dataset_type_b, deserialized_result_b = deserialize(serialized_result_a)
-    serialized_result_b = serialize(dataset_type_b, deserialized_result_b)
+    deserialized_result_b, dataset_type_b = deserialize(serialized_result_a)
+    serialized_result_b = serialize(deserialized_result_b, dataset_type_b)
 
     assert serialized_result_a == serialized_result_b
 

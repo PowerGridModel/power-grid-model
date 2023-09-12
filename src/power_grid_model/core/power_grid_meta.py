@@ -158,7 +158,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
 power_grid_meta_data = _generate_meta_data()
 
 
-def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False):
+def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False) -> np.ndarray:
     """
     Initializes an array for use in Power Grid Model calculations
 

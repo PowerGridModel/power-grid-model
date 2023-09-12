@@ -7,7 +7,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Dict, List, Mapping, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import numpy as np
 
@@ -22,6 +22,7 @@ from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, WritableDatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
+from power_grid_model.errors import PowerGridError
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -114,6 +115,50 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
+def deduce_dataset_type(data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> str:
+    """
+    Deduce the dataset type from the provided dataset.
+
+    Args:
+        data: the dataset
+
+    Raises:
+        ValueError
+            if the dataset type cannot be deduced because multiple dataset types match the format
+            (probably because the data contained no supported components, e.g. was empty)
+        PowerGridError
+            if no dataset type matches the format of the data
+            (probably because the data contained conflicting data formats)
+
+    Returns:
+        the dataset type
+    """
+    candidates = set(power_grid_meta_data.keys())
+
+    for dataset_type, dataset_metadatas in power_grid_meta_data.items():
+        for component, dataset_metadata in dataset_metadatas.items():
+            if component in data:
+                component_data = data[component]
+                if isinstance(component_data, np.ndarray):
+                    component_dtype = component_data.dtype
+                else:
+                    component_dtype = component_data["data"].dtype
+
+                if component_dtype is not dataset_metadata.dtype:
+                    candidates.discard(dataset_type)
+                    break
+
+    if not candidates:
+        raise PowerGridError(
+            "The dataset type could not be deduced because no type matches the data. "
+            "This usually means inconsistent data was provided."
+        )
+    if len(candidates) > 1:
+        raise ValueError("The dataset type could not be deduced because multiple dataset types match the data.")
+
+    return next(iter(candidates))
+
+
 class CConstDataset:
     """
     A view of a user-owned dataset.
@@ -129,10 +174,10 @@ class CConstDataset:
     _batch_size: int
     _const_dataset: ConstDatasetPtr
 
-    def __new__(cls, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
+    def __new__(cls, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]], dataset_type: Optional[str] = None):
         instance = super().__new__(cls)
 
-        instance._dataset_type = dataset_type
+        instance._dataset_type = dataset_type if isinstance(dataset_type, str) else deduce_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
         if data:

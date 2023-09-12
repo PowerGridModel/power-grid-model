@@ -453,7 +453,7 @@ def _compatibility_deprecated_import_json_data(json_file: Path, data_type: str):
             "version": "1.0",
         }
 
-    result_dataset_type, result = json_deserialize(json.dumps(data))
+    result, result_dataset_type = json_deserialize(json.dumps(data))
     if result_dataset_type != data_type:
         raise PowerGridSerializationError("An internal error occured during deserialization")
 
@@ -549,11 +549,7 @@ def _compatibility_deprecated_export_json_data(
     json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False
 ):
     with open(json_file, mode="w", encoding="utf-8") as file_pointer:
-        file_pointer.write(
-            json_serialize(
-                dataset_type="update", data=data, indent=0 if indent is None else indent, use_compact_list=compact
-            )
-        )
+        file_pointer.write(json_serialize(data=data, indent=0 if indent is None else indent, use_compact_list=compact))
 
 
 def compact_json_dump(data: Any, io_stream: IO[str], indent: int, max_level: int, level: int = 0):

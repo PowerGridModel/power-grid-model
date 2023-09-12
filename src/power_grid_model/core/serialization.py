@@ -10,7 +10,7 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
-from typing import Dict, Mapping, Tuple, Union
+from typing import Dict, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
@@ -58,7 +58,7 @@ class Deserializer:
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)
 
-    def load(self) -> Tuple[str, Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]:
+    def load(self) -> Tuple[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]], str]:
         """
         Load the deserialized data to a new dataset.
 
@@ -68,11 +68,11 @@ class Deserializer:
 
         Returns:
             A tuple containing:
-                the type of the dataset
                 the deserialized dataset in Power grid model input format
+                the type of the dataset
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
-        return self._dataset.get_info().dataset_type(), self._dataset.get_data()
+        return self._dataset.get_data(), self._dataset.get_info().dataset_type()
 
 
 class Serializer(ABC):
@@ -81,27 +81,25 @@ class Serializer(ABC):
     """
 
     _data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
-    _dataset_type: str
     _dataset: CConstDataset
     _serializer: SerializerPtr
 
     def __new__(
         cls,
-        dataset_type: str,
         data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]],
         serialization_type: SerializationType,
+        dataset_type: Optional[str] = None,
     ):
         instance = super().__new__(cls)
 
         instance._data = data
-        instance._dataset_type = dataset_type
 
         if instance._data:
             first = next(iter(instance._data.values()))
             if not isinstance(first, np.ndarray):
                 raise PowerGridSerializationError("Sparse batch datasets are not supported.")
 
-        instance._dataset = CConstDataset(instance._dataset_type, instance._data)
+        instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()
 
         instance._serializer = pgc.create_serializer(instance._dataset.get_dataset_ptr(), serialization_type.value)
@@ -199,8 +197,8 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
     JSON deserializer for the Power grid model
     """
 
-    def __new__(cls, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
-        return super().__new__(cls, dataset_type, data, SerializationType.JSON)
+    def __new__(cls, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]], dataset_type: Optional[str] = None):
+        return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
 
 class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-methods
@@ -208,11 +206,11 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
     msgpack deserializer for the Power grid model
     """
 
-    def __new__(cls, dataset_type: str, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]]):
-        return super().__new__(cls, dataset_type, data, SerializationType.MSGPACK)
+    def __new__(cls, data: Dict[str, Union[np.ndarray, Mapping[str, np.ndarray]]], dataset_type: Optional[str] = None):
+        return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
-def json_deserialize(data: Union[str, bytes]) -> Tuple[str, Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]:
+def json_deserialize(data: Union[str, bytes]) -> Tuple[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]], str]:
     """
     Load serialized JSON data to a new dataset.
 
@@ -225,8 +223,8 @@ def json_deserialize(data: Union[str, bytes]) -> Tuple[str, Mapping[str, Union[n
 
     Returns:
         A tuple containing:
-            the type of the dataset.
             the deserialized dataset in Power grid model input format.
+            the type of the dataset.
     """
     result = JsonDeserializer(data).load()
     assert_no_error()
@@ -234,17 +232,20 @@ def json_deserialize(data: Union[str, bytes]) -> Tuple[str, Mapping[str, Union[n
 
 
 def json_serialize(
-    dataset_type: str,
     data: Dict[str, np.ndarray | Mapping[str, np.ndarray]],
+    dataset_type: Optional[str] = None,
     use_compact_list: bool = False,
     indent: int = 2,
 ) -> str:
     """
     Dump data to a JSON str.
 
+    If the dataset_type is not specified or None, it will be deduced from the dataset if possible.
+    Deduction is not possible in case data is empty.
+
     Args:
-        dataset_type: the type of the dataset
         data: the dataset
+        dataset_type: the type of the dataset. Defaults to None. Required str-type if data is empty.
         use_compact_list: whether or not to use compact lists (sparse data). Defaults to False.
         indent:
             use specified indentation to make data more readable
@@ -256,12 +257,12 @@ def json_serialize(
     Returns:
         a serialized string containing the dataset
     """
-    result = JsonSerializer(dataset_type, data).dump(use_compact_list=use_compact_list, indent=indent)
+    result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
     return result
 
 
-def msgpack_deserialize(data: bytes) -> Tuple[str, Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]:
+def msgpack_deserialize(data: bytes) -> Tuple[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]], str]:
     """
     Load serialized msgpack data to a new dataset.
 
@@ -274,8 +275,8 @@ def msgpack_deserialize(data: bytes) -> Tuple[str, Mapping[str, Union[np.ndarray
 
     Returns:
         A tuple containing:
-            the type of the dataset.
             the deserialized dataset in Power grid model input format.
+            the type of the dataset.
     """
     result = MsgpackDeserializer(data).load()
     assert_no_error()
@@ -283,22 +284,28 @@ def msgpack_deserialize(data: bytes) -> Tuple[str, Mapping[str, Union[np.ndarray
 
 
 def msgpack_serialize(
-    dataset_type: str, data: Dict[str, np.ndarray | Mapping[str, np.ndarray]], use_compact_list: bool = False
+    data: Dict[str, np.ndarray | Mapping[str, np.ndarray]],
+    dataset_type: Optional[str] = None,
+    use_compact_list: bool = False,
 ) -> bytes:
     """
     Dump the data to raw msgpack bytes.
 
+    If the dataset_type is not specified or None, it will be deduced from the dataset if possible.
+    Deduction is not possible in case data is empty.
+
     Args:
-        dataset_type: the type of the dataset
         data: the dataset
+        dataset_type: the type of the dataset. Defaults to None. Required str-type if data is empty.
         use_compact_list: whether or not to use compact lists (sparse data). Defaults to False.
 
     Raises:
+        KeyError if the dataset_type was not provided and could not be deduced from the dataset (i.e. it was empty).
         PowerGridError if there was an internal error.
 
     Returns:
         a serialized string containing the dataset
     """
-    result = MsgpackSerializer(dataset_type, data).dump(use_compact_list=use_compact_list)
+    result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()
     return result
