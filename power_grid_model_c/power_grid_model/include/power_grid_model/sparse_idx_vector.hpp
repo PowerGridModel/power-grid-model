@@ -12,29 +12,9 @@
 
 namespace power_grid_model::detail {
 
-class SparseIdxVector {
-
+template <class T> class SparseIdxVector {
   public:
-    explicit SparseIdxVector(IdxVector const& data) : data_(data) {}
-
-    auto begin() { return data_.begin(); }
-    auto cbegin() const { return data_.cbegin(); }
-    auto end() { return data_.end(); }
-    auto cend() const { return data_.cend(); }
-    auto size() { return data_.size(); }
-    auto operator[](const Idx& sub_location) { return data_[sub_location]; }
-    auto at(const Idx& sub_location) { return data_.at(sub_location); }
-    auto data_size() { return data_.back(); }
-
-    auto subset(Idx location) { return std::pair<Idx, size_t>{data_[location], data_[location + 1] - data_[location]}; }
-
-  private:
-    IdxVector data_;
-};
-
-template <class T> class SparseVectorData {
-  public:
-    explicit SparseVectorData(std::vector<T> const& data) : data_(data) {}
+    explicit SparseIdxVector(IdxVector const& indptr_, std::vector<T> const& data) : indptr_(indptr), data_(data) {}
 
     using iterator_category = std::forward_iterator_tag;
 
@@ -46,14 +26,15 @@ template <class T> class SparseVectorData {
     auto operator[](const Idx& sub_location) { return data_[sub_location]; }
     auto at(const Idx& sub_location) { return data_.at(sub_location); }
 
-    auto subset_data(std::pair<Idx, size_t> location_size) {
-        auto begin = data_.begin() + location_size.first;
-        auto end = data_.begin() + location_size.first + location_size.second;
+    auto subset_data(Idx location) {
+        auto begin = data_.begin() + indptr_[location];
+        auto end = data_.begin() + indptr_[location+1] - indptr_[location];
         return boost::make_iterator_range(begin, end);
     }
 
   private:
-    std::vector<T> data_{};
+    IdxVector indptr_;
+    std::vector<T> data_;
 };
 
 } // namespace power_grid_model::detail
