@@ -18,7 +18,7 @@ Coincidentally, those phases also translate to fields of expertise, which enable
 | Logic/control module                               | Description                                                                                                       | Expertise              |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | I/O                                                | Constructing, updating and outputting components in the power grid                                                | Software Engineering   |
-| Topology consruction                               | Constructing the topological graph of the grid                                                                    | Topology               |
+| Topology construction                              | Constructing the topological graph of the grid                                                                    | Topology               |
 | $Y_{\text{bus}}$ construction/Component extraction | Constructing $Y_{\text{bus}}$ from the power grid components and topology                                         | Electrical Engineering |
 | Solver construction/Grid extraction                | Translation from $Y_{\text{bus}}$ to a solvable system of equations and from the solution back to physical values | Physics                |
 | Solving                                            | Abstract solution to the system of equations                                                                      | Mathematics            |
