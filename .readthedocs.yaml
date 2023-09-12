@@ -18,7 +18,7 @@ build:
       - pip install --verbose --editable .[doc]
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include  -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
-      - find power_grid_model_c/power_grid_model_c/include  -name *.h -exec sed -i -r "s/PGM_API //g" {} \;    
+      - find power_grid_model_c/power_grid_model_c/include  -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
       # download examples
