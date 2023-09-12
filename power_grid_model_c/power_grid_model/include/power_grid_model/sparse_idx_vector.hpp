@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_SPARSE_IDX_VECTOR_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_SPARSE_IDX_VECTOR_HPP
+#ifndef POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
+#define POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 
 #include "power_grid_model.hpp"
 
