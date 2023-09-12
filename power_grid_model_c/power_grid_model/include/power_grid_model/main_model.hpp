@@ -297,7 +297,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             Timer const timer(calculation_info_, 2200, "Math Calculation");
             auto& solvers = get_solvers<sym>();
             auto& y_bus_vec = get_y_bus<sym>();
-            std::vector<MathOutputType> math_output(n_math_solvers_);
+            std::vector<MathOutputType> math_output;
+            math_output.reserve(n_math_solvers_);
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 math_output.emplace_back(solve(solvers[i], input[i], y_bus_vec[i]));
             }
