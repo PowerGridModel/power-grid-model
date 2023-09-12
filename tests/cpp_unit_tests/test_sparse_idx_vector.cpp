@@ -28,7 +28,6 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     CHECK(sparsevectordata_range.size() == 3);
     CHECK(sparsevectordata[4] == 14);
     CHECK(sparsevectordata.at(4) == 14);
-    auto x = data[4];
 }
 
 } // namespace power_grid_model
