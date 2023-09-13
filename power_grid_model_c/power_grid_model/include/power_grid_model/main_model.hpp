@@ -1105,7 +1105,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <bool sym> void prepare_solvers() {
         std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
         // also get the vector of other solvers (sym -> asym, or asym -> sym)
-        std::vector<MathSolver<!sym>>& other_solvers = get_solvers<!sym>();
+        std::vector<MathSolver<!sym>> const& other_solvers = get_solvers<!sym>();
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
             rebuild_topology();
@@ -1123,7 +1123,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // if parameters are not up to date, update them
         else if (!is_parameter_up_to_date<sym>()) {
             // get param, will be consumed
-            std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
+            std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
             main_core::update_y_bus(math_state_, math_params, n_math_solvers_);
         }
         // else do nothing, set everything up to date
