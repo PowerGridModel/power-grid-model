@@ -487,6 +487,7 @@ TEST_CASE("Test math solver") {
         param.branch_param[0] = BranchCalcParam<true>{};
         param.branch_param[1] = BranchCalcParam<true>{};
         param.shunt_param[0] = 0.0;
+        y_bus_sym.update_admittance(std::make_shared<MathModelParam<true> const>(param));
         MathSolver<true> solver{topo_ptr};
         CalculationInfo info;
 
@@ -869,6 +870,8 @@ TEST_CASE("Short circuit solver") {
         auto sym_param_comp_ptr = std::make_shared<MathModelParam<true> const>(sym_param_comp);
         MathSolver<false> solver{topo_comp_ptr};
         MathSolver<true> sym_solver{topo_comp_ptr};
+        YBus<false> y_bus_asym{topo_comp_ptr, asym_param_comp_ptr};
+        YBus<true> y_bus_sym{topo_comp_ptr, sym_param_comp_ptr};
 
         DoubleComplex const if_comp = vref / (zref + z_fault);
         DoubleComplex const uf_comp = vref - if_comp * zref;
