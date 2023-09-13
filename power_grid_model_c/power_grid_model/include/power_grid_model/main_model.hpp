@@ -1079,11 +1079,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<YBus<sym>>& y_bus_vec = get_y_bus<sym>();
         // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
         std::vector<YBus<!sym>>& other_y_bus_vec = get_y_bus<!sym>();
-        // If not Ybus exists, build them
-        if (n_math_solvers_ != (Idx)y_bus_vec.size()) {
+        // If no Ybus exists, build them
+        if (y_bus_vec.empty()) {
             // check if other (sym/asym) Y_bus exists
-            bool const other_y_bus_exist = (n_math_solvers_ == (Idx)other_y_bus_vec.size());
-            assert(y_bus_vec.empty());
+            bool const other_y_bus_exist = (!other_y_bus_vec.empty());
+            // assert(y_bus_vec.empty());
             y_bus_vec.reserve(n_math_solvers_);
             // get param, will be consumed
             std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
