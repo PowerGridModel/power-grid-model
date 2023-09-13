@@ -21,6 +21,8 @@ struct MathState {
 constexpr void clear(MathState& math_state) {
     math_state.math_solvers_sym.clear();
     math_state.math_solvers_asym.clear();
+    math_state.y_bus_vec_sym.clear();
+    math_state.y_bus_vec_asym.clear();
 }
 
 } // namespace power_grid_model::main_core
