@@ -137,16 +137,18 @@ def deduce_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.nda
 
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
-            if component in data:
-                component_data = data[component]
-                if isinstance(component_data, np.ndarray):
-                    component_dtype = component_data.dtype
-                else:
-                    component_dtype = component_data["data"].dtype
+            if component not in data:
+                continue
 
-                if component_dtype is not dataset_metadata.dtype:
-                    candidates.discard(dataset_type)
-                    break
+            component_data = data[component]
+            if isinstance(component_data, np.ndarray):
+                component_dtype = component_data.dtype
+            else:
+                component_dtype = component_data["data"].dtype
+
+            if component_dtype is not dataset_metadata.dtype:
+                candidates.discard(dataset_type)
+                break
 
     if not candidates:
         raise PowerGridError(
