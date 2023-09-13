@@ -18,7 +18,7 @@ struct MathState {
     std::vector<MathSolver<false>> math_solvers_asym;
 };
 
-constexpr void clear(MathState& math_state) {
+void clear(MathState& math_state) {
     math_state.math_solvers_sym.clear();
     math_state.math_solvers_asym.clear();
     math_state.y_bus_vec_sym.clear();
