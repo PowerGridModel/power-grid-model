@@ -20,17 +20,17 @@ Currently, two serialization formats are provided:
       - [JSON schema root object](#json-schema-root-object)
       - [JSON schema attributes object](#json-schema-attributes-object)
       - [JSON schema dataset object](#json-schema-dataset-object)
-        - [JSON schema single dataset object](#json-schema-single-dataset-object)
-        - [JSON schema batch dataset object](#json-schema-batch-dataset-object)
+      - [JSON schema single dataset object](#json-schema-single-dataset-object)
+      - [JSON schema batch dataset object](#json-schema-batch-dataset-object)
       - [JSON schema component dataset object](#json-schema-component-dataset-object)
       - [JSON schema component data object](#json-schema-component-data-object)
       - [JSON schema homogeneous component data object](#json-schema-homogeneous-component-data-object)
       - [JSON schema inhomogeneous component dataset object](#json-schema-inhomogeneous-component-dataset-object)
       - [JSON schema attribute value](#json-schema-attribute-value)
-        - [JSON schema int32\_t](#json-schema-int32_t)
-        - [JSON schema int8\_t](#json-schema-int8_t)
-        - [JSON schema double](#json-schema-double)
-        - [JSON schema RealValueOutput](#json-schema-realvalueoutput)
+      - [JSON schema int32\_t](#json-schema-int32_t)
+      - [JSON schema int8\_t](#json-schema-int8_t)
+      - [JSON schema double](#json-schema-double)
+      - [JSON schema RealValueOutput](#json-schema-realvalueoutput)
       - [JSON schema component](#json-schema-component)
       - [JSON schema attribute](#json-schema-attribute)
       - [JSON schema attributes](#json-schema-attributes)
@@ -70,14 +70,14 @@ The dataset object is either a [`SingleDataset`](#json-schema-single-dataset-obj
 
 * `Dataset`: [`SingleDataset`](#json-schema-single-dataset-object) | [`BatchDataset`](#json-schema-batch-dataset-object)
 
-##### JSON schema single dataset object
+#### JSON schema single dataset object
 
 An object of components containing the [`ComponentDataset`](#json-schema-component-dataset-object) for each component.
 
 * `SingleDataset`: `Object`
   * `component`: [`ComponentDataset`](#json-schema-component-dataset-object) the component dataset.
 
-##### JSON schema batch dataset object
+#### JSON schema batch dataset object
 
 An array containing [`SingleDataset`](#json-schema-single-dataset-object) objects for all batch scenarios.
 
@@ -119,21 +119,21 @@ The type is listed for each attribute in [Components](components.md).
 
 * `AttributeValue`: `null` | [`int32_t`](#json-schema-int32_t) | [`int8_t`](#json-schema-int8_t) | [`double`](#json-schema-double) | [`RealValueOutput`](#json-schema-real-value)
 
-##### JSON schema int32_t
+#### JSON schema int32_t
 
 An integer `number` value usually representing an `ID`. It may be in the inclusive range $\left[-2^{31},+2^{31} - 1\right]$.
 The type is listed for each attribute in [Components](components.md).
 
 * `int32_t`: `number`
 
-##### JSON schema int8_t
+#### JSON schema int8_t
 
 An integer `number` value usually representing an enumeration value or a discrete setting. It may be in the inclusive range $\left[-2^{7},+2^{7} - 1\right]$.
 The type is listed for each attribute in [Components](components.md).
 
 * `int8_t`: `number`
 
-##### JSON schema double
+#### JSON schema double
 
 A floating point `number` or `string` value usually representing a real.
 If it is a `string`, it shall be either `"inf"` or `"+inf"` for positive infinity, or `"-inf"` for negative infinity.
@@ -142,7 +142,7 @@ The type is listed for each attribute in [Components](components.md).
 
 * `double`: `number`|`string`
 
-##### JSON schema RealValueOutput
+#### JSON schema RealValueOutput
 
 A real value of which the data format depends on the type of calculation.
 For symmetric calculations, it is a [`double`](#json-schema-double). For asymmetric calculations, it is an `Array[double]`.
