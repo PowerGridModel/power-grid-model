@@ -22,7 +22,6 @@ TEST_CASE("Sparse idx data strucuture for topology") {
         for (auto i : sparse_vector_at_1) {
             actual_elements_at_1.push_back(i);
         }
-
         CHECK(actual_elements_at_1 == expected_elements_at_1);
         CHECK(sparse_vector_at_1[1] == 14);
         CHECK(sparse_vector_at_1.size() == 3);
@@ -36,8 +35,8 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             actual_complete_data.push_back(i);
         }
 
-        CHECK(sparse_idx_vector[1] == 3);
-        CHECK(sparse_idx_vector.at(1) == 3);
+        CHECK(sparse_idx_vector[1] == 11);
+        CHECK(sparse_idx_vector.at(1) == 11);
         CHECK(data == actual_complete_data);
     }
 }

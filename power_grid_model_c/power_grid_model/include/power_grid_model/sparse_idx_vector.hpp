@@ -14,7 +14,7 @@ namespace power_grid_model::detail {
 
 template <class T> class SparseIdxVector {
   public:
-    explicit SparseIdxVector(IdxVector const& indptr_, std::vector<T> const& data) : indptr_(indptr), data_(data) {}
+    explicit SparseIdxVector(IdxVector const& indptr, std::vector<T> const& data) : indptr_(indptr), data_(data) {}
 
     using iterator_category = std::forward_iterator_tag;
 
@@ -28,7 +28,7 @@ template <class T> class SparseIdxVector {
 
     auto subset_data(Idx location) {
         auto begin = data_.begin() + indptr_[location];
-        auto end = data_.begin() + indptr_[location+1] - indptr_[location];
+        auto end = data_.begin() + indptr_[location + 1];
         return boost::make_iterator_range(begin, end);
     }
 
