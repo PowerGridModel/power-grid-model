@@ -13,13 +13,14 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 
 import numpy as np
 
-from power_grid_model.core.power_grid_meta import CDataset, initialize_array, power_grid_meta_data, prepare_cpp_array
+from power_grid_model.core.buffer_handling import CDataset, get_dataset_view
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
 
 
 class OutputType(Enum):
     """
-    the different supported output types:
+    The different supported output types:
         - sym_output
         - asym_output
     """
@@ -31,7 +32,7 @@ class OutputType(Enum):
 
 def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> OutputType:
     """
-    get the output type based on the provided arguments
+    Get the output type based on the provided arguments.
 
     Args:
         calculation_type:
@@ -54,7 +55,7 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Ou
 
 def is_batch_calculation(update_data: Optional[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]) -> bool:
     """
-    returns whether the provided update data represents a batch calculation or not
+    Returns whether the provided update data represents a batch calculation or not.
 
     Args:
         update_data:
@@ -69,7 +70,7 @@ def is_batch_calculation(update_data: Optional[Mapping[str, Union[np.ndarray, Ma
 
 def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CDataset:
     """
-    create a view of the input data in a format compatible with the PGM core libary
+    Create a view of the input data in a format compatible with the PGM core libary.
 
     Args:
         input_data:
@@ -78,14 +79,14 @@ def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CDataset:
     Returns:
         instance of CDataset ready to be fed into C API
     """
-    return prepare_cpp_array(data_type="input", array_dict=input_data)
+    return get_dataset_view(data_type="input", array_dict=input_data)
 
 
 def prepare_update_view(
     update_data: Optional[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]] = None
 ) -> CDataset:
     """
-    create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary
+    Create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary.
 
     Args:
         update_data:
@@ -97,12 +98,12 @@ def prepare_update_view(
     if update_data is None:
         # no update dataset, create one batch with empty set
         update_data = {}
-    return prepare_cpp_array(data_type="update", array_dict=update_data)
+    return get_dataset_view(data_type="update", array_dict=update_data)
 
 
 def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: OutputType) -> CDataset:
     """
-    create a view of the output data in a format compatible with the PGM core libary
+    create a view of the output data in a format compatible with the PGM core libary.
 
     Args:
         output_data:
@@ -113,7 +114,7 @@ def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: Outp
     Returns:
         instance of CDataset ready to be fed into C API
     """
-    return prepare_cpp_array(data_type=output_type.value, array_dict=output_data)
+    return get_dataset_view(data_type=output_type.value, array_dict=output_data)
 
 
 def create_output_data(
@@ -123,7 +124,7 @@ def create_output_data(
     batch_size: int,
 ) -> Dict[str, np.ndarray]:
     """
-    create the output data that the user can use. always returns batch type output data.
+    Create the output data that the user can use. always returns batch type output data.
         Use reduce_output_data to flatten to single scenario output if applicable.
 
     Args:
@@ -156,17 +157,16 @@ def create_output_data(
 
     # create result dataset
     result_dict = {}
+
     for name, count in all_component_count.items():
-        # intialize array
-        arr = initialize_array(output_type.value, name, (batch_size, count), empty=True)
-        result_dict[name] = arr
+        result_dict[name] = initialize_array(output_type.value, name, (batch_size, count), empty=True)
 
     return result_dict
 
 
 def reduce_output_data(output_data: Dict[str, np.ndarray], batch_calculation: bool) -> Dict[str, np.ndarray]:
     """
-    reformat the output data into the format desired by the user
+    Reformat the output data into the format desired by the user.
 
     Args:
         output_data:

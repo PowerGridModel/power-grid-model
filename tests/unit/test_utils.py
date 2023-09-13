@@ -153,15 +153,15 @@ def test_convert_batch_to_list_data__zero_batches():
     assert convert_batch_dataset_to_batch_list({}) == []
 
 
-@patch("json.dump")
 @patch("builtins.open", new_callable=mock_open)
-@patch("power_grid_model.utils.convert_dataset_to_python_dataset")
-def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock, json_dump_mock: MagicMock):
-    convert_mock.return_value = {"foo": [{"val": 123}]}
+@patch("power_grid_model.utils.json_serialize")
+def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock):
+    convert_mock.return_value = '{"foo": [{"val": 123}]}'
     data: Dataset = {}  # type: ignore
     export_json_data(json_file=Path("output.json"), data=data, indent=2)
-    convert_mock.assert_called_once()
-    json_dump_mock.assert_called_once_with({"foo": [{"val": 123}]}, open_mock(), indent=2)
+    convert_mock.assert_called_once_with(data={}, use_compact_list=False, indent=2)
+    handle = open_mock()
+    handle.write.assert_called_once_with(convert_mock.return_value)
 
 
 def test_compact_json_dump():

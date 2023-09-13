@@ -13,13 +13,14 @@ import numpy as np
 
 from power_grid_model.core.index_integer import IdxNp
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.errors import PowerGridBatchError, PowerGridError
+from power_grid_model.errors import PowerGridBatchError, PowerGridError, PowerGridSerializationError
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 # error codes
 PGM_NO_ERROR = 0
 PGM_REGULAR_ERROR = 1
 PGM_BATCH_ERROR = 2
+PGM_SERIALIZATION_ERROR = 3
 
 
 def find_error(batch_size: int = 1) -> Optional[RuntimeError]:
@@ -52,6 +53,8 @@ def find_error(batch_size: int = 1) -> Optional[RuntimeError]:
         mask[error.failed_scenarios] = False
         error.succeeded_scenarios = all_scenarios[mask]
         return error
+    if error_code == PGM_SERIALIZATION_ERROR:
+        return PowerGridSerializationError(pgc.error_message())
     return RuntimeError("Unknown error!")
 
 

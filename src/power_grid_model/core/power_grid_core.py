@@ -7,7 +7,7 @@ Loader for the dynamic library
 """
 
 import platform
-from ctypes import CDLL, POINTER, c_char_p, c_double, c_size_t, c_void_p
+from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 from pathlib import Path
@@ -17,16 +17,31 @@ from power_grid_model.core.index_integer import IdC, IdxC
 
 # integer index
 IdxPtr = POINTER(IdxC)
+"""Pointer to index."""
 IdxDoublePtr = POINTER(IdxPtr)
+"""Double pointer to index."""
 IDPtr = POINTER(IdC)
-# double pointer to char
-CharDoublePtr = POINTER(c_char_p)
-# double pointer to void
+"""Raw pointer to ids."""
+
+# string data
+CStr = c_char_p
+"""Null terminated string."""
+CStrPtr = POINTER(CStr)
+"""Pointer to null terminated string."""
+CharPtr = POINTER(c_char)
+"""Raw pointer to char."""
+CharDoublePtr = POINTER(CharPtr)
+"""Double pointer to char."""
+
+# raw data
+VoidPtr = c_void_p
+"""Raw void pointer."""
 VoidDoublePtr = POINTER(c_void_p)
+"""Double pointer to void."""
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {str: c_char_p, int: IdxC, float: c_double}
+_ARGS_TYPE_MAPPING = {bytes: CharPtr, str: CStr, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
 # pylint: disable=too-few-public-methods
@@ -56,6 +71,24 @@ class DatasetPtr(c_void_p):
     """
 
 
+class ConstDatasetPtr(c_void_p):
+    """
+    Pointer to writable dataset
+    """
+
+
+class WritableDatasetPtr(c_void_p):
+    """
+    Pointer to writable dataset
+    """
+
+
+class DatasetInfoPtr(c_void_p):
+    """
+    Pointer to dataset info
+    """
+
+
 class ComponentPtr(c_void_p):
     """
     Pointer to component
@@ -65,6 +98,18 @@ class ComponentPtr(c_void_p):
 class AttributePtr(c_void_p):
     """
     Pointer to attribute
+    """
+
+
+class DeserializerPtr(c_void_p):
+    """
+    Pointer to deserializer
+    """
+
+
+class SerializerPtr(c_void_p):
+    """
+    Pointer to serializer
     """
 
 
@@ -130,16 +175,16 @@ def make_c_binding(func: Callable):
         else:
             c_inputs = [self._handle]  # pylint: disable=protected-access
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
-        for arg, arg_type in zip(args, c_argtypes):
-            if arg_type == c_char_p:
+        for arg in args:
+            if isinstance(arg, str):
                 c_inputs.append(arg.encode())
             else:
                 c_inputs.append(arg)
 
         # call
         res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
-        # convert to string for c_char_p
-        if c_restype == c_char_p:
+        # convert to string for CStr
+        if c_restype == CStr:
             res = res.decode()
         return res
 
@@ -187,11 +232,11 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]
+    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def batch_errors(self) -> CharDoublePtr:  # type: ignore[empty-body, valid-type]
+    def batch_errors(self) -> CStrPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -297,7 +342,7 @@ class PowerGridCore:
         self,
         system_frequency: float,
         n_components: int,
-        components: CharDoublePtr,  # type: ignore[valid-type]
+        components: CStrPtr,  # type: ignore[valid-type]
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         input_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> ModelPtr:
@@ -308,35 +353,29 @@ class PowerGridCore:
         self,
         model: ModelPtr,
         n_components: int,
-        components: CharDoublePtr,  # type: ignore[valid-type]
+        components: CStrPtr,  # type: ignore[valid-type]
         component_sizes: IdxPtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> None:
         pass  # pragma: no cover
 
     @make_c_binding
-    def copy_model(  # type: ignore[empty-body]
-        self,
-        model: ModelPtr,
-    ) -> ModelPtr:
+    def copy_model(self, model: ModelPtr) -> ModelPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def get_indexer(  # type: ignore[empty-body]
+    def get_indexer(
         self,
         model: ModelPtr,
         component: str,
         size: int,
         ids: IDPtr,  # type: ignore[valid-type]
         indexer: IdxPtr,  # type: ignore[valid-type]
-    ) -> None:
+    ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def destroy_model(  # type: ignore[empty-body]
-        self,
-        model: ModelPtr,
-    ) -> None:
+    def destroy_model(self, model: ModelPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -346,16 +385,139 @@ class PowerGridCore:
         opt: OptionsPtr,
         # output
         n_output_components: int,
-        output_components: CharDoublePtr,  # type: ignore[valid-type]
+        output_components: CStrPtr,  # type: ignore[valid-type]
         output_data: VoidDoublePtr,  # type: ignore[valid-type]
         # update
         n_scenarios: int,
         n_update_components: int,
-        update_components: CharDoublePtr,  # type: ignore[valid-type]
+        update_components: CStrPtr,  # type: ignore[valid-type]
         n_component_elements_per_scenario: IdxPtr,  # type: ignore[valid-type]
         indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
         update_data: VoidDoublePtr,  # type: ignore[valid-type]
     ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_name(self, info: DatasetInfoPtr) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_is_batch(self, info: DatasetInfoPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_batch_size(self, info: DatasetInfoPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_n_components(self, info: DatasetInfoPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_component_name(self, info: DatasetInfoPtr, component_idx: int) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_elements_per_scenario(  # type: ignore[empty-body]
+        self, info: DatasetInfoPtr, component_idx: int
+    ) -> int:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_total_elements(self, info: DatasetInfoPtr, component_idx: int) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_dataset_const(  # type: ignore[empty-body]
+        self, dataset: str, is_batch: int, batch_size: int
+    ) -> ConstDatasetPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_dataset_const(self, dataset: ConstDatasetPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_const_add_buffer(  # type: ignore[empty-body]
+        self,
+        dataset: ConstDatasetPtr,
+        component: str,
+        elements_per_scenario: int,
+        total_elements: int,
+        indptr: IdxPtr,  # type: ignore[valid-type]
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_const_get_info(self, dataset: ConstDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_writable_get_info(self, dataset: WritableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_writable_set_buffer(
+        self,
+        dataset: WritableDatasetPtr,
+        component: str,
+        indptr: IdxPtr,  # type: ignore[valid-type]
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_deserializer_from_binary_buffer(  # type: ignore[empty-body]
+        self, data: bytes, size: int, serialization_format: int
+    ) -> DeserializerPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_deserializer_from_null_terminated_string(  # type: ignore[empty-body]
+        self, data: str, serialization_format: int
+    ) -> DeserializerPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def deserializer_get_dataset(self, deserializer: DeserializerPtr) -> WritableDatasetPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def deserializer_parse_to_buffer(self, deserializer: DeserializerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_deserializer(self, deserializer: DeserializerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_serializer(  # type: ignore[empty-body]
+        self, data: ConstDatasetPtr, serialization_format: int
+    ) -> SerializerPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def serializer_get_to_binary_buffer(  # type: ignore[empty-body]
+        self,
+        serializer: SerializerPtr,
+        use_compact_list: int,
+        data: CharDoublePtr,  # type: ignore[valid-type]
+        size: IdxPtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def serializer_get_to_zero_terminated_string(  # type: ignore[empty-body]
+        self,
+        serializer: SerializerPtr,
+        use_compact_list: int,
+        indent: int,
+    ) -> str:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_serializer(self, serializer: SerializerPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
 
