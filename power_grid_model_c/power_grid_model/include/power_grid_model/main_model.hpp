@@ -277,9 +277,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <math_output_type MathOutputType, typename MathSolverType, typename YBus, typename InputType,
               typename PrepareInputFn, typename SolveFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>> &&
-                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, InputType const&, YBus const&> &&
+                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&, InputType const&> &&
                  std::same_as<std::invoke_result_t<PrepareInputFn>, std::vector<InputType>> &&
-                 std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, InputType const&, YBus const&>,
+                 std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType const&>,
                               MathOutputType>
     std::vector<MathOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
         constexpr bool sym = symmetric_math_output_type<MathOutputType>;
@@ -300,7 +300,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             std::vector<MathOutputType> math_output;
             math_output.reserve(n_math_solvers_);
             for (Idx i = 0; i != n_math_solvers_; ++i) {
-                math_output.emplace_back(solve(solvers[i], input[i], y_bus_vec[i]));
+                math_output.emplace_back(solve(solvers[i], y_bus_vec[i], input[i]));
             }
             return math_output;
         }();
@@ -311,8 +311,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                        CalculationMethod calculation_method) {
         return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, PowerFlowInput<sym>>(
             [this] { return prepare_power_flow_input<sym>(); },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& input,
-                                                          YBus<sym> const& y_bus) {
+            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                                                          PowerFlowInput<sym> const& input) {
                 return solver.run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method, y_bus);
             });
     }
@@ -322,8 +322,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                              CalculationMethod calculation_method) {
         return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, StateEstimationInput<sym>>(
             [this] { return prepare_state_estimation_input<sym>(); },
-            [this, err_tol, max_iter, calculation_method](
-                MathSolver<sym>& solver, StateEstimationInput<sym> const& input, YBus<sym> const& y_bus) {
+            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                                                          StateEstimationInput<sym> const& input) {
                 return solver.run_state_estimation(input, err_tol, max_iter, calculation_info_, calculation_method,
                                                    y_bus);
             });
@@ -334,8 +334,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                                       CalculationMethod calculation_method) {
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
             [this, voltage_scaling] { return prepare_short_circuit_input<sym>(voltage_scaling); },
-            [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& input,
-                                       YBus<sym> const& y_bus) {
+            [this, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                                       ShortCircuitInput const& input) {
                 return solver.run_short_circuit(input, calculation_info_, calculation_method, y_bus);
             });
     }
