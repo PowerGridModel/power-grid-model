@@ -311,9 +311,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                        CalculationMethod calculation_method) {
         return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, PowerFlowInput<sym>>(
             [this] { return prepare_power_flow_input<sym>(); },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& y,
+            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, PowerFlowInput<sym> const& input,
                                                           YBus<sym> const& y_bus) {
-                return solver.run_power_flow(y, err_tol, max_iter, calculation_info_, calculation_method, y_bus);
+                return solver.run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method, y_bus);
             });
     }
 
@@ -322,9 +322,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                              CalculationMethod calculation_method) {
         return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, StateEstimationInput<sym>>(
             [this] { return prepare_state_estimation_input<sym>(); },
-            [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, StateEstimationInput<sym> const& y,
-                                                          YBus<sym> const& y_bus) {
-                return solver.run_state_estimation(y, err_tol, max_iter, calculation_info_, calculation_method, y_bus);
+            [this, err_tol, max_iter, calculation_method](
+                MathSolver<sym>& solver, StateEstimationInput<sym> const& input, YBus<sym> const& y_bus) {
+                return solver.run_state_estimation(input, err_tol, max_iter, calculation_info_, calculation_method,
+                                                   y_bus);
             });
     }
 
@@ -333,8 +334,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                                       CalculationMethod calculation_method) {
         return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
             [this, voltage_scaling] { return prepare_short_circuit_input<sym>(voltage_scaling); },
-            [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& y, YBus<sym> const& y_bus) {
-                return solver.run_short_circuit(y, calculation_info_, calculation_method, y_bus);
+            [this, calculation_method](MathSolver<sym>& solver, ShortCircuitInput const& input,
+                                       YBus<sym> const& y_bus) {
+                return solver.run_short_circuit(input, calculation_info_, calculation_method, y_bus);
             });
     }
 
