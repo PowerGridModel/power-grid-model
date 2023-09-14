@@ -119,6 +119,22 @@ constexpr std::string_view json_single = R"(
         0,
         1.02e6,
         0.22e6
+      ],
+      [
+        33,
+        2,
+        1,
+        0,
+        "inf",
+        0.31e6
+      ],
+      [
+        34,
+        3,
+        1,
+        0,
+        "-inf",
+        0.31e6
       ]
     ]
   }
@@ -237,8 +253,8 @@ TEST_CASE("Deserializer") {
             CHECK(info.get_component_info("line").total_elements == 2);
             CHECK(info.get_component_info("source").elements_per_scenario == 3);
             CHECK(info.get_component_info("source").total_elements == 3);
-            CHECK(info.get_component_info("sym_load").elements_per_scenario == 2);
-            CHECK(info.get_component_info("sym_load").total_elements == 2);
+            CHECK(info.get_component_info("sym_load").elements_per_scenario == 4);
+            CHECK(info.get_component_info("sym_load").total_elements == 4);
         }
 
         SUBCASE("Check parse") {
@@ -285,6 +301,10 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load[0].p_specified == doctest::Approx(1.01e6));
             CHECK(sym_load[1].id == 8);
             CHECK(sym_load[1].q_specified == doctest::Approx(0.22e6));
+            CHECK(sym_load[2].id == 33);
+            CHECK(sym_load[2].p_specified == std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].id == 34);
+            CHECK(sym_load[3].q_specified == -std::numeric_limits<double>::infinity());
         }
     }
 

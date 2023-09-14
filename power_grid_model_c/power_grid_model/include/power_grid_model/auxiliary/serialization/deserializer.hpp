@@ -48,6 +48,13 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
                 if (as_array(o).ptr[i].is_nil()) {
                     continue;
                 }
+                if (as_array(o).ptr[i] == "inf" || as_array(o).ptr[i] == "-inf" || as_array(o).ptr[i] == "+inf") {
+                    if (as_array(o).ptr[i] == "-inf") {
+                        v(i) = -std::numeric_limits<double>::infinity();
+                    } else {
+                        v(i) = std::numeric_limits<double>::infinity();
+                    }
+                }
                 as_array(o).ptr[i] >> v(i);
             }
             return o;
