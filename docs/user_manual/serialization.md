@@ -66,7 +66,7 @@ A [`Attribute`](#json-schema-attribute) string contains the name of an attribute
 
 #### JSON schema dataset object
 
-The [`Dataset`](#json-schema-dataset-object) object is either a [`SingleDataset`](#json-schema-single-dataset-object), or a [`BatchDataset`](#json-schema-batch-dataset-object)
+The [`Dataset`](#json-schema-dataset-object) object is either a [`SingleDataset`](#json-schema-single-dataset-object) if the [`is_batch`](#json-schema-root-object) field in the [`PowerGridModelRoot`](#json-schema-root-object) object, or a [`BatchDataset`](#json-schema-batch-dataset-object) otherwise.
 
 - [`Dataset`](#json-schema-dataset-object): [`SingleDataset`](#json-schema-single-dataset-object) | [`BatchDataset`](#json-schema-batch-dataset-object)
 
@@ -99,7 +99,7 @@ A [`ComponentData`](#json-schema-component-data-object) object is either a [`Hom
 
 #### JSON schema homogeneous component data object
 
-A [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) object contains the actual values of a certain component following the exact order of the attributes listed in the [`attributes`](#json-schema-root-object) field in the [root object](#json-schema-root-object).
+A [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) object contains the actual values of a certain component following the exact order of the attributes listed in the [`attributes`](#json-schema-root-object) field in the [`PowerGridModelRoot`](#json-schema-root-object) object.
 
 - [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object): `Array`
   - [`AttributeValue`](#json-schema-attribute-value): the value of each attribute.
@@ -107,7 +107,7 @@ A [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) o
 #### JSON schema inhomogeneous component data object
 
 An [`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object) object contains actual values per attribute of a certain component.
-Contrary to the [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object), it lists the names of the attributes for which the values are specified, so the attributes may be in arbitrary order and do not have to follow the schema listed in the [`attributes`](#json-schema-root-object) field in the [root object](#json-schema-root-object).
+Contrary to the [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object), it lists the names of the attributes for which the values are specified, so the attributes may be in arbitrary order and do not have to follow the schema listed in the [`attributes`](#json-schema-root-object) field in the [`PowerGridModelRoot`](#json-schema-root-object) object.
 
 - [`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object): `Object`
   - [`Attribute`](#json-schema-attribute): [`AttributeValue`](#json-schema-attribute-value): the value of each attribute per attribute.
