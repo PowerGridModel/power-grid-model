@@ -1083,15 +1083,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<YBus<!sym>>& other_y_bus_vec = get_y_bus<!sym>();
         // If no Ybus exists, build them
         if (y_bus_vec.empty()) {
-            // check if other (sym/asym) Y_bus exists
             bool const other_y_bus_exist = (!other_y_bus_vec.empty());
-            // assert(y_bus_vec.empty());
             y_bus_vec.reserve(n_math_solvers_);
-            // get param, will be consumed
-            std::vector<MathModelParam<sym>> math_params = get_math_param<sym>();
-            // loop to build
+            auto math_params = get_math_param<sym>();
+
             for (Idx i = 0; i != n_math_solvers_; ++i) {
-                // if other y_bus exists, construct from existing Y_bus struct
+                // construct from existing Y_bus structure if possible
                 if (other_y_bus_exist) {
                     y_bus_vec.emplace_back(state_.math_topology[i],
                                            std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
