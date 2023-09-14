@@ -11,7 +11,6 @@
 namespace power_grid_model::main_core {
 
 struct MathState {
-
     std::vector<YBus<true>> y_bus_vec_sym;
     std::vector<YBus<false>> y_bus_vec_asym;
     std::vector<MathSolver<true>> math_solvers_sym;
