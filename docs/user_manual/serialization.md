@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 The power-grid-model provides tools for serialization and deserialization for datasets.
 
-Visit the [Python API Reference](../api_reference/python-api-reference.md#utils) and [C API Reference](../api_reference/power-grid-model-c-api-reference.rst#Serialization) for the full documentation of the serialization tools.
+Visit the [Python API Reference](../api_reference/python-api-reference.md#utils) and [C API Reference](../api_reference/power-grid-model-c-api-reference.rst) for the full documentation of the serialization tools.
 
 ## Serialization format
 
