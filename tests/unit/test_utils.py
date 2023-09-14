@@ -9,18 +9,17 @@ from unittest.mock import MagicMock, mock_open, patch
 import numpy as np
 import pytest
 
-from power_grid_model.data_types import BatchDataset, BatchList, Dataset
-from power_grid_model.utils import (
-    compact_json_dump,
+from power_grid_model._utils import (
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
-    convert_python_to_numpy,
-    export_json_data,
     get_and_verify_batch_sizes,
     is_nan,
     split_numpy_array_in_batches,
     split_sparse_batches_in_batches,
 )
+from power_grid_model.data_types import BatchDataset, BatchList, Dataset
+from power_grid_model.utils import compact_json_dump, export_json_data
+from tests.unit.utils import convert_python_to_numpy
 
 
 @pytest.fixture(name="two_nodes_one_line")
@@ -562,7 +561,7 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
         get_and_verify_batch_sizes(update_data)
 
 
-@patch("power_grid_model.utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}
     with pytest.raises(
@@ -573,7 +572,7 @@ def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock
         convert_batch_dataset_to_batch_list(update_data)
 
 
-@patch("power_grid_model.utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(

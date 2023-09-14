@@ -11,7 +11,16 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pytest
 
-from power_grid_model.data_types import Dataset, SingleDataset
+from power_grid_model import initialize_array
+from power_grid_model.data_types import (
+    BatchDataset,
+    BatchList,
+    ComponentList,
+    Dataset,
+    PythonDataset,
+    SingleDataset,
+    SinglePythonDataset,
+)
 from power_grid_model.utils import export_json_data, import_json_data
 
 BASE_PATH = Path(__file__).parent.parent
@@ -223,3 +232,151 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                     f"\nDifference: {actual_col - expected_col}"
                     f"\nMatches:    {np.isclose(actual_col, expected_col, rtol=rtol, atol=a)}"
                 )
+
+
+def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
+    """
+    Convert a list of datasets to one single batch dataset
+
+    Example data formats:
+        input:  [{"node": <1d-array>, "line": <1d-array>}, {"node": <1d-array>, "line": <1d-array>}]
+        output: {"node": <2d-array>, "line": <2d-array>}
+         -or-:  {"indptr": <1d-array>, "data": <1d-array>}
+    Args:
+        list_data: list of dataset
+
+    Returns:
+        batch dataset
+        For a certain component, if all the length is the same for all the batches, a 2D array is used
+        Otherwise use a dict of indptr/data key
+    """
+
+    # List all *unique* types
+    components = {x for dataset in list_data for x in dataset.keys()}
+
+    batch_data: BatchDataset = {}
+    for component in components:
+        # Create a 2D array if the component exists in all datasets and number of objects is the same in each dataset
+        comp_exists_in_all_datasets = all(component in x for x in list_data)
+        if comp_exists_in_all_datasets:
+            all_sizes_are_the_same = all(x[component].size == list_data[0][component].size for x in list_data)
+            if all_sizes_are_the_same:
+                batch_data[component] = np.stack([x[component] for x in list_data], axis=0)
+                continue
+
+        # otherwise use indptr/data dict
+        indptr = [0]
+        data = []
+        for dataset in list_data:
+            if component in dataset:
+                # If the current dataset contains the component, increase the indptr for this batch and append the data
+                objects = dataset[component]
+                indptr.append(indptr[-1] + len(objects))
+                data.append(objects)
+
+            else:
+                # If the current dataset does not contain the component, add the last indptr again.
+                indptr.append(indptr[-1])
+
+        # Convert the index pointers to a numpy array and combine the list of object numpy arrays into a singe
+        # numpy array. All objects of all batches are now stores in one large array, the index pointers define
+        # which elemets of the array (rows) belong to which batch.
+        batch_data[component] = {"indptr": np.array(indptr, dtype=np.int64), "data": np.concatenate(data, axis=0)}
+
+    return batch_data
+
+
+def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: bool = False) -> Dataset:
+    """
+    Convert native python data to internal numpy
+
+    Args:
+        data: data in dict or list
+        data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra attributes in the data
+
+    Returns:
+        A single or batch dataset for power-grid-model
+    """
+
+    # If the input data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
+    # first convert each batch separately, by recursively calling this function for each batch. Then the numpy
+    # data for all batches in converted into a proper and compact numpy structure.
+    if isinstance(data, list):
+        list_data = [
+            convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type, ignore_extra=ignore_extra)
+            for json_dict in data
+        ]
+        return convert_list_to_batch_data(list_data)
+
+    # Otherwise this should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
+    if not isinstance(data, dict):
+        raise TypeError("Data should be either a list or a dictionary!")
+
+    return convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type, ignore_extra=ignore_extra)
+
+
+def convert_python_single_dataset_to_single_dataset(
+    data: SinglePythonDataset, data_type: str, ignore_extra: bool = False
+) -> SingleDataset:
+    """
+    Convert native python data to internal numpy
+
+    Args:
+        data: data in dict
+        data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra attributes in the data
+
+    Returns:
+        A single dataset for power-grid-model
+    """
+
+    dataset: SingleDataset = {}
+    for component, objects in data.items():
+        dataset[component] = convert_component_list_to_numpy(
+            objects=objects, component=component, data_type=data_type, ignore_extra=ignore_extra
+        )
+
+    return dataset
+
+
+def convert_component_list_to_numpy(
+    objects: ComponentList, component: str, data_type: str, ignore_extra: bool = False
+) -> np.ndarray:
+    """
+    Convert native python data to internal numpy
+
+    Args:
+        objects: data in dict
+        component: the name of the component
+        data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra attributes in the data
+
+    Returns:
+        A single numpy array
+    """
+
+    # We'll initialize an 1d-array with NaN values for all the objects of this component type
+    array = initialize_array(data_type, component, len(objects))
+
+    for i, obj in enumerate(objects):
+        # As each object is a separate dictionary, and the attributes may differ per object, we need to check
+        # all attributes. Non-existing attributes
+        for attribute, value in obj.items():
+            # If an attribute doesn't exist, the user should explicitly state that she/he is ok with extra
+            # information in the data. This is to protect the user from overlooking errors.
+            if attribute not in array.dtype.names:
+                if ignore_extra:
+                    continue
+                raise ValueError(
+                    f"Invalid attribute '{attribute}' for {component} {data_type} data. "
+                    "(Use ignore_extra=True to ignore the extra data and suppress this exception)"
+                )
+
+            # Assign the value and raise an error if the value cannot be stored in the specific numpy array data format
+            # for this attribute.
+            try:
+                array[i][attribute] = value
+            except ValueError as ex:
+                raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
+    return array
