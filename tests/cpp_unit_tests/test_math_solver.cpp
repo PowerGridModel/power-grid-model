@@ -714,10 +714,9 @@ TEST_CASE("Short circuit solver") {
     auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
     auto param_sym_ptr = std::make_shared<MathModelParam<true> const>(param_sc_sym);
     auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_sc_asym);
-    YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
-    YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
 
     SUBCASE("Test short circuit solver 3ph") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, z0, z0_0, vref, zref);
@@ -732,6 +731,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph solid fault") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -741,6 +741,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params") {
+        YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
         MathSolver<true> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, z0, z0_0, vref, zref);
@@ -755,6 +756,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
+        YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
         MathSolver<true> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -764,6 +766,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
@@ -778,6 +781,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg solid fault") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input =
             create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr);
@@ -788,6 +792,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, z0, z0_0, vref, zref);
@@ -802,6 +807,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph solid fault") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -811,6 +817,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
@@ -825,6 +832,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg solid") {
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input =
             create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
@@ -835,6 +843,8 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver no faults") {
+        YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver_asym{topo_sc_ptr};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
