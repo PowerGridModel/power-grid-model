@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pytest
 
-from power_grid_model.data_types import Dataset, SingleDataset
-from power_grid_model.utils import export_json_data, import_json_data
+from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
+from power_grid_model.utils import export_json_data, import_json_data, json_deserialize
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
@@ -223,3 +223,27 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                     f"\nDifference: {actual_col - expected_col}"
                     f"\nMatches:    {np.isclose(actual_col, expected_col, rtol=rtol, atol=a)}"
                 )
+
+
+def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
+    """
+    Convert native python data to internal numpy
+
+    Args:
+        data: data in dict or list
+        data_type: type of data: input, update, sym_output, or asym_output
+
+    Returns:
+        A single or batch dataset for power-grid-model
+    """
+    return json_deserialize(
+        json.dumps(
+            {
+                "version": "1.0",
+                "is_batch": isinstance(data, list),
+                "attributes": {},
+                "type": data_type,
+                "data": data,
+            }
+        )
+    )

@@ -33,7 +33,7 @@ def get_header_include() -> List[str]:
     try:
         from pybuild_header_dependency import HeaderResolver
 
-        resolver = HeaderResolver({"eigen": None, "boost": None})
+        resolver = HeaderResolver({"eigen": None, "boost": None, "msgpack-cxx": None, "nlohmann_json": None})
         return [str(resolver.get_include())]
     except ImportError:
         return []
@@ -143,6 +143,8 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pgm_c / pgm_c / "src" / "meta_data.cpp"),
         str(pgm_c / pgm_c / "src" / "model.cpp"),
         str(pgm_c / pgm_c / "src" / "options.cpp"),
+        str(pgm_c / pgm_c / "src" / "dataset.cpp"),
+        str(pgm_c / pgm_c / "src" / "serialization.cpp"),
     ]
     # macro
     define_macros = [

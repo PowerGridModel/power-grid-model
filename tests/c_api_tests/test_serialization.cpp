@@ -19,7 +19,7 @@ namespace {
 using namespace std::string_literals;
 
 constexpr char const* json_data =
-    R"({"attributes":{},"data":{"node":[{"id":5}]},"is_batch":false,"type":"input","version":"1.0"})";
+    R"({"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]},"is_batch":false,"type":"input","version":"1.0"})";
 } // namespace
 
 TEST_CASE("Serialization") {
@@ -27,17 +27,22 @@ TEST_CASE("Serialization") {
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
     std::vector<NodeInput> node{{{5}, nan}};
-    Idx const n_components = 1;
+    std::vector<SourceInput> source{{{{6}, na_IntID, na_IntS}, nan, nan, nan, nan, nan},
+                                    {{{7}, na_IntID, na_IntS}, nan, nan, nan, nan, nan}};
+    Idx const n_components = 2;
     Idx const batch_size = 1;
     Idx const is_batch = 0;
-    Idx const elements_per_scenario = 1;
-    Idx const total_elements = 1;
+    std::vector<Idx> const elements_per_scenario = {1, 2};
+    std::vector<Idx> const total_elements = {1, 2};
 
     SUBCASE("Serializer") {
         ConstDatasetPtr unique_dataset{PGM_create_dataset_const(hl, "input", is_batch, batch_size)};
         CHECK(PGM_error_code(hl) == PGM_no_error);
         auto const dataset = unique_dataset.get();
-        PGM_dataset_const_add_buffer(hl, dataset, "node", elements_per_scenario, total_elements, nullptr, node.data());
+        PGM_dataset_const_add_buffer(hl, dataset, "node", elements_per_scenario[0], total_elements[0], nullptr,
+                                     node.data());
+        PGM_dataset_const_add_buffer(hl, dataset, "source", elements_per_scenario[1], total_elements[1], nullptr,
+                                     source.data());
         CHECK(PGM_error_code(hl) == PGM_no_error);
 
         SUBCASE("json") {
@@ -103,16 +108,22 @@ TEST_CASE("Serialization") {
             CHECK(PGM_dataset_info_batch_size(hl, info) == batch_size);
             CHECK(PGM_dataset_info_n_components(hl, info) == n_components);
             CHECK(PGM_dataset_info_component_name(hl, info, 0) == "node"s);
-            CHECK(PGM_dataset_info_elements_per_scenario(hl, info, 0) == elements_per_scenario);
-            CHECK(PGM_dataset_info_total_elements(hl, info, 0) == total_elements);
+            CHECK(PGM_dataset_info_component_name(hl, info, 1) == "source"s);
+            for (Idx idx : {0, 1}) {
+                CHECK(PGM_dataset_info_elements_per_scenario(hl, info, idx) == elements_per_scenario[idx]);
+                CHECK(PGM_dataset_info_total_elements(hl, info, idx) == total_elements[idx]);
+            }
             // set buffer
             PGM_dataset_writable_set_buffer(hl, dataset, "node", nullptr, node.data());
+            PGM_dataset_writable_set_buffer(hl, dataset, "source", nullptr, source.data());
             CHECK(PGM_error_code(hl) == PGM_no_error);
             // parse
             PGM_deserializer_parse_to_buffer(hl, deserializer);
             // check
             CHECK(node[0].id == 5);
             CHECK(is_nan(node[0].u_rated));
+            CHECK(source[0].id == 6);
+            CHECK(source[1].id == 7);
         }
     }
 }
