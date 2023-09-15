@@ -270,7 +270,7 @@ def json_serialize(
     return result
 
 
-def msgpack_deserialize(data: bytes) -> Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]:
+def msgpack_deserialize(data: bytes) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Load serialized msgpack data to a new dataset.
 
