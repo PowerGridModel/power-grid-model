@@ -115,7 +115,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def deduce_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> str:
+def get_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> str:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -183,7 +183,7 @@ class CConstDataset:
     ):
         instance = super().__new__(cls)
 
-        instance._dataset_type = dataset_type if isinstance(dataset_type, str) else deduce_dataset_type(data)
+        instance._dataset_type = dataset_type if isinstance(dataset_type, str) else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
         if data:
@@ -333,7 +333,7 @@ class CWritableDataset:
         """
         return CDatasetInfo(pgc.dataset_writable_get_info(self._writable_dataset))
 
-    def get_data(self) -> Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]:
+    def get_data(self) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
         """
         Retrieve data from the Power Grid Model dataset.
 

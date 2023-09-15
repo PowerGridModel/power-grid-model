@@ -9,18 +9,17 @@ from unittest.mock import MagicMock, mock_open, patch
 import numpy as np
 import pytest
 
-from power_grid_model.data_types import BatchDataset, BatchList, Dataset
-from power_grid_model.utils import (
-    compact_json_dump,
+from power_grid_model._utils import (
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
-    convert_python_to_numpy,
-    export_json_data,
     get_and_verify_batch_sizes,
     is_nan,
     split_numpy_array_in_batches,
     split_sparse_batches_in_batches,
 )
+from power_grid_model.data_types import BatchDataset, BatchList, Dataset
+from power_grid_model.utils import export_json_data
+from tests.unit.utils import convert_python_to_numpy
 
 
 @pytest.fixture(name="two_nodes_one_line")
@@ -162,134 +161,6 @@ def test_export_json_data(convert_mock: MagicMock, open_mock: MagicMock):
     convert_mock.assert_called_once_with(data={}, use_compact_list=False, indent=2)
     handle = open_mock()
     handle.write.assert_called_once_with(convert_mock.return_value)
-
-
-def test_compact_json_dump():
-    data = {
-        "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
-        "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
-    }
-
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=0)
-    assert (
-        string_stream.getvalue()
-        == """{"node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}], "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]}"""
-    )
-
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=1)
-    assert (
-        string_stream.getvalue()
-        == """{
-  "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
-  "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
-}
-"""
-    )
-
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=2)
-    assert (
-        string_stream.getvalue()
-        == """{
-  "node":
-    [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
-  "line":
-    [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}]
-}
-"""
-    )
-
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=3)
-    assert (
-        string_stream.getvalue()
-        == """{
-  "node":
-    [
-      {"id": 1, "x": 2},
-      {"id": 3, "x": 4}
-    ],
-  "line":
-    [
-      {"id": 5, "x": 6},
-      {"id": 7, "x": {"y": 8.1, "z": 8.2}}
-    ]
-}
-"""
-    )
-
-
-def test_compact_json_dump_string():
-    data = "test"
-
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=2)
-    assert string_stream.getvalue() == '"test"'
-
-
-def test_compact_json_dump_deep():
-    data = {
-        "foo": 1,
-        "bar": {"x": 2, "y": 3},
-    }
-
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=10)
-    assert (
-        string_stream.getvalue()
-        == """{
-  "foo": 1,
-  "bar":
-    {
-      "x": 2,
-      "y": 3
-    }
-
-}
-"""
-    )
-
-
-def test_compact_json_dump_batch():
-    data = [
-        {
-            "node": [{"id": 1, "x": 2}, {"id": 3, "x": 4}],
-            "line": [{"id": 5, "x": 6}, {"id": 7, "x": {"y": 8.1, "z": 8.2}}],
-        },
-        {
-            "line": [{"id": 9, "x": 10}, {"id": 11, "x": 12}],
-        },
-    ]
-    string_stream = io.StringIO()
-    compact_json_dump(data, string_stream, indent=2, max_level=4)
-    assert (
-        string_stream.getvalue()
-        == """[
-  {
-    "node":
-      [
-        {"id": 1, "x": 2},
-        {"id": 3, "x": 4}
-      ],
-    "line":
-      [
-        {"id": 5, "x": 6},
-        {"id": 7, "x": {"y": 8.1, "z": 8.2}}
-      ]
-  }
-,
-  {
-    "line":
-      [
-        {"id": 9, "x": 10},
-        {"id": 11, "x": 12}
-      ]
-  }
-
-]"""
-    )
 
 
 def test_split_numpy_array_in_batches_n1():
@@ -562,7 +433,7 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
         get_and_verify_batch_sizes(update_data)
 
 
-@patch("power_grid_model.utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}
     with pytest.raises(
@@ -573,7 +444,7 @@ def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock
         convert_batch_dataset_to_batch_list(update_data)
 
 
-@patch("power_grid_model.utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(

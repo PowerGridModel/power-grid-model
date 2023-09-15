@@ -10,7 +10,7 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
-from typing import Mapping, Optional, Tuple, Union
+from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 
@@ -58,7 +58,7 @@ class Deserializer:
     def __del__(self):
         pgc.destroy_deserializer(self._deserializer)
 
-    def load(self) -> Tuple[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]], str]:
+    def load(self) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
         """
         Load the deserialized data to a new dataset.
 
@@ -70,7 +70,7 @@ class Deserializer:
             A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
-        return self._dataset.get_data(), self._dataset.get_info().dataset_type()
+        return self._dataset.get_data()
 
 
 class Serializer(ABC):
@@ -216,7 +216,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
-def json_deserialize(data: Union[str, bytes]) -> Tuple[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]], str]:
+def json_deserialize(data: Union[str, bytes]) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Load serialized JSON data to a new dataset.
 
@@ -266,7 +266,7 @@ def json_serialize(
     return result
 
 
-def msgpack_deserialize(data: bytes) -> Tuple[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]], str]:
+def msgpack_deserialize(data: bytes) -> Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]:
     """
     Load serialized msgpack data to a new dataset.
 

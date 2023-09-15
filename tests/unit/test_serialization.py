@@ -9,6 +9,7 @@ import msgpack
 import numpy as np
 import pytest
 
+from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -332,20 +333,26 @@ def assert_serialization_correct(
 @pytest.mark.parametrize("raw_buffer", (True, False))
 def test_json_deserialize_data(serialized_data, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
-    result, result_type = json_deserialize(data)
+    result = json_deserialize(data)
 
-    assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data)
+
+    if result:
+        result_type = get_dataset_type(result)
+        assert result_type == serialized_data["type"]
 
 
 def test_msgpack_deserialize_data(serialized_data):
     data = to_msgpack(serialized_data)
-    result, result_type = msgpack_deserialize(data)
+    result = msgpack_deserialize(data)
 
-    assert result_type == serialized_data["type"]
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data)
+
+    if result:
+        result_type = get_dataset_type(result)
+        assert result_type == serialized_data["type"]
 
 
 @pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
@@ -381,8 +388,8 @@ def test_msgpack_serialize_empty_dataset(dataset_type):
     ),
 )
 def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, pack):
-    deserialized_data, dataset_type = deserialize(pack(serialized_data))
-    full_result = serialize(deserialized_data, dataset_type)
+    deserialized_data = deserialize(pack(serialized_data))
+    full_result = serialize(deserialized_data, serialized_data["type"])
 
     if serialized_data["data"]:
         assert serialize(deserialized_data) == full_result
@@ -404,16 +411,13 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
     """
     test_data = pack(serialized_data)
 
-    deserialized_result_a, dataset_type_a = deserialize(test_data)
-    serialized_result_a = serialize(deserialized_result_a, dataset_type_a)
+    deserialized_result_a = deserialize(test_data)
+    serialized_result_a = serialize(deserialized_result_a, dataset_type=serialized_data["type"])
 
-    deserialized_result_b, dataset_type_b = deserialize(serialized_result_a)
-    serialized_result_b = serialize(deserialized_result_b, dataset_type_b)
+    deserialized_result_b = deserialize(serialized_result_a)
+    serialized_result_b = serialize(deserialized_result_b, dataset_type=serialized_data["type"])
 
     assert serialized_result_a == serialized_result_b
-
-    assert dataset_type_a == serialized_data["type"]
-    assert dataset_type_b == serialized_data["type"]
     assert list(deserialized_result_b) == list(deserialized_result_a)
 
     for component_result_a, component_result_b in zip(deserialized_result_a.values(), deserialized_result_b.values()):

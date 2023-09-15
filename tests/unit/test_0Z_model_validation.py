@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import PowerGridModel
-from power_grid_model.utils import convert_batch_dataset_to_batch_list
+from power_grid_model._utils import convert_batch_dataset_to_batch_list
 
 from .utils import EXPORT_OUTPUT, compare_result, import_case_data, pytest_cases, save_json_data
 
