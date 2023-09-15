@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import pytest
 
-from power_grid_model.core.power_grid_dataset import CConstDataset, deduce_dataset_type
+from power_grid_model.core.power_grid_dataset import CConstDataset, get_dataset_type
 from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
@@ -37,9 +37,9 @@ def dataset_type(request):
     return request.param
 
 
-def test_deduce_dataset_type(dataset_type):
+def test_get_dataset_type(dataset_type):
     assert (
-        deduce_dataset_type(
+        get_dataset_type(
             data={
                 "node": np.zeros(1, dtype=power_grid_meta_data[dataset_type]["node"]),
                 "sym_load": np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
@@ -49,22 +49,22 @@ def test_deduce_dataset_type(dataset_type):
     )
 
 
-def test_deduce_dataset_type__empty_data():
+def test_get_dataset_type__empty_data():
     with pytest.raises(ValueError):
-        deduce_dataset_type(data={})
+        get_dataset_type(data={})
 
 
-def test_deduce_dataset_type__conflicting_data():
+def test_get_dataset_type__conflicting_data():
     for first, second in itertools.product(all_dataset_types(), all_dataset_types()):
         data = {
             "node": np.zeros(1, dtype=power_grid_meta_data[first]["node"]),
             "sym_load": np.zeros(1, dtype=power_grid_meta_data[second]["sym_load"]),
         }
         if first == second:
-            assert deduce_dataset_type(data=data) == first
+            assert get_dataset_type(data=data) == first
         else:
             with pytest.raises(PowerGridError):
-                deduce_dataset_type(data=data)
+                get_dataset_type(data=data)
 
 
 def test_const_dataset__empty_dataset(dataset_type):
