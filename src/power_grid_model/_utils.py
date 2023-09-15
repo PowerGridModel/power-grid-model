@@ -7,7 +7,7 @@ This file contains helper functions for library-internal use only.
 
 Disclaimer!
 
-We do not officially support support this functionality and may remove features in this library at any given time!
+We do not officially support this functionality and may remove features in this library at any given time!
 """
 
 from typing import List, Optional, cast
