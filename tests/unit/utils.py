@@ -234,7 +234,37 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                 )
 
 
-def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
+def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: bool = False) -> Dataset:
+    """
+    Convert native python data to internal numpy
+
+    Args:
+        data: data in dict or list
+        data_type: type of data: input, update, sym_output, or asym_output
+        ignore_extra: Allow (and ignore) extra attributes in the data
+
+    Returns:
+        A single or batch dataset for power-grid-model
+    """
+
+    # If the input data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
+    # first convert each batch separately, by recursively calling this function for each batch. Then the numpy
+    # data for all batches in converted into a proper and compact numpy structure.
+    if isinstance(data, list):
+        list_data = [
+            _convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type, ignore_extra=ignore_extra)
+            for json_dict in data
+        ]
+        return _convert_list_to_batch_data(list_data)
+
+    # Otherwise this should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
+    if not isinstance(data, dict):
+        raise TypeError("Data should be either a list or a dictionary!")
+
+    return _convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type, ignore_extra=ignore_extra)
+
+
+def _convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
     """
     Convert a list of datasets to one single batch dataset
 
@@ -286,37 +316,7 @@ def convert_list_to_batch_data(list_data: BatchList) -> BatchDataset:
     return batch_data
 
 
-def convert_python_to_numpy(data: PythonDataset, data_type: str, ignore_extra: bool = False) -> Dataset:
-    """
-    Convert native python data to internal numpy
-
-    Args:
-        data: data in dict or list
-        data_type: type of data: input, update, sym_output, or asym_output
-        ignore_extra: Allow (and ignore) extra attributes in the data
-
-    Returns:
-        A single or batch dataset for power-grid-model
-    """
-
-    # If the input data is a list, we are dealing with batch data. Each element in the list is a batch. We'll
-    # first convert each batch separately, by recursively calling this function for each batch. Then the numpy
-    # data for all batches in converted into a proper and compact numpy structure.
-    if isinstance(data, list):
-        list_data = [
-            convert_python_single_dataset_to_single_dataset(json_dict, data_type=data_type, ignore_extra=ignore_extra)
-            for json_dict in data
-        ]
-        return convert_list_to_batch_data(list_data)
-
-    # Otherwise this should be a normal (non-batch) structure, with a list of objects (dictionaries) per component.
-    if not isinstance(data, dict):
-        raise TypeError("Data should be either a list or a dictionary!")
-
-    return convert_python_single_dataset_to_single_dataset(data=data, data_type=data_type, ignore_extra=ignore_extra)
-
-
-def convert_python_single_dataset_to_single_dataset(
+def _convert_python_single_dataset_to_single_dataset(
     data: SinglePythonDataset, data_type: str, ignore_extra: bool = False
 ) -> SingleDataset:
     """
@@ -333,14 +333,14 @@ def convert_python_single_dataset_to_single_dataset(
 
     dataset: SingleDataset = {}
     for component, objects in data.items():
-        dataset[component] = convert_component_list_to_numpy(
+        dataset[component] = _convert_component_list_to_numpy(
             objects=objects, component=component, data_type=data_type, ignore_extra=ignore_extra
         )
 
     return dataset
 
 
-def convert_component_list_to_numpy(
+def _convert_component_list_to_numpy(
     objects: ComponentList, component: str, data_type: str, ignore_extra: bool = False
 ) -> np.ndarray:
     """
