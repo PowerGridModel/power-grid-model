@@ -154,7 +154,7 @@ For symmetric components, it is a [`double`](#json-schema-double).
 For asymmetric components, it is an Array of size 3 containing [`double`](#json-schema-double) or `null` values.
 The type is listed for each attribute in [Components](components.md).
 
-- [`RealValueInput`](#json-schema-realvalueinput): `number` for symmetric calculations.
+- [`RealValueInput`](#json-schema-realvalueinput): [`double`](#json-schema-double) for symmetric calculations.
 - [`RealValueInput`](#json-schema-realvalueinput): `Array` of size 3 for asymmetric calculations, one for each phase.
   - [`double`](#json-schema-double) | `null`: the value for the `_a` phase, if specified.
   - [`double`](#json-schema-double) | `null`: the value for the `_b` phase, if specified.
@@ -167,7 +167,7 @@ For symmetric calculations, it is a [`double`](#json-schema-double).
 For asymmetric calculations, it is an Array of size 3 containing [`double`](#json-schema-double) or `null` values.
 The type is listed for each attribute in [Components](components.md).
 
-- [`RealValueOutput`](#json-schema-realvalueoutput): `number` for symmetric calculations.
+- [`RealValueOutput`](#json-schema-realvalueoutput): [`double`](#json-schema-double) for symmetric calculations.
 - [`RealValueOutput`](#json-schema-realvalueoutput): `Array` of size 3 for asymmetric calculations, one for each phase.
   - [`double`](#json-schema-double) | `null`: the value for the `_a` phase, if specified.
   - [`double`](#json-schema-double) | `null`: the value for the `_b` phase, if specified.
@@ -300,7 +300,7 @@ The msgpack serialization format is a compressed version of the [JSON serializat
 #### msgpack schema double
 
 ```{note}
-This is the `msgpack`-specific version of [`double`](#mgspack-schema-double).
+This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [`double`](#msgpack-schema-double).
 For [JSON](#json-serialization-format-specification), refer to [`double` for JSON](#json-schema-double).
 ```
 

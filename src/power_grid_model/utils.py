@@ -61,7 +61,7 @@ def json_serialize_to_file(
         file_path: the path to the file to load and deserialize.
         data: a single or batch dataset for power-grid-model.
         use_compact_list: write components on a single line.
-        indent: indent of the file, default 2.
+        indent: indent of the file. Defaults to 2.
 
     Returns:
         Save to file.
@@ -122,8 +122,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     Args:
         json_file: path to the json file.
         data_type: type of data: input, update, sym_output, or asym_output.
-        args [deprecated]: All extra positional arguments are ignored.
-        kwargs [deprecated]: All extra keyword arguments are ignored.
+        [deprecated]: All extra positional and keyword arguments are ignored.
 
     Returns:
         A single or batch dataset for power-grid-model.
