@@ -25,7 +25,7 @@ namespace power_grid_model {
 
 template <bool sym> class MathSolver {
   public:
-    MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : topo_ptr_{topo_ptr},
           all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(),
                                    [](LoadGenType x) { return x == LoadGenType::const_y; })} {}
