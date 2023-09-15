@@ -11,16 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pytest
 
-from power_grid_model import initialize_array
-from power_grid_model.data_types import (
-    BatchDataset,
-    BatchList,
-    ComponentList,
-    Dataset,
-    PythonDataset,
-    SingleDataset,
-    SinglePythonDataset,
-)
+from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.utils import export_json_data, import_json_data, json_deserialize
 
 BASE_PATH = Path(__file__).parent.parent

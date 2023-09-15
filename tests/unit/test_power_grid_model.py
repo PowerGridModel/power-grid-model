@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import json
 from copy import copy
 
 import numpy as np

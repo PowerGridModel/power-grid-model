@@ -5,17 +5,12 @@
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
-import numpy as np
-import pytest
-
-from power_grid_model.data_types import BatchDataset, BatchList, Dataset
+from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
     json_deserialize_from_file,
     json_serialize_to_file,
-    msgpack_deserialize,
     msgpack_deserialize_from_file,
-    msgpack_serialize,
     msgpack_serialize_to_file,
 )
 
