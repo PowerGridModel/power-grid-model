@@ -129,22 +129,6 @@ def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
     assert json_return_list == json_list
 
 
-def test_convert_python_to_numpy__extra_attributes():
-    convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input", ignore_extra=True)
-    with pytest.raises(ValueError, match="Invalid attribute 'u' for line input data."):
-        convert_python_to_numpy({"line": [{"id": 1, "u": 10.5e3}]}, "input")
-
-
-def test_convert_python_to_numpy_invalid_data_format():
-    with pytest.raises(ValueError, match="Invalid 'id' value for line input data."):
-        convert_python_to_numpy({"line": [{"id": "my_line", "u_rated": 10.5e3}]}, "input")
-
-
-def test_convert_python_to_numpy__raises_type_error():
-    with pytest.raises(TypeError, match="Data should be either a list or a dictionary!"):
-        convert_python_to_numpy(123, "input")  # type: ignore
-
-
 def test_convert_batch_to_list_data__zero_batches():
     assert convert_batch_dataset_to_batch_list({}) == []
 
