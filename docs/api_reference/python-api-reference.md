@@ -40,6 +40,7 @@ SPDX-License-Identifier: MPL-2.0
 ## utils
 
 ```{eval-rst}
+.. autofunction:: power_grid_model.utils.get_dataset_type
 .. autofunction:: power_grid_model.utils.json_deserialize
 .. autofunction:: power_grid_model.utils.json_serialize
 .. autofunction:: power_grid_model.utils.msgpack_deserialize
