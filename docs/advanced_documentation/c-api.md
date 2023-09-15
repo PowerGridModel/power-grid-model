@@ -144,12 +144,13 @@ These two dataset types expose a dataset to the power-grid-model with the follow
 | Dataset interface        | power-grid-model permissions | User permissions    | Treat as        |
 | ------------------------ | ---------------------------- | ------------------- | --------------- |
 | `PGM_dataset_const_*`    | Read                         | Create, read, write | `const * const` |
-| `PGM_dataset_writable_*` | Read, write                  | Create, read        | `* const`       |
+| `PGM_dataset_writable_*` | Read, write                  | Read                | `* const`       |
 
 A constant dataset is completely user-owned.
 The user is responsible for creating and destroying both the dataset and its buffers.
 This dataset is perfect for input and update datasets.
 
-A writable dataset, instead, cannot be created by the user, but will be provided by the power-grid-model.
-The user can then provide buffers to which the power-grid-model can output its data.
-This dataset type is perfect for output data.
+A writable dataset, instead, cannot be created by the user, but will be provided by the deserializer.
+The user can then provide buffers to which the deserializer can write its data (and `indptr`).
+This allows the buffers to have lifetimes beyond the lifetime of the deserializer.
+This dataset type is only meant to be used for providing user buffers to the deserializer.
