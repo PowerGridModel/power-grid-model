@@ -236,11 +236,14 @@ def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
     Returns:
         A single or batch dataset for power-grid-model
     """
-    data = {
-        "version": "1.0",
-        "is_batch": isinstance(data, list),
-        "attributes": {},
-        "type": data_type,
-        "data": data,
-    }
-    return json_deserialize(json.dumps(data))
+    return json_deserialize(
+        json.dumps(
+            {
+                "version": "1.0",
+                "is_batch": isinstance(data, list),
+                "attributes": {},
+                "type": data_type,
+                "data": data,
+            }
+        )
+    )
