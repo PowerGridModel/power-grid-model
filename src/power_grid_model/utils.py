@@ -7,7 +7,6 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
-import typing
 import warnings
 from pathlib import Path
 from typing import Optional
@@ -23,93 +22,188 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.errors import PowerGridError, PowerGridSerializationError
+from power_grid_model.errors import PowerGridSerializationError
 
-_DEPRECATED_METHOD_MSG = "This method is deprecated."
-_DEPRECATED_METHOD_IMPORT_JSON_DATA_MSG = f"{_DEPRECATED_METHOD_MSG} Please use import_json_data instead."
+_DEPRECATED_FUNCTION_MSG = "This function is deprecated."
+_DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
+_DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_serialize_from_file instead."
 
 
-def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Dataset:
+def json_deserialize_from_file(file_path: Path) -> Dataset:
     """
-    Import json data.
-
-    This method is deprecated. Please use import_json_deserialize instead.
+    Load and deserialize a JSON file to a new dataset.
 
     Args:
-        json_file: path to the json file
-        data_type: type of data: input, update, sym_output, or asym_output
-        args: All extra positional arguments are ignored for compatibility.
-        kwargs: All extra keyword arguments are ignored for compatibility.
+        file_path: the path to the file to load and deserialize.
+
+    Raises:
+        ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError if there was an internal error.
 
     Returns:
-        A single or batch dataset for power-grid-model
+        A tuple containing:
+            the deserialized dataset in Power grid model input format.
+            the type of the dataset.
     """
-    if args:
-        warnings.warn(
-            "Provided positional arguments at index 2 and following may be deprecated and are ignored.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    if kwargs:
-        warnings.warn(
-            f"Provided keyword arguments {list(kwargs.keys())} may be deprecated and are ignored.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
-        try:
-            return json_deserialize(file_pointer.read())
-
-        except Exception as exception:
-            try:
-                file_pointer.seek(0)
-                data = _compatibility_deprecated_import_json_data_v0(file_pointer=file_pointer, data_type=data_type)
-                warnings.warn(
-                    "The file you provided contains a deprecated format for which support may be removed in the future."
-                    " Consider upgrading it using 'export_json_data(json_file, import_json_data(json_file))'.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                return data
-            except (PowerGridError, ValueError):
-                pass
-
-            raise exception
+    with open(file_path, encoding="utf-8") as file_pointer:
+        return json_deserialize(file_pointer.read())
 
 
-def export_json_data(json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False):
+def json_serialize_to_file(
+    file_path: Path,
+    data: Dataset,
+    dataset_type: Optional[str] = None,
+    use_compact_list: bool = False,
+    indent: Optional[int] = 2,
+):
     """
-    Export json data in most recent format.
+    Export JSON data in most recent format.
 
     Args:
-        json_file: path to json file
-        data: a single or batch dataset for power-grid-model
-        indent: indent of the file, default 2
-        compact: write components on a single line
+        file_path: the path to the file to load and deserialize.
+        data: a single or batch dataset for power-grid-model.
+        use_compact_list: write components on a single line.
+        indent: indent of the file, default 2.
 
     Returns:
         Save to file
     """
-    with open(json_file, mode="w", encoding="utf-8") as file_pointer:
-        file_pointer.write(json_serialize(data=data, indent=0 if indent is None else indent, use_compact_list=compact))
+    result = json_serialize(
+        data=data, dataset_type=dataset_type, use_compact_list=use_compact_list, indent=-1 if indent is None else indent
+    )
+
+    with open(file_path, mode="w", encoding="utf-8") as file_pointer:
+        file_pointer.write(result)
+
+
+def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
+    """
+    Load and deserialize a msgpack file to a new dataset.
+
+    Args:
+        file_path: the path to the file to load and deserialize.
+
+    Raises:
+        ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError if there was an internal error.
+
+    Returns:
+        A tuple containing:
+            the deserialized dataset in Power grid model input format.
+            the type of the dataset.
+    """
+    with open(file_path, mode="rb", encoding="utf-8") as file_pointer:
+        return msgpack_deserialize(file_pointer.read())
+
+
+def msgpack_serialize_to_file(
+    file_path: Path, data: Dataset, dataset_type: Optional[str] = None, use_compact_list: bool = False
+):
+    """
+    Export msgpack data in most recent format.
+
+    Args:
+        file_path: the path to the file to load and deserialize.
+        data: a single or batch dataset for power-grid-model.
+        use_compact_list: write components on a single line.
+        indent: indent of the file, default 2.
+
+    Returns:
+        Save to file
+    """
+    result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
+
+    with open(file_path, mode="wb", encoding="utf-8") as file_pointer:
+        file_pointer.write(result)
+
+
+def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Dataset:
+    """
+    [deprecated] Import json data.
+
+    This function is deprecated. Please use json_deserialize_from_file instead (requires loading the file yourself).
+
+    Args:
+        json_file: path to the json file.
+        data_type: type of data: input, update, sym_output, or asym_output.
+        args [deprecated]: All extra positional arguments are ignored.
+        kwargs [deprecated]: All extra keyword arguments are ignored.
+    Returns:
+        A single or batch dataset for power-grid-model.
+    """
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    if args:
+        warnings.warn(
+            "Provided positional arguments at index 2 and following are deprecated.", DeprecationWarning, stacklevel=2
+        )
+    if kwargs:
+        warnings.warn(
+            f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning, stacklevel=2
+        )
+
+    return _compatibility_deprecated_import_json_data(json_file=json_file, data_type=data_type)
+
+
+def export_json_data(
+    json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False, use_deprecated_format: bool = True
+):
+    """
+    [deprecated] Export json data in a deprecated serialization format.
+
+    **WARNING:** This function is deprecated. Please use json_serialize_to_file instead.
+
+    For backwards compatibility, this function outputs the deprecated serialization format by default.
+    This feature may be removed in the future.
+
+    Args:
+        json_file: path to json file.
+        data: a single or batch dataset for power-grid-model.
+        indent: indent of the file, default 2.
+        compact: write components on a single line.
+        use_deprecated_format: use the old style format. Defaults to True for backwards compatibility.
+
+    Returns:
+        Save to file.
+    """
+    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    if use_deprecated_format:
+        warnings.warn(
+            "Argument use_deprecated_format is a temporary backwards-compatibility measure. "
+            "Please upgrade to use_deprecated_format=False or json_serialize_to_file as soon as possible.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        _compatibility_deprecated_export_json_data(json_file=json_file, data=data)
+    else:
+        json_serialize_to_file(file_path=json_file, data=data, use_compact_list=compact, indent=indent)
+
+
+def _compatibility_deprecated_export_json_data(
+    json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False
+):
+    serialized_data = json_serialize(data=data, use_compact_list=compact, indent=-1 if indent is None else indent)
+    old_format_serialized_data = json.dumps(json.loads(serialized_data)["data"])
+    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
+        file_pointer.write(old_format_serialized_data)
 
 
 def import_input_data(json_file: Path) -> SingleDataset:
     """
     [deprecated] Import input json data.
 
-    This method is deprecated. Please use import_json_deserialize instead.
+    **WARNING:** This function is deprecated. Please use json_deserialize_from_file instead.
+
+    For backwards and forward compatibility, this function supportes both the latest and the old serialization format.
 
     Args:
-        json_file: path to the json file
+        json_file: path to the json file.
 
     Returns:
-        A single dataset for power-grid-model
+        A single dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_METHOD_IMPORT_JSON_DATA_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
 
-    data = import_json_data(json_file=json_file, data_type="input")
+    data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type="input")
     assert isinstance(data, dict)
     assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
     return cast_type(SingleDataset, data)
@@ -119,21 +213,25 @@ def import_update_data(json_file: Path) -> BatchDataset:
     """
     [deprecated] Import update json data.
 
-    This method is deprecated. Please use import_json_data instead.
+    **WARNING:** This function is deprecated. Please use json_deserialize_from_file instead.
+
+    For backwards and forward compatibility, this function supportes both the latest and the old serialization format.
 
     Args:
-        json_file: path to the json file
+        json_file: path to the json file.
 
     Returns:
-        A batch dataset for power-grid-model
+        A batch dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_METHOD_IMPORT_JSON_DATA_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
 
-    return cast_type(BatchDataset, import_json_data(json_file=json_file, data_type="update"))
+    return cast_type(BatchDataset, _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"))
 
 
-def _compatibility_deprecated_import_json_data_v0(file_pointer: typing.IO, data_type: str):
-    data = json.load(file_pointer)
+def _compatibility_deprecated_import_json_data(json_file: Path, data_type: str):
+    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
+        data = json.load(file_pointer)
+
     if "version" not in data:  # convert old format to version 1.0
         data = {
             "attributes": {},
