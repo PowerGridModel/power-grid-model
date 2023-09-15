@@ -131,7 +131,7 @@ def get_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarra
             (probably because the data contained conflicting data formats)
 
     Returns:
-        the dataset type
+        The dataset type.
     """
     candidates = set(power_grid_meta_data.keys())
 
@@ -235,9 +235,9 @@ class CConstDataset:
             data: the data.
 
         Raises:
-            ValueError if the component is unknown and allow_unknown is False.
-            ValueError if the data is inconsistent with the rest of the dataset.
-            PowerGridError if there was an internal error.
+            ValueError: if the component is unknown and allow_unknown is False.
+            ValueError: if the data is inconsistent with the rest of the dataset.
+            PowerGridError: if there was an internal error.
         """
         for component, component_data in data.items():
             self.add_component_data(component, component_data, allow_unknown=True)
@@ -254,9 +254,9 @@ class CConstDataset:
             allow_unknown (optional): ignore any unknown components. Defaults to False.
 
         Raises:
-            ValueError if the component is unknown and allow_unknown is False.
-            ValueError if the data is inconsistent with the rest of the dataset.
-            PowerGridError if there was an internal error.
+            ValueError: if the component is unknown and allow_unknown is False.
+            ValueError: if the data is inconsistent with the rest of the dataset.
+            PowerGridError: if there was an internal error.
         """
         if component not in self._schema:
             if not allow_unknown:

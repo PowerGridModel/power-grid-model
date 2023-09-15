@@ -137,6 +137,9 @@ def create_output_data(
         batch_size:
             the batch size
 
+    Raises:
+        KeyError: if some specified components are unknown.
+
     Returns:
         dictionary of results of all components
             key: component type name to be updated in batch
@@ -145,8 +148,6 @@ def create_output_data(
                 for batch calculation: 2D numpy structured array for the results of this component type
                     Dimension 0: each batch
                     Dimension 1: the result of each element for this component type
-        Error handling:
-            in case if some specified components are unknown, a KeyError will be raised.
     """
     # raise error if some specified components are unknown
     unknown_components = [x for x in output_component_types if x not in power_grid_meta_data[output_type.value]]

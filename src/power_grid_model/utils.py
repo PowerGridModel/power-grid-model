@@ -37,13 +37,11 @@ def json_deserialize_from_file(file_path: Path) -> Dataset:
         file_path: the path to the file to load and deserialize.
 
     Raises:
-        ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
-        PowerGridError if there was an internal error.
+        ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError: if there was an internal error.
 
     Returns:
-        A tuple containing:
-            the deserialized dataset in Power grid model input format.
-            the type of the dataset.
+        The deserialized dataset in Power grid model input format.
     """
     with open(file_path, encoding="utf-8") as file_pointer:
         return json_deserialize(file_pointer.read())
@@ -66,7 +64,7 @@ def json_serialize_to_file(
         indent: indent of the file, default 2.
 
     Returns:
-        Save to file
+        Save to file.
     """
     result = json_serialize(
         data=data, dataset_type=dataset_type, use_compact_list=use_compact_list, indent=-1 if indent is None else indent
@@ -84,13 +82,11 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
         file_path: the path to the file to load and deserialize.
 
     Raises:
-        ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
-        PowerGridError if there was an internal error.
+        ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError: if there was an internal error.
 
     Returns:
-        A tuple containing:
-            the deserialized dataset in Power grid model input format.
-            the type of the dataset.
+        The deserialized dataset in Power grid model input format.
     """
     with open(file_path, mode="rb", encoding="utf-8") as file_pointer:
         return msgpack_deserialize(file_pointer.read())
@@ -109,7 +105,7 @@ def msgpack_serialize_to_file(
         indent: indent of the file, default 2.
 
     Returns:
-        Save to file
+        Save to file.
     """
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
 
@@ -128,6 +124,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
         data_type: type of data: input, update, sym_output, or asym_output.
         args [deprecated]: All extra positional arguments are ignored.
         kwargs [deprecated]: All extra keyword arguments are ignored.
+
     Returns:
         A single or batch dataset for power-grid-model.
     """

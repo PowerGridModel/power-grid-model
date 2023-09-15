@@ -21,7 +21,9 @@ from power_grid_model.core.power_grid_meta import ComponentMetaData, power_grid_
 
 @dataclass
 class BufferProperties:
-    """Helper class to collect info on the dataset."""
+    """
+    Helper class to collect info on the dataset.
+    """
 
     is_sparse: bool
     is_batch: bool
@@ -34,7 +36,7 @@ class BufferProperties:
 @dataclass
 class CBuffer:
     """
-    Buffer for a single component
+    Buffer for a single component.
     """
 
     data: VoidPtr
@@ -47,7 +49,7 @@ class CBuffer:
 @dataclass
 class CDataset:
     """
-    Dataset definition
+    Dataset definition.
     """
 
     dataset: Dict[str, CBuffer]
@@ -64,11 +66,11 @@ def get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
     Get a raw view on the data.
 
     Args:
-        data: the data
-        schema: the schema the raw buffer should obey
+        data: the data.
+        schema: the schema the raw buffer should obey.
 
     Returns:
-        a raw view on the data set
+        a raw view on the data set.
     """
     return np.ascontiguousarray(data, dtype=schema.dtype).ctypes.data_as(VoidPtr)
 
@@ -78,10 +80,10 @@ def get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
     Get a raw view on the index pointer.
 
     Args:
-        indptr: the index pointer
+        indptr: the index pointer.
 
     Returns:
-        a raw view on the index pointer
+        a raw view on the index pointer.
     """
     return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
@@ -94,8 +96,8 @@ def get_uniform_buffer_properties(data: np.ndarray) -> BufferProperties:
         data (np.ndarray): the dataset component.
 
     Raises:
-        KeyError if the dataset component is not sparse.
-        ValueError if the dataset component contains conflicting or bad data.
+        KeyError: if the dataset component is not sparse.
+        ValueError: if the dataset component contains conflicting or bad data.
 
     Returns:
         the properties of the dataset component.
@@ -127,8 +129,8 @@ def get_sparse_buffer_properties(data: Mapping[str, np.ndarray]) -> BufferProper
         data (Mapping[str, np.ndarray]): the sparse dataset component.
 
     Raises:
-        KeyError if the dataset component is not sparse.
-        ValueError if the dataset component contains conflicting or bad data.
+        KeyError: if the dataset component is not sparse.
+        ValueError: if the dataset component contains conflicting or bad data.
 
     Returns:
         the properties of the dataset component.
@@ -169,7 +171,7 @@ def get_buffer_properties(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> 
         data (Union[np.ndarray, Mapping[str, np.ndarray]]): the dataset component.
 
     Raises:
-        ValueError if the dataset component contains conflicting or bad data.
+        ValueError: if the dataset component contains conflicting or bad data.
 
     Returns:
         the properties of the dataset component.
@@ -185,11 +187,11 @@ def get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuf
     Get a C API compatible view on a uniform buffer.
 
     Args:
-        data: the data
-        schema: the schema that the data should obey
+        data: the data.
+        schema: the schema that the data should obey.
 
     Returns:
-        the C API buffer view
+        the C API buffer view.
     """
     properties = get_uniform_buffer_properties(data)
 
@@ -207,11 +209,11 @@ def get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMeta
     Get a C API compatible view on a sparse buffer.
 
     Args:
-        data: the data
-        schema: the schema that the data should obey
+        data: the data.
+        schema: the schema that the data should obey.
 
     Returns:
-        the C API buffer view
+        the C API buffer view.
     """
     contents = data["data"]
     indptr = data["indptr"]
@@ -232,11 +234,11 @@ def get_buffer_view(data: Union[np.ndarray, Mapping[str, np.ndarray]], schema: C
     Get a C API compatible view on a buffer.
 
     Args:
-        data: the data
-        schema: the schema that the data should obey
+        data: the data.
+        schema: the schema that the data should obey.
 
     Returns:
-        the C API buffer view
+        the C API buffer view.
     """
     if isinstance(data, np.ndarray):
         return get_uniform_buffer_view(data, schema)
@@ -249,14 +251,14 @@ def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Un
     Create a buffer with the provided properties and type.
 
     Args:
-        properties: the desired buffer properties
-        dtype: the data type of the buffer
+        properties: the desired buffer properties.
+        dtype: the data type of the buffer.
 
     Raises:
-        ValueError if the buffer properties are not consistent
+        ValueError: if the buffer properties are not consistent.
 
     Returns:
-        Union[np.ndarray, Dict[str, np.ndarray]]: a buffer with the correct properties
+        Union[np.ndarray, Dict[str, np.ndarray]]: a buffer with the correct properties.
     """
     if properties.is_sparse:
         return create_sparse_buffer(properties=properties, schema=schema)
@@ -269,14 +271,14 @@ def create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDat
     Create a uniform buffer with the provided properties and type.
 
     Args:
-        properties: the desired buffer properties
-        dtype: the data type of the buffer
+        properties: the desired buffer properties.
+        dtype: the data type of the buffer.
 
     Raises:
-        ValueError if the buffer properties are not uniform
+        ValueError: if the buffer properties are not uniform.
 
     Returns:
-        A uniform buffer with the correct properties
+        A uniform buffer with the correct properties.
     """
     if properties.is_sparse:
         raise ValueError(f"A uniform buffer cannot be sparse. {VALIDATOR_MSG}")
@@ -294,14 +296,14 @@ def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData
     Create a sparse buffer with the provided properties and type.
 
     Args:
-        properties: the desired buffer properties
-        dtype: the data type of the buffer
+        properties: the desired buffer properties.
+        dtype: the data type of the buffer.
 
     Raises:
-        ValueError if the buffer properties are not sparse
+        ValueError: if the buffer properties are not sparse.
 
     Returns:
-        A sparse buffer with the correct properties
+        A sparse buffer with the correct properties.
     """
     data = np.empty(properties.n_total_elements, dtype=schema.dtype)
     indptr = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
@@ -323,7 +325,7 @@ def get_dataset_view(data_type: str, array_dict: Mapping[str, Union[np.ndarray, 
                         data -> data array in flat for batches
                         indptr -> index pointer for variable length input
     Returns:
-        instance of CDataset ready to be fed into C API
+        instance of CDataset ready to be fed into C API.
     """
     schema = power_grid_meta_data[data_type]
     dataset_dict = {
