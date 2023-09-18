@@ -91,6 +91,7 @@ examples/Make Test Dataset.ipynb
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
+advanced_documentation/core-design
 ```
 ```{toctree}
 :caption: "Contribution"
