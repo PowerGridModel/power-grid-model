@@ -84,6 +84,9 @@ A [`BatchDataset`](#json-schema-batch-dataset-object) is an array containing [`S
 - [`BatchDataset`](#json-schema-batch-dataset-object): `Array`
   - [`SingleDataset`](#json-schema-single-dataset-object): a single dataset per batch scenario.
 
+Note that the actual deserialized data representation may be sparse or dense, depending on the contents.
+Regardless of whether the deserialized data representation data is sparse or dense, the serialization format remains the same.
+
 #### JSON schema component dataset object
 
 A [`ComponentDataset`](#json-schema-component-dataset-object) is an array of [`ComponentData`](#json-schema-component-data-object)s per component of the same type.

@@ -148,7 +148,7 @@ def sparse_batch_update_dataset():
         "version": "1.0",
         "type": "update",
         "is_batch": True,
-        "attributes": {"sym_load": ["id", "p_specified", "q_specified"], "asym_load": ["id", "p_specified"]},
+        "attributes": {},
         "data": [
             {"sym_load": [{"id": 7, "q_specified": 50.0}]},
             {"sym_load": [{"id": 8, "q_specified": 33.333333333333336}]},

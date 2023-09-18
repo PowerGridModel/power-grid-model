@@ -21,12 +21,37 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
 from power_grid_model.errors import PowerGridSerializationError
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
 _DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_serialize_from_file instead."
+
+
+def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
+    """
+    Obtain the single dataset at a given scenario, independently of the internal batch data structure.
+
+    Args:
+        dataset: the batch dataset
+        scenario: the scenario index
+
+    Raises:
+        IndexError: if the scenario is out of range for any of the components.
+
+    Returns:
+        The dataset for a specific scenario
+    """
+
+    def _get_component_scenario(component_scenarios: BatchArray) -> np.ndarray:
+        if isinstance(component_scenarios, np.ndarray):
+            return component_scenarios[scenario]
+
+        indptr = component_scenarios["indptr"]
+        return component_scenarios["data"][indptr[scenario] : indptr[scenario + 1]]
+
+    return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 
 
 def json_deserialize_from_file(file_path: Path) -> Dataset:

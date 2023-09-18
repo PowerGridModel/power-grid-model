@@ -5,14 +5,40 @@
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
+import numpy as np
+import pytest
+
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
+    get_dataset_scenario,
     json_deserialize_from_file,
     json_serialize_to_file,
     msgpack_deserialize_from_file,
     msgpack_serialize_to_file,
 )
+
+
+def test_get_dataset_scenario():
+    data = {
+        "foo": np.array([["bar", "baz"], ["foobar", "foobaz"]]),
+        "hi": {
+            "data": np.array(["hello", "hey"]),
+            "indptr": np.array([0, 0, 2]),
+        },
+    }
+    result = get_dataset_scenario(data, 0)
+    assert result.keys() == data.keys()
+    np.testing.assert_array_equal(result["foo"], data["foo"][0])
+    np.testing.assert_array_equal(result["hi"], data["hi"]["data"][0:0])
+
+    result = get_dataset_scenario(data, 1)
+    assert result.keys() == data.keys()
+    np.testing.assert_array_equal(result["foo"], data["foo"][1])
+    np.testing.assert_array_equal(result["hi"], data["hi"]["data"][0:2])
+
+    with pytest.raises(IndexError):
+        get_dataset_scenario(data, 2)
 
 
 @patch("builtins.open", new_callable=mock_open)
