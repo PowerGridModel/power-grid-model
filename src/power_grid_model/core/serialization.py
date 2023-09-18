@@ -56,7 +56,8 @@ class Deserializer:
         return instance
 
     def __del__(self):
-        pgc.destroy_deserializer(self._deserializer)
+        if hasattr(self, "_deserializer"):
+            pgc.destroy_deserializer(self._deserializer)
 
     def load(self) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
         """
@@ -100,7 +101,8 @@ class Serializer(ABC):
         return instance
 
     def __del__(self):
-        pgc.destroy_serializer(self._serializer)
+        if hasattr(self, "_serializer"):
+            pgc.destroy_serializer(self._serializer)
 
     def dump_str(self, *, use_compact_list: bool = False, indent: int = 2) -> str:
         """
