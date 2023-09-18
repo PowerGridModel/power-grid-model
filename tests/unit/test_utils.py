@@ -5,14 +5,40 @@
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
+import numpy as np
+import pytest
+
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
+    get_dataset_scenario,
     json_deserialize_from_file,
     json_serialize_to_file,
     msgpack_deserialize_from_file,
     msgpack_serialize_to_file,
 )
+
+
+def test_get_dataset_scenario():
+    data = {
+        "foo": np.array([["bar", "baz"], ["foobar", "foobaz"]]),
+        "hi": {
+            "data": np.array(["hello", "hey"]),
+            "indptr": np.array([0, 0, 2]),
+        },
+    }
+    result = get_dataset_scenario(data, 0)
+    assert result.keys() == data.keys()
+    np.testing.assert_array_equal(result["foo"], data["foo"][0])
+    np.testing.assert_array_equal(result["hi"], data["hi"]["data"][0:0])
+
+    result = get_dataset_scenario(data, 1)
+    assert result.keys() == data.keys()
+    np.testing.assert_array_equal(result["foo"], data["foo"][1])
+    np.testing.assert_array_equal(result["hi"], data["hi"]["data"][0:2])
+
+    with pytest.raises(IndexError):
+        get_dataset_scenario(data, 2)
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -64,7 +90,10 @@ def test_msgpack_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
 def test_export_json_data_format_version_1_0(convert_mock: MagicMock, open_mock: MagicMock):
     convert_mock.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
     data: Dataset = {}  # type: ignore
-    export_json_data(json_file=Path("output.json"), data=data, indent=2, use_deprecated_format=False)
+
+    with pytest.deprecated_call():
+        export_json_data(json_file=Path("output.json"), data=data, indent=2, use_deprecated_format=False)
+
     convert_mock.assert_called_once_with(data={}, dataset_type=None, use_compact_list=False, indent=2)
     handle = open_mock()
     handle.write.assert_called_once_with(convert_mock.return_value)
@@ -75,7 +104,10 @@ def test_export_json_data_format_version_1_0(convert_mock: MagicMock, open_mock:
 def test_export_json_data__deprecated_format(convert_mock: MagicMock, open_mock: MagicMock):
     convert_mock.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
     data: Dataset = {}  # type: ignore
-    export_json_data(json_file=Path("output.json"), data=data, indent=2)
+
+    with pytest.deprecated_call():
+        export_json_data(json_file=Path("output.json"), data=data, indent=2)
+
     convert_mock.assert_called_once_with(data={}, use_compact_list=False, indent=2)
     handle = open_mock()
     handle.write.assert_called_once_with('{"foo": [{"val": 123}]}')
