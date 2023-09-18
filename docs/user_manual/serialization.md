@@ -84,7 +84,7 @@ A [`BatchDataset`](#json-schema-batch-dataset-object) is an array containing [`S
 - [`BatchDataset`](#json-schema-batch-dataset-object): `Array`
   - [`SingleDataset`](#json-schema-single-dataset-object): a single dataset per batch scenario.
 
-Note that the actual deserialized data representation may be sparse or dense, depending on the contents.
+**NOTE:** The actual deserialized data representation may be sparse or dense, depending on the contents.
 Regardless of whether the deserialized data representation data is sparse or dense, the serialization format remains the same.
 
 #### JSON schema component dataset object
@@ -138,10 +138,8 @@ The type is listed for each attribute in [Components](components.md).
 
 #### JSON schema double
 
-```{note}
-This is the JSON-specific version of [`double`](#json-schema-double).
+**NOTE:** This is the JSON-specific version of [`double`](#json-schema-double).
 For [`mspgack`](#msgpack-serialization-format-specification), refer to [`double` for `msgpack`](#msgpack-schema-double).
-```
 
 A [`double`](#json-schema-double) floating point `number` or `string` value usually representing a real.
 If it is a `string`, it shall be either `"inf"` or `"+inf"` for positive infinity, or `"-inf"` for negative infinity.
@@ -302,10 +300,8 @@ The msgpack serialization format is a compressed version of the [JSON serializat
 
 #### msgpack schema double
 
-```{note}
-This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [`double`](#msgpack-schema-double).
+**NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [`double`](#msgpack-schema-double).
 For [JSON](#json-serialization-format-specification), refer to [`double` for JSON](#json-schema-double).
-```
 
 A [`double`](#msgpack-schema-double) floating point `number` value usually representing a real.
 Infinities are represented using the [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) standard for double-precision floating point values representation for infinities.
