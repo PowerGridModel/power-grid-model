@@ -13,7 +13,12 @@ TEST_CASE("Sparse idx data strucuture for topology") {
 
     SUBCASE("sparse idx vector mapping") {
         CHECK(sparse_idx_vector[Idx{0}] == 0);
+        CHECK(sparse_idx_vector[Idx{1}] == 0);
+        CHECK(sparse_idx_vector[Idx{2}] == 0);
         CHECK(sparse_idx_vector[Idx{3}] == 1);
+        CHECK(sparse_idx_vector[Idx{4}] == 1);
+        CHECK(sparse_idx_vector[Idx{5}] == 1);
+        CHECK(sparse_idx_vector[Idx{6}] == 2);
         CHECK(sparse_idx_vector.at(Idx{1}) == 0);
         CHECK(sparse_idx_vector.at(Idx{4}) == 1);
     }
