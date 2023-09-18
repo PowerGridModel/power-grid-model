@@ -152,15 +152,11 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     Returns:
         A single or batch dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
     if args:
-        warnings.warn(
-            "Provided positional arguments at index 2 and following are deprecated.", DeprecationWarning, stacklevel=2
-        )
+        warnings.warn("Provided positional arguments at index 2 and following are deprecated.", DeprecationWarning)
     if kwargs:
-        warnings.warn(
-            f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning, stacklevel=2
-        )
+        warnings.warn(f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning)
 
     return _compatibility_deprecated_import_json_data(json_file=json_file, data_type=data_type)
 
@@ -186,7 +182,7 @@ def export_json_data(
     Returns:
         Save to file.
     """
-    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning)
     if use_deprecated_format:
         warnings.warn(
             "Argument use_deprecated_format is a temporary backwards-compatibility measure. "
@@ -222,7 +218,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
     Returns:
         A single dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
     data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type="input")
     assert isinstance(data, dict)
@@ -244,7 +240,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
     Returns:
         A batch dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
     return cast_type(BatchDataset, _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"))
 
