@@ -32,9 +32,9 @@ template <typename T> class SparseIdxVector {
     T previous_; // previously searched index
 
     auto search_idx_(T index) {
-        if (index < inptr[previous_ + 1] & index >= inptr[previous_]) {
+        if (index < indptr_[previous_ + 1] & index >= indptr_[previous_]) {
             return previous_;
-        } else if (index < inptr[previous_ + 2] & index >= inptr[previous_ + 1]) {
+        } else if (index < indptr_[previous_ + 2] & index >= indptr_[previous_ + 1]) {
             return previous_++; // TODO end check
         } else {
             // insert search algorithm here
