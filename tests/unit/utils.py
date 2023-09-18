@@ -143,8 +143,11 @@ def dict_params(params: Dict[Any, str], **kwargs):
 
 def import_case_data(data_path: Path, calculation_type: str, sym: bool):
     def _import_data(file_path, data_type, *args, **kwargs):
-        with pytest.deprecated_call():
-            return import_json_data(file_path, data_type, *args, **kwargs)
+        if file_path.parent.name == "deprecated_format":
+            with pytest.deprecated_call():
+                return import_json_data(file_path, data_type, *args, **kwargs)
+
+        return json_deserialize_from_file(file_path)
 
     output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
     return_dict = {
