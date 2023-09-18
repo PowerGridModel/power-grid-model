@@ -1,45 +1,51 @@
 {
-  "node": [
-    {
-      "id": 1,
-      "u_rated": 10500.0
-    },
-    {
-      "id": 2,
-      "u_rated": 10500.0
-    },
-    {
-      "id": 5,
-      "u_rated": 10500.0
-    }
-  ],
-  "line": [
-    {
-      "id": 3,
-      "from_node": 1,
-      "to_node": 2,
-      "from_status": 1,
-      "to_status": 1,
-      "r1": 0.25,
-      "x1": 0.2,
-      "c1": 1e-06,
-      "tan1": 0.0,
-      "r0": 0.25,
-      "x0": 0.2,
-      "c0": 1e-06,
-      "tan0": 0.0,
-      "i_n": 1000.0
-    }
-  ],
-  "source": [
-    {
-      "id": 10,
-      "node": 1,
-      "status": 1,
-      "u_ref": 1.0,
-      "sk": 1e12,
-      "rx_ratio": 0.1,
-      "z01_ratio": 1.0
-    }
-  ]
+  "attributes": {},
+  "data": {
+    "line": [
+      {
+        "c0": 1e-06,
+        "c1": 1e-06,
+        "from_node": 1,
+        "from_status": 1,
+        "i_n": 1000,
+        "id": 3,
+        "r0": 0.25,
+        "r1": 0.25,
+        "tan0": 0,
+        "tan1": 0,
+        "to_node": 2,
+        "to_status": 1,
+        "x0": 0.2,
+        "x1": 0.2
+      }
+    ],
+    "node": [
+      {
+        "id": 1,
+        "u_rated": 10500
+      },
+      {
+        "id": 2,
+        "u_rated": 10500
+      },
+      {
+        "id": 5,
+        "u_rated": 10500
+      }
+    ],
+    "source": [
+      {
+        "id": 10,
+        "node": 1,
+        "rx_ratio": 0.1,
+        "sk": 1000000000000,
+        "status": 1,
+        "u_ref": 1,
+        "z01_ratio": 1
+      }
+    ]
+  },
+  "is_batch": false,
+  "type": "input",
+  "version": "1.0"
 }
