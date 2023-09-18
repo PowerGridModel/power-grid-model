@@ -12,29 +12,48 @@
 
 namespace power_grid_model::detail {
 
-template <class T> class SparseIdxVector {
+template <typename T> class SparseIdxVector {
   public:
-    explicit SparseIdxVector(IdxVector const& indptr, std::vector<T> const& data) : indptr_(indptr), data_(data) {}
+    explicit SparseIdxVector(std::vector<T> const& indptr) : indptr_(indptr) {}
 
-    using iterator_category = std::forward_iterator_tag;
+    auto at(Idx index) { return search_idx_at_(index); }
+    auto at(Idx index) const { return search_idx_at_(index); }
+    auto operator[](Idx index) { return search_idx_(index); }
+    auto operator[](Idx index) const { return search_idx_(index); }
+    auto data_size() { return indptr_.back(); }
 
-    auto begin() { return data_.begin(); }
-    auto cbegin() const { return data_.cbegin(); }
-    auto end() { return data_.end(); }
-    auto cend() const { return data_.cend(); }
-    auto size() { return data_.size(); }
-    auto operator[](const Idx& sub_location) { return data_[sub_location]; }
-    auto at(const Idx& sub_location) { return data_.at(sub_location); }
-
-    auto subset_data(Idx location) {
-        auto begin = data_.begin() + indptr_[location];
-        auto end = data_.begin() + indptr_[location + 1];
-        return boost::make_iterator_range(begin, end);
+    // where would this be needed?
+    auto reverse_idx_range(Idx value) {
+        return { indptr_[value], indptr_[value + 1] }
     }
 
   private:
-    IdxVector indptr_;
-    std::vector<T> data_;
+    std::vector<T> indptr_;
+    T previous_; // previously searched index
+
+    auto search_idx_(T index) {
+        if (index < inptr[previous_ + 1] & index >= inptr[previous_]) {
+            return previous_;
+        } else if (index < inptr[previous_ + 2] & index >= inptr[previous_ + 1]) {
+            return previous_++; // TODO end check
+        } else {
+            // insert search algorithm here
+            for (Idx value; value < indptr_.size() - 1; ++value) {
+                if (indptr_[value + 1] > index) {
+                    previous_ = value;
+                    return value;
+                }
+            }
+            return nullptr; // index not found
+        }
+    }
+
+    auto search_idx_at_(T index) {
+        if (auto found = search_idx_(index)) {
+            return found;
+        }
+        throw std::out_of_range{"Element not found on index"};
+    }
 };
 
 } // namespace power_grid_model::detail
