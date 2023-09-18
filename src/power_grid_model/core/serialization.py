@@ -91,12 +91,6 @@ class Serializer(ABC):
         instance = super().__new__(cls)
 
         instance._data = data
-
-        if instance._data:
-            first = next(iter(instance._data.values()))
-            if not isinstance(first, np.ndarray):
-                raise PowerGridSerializationError("Sparse batch datasets are not supported.")
-
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()
 
