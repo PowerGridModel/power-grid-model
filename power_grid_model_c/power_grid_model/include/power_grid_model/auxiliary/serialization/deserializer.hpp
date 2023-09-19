@@ -19,6 +19,7 @@
 #include <set>
 #include <span>
 #include <sstream>
+#include <string>
 #include <string_view>
 
 // as array and map
@@ -39,23 +40,30 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             using power_grid_model::meta_data::as_array;
 
             if (o.type != msgpack::type::ARRAY) {
-                throw msgpack::type_error();
+                throw type_error();
             }
             if (as_array(o).size != 3) {
-                throw msgpack::type_error();
+                throw type_error();
             }
             for (int8_t i = 0; i != 3; ++i) {
-                if (as_array(o).ptr[i].is_nil()) {
+                auto const& phase_obj = as_array(o).ptr[i];
+                if (phase_obj.is_nil()) {
                     continue;
                 }
-                if (as_array(o).ptr[i] == "inf" || as_array(o).ptr[i] == "-inf" || as_array(o).ptr[i] == "+inf") {
-                    if (as_array(o).ptr[i] == "-inf") {
-                        v(i) = -std::numeric_limits<double>::infinity();
+                if (phase_obj.type == type::STR) {
+                    if (phase_obj.as<std::string_view>() == "inf" || phase_obj.as<std::string_view>() == "-inf" ||
+                        phase_obj.as<std::string_view>() == "+inf") {
+                        if (phase_obj.as<std::string_view>() == "-inf") {
+                            v(i) = -std::numeric_limits<double>::infinity();
+                        } else {
+                            v(i) = std::numeric_limits<double>::infinity();
+                        }
                     } else {
-                        v(i) = std::numeric_limits<double>::infinity();
+                        phase_obj >> v(i);
                     }
+                } else {
+                    phase_obj >> v(i);
                 }
-                as_array(o).ptr[i] >> v(i);
             }
             return o;
         }
@@ -428,7 +436,25 @@ class Deserializer {
         }
         // call relevant parser
         ctype_func_selector(attribute.ctype, [element_pointer, &obj, &attribute]<class T> {
-            obj >> attribute.get_attribute<T>(element_pointer);
+            using namespace std::string_view_literals;
+            using namespace std::string_literals;
+            auto& attr = attribute.get_attribute<T>(element_pointer);
+            if constexpr (std::floating_point<T>) {
+                if (obj.type == msgpack_string) {
+                    if (obj.as<std::string_view>() == "inf" || obj.as<std::string_view>() == "-inf" ||
+                        obj.as<std::string_view>() == "+inf") {
+                        if (obj.as<std::string_view>() == "-inf") {
+                            attr = -std::numeric_limits<double>::infinity();
+                        } else {
+                            attr = std::numeric_limits<double>::infinity();
+                        }
+                    }
+                } else {
+                    obj >> attr;
+                }
+            } else {
+                obj >> attr;
+            }
         });
     }
 

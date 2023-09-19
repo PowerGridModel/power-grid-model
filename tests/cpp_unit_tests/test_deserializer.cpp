@@ -121,20 +121,20 @@ constexpr std::string_view json_single = R"(
         0.22e6
       ],
       [
-        33,
-        2,
+        36,
+        3,
         1,
         0,
         "inf",
-        0.31e6
+        0.22e6
       ],
       [
-        34,
+        37,
         3,
         1,
         0,
         "-inf",
-        0.31e6
+        "+inf"
       ]
     ]
   }
@@ -211,6 +211,30 @@ constexpr std::string_view json_batch = R"(
           ]
         }
       ]
+    },
+    {
+      "sym_load": [
+        [
+          37,
+          "-inf",
+          "inf"
+        ]
+      ],
+      "asym_load": [
+        {
+          "id": 31,
+          "q_specified": [
+            "inf",
+            80.0,
+            "+inf"
+          ],
+          "p_specified": [
+            "-inf",
+            75.0,
+            "-inf"
+          ]
+        }
+      ]
     }
   ]
 }
@@ -261,7 +285,7 @@ TEST_CASE("Deserializer") {
             std::vector<NodeInput> node(3);
             std::vector<LineInput> line(2);
             std::vector<SourceInput> source(3);
-            std::vector<SymLoadGenInput> sym_load(2);
+            std::vector<SymLoadGenInput> sym_load(4);
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("node", nullptr, node.data());
             info.set_buffer("line", nullptr, line.data());
@@ -301,10 +325,11 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load[0].p_specified == doctest::Approx(1.01e6));
             CHECK(sym_load[1].id == 8);
             CHECK(sym_load[1].q_specified == doctest::Approx(0.22e6));
-            CHECK(sym_load[2].id == 33);
+            CHECK(sym_load[2].id == 36);
             CHECK(sym_load[2].p_specified == std::numeric_limits<double>::infinity());
-            CHECK(sym_load[3].id == 34);
-            CHECK(sym_load[3].q_specified == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].id == 37);
+            CHECK(sym_load[3].p_specified == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].q_specified == std::numeric_limits<double>::infinity());
         }
     }
 
@@ -314,21 +339,21 @@ TEST_CASE("Deserializer") {
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().dataset().name == "update");
             CHECK(deserializer.get_dataset_info().is_batch());
-            CHECK(deserializer.get_dataset_info().batch_size() == 3);
+            CHECK(deserializer.get_dataset_info().batch_size() == 4);
             CHECK(deserializer.get_dataset_info().n_components() == 2);
         }
 
         SUBCASE("Check buffer") {
             auto const& info = deserializer.get_dataset_info();
             CHECK(info.get_component_info("sym_load").elements_per_scenario == -1);
-            CHECK(info.get_component_info("sym_load").total_elements == 3);
+            CHECK(info.get_component_info("sym_load").total_elements == 4);
             CHECK(info.get_component_info("asym_load").elements_per_scenario == 1);
-            CHECK(info.get_component_info("asym_load").total_elements == 3);
+            CHECK(info.get_component_info("asym_load").total_elements == 4);
         }
 
         SUBCASE("Check parse") {
-            std::vector<SymLoadGenUpdate> sym_load(3);
-            std::vector<AsymLoadGenUpdate> asym_load(3);
+            std::vector<SymLoadGenUpdate> sym_load(4);
+            std::vector<AsymLoadGenUpdate> asym_load(4);
             IdxVector sym_load_indptr(4);
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("sym_load", sym_load_indptr.data(), sym_load.data());
@@ -349,6 +374,9 @@ TEST_CASE("Deserializer") {
             CHECK(is_nan(sym_load[2].p_specified));
             CHECK(is_nan(sym_load[2].q_specified));
             CHECK(sym_load[2].status == 0);
+            CHECK(sym_load[3].id == 37);
+            CHECK(sym_load[3].p_specified == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].q_specified == std::numeric_limits<double>::infinity());
 
             // asym_load
             CHECK(asym_load[0].id == 9);
@@ -364,6 +392,13 @@ TEST_CASE("Deserializer") {
             CHECK(asym_load[2].q_specified(0) == doctest::Approx(70.0));
             CHECK(asym_load[2].q_specified(1) == doctest::Approx(80.0));
             CHECK(asym_load[2].q_specified(2) == doctest::Approx(90.0));
+            CHECK(asym_load[3].id == 31);
+            CHECK(asym_load[3].p_specified(0) == -std::numeric_limits<double>::infinity());
+            CHECK(asym_load[3].p_specified(1) == doctest::Approx(75.0));
+            CHECK(asym_load[3].p_specified(2) == -std::numeric_limits<double>::infinity());
+            CHECK(asym_load[3].q_specified(0) == std::numeric_limits<double>::infinity());
+            CHECK(asym_load[3].q_specified(1) == doctest::Approx(80.0));
+            CHECK(asym_load[3].q_specified(2) == std::numeric_limits<double>::infinity());
         }
     }
 }
