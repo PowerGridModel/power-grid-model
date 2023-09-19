@@ -21,7 +21,7 @@ class SparseIdxVector {
         Iterator(IdxVector const& indptr, Idx group, Idx element)
             : indptr_(indptr), size_(static_cast<Idx>(indptr.size())), group_(group), element_(element) {}
 
-        bool operator!=(Iterator const& other) { return !(group_ == other.group_ && element_ == other.element_); }
+        bool operator!=(Iterator const& other) { return !(*this == other); }
 
         bool operator==(Iterator const& other) { return (group_ == other.group_ && element_ == other.element_); }
 

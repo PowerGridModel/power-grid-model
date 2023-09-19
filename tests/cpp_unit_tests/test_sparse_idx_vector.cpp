@@ -50,7 +50,6 @@ TEST_CASE("Sparse idx data strucuture for topology") {
 
     SUBCASE("Group iterator") {
         auto group_iter = sparse_idx_vector.group_iter();
-        auto sample_begin = sample_indptr.begin();
         SparseIdxVector::ElementIterator expected_range_0{IdxVector{0, 3}, 0, 0};
         SparseIdxVector::ElementIterator expected_range_1{IdxVector{3, 6}, 1, 0};
         SparseIdxVector::ElementIterator expected_range_2{IdxVector{6, 7}, 2, 0};
