@@ -36,7 +36,6 @@ if there are sources
 #include "../calculation_parameters.hpp"
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
-#include "../sparse_idx_vector.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
@@ -81,25 +80,23 @@ template <bool sym> class LinearPFSolver {
         // loop to all loads and sources, j as load number
         IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        detail::SparseIdxVector load_gen_bus_sparse_idx{*load_gen_bus_indptr_};
-        detail::SparseIdxVector source_bus_sparse_idx{*source_bus_indptr_};
-
-        // loop loads
-        for (Idx load_number = 0; load_number != input.s_injection.size(); ++load_number) {
-            auto bus_number = load_gen_bus_sparse_idx[load_number];
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const data_sequence = bus_entry[bus_number];
-            // YBus_diag += -conj(S_base)
-            add_diag(mat_data_[data_sequence], -conj(input.s_injection[load_number]));
-        }
-        // loop sources
-        for (Idx source_number = 0; source_number != input.source.size(); ++source_number) {
-            auto bus_number = source_bus_sparse_idx[source_number];
-            Idx const data_sequence = bus_entry[bus_number];
-            // YBus_diag += Y_source
-            mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
-            // rhs += Y_source_j * U_ref_j
-            output.u[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                        ComplexValue<sym>{input.source[source_number]});
+            // loop loads
+            for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
+                 ++load_number) {
+                // YBus_diag += -conj(S_base)
+                add_diag(mat_data_[data_sequence], -conj(input.s_injection[load_number]));
+            }
+            // loop sources
+            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+                 ++source_number) {
+                // YBus_diag += Y_source
+                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                // rhs += Y_source_j * U_ref_j
+                output.u[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                            ComplexValue<sym>{input.source[source_number]});
+            }
         }
 
         // solve
@@ -131,29 +128,28 @@ template <bool sym> class LinearPFSolver {
         output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
         output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
 
-        detail::SparseIdxVector load_gen_bus_sparse_idx{*load_gen_bus_indptr_};
-        detail::SparseIdxVector source_bus_sparse_idx{*source_bus_indptr_};
-
         // prepare source, load gen and node injection
-        output.source.resize(source_bus_sparse_idx.data_size());
-        output.load_gen.resize(load_gen_bus_sparse_idx.data_size());
+        output.source.resize(source_bus_indptr_->back());
+        output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
-        // source
-        for (Idx source = 0; source != output.source.size(); ++source) {
-            auto bus = source_bus_sparse_idx[source];
-            ComplexValue<sym> const u_ref{input.source[source]};
-            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-            output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
-            output.source[source].s = output.u[bus] * conj(output.source[source].i);
-        }
+        // loop all bus
+        for (Idx bus = 0; bus != n_bus_; ++bus) {
+            // source
+            for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
+                ComplexValue<sym> const u_ref{input.source[source]};
+                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+                output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
+                output.source[source].s = output.u[bus] * conj(output.source[source].i);
+            }
 
-        // load_gen
-        for (Idx load_gen = 0; load_gen != output.load_gen.size(); ++load_gen) {
-            auto bus = load_gen_bus_sparse_idx[load_gen];
-            // power is always quadratic relation to voltage for linear pf
-            output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus]);
-            output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
+            // load_gen
+            for (Idx load_gen = (*load_gen_bus_indptr_)[bus]; load_gen != (*load_gen_bus_indptr_)[bus + 1];
+                 ++load_gen) {
+                // power is always quadratic relation to voltage for linear pf
+                output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus]);
+                output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
+            }
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
