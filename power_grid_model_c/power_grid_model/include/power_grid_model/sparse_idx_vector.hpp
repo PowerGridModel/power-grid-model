@@ -71,8 +71,9 @@ class SparseIdxVector {
       public:
         ElementIteratorItems(IdxVector const& indptr, Idx group, Idx element)
             : ElementIterator(indptr, group, element) {}
-        auto operator*() const { return std::make_pair(group_, indptr_[group_] + element_); }
-        auto operator[](Idx const& index) const { return std::make_pair(*this[index], index); }
+        auto operator*() const { return std::make_tuple(group_, indptr_[group_] + element_); }
+        ElementIteratorItems begin() { return ElementIteratorItems{indptr_, 0, 0}; }
+        ElementIteratorItems end() { return ElementIteratorItems{indptr_, size_ - 1, 0}; }
     };
 
     class GroupIterator : public Iterator {
@@ -101,7 +102,7 @@ class SparseIdxVector {
     };
 
     ElementIterator element_iter() { return ElementIterator(indptr_, 0, 0); }
-    ElementIterator element_iter_items() { return ElementIteratorItems(indptr_, 0, 0); }
+    ElementIteratorItems element_iter_items() { return ElementIteratorItems(indptr_, 0, 0); }
     GroupIterator group_iter() { return GroupIterator(indptr_, 0, 0); }
 
   private:

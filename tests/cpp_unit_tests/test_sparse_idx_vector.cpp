@@ -37,18 +37,16 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     }
 
     // TODO Implement items
-    // SUBCASE("Element iterator items") {
-    //     auto elm_iter_items = sparse_idx_vector.element_iter_items();
-    //     auto& [a0, a1] = elm_iter_items[0];
-    //     CHECK(a0 == 0);
-    //     CHECK(a1 == 0);
+    SUBCASE("Element iterator items") {
+        auto elm_iter_items = sparse_idx_vector.element_iter_items();
 
-    //     IdxVector actual_groups{};
-    //     for (auto& [key, value] : elm_iter_items) {
-    //         actual_groups[key] = value;
-    //     }
-    //     CHECK(actual_groups == expected_groups);
-    // }
+        IdxVector actual_groups{};
+        actual_groups.resize(expected_groups.size());
+        for (auto [key, value] : elm_iter_items) {
+            actual_groups[value] = key;
+        }
+        CHECK(actual_groups == expected_groups);
+    }
 
     SUBCASE("Group iterator") {
         auto group_iter = sparse_idx_vector.group_iter();
