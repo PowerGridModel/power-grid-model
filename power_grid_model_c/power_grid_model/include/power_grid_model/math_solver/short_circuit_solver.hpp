@@ -41,7 +41,6 @@ template <bool sym> class ShortCircuitSolver {
         auto const [phase_1, phase_2] = set_phase_index(fault_phase);
 
         // getter
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.lu_diag();
         // output
         ShortCircuitMathOutput<sym> output;
@@ -49,13 +48,7 @@ template <bool sym> class ShortCircuitSolver {
         output.fault.resize(input.faults.size());
         output.source.resize(n_source_);
 
-        // copy y_bus data
-        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&ydata](Idx k) {
-            if (k == -1) {
-                return ComplexTensor<sym>{};
-            }
-            return ydata[k];
-        });
+        copy_y_bus(y_bus);
 
         // prepare matrix + rhs
         IdxVector infinite_admittance_fault_counter(n_bus_);
@@ -212,6 +205,16 @@ template <bool sym> class ShortCircuitSolver {
     // sparse solver
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     BlockPermArray perm_;
+
+    void copy_y_bus(YBus<sym> const& y_bus) {
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
+            if (k == -1) {
+                return ComplexTensor<sym>{};
+            }
+            return ydata[k];
+        });
+    }
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
