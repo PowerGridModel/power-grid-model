@@ -58,7 +58,6 @@ template <bool sym> class LinearPFSolver {
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    CalculationInfo& calculation_info) {
         // getter
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
         IdxVector const& bus_entry = y_bus.lu_diag();
         // output
         MathOutput<sym> output;
@@ -69,13 +68,7 @@ template <bool sym> class LinearPFSolver {
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
 
-        // copy y bus data
-        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
-            if (k == -1) {
-                return ComplexTensor<sym>{};
-            }
-            return ydata[k];
-        });
+        copy_y_bus(y_bus);
 
         add_loads_and_sources(bus_entry, y_bus, input, output);
 
@@ -102,6 +95,16 @@ template <bool sym> class LinearPFSolver {
     // sparse solver
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
+
+    void copy_y_bus(YBus<sym> const& y_bus) {
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
+            if (k == -1) {
+                return ComplexTensor<sym>{};
+            }
+            return ydata[k];
+        });
+    }
 
     void add_loads_and_sources(IdxVector const& bus_entry, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                MathOutput<sym>& output) {
