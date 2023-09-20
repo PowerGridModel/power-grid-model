@@ -67,9 +67,7 @@ template <bool sym> class LinearPFSolver {
 
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
-
         copy_y_bus(y_bus);
-
         add_loads_and_sources(bus_entry, y_bus, input, output);
 
         // solve
