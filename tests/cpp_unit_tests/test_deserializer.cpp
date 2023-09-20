@@ -354,7 +354,7 @@ TEST_CASE("Deserializer") {
         SUBCASE("Check parse") {
             std::vector<SymLoadGenUpdate> sym_load(4);
             std::vector<AsymLoadGenUpdate> asym_load(4);
-            IdxVector sym_load_indptr(4);
+            IdxVector sym_load_indptr(deserializer.get_dataset_info().batch_size() + 1);
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("sym_load", sym_load_indptr.data(), sym_load.data());
             info.set_buffer("asym_load", nullptr, asym_load.data());
@@ -362,7 +362,7 @@ TEST_CASE("Deserializer") {
             deserializer.parse();
 
             // sym_load
-            CHECK(sym_load_indptr == IdxVector{0, 1, 1, 3});
+            CHECK(sym_load_indptr == IdxVector{0, 1, 1, 3, 4});
             CHECK(sym_load[0].id == 7);
             CHECK(sym_load[0].p_specified == doctest::Approx(20.0));
             CHECK(sym_load[0].status == na_IntS);
