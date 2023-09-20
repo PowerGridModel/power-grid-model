@@ -65,8 +65,7 @@ template <bool sym> class ShortCircuitSolver {
                  ++source_number) {
                 ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                 diagonal_element += y_source; // add y_source to the diagonal of Ybus
-                u_bus +=
-                    dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source * c
+                u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source
             }
             // skip if no fault
             if (!input.faults.empty()) {
