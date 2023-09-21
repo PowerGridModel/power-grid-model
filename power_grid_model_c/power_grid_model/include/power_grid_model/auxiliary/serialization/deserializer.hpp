@@ -29,7 +29,7 @@ constexpr auto const& as_array(msgpack::object const& obj) { return obj.via.arra
 constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 
-constexpr void const handle_inf(msgpack::object const& obj, auto& attr) {
+constexpr void handle_inf(msgpack::object const& obj, auto& attr) {
     using namespace msgpack;
     using namespace std::string_view_literals;
 
