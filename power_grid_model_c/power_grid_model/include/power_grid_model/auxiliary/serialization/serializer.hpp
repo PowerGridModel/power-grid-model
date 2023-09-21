@@ -228,6 +228,9 @@ class Serializer {
             break;
         case nlohmann::json::value_t::number_float:
             json_inf_to_string(json_document);
+            break;
+        default:
+            break;
         }
     }
 

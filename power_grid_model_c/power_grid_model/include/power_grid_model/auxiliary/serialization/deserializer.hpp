@@ -175,6 +175,9 @@ class Deserializer {
             break;
         case nlohmann::json::value_t::string:
             json_string_to_inf(json_document);
+            break;
+        default:
+            break;
         }
     }
 
