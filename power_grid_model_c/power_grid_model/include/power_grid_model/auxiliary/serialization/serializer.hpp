@@ -42,18 +42,13 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p,
                                             power_grid_model::RealValue<false> const& o) const {
             using namespace std::string_view_literals;
-            constexpr auto infinity = "inf"sv;
-            constexpr auto neg_infinity = "-inf"sv;
+            using namespace power_grid_model::meta_data;
             p.pack_array(3);
             for (int8_t i = 0; i != 3; ++i) {
                 if (power_grid_model::is_nan(o(i))) {
                     p.pack_nil();
                 } else {
-                    if (std::isinf(o(i))) {
-                        p.pack(o(i) > 0 ? infinity : neg_infinity);
-                    } else {
-                        p.pack(o(i));
-                    }
+                    pack_inf(p, o(i));
                 }
             }
             return p;
@@ -65,6 +60,19 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 } // namespace msgpack
 
 namespace power_grid_model::meta_data {
+
+constexpr void pack_inf(auto& packer_inf, auto& attr) {
+    using namespace msgpack;
+    using namespace std::string_view_literals;
+    constexpr auto infinity = "inf"sv;
+    constexpr auto neg_infinity = "-inf"sv;
+
+    if (std::isinf(attr)) {
+        packer_inf.pack(attr > 0 ? infinity : neg_infinity);
+    } else {
+        packer_inf.pack(attr);
+    }
+}
 
 class Serializer {
     using RawElementPtr = void const*;
@@ -141,19 +149,6 @@ class Serializer {
         }
         }
     }
-
-    // constexpr void handle_inf(auto& attr) {
-    //     using namespace msgpack;
-    //     using namespace std::string_view_literals;
-    //     constexpr auto infinity = "inf"sv;
-    //     constexpr auto neg_infinity = "-inf"sv;
-
-    //     if (std::isinf(attr)) {
-    //         auto attribute = (attr > 0 ? infinity : neg_infinity);
-    //     } else {
-    //         attr);
-    //     }
-    // }
 
   private:
     SerializationFormat serialization_format_{};
@@ -360,20 +355,9 @@ class Serializer {
 
     void pack_attribute(RawElementPtr element_ptr, MetaAttribute const& attribute) {
         ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<typename T> {
-            // split in two and check if constexpr std floating point then if statement that checks whether it is inf
-            // (isinf)
-            using namespace std::string_view_literals;
-            constexpr auto infinity = "inf"sv;
-            constexpr auto neg_infinity = "-inf"sv;
-
             auto const& attr = attribute.get_attribute<T const>(element_ptr);
             if constexpr (std::floating_point<T>) {
-                if (std::isinf(attr)) {
-                    packer_.pack(attr > 0 ? infinity : neg_infinity);
-                } else {
-                    packer_.pack(attr);
-                }
-
+                pack_inf(packer_, attr);
             } else {
                 packer_.pack(attr);
             }
