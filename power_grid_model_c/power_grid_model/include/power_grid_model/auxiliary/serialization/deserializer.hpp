@@ -158,10 +158,35 @@ class Deserializer {
     std::vector<std::vector<ArraySpan>> msg_views_;
 
     static std::vector<char> json_to_msgpack(std::string_view json_string) {
-        nlohmann::json const json_document = nlohmann::json::parse(json_string);
+        nlohmann::json json_document = nlohmann::json::parse(json_string);
+        json_check_inf(json_document);
         std::vector<char> msgpack_data;
         nlohmann::json::to_msgpack(json_document, msgpack_data);
         return msgpack_data;
+    }
+
+    static void json_check_inf(nlohmann::json& json_document) {
+        switch (json_document.type()) {
+            using enum nlohmann::json::value_t;
+        case object:
+        case array:
+            for (auto& value : json_document) {
+                json_check_inf(value);
+            }
+            break;
+        case string:
+            json_parse_string_inf(json_document);
+        }
+    }
+
+    static void json_parse_string_inf(nlohmann::json& value) {
+        std::string const str = value.get<std::string>();
+        if (str == "inf" || str == "+inf") {
+            value = std::numeric_limits<double>::infinity();
+        }
+        if (str == "-inf") {
+            value = -std::numeric_limits<double>::infinity();
+        }
     }
 
     static std::string_view key_to_string(msgpack::object_kv const& kv) {

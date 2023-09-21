@@ -42,15 +42,15 @@ constexpr std::string_view json_single = R"(
     "node": [
       [
         1,
-        10.5e3
+        "inf"
       ],
       [
         2,
-        10.5e3
+        "+inf"
       ],
       [
         3,
-        10.5e3
+        "-inf"
       ]
     ],
     "line": [
@@ -255,11 +255,14 @@ TEST_CASE("Deserializer") {
             deserializer.parse();
             // check node
             CHECK(node[0].id == 1);
-            CHECK(node[0].u_rated == doctest::Approx(10.5e3));
+            CHECK(std::isinf(node[0].u_rated));
+            CHECK(node[0].u_rated > 0.0);
             CHECK(node[1].id == 2);
-            CHECK(node[1].u_rated == doctest::Approx(10.5e3));
+            CHECK(std::isinf(node[1].u_rated));
+            CHECK(node[1].u_rated > 0.0);
             CHECK(node[2].id == 3);
-            CHECK(node[2].u_rated == doctest::Approx(10.5e3));
+            CHECK(std::isinf(node[2].u_rated));
+            CHECK(node[2].u_rated < 0.0);
             // check line
             CHECK(line[0].id == 4);
             CHECK(line[0].r1 == doctest::Approx(0.11));
