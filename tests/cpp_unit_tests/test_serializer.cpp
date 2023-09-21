@@ -10,13 +10,13 @@ namespace power_grid_model::meta_data {
 
 namespace {
 constexpr std::string_view single_dataset_dict =
-    R"({"attributes":{},"data":{"asym_load":[{"id":5,"p_specified":[10,11,12]},{"id":6,"p_specified":[15,null,16]},{"id":7}]},"is_batch":false,"type":"update","version":"1.0"})";
+    R"({"attributes":{},"data":{"asym_load":[{"id":5,"p_specified":[10,11,12]},{"id":6,"p_specified":["inf",null,"-inf"]},{"id":7}]},"is_batch":false,"type":"update","version":"1.0"})";
 constexpr std::string_view single_dataset_list =
-    R"({"attributes":{"asym_load":["id","p_specified"]},"data":{"asym_load":[[5,[10,11,12]],[6,[15,null,16]],[7,null]]},"is_batch":false,"type":"update","version":"1.0"})";
+    R"({"attributes":{"asym_load":["id","p_specified"]},"data":{"asym_load":[[5,[10,11,12]],[6,["inf",null,"-inf"]],[7,null]]},"is_batch":false,"type":"update","version":"1.0"})";
 constexpr std::string_view batch_dataset_list =
-    R"({"attributes":{},"data":[{"asym_load":[{"id":5,"p_specified":[10,11,12]}]},{"asym_gen":[{"id":7}],"asym_load":[{"id":6,"p_specified":[15,null,16]}]}],"is_batch":true,"type":"update","version":"1.0"})";
+    R"({"attributes":{},"data":[{"asym_load":[{"id":5,"p_specified":[10,11,12]}]},{"asym_gen":[{"id":7}],"asym_load":[{"id":6,"p_specified":["inf",null,"-inf"]}]}],"is_batch":true,"type":"update","version":"1.0"})";
 constexpr std::string_view batch_dataset_dict =
-    R"({"attributes":{"asym_gen":["id"],"asym_load":["id","p_specified"]},"data":[{"asym_load":[[5,[10,11,12]]]},{"asym_gen":[[7]],"asym_load":[[6,[15,null,16]]]}],"is_batch":true,"type":"update","version":"1.0"})";
+    R"({"attributes":{"asym_gen":["id"],"asym_load":["id","p_specified"]},"data":[{"asym_load":[[5,[10,11,12]]]},{"asym_gen":[[7]],"asym_load":[[6,["inf",null,"-inf"]]]}],"is_batch":true,"type":"update","version":"1.0"})";
 } // namespace
 
 TEST_CASE("Serializer") {
@@ -26,7 +26,8 @@ TEST_CASE("Serializer") {
     asym_load_gen[1].id = 6;
     asym_load_gen[2].id = 7;
     asym_load_gen[0].p_specified = {10.0, 11.0, 12.0};
-    asym_load_gen[1].p_specified = {15.0, nan, 16.0};
+    asym_load_gen[1].p_specified = {std::numeric_limits<double>::infinity(), nan,
+                                    -std::numeric_limits<double>::infinity()};
     // nan for asym_load_gen[2].p_specified
 
     SUBCASE("Single dataset") {
