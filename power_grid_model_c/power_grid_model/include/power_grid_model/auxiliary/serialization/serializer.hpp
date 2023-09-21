@@ -140,6 +140,19 @@ class Serializer {
         }
     }
 
+    // constexpr void handle_inf(auto& attr) {
+    //     using namespace msgpack;
+    //     using namespace std::string_view_literals;
+    //     constexpr auto infinity = "inf"sv;
+    //     constexpr auto neg_infinity = "-inf"sv;
+
+    //     if (std::isinf(attr)) {
+    //         auto attribute = (attr > 0 ? infinity : neg_infinity);
+    //     } else {
+    //         attr);
+    //     }
+    // }
+
   private:
     SerializationFormat serialization_format_{};
 
