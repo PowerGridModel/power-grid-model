@@ -68,7 +68,7 @@ template <bool sym> class LinearPFSolver {
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
         copy_y_bus(y_bus);
-        add_loads_and_sources(bus_entry, y_bus, input, output);
+        prepare_matrix_and_rhs(bus_entry, y_bus, input, output);
 
         // solve
         // u vector will have I_injection for slack bus for now
@@ -104,27 +104,35 @@ template <bool sym> class LinearPFSolver {
         });
     }
 
-    void add_loads_and_sources(IdxVector const& bus_entry, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                               MathOutput<sym>& output) {
+    void prepare_matrix_and_rhs(IdxVector const& bus_entry, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                MathOutput<sym>& output) {
         IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const data_sequence = bus_entry[bus_number];
-            // loop loads
-            for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
-                 ++load_number) {
-                // YBus_diag += -conj(S_base)
-                add_diag(mat_data_[data_sequence], -conj(input.s_injection[load_number]));
-            }
-            // loop sources
-            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-                 ++source_number) {
-                // YBus_diag += Y_source
-                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
-                // rhs += Y_source_j * U_ref_j
-                output.u[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                            ComplexValue<sym>{input.source[source_number]});
-            }
+            add_loads(load_gen_bus_idxptr, bus_number, input, data_sequence);
+            add_sources(source_bus_indptr, bus_number, y_bus, input, output, data_sequence);
+        }
+    }
+
+    void add_loads(IdxVector const& load_gen_bus_idxptr, Idx const& bus_number, PowerFlowInput<sym> const& input,
+                   Idx const& data_sequence) {
+        for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
+             ++load_number) {
+            // YBus_diag += -conj(S_base)
+            add_diag(mat_data_[data_sequence], -conj(input.s_injection[load_number]));
+        }
+    }
+
+    void add_sources(IdxVector const& source_bus_indptr, Idx const& bus_number, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input, MathOutput<sym>& output, Idx const& data_sequence) {
+        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+             ++source_number) {
+            // YBus_diag += Y_source
+            mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
+            // rhs += Y_source_j * U_ref_j
+            output.u[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                        ComplexValue<sym>{input.source[source_number]});
         }
     }
 
