@@ -98,12 +98,8 @@ template <bool sym> class ShortCircuitSolver {
             auto& u_bus = output.u_bus[bus_number];
 
             // add all sources
-            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-                 ++source_number) {
-                ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-                diagonal_element += y_source; // add y_source to the diagonal of Ybus
-                u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source
-            }
+            add_sources(source_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus);
+
             // skip if no fault
             if (!input.faults.empty()) {
                 // add all faults
@@ -219,6 +215,16 @@ template <bool sym> class ShortCircuitSolver {
                     }
                 }
             }
+        }
+    }
+
+    void add_sources(IdxVector const& source_bus_indptr, Idx const& bus_number, YBus<sym> const& y_bus,
+                     ShortCircuitInput const& input, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
+        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+             ++source_number) {
+            ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
+            diagonal_element += y_source; // add y_source to the diagonal of Ybus
+            u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source
         }
     }
 
