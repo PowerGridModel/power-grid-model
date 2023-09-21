@@ -33,6 +33,11 @@ json read_json(std::filesystem::path const& json_file) {
     return j;
 }
 
+json const& get_dataset_json(json const& j) {
+    return j.contains("version") ? j.at("data") // v1.0
+                                 : j;           // deprecated version
+}
+
 class UnsupportedValidationCase : public PowerGridError {
   public:
     UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
@@ -135,7 +140,7 @@ struct SingleData {
 // parse single json data
 SingleData convert_json_single(json const& j, std::string const& data_type) {
     SingleData single_data;
-    single_data.buffer_map = parse_single_dict(j, data_type);
+    single_data.buffer_map = parse_single_dict(get_dataset_json(j), data_type);
     single_data.const_dataset = generate_dataset<true>(single_data.buffer_map);
     single_data.dataset = generate_dataset<false>(single_data.buffer_map);
 
@@ -175,7 +180,7 @@ struct BatchData {
 BatchData convert_json_batch(json const& j, std::string const& data_type) {
     MetaDataset const& meta = meta_data().get_dataset(data_type);
     BatchData batch_data;
-    for (auto const& j_single : j) {
+    for (auto const& j_single : get_dataset_json(j)) {
         batch_data.individual_batch.push_back(convert_json_single(j_single, data_type));
     }
     Idx const n_batch = static_cast<Idx>(batch_data.individual_batch.size());
