@@ -19,6 +19,20 @@
 #include <span>
 #include <string_view>
 
+constexpr void pack_inf(auto& packer_inf, auto& attr) {
+    using namespace msgpack;
+    using namespace std::string_view_literals;
+    using namespace power_grid_model::meta_data;
+    constexpr auto infinity = "inf"sv;
+    constexpr auto neg_infinity = "-inf"sv;
+
+    if (std::isinf(attr)) {
+        packer_inf.pack(attr > 0 ? infinity : neg_infinity);
+    } else {
+        packer_inf.pack(attr);
+    }
+}
+
 // custom packers
 namespace msgpack {
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
@@ -60,19 +74,6 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 } // namespace msgpack
 
 namespace power_grid_model::meta_data {
-
-constexpr void pack_inf(auto& packer_inf, auto& attr) {
-    using namespace msgpack;
-    using namespace std::string_view_literals;
-    constexpr auto infinity = "inf"sv;
-    constexpr auto neg_infinity = "-inf"sv;
-
-    if (std::isinf(attr)) {
-        packer_inf.pack(attr > 0 ? infinity : neg_infinity);
-    } else {
-        packer_inf.pack(attr);
-    }
-}
 
 class Serializer {
     using RawElementPtr = void const*;
