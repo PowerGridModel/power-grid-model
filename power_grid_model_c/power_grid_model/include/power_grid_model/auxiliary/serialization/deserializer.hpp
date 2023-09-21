@@ -29,19 +29,17 @@ constexpr auto const& as_array(msgpack::object const& obj) { return obj.via.arra
 constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 
-constexpr void handle_inf(msgpack::object const& obj, auto& attr) {
+constexpr void unpack(msgpack::object const& obj, std::floating_point auto& attr) {
     using namespace msgpack;
     using namespace std::string_view_literals;
 
     auto infinity = std::numeric_limits<double>::infinity();
     if (obj.type == type::STR) {
         auto const& obj_string = obj.as<std::string_view>();
-        if (obj_string == "inf" || obj_string == "-inf" || obj_string == "+inf") {
-            if (obj_string == "inf" || obj_string == "+inf") {
-                attr = infinity;
-            } else {
-                attr = -infinity;
-            }
+        if (obj_string == "inf" || obj_string == "+inf") {
+            attr = infinity;
+        } else if (obj_string == "-inf") {
+            attr = -infinity;
         } else {
             throw type_error();
         }
@@ -60,7 +58,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     template <> struct convert<power_grid_model::RealValue<false>> {
         msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
             using power_grid_model::meta_data::as_array;
-            using power_grid_model::meta_data::handle_inf;
+            using power_grid_model::meta_data::unpack;
 
             if (o.type != msgpack::type::ARRAY) {
                 throw type_error();
@@ -73,7 +71,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
                 if (phase_obj.is_nil()) {
                     continue;
                 }
-                handle_inf(phase_obj, v(i));
+                unpack(phase_obj, v(i));
             }
             return o;
         }
@@ -446,11 +444,9 @@ class Deserializer {
         }
         // call relevant parser
         ctype_func_selector(attribute.ctype, [element_pointer, &obj, &attribute]<class T> {
-            using namespace std::string_view_literals;
-            using namespace std::string_literals;
             auto& attr = attribute.get_attribute<T>(element_pointer);
             if constexpr (std::floating_point<T>) {
-                handle_inf(obj, attr);
+                unpack(obj, attr);
             } else {
                 obj >> attr;
             }
