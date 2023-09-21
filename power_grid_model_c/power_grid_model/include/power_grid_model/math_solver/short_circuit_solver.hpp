@@ -187,15 +187,8 @@ template <bool sym> class ShortCircuitSolver {
         }
         if constexpr (!sym) {
             if (fault_type == FaultType::single_phase_to_ground) {
-                for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                     data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                    Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                    // mat_data[:,bus][:, phase_1] = 0
-                    mat_data_[col_data_index].col(phase_1) = 0;
-                }
-                // mat_data[bus,bus][phase_1, phase_1] = -1
-                diagonal_element(phase_1, phase_1) = -1;
-                u_bus(phase_1) = 0; // update rhs
+                add_single_phase_to_ground_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus,
+                                                                         phase_1);
             } else if (fault_type == FaultType::two_phase) {
                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
@@ -245,6 +238,22 @@ template <bool sym> class ShortCircuitSolver {
         // mat_data[bus,bus] = -1
         diagonal_element = ComplexTensor<sym>{-1};
         u_bus = ComplexValue<sym>{0}; // update rhs
+    }
+
+    void add_single_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
+                                                                  ComplexTensor<sym>& diagonal_element,
+                                                                  ComplexValue<sym>& u_bus, IntS const& phase_1)
+        requires !
+                 sym {
+        for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
+             ++data_index) {
+            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+            // mat_data[:,bus][:, phase_1] = 0
+            mat_data_[col_data_index].col(phase_1) = 0;
+        }
+        // mat_data[bus,bus][phase_1, phase_1] = -1
+        diagonal_element(phase_1, phase_1) = -1;
+        u_bus(phase_1) = 0; // update rhs
     }
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
