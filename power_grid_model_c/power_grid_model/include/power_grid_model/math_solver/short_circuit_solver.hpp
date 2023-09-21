@@ -190,37 +190,11 @@ template <bool sym> class ShortCircuitSolver {
                 add_single_phase_to_ground_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus,
                                                                          phase_1);
             } else if (fault_type == FaultType::two_phase) {
-                for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                     data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                    Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                    // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
-                    // mat_data[:,bus][:, phase_2] = 0
-                    mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
-                    mat_data_[col_data_index].col(phase_2) = 0;
-                }
-                // mat_data[bus,bus][phase_1, phase_2] = -1
-                // mat_data[bus,bus][phase_2, phase_2] = 1
-                diagonal_element(phase_1, phase_2) = -1;
-                diagonal_element(phase_2, phase_2) = 1;
-                // update rhs
-                u_bus(phase_2) += u_bus(phase_1);
-                u_bus(phase_1) = 0;
+                add_two_phase_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus, phase_1,
+                                                            phase_2);
             } else if (fault_type == FaultType::two_phase_to_ground) {
-                for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                     data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                    Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                    // mat_data[:,bus][:, phase_1] = 0
-                    // mat_data[:,bus][:, phase_2] = 0
-                    mat_data_[col_data_index].col(phase_1) = 0;
-                    mat_data_[col_data_index].col(phase_2) = 0;
-                }
-                // mat_data[bus,bus][phase_1, phase_1] = -1
-                // mat_data[bus,bus][phase_2, phase_2] = -1
-                diagonal_element(phase_1, phase_1) = -1;
-                diagonal_element(phase_2, phase_2) = -1;
-                // update rhs
-                u_bus(phase_1) = 0;
-                u_bus(phase_2) = 0;
+                add_two_phase_to_ground_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus,
+                                                                      phase_1, phase_2);
             } else {
                 assert((fault_type == FaultType::three_phase));
             }
@@ -254,6 +228,51 @@ template <bool sym> class ShortCircuitSolver {
         // mat_data[bus,bus][phase_1, phase_1] = -1
         diagonal_element(phase_1, phase_1) = -1;
         u_bus(phase_1) = 0; // update rhs
+    }
+
+    void add_two_phase_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
+                                                     ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
+                                                     IntS const& phase_1, IntS const& phase_2)
+        requires !
+                 sym {
+        for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
+             ++data_index) {
+            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+            // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
+            // mat_data[:,bus][:, phase_2] = 0
+            mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
+            mat_data_[col_data_index].col(phase_2) = 0;
+        }
+        // mat_data[bus,bus][phase_1, phase_2] = -1
+        // mat_data[bus,bus][phase_2, phase_2] = 1
+        diagonal_element(phase_1, phase_2) = -1;
+        diagonal_element(phase_2, phase_2) = 1;
+        // update rhs
+        u_bus(phase_2) += u_bus(phase_1);
+        u_bus(phase_1) = 0;
+    }
+
+    void add_two_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
+                                                               ComplexTensor<sym>& diagonal_element,
+                                                               ComplexValue<sym>& u_bus, IntS const& phase_1,
+                                                               IntS const& phase_2)
+        requires !
+                 sym {
+        for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
+             ++data_index) {
+            Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+            // mat_data[:,bus][:, phase_1] = 0
+            // mat_data[:,bus][:, phase_2] = 0
+            mat_data_[col_data_index].col(phase_1) = 0;
+            mat_data_[col_data_index].col(phase_2) = 0;
+        }
+        // mat_data[bus,bus][phase_1, phase_1] = -1
+        // mat_data[bus,bus][phase_2, phase_2] = -1
+        diagonal_element(phase_1, phase_1) = -1;
+        diagonal_element(phase_2, phase_2) = -1;
+        // update rhs
+        u_bus(phase_1) = 0;
+        u_bus(phase_2) = 0;
     }
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
