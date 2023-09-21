@@ -28,6 +28,30 @@ namespace power_grid_model::meta_data {
 constexpr auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
 constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
+
+constexpr void const handle_inf(msgpack::object const& obj, auto& attr) {
+    using namespace msgpack;
+    using namespace std::string_view_literals;
+
+    auto infinity = std::numeric_limits<double>::infinity();
+    if (obj.type == type::STR) {
+        auto const& obj_string = obj.as<std::string_view>();
+        if (obj_string == "inf" || obj_string == "-inf" || obj_string == "+inf") {
+            // do other way around
+            if (obj_string == "inf" || obj_string == "+inf") {
+                // use infinity only once, give a vairable
+                attr = infinity;
+            } else {
+                attr = -infinity;
+            }
+        } else {
+            throw type_error();
+        }
+    } else {
+        obj >> attr;
+    }
+}
+
 } // namespace power_grid_model::meta_data
 
 // converter for double[3]
@@ -38,6 +62,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     template <> struct convert<power_grid_model::RealValue<false>> {
         msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
             using power_grid_model::meta_data::as_array;
+            using power_grid_model::meta_data::handle_inf;
 
             if (o.type != msgpack::type::ARRAY) {
                 throw type_error();
@@ -50,20 +75,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
                 if (phase_obj.is_nil()) {
                     continue;
                 }
-                if (phase_obj.type == type::STR) {
-                    if (phase_obj.as<std::string_view>() == "inf" || phase_obj.as<std::string_view>() == "-inf" ||
-                        phase_obj.as<std::string_view>() == "+inf") {
-                        if (phase_obj.as<std::string_view>() == "-inf") {
-                            v(i) = -std::numeric_limits<double>::infinity();
-                        } else {
-                            v(i) = std::numeric_limits<double>::infinity();
-                        }
-                    } else {
-                        phase_obj >> v(i);
-                    }
-                } else {
-                    phase_obj >> v(i);
-                }
+                handle_inf(phase_obj, v(i));
             }
             return o;
         }
@@ -440,18 +452,7 @@ class Deserializer {
             using namespace std::string_literals;
             auto& attr = attribute.get_attribute<T>(element_pointer);
             if constexpr (std::floating_point<T>) {
-                if (obj.type == msgpack_string) {
-                    if (obj.as<std::string_view>() == "inf" || obj.as<std::string_view>() == "-inf" ||
-                        obj.as<std::string_view>() == "+inf") {
-                        if (obj.as<std::string_view>() == "-inf") {
-                            attr = -std::numeric_limits<double>::infinity();
-                        } else {
-                            attr = std::numeric_limits<double>::infinity();
-                        }
-                    }
-                } else {
-                    obj >> attr;
-                }
+                handle_inf(obj, attr);
             } else {
                 obj >> attr;
             }
