@@ -23,7 +23,22 @@ else:
     raise SystemError("Only Windows, Linux, or MacOS is supported!")
 
 
-def get_header_include() -> List[str]:
+def get_required_dependency_include() -> List[str]:
+    """
+    Get build requirements includes.
+
+    Returns:
+        either empty list or a list of header path
+    """
+    try:
+        import msgpack_cxx
+
+        return [str(msgpack_cxx.get_include())]
+    except ImportError:
+        return []
+
+
+def get_pre_installed_header_include() -> List[str]:
     """
     Get header files from pybuild_header_dependency, if it is installed
 
@@ -33,7 +48,7 @@ def get_header_include() -> List[str]:
     try:
         from pybuild_header_dependency import HeaderResolver
 
-        resolver = HeaderResolver({"eigen": None, "boost": None})
+        resolver = HeaderResolver({"eigen": None, "boost": None, "nlohmann_json": None})
         return [str(resolver.get_include())]
     except ImportError:
         return []
@@ -131,7 +146,8 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pkg_dir / pgm_c / pgm / "include"),  # The include-folder of the library
         str(pkg_dir / pgm_c / pgm_c / "include"),  # The include-folder of the C API self
     ]
-    include_dirs += get_header_include()
+    include_dirs += get_required_dependency_include()
+    include_dirs += get_pre_installed_header_include()
     include_dirs += get_conda_include()
     # compiler and link flag
     cflags: List[str] = []
@@ -143,6 +159,8 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pgm_c / pgm_c / "src" / "meta_data.cpp"),
         str(pgm_c / pgm_c / "src" / "model.cpp"),
         str(pgm_c / pgm_c / "src" / "options.cpp"),
+        str(pgm_c / pgm_c / "src" / "dataset.cpp"),
+        str(pgm_c / pgm_c / "src" / "serialization.cpp"),
     ]
     # macro
     define_macros = [

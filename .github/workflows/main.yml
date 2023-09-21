@@ -30,7 +30,7 @@ jobs:
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
@@ -78,7 +78,7 @@ jobs:
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install packages
         run: |
           sudo apt-get update
@@ -88,7 +88,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
-          brew install boost eigen nlohmann-json doctest msgpack-cxx
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
@@ -104,7 +104,7 @@ jobs:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Activate conda
         run: |
@@ -112,7 +112,7 @@ jobs:
 
       - name: Install conda environment
         run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest msgpack-cxx
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json msgpack-cxx doctest
 
       - name: Build and test
         run: |
@@ -149,11 +149,11 @@ jobs:
       PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install cpp dependencies
         run: |
-          brew install ninja boost eigen nlohmann-json doctest msgpack-cxx
+          brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
@@ -180,7 +180,7 @@ jobs:
     needs: [aquire-python-version-build-sdist]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v3
         with:
@@ -189,7 +189,7 @@ jobs:
 
       - name: Set up QEMU
         if: matrix.os == 'ubuntu-latest'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.15.0
@@ -218,7 +218,7 @@ jobs:
       run:
         shell: bash -el {0}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -247,7 +247,7 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup python
         uses: actions/setup-python@v4

@@ -79,7 +79,7 @@ PGM_API PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_D
  * @param component_idx The index number of the component.
  * @return The total number of elements of that component.
  *     If the number of elements per scenario is uniform,
- *     this value must equal to PGM_dataset_info_component_name() * PGM_dataset_info_elements_per_scenario().
+ *     this value must equal to PGM_dataset_info_batch_size() * PGM_dataset_info_elements_per_scenario().
  */
 PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx);
 

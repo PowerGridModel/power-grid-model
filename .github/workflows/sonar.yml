@@ -30,7 +30,7 @@ jobs:
       CC: clang-14
       CXX: clang++-14
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install packages
@@ -42,7 +42,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
-          brew install boost eigen nlohmann-json doctest msgpack-cxx
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Set up Python
         uses: actions/setup-python@v4
         with:

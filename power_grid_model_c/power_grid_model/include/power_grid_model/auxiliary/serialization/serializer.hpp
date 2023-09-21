@@ -93,8 +93,10 @@ class Serializer {
     // destructor
     ~Serializer() = default;
 
-    Serializer(ConstDatasetHandler const& dataset_handler, SerializationFormat serialization_format)
-        : serialization_format_{serialization_format}, dataset_handler_{dataset_handler}, packer_{msgpack_buffer_} {
+    Serializer(ConstDatasetHandler dataset_handler, SerializationFormat serialization_format)
+        : serialization_format_{serialization_format},
+          dataset_handler_{std::move(dataset_handler)},
+          packer_{msgpack_buffer_} {
         switch (serialization_format_) {
         case SerializationFormat::json:
             [[fallthrough]];

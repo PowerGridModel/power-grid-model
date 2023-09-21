@@ -66,6 +66,7 @@ user_manual/calculations
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
+user_manual/serialization
 ```
 ```{toctree}
 :caption: "API Reference"
@@ -90,6 +91,7 @@ examples/Make Test Dataset.ipynb
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
+advanced_documentation/core-design
 ```
 ```{toctree}
 :caption: "Contribution"
