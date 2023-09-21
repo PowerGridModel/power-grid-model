@@ -32,8 +32,9 @@ def get_required_dependency_include() -> List[str]:
     """
     try:
         import msgpack_cxx
+        import nlohmann_json
 
-        return [str(msgpack_cxx.get_include())]
+        return [str(msgpack_cxx.get_include()), str(nlohmann_json.get_include())]
     except ImportError:
         return []
 
@@ -48,7 +49,7 @@ def get_pre_installed_header_include() -> List[str]:
     try:
         from pybuild_header_dependency import HeaderResolver
 
-        resolver = HeaderResolver({"eigen": None, "boost": None, "nlohmann_json": None})
+        resolver = HeaderResolver({"eigen": None, "boost": None})
         return [str(resolver.get_include())]
     except ImportError:
         return []
