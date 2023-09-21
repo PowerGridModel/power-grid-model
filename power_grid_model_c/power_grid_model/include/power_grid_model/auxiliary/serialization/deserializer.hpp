@@ -37,9 +37,7 @@ constexpr void const handle_inf(msgpack::object const& obj, auto& attr) {
     if (obj.type == type::STR) {
         auto const& obj_string = obj.as<std::string_view>();
         if (obj_string == "inf" || obj_string == "-inf" || obj_string == "+inf") {
-            // do other way around
             if (obj_string == "inf" || obj_string == "+inf") {
-                // use infinity only once, give a vairable
                 attr = infinity;
             } else {
                 attr = -infinity;
