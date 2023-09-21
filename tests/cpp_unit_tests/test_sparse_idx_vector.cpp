@@ -14,7 +14,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     IdxVector expected_keys{0, 1, 2, 3, 4, 5, 6};
 
     SUBCASE("Element iterator") {
-        auto elm_iter = sparse_idx_vector.element_iter();
+        auto elm_iter = sparse_idx_vector.values();
         CHECK(elm_iter[0] == 0);
         CHECK(elm_iter[1] == 0);
         CHECK(elm_iter[2] == 0);
@@ -30,48 +30,52 @@ TEST_CASE("Sparse idx data strucuture for topology") {
         CHECK(actual_groups == expected_groups);
         CHECK(elm_iter.size() == 7);
 
-        SparseIdxVector::ElementIterator elm_iter2 = sparse_idx_vector.element_iter();
+        auto elm_iter2 = sparse_idx_vector.values();
         ++elm_iter2;
         ++elm_iter;
         CHECK(elm_iter == elm_iter2);
     }
 
     // TODO Implement items
-    SUBCASE("Element iterator items") {
-        auto elm_iter_items = sparse_idx_vector.element_iter_items();
+    // SUBCASE("Element iterator items") {
+    //     auto elm_iter_items = sparse_idx_vector.element_iter_items();
+    //     IdxVector actual_groups{};
+    //     actual_groups.resize(expected_groups.size());
+    //     for (auto [key, value] : elm_iter_items) {
+    //         actual_groups[value] = key;
+    //     }
+    //     CHECK(actual_groups == expected_groups);
+    // }
 
-        IdxVector actual_groups{};
-        actual_groups.resize(expected_groups.size());
-        for (auto [key, value] : elm_iter_items) {
-            actual_groups[value] = key;
+    SUBCASE("Element Range") {
+        IdxVector expected_range{0, 0, 1, 1, 1};
+        auto elm_range = sparse_idx_vector.value_range(1, 6);
+        IdxVector actual_range{};
+        for (Idx i : elm_range) {
+            actual_range.push_back(i);
         }
-        CHECK(actual_groups == expected_groups);
+        CHECK(actual_range == expected_range);
     }
 
     SUBCASE("Group iterator") {
-        auto group_iter = sparse_idx_vector.group_iter();
-        SparseIdxVector::ElementIterator expected_range_0{IdxVector{0, 3}, 0, 0};
-        SparseIdxVector::ElementIterator expected_range_1{IdxVector{3, 6}, 1, 0};
-        SparseIdxVector::ElementIterator expected_range_2{IdxVector{6, 7}, 2, 0};
+        auto groups = sparse_idx_vector.groups();
+        SparseIdxVector<Idx>::ElementRange expected_range_0{sample_indptr, 0, 1, 0, 0};
+        SparseIdxVector<Idx>::ElementRange expected_range_1{sample_indptr, 1, 2, 0, 0};
+        SparseIdxVector<Idx>::ElementRange expected_range_2{sample_indptr, 2, 3, 0, 0};
 
-        // TODO Implement group iterator. Check what it is supposed to do.
+        IdxVector actual_groups{};
+        for (auto element_range : groups) {
+            for (auto element : element_range) {
+                actual_groups.push_back(element);
+            }
+        }
+        CHECK(actual_groups == expected_groups);
 
-        // CHECK(group_iter[0] == expected_range_0);
-        // CHECK(group_iter[1] == expected_range_1);
-        // CHECK(group_iter[2] == expected_range_2);
+        CHECK(groups[0] == expected_range_0);
+        CHECK(groups[1] == expected_range_1);
+        CHECK(groups[2] == expected_range_2);
 
-        // CHECK(*(++group_iter) == expected_range_0);
-        // CHECK(*(++group_iter) == expected_range_1);
-        // CHECK(*(group_iter) == expected_range_2);
-
-        // CHECK(actual_groups == expected_groups);
-        CHECK(group_iter.size() == 3);
-
-        auto group_iter2 = sparse_idx_vector.element_iter();
-        auto group_iter3 = sparse_idx_vector.element_iter();
-        ++group_iter2;
-        ++group_iter3;
-        CHECK(group_iter2 == group_iter3);
+        CHECK(groups.size() == 3);
     }
 }
 
