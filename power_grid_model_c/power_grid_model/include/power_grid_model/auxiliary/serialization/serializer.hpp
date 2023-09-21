@@ -19,7 +19,7 @@
 #include <span>
 #include <string_view>
 
-constexpr void pack_inf(auto& packer_inf, auto& attr) {
+constexpr void pack_inf(auto& packer, auto& attr) {
     using namespace msgpack;
     using namespace std::string_view_literals;
     using namespace power_grid_model::meta_data;
@@ -27,9 +27,9 @@ constexpr void pack_inf(auto& packer_inf, auto& attr) {
     constexpr auto neg_infinity = "-inf"sv;
 
     if (std::isinf(attr)) {
-        packer_inf.pack(attr > 0 ? infinity : neg_infinity);
+        packer.pack(attr > 0 ? infinity : neg_infinity);
     } else {
-        packer_inf.pack(attr);
+        packer.pack(attr);
     }
 }
 
