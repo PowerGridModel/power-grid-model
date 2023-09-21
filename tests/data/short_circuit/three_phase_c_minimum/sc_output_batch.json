@@ -3,7 +3,7 @@
   "type": "sc_output",
   "is_batch": true,
   "attributes": {},
-  "data": {
+  "data": [
     {
       "node":
         [

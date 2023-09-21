@@ -3,7 +3,7 @@
   "type": "update",
   "is_batch": true,
   "attributes": {},
-  "data": {
+  "data": [
     {
       "fault":
         [
