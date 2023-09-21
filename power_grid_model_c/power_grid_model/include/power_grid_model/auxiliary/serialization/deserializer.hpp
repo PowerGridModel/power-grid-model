@@ -167,14 +167,13 @@ class Deserializer {
 
     static void json_convert_inf(nlohmann::json& json_document) {
         switch (json_document.type()) {
-            using enum nlohmann::json::value_t;
-        case object:
-        case array:
+        case nlohmann::json::value_t::object:
+        case nlohmann::json::value_t::array:
             for (auto& value : json_document) {
                 json_convert_inf(value);
             }
             break;
-        case string:
+        case nlohmann::json::value_t::string:
             json_string_to_inf(json_document);
         }
     }
