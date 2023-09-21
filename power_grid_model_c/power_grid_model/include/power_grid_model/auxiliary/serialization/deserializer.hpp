@@ -31,9 +31,8 @@ constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 
 constexpr void unpack(msgpack::object const& obj, std::floating_point auto& attr) {
     using namespace msgpack;
-    using namespace std::string_view_literals;
 
-    auto infinity = std::numeric_limits<double>::infinity();
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
     if (obj.type == type::STR) {
         auto const& obj_string = obj.as<std::string_view>();
         if (obj_string == "inf" || obj_string == "+inf") {

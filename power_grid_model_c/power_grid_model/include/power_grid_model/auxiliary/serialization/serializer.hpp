@@ -20,9 +20,7 @@
 #include <string_view>
 
 constexpr void pack_inf(auto& packer, auto& attr) {
-    using namespace msgpack;
     using namespace std::string_view_literals;
-    using namespace power_grid_model::meta_data;
     constexpr auto infinity = "inf"sv;
     constexpr auto neg_infinity = "-inf"sv;
 
@@ -55,7 +53,6 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
         template <typename Stream>
         msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p,
                                             power_grid_model::RealValue<false> const& o) const {
-            using namespace std::string_view_literals;
             using namespace power_grid_model::meta_data;
             p.pack_array(3);
             for (int8_t i = 0; i != 3; ++i) {
