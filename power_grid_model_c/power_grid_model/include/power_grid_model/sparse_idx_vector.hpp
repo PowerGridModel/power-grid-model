@@ -12,6 +12,21 @@
 
 namespace power_grid_model::detail {
 
+struct element_view_t {};
+// constexpr element_view_t element_view;
+
+struct items_view_t {};
+// constexpr items_view_t items_view;
+
+// template <class T>
+// concept IteratorViews = std::same_as<Idx, T> || std::same_as<std::tuple<Idx, Idx>, T>; // TODO Replace Idx
+
+template <class T>
+concept ElementView = std::same_as<element_view_t, T>; // TODO Replace Idx
+
+template <class T>
+concept ItemsView = std::same_as<items_view_t, T>;
+
 template <typename ValueType> class SparseIdxVector {
   public:
     using ValueTypeVector = std::vector<ValueType>; // Can be Idx, can be array<Idx, 2>
@@ -21,44 +36,47 @@ template <typename ValueType> class SparseIdxVector {
   public:
     explicit SparseIdxVector(ValueTypeVector const& indptr) : indptr_(indptr) {}
 
-    class IteratorBase {
+    // class IteratorBase {
+    //   public:
+    //     using difference_type = std::ptrdiff_t; // Verify if correct
+    //     using pointer = ValueType*;
+    //     using reference = ValueType&;
+    //     using iterator_category = std::forward_iterator_tag;
+
+    //     bool operator!=(IteratorBase const& other) { return !(*this == other); }
+
+    //     ValueTypeVector const& indptr_;
+    // };
+
+    template <typename IteratorViewType> class Iterator {
       public:
-        using difference_type = std::ptrdiff_t; // Verify if correct
-        using pointer = ValueType*;
-        using reference = ValueType&;
-        using iterator_category = std::forward_iterator_tag;
-
-        bool operator!=(IteratorBase const& other) { return !(*this == other); }
-
-        ValueTypeVector const& indptr_;
-    };
-
-    class Iterator {
-      public:
-        using difference_type = std::ptrdiff_t; // Verify if correct
-        using value_pointer = ValueType*;
-        using value_reference = ValueType&;
-        using key_pointer = KeyType*;
-        using key_reference = KeyType&;
+        using self_type = Iterator;
         using iterator_category = std::forward_iterator_tag;
 
       public:
         Iterator(ValueTypeVector const& indptr, size_t const& group, size_t const& element)
             : indptr_(indptr), group_(group), element_(element) {}
 
-        friend bool operator==(Iterator const& lhs, Iterator const& rhs) {
+        friend bool operator==(self_type const& lhs, self_type const& rhs) {
             return lhs.group_ == rhs.group_ && lhs.element_ == rhs.element_;
         }
-        friend bool operator!=(Iterator const& lhs, Iterator const& rhs) { return !(lhs == rhs); }
+        friend bool operator!=(self_type const& lhs, self_type const& rhs) { return !(lhs == rhs); }
 
-        KeyType operator*() {
-            return convert_size_type(group_);
-        } // TODO Should be reference but its not the element being returned, but conversion
-        // auto operator*() const { return std::make_tuple(group_, indptr_[group_] + element_); }
+        auto operator*()
+            requires ElementView<IteratorViewType>
+        {
+            return static_cast<KeyType>(group_);
+        }
 
-        KeyType size() { return convert_size_type(indptr_.back()); }
+        auto operator*()
+            requires ItemsView<IteratorViewType>
+        {
+            return std::make_tuple(group_, indptr_[group_] + element_);
+        }
 
-        Iterator& operator++() {
+        KeyType size() { return static_cast<KeyType>(indptr_.back()); }
+
+        self_type& operator++() {
             ++element_;
             if (element_ == group_size(group_)) {
                 element_ = 0;
@@ -67,17 +85,15 @@ template <typename ValueType> class SparseIdxVector {
             return *this;
         }
 
-        KeyType operator[](ValueType const& index) { return convert_size_type(search_idx(index)); }
+        KeyType operator[](ValueType const& index) { return static_cast<KeyType>(search_idx(index)); }
 
-        Iterator begin() { return Iterator{indptr_, 0, 0}; }
-        Iterator end() { return Iterator{indptr_, indptr_.size() - 1, 0}; }
+        self_type begin() { return self_type{indptr_, 0, 0}; }
+        self_type end() { return self_type{indptr_, indptr_.size() - 1, 0}; }
 
       private:
         ValueTypeVector const& indptr_{};
         size_t group_{};
         size_t element_{};
-
-        KeyType convert_size_type(size_t const& size_t_to_convert) { return static_cast<KeyType>(size_t_to_convert); }
 
         size_t group_size(size_t const& group_number) { return indptr_[group_number + 1] - indptr_[group_number]; }
 
@@ -92,7 +108,7 @@ template <typename ValueType> class SparseIdxVector {
         }
     };
 
-    class ElementRange {
+    template <typename IteratorViewType> class ElementRange {
       public:
         ElementRange(ValueTypeVector const& indptr, size_t group_begin, size_t group_end, size_t element_begin,
                      size_t element_end)
@@ -108,8 +124,8 @@ template <typename ValueType> class SparseIdxVector {
         }
         friend bool operator!=(ElementRange const& lhs, ElementRange const& rhs) { return !(lhs == rhs); }
 
-        Iterator begin() { return Iterator{indptr_, group_begin_, element_begin_}; }
-        Iterator end() { return Iterator{indptr_, group_end_, element_end_}; }
+        Iterator<IteratorViewType> begin() { return Iterator<IteratorViewType>{indptr_, group_begin_, element_begin_}; }
+        Iterator<IteratorViewType> end() { return Iterator<IteratorViewType>{indptr_, group_end_, element_end_}; }
 
       protected:
         ValueTypeVector const& indptr_;
@@ -119,11 +135,11 @@ template <typename ValueType> class SparseIdxVector {
         size_t element_end_;
     };
 
-    class GroupIterator : public ElementRange {
+    template <typename IteratorViewType> class GroupIterator : public ElementRange<IteratorViewType> {
       public:
         GroupIterator(ValueTypeVector const& indptr, size_t group_begin, size_t group_end, size_t element_begin,
                       size_t element_end)
-            : ElementRange{indptr, group_begin, group_end, element_begin, element_end} {}
+            : ElementRange<IteratorViewType>{indptr, group_begin, group_end, element_begin, element_end} {}
 
         GroupIterator& operator++() {
             ++this->group_begin_;
@@ -131,9 +147,11 @@ template <typename ValueType> class SparseIdxVector {
             return *this;
         }
 
-        ElementRange operator*() { return *this; }
+        ElementRange<IteratorViewType> operator*() { return *this; }
 
-        ElementRange operator[](size_t const group) { return ElementRange{this->indptr_, group, group + 1, 0, 0}; }
+        ElementRange<IteratorViewType> operator[](size_t const group) {
+            return ElementRange<IteratorViewType>{this->indptr_, group, group + 1, 0, 0};
+        }
 
         size_t size() { return this->indptr_.size() - 1; }
         GroupIterator begin() { return GroupIterator{this->indptr_, 0, 1, 0, 0}; }
@@ -142,20 +160,21 @@ template <typename ValueType> class SparseIdxVector {
         }
     };
 
-    Iterator values() { return Iterator(indptr_, 0, 0); }
-    // ElementIteratorItems items() { return ElementIteratorItems(indptr_, 0, 0); }
-
-    ElementRange value_range(ValueType const& value_begin, ValueType const& value_end) {
+    auto value_range(ValueType const& value_begin, ValueType const& value_end) {
         auto group_begin = values()[value_begin];
         auto group_end = values()[value_end];
         auto element_begin = value_begin - indptr_[group_begin];
         auto element_end = value_end - indptr_[group_end];
-        return ElementRange(indptr_, group_begin, group_end, element_begin, element_end);
+        return ElementRange<element_view_t>(indptr_, group_begin, group_end, element_begin, element_end);
     }
 
-    GroupIterator groups() { return GroupIterator(indptr_, 0, indptr_.size() - 1, 0, 0); }
+    auto groups_values() { return GroupIterator<element_view_t>(indptr_, 0, indptr_.size() - 1, 0, 0); }
+    auto groups_items() { return GroupIterator<items_view_t>(indptr_, 0, indptr_.size() - 1, 0, 0); }
 
-    // private:
+    auto values() { return Iterator<element_view_t>(indptr_, 0, 0); }
+    auto items() { return Iterator<items_view_t>(indptr_, 0, 0); }
+
+  private:
     ValueTypeVector const& indptr_;
 };
 

@@ -28,24 +28,20 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             actual_groups.push_back(i);
         }
         CHECK(actual_groups == expected_groups);
-        CHECK(elm_iter.size() == 7);
 
-        auto elm_iter2 = sparse_idx_vector.values();
-        ++elm_iter2;
-        ++elm_iter;
-        CHECK(elm_iter == elm_iter2);
+        CHECK(elm_iter.size() == 7);
     }
 
     // TODO Implement items
-    // SUBCASE("Element iterator items") {
-    //     auto elm_iter_items = sparse_idx_vector.element_iter_items();
-    //     IdxVector actual_groups{};
-    //     actual_groups.resize(expected_groups.size());
-    //     for (auto [key, value] : elm_iter_items) {
-    //         actual_groups[value] = key;
-    //     }
-    //     CHECK(actual_groups == expected_groups);
-    // }
+    SUBCASE("Element iterator items") {
+        auto elm_iter_items = sparse_idx_vector.items();
+        IdxVector actual_groups{};
+        actual_groups.resize(expected_groups.size());
+        for (auto [key, value] : elm_iter_items) {
+            actual_groups[value] = key;
+        }
+        CHECK(actual_groups == expected_groups);
+    }
 
     SUBCASE("Element Range") {
         IdxVector expected_range{0, 0, 1, 1, 1};
@@ -57,25 +53,39 @@ TEST_CASE("Sparse idx data strucuture for topology") {
         CHECK(actual_range == expected_range);
     }
 
-    SUBCASE("Group iterator") {
-        auto groups = sparse_idx_vector.groups();
-        SparseIdxVector<Idx>::ElementRange expected_range_0{sample_indptr, 0, 1, 0, 0};
-        SparseIdxVector<Idx>::ElementRange expected_range_1{sample_indptr, 1, 2, 0, 0};
-        SparseIdxVector<Idx>::ElementRange expected_range_2{sample_indptr, 2, 3, 0, 0};
+    SUBCASE("Group iterator values") {
+        auto groups_values = sparse_idx_vector.groups_values();
+
+        using ElmRangeType = SparseIdxVector<Idx>::ElementRange<element_view_t>;
+        ElmRangeType expected_range_0{sample_indptr, 0, 1, 0, 0};
+        ElmRangeType expected_range_1{sample_indptr, 1, 2, 0, 0};
+        ElmRangeType expected_range_2{sample_indptr, 2, 3, 0, 0};
 
         IdxVector actual_groups{};
-        for (auto element_range : groups) {
+        for (auto element_range : groups_values) {
             for (auto element : element_range) {
                 actual_groups.push_back(element);
             }
         }
         CHECK(actual_groups == expected_groups);
 
-        CHECK(groups[0] == expected_range_0);
-        CHECK(groups[1] == expected_range_1);
-        CHECK(groups[2] == expected_range_2);
+        CHECK(groups_values[0] == expected_range_0);
+        CHECK(groups_values[1] == expected_range_1);
+        CHECK(groups_values[2] == expected_range_2);
 
-        CHECK(groups.size() == 3);
+        CHECK(groups_values.size() == 3);
+    }
+
+    SUBCASE("Group Iterator items") {
+        auto groups_items = sparse_idx_vector.groups_items();
+        IdxVector actual_groups_items{};
+        actual_groups_items.resize(expected_groups.size());
+        for (auto element_range : groups_items) {
+            for (auto [key, value] : element_range) {
+                actual_groups_items[value] = key;
+            }
+        }
+        CHECK(actual_groups_items == expected_groups);
     }
 }
 
