@@ -121,38 +121,84 @@ std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::stri
     return dataset;
 }
 
+auto create_buffers(WritableDatasetHandler const& info, Idx batch_size = -1) {
+    if (batch_size < 0) {
+        batch_size = info.batch_size();
+    }
+
+    std::map<std::string, Buffer> result;
+
+    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
+        auto const& component_info = info.get_component_info(component_idx);
+        auto const& component_meta = component_info.component;
+
+        Buffer buffer{};
+
+        buffer.ptr = std::shared_ptr<void>(component_meta->create_buffer(component_info.total_elements),
+                                           component_meta->destroy_buffer);
+
+        component_meta->set_nan(buffer.ptr.get(), 0, component_info.total_elements);
+        buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
+
+        buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
+                                             component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr,
+                                             batch_size, component_info.elements_per_scenario};
+
+        result[component_meta->name] = std::move(buffer);
+    }
+
+    return result;
+}
+
+auto construct_individual_scenarios(BatchData& dataset, WritableDatasetHandler const& info) {
+    for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
+        SingleData scenario;
+
+        for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
+            auto const& component_info = info.get_component_info(component_idx);
+            auto const& component_meta = component_info.component;
+
+            auto& buffer_map = dataset.buffer_map[component_meta->name];
+            auto start = component_info.elements_per_scenario < 0 ? buffer_map.indptr[scenario_idx]
+                                                                  : scenario_idx * component_info.elements_per_scenario;
+
+            scenario.dataset[component_meta->name] = MutableDataPointer{
+                component_meta->advance_ptr(buffer_map.ptr.get(), start),
+                component_info.elements_per_scenario < 0 ? &buffer_map.indptr[scenario_idx] : nullptr, 1,
+                component_info.elements_per_scenario};
+
+            scenario.const_dataset[component_meta->name] =
+                static_cast<ConstDataPointer>(scenario.dataset[component_meta->name]);
+        }
+
+        dataset.individual_batch.push_back(std::move(scenario));
+    }
+}
+
+auto load_into_buffers(Deserializer& deserializer, std::map<std::string, Buffer>& buffer_map) {
+    for (auto& [component, buffer] : buffer_map) {
+        deserializer.get_dataset_info().set_buffer(component, buffer.indptr.data(), buffer.ptr.get());
+    }
+    deserializer.parse();
+}
+
 auto load_dataset(std::filesystem::path const& path) {
-    BatchData batch_data;
+    BatchData result;
 
     auto deserializer = Deserializer(power_grid_model::meta_data::from_json, read_file(path));
     auto& info = deserializer.get_dataset_info();
 
-    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-        auto const& component_info = info.get_component_info(component_idx);
-        Buffer buffer{};
+    result.buffer_map = create_buffers(info);
 
-        buffer.ptr = std::shared_ptr<void>(component_info.component->create_buffer(component_info.total_elements),
-                                           component_info.component->destroy_buffer);
-
-        component_info.component->set_nan(buffer.ptr.get(), 0, component_info.total_elements);
-        buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? info.batch_size() + 1 : 0);
-
-        info.set_buffer(component_info.component->name,
-                        component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr, buffer.ptr.get());
-
-        buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
-                                             component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr,
-                                             info.batch_size(), component_info.elements_per_scenario};
-
-        batch_data.buffer_map[component_info.component->name] = std::move(buffer);
-    }
-
-    deserializer.parse();
+    load_into_buffers(deserializer, result.buffer_map);
 
     // create dataset
-    batch_data.const_dataset = generate_dataset<true>(batch_data.buffer_map);
-    batch_data.dataset = generate_dataset<false>(batch_data.buffer_map);
-    return batch_data;
+    result.const_dataset = generate_dataset<true>(result.buffer_map);
+    result.dataset = generate_dataset<false>(result.buffer_map);
+
+    construct_individual_scenarios(result, info);
+
+    return result;
 }
 
 // Buffer parse_single_type(json const& j, MetaComponent const& meta) {
@@ -202,12 +248,13 @@ SingleData create_result_dataset(BatchData const& input, std::string const& data
         Idx const length = (buffer.indptr.empty() ? buffer.data_ptr.elements_per_scenario(0) : buffer.indptr.back());
         result_buffer.ptr =
             std::shared_ptr<void>(component_meta.create_buffer(length * n_batch), component_meta.destroy_buffer);
-        result_buffer.indptr.resize(n_batch + 1, 0);
-        result_buffer.data_ptr = MutableDataPointer{result_buffer.ptr.get(), result_buffer.indptr.data(), n_batch};
+        // result_buffer.indptr.resize(n_batch + 1, 0);
+        result_buffer.data_ptr =
+            MutableDataPointer{result_buffer.ptr.get(), n_batch, buffer.data_ptr.elements_per_scenario(0)};
         // set indptr
-        for (Idx batch = 0; batch != n_batch; ++batch) {
-            result_buffer.indptr[batch + 1] = (batch + 1) * length;
-        }
+        // for (Idx batch = 0; batch != n_batch; ++batch) {
+        //     result_buffer.indptr[batch + 1] = (batch + 1) * length;
+        // }
         result.buffer_map[name] = std::move(result_buffer);
     }
     result.dataset = generate_dataset<false>(result.buffer_map);
