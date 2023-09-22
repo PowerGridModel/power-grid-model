@@ -133,6 +133,21 @@ TEST_CASE("Test y bus") {
         CHECK(*ybus.shared_indices_lu() == col_indices);
         CHECK(*ybus.shared_diag_lu() == bus_entry);
         CHECK(ybus.map_lu_y_bus() == map_lu_y_bus);
+
+        SUBCASE("Test y bus structure getter") {
+            YBusStructure ybus_struct_ref{topo};
+            auto ybus_struct = ybus.get_y_bus_structure();
+            CHECK(ybus_struct->bus_entry == ybus_struct_ref.bus_entry);
+            CHECK(ybus_struct->col_indices == ybus_struct_ref.col_indices);
+            CHECK(ybus_struct->col_indices_lu == ybus_struct_ref.col_indices_lu);
+            CHECK(ybus_struct->diag_lu == ybus_struct_ref.diag_lu);
+            CHECK(ybus_struct->lu_transpose_entry == ybus_struct_ref.lu_transpose_entry);
+            CHECK(ybus_struct->map_lu_y_bus == ybus_struct_ref.map_lu_y_bus);
+            CHECK(ybus_struct->row_indptr == ybus_struct_ref.row_indptr);
+            CHECK(ybus_struct->row_indptr_lu == ybus_struct_ref.row_indptr_lu);
+            CHECK(ybus_struct->y_bus_element.size() == ybus_struct_ref.y_bus_element.size());
+            CHECK(ybus_struct->y_bus_entry_indptr == ybus_struct_ref.y_bus_entry_indptr);
+        }
     }
 
     SUBCASE("Test y bus construction (asymmetrical)") {
