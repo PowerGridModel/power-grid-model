@@ -51,9 +51,9 @@ class UnsupportedValidationCase : public PowerGridError {
 };
 
 // memory buffer
-using BufferPtr = std::shared_ptr<void>; // shared pointer allows passing deleters at runtime
+using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)>>; // custom deleter at runtime
 struct Buffer {
-    BufferPtr ptr;
+    BufferPtr ptr{nullptr, [](void const*) {}};
     IdxVector indptr;
     MutableDataPointer data_ptr; // TODO(mgovers): remove
 };
@@ -87,8 +87,8 @@ auto create_owning_dataset(WritableDatasetHandler const& info, Idx batch_size = 
 
         Buffer buffer{};
 
-        buffer.ptr = std::shared_ptr<void>(component_meta->create_buffer(component_info.total_elements),
-                                           component_meta->destroy_buffer);
+        buffer.ptr =
+            BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
 
         component_meta->set_nan(buffer.ptr.get(), 0, component_info.total_elements);
         buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
@@ -158,8 +158,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         Buffer result_buffer;
         Idx const length = (buffer.indptr.empty() ? buffer.data_ptr.elements_per_scenario(0) : buffer.indptr.back());
 
-        result_buffer.ptr =
-            std::shared_ptr<void>(component_meta.create_buffer(length * n_batch), component_meta.destroy_buffer);
+        result_buffer.ptr = BufferPtr{component_meta.create_buffer(length * n_batch), component_meta.destroy_buffer};
         result_buffer.data_ptr =
             MutableDataPointer{result_buffer.ptr.get(), n_batch, buffer.data_ptr.elements_per_scenario(0)};
 
