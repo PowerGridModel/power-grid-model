@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
 
-  aquire-python-version-build-sdist:
+  acquire-python-version-build-sdist:
     name: Build sdist and set version
     if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: version
-          path: PYPI_VERSION      
+          path: PYPI_VERSION
 
       - name: Keep SDist
         uses: actions/upload-artifact@v3
@@ -177,7 +177,7 @@ jobs:
             cibw_build: "*"
 
     runs-on: ${{ matrix.os }}
-    needs: [aquire-python-version-build-sdist]
+    needs: [acquire-python-version-build-sdist]
 
     steps:
       - uses: actions/checkout@v4
