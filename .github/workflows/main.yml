@@ -177,7 +177,7 @@ jobs:
             cibw_build: "*"
 
     runs-on: ${{ matrix.os }}
-    needs: [aquire-python-version-build-sdist]
+    needs: [acquire-python-version-build-sdist]
 
     steps:
       - uses: actions/checkout@v4
