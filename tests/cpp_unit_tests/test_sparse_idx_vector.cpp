@@ -13,7 +13,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     IdxVector expected_groups{0, 0, 0, 1, 1, 1, 2};
     IdxVector expected_keys{0, 1, 2, 3, 4, 5, 6};
 
-    SUBCASE("Element iterator") {
+    SUBCASE("Element iterator values") {
         auto elm_iter = sparse_idx_vector.values();
         CHECK(elm_iter[0] == 0);
         CHECK(elm_iter[1] == 0);
@@ -41,16 +41,6 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             actual_groups[value] = key;
         }
         CHECK(actual_groups == expected_groups);
-    }
-
-    SUBCASE("Element Range") {
-        IdxVector expected_range{0, 0, 1, 1, 1};
-        auto elm_range = sparse_idx_vector.value_range(1, 6);
-        IdxVector actual_range{};
-        for (Idx i : elm_range) {
-            actual_range.push_back(i);
-        }
-        CHECK(actual_range == expected_range);
     }
 
     SUBCASE("Group iterator values") {
