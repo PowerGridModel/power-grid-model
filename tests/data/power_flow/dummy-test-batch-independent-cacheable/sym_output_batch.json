@@ -1,15 +1,18 @@
 {
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
   "attributes": {},
   "data": [
     {
       "node": [
         {
           "id": 1,
-          "u": 9
+          "u": 9.0
         },
         {
           "id": 2,
-          "u": 8
+          "u": 8.0
         }
       ]
     },
@@ -17,11 +20,11 @@
       "node": [
         {
           "id": 1,
-          "u": 8
+          "u": 8.0
         },
         {
           "id": 2,
-          "u": 6
+          "u": 6.0
         }
       ]
     },
@@ -29,16 +32,13 @@
       "node": [
         {
           "id": 1,
-          "u": 7
+          "u": 7.0
         },
         {
           "id": 2,
-          "u": 4
+          "u": 4.0
         }
       ]
     }
-  ],
-  "is_batch": true,
-  "type": "sym_output",
-  "version": "1.0"
+  ]
 }

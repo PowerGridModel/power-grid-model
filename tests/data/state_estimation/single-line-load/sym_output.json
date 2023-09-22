@@ -1,43 +1,43 @@
 {
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
   "attributes": {},
   "data": {
     "line": [
       {
-        "energized": 1,
         "id": 21,
+        "energized": 1,
         "p_from": 1501363.636462,
-        "p_to": -1499319.10787
+        "p_to": -1499319.107870
       }
     ],
     "node": [
       {
-        "energized": 1,
         "id": 11,
+        "energized": 1,
         "u": 10499.999938870853
       },
       {
-        "energized": 1,
         "id": 12,
+        "energized": 1,
         "u": 10485.701289
       }
     ],
     "source": [
       {
-        "energized": 1,
         "id": 41,
+        "energized": 1,
         "p": 1501363.636462
       }
     ],
     "sym_load": [
       {
-        "energized": 1,
         "id": 31,
-        "p": 1499319.10787,
-        "q": 0
+        "energized": 1,
+        "p": 1499319.107870,
+        "q": 0.0
       }
     ]
-  },
-  "is_batch": false,
-  "type": "sym_output",
-  "version": "1.0"
+  }
 }

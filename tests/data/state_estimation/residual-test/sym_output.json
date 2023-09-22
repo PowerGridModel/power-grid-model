@@ -1,4 +1,7 @@
 {
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
   "attributes": {},
   "data": {
     "node": [
@@ -11,17 +14,14 @@
     "sym_voltage_sensor": [
       {
         "id": 3,
-        "u_angle_residual": -0.03383796318739621,
-        "u_residual": 0.4298292735637155
+        "u_residual": 0.4298292735637155,
+        "u_angle_residual": -0.03383796318739621
       },
       {
         "id": 4,
-        "u_angle_residual": 0.1661620368126038,
-        "u_residual": -1.5701707264362845
+        "u_residual": -1.5701707264362845,
+        "u_angle_residual": 0.1661620368126038
       }
     ]
-  },
-  "is_batch": false,
-  "type": "sym_output",
-  "version": "1.0"
+  }
 }

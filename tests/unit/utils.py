@@ -5,6 +5,7 @@
 import json
 import os
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -12,7 +13,13 @@ import numpy as np
 import pytest
 
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
-from power_grid_model.utils import export_json_data, import_json_data, json_deserialize, json_deserialize_from_file
+from power_grid_model.utils import (
+    export_json_data,
+    import_json_data,
+    json_deserialize,
+    json_deserialize_from_file,
+    json_serialize_to_file,
+)
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
@@ -141,24 +148,16 @@ def dict_params(params: Dict[Any, str], **kwargs):
 
 
 def import_case_data(data_path: Path, calculation_type: str, sym: bool):
-    def _import_data(file_path, data_type, *args, **kwargs):
-        if file_path.parent.name == "deprecated_format":
-            return import_json_data(file_path, data_type, *args, **kwargs)
-        return json_deserialize_from_file(file_path)
-
     output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
-    return_dict = {
-        "input": _import_data(data_path / "input.json", "input", ignore_extra=True),
-    }
+    return_dict = {"input": json_deserialize_from_file(data_path / "input.json")}
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
-        return_dict["output"] = _import_data(data_path / f"{output_prefix}.json", output_prefix, ignore_extra=True)
+        return_dict["output"] = json_deserialize_from_file(data_path / f"{output_prefix}.json")
     # import update and output batch if relevant
     if (data_path / "update_batch.json").exists():
-        return_dict["update_batch"] = _import_data(data_path / "update_batch.json", "update", ignore_extra=True)
-        return_dict["output_batch"] = _import_data(
-            data_path / f"{output_prefix}_batch.json", output_prefix, ignore_extra=True
-        )
+        return_dict["update_batch"] = json_deserialize_from_file(data_path / "update_batch.json")
+        return_dict["output_batch"] = json_deserialize_from_file(data_path / f"{output_prefix}_batch.json")
+
     return return_dict
 
 
@@ -166,7 +165,7 @@ def save_json_data(json_file: str, data: Dataset):
     OUPUT_PATH.mkdir(parents=True, exist_ok=True)
     data_file = OUPUT_PATH / json_file
     data_file.parent.mkdir(parents=True, exist_ok=True)
-    export_json_data(data_file, data)
+    json_serialize_to_file(data_file, data)
 
 
 def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: Union[float, Dict[str, float]]):

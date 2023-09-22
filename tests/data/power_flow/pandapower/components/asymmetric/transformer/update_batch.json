@@ -1,4 +1,7 @@
 {
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
   "attributes": {},
   "data": [
     {
@@ -89,8 +92,5 @@
         }
       ]
     }
-  ],
-  "is_batch": true,
-  "type": "update",
-  "version": "1.0"
+  ]
 }

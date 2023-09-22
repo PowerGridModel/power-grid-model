@@ -7,6 +7,8 @@ requires = [
     "setuptools",
     "wheel",
     "pybuild-header-dependency",
+    "msgpack-cxx",
+    "nlohmann-json",
 ]
 build-backend = "setuptools.build_meta"
 

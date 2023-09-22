@@ -21,12 +21,37 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
 from power_grid_model.errors import PowerGridSerializationError
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
 _DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_serialize_from_file instead."
+
+
+def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
+    """
+    Obtain the single dataset at a given scenario, independently of the internal batch data structure.
+
+    Args:
+        dataset: the batch dataset
+        scenario: the scenario index
+
+    Raises:
+        IndexError: if the scenario is out of range for any of the components.
+
+    Returns:
+        The dataset for a specific scenario
+    """
+
+    def _get_component_scenario(component_scenarios: BatchArray) -> np.ndarray:
+        if isinstance(component_scenarios, np.ndarray):
+            return component_scenarios[scenario]
+
+        indptr = component_scenarios["indptr"]
+        return component_scenarios["data"][indptr[scenario] : indptr[scenario + 1]]
+
+    return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 
 
 def json_deserialize_from_file(file_path: Path) -> Dataset:
@@ -61,7 +86,7 @@ def json_serialize_to_file(
         file_path: the path to the file to load and deserialize.
         data: a single or batch dataset for power-grid-model.
         use_compact_list: write components on a single line.
-        indent: indent of the file, default 2.
+        indent: indent of the file. Defaults to 2.
 
     Returns:
         Save to file.
@@ -122,21 +147,16 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     Args:
         json_file: path to the json file.
         data_type: type of data: input, update, sym_output, or asym_output.
-        args [deprecated]: All extra positional arguments are ignored.
-        kwargs [deprecated]: All extra keyword arguments are ignored.
+        [deprecated]: All extra positional and keyword arguments are ignored.
 
     Returns:
         A single or batch dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
     if args:
-        warnings.warn(
-            "Provided positional arguments at index 2 and following are deprecated.", DeprecationWarning, stacklevel=2
-        )
+        warnings.warn("Provided positional arguments at index 2 and following are deprecated.", DeprecationWarning)
     if kwargs:
-        warnings.warn(
-            f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning, stacklevel=2
-        )
+        warnings.warn(f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning)
 
     return _compatibility_deprecated_import_json_data(json_file=json_file, data_type=data_type)
 
@@ -162,7 +182,7 @@ def export_json_data(
     Returns:
         Save to file.
     """
-    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_SERIALIZATION_MSG, DeprecationWarning)
     if use_deprecated_format:
         warnings.warn(
             "Argument use_deprecated_format is a temporary backwards-compatibility measure. "
@@ -198,7 +218,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
     Returns:
         A single dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
     data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type="input")
     assert isinstance(data, dict)
@@ -220,7 +240,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
     Returns:
         A batch dataset for power-grid-model.
     """
-    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
     return cast_type(BatchDataset, _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"))
 

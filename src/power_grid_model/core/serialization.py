@@ -56,20 +56,19 @@ class Deserializer:
         return instance
 
     def __del__(self):
-        pgc.destroy_deserializer(self._deserializer)
+        if hasattr(self, "_deserializer"):
+            pgc.destroy_deserializer(self._deserializer)
 
     def load(self) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
         """
         Load the deserialized data to a new dataset.
 
         Raises:
-            ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
-            PowerGridError if there was an internal error.
+            ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
+            PowerGridError: if there was an internal error.
 
         Returns:
-            A tuple containing:
-                the deserialized dataset in Power grid model input format
-                the type of the dataset
+            A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
         return self._dataset.get_data()
@@ -93,12 +92,6 @@ class Serializer(ABC):
         instance = super().__new__(cls)
 
         instance._data = data
-
-        if instance._data:
-            first = next(iter(instance._data.values()))
-            if not isinstance(first, np.ndarray):
-                raise PowerGridSerializationError("Sparse batch datasets are not supported.")
-
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()
 
@@ -108,7 +101,8 @@ class Serializer(ABC):
         return instance
 
     def __del__(self):
-        pgc.destroy_serializer(self._serializer)
+        if hasattr(self, "_serializer"):
+            pgc.destroy_serializer(self._serializer)
 
     def dump_str(self, *, use_compact_list: bool = False, indent: int = 2) -> str:
         """
@@ -121,7 +115,7 @@ class Serializer(ABC):
                 Use 0 or negative value for no indentation. Defaults to 2
 
         Returns:
-            a serialized string containing the dataset
+            A serialized string containing the dataset.
         """
         data = pgc.serializer_get_to_zero_terminated_string(self._serializer, int(use_compact_list), indent)
         assert_no_error()
@@ -135,7 +129,7 @@ class Serializer(ABC):
             use_compact_list (bool, optional): whether or not to use compact lists (sparse data). Defaults to False.
 
         Returns:
-            the raw bytes of the serialization of the datast
+            The raw bytes of the serialization of the datast.
         """
         raw_data = CharPtr()  # pylint: disable(not-callable)
         size = IdxC()  # pylint: disable(not-callable)
@@ -226,13 +220,11 @@ def json_deserialize(data: Union[str, bytes]) -> Dict[str, Union[np.ndarray, Dic
         data: the data to deserialize.
 
     Raises:
-        ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
-        PowerGridError if there was an internal error.
+        ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError: if there was an internal error.
 
     Returns:
-        A tuple containing:
-            the deserialized dataset in Power grid model input format.
-            the type of the dataset.
+        A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
     """
     result = JsonDeserializer(data).load()
     assert_no_error()
@@ -260,10 +252,10 @@ def json_serialize(
             Use 0 or negative value for no indentation. Defaults to 2
 
     Raises:
-        PowerGridError if there was an internal error.
+        PowerGridError: if there was an internal error.
 
     Returns:
-        a serialized string containing the dataset
+        A serialized string containing the dataset.
     """
     result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
@@ -278,13 +270,11 @@ def msgpack_deserialize(data: bytes) -> Dict[str, Union[np.ndarray, Dict[str, np
         data: the data to deserialize.
 
     Raises:
-        ValueError if the data is inconsistent with the rest of the dataset or a component is unknown.
-        PowerGridError if there was an internal error.
+        ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError: if there was an internal error.
 
     Returns:
-        A tuple containing:
-            the deserialized dataset in Power grid model input format.
-            the type of the dataset.
+        A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
     """
     result = MsgpackDeserializer(data).load()
     assert_no_error()
@@ -308,11 +298,11 @@ def msgpack_serialize(
         use_compact_list: whether or not to use compact lists (sparse data). Defaults to False.
 
     Raises:
-        KeyError if the dataset_type was not provided and could not be deduced from the dataset (i.e. it was empty).
-        PowerGridError if there was an internal error.
+        KeyError: if the dataset_type was not provided and could not be deduced from the dataset (i.e. it was empty).
+        PowerGridError: if there was an internal error.
 
     Returns:
-        a serialized string containing the dataset
+        A serialized string containing the dataset.
     """
     result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()

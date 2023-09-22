@@ -126,7 +126,7 @@ def uniform_batch_update_dataset():
     }
 
 
-def sparse_batch_update_dataset():
+def inhomogeneous_batch_update_dataset():
     return {
         "version": "1.0",
         "type": "update",
@@ -139,6 +139,20 @@ def sparse_batch_update_dataset():
                 "sym_load": [[7, None, 10.0], {"id": 8, "status": 0}],
                 "asym_load": [{"id": 9, "q_specified": [70.0, 80.0, 90.0]}],
             },
+        ],
+    }
+
+
+def sparse_batch_update_dataset():
+    return {
+        "version": "1.0",
+        "type": "update",
+        "is_batch": True,
+        "attributes": {},
+        "data": [
+            {"sym_load": [{"id": 7, "q_specified": 50.0}]},
+            {"sym_load": [{"id": 8, "q_specified": 33.333333333333336}]},
+            {"sym_load": [{"id": 7, "q_specified": 10.0}, {"id": 8, "q_specified": 2.5}]},
         ],
     }
 
@@ -204,6 +218,7 @@ def single_sc_output_dataset():
         full_input_dataset,
         single_update_dataset,
         uniform_batch_update_dataset,
+        inhomogeneous_batch_update_dataset,
         sparse_batch_update_dataset,
         single_sym_output_dataset,
         batch_sym_output_dataset,

@@ -1,4 +1,7 @@
 {
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
   "attributes": {},
   "data": [
     {
@@ -37,8 +40,5 @@
         }
       ]
     }
-  ],
-  "is_batch": true,
-  "type": "sym_output",
-  "version": "1.0"
+  ]
 }

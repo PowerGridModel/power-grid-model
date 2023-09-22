@@ -1,63 +1,63 @@
 {
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
   "attributes": {},
   "data": {
     "line": [
       {
-        "energized": 1,
-        "i_from": 0,
-        "i_to": 0,
         "id": 4,
-        "loading": 0,
-        "p_from": 0,
-        "p_to": 0,
-        "q_from": 0,
-        "q_to": 0,
-        "s_from": 0,
-        "s_to": 0
+        "energized": 1,
+        "loading": 0.0,
+        "p_from": 0.0,
+        "q_from": 0.0,
+        "i_from": 0.0,
+        "s_from": 0.0,
+        "p_to": 0.0,
+        "q_to": 0.0,
+        "i_to": 0.0,
+        "s_to": 0.0
       }
     ],
     "node": [
       {
-        "energized": 1,
         "id": 1,
-        "u": 100,
-        "u_angle": 0,
-        "u_pu": 1
+        "energized": 1,
+        "u_pu": 1.0,
+        "u": 100.0,
+        "u_angle": 0.0
       },
       {
-        "energized": 1,
         "id": 2,
-        "u": 100,
-        "u_angle": 0,
-        "u_pu": 1
+        "energized": 1,
+        "u_pu": 1.0,
+        "u": 100.0,
+        "u_angle": 0.0
       }
     ],
     "source": [
       {
-        "energized": 1,
-        "i": 0,
         "id": 6,
-        "p": 0,
-        "pf": 0,
-        "q": 0,
-        "s": 0
-      }
-    ],
-    "sym_power_sensor": [
-      {
-        "id": 401,
-        "p_residual": 100000,
-        "q_residual": 100000
+        "energized": 1,
+        "p": 0.0,
+        "q": 0.0,
+        "i": 0.0,
+        "s": 0.0,
+        "pf": 0.0
       }
     ],
     "sym_voltage_sensor": [
       {
         "id": 101,
-        "u_residual": 0
+        "u_residual": 0.0
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 401,
+        "p_residual": 100e3,
+        "q_residual": 100e3
       }
     ]
-  },
-  "is_batch": false,
-  "type": "sym_output",
-  "version": "1.0"
+  }
 }

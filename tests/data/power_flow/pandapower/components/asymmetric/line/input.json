@@ -1,133 +1,133 @@
 {
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
   "attributes": {},
   "data": {
-    "asym_load": [
+    "node": [
       {
-        "id": 9,
-        "node": 5,
-        "p_specified": [
-          10000,
-          9000,
-          8000
-        ],
-        "q_specified": [
-          2000,
-          1520,
-          1000
-        ],
-        "status": 1,
-        "type": 0
+        "id": 1,
+        "u_rated": 10500.0
+      },
+      {
+        "id": 2,
+        "u_rated": 10500.0
+      },
+      {
+        "id": 5,
+        "u_rated": 10500.0
       }
     ],
     "line": [
       {
-        "c0": 1e-06,
-        "c1": 1e-06,
-        "from_node": 1,
-        "from_status": 1,
-        "i_n": 1000,
         "id": 3,
-        "r0": 0.25,
-        "r1": 0.25,
-        "tan0": 0,
-        "tan1": 0,
+        "from_node": 1,
         "to_node": 2,
+        "from_status": 1,
         "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-06,
+        "tan1": 0.0,
+        "r0": 0.25,
         "x0": 0.2,
-        "x1": 0.2
+        "c0": 1e-06,
+        "tan0": 0.0,
+        "i_n": 1000.0
       },
       {
-        "c0": 1e-06,
-        "c1": 1e-06,
-        "from_node": 2,
-        "from_status": 1,
-        "i_n": 1000,
         "id": 6,
-        "r0": 0.25,
-        "r1": 0.25,
-        "tan0": 0,
-        "tan1": 0,
-        "to_node": 5,
-        "to_status": 1,
-        "x0": 0.2,
-        "x1": 0.2
-      },
-      {
-        "c0": 1e-06,
-        "c1": 1e-06,
         "from_node": 2,
+        "to_node": 5,
         "from_status": 1,
-        "i_n": 1000,
-        "id": 7,
-        "r0": 0.25,
-        "r1": 0.25,
-        "tan0": 0,
-        "tan1": 0,
-        "to_node": 5,
-        "to_status": 0,
-        "x0": 0.2,
-        "x1": 0.2
-      },
-      {
-        "c0": 1e-06,
-        "c1": 1e-06,
-        "from_node": 2,
-        "from_status": 0,
-        "i_n": 1000,
-        "id": 8,
-        "r0": 0.25,
-        "r1": 0.25,
-        "tan0": 0,
-        "tan1": 0,
-        "to_node": 5,
         "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-06,
+        "tan1": 0.0,
+        "r0": 0.25,
         "x0": 0.2,
-        "x1": 0.2
+        "c0": 1e-06,
+        "tan0": 0.0,
+        "i_n": 1000.0
       },
       {
-        "c0": 1e-06,
-        "c1": 1e-06,
+        "id": 7,
         "from_node": 2,
-        "from_status": 0,
-        "i_n": 1000,
-        "id": 10,
-        "r0": 0.25,
-        "r1": 0.25,
-        "tan0": 0,
-        "tan1": 0,
         "to_node": 5,
+        "from_status": 1,
         "to_status": 0,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-06,
+        "tan1": 0.0,
+        "r0": 0.25,
         "x0": 0.2,
-        "x1": 0.2
+        "c0": 1e-06,
+        "tan0": 0.0,
+        "i_n": 1000.0
+      },
+      {
+        "id": 8,
+        "from_node": 2,
+        "to_node": 5,
+        "from_status": 0,
+        "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-06,
+        "tan1": 0.0,
+        "r0": 0.25,
+        "x0": 0.2,
+        "c0": 1e-06,
+        "tan0": 0.0,
+        "i_n": 1000.0
+      },
+      {
+        "id": 10,
+        "from_node": 2,
+        "to_node": 5,
+        "from_status": 0,
+        "to_status": 0,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-06,
+        "tan1": 0.0,
+        "r0": 0.25,
+        "x0": 0.2,
+        "c0": 1e-06,
+        "tan0": 0.0,
+        "i_n": 1000.0
       }
     ],
-    "node": [
+    "asym_load": [
       {
-        "id": 1,
-        "u_rated": 10500
-      },
-      {
-        "id": 2,
-        "u_rated": 10500
-      },
-      {
-        "id": 5,
-        "u_rated": 10500
+        "id": 9,
+        "node": 5,
+        "status": 1,
+        "type": 0,
+        "p_specified": [
+          10000.0,
+          9000.0,
+          8000.0
+        ],
+        "q_specified": [
+          2000.0,
+          1520.0,
+          1000.0
+        ]
       }
     ],
     "source": [
       {
         "id": 4,
         "node": 1,
-        "rx_ratio": 0.1,
-        "sk": 100000000000000,
         "status": 1,
-        "u_ref": 1,
-        "z01_ratio": 1
+        "u_ref": 1.0,
+        "sk": 1e+14,
+        "rx_ratio": 0.1,
+        "z01_ratio": 1.0
       }
     ]
-  },
-  "is_batch": false,
-  "type": "input",
-  "version": "1.0"
+  }
 }
