@@ -10,32 +10,56 @@
 
 #include <boost/range.hpp>
 
+/*
+A data-structure for iterating through the indptr, ie. sparse representation of data.
+Indptr can be eg: [0, 3, 6, 7]
+This means that:
+objects 0, 1, 2 are coupled to index 0
+objects 3, 4, 5 are coupled to index 1
+objects 6 is coupled to index 2
+
+Another intuitive way to look at this for python developers is like list of lists: [[0, 1, 2], [3, 4, 5], [6]].
+
+SparseIdxVector will help iterate over this indptr like a map via the Iterator interface directly.
+
+While using iterator operations, the 'values' view dereferences the index of outer list. And the 'items' view
+derferences [index of outer list, value]
+
+The 'items' and 'values' functions iterate through each element.
+The 'groups_items' and 'groups_values' functions iterates through the outer index.
+
+*/
+
 namespace power_grid_model::detail {
 
+// Tags for items or values iterator.
 struct element_view_t {};
 struct items_view_t {};
 
 template <class T>
-concept ElementView = std::same_as<element_view_t, T>; // TODO Replace Idx
+concept ElementView = std::same_as<element_view_t, T>;
 
 template <class T>
 concept ItemsView = std::same_as<items_view_t, T>;
 
+template <class T>
+concept IteratorView = ElementView<T> || ItemsView<T>;
+
 template <typename ValueType> class SparseIdxVector {
   public:
-    using ValueTypeVector = std::vector<ValueType>; // Can be Idx, can be array<Idx, 2>
+    using ValueVector = std::vector<ValueType>; // ValueType Can be Idx, can be array<Idx, 2>
     // The keys of vector are size_t. Outside this class, the indexing is with Idx instead of size_t, hence conversion.
     using KeyType = Idx;
 
   public:
-    explicit SparseIdxVector(ValueTypeVector const& indptr) : indptr_(indptr) {}
+    explicit SparseIdxVector(ValueVector const& indptr) : indptr_(indptr) {}
 
-    template <typename IteratorViewType> class Iterator {
+    template <IteratorView ViewTag> class Iterator {
       public:
         using iterator_category = std::forward_iterator_tag;
 
       public:
-        Iterator(ValueTypeVector const& indptr, size_t const& group, size_t const& element)
+        Iterator(ValueVector const& indptr, size_t const& group, size_t const& element)
             : indptr_(indptr), group_(group), element_(element) {}
 
         friend bool operator==(Iterator const& lhs, Iterator const& rhs) {
@@ -44,13 +68,13 @@ template <typename ValueType> class SparseIdxVector {
         friend bool operator!=(Iterator const& lhs, Iterator const& rhs) { return !(lhs == rhs); }
 
         auto operator*()
-            requires ElementView<IteratorViewType>
+            requires ElementView<ViewTag>
         {
             return static_cast<KeyType>(group_);
         }
 
         auto operator*()
-            requires ItemsView<IteratorViewType>
+            requires ItemsView<ViewTag>
         {
             return std::make_tuple(group_, indptr_[group_] + element_);
         }
@@ -72,11 +96,11 @@ template <typename ValueType> class SparseIdxVector {
         auto end() { return Iterator{indptr_, indptr_.size() - 1, 0}; }
 
       private:
-        ValueTypeVector const& indptr_{};
+        ValueVector const& indptr_{};
         size_t group_{};
         size_t element_{};
 
-        auto group_size(size_t const& group_number) { return indptr_[group_number + 1] - indptr_[group_number]; }
+        auto group_size(size_t const& group_number) const { return indptr_[group_number + 1] - indptr_[group_number]; }
 
         auto search_idx(ValueType const& index) {
             // insert search algorithm here
@@ -87,11 +111,32 @@ template <typename ValueType> class SparseIdxVector {
             }
             throw std::out_of_range{"Element not found on index"};
         }
+
+        // TODO Improve search function
+        // auto search_idx(ValueType const& index)  const {
+        //     KeyType lower{0};
+        //     auto upper = static_cast<KeyType>(indptr_.size() - 1);
+        //     auto lower_value = indptr_[lower];
+        //     auto upper_value = indptr_[upper];
+
+        //     while (lower < upper) {
+        //         auto test = (upper - lower) / 2;
+        //         auto test_value = indptr_[test];
+        //         if (test_value < index) {
+        //             lower = test;
+        //             lower_value = test_value;
+        //         } else {
+        //             upper = test;
+        //             upper_value = test_value;
+        //         }
+        //     }
+        //     return lower;
+        // }
     };
 
-    template <typename IteratorViewType> class ElementRange {
+    template <typename ViewTag> class ElementRange {
       public:
-        ElementRange(ValueTypeVector const& indptr, size_t group_begin, size_t group_end, size_t element_begin,
+        ElementRange(ValueVector const& indptr, size_t group_begin, size_t group_end, size_t element_begin,
                      size_t element_end)
             : indptr_(indptr),
               group_begin_(group_begin),
@@ -105,22 +150,22 @@ template <typename ValueType> class SparseIdxVector {
         }
         friend bool operator!=(ElementRange const& lhs, ElementRange const& rhs) { return !(lhs == rhs); }
 
-        Iterator<IteratorViewType> begin() { return Iterator<IteratorViewType>{indptr_, group_begin_, element_begin_}; }
-        Iterator<IteratorViewType> end() { return Iterator<IteratorViewType>{indptr_, group_end_, element_end_}; }
+        Iterator<ViewTag> begin() { return Iterator<ViewTag>{indptr_, group_begin_, element_begin_}; }
+        Iterator<ViewTag> end() { return Iterator<ViewTag>{indptr_, group_end_, element_end_}; }
 
       protected:
-        ValueTypeVector const& indptr_;
+        ValueVector const& indptr_;
         size_t group_begin_;
         size_t group_end_;
         size_t element_begin_;
         size_t element_end_;
     };
 
-    template <typename IteratorViewType> class GroupIterator : public ElementRange<IteratorViewType> {
+    template <typename ViewTag> class GroupIterator : public ElementRange<ViewTag> {
       public:
-        using ElementRangeType = ElementRange<IteratorViewType>;
+        using ElementRangeType = ElementRange<ViewTag>;
 
-        GroupIterator(ValueTypeVector const& indptr, size_t group_begin, size_t group_end, size_t element_begin,
+        GroupIterator(ValueVector const& indptr, size_t group_begin, size_t group_end, size_t element_begin,
                       size_t element_end)
             : ElementRangeType{indptr, group_begin, group_end, element_begin, element_end} {}
 
@@ -146,7 +191,7 @@ template <typename ValueType> class SparseIdxVector {
     auto items() { return Iterator<items_view_t>(indptr_, 0, 0); }
 
   private:
-    ValueTypeVector const& indptr_;
+    ValueVector const& indptr_;
 };
 
 } // namespace power_grid_model::detail
