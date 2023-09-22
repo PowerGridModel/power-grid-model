@@ -217,8 +217,8 @@ template <bool sym> class ShortCircuitSolver {
     void add_single_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
                                                                   ComplexTensor<sym>& diagonal_element,
                                                                   ComplexValue<sym>& u_bus, IntS const& phase_1)
-        requires !
-                 sym {
+        requires(!sym)
+    {
         for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
              ++data_index) {
             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -233,8 +233,8 @@ template <bool sym> class ShortCircuitSolver {
     void add_two_phase_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
                                                      ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
                                                      IntS const& phase_1, IntS const& phase_2)
-        requires !
-                 sym {
+        requires(!sym)
+    {
         for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
              ++data_index) {
             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -256,8 +256,8 @@ template <bool sym> class ShortCircuitSolver {
                                                                ComplexTensor<sym>& diagonal_element,
                                                                ComplexValue<sym>& u_bus, IntS const& phase_1,
                                                                IntS const& phase_2)
-        requires !
-                 sym {
+        requires(!sym)
+    {
         for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
              ++data_index) {
             Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
