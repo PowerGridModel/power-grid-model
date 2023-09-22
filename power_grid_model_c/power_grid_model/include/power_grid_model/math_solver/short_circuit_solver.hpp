@@ -97,12 +97,10 @@ template <bool sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            // add all sources
             add_sources(source_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus);
 
             // skip if no fault
             if (!input.faults.empty()) {
-                // add all faults
                 add_faults(fault_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus,
                            infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
             }
@@ -136,46 +134,7 @@ template <bool sym> class ShortCircuitSolver {
                 break;
             }
             assert(!std::isinf(y_fault.imag()));
-            if (fault_type == FaultType::three_phase) { // three phase fault
-                // mat_data[bus,bus] += y_fault
-                diagonal_element += ComplexTensor<sym>{y_fault};
-            }
-            if constexpr (!sym) {
-                if (fault_type == FaultType::single_phase_to_ground) {
-                    // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                    diagonal_element(phase_1, phase_1) += y_fault;
-                } else if (fault_type == FaultType::two_phase) {
-                    // mat_data[bus,bus][phase_1, phase_1] += y_fault
-                    // mat_data[bus,bus][phase_2, phase_2] += y_fault
-                    // mat_data[bus,bus][phase_1, phase_2] -= y_fault
-                    // mat_data[bus,bus][phase_2, phase_1] -= y_fault
-                    diagonal_element(phase_1, phase_1) += y_fault;
-                    diagonal_element(phase_2, phase_2) += y_fault;
-                    diagonal_element(phase_1, phase_2) -= y_fault;
-                    diagonal_element(phase_2, phase_1) -= y_fault;
-                } else if (fault_type == FaultType::two_phase_to_ground) {
-                    for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
-                         data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
-                        Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
-                        // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
-                        // mat_data[:,bus][:, phase_2] = 0
-                        mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
-                        mat_data_[col_data_index].col(phase_2) = 0;
-                    }
-                    // mat_data[bus,bus][phase_1, phase_2] = -1
-                    // mat_data[bus,bus][phase_2, phase_1] += y_fault
-                    // mat_data[bus,bus][phase_2, phase_2] = 1
-                    diagonal_element(phase_1, phase_2) = -1;
-                    diagonal_element(phase_2, phase_2) = 1;
-                    diagonal_element(phase_2, phase_1) += y_fault;
-                    // update rhs
-                    u_bus(phase_2) += u_bus(phase_1);
-                    u_bus(phase_1) = 0;
-                } else {
-                    assert((fault_type == FaultType::three_phase));
-                    continue;
-                }
-            }
+            add_fault(y_fault, bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1, phase_2);
         }
     }
 
@@ -273,6 +232,50 @@ template <bool sym> class ShortCircuitSolver {
         // update rhs
         u_bus(phase_1) = 0;
         u_bus(phase_2) = 0;
+    }
+
+    void add_fault(DoubleComplex const& y_fault, Idx const& bus_number, YBus<sym> const& y_bus,
+                   ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus, FaultType const& fault_type,
+                   IntS const& phase_1, IntS const& phase_2) {
+        if (fault_type == FaultType::three_phase) { // three phase fault
+            // mat_data[bus,bus] += y_fault
+            diagonal_element += ComplexTensor<sym>{y_fault};
+        }
+        if constexpr (!sym) {
+            if (fault_type == FaultType::single_phase_to_ground) {
+                // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                diagonal_element(phase_1, phase_1) += y_fault;
+            } else if (fault_type == FaultType::two_phase) {
+                // mat_data[bus,bus][phase_1, phase_1] += y_fault
+                // mat_data[bus,bus][phase_2, phase_2] += y_fault
+                // mat_data[bus,bus][phase_1, phase_2] -= y_fault
+                // mat_data[bus,bus][phase_2, phase_1] -= y_fault
+                diagonal_element(phase_1, phase_1) += y_fault;
+                diagonal_element(phase_2, phase_2) += y_fault;
+                diagonal_element(phase_1, phase_2) -= y_fault;
+                diagonal_element(phase_2, phase_1) -= y_fault;
+            } else if (fault_type == FaultType::two_phase_to_ground) {
+                for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
+                     data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
+                    Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
+                    // mat_data[:,bus][:, phase_1] += mat_data[:,bus][:, phase_2]
+                    // mat_data[:,bus][:, phase_2] = 0
+                    mat_data_[col_data_index].col(phase_1) += mat_data_[col_data_index].col(phase_2);
+                    mat_data_[col_data_index].col(phase_2) = 0;
+                }
+                // mat_data[bus,bus][phase_1, phase_2] = -1
+                // mat_data[bus,bus][phase_2, phase_1] += y_fault
+                // mat_data[bus,bus][phase_2, phase_2] = 1
+                diagonal_element(phase_1, phase_2) = -1;
+                diagonal_element(phase_2, phase_2) = 1;
+                diagonal_element(phase_2, phase_1) += y_fault;
+                // update rhs
+                u_bus(phase_2) += u_bus(phase_1);
+                u_bus(phase_1) = 0;
+            } else {
+                assert((fault_type == FaultType::three_phase));
+            }
+        }
     }
 
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
