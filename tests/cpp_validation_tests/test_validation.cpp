@@ -58,17 +58,11 @@ struct Buffer {
     MutableDataPointer data_ptr; // TODO(mgovers): remove
 };
 
-struct DatasetView {
-    Dataset dataset;
-    ConstDataset const_dataset;
-    std::map<std::string, Buffer> buffer_map;
-};
-
 struct OwningDataset {
     Dataset dataset;
     ConstDataset const_dataset;
     std::map<std::string, Buffer> buffer_map;
-    std::deque<DatasetView> batch_scenarios;
+    std::deque<ConstDataset> batch_scenarios;
 };
 
 template <bool is_const>
@@ -115,22 +109,20 @@ auto create_owning_dataset(WritableDatasetHandler const& info, Idx batch_size = 
 
 auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
     for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
-        DatasetView scenario;
+        ConstDataset scenario;
 
         for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
             auto const& component_info = info.get_component_info(component_idx);
             auto const& component_meta = component_info.component;
 
             auto& buffer_map = dataset.buffer_map[component_meta->name];
-            if (component_info.elements_per_scenario >= 0) {
-                scenario.const_dataset[component_meta->name] =
-                    ConstDataPointer{component_meta->advance_ptr(buffer_map.ptr.get(),
-                                                                 scenario_idx * component_info.elements_per_scenario),
-                                     nullptr, 1, component_info.elements_per_scenario};
-            } else {
-                scenario.const_dataset[component_meta->name] = ConstDataPointer{
-                    buffer_map.ptr.get(), &buffer_map.indptr[scenario_idx], 1, component_info.elements_per_scenario};
-            }
+
+            auto offset =
+                component_info.elements_per_scenario < 0 ? 0 : scenario_idx * component_info.elements_per_scenario;
+            auto indptr = component_info.elements_per_scenario < 0 ? &buffer_map.indptr[scenario_idx] : nullptr;
+
+            scenario[component_meta->name] = ConstDataPointer{component_meta->advance_ptr(buffer_map.ptr.get(), offset),
+                                                              indptr, 1, component_info.elements_per_scenario};
         }
 
         dataset.batch_scenarios.push_back(std::move(scenario));
@@ -598,12 +590,12 @@ void validate_batch_case(CaseParam const& param) {
 
             // update and run
             model_copy.update_component<MainModel::permanent_update_t>(
-                validation_case.update_batch.batch_scenarios[batch].const_dataset);
+                validation_case.update_batch.batch_scenarios[batch]);
             func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
 
             // check
-            assert_result(result.const_dataset, validation_case.output_batch.batch_scenarios[batch].const_dataset,
-                          output_prefix, param.atol, param.rtol);
+            assert_result(result.const_dataset, validation_case.output_batch.batch_scenarios[batch], output_prefix,
+                          param.atol, param.rtol);
         }
 
         // run in one-go, with different threading possibility
