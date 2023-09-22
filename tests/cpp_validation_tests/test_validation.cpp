@@ -162,13 +162,11 @@ auto construct_individual_scenarios(BatchData& dataset, WritableDatasetHandler c
             auto start = component_info.elements_per_scenario < 0 ? buffer_map.indptr[scenario_idx]
                                                                   : scenario_idx * component_info.elements_per_scenario;
 
-            scenario.dataset[component_meta->name] = MutableDataPointer{
-                component_meta->advance_ptr(buffer_map.ptr.get(), start),
-                component_info.elements_per_scenario < 0 ? &buffer_map.indptr[scenario_idx] : nullptr, 1,
-                component_info.elements_per_scenario};
-
+            // the individual scenarios are merely views of the original batch
             scenario.const_dataset[component_meta->name] =
-                static_cast<ConstDataPointer>(scenario.dataset[component_meta->name]);
+                ConstDataPointer{component_meta->advance_ptr(buffer_map.ptr.get(), start),
+                                 component_info.elements_per_scenario < 0 ? &buffer_map.indptr[scenario_idx] : nullptr,
+                                 1, component_info.elements_per_scenario};
         }
 
         dataset.individual_batch.push_back(std::move(scenario));
@@ -724,18 +722,18 @@ void validate_batch_case(CaseParam const& param) {
         Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
         CalculationFunc const func = calculation_func(param);
 
-        // // run in loops
-        // for (Idx batch = 0; batch != n_batch; ++batch) {
-        //     MainModel model_copy{model};
-        //     // update and run
-        //     model_copy.update_component<MainModel::permanent_update_t>(
-        //         validation_case.update_batch.individual_batch[batch].const_dataset);
-        //     func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+        // run in loops
+        for (Idx batch = 0; batch != n_batch; ++batch) {
+            MainModel model_copy{model};
+            // update and run
+            model_copy.update_component<MainModel::permanent_update_t>(
+                validation_case.update_batch.individual_batch[batch].const_dataset);
+            func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
 
-        //     // check
-        //     assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
-        //                   output_prefix, param.atol, param.rtol);
-        // }
+            // check
+            assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
+                          output_prefix, param.atol, param.rtol);
+        }
 
         // run in one-go, with different threading possibility
         SingleData const batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
