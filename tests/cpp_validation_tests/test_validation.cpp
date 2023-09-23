@@ -102,23 +102,7 @@ auto create_owning_dataset(WritableDatasetHandler const& info, Idx batch_size = 
 
 auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
     for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
-        ConstDataset scenario;
-
-        for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-            auto const& component_info = info.get_component_info(component_idx);
-            auto const& component_meta = component_info.component;
-
-            auto& buffer_map = dataset.buffer_map[component_meta->name];
-
-            auto offset =
-                component_info.elements_per_scenario < 0 ? 0 : scenario_idx * component_info.elements_per_scenario;
-            auto indptr = component_info.elements_per_scenario < 0 ? &buffer_map.indptr[scenario_idx] : nullptr;
-
-            scenario[component_meta->name] = ConstDataPointer{component_meta->advance_ptr(buffer_map.ptr.get(), offset),
-                                                              indptr, 1, component_info.elements_per_scenario};
-        }
-
-        dataset.batch_scenarios.push_back(std::move(scenario));
+        dataset.batch_scenarios.push_back(info.export_dataset<true>(scenario_idx));
     }
 }
 
