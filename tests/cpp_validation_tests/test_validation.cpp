@@ -203,17 +203,17 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                    std::map<std::string, double> atol, double rtol) {
     MetaDataset const& meta = meta_data().get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
-    // loop all batch
-    for (Idx batch = 0; batch != batch_size; ++batch) {
+    // loop all scenario
+    for (Idx scenario = 0; scenario != batch_size; ++scenario) {
         // loop all component type name
         for (auto const& [type_name, reference_dataset] : reference_result) {
             MetaComponent const& component_meta = meta.get_component(type_name);
-            Idx const length = reference_dataset.elements_per_scenario(batch);
-            // offset batch
+            Idx const length = reference_dataset.elements_per_scenario(scenario);
+            // offset scenario
             RawDataConstPtr const result_ptr =
-                reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * batch * component_meta.size;
+                reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * scenario * component_meta.size;
             RawDataConstPtr const reference_result_ptr =
-                reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * batch * component_meta.size;
+                reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * scenario * component_meta.size;
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
@@ -254,7 +254,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     } else {
                         std::string const case_str =
-                            "batch: #" + std::to_string(batch) + ", Component: " + type_name + " #" +
+                            "scenario: #" + std::to_string(scenario) + ", Component: " + type_name + " #" +
                             std::to_string(obj) + ", attribute: " + attr.name +
                             ": actual = " + get_as_string(result_ptr, attr, obj) +
                             " vs. expected = " + get_as_string(reference_result_ptr, attr, obj);
@@ -543,16 +543,16 @@ void validate_batch_case(CaseParam const& param) {
         CalculationFunc const func = calculation_func(param);
 
         // run in loops
-        for (Idx batch = 0; batch != n_scenario; ++batch) {
+        for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
             MainModel model_copy{model};
 
             // update and run
             model_copy.update_component<MainModel::permanent_update_t>(
-                validation_case.update_batch.batch_scenarios[batch]);
+                validation_case.update_batch.batch_scenarios[scenario]);
             func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
 
             // check
-            assert_result(result.const_dataset, validation_case.output_batch.batch_scenarios[batch], output_prefix,
+            assert_result(result.const_dataset, validation_case.output_batch.batch_scenarios[scenario], output_prefix,
                           param.atol, param.rtol);
         }
 
