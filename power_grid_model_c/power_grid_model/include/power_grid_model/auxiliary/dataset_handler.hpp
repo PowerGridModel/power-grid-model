@@ -10,6 +10,7 @@
 
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
+#include "dataset.hpp"
 #include "meta_data.hpp"
 #include "meta_data_gen.hpp"
 
@@ -52,6 +53,20 @@ class DatasetHandler {
         if (!dataset_info_.is_batch && (dataset_info_.batch_size != 1)) {
             throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
         }
+    }
+
+    template <bool dataset_const>
+    std::map<std::string, DataPointer<dataset_const>> export_dataset() const
+        requires(data_mutable)
+    {
+        std::map<std::string, DataPointer<dataset_const>> dataset;
+        for (Idx i{}; i != n_components(); ++i) {
+            ComponentInfo const& component = get_component_info(i);
+            Buffer const& buffer = get_buffer(i);
+            dataset[component.component->name] = DataPointer<dataset_const>{
+                buffer.data, buffer.indptr.data(), batch_size(), component.elements_per_scenario};
+        }
+        return dataset;
     }
 
     bool is_batch() const { return dataset_info_.is_batch; }
