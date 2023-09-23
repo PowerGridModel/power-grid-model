@@ -115,25 +115,19 @@ auto load_dataset(std::filesystem::path const& path) {
 }
 
 // create single result set
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, Idx n_batch = 1) {
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
+                                    Idx batch_size = 1) {
     MetaDataset const& meta = meta_data().get_dataset(data_type);
-    OwningDataset result;
-    for (auto const& [name, buffer] : input.buffer_map) {
+    WritableDatasetHandler handler{is_batch, batch_size, meta.name};
+
+    for (auto const& [name, data_ptr] : input.const_dataset) {
+        assert(data_ptr.batch_size() == 1);
         MetaComponent const& component_meta = meta.get_component(name);
         Buffer result_buffer;
-        Idx const length = (buffer.indptr.empty() ? buffer.data_ptr.elements_per_scenario(0) : buffer.indptr.back());
-
-        result_buffer.ptr = BufferPtr{component_meta.create_buffer(length * n_batch), component_meta.destroy_buffer};
-        result_buffer.data_ptr =
-            MutableDataPointer{result_buffer.ptr.get(), n_batch, buffer.data_ptr.elements_per_scenario(0)};
-
-        result.buffer_map[name] = std::move(result_buffer);
+        Idx const elements_per_scenario = data_ptr.elements_per_scenario(0);
+        handler.add_component_info(name, elements_per_scenario, elements_per_scenario * batch_size);
     }
-
-    result.dataset = generate_dataset<false>(result.buffer_map);
-    result.const_dataset = generate_dataset<true>(result.buffer_map);
-
-    return result;
+    return create_owning_dataset(handler);
 }
 
 template <typename T>
@@ -545,11 +539,11 @@ void validate_batch_case(CaseParam const& param) {
         // TODO (mgovers): fix false positive of misc-const-correctness
         // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
-        Idx const n_batch = static_cast<Idx>(validation_case.update_batch.batch_scenarios.size());
+        Idx const n_scenario = static_cast<Idx>(validation_case.update_batch.batch_scenarios.size());
         CalculationFunc const func = calculation_func(param);
 
         // run in loops
-        for (Idx batch = 0; batch != n_batch; ++batch) {
+        for (Idx batch = 0; batch != n_scenario; ++batch) {
             MainModel model_copy{model};
 
             // update and run
@@ -563,7 +557,7 @@ void validate_batch_case(CaseParam const& param) {
         }
 
         // run in one-go, with different threading possibility
-        auto const batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+        auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, n_scenario);
         for (Idx const threading : {-1, 0, 1, 2}) {
             func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
                  validation_case.update_batch.const_dataset, threading);
