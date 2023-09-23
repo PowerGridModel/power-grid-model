@@ -14,7 +14,6 @@
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
-#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -62,7 +61,7 @@ struct OwningDataset {
     Dataset dataset;
     ConstDataset const_dataset;
     std::map<std::string, Buffer> buffer_map;
-    std::deque<ConstDataset> batch_scenarios;
+    std::vector<ConstDataset> batch_scenarios;
 };
 
 template <bool is_const>
