@@ -89,8 +89,6 @@ auto create_owning_dataset(WritableDatasetHandler const& info, Idx batch_size = 
 
         buffer.ptr =
             BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
-
-        component_meta->set_nan(buffer.ptr.get(), 0, component_info.total_elements);
         buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
 
         buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
@@ -99,10 +97,6 @@ auto create_owning_dataset(WritableDatasetHandler const& info, Idx batch_size = 
 
         result.buffer_map[component_meta->name] = std::move(buffer);
     }
-
-    // create dataset
-    result.const_dataset = generate_dataset<true>(result.buffer_map);
-    result.dataset = generate_dataset<false>(result.buffer_map);
 
     return result;
 }
@@ -143,8 +137,11 @@ auto load_dataset(std::filesystem::path const& path) {
     auto result = create_owning_dataset(info);
 
     load_into_buffers(deserializer, result.buffer_map);
-
     construct_individual_scenarios(result, info);
+
+    // create dataset
+    result.const_dataset = info.export_dataset<true>();
+    result.dataset = info.export_dataset<false>();
 
     return result;
 }
