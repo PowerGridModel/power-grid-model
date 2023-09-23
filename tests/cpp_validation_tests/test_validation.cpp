@@ -73,31 +73,30 @@ std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::stri
     return dataset;
 }
 
-auto create_owning_dataset(WritableDatasetHandler const& info, Idx batch_size = -1) {
-    if (batch_size < 0) {
-        batch_size = info.batch_size();
-    }
+auto create_owning_dataset(WritableDatasetHandler& info) {
 
-    OwningDataset result;
+    Idx const batch_size = info.batch_size();
+    OwningDataset dataset;
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_info = info.get_component_info(component_idx);
         auto const& component_meta = component_info.component;
 
         Buffer buffer{};
-
         buffer.ptr =
             BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
         buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
-
         buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
                                              component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr,
                                              batch_size, component_info.elements_per_scenario};
 
-        result.buffer_map[component_meta->name] = std::move(buffer);
+        info.set_buffer(component_info.component->name, buffer.indptr.data(), buffer.ptr.get());
+        dataset.buffer_map[component_meta->name] = std::move(buffer);
     }
+    dataset.const_dataset = info.export_dataset<true>();
+    dataset.dataset = info.export_dataset<false>();
 
-    return result;
+    return dataset;
 }
 
 auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
@@ -106,27 +105,13 @@ auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandl
     }
 }
 
-auto load_into_buffers(Deserializer& deserializer, std::map<std::string, Buffer>& buffer_map) {
-    for (auto& [component, buffer] : buffer_map) {
-        deserializer.get_dataset_info().set_buffer(component, buffer.indptr.data(), buffer.ptr.get());
-    }
-    deserializer.parse();
-}
-
 auto load_dataset(std::filesystem::path const& path) {
     auto deserializer = Deserializer(power_grid_model::meta_data::from_json, read_file(path));
     auto& info = deserializer.get_dataset_info();
-
-    auto result = create_owning_dataset(info);
-
-    load_into_buffers(deserializer, result.buffer_map);
-    construct_individual_scenarios(result, info);
-
-    // create dataset
-    result.const_dataset = info.export_dataset<true>();
-    result.dataset = info.export_dataset<false>();
-
-    return result;
+    auto dataset = create_owning_dataset(info);
+    deserializer.parse();
+    construct_individual_scenarios(dataset, info);
+    return dataset;
 }
 
 // create single result set
