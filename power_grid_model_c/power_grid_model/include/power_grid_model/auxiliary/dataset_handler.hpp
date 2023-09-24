@@ -55,6 +55,17 @@ class DatasetHandler {
         }
     }
 
+    // implicit conversion constructor to const
+    template <bool indptr_mutable_other>
+    DatasetHandler(DatasetHandler<true, indptr_mutable_other> const& other)
+        requires(!data_mutable)
+        : dataset_info_{other.get_description()} {
+        for (Idx i{}; i != other.n_components(); ++i) {
+            auto const& buffer = other.get_buffer(i);
+            buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
+        }
+    }
+
     template <bool dataset_const>
     std::map<std::string, DataPointer<dataset_const>> export_dataset(Idx scenario = -1) const
         requires(dataset_const || data_mutable)

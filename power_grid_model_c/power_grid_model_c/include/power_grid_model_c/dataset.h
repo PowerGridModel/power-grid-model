@@ -96,8 +96,31 @@ PGM_API PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char cons
                                                    PGM_Idx batch_size);
 
 /**
+ * @brief Create an instance of PGM_ConstDataset from a PGM_WritableDataset
+ *     They share the same buffer memory.
+ * @param handle
+ * @param writable_dataset pointer to an instance of PGM_WritableDataset
+ * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
+ *    The instance must be freed by PGM_destroy_dataset_const().
+ */
+PGM_API PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
+                                                                 PGM_WritableDataset const* writable_dataset);
+
+/**
+ * @brief Create an instance of PGM_ConstDataset from a PGM_MutableDataset
+ *     They share the same buffer memory.
+ * @param handle
+ * @param mutable_dataset pointer to an instance of PGM_MutableDataset
+ * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
+ *    The instance must be freed by PGM_destroy_dataset_const().
+ */
+PGM_API PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle,
+                                                                PGM_MutableDataset const* mutable_dataset);
+
+/**
  * @brief Destroy an instance of PGM_ConstDataset.
- * @param dataset The pointer to the PGM_ConstDataset created by PGM_create_dataset_const().
+ * @param dataset The pointer to the PGM_ConstDataset created by PGM_create_dataset_const(),
+ * PGM_create_dataset_const_from_writable(), or PGM_create_dataset_const_from_mutable().
  * @return
  */
 PGM_API void PGM_destroy_dataset_const(PGM_ConstDataset* dataset);
@@ -155,6 +178,56 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle,
  */
 PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
                                              PGM_Idx* indptr, void* data);
+
+/**
+ * @brief Create an instance of PGM_MutableDataset.
+ * @param handle
+ * @param dataset The name of the dataset.
+ * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single.
+ * @param batch_size The size of the batch. For single datasets, this must be 1.
+ * @return A pointer to the created PGM_MutableDataset, or NULL if errors occur. Check the handle for error.
+ *    The instance must be freed by PGM_destroy_dataset_mutable().
+ */
+PGM_API PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
+                                                       PGM_Idx batch_size);
+
+/**
+ * @brief Destroy an instance of PGM_MutableDataset.
+ * @param dataset The pointer to the PGM_MutableDataset created by PGM_create_dataset_mutable().
+ * @return
+ */
+PGM_API void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset);
+
+/**
+ * @brief Add a component buffer to an instance of PGM_MutableDataset.
+ * @param handle
+ * @param dataset The pointer to the PGM_MutableDataset.
+ * @param component The name of the component.
+ * @param elements_per_scenario The number of the elements per scenario.
+ *     If the component is uniform, elements_per_scenario must be >= 0
+ *     If the component is not uniform, elements_per_scenario must be -1
+ * @param total_elements The total number of elements for all scenarios.
+ *     If elements_per_scenario >= 0, we must have elements_per_scenario * batch_size = total_elements.
+ * @param indptr A pointer to an array of indptr of a non-uniform component.
+ *     If the component is uniform, indptr must be NULL.
+ *     If the component is not uniform, indptr must point to an array of size (batch_size + 1).
+ *         The values in the array must be not decreasing.
+ *         And we must have indptr[0] = 0, indptr[batch_size] = total_elements.
+ * @param data A void pointer to the buffer data.
+ * @return
+ */
+PGM_API void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
+                                            PGM_Idx elements_per_scenario, PGM_Idx total_elements,
+                                            PGM_Idx const* indptr, void* data);
+
+/**
+ * @brief Get the dataset info of the instance PGM_MutableDataset.
+ * @param handle
+ * @param dataset A pointer to the PGM_MutableDataset.
+ * @return A pointer to the instance of PGM_DatasetInfo.
+ *     The pointer has the same lifetime as the input dataset pointer.
+ */
+PGM_API PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, PGM_MutableDataset const* dataset);
 
 #ifdef __cplusplus
 }
