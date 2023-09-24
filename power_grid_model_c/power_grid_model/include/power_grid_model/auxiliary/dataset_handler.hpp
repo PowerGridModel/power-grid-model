@@ -57,7 +57,7 @@ class DatasetHandler {
 
     template <bool dataset_const>
     std::map<std::string, DataPointer<dataset_const>> export_dataset(Idx scenario = -1) const
-        requires(data_mutable)
+        requires(dataset_const || data_mutable)
     {
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with a scenario > 0!"};
@@ -110,20 +110,18 @@ class DatasetHandler {
         return dataset_info_.component_info[find_component(component, true)];
     }
 
-    void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
-        if (find_component(component) >= 0) {
-            throw DatasetError{"Cannot have duplicated components!\n"};
-        }
-        check_uniform_integrity(elements_per_scenario, total_elements);
-        dataset_info_.component_info.push_back(
-            {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
-        buffers_.push_back(Buffer{});
+    void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
+        requires(indptr_mutable)
+    {
+        add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
     void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
-                    Data* data) {
+                    Data* data)
+        requires(!indptr_mutable)
+    {
         check_non_uniform_integrity<true>(elements_per_scenario, total_elements, indptr);
-        add_component_info(component, elements_per_scenario, total_elements);
+        add_component_info_impl(component, elements_per_scenario, total_elements);
         buffers_.back().data = data;
         if (indptr) {
             buffers_.back().indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
@@ -132,7 +130,9 @@ class DatasetHandler {
         }
     }
 
-    void set_buffer(std::string_view component, Indptr* indptr, Data* data) {
+    void set_buffer(std::string_view component, Indptr* indptr, Data* data)
+        requires(indptr_mutable)
+    {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = dataset_info_.component_info[idx];
         check_non_uniform_integrity<false>(info.elements_per_scenario, info.total_elements, indptr);
@@ -172,6 +172,16 @@ class DatasetHandler {
                 throw DatasetError{"For a uniform buffer, indptr should be nullptr !\n"};
             }
         }
+    }
+
+    void add_component_info_impl(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
+        if (find_component(component) >= 0) {
+            throw DatasetError{"Cannot have duplicated components!\n"};
+        }
+        check_uniform_integrity(elements_per_scenario, total_elements);
+        dataset_info_.component_info.push_back(
+            {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
+        buffers_.push_back(Buffer{});
     }
 };
 
