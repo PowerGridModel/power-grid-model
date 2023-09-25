@@ -236,11 +236,8 @@ class Serializer {
 
     static void json_inf_to_string(nlohmann::json& value) {
         double const v = value.get<double>();
-        if (std::isinf(v) && v > 0.0) {
-            value = "inf";
-        }
-        if (std::isinf(v) && v < 0.0) {
-            value = "-inf";
+        if (std::isinf(v)) {
+            value = v > 0.0 ? "inf" : "-inf";
         }
     }
 

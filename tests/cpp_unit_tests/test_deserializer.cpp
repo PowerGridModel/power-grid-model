@@ -42,15 +42,15 @@ constexpr std::string_view json_single = R"(
     "node": [
       [
         1,
-        "inf"
+        10.5e3
       ],
       [
         2,
-        "+inf"
+        10.5e3
       ],
       [
         3,
-        "-inf"
+        10.5e3
       ]
     ],
     "line": [
@@ -119,6 +119,22 @@ constexpr std::string_view json_single = R"(
         0,
         1.02e6,
         0.22e6
+      ],
+      [
+        36,
+        3,
+        1,
+        0,
+        "inf",
+        0.22e6
+      ],
+      [
+        37,
+        3,
+        1,
+        0,
+        "-inf",
+        "+inf"
       ]
     ]
   }
@@ -195,6 +211,30 @@ constexpr std::string_view json_batch = R"(
           ]
         }
       ]
+    },
+    {
+      "sym_load": [
+        [
+          37,
+          "-inf",
+          "inf"
+        ]
+      ],
+      "asym_load": [
+        {
+          "id": 31,
+          "q_specified": [
+            "inf",
+            80.0,
+            "+inf"
+          ],
+          "p_specified": [
+            "-inf",
+            75.0,
+            "-inf"
+          ]
+        }
+      ]
     }
   ]
 }
@@ -237,15 +277,15 @@ TEST_CASE("Deserializer") {
             CHECK(info.get_component_info("line").total_elements == 2);
             CHECK(info.get_component_info("source").elements_per_scenario == 3);
             CHECK(info.get_component_info("source").total_elements == 3);
-            CHECK(info.get_component_info("sym_load").elements_per_scenario == 2);
-            CHECK(info.get_component_info("sym_load").total_elements == 2);
+            CHECK(info.get_component_info("sym_load").elements_per_scenario == 4);
+            CHECK(info.get_component_info("sym_load").total_elements == 4);
         }
 
         SUBCASE("Check parse") {
             std::vector<NodeInput> node(3);
             std::vector<LineInput> line(2);
             std::vector<SourceInput> source(3);
-            std::vector<SymLoadGenInput> sym_load(2);
+            std::vector<SymLoadGenInput> sym_load(4);
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("node", nullptr, node.data());
             info.set_buffer("line", nullptr, line.data());
@@ -255,14 +295,11 @@ TEST_CASE("Deserializer") {
             deserializer.parse();
             // check node
             CHECK(node[0].id == 1);
-            CHECK(std::isinf(node[0].u_rated));
-            CHECK(node[0].u_rated > 0.0);
+            CHECK(node[0].u_rated == doctest::Approx(10.5e3));
             CHECK(node[1].id == 2);
-            CHECK(std::isinf(node[1].u_rated));
-            CHECK(node[1].u_rated > 0.0);
+            CHECK(node[1].u_rated == doctest::Approx(10.5e3));
             CHECK(node[2].id == 3);
-            CHECK(std::isinf(node[2].u_rated));
-            CHECK(node[2].u_rated < 0.0);
+            CHECK(node[2].u_rated == doctest::Approx(10.5e3));
             // check line
             CHECK(line[0].id == 4);
             CHECK(line[0].r1 == doctest::Approx(0.11));
@@ -288,6 +325,11 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load[0].p_specified == doctest::Approx(1.01e6));
             CHECK(sym_load[1].id == 8);
             CHECK(sym_load[1].q_specified == doctest::Approx(0.22e6));
+            CHECK(sym_load[2].id == 36);
+            CHECK(sym_load[2].p_specified == std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].id == 37);
+            CHECK(sym_load[3].p_specified == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].q_specified == std::numeric_limits<double>::infinity());
         }
     }
 
@@ -297,22 +339,22 @@ TEST_CASE("Deserializer") {
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().dataset().name == "update");
             CHECK(deserializer.get_dataset_info().is_batch());
-            CHECK(deserializer.get_dataset_info().batch_size() == 3);
+            CHECK(deserializer.get_dataset_info().batch_size() == 4);
             CHECK(deserializer.get_dataset_info().n_components() == 2);
         }
 
         SUBCASE("Check buffer") {
             auto const& info = deserializer.get_dataset_info();
             CHECK(info.get_component_info("sym_load").elements_per_scenario == -1);
-            CHECK(info.get_component_info("sym_load").total_elements == 3);
+            CHECK(info.get_component_info("sym_load").total_elements == 4);
             CHECK(info.get_component_info("asym_load").elements_per_scenario == 1);
-            CHECK(info.get_component_info("asym_load").total_elements == 3);
+            CHECK(info.get_component_info("asym_load").total_elements == 4);
         }
 
         SUBCASE("Check parse") {
-            std::vector<SymLoadGenUpdate> sym_load(3);
-            std::vector<AsymLoadGenUpdate> asym_load(3);
-            IdxVector sym_load_indptr(4);
+            std::vector<SymLoadGenUpdate> sym_load(4);
+            std::vector<AsymLoadGenUpdate> asym_load(4);
+            IdxVector sym_load_indptr(deserializer.get_dataset_info().batch_size() + 1);
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("sym_load", sym_load_indptr.data(), sym_load.data());
             info.set_buffer("asym_load", nullptr, asym_load.data());
@@ -320,7 +362,7 @@ TEST_CASE("Deserializer") {
             deserializer.parse();
 
             // sym_load
-            CHECK(sym_load_indptr == IdxVector{0, 1, 1, 3});
+            CHECK(sym_load_indptr == IdxVector{0, 1, 1, 3, 4});
             CHECK(sym_load[0].id == 7);
             CHECK(sym_load[0].p_specified == doctest::Approx(20.0));
             CHECK(sym_load[0].status == na_IntS);
@@ -332,6 +374,9 @@ TEST_CASE("Deserializer") {
             CHECK(is_nan(sym_load[2].p_specified));
             CHECK(is_nan(sym_load[2].q_specified));
             CHECK(sym_load[2].status == 0);
+            CHECK(sym_load[3].id == 37);
+            CHECK(sym_load[3].p_specified == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load[3].q_specified == std::numeric_limits<double>::infinity());
 
             // asym_load
             CHECK(asym_load[0].id == 9);
@@ -347,6 +392,13 @@ TEST_CASE("Deserializer") {
             CHECK(asym_load[2].q_specified(0) == doctest::Approx(70.0));
             CHECK(asym_load[2].q_specified(1) == doctest::Approx(80.0));
             CHECK(asym_load[2].q_specified(2) == doctest::Approx(90.0));
+            CHECK(asym_load[3].id == 31);
+            CHECK(asym_load[3].p_specified(0) == -std::numeric_limits<double>::infinity());
+            CHECK(asym_load[3].p_specified(1) == doctest::Approx(75.0));
+            CHECK(asym_load[3].p_specified(2) == -std::numeric_limits<double>::infinity());
+            CHECK(asym_load[3].q_specified(0) == std::numeric_limits<double>::infinity());
+            CHECK(asym_load[3].q_specified(1) == doctest::Approx(80.0));
+            CHECK(asym_load[3].q_specified(2) == std::numeric_limits<double>::infinity());
         }
     }
 }
