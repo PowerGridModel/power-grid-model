@@ -210,11 +210,35 @@ class Serializer {
 
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
-            auto const json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
+            auto json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
+            json_convert_inf(json_document);
             json_indent_ = indent;
             json_buffer_ = json_document.dump(static_cast<int>(indent));
         }
         return json_buffer_;
+    }
+
+    static void json_convert_inf(nlohmann::json& json_document) {
+        switch (json_document.type()) {
+        case nlohmann::json::value_t::object:
+        case nlohmann::json::value_t::array:
+            for (auto& value : json_document) {
+                json_convert_inf(value);
+            }
+            break;
+        case nlohmann::json::value_t::number_float:
+            json_inf_to_string(json_document);
+            break;
+        default:
+            break;
+        }
+    }
+
+    static void json_inf_to_string(nlohmann::json& value) {
+        double const v = value.get<double>();
+        if (std::isinf(v)) {
+            value = v > 0.0 ? "inf" : "-inf";
+        }
     }
 
     void serialize(bool use_compact_list) {
