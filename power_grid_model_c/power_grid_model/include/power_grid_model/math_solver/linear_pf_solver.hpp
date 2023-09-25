@@ -148,16 +148,8 @@ template <bool sym> class LinearPFSolver {
 
         // loop all bus
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            // source
             calculate_source_result(bus_number, y_bus, input, output);
-
-            // load_gen
-            for (Idx load_gen = (*load_gen_bus_indptr_)[bus_number];
-                 load_gen != (*load_gen_bus_indptr_)[bus_number + 1]; ++load_gen) {
-                // power is always quadratic relation to voltage for linear pf
-                output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus_number]);
-                output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
-            }
+            calculate_load_gen_result(bus_number, input, output);
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
@@ -170,6 +162,15 @@ template <bool sym> class LinearPFSolver {
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
             output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
             output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
+        }
+    }
+
+    void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        for (Idx load_gen = (*load_gen_bus_indptr_)[bus_number]; load_gen != (*load_gen_bus_indptr_)[bus_number + 1];
+             ++load_gen) {
+            // power is always quadratic relation to voltage for linear pf
+            output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus_number]);
+            output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
         }
     }
 };
