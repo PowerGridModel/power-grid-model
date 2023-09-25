@@ -271,10 +271,9 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
             add_diag(data_jac_[k].l(), -del_x_pq_[i].q());
         }
 
-        // loop individual load/source, i as bus number, j as load/source number
+        // loop individual load/source, j as load/source number
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
-            // k as data sequence number
-            Idx const k = bus_entry[bus_number];
+            Idx const diagonal_position = bus_entry[bus_number];
 
             // loop load
             for (Idx j = load_gen_bus_indptr[bus_number]; j != load_gen_bus_indptr[bus_number + 1]; ++j) {
@@ -293,9 +292,9 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                     del_x_pq_[bus_number].p() += real(input.s_injection[j]) * x_[bus_number].v() * x_[bus_number].v();
                     del_x_pq_[bus_number].q() += imag(input.s_injection[j]) * x_[bus_number].v() * x_[bus_number].v();
                     // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
-                    add_diag(data_jac_[k].n(),
+                    add_diag(data_jac_[diagonal_position].n(),
                              -real(input.s_injection[j]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
-                    add_diag(data_jac_[k].l(),
+                    add_diag(data_jac_[diagonal_position].l(),
                              -imag(input.s_injection[j]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
                     break;
                 case LoadGenType::const_i:
@@ -303,8 +302,8 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                     del_x_pq_[bus_number].p() += real(input.s_injection[j]) * x_[bus_number].v();
                     del_x_pq_[bus_number].q() += imag(input.s_injection[j]) * x_[bus_number].v();
                     // -dPQ_sp/dV * V = -PQ_base * V
-                    add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * x_[bus_number].v());
-                    add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * x_[bus_number].v());
+                    add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[j]) * x_[bus_number].v());
+                    add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[j]) * x_[bus_number].v());
                     break;
                 default:
                     throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
@@ -333,10 +332,10 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                 // append to jacobian block
                 // hnml -= -dPQ_cal/(dtheta,dV)
                 // hnml += dPQ_cal/(dtheta,dV)
-                data_jac_[k].h() += block_mm.h();
-                data_jac_[k].n() += block_mm.n();
-                data_jac_[k].m() += block_mm.m();
-                data_jac_[k].l() += block_mm.l();
+                data_jac_[diagonal_position].h() += block_mm.h();
+                data_jac_[diagonal_position].n() += block_mm.n();
+                data_jac_[diagonal_position].m() += block_mm.m();
+                data_jac_[diagonal_position].l() += block_mm.l();
             }
         }
     }
