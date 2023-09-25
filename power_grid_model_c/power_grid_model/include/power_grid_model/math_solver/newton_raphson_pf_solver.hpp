@@ -301,6 +301,35 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         }
     }
 
+    void add_const_power_load(Idx const& bus_number, Idx const& load_number, PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
+        // -dPQ_sp/dV * V = 0
+    }
+
+    void add_const_impedance_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
+                                  PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base * V^2
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
+        add_diag(data_jac_[diagonal_position].n(),
+                 -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(),
+                 -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+    }
+
+    void add_const_current_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
+                                PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base * V
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
+        // -dPQ_sp/dV * V = -PQ_base * V
+        add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
+    }
+
     void add_sources(Idx const& bus_number, Idx const& diagonal_position, YBus<sym> const& y_bus,
                      PowerFlowInput<sym> const& input, IdxVector const& source_bus_indptr,
                      ComplexValueVector<sym> const& u) {
@@ -331,35 +360,6 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
             data_jac_[diagonal_position].m() += block_mm.m();
             data_jac_[diagonal_position].l() += block_mm.l();
         }
-    }
-
-    void add_const_power_load(Idx const& bus_number, Idx const& load_number, PowerFlowInput<sym> const& input) {
-        // PQ_sp = PQ_base
-        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
-        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
-        // -dPQ_sp/dV * V = 0
-    }
-
-    void add_const_impedance_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
-                                  PowerFlowInput<sym> const& input) {
-        // PQ_sp = PQ_base * V^2
-        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
-        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
-        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
-        add_diag(data_jac_[diagonal_position].n(),
-                 -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
-        add_diag(data_jac_[diagonal_position].l(),
-                 -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
-    }
-
-    void add_const_current_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
-                                PowerFlowInput<sym> const& input) {
-        // PQ_sp = PQ_base * V
-        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
-        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
-        // -dPQ_sp/dV * V = -PQ_base * V
-        add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
-        add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
     }
 
     // Solve the linear Equations
