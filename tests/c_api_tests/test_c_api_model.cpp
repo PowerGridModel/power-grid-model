@@ -46,11 +46,11 @@ TEST_CASE("C API Model") {
     PGM_Options* opt = unique_options.get();
 
     // input data
+    ConstDatasetPtr const unique_input_dataset{PGM_create_dataset_const(hl, "input", false, 1)};
+    PGM_ConstDataset* input_dataset = unique_input_dataset.get();
     NodeInput node_input{{0}, 100.0};
     SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, 1000.0, 0.0, 1.0};
     SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 500.0};
-    std::array input_components{"node", "source", "sym_load"};
-    std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, PGM_def_input_source, 1)};
     RawDataPtr source_buffer = unique_source_buffer.get();
@@ -61,7 +61,10 @@ TEST_CASE("C API Model") {
     PGM_buffer_set_value(hl, PGM_def_input_source_u_ref, source_buffer, &source_input.u_ref, 0, 1, -1);
     PGM_buffer_set_value(hl, PGM_def_input_source_sk, source_buffer, &source_input.sk, 0, 1, -1);
     PGM_buffer_set_value(hl, PGM_def_input_source_rx_ratio, source_buffer, &source_input.rx_ratio, 0, 1, -1);
-    std::array<RawDataConstPtr, 3> input_data{&node_input, source_buffer, &load_input};
+    // add buffer
+    PGM_dataset_const_add_buffer(hl, input_dataset, "node", 1, 1, nullptr, &node_input);
+    PGM_dataset_const_add_buffer(hl, input_dataset, "sym_load", 1, 1, nullptr, &load_input);
+    PGM_dataset_const_add_buffer(hl, input_dataset, "source", 1, 1, nullptr, source_buffer);
 
     // output data
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
