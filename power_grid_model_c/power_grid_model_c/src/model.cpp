@@ -71,7 +71,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     }
 
     Dataset const exported_output_dataset = output_dataset->export_dataset<false>();
-    auto const exported_update_dataset = batch_dataset ? batch_dataset->export_dataset<true>() : ConstDataset{};
+    auto const exported_update_dataset =
+        batch_dataset != nullptr ? batch_dataset->export_dataset<true>() : ConstDataset{};
 
     // call calculation
     try {
