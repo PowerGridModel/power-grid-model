@@ -126,11 +126,11 @@ int main(int argc, char** argv) {
     // dataset single
     PGM_MutableDataset* single_output_dataset = PGM_create_dataset_mutable(handle, "sym_output", 0, 1);
     PGM_dataset_mutable_add_buffer(handle, single_output_dataset, "node", 1, 1, NULL, node_output);
-    assert(PGM_error_code(handle) != PGM_no_error);
+    assert(PGM_error_code(handle) == PGM_no_error);
     // dataset batch
     PGM_MutableDataset* batch_output_dataset = PGM_create_dataset_mutable(handle, "sym_output", 1, 3);
     PGM_dataset_mutable_add_buffer(handle, batch_output_dataset, "node", 1, 3, NULL, node_output);
-    assert(PGM_error_code(handle) != PGM_no_error);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** one time calculation ****/
     // create options with default value
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
     PGM_ConstDataset* batch_update_dataset = PGM_create_dataset_const(handle, "update", 1, 3);
     PGM_dataset_const_add_buffer(handle, batch_update_dataset, "source", 1, 3, NULL, source_update);
     PGM_dataset_const_add_buffer(handle, batch_update_dataset, "sym_load", -1, 4, indptr_load, load_update);
-    assert(PGM_error_code(handle) != PGM_no_error);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** Batch calculation ****/
     PGM_calculate(handle, model, opt, batch_output_dataset, batch_update_dataset);
