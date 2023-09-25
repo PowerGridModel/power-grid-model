@@ -227,11 +227,23 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+        IdxVector const& bus_entry = y_bus.lu_diag();
+
+        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
+
+        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+            Idx const diagonal_position = bus_entry[bus_number];
+            add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
+            add_sources(bus_number, diagonal_position, y_bus, input, source_bus_indptr, u);
+        }
+    }
+
+    void prepare_matrix_and_rhs_from_network_perspective(YBus<sym> const& y_bus, ComplexValueVector<sym> const& u,
+                                                         IdxVector const& bus_entry) {
         IdxVector const& indptr = y_bus.row_indptr_lu();
         IdxVector const& indices = y_bus.col_indices_lu();
-        IdxVector const& bus_entry = y_bus.lu_diag();
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
         // loop for row indices as i for whole matrix
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -269,13 +281,6 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
             add_diag(data_jac_[k].m(), -del_x_pq_[i].p());
             // L -= (-Q)
             add_diag(data_jac_[k].l(), -del_x_pq_[i].q());
-        }
-
-        // loop individual load/source, j as load/source number
-        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
-            Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
-            add_sources(bus_number, diagonal_position, y_bus, input, source_bus_indptr, u);
         }
     }
 
