@@ -245,15 +245,14 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
-        // loop for row indices as i for whole matrix
-        for (Idx i = 0; i != this->n_bus_; ++i) {
+        for (Idx row = 0; row != this->n_bus_; ++row) {
             // reset power injection
-            del_x_pq_[i].p() = RealValue<sym>{0.0};
-            del_x_pq_[i].q() = RealValue<sym>{0.0};
+            del_x_pq_[row].p() = RealValue<sym>{0.0};
+            del_x_pq_[row].q() = RealValue<sym>{0.0};
             // loop for column for incomplete jacobian and injection
             // k as data indices
             // j as column indices
-            for (Idx k = indptr[i]; k != indptr[i + 1]; ++k) {
+            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
                 // set to zero and skip if it is a fill-in
                 Idx const k_y_bus = map_lu_y_bus[k];
                 if (k_y_bus == -1) {
@@ -262,25 +261,25 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                 }
                 Idx const j = indices[k];
                 // incomplete jacobian
-                data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[i], u[j]);
+                data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[row], u[j]);
                 // accumulate negative power injection
                 // -P = sum(-N)
-                del_x_pq_[i].p() -= sum_row(data_jac_[k].n());
+                del_x_pq_[row].p() -= sum_row(data_jac_[k].n());
                 // -Q = sum (-H)
-                del_x_pq_[i].q() -= sum_row(data_jac_[k].h());
+                del_x_pq_[row].q() -= sum_row(data_jac_[k].h());
             }
             // correct diagonal part of jacobian
-            Idx const k = bus_entry[i];
+            Idx const k = bus_entry[row];
             // diagonal correction
             // del_pq has negative injection
             // H += (-Q)
-            add_diag(data_jac_[k].h(), del_x_pq_[i].q());
+            add_diag(data_jac_[k].h(), del_x_pq_[row].q());
             // N -= (-P)
-            add_diag(data_jac_[k].n(), -del_x_pq_[i].p());
+            add_diag(data_jac_[k].n(), -del_x_pq_[row].p());
             // M -= (-P)
-            add_diag(data_jac_[k].m(), -del_x_pq_[i].p());
+            add_diag(data_jac_[k].m(), -del_x_pq_[row].p());
             // L -= (-Q)
-            add_diag(data_jac_[k].l(), -del_x_pq_[i].q());
+            add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
         }
     }
 
