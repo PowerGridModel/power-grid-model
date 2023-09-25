@@ -274,37 +274,8 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         // loop individual load/source, j as load/source number
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
-
-            // loop load
             add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
-
-            // loop source
-            for (Idx j = source_bus_indptr[bus_number]; j != source_bus_indptr[bus_number + 1]; ++j) {
-                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[j];
-                ComplexValue<sym> const u_ref{input.source[j]};
-                // calculate block, um = ui, us = uref
-                PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
-                PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[bus_number], u_ref);
-                // P_cal_m = (Nmm + Nms) * I
-                RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
-                // Q_cal_m = (Hmm + Hms) * I
-                RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
-                // correct hnml for mm
-                add_diag(block_mm.h(), -q_cal);
-                add_diag(block_mm.n(), p_cal);
-                add_diag(block_mm.m(), p_cal);
-                add_diag(block_mm.l(), q_cal);
-                // append to del_pq
-                del_x_pq_[bus_number].p() -= p_cal;
-                del_x_pq_[bus_number].q() -= q_cal;
-                // append to jacobian block
-                // hnml -= -dPQ_cal/(dtheta,dV)
-                // hnml += dPQ_cal/(dtheta,dV)
-                data_jac_[diagonal_position].h() += block_mm.h();
-                data_jac_[diagonal_position].n() += block_mm.n();
-                data_jac_[diagonal_position].m() += block_mm.m();
-                data_jac_[diagonal_position].l() += block_mm.l();
-            }
+            add_sources(bus_number, diagonal_position, y_bus, input, source_bus_indptr, u);
         }
     }
 
@@ -327,6 +298,38 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
             default:
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
+        }
+    }
+
+    void add_sources(Idx const& bus_number, Idx const& diagonal_position, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input, IdxVector const& source_bus_indptr,
+                     ComplexValueVector<sym> const& u) {
+        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+             ++source_number) {
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
+            ComplexValue<sym> const u_ref{input.source[source_number]};
+            // calculate block, um = ui, us = uref
+            PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
+            PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[bus_number], u_ref);
+            // P_cal_m = (Nmm + Nms) * I
+            RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
+            // Q_cal_m = (Hmm + Hms) * I
+            RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
+            // correct hnml for mm
+            add_diag(block_mm.h(), -q_cal);
+            add_diag(block_mm.n(), p_cal);
+            add_diag(block_mm.m(), p_cal);
+            add_diag(block_mm.l(), q_cal);
+            // append to del_pq
+            del_x_pq_[bus_number].p() -= p_cal;
+            del_x_pq_[bus_number].q() -= q_cal;
+            // append to jacobian block
+            // hnml -= -dPQ_cal/(dtheta,dV)
+            // hnml += dPQ_cal/(dtheta,dV)
+            data_jac_[diagonal_position].h() += block_mm.h();
+            data_jac_[diagonal_position].n() += block_mm.n();
+            data_jac_[diagonal_position].m() += block_mm.m();
+            data_jac_[diagonal_position].l() += block_mm.l();
         }
     }
 
