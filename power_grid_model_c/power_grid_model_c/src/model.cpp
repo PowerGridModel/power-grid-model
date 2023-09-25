@@ -17,9 +17,6 @@
 
 namespace {
 using namespace power_grid_model;
-
-using meta_data::RawDataConstPtr;
-using meta_data::RawDataPtr;
 } // namespace
 
 // aliases main class
