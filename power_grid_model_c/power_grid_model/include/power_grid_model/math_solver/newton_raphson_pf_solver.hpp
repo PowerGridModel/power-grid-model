@@ -276,39 +276,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
             Idx const diagonal_position = bus_entry[bus_number];
 
             // loop load
-            for (Idx j = load_gen_bus_indptr[bus_number]; j != load_gen_bus_indptr[bus_number + 1]; ++j) {
-                // load type
-                LoadGenType const type = load_gen_type[j];
-                // modify jacobian and del_pq based on type
-                switch (type) {
-                case LoadGenType::const_pq:
-                    // PQ_sp = PQ_base
-                    del_x_pq_[bus_number].p() += real(input.s_injection[j]);
-                    del_x_pq_[bus_number].q() += imag(input.s_injection[j]);
-                    // -dPQ_sp/dV * V = 0
-                    break;
-                case LoadGenType::const_y:
-                    // PQ_sp = PQ_base * V^2
-                    del_x_pq_[bus_number].p() += real(input.s_injection[j]) * x_[bus_number].v() * x_[bus_number].v();
-                    del_x_pq_[bus_number].q() += imag(input.s_injection[j]) * x_[bus_number].v() * x_[bus_number].v();
-                    // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
-                    add_diag(data_jac_[diagonal_position].n(),
-                             -real(input.s_injection[j]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
-                    add_diag(data_jac_[diagonal_position].l(),
-                             -imag(input.s_injection[j]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
-                    break;
-                case LoadGenType::const_i:
-                    // PQ_sp = PQ_base * V
-                    del_x_pq_[bus_number].p() += real(input.s_injection[j]) * x_[bus_number].v();
-                    del_x_pq_[bus_number].q() += imag(input.s_injection[j]) * x_[bus_number].v();
-                    // -dPQ_sp/dV * V = -PQ_base * V
-                    add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[j]) * x_[bus_number].v());
-                    add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[j]) * x_[bus_number].v());
-                    break;
-                default:
-                    throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
-                }
-            }
+            add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
 
             // loop source
             for (Idx j = source_bus_indptr[bus_number]; j != source_bus_indptr[bus_number + 1]; ++j) {
@@ -336,6 +304,46 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                 data_jac_[diagonal_position].n() += block_mm.n();
                 data_jac_[diagonal_position].m() += block_mm.m();
                 data_jac_[diagonal_position].l() += block_mm.l();
+            }
+        }
+    }
+
+    void add_loads(Idx const& bus_number, Idx const& diagonal_position, PowerFlowInput<sym> const& input,
+                   IdxVector const& load_gen_bus_indptr, std::vector<LoadGenType> const& load_gen_type) {
+        for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
+             ++load_number) {
+            // load type
+            LoadGenType const type = load_gen_type[load_number];
+            // modify jacobian and del_pq based on type
+            switch (type) {
+            case LoadGenType::const_pq:
+                // PQ_sp = PQ_base
+                del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
+                del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
+                // -dPQ_sp/dV * V = 0
+                break;
+            case LoadGenType::const_y:
+                // PQ_sp = PQ_base * V^2
+                del_x_pq_[bus_number].p() +=
+                    real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+                del_x_pq_[bus_number].q() +=
+                    imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+                // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
+                add_diag(data_jac_[diagonal_position].n(),
+                         -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+                add_diag(data_jac_[diagonal_position].l(),
+                         -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+                break;
+            case LoadGenType::const_i:
+                // PQ_sp = PQ_base * V
+                del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
+                del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
+                // -dPQ_sp/dV * V = -PQ_base * V
+                add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
+                add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
+                break;
+            default:
+                throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
         }
     }
