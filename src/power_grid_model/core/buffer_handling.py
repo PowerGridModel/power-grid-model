@@ -7,7 +7,6 @@ Power grid model buffer handler
 """
 
 
-from ctypes import Array
 from dataclasses import dataclass
 from typing import Dict, Mapping, Optional, Tuple, Union
 
@@ -15,8 +14,8 @@ import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import CStr, IdxPtr, VoidPtr
-from power_grid_model.core.power_grid_meta import ComponentMetaData, power_grid_meta_data
+from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
+from power_grid_model.core.power_grid_meta import ComponentMetaData
 
 
 @dataclass
@@ -44,21 +43,6 @@ class CBuffer:
     n_elements_per_scenario: int
     batch_size: int
     total_elements: int
-
-
-@dataclass
-class CDataset:
-    """
-    Dataset definition.
-    """
-
-    dataset: Dict[str, CBuffer]
-    batch_size: int
-    n_components: int
-    components: Array
-    n_component_elements_per_scenario: Array
-    indptrs_per_component: Array
-    data_ptrs_per_component: Array
 
 
 def _get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
@@ -252,7 +236,7 @@ def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Un
 
     Args:
         properties: the desired buffer properties.
-        dtype: the data type of the buffer.
+        schema: the data type of the buffer.
 
     Raises:
         ValueError: if the buffer properties are not consistent.
@@ -272,7 +256,7 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
 
     Args:
         properties: the desired buffer properties.
-        dtype: the data type of the buffer.
+        schema: the data type of the buffer.
 
     Raises:
         ValueError: if the buffer properties are not uniform.
@@ -297,7 +281,7 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
 
     Args:
         properties: the desired buffer properties.
-        dtype: the data type of the buffer.
+        schema: the data type of the buffer.
 
     Raises:
         ValueError: if the buffer properties are not sparse.
@@ -308,46 +292,3 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
     data = np.empty(properties.n_total_elements, dtype=schema.dtype)
     indptr = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
     return {"data": data, "indptr": indptr}
-
-
-def get_dataset_view(data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> CDataset:
-    """
-    prepare array for cpp pointers
-    Args:
-        data_type: input, update, or symmetric/asymmetric output
-        array_dict:
-            key: component type
-            value:
-                data array: can be 1D or 2D (in batches)
-                or
-                dict with
-                    key:
-                        data -> data array in flat for batches
-                        indptr -> index pointer for variable length input
-    Returns:
-        instance of CDataset ready to be fed into C API.
-    """
-    schema = power_grid_meta_data[data_type]
-    dataset_dict = {
-        component_name: get_buffer_view(entry, schema[component_name])
-        for component_name, entry in array_dict.items()
-        if component_name in schema
-    }
-
-    n_components = len(dataset_dict)
-    batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
-    if np.unique(batch_sizes).size > 1:
-        raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
-    batch_size = 1 if batch_sizes.size == 0 else batch_sizes[0]
-
-    return CDataset(
-        dataset=dataset_dict,
-        batch_size=batch_size,
-        n_components=n_components,
-        components=(CStr * n_components)(*(x.encode() for x in dataset_dict)),
-        n_component_elements_per_scenario=(IdxC * n_components)(
-            *(x.n_elements_per_scenario for x in dataset_dict.values())
-        ),
-        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore
-        data_ptrs_per_component=(VoidPtr * n_components)(*(x.data for x in dataset_dict.values())),
-    )
