@@ -18,12 +18,11 @@ from power_grid_model.core.data_handling import (
     prepare_input_view,
     prepare_output_view,
     prepare_update_view,
-    reduce_output_data,
 )
 from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
-from power_grid_model.core.power_grid_core import IDPtr, IdxPtr, ModelPtr
+from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.enum import CalculationMethod, CalculationType, ShortCircuitVoltageScaling
 
@@ -169,6 +168,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]],
         calculation_type: CalculationType,
         symmetric: bool,
+        is_batch: bool,
         batch_size: int,
     ) -> Dict[str, np.ndarray]:
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
@@ -181,6 +181,7 @@ class PowerGridModel:
             output_component_types=output_component_types,
             output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
             all_component_count=all_component_count,
+            is_batch=is_batch,
             batch_size=batch_size,
         )
 
@@ -229,13 +230,19 @@ class PowerGridModel:
         self._batch_error = None
         batch_calculation = is_batch_calculation(update_data=update_data)
 
-        prepared_update = prepare_update_view(update_data)
-        batch_size = prepared_update.get_info().batch_size()
+        if batch_calculation:
+            prepared_update = prepare_update_view(update_data)
+            update_ptr = prepared_update.get_dataset_ptr()
+            batch_size = prepared_update.get_info().batch_size()
+        else:
+            update_ptr = ConstDatasetPtr()
+            batch_size = 1
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
             calculation_type=calculation_type,
             symmetric=symmetric,
+            is_batch=batch_calculation,
             batch_size=batch_size,
         )
         prepared_result = prepare_output_view(
@@ -249,12 +256,12 @@ class PowerGridModel:
             self._model,
             options.opt,
             output_data=prepared_result.get_dataset_ptr(),
-            update_data=prepared_update.get_dataset_ptr(),
+            update_data=update_ptr,
         )
 
         self._handle_errors(continue_on_batch_error=continue_on_batch_error, batch_size=batch_size)
 
-        return reduce_output_data(output_data=output_data, batch_calculation=batch_calculation)
+        return output_data
 
     def calculate_power_flow(
         self,
