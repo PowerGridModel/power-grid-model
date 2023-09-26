@@ -71,7 +71,7 @@ class DatasetHandler {
         requires(dataset_const || data_mutable)
     {
         if (!is_batch() && scenario > 0) {
-            throw DatasetError{"Cannot export a single dataset with a scenario > 0!"};
+            throw DatasetError{"Cannot export a single dataset with multiple scenarios!\n"};
         }
         std::map<std::string, DataPointer<dataset_const>> dataset;
         for (Idx i{}; i != n_components(); ++i) {
