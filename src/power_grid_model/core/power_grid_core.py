@@ -441,6 +441,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def dataset_mutable_get_info(self, dataset: MutableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def create_dataset_const_from_mutable(  # type: ignore[empty-body]
         self, mutable_dataset: MutableDatasetPtr
     ) -> ConstDatasetPtr:

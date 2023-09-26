@@ -9,7 +9,7 @@ Data handling
 
 
 from enum import Enum
-from typing import Dict, List, Mapping, Optional, Set, Union
+from typing import Dict, List, Mapping, Set, Tuple, Union
 
 import numpy as np
 
@@ -51,21 +51,6 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Ou
         return OutputType.SC_OUTPUT
 
     raise NotImplementedError()
-
-
-def is_batch_calculation(update_data: Optional[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]) -> bool:
-    """
-    Returns whether the provided update data represents a batch calculation or not.
-
-    Args:
-        update_data:
-            The update data.
-
-    Returns:
-        True if the update_data is provided, else False.
-    """
-    # update data exists for batch calculation
-    return update_data is not None
 
 
 def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CConstDataset:
@@ -160,7 +145,7 @@ def create_output_data(
     for name, count in all_component_count.items():
         # shape
         if is_batch:
-            shape = (batch_size, count)
+            shape: Union[Tuple[int], Tuple[int, int]] = (batch_size, count)
         else:
             shape = (count,)
         result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)

@@ -14,7 +14,6 @@ import numpy as np
 from power_grid_model.core.data_handling import (
     create_output_data,
     get_output_type,
-    is_batch_calculation,
     prepare_input_view,
     prepare_output_view,
     prepare_update_view,
@@ -163,6 +162,7 @@ class PowerGridModel:
 
         return {k: v for k, v in self.all_component_count.items() if include_type(k)}
 
+    # pylint: disable=too-many-arguments
     def _construct_output(
         self,
         output_component_types: Optional[Union[Set[str], List[str]]],
@@ -228,9 +228,9 @@ class PowerGridModel:
         Returns:
         """
         self._batch_error = None
-        batch_calculation = is_batch_calculation(update_data=update_data)
+        is_batch = update_data is not None
 
-        if batch_calculation:
+        if update_data is not None:
             prepared_update = prepare_update_view(update_data)
             update_ptr = prepared_update.get_dataset_ptr()
             batch_size = prepared_update.get_info().batch_size()
@@ -242,7 +242,7 @@ class PowerGridModel:
             output_component_types=output_component_types,
             calculation_type=calculation_type,
             symmetric=symmetric,
-            is_batch=batch_calculation,
+            is_batch=is_batch,
             batch_size=batch_size,
         )
         prepared_result = prepare_output_view(
