@@ -193,9 +193,6 @@ class CMutableDataset:
             first_sub_info = get_buffer_properties(next(iter(data.values())))
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
-
-            if instance._is_batch and instance._dataset_type == "input":
-                raise ValueError(f"Input datasets cannot be batch dataset type. {VALIDATOR_MSG}")
         else:
             instance._is_batch = False
             instance._batch_size = 1
