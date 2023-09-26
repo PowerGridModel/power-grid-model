@@ -108,17 +108,9 @@ class PowerGridModel:
         self._all_component_count = None
         # create new
         prepared_input = prepare_input_view(input_data)
-        self._model_ptr = pgc.create_model(
-            system_frequency,
-            components=prepared_input.components,
-            n_components=prepared_input.n_components,
-            component_sizes=prepared_input.n_component_elements_per_scenario,
-            input_data=prepared_input.data_ptrs_per_component,
-        )
+        self._model_ptr = pgc.create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
         assert_no_error()
-        self._all_component_count = {
-            k: v.n_elements_per_scenario for k, v in prepared_input.dataset.items() if v.n_elements_per_scenario > 0
-        }
+        self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
     def update(self, *, update_data: Dict[str, np.ndarray]):
         """
@@ -134,13 +126,7 @@ class PowerGridModel:
             None
         """
         prepared_update = prepare_update_view(update_data)
-        pgc.update_model(
-            self._model,
-            prepared_update.n_components,
-            prepared_update.components,
-            prepared_update.n_component_elements_per_scenario,
-            prepared_update.data_ptrs_per_component,
-        )
+        pgc.update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
     def get_indexer(self, component_type: str, ids: np.ndarray):
@@ -200,11 +186,11 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        def as_enum_value(key: str, type_: Type[IntEnum]):
-            if key in kwargs:
-                value = kwargs[key]
-                if isinstance(value, str):
-                    kwargs[key] = type_[value]
+        def as_enum_value(key_enum: str, type_: Type[IntEnum]):
+            if key_enum in kwargs:
+                value_enum = kwargs[key_enum]
+                if isinstance(value_enum, str):
+                    kwargs[key_enum] = type_[value_enum]
 
         as_enum_value("calculation_method", CalculationMethod)
         as_enum_value("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
@@ -244,7 +230,7 @@ class PowerGridModel:
         batch_calculation = is_batch_calculation(update_data=update_data)
 
         prepared_update = prepare_update_view(update_data)
-        batch_size = prepared_update.batch_size
+        batch_size = prepared_update.get_info().batch_size()
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
@@ -262,17 +248,8 @@ class PowerGridModel:
             # model and options
             self._model,
             options.opt,
-            # result dataset
-            prepared_result.n_components,
-            prepared_result.components,
-            prepared_result.data_ptrs_per_component,
-            # update dataset
-            batch_size,
-            prepared_update.n_components,
-            prepared_update.components,
-            prepared_update.n_component_elements_per_scenario,
-            prepared_update.indptrs_per_component,
-            prepared_update.data_ptrs_per_component,
+            output_data=prepared_result.get_dataset_ptr(),
+            update_data=prepared_update.get_dataset_ptr(),
         )
 
         self._handle_errors(continue_on_batch_error=continue_on_batch_error, batch_size=batch_size)

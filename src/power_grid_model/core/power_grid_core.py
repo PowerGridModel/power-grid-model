@@ -450,9 +450,9 @@ class PowerGridCore:
     def destroy_dataset_const(self, dataset: ConstDatasetPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
-    # @make_c_binding
-    # def dataset_const_get_info(self, dataset: ConstDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
-    #     pass  # pragma: no cover
+    @make_c_binding
+    def dataset_const_get_info(self, dataset: ConstDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
 
     @make_c_binding
     def dataset_writable_get_info(self, dataset: WritableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]

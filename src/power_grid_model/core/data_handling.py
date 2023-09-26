@@ -13,7 +13,7 @@ from typing import Dict, List, Mapping, Optional, Set, Union
 
 import numpy as np
 
-from power_grid_model.core.buffer_handling import CDataset, get_dataset_view
+from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
 
@@ -68,7 +68,7 @@ def is_batch_calculation(update_data: Optional[Mapping[str, Union[np.ndarray, Ma
     return update_data is not None
 
 
-def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CDataset:
+def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CConstDataset:
     """
     Create a view of the input data in a format compatible with the PGM core libary.
 
@@ -77,14 +77,14 @@ def prepare_input_view(input_data: Mapping[str, np.ndarray]) -> CDataset:
             the input data to create the view from
 
     Returns:
-        instance of CDataset ready to be fed into C API
+        instance of CConstDataset ready to be fed into C API
     """
-    return get_dataset_view(data_type="input", array_dict=input_data)
+    return CConstDataset(input_data, dataset_type="input")
 
 
 def prepare_update_view(
     update_data: Optional[Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]] = None
-) -> CDataset:
+) -> CConstDataset:
     """
     Create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary.
 
@@ -93,15 +93,15 @@ def prepare_update_view(
             the update data to create the view from. Defaults to None
 
     Returns:
-        instance of CDataset ready to be fed into C API
+        instance of CConstDataset ready to be fed into C API
     """
     if update_data is None:
         # no update dataset, create one batch with empty set
         update_data = {}
-    return get_dataset_view(data_type="update", array_dict=update_data)
+    return CConstDataset(update_data, dataset_type="update")
 
 
-def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: OutputType) -> CDataset:
+def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: OutputType) -> CMutableDataset:
     """
     create a view of the output data in a format compatible with the PGM core libary.
 
@@ -112,9 +112,9 @@ def prepare_output_view(output_data: Mapping[str, np.ndarray], output_type: Outp
             the output type of the output_data
 
     Returns:
-        instance of CDataset ready to be fed into C API
+        instance of CMutableDataset ready to be fed into C API
     """
-    return get_dataset_view(data_type=output_type.value, array_dict=output_data)
+    return CMutableDataset(output_data, dataset_type=output_type.value)
 
 
 def create_output_data(

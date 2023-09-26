@@ -65,7 +65,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     PGM_clear_error(handle);
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset->is_batch())) {
-        handle->err_code = PGM_batch_error;
+        handle->err_code = PGM_regular_error;
         handle->err_msg = "If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n";
         return;
     }
