@@ -133,14 +133,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         // loop buses: i
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             add_loads(bus_number, input, load_gen_bus_indptr, load_gen_type, u);
-
-            // loop sources: j
-            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-                 ++source_number) {
-                // I_inj_i += Y_source_j * U_ref_j
-                rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                          ComplexValue<sym>{input.source[source_number]});
-            }
+            add_sources(bus_number, y_bus, input, source_bus_indptr);
         }
     }
 
@@ -195,6 +188,16 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
             default:
                 throw MissingCaseForEnumError("Injection current calculation", type);
             }
+        }
+    }
+
+    void add_sources(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                     IdxVector const& source_bus_indptr) {
+        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+             ++source_number) {
+            // I_inj_i += Y_source_j * U_ref_j
+            rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                      ComplexValue<sym>{input.source[source_number]});
         }
     }
 };
