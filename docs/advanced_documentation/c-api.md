@@ -132,23 +132,24 @@ because the buffer will be overwritten in the calculation core with the real out
 
 ## Dataset views
 
-```{warning}
-This feature is still under construction. Not all parts of the C API implement this feature.
-```
-
-For larger datasets that cannot or should not be treated independently,
+For large datasets that cannot or should not be treated independently,
 `PGM_dataset_*` interfaces are provided.
-Currently implemented are `PGM_dataset_const` and `PGM_dataset_writable`.
-These two dataset types expose a dataset to the power-grid-model with the following permissions on buffers:
+Currently implemented are `PGM_dataset_const`, `PGM_dataset_mutable`, and `PGM_dataset_writable`.
+These three dataset types expose a dataset to the power-grid-model with the following permissions on buffers:
 
 | Dataset interface        | power-grid-model permissions | User permissions    | Treat as        |
-| ------------------------ | ---------------------------- | ------------------- | --------------- |
+|--------------------------| ---------------------------- | ------------------- | --------------- |
 | `PGM_dataset_const_*`    | Read                         | Create, read, write | `const * const` |
+| `PGM_dataset_mutable_*`  | Read, write                  | Create, read, write | `* const` |
 | `PGM_dataset_writable_*` | Read, write                  | Read                | `* const`       |
 
 A constant dataset is completely user-owned.
 The user is responsible for creating and destroying both the dataset and its buffers.
-This dataset is perfect for input and update datasets.
+This dataset is suited for input and (batch) update datasets.
+
+A mutable dataset is completely user-owned.
+The user is responsible for creating and destroying both the dataset and its buffers.
+This dataset is suited for (batch) output datasets.
 
 A writable dataset, instead, cannot be created by the user, but will be provided by the deserializer.
 The user can then provide buffers to which the deserializer can write its data (and `indptr`).
