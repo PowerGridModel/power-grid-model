@@ -24,10 +24,6 @@ def output_dataset_types():
     return ["sym_output", "asym_output", "sc_output"]
 
 
-def batch_dataset_types():
-    return update_dataset_types() + output_dataset_types()
-
-
 def all_dataset_types():
     return input_dataset_types() + update_dataset_types() + output_dataset_types()
 
@@ -124,22 +120,18 @@ def test_const_dataset__uniform_batch_data(dataset_type, batch_size):
         for component, count in components.items()
     }
 
-    if dataset_type in batch_dataset_types():
-        dataset = CConstDataset(data, dataset_type)
-        info = dataset.get_info()
+    dataset = CConstDataset(data, dataset_type)
+    info = dataset.get_info()
 
-        assert info.name() == dataset_type
-        assert info.dataset_type() == dataset_type
+    assert info.name() == dataset_type
+    assert info.dataset_type() == dataset_type
 
-        assert info.is_batch()
-        assert info.batch_size() == batch_size
-        assert info.n_components() == len(components)
-        assert info.components() == list(components)
-        assert info.elements_per_scenario() == components
-        assert info.total_elements() == {component: batch_size * count for component, count in components.items()}
-    else:
-        with pytest.raises(ValueError):
-            CConstDataset(data, dataset_type)
+    assert info.is_batch()
+    assert info.batch_size() == batch_size
+    assert info.n_components() == len(components)
+    assert info.components() == list(components)
+    assert info.elements_per_scenario() == components
+    assert info.total_elements() == {component: batch_size * count for component, count in components.items()}
 
 
 def test_const_dataset__sparse_batch_data(dataset_type):
@@ -161,22 +153,18 @@ def test_const_dataset__sparse_batch_data(dataset_type):
         "link": np.zeros(shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type]["link"]),
     }
 
-    if dataset_type in batch_dataset_types():
-        dataset = CConstDataset(data, dataset_type)
-        info = dataset.get_info()
+    dataset = CConstDataset(data, dataset_type)
+    info = dataset.get_info()
 
-        assert info.name() == dataset_type
-        assert info.dataset_type() == dataset_type
+    assert info.name() == dataset_type
+    assert info.dataset_type() == dataset_type
 
-        assert info.is_batch()
-        assert info.batch_size() == 3
-        assert info.n_components() == len(components)
-        assert info.components() == list(components)
-        assert info.elements_per_scenario() == {"node": -1, "sym_load": -1, "asym_load": -1, "link": 4}
-        assert info.total_elements() == {"node": 3, "sym_load": 2, "asym_load": 4, "link": batch_size * 4}
-    else:
-        with pytest.raises(ValueError):
-            CConstDataset(data, dataset_type)
+    assert info.is_batch()
+    assert info.batch_size() == 3
+    assert info.n_components() == len(components)
+    assert info.components() == list(components)
+    assert info.elements_per_scenario() == {"node": -1, "sym_load": -1, "asym_load": -1, "link": 4}
+    assert info.total_elements() == {"node": 3, "sym_load": 2, "asym_load": 4, "link": batch_size * 4}
 
 
 def test_const_dataset__mixed_batch_size(dataset_type):

@@ -46,11 +46,11 @@ TEST_CASE("C API Model") {
     PGM_Options* opt = unique_options.get();
 
     // input data
+    ConstDatasetPtr const unique_input_dataset{PGM_create_dataset_const(hl, "input", false, 1)};
+    PGM_ConstDataset* input_dataset = unique_input_dataset.get();
     NodeInput node_input{{0}, 100.0};
     SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, 1000.0, 0.0, 1.0};
     SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 500.0};
-    std::array input_components{"node", "source", "sym_load"};
-    std::array<Idx, 3> input_component_sizes{1, 1, 1};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, PGM_def_input_source, 1)};
     RawDataPtr source_buffer = unique_source_buffer.get();
@@ -61,17 +61,25 @@ TEST_CASE("C API Model") {
     PGM_buffer_set_value(hl, PGM_def_input_source_u_ref, source_buffer, &source_input.u_ref, 0, 1, -1);
     PGM_buffer_set_value(hl, PGM_def_input_source_sk, source_buffer, &source_input.sk, 0, 1, -1);
     PGM_buffer_set_value(hl, PGM_def_input_source_rx_ratio, source_buffer, &source_input.rx_ratio, 0, 1, -1);
-    std::array<RawDataConstPtr, 3> input_data{&node_input, source_buffer, &load_input};
+    // add buffer
+    PGM_dataset_const_add_buffer(hl, input_dataset, "node", 1, 1, nullptr, &node_input);
+    PGM_dataset_const_add_buffer(hl, input_dataset, "sym_load", 1, 1, nullptr, &load_input);
+    PGM_dataset_const_add_buffer(hl, input_dataset, "source", 1, 1, nullptr, source_buffer);
 
     // output data
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
     NodeOutput<true>& node_result_0 = sym_node_outputs[0];
     NodeOutput<true>& node_result_1 = sym_node_outputs[1];
-    std::array output_components{"node"};
-    std::array<RawDataPtr, 1> sym_output_data{sym_node_outputs.data()};
+    MutableDatasetPtr const unique_single_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", false, 1)};
+    PGM_MutableDataset* single_output_dataset = unique_single_output_dataset.get();
+    PGM_dataset_mutable_add_buffer(hl, single_output_dataset, "node", 1, 1, nullptr, sym_node_outputs.data());
+    MutableDatasetPtr const unique_batch_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", true, 2)};
+    PGM_MutableDataset* batch_output_dataset = unique_batch_output_dataset.get();
+    PGM_dataset_mutable_add_buffer(hl, batch_output_dataset, "node", 1, 2, nullptr, sym_node_outputs.data());
 
     // update data
     SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};
+    std::array<Idx, 3> source_update_indptr{0, 1, 1};
     std::array<SymLoadGenUpdate, 2> load_updates{};
     // set nan twice with offset
     PGM_buffer_set_nan(hl, PGM_def_update_sym_load, load_updates.data(), 0, 1);
@@ -81,21 +89,23 @@ TEST_CASE("C API Model") {
     load_updates[0].q_specified = 100.0;
     load_updates[1].id = 2;
     load_updates[1].q_specified = 300.0;
-    std::array update_components{"source", "sym_load"};
-    std::array<Idx, 2> update_component_sizes{1, 1};
-    std::array<RawDataConstPtr, 2> update_data{&source_update, load_updates.data()};
-    std::array<Idx, 2> n_component_elements_per_scenario{-1, 1};
-    std::array<Idx, 3> source_update_indptr{0, 1, 1};
-    std::array<Idx const*, 2> indptrs_per_component{source_update_indptr.data(), nullptr};
+    // dataset
+    ConstDatasetPtr const unique_single_update_dataset{PGM_create_dataset_const(hl, "update", false, 1)};
+    PGM_ConstDataset* single_update_dataset = unique_single_update_dataset.get();
+    PGM_dataset_const_add_buffer(hl, single_update_dataset, "source", 1, 1, nullptr, &source_update);
+    PGM_dataset_const_add_buffer(hl, single_update_dataset, "sym_load", 1, 1, nullptr, load_updates.data());
+    ConstDatasetPtr const unique_batch_update_dataset{PGM_create_dataset_const(hl, "update", true, 2)};
+    PGM_ConstDataset* batch_update_dataset = unique_batch_update_dataset.get();
+    PGM_dataset_const_add_buffer(hl, batch_update_dataset, "source", -1, 1, source_update_indptr.data(),
+                                 &source_update);
+    PGM_dataset_const_add_buffer(hl, batch_update_dataset, "sym_load", 1, 2, nullptr, load_updates.data());
 
     // create model
-    ModelPtr const unique_model{
-        PGM_create_model(hl, 50.0, 3, input_components.data(), input_component_sizes.data(), input_data.data())};
+    ModelPtr const unique_model{PGM_create_model(hl, 50.0, input_dataset)};
     PGM_PowerGridModel* model = unique_model.get();
 
     SUBCASE("Simple power flow") {
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -105,10 +115,9 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Simple update") {
-        PGM_update_model(hl, model, 2, update_components.data(), update_component_sizes.data(), update_data.data());
+        PGM_update_model(hl, model, single_update_dataset);
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -120,9 +129,7 @@ TEST_CASE("C API Model") {
     SUBCASE("Copy model") {
         ModelPtr const model_copy{PGM_copy_model(hl, model)};
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        PGM_calculate(hl, model_copy.get(), opt, 1, output_components.data(),
-                      sym_output_data.data(),                    // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr); // batch parameters
+        PGM_calculate(hl, model_copy.get(), opt, single_output_dataset, nullptr);
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -144,10 +151,7 @@ TEST_CASE("C API Model") {
     }
 
     SUBCASE("Batch power flow") {
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
-                      2, 2, update_components.data(), n_component_elements_per_scenario.data(),
-                      indptrs_per_component.data(),
-                      update_data.data()); // batch parameters
+        PGM_calculate(hl, model, opt, batch_output_dataset, batch_update_dataset);
         CHECK(PGM_error_code(hl) == PGM_no_error);
         CHECK(node_result_0.id == 0);
         CHECK(node_result_0.energized == 1);
@@ -173,8 +177,7 @@ TEST_CASE("C API Model") {
 
     SUBCASE("Construction error") {
         load_input.id = 0;
-        ModelPtr const wrong_model{
-            PGM_create_model(hl, 50.0, 3, input_components.data(), input_component_sizes.data(), input_data.data())};
+        ModelPtr const wrong_model{PGM_create_model(hl, 50.0, input_dataset)};
         CHECK(wrong_model.get() == nullptr);
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         std::string const err_msg{PGM_error_message(hl)};
@@ -183,7 +186,7 @@ TEST_CASE("C API Model") {
 
     SUBCASE("Update error") {
         source_update.id = 5;
-        PGM_update_model(hl, model, 2, update_components.data(), update_component_sizes.data(), update_data.data());
+        PGM_update_model(hl, model, single_update_dataset);
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         std::string const err_msg{PGM_error_message(hl)};
         CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
@@ -195,16 +198,14 @@ TEST_CASE("C API Model") {
         PGM_set_err_tol(hl, opt, 1e-100);
         PGM_set_symmetric(hl, opt, 0);
         PGM_set_threading(hl, opt, 1);
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_error_message(hl)};
         CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
         // wrong method
         PGM_set_calculation_type(hl, opt, PGM_state_estimation);
         PGM_set_calculation_method(hl, opt, PGM_iterative_current);
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
-                      0, 0, nullptr, nullptr, nullptr, nullptr);                           // batch parameters
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         err_msg = PGM_error_message(hl);
         CHECK(err_msg.find("The calculation method is invalid for this calculation!") != std::string::npos);
@@ -213,10 +214,7 @@ TEST_CASE("C API Model") {
     SUBCASE("Batch calculation error") {
         // wrong id
         load_updates[1].id = 5;
-        PGM_calculate(hl, model, opt, 1, output_components.data(), sym_output_data.data(), // basic parameters
-                      2, 2, update_components.data(), n_component_elements_per_scenario.data(),
-                      indptrs_per_component.data(),
-                      update_data.data()); // batch parameters
+        PGM_calculate(hl, model, opt, batch_output_dataset, batch_update_dataset);
         // failed in batch 1
         CHECK(PGM_error_code(hl) == PGM_batch_error);
         CHECK(PGM_n_failed_scenarios(hl) == 1);

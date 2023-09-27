@@ -19,7 +19,7 @@ from power_grid_model.core.buffer_handling import (
     get_buffer_view,
 )
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
-from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, WritableDatasetPtr
+from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, MutableDatasetPtr, WritableDatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
 from power_grid_model.errors import PowerGridError
@@ -161,20 +161,21 @@ def get_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarra
     return next(iter(candidates))
 
 
-class CConstDataset:
+class CMutableDataset:
     """
     A view of a user-owned dataset.
 
     This may be used to provide a user dataset to the Power Grid Model.
 
-    The dataset will create read-only buffers that the Power Grid Model can use to load data.
+    The dataset will create mutable buffers that the Power Grid Model can use to load data.
     """
 
     _dataset_type: str
     _schema: DatasetMetaData
     _is_batch: bool
     _batch_size: int
-    _const_dataset: ConstDatasetPtr
+    _mutable_dataset: MutableDatasetPtr
+    _buffer_views: List[CBuffer]
 
     def __new__(
         cls,
@@ -182,6 +183,8 @@ class CConstDataset:
         dataset_type: Optional[str] = None,
     ):
         instance = super().__new__(cls)
+        instance._mutable_dataset = MutableDatasetPtr()
+        instance._buffer_views = []
 
         instance._dataset_type = dataset_type if isinstance(dataset_type, str) else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
@@ -190,20 +193,141 @@ class CConstDataset:
             first_sub_info = get_buffer_properties(next(iter(data.values())))
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
-
-            if instance._is_batch and instance._dataset_type == "input":
-                raise ValueError(f"Input datasets cannot be batch dataset type. {VALIDATOR_MSG}")
         else:
             instance._is_batch = False
             instance._batch_size = 1
 
-        instance._const_dataset = pgc.create_dataset_const(
+        instance._mutable_dataset = pgc.create_dataset_mutable(
             instance._dataset_type, instance._is_batch, instance._batch_size
         )
         assert_no_error()
 
-        instance.add_data(data)
+        instance._add_data(data)
         assert_no_error()
+
+        return instance
+
+    def get_dataset_ptr(self) -> MutableDatasetPtr:
+        """
+        Get the raw underlying mutable dataset pointer.
+
+        Returns:
+            MutableDatasetPtr: the raw underlying mutable dataset pointer.
+        """
+        return self._mutable_dataset
+
+    def get_info(self) -> CDatasetInfo:
+        """
+        Get the info for this dataset.
+
+        Returns:
+            The dataset info for this dataset.
+        """
+        return CDatasetInfo(pgc.dataset_mutable_get_info(self._mutable_dataset))
+
+    def get_buffer_views(self) -> List[CBuffer]:
+        """
+        Get list of buffer views
+
+        Returns:
+            list of buffer view
+        """
+        return self._buffer_views
+
+    def _add_data(
+        self, data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]
+    ):
+        """
+        Add Power Grid Model data to the mutable dataset view.
+
+        Args:
+            data: the data.
+
+        Raises:
+            ValueError: if the component is unknown and allow_unknown is False.
+            ValueError: if the data is inconsistent with the rest of the dataset.
+            PowerGridError: if there was an internal error.
+        """
+        for component, component_data in data.items():
+            self._add_component_data(component, component_data, allow_unknown=False)
+
+    def _add_component_data(
+        self, component: str, data: Union[np.ndarray, Mapping[str, np.ndarray]], allow_unknown: bool = False
+    ):
+        """
+        Add Power Grid Model data for a single component to the mutable dataset view.
+
+        Args:
+            component: the name of the component
+            data: the data of the component
+            allow_unknown (optional): ignore any unknown components. Defaults to False.
+
+        Raises:
+            ValueError: if the component is unknown and allow_unknown is False.
+            ValueError: if the data is inconsistent with the rest of the dataset.
+            PowerGridError: if there was an internal error.
+        """
+        if component not in self._schema:
+            if not allow_unknown:
+                raise ValueError(f"Unknown component {component} in schema. {VALIDATOR_MSG}")
+            return
+
+        self._validate_properties(data)
+        c_buffer = get_buffer_view(data, self._schema[component])
+        self._buffer_views.append(c_buffer)
+        self._register_buffer(component, c_buffer)
+
+    def _register_buffer(self, component, buffer: CBuffer):
+        pgc.dataset_mutable_add_buffer(
+            dataset=self._mutable_dataset,
+            component=component,
+            elements_per_scenario=buffer.n_elements_per_scenario,
+            total_elements=buffer.total_elements,
+            indptr=buffer.indptr,
+            data=buffer.data,
+        )
+        assert_no_error()
+
+    def _validate_properties(self, data: Union[np.ndarray, Mapping[str, np.ndarray]]):
+        properties = get_buffer_properties(data)
+        if properties.is_batch != self._is_batch:
+            raise ValueError(
+                f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
+            )
+        if properties.batch_size != self._batch_size:
+            raise ValueError(f"Dataset must have a consistent batch size across all components. {VALIDATOR_MSG}")
+
+    def __del__(self):
+        pgc.destroy_dataset_mutable(self._mutable_dataset)
+
+
+class CConstDataset:
+    """
+    A view of a user-owned dataset.
+
+    This may be used to provide a user dataset to the Power Grid Model.
+
+    The dataset will create const buffers that the Power Grid Model can use to load data.
+
+    It is created from mutable dataset.
+    """
+
+    _const_dataset: ConstDatasetPtr
+    _buffer_views: List[CBuffer]
+
+    def __new__(
+        cls,
+        data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
+        dataset_type: Optional[str] = None,
+    ):
+        instance = super().__new__(cls)
+        instance._const_dataset = ConstDatasetPtr()
+
+        # create from mutable dataset
+        mutable_dataset = CMutableDataset(data=data, dataset_type=dataset_type)
+        instance._const_dataset = pgc.create_dataset_const_from_mutable(mutable_dataset.get_dataset_ptr())
+        assert_no_error()
+        instance._buffer_views = mutable_dataset.get_buffer_views()
 
         return instance
 
@@ -225,70 +349,8 @@ class CConstDataset:
         """
         return CDatasetInfo(pgc.dataset_const_get_info(self._const_dataset))
 
-    def add_data(
-        self, data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]
-    ):
-        """
-        Add Power Grid Model data to the const dataset view.
-
-        Args:
-            data: the data.
-
-        Raises:
-            ValueError: if the component is unknown and allow_unknown is False.
-            ValueError: if the data is inconsistent with the rest of the dataset.
-            PowerGridError: if there was an internal error.
-        """
-        for component, component_data in data.items():
-            self.add_component_data(component, component_data, allow_unknown=True)
-
-    def add_component_data(
-        self, component: str, data: Union[np.ndarray, Mapping[str, np.ndarray]], allow_unknown: bool = False
-    ):
-        """
-        Add Power Grid Model data for a single component to the const dataset view.
-
-        Args:
-            component: the name of the component
-            data: the data of the component
-            allow_unknown (optional): ignore any unknown components. Defaults to False.
-
-        Raises:
-            ValueError: if the component is unknown and allow_unknown is False.
-            ValueError: if the data is inconsistent with the rest of the dataset.
-            PowerGridError: if there was an internal error.
-        """
-        if component not in self._schema:
-            if not allow_unknown:
-                raise ValueError(f"Unknown component {component} in schema. {VALIDATOR_MSG}")
-            return
-
-        self._validate_properties(data)
-        self._register_buffer(component, get_buffer_view(data, self._schema[component]))
-
-    def _register_buffer(self, component, buffer: CBuffer):
-        pgc.dataset_const_add_buffer(
-            dataset=self._const_dataset,
-            component=component,
-            elements_per_scenario=buffer.n_elements_per_scenario,
-            total_elements=buffer.total_elements,
-            indptr=buffer.indptr,
-            data=buffer.data,
-        )
-        assert_no_error()
-
-    def _validate_properties(self, data: Union[np.ndarray, Mapping[str, np.ndarray]]):
-        properties = get_buffer_properties(data)
-        if properties.is_batch != self._is_batch:
-            raise ValueError(
-                f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
-            )
-        if properties.batch_size != self._batch_size:
-            raise ValueError(f"Dataset must have a consistent batch size across all components. {VALIDATOR_MSG}")
-
     def __del__(self):
-        if hasattr(self, "_const_dataset"):
-            pgc.destroy_dataset_const(self._const_dataset)
+        pgc.destroy_dataset_const(self._const_dataset)
 
 
 class CWritableDataset:
