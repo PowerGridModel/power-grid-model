@@ -146,7 +146,6 @@ template <bool sym> class LinearPFSolver {
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
-        // loop all bus
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             calculate_source_result(bus_number, y_bus, input, output);
             calculate_load_gen_result(bus_number, input, output);
