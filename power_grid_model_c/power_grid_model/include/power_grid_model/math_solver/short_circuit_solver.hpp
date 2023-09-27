@@ -258,7 +258,7 @@ template <bool sym> class ShortCircuitSolver {
         diagonal_element += ComplexTensor<sym>{y_fault};
     }
 
-    void add_single_phase_to_ground_fault(DoubleComplex const& y_fault, ComplexTensor<sym>& diagonal_element,
+    void add_single_phase_to_ground_fault(DoubleComplex const& y_fault, ComplexTensor<false>& diagonal_element,
                                           IntS const& phase_1)
         requires(!sym)
     {
