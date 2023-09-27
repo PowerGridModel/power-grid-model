@@ -77,6 +77,12 @@ class ConstDatasetPtr(c_void_p):
     """
 
 
+class MutableDatasetPtr(c_void_p):
+    """
+    Pointer to writable dataset
+    """
+
+
 class WritableDatasetPtr(c_void_p):
     """
     Pointer to writable dataset
@@ -341,10 +347,7 @@ class PowerGridCore:
     def create_model(  # type: ignore[empty-body]
         self,
         system_frequency: float,
-        n_components: int,
-        components: CStrPtr,  # type: ignore[valid-type]
-        component_sizes: IdxPtr,  # type: ignore[valid-type]
-        input_data: VoidDoublePtr,  # type: ignore[valid-type]
+        input_data: ConstDatasetPtr,  # type: ignore[valid-type]
     ) -> ModelPtr:
         pass  # pragma: no cover
 
@@ -352,10 +355,7 @@ class PowerGridCore:
     def update_model(  # type: ignore[empty-body]
         self,
         model: ModelPtr,
-        n_components: int,
-        components: CStrPtr,  # type: ignore[valid-type]
-        component_sizes: IdxPtr,  # type: ignore[valid-type]
-        update_data: VoidDoublePtr,  # type: ignore[valid-type]
+        update_data: ConstDatasetPtr,  # type: ignore[valid-type]
     ) -> None:
         pass  # pragma: no cover
 
@@ -383,17 +383,8 @@ class PowerGridCore:
         self,
         model: ModelPtr,
         opt: OptionsPtr,
-        # output
-        n_output_components: int,
-        output_components: CStrPtr,  # type: ignore[valid-type]
-        output_data: VoidDoublePtr,  # type: ignore[valid-type]
-        # update
-        n_scenarios: int,
-        n_update_components: int,
-        update_components: CStrPtr,  # type: ignore[valid-type]
-        n_component_elements_per_scenario: IdxPtr,  # type: ignore[valid-type]
-        indptrs_per_component: IdxDoublePtr,  # type: ignore[valid-type]
-        update_data: VoidDoublePtr,  # type: ignore[valid-type]
+        output_data: MutableDatasetPtr,  # type: ignore[valid-type]
+        update_data: ConstDatasetPtr,  # type: ignore[valid-type]
     ) -> None:
         pass  # pragma: no cover
 
@@ -428,25 +419,39 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def create_dataset_const(  # type: ignore[empty-body]
+    def create_dataset_mutable(  # type: ignore[empty-body]
         self, dataset: str, is_batch: int, batch_size: int
-    ) -> ConstDatasetPtr:
+    ) -> MutableDatasetPtr:
         pass  # pragma: no cover
 
     @make_c_binding
-    def destroy_dataset_const(self, dataset: ConstDatasetPtr) -> None:  # type: ignore[empty-body]
+    def destroy_dataset_mutable(self, dataset: MutableDatasetPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def dataset_const_add_buffer(  # type: ignore[empty-body]
+    def dataset_mutable_add_buffer(  # type: ignore[empty-body]
         self,
-        dataset: ConstDatasetPtr,
+        dataset: MutableDatasetPtr,
         component: str,
         elements_per_scenario: int,
         total_elements: int,
         indptr: IdxPtr,  # type: ignore[valid-type]
         data: VoidPtr,  # type: ignore[valid-type]
     ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_mutable_get_info(self, dataset: MutableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_dataset_const_from_mutable(  # type: ignore[empty-body]
+        self, mutable_dataset: MutableDatasetPtr
+    ) -> ConstDatasetPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_dataset_const(self, dataset: ConstDatasetPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

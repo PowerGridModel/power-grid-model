@@ -7,7 +7,6 @@ Power grid model buffer handler
 """
 
 
-from ctypes import Array
 from dataclasses import dataclass
 from typing import Dict, Mapping, Optional, Tuple, Union
 
@@ -15,8 +14,8 @@ import numpy as np
 
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import CStr, IdxPtr, VoidPtr
-from power_grid_model.core.power_grid_meta import ComponentMetaData, power_grid_meta_data
+from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
+from power_grid_model.core.power_grid_meta import ComponentMetaData
 
 
 @dataclass
@@ -46,22 +45,7 @@ class CBuffer:
     total_elements: int
 
 
-@dataclass
-class CDataset:
-    """
-    Dataset definition.
-    """
-
-    dataset: Dict[str, CBuffer]
-    batch_size: int
-    n_components: int
-    components: Array
-    n_component_elements_per_scenario: Array
-    indptrs_per_component: Array
-    data_ptrs_per_component: Array
-
-
-def get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
+def _get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
     """
     Get a raw view on the data.
 
@@ -75,7 +59,7 @@ def get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
     return np.ascontiguousarray(data, dtype=schema.dtype).ctypes.data_as(VoidPtr)
 
 
-def get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
+def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
     """
     Get a raw view on the index pointer.
 
@@ -88,7 +72,7 @@ def get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
     return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
 
-def get_uniform_buffer_properties(data: np.ndarray) -> BufferProperties:
+def _get_uniform_buffer_properties(data: np.ndarray) -> BufferProperties:
     """
     Extract the properties of the uniform batch dataset component.
 
@@ -121,7 +105,7 @@ def get_uniform_buffer_properties(data: np.ndarray) -> BufferProperties:
     )
 
 
-def get_sparse_buffer_properties(data: Mapping[str, np.ndarray]) -> BufferProperties:
+def _get_sparse_buffer_properties(data: Mapping[str, np.ndarray]) -> BufferProperties:
     """
     Extract the properties of the sparse batch dataset component.
 
@@ -177,12 +161,12 @@ def get_buffer_properties(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> 
         the properties of the dataset component.
     """
     if isinstance(data, np.ndarray):
-        return get_uniform_buffer_properties(data)
+        return _get_uniform_buffer_properties(data)
 
-    return get_sparse_buffer_properties(data)
+    return _get_sparse_buffer_properties(data)
 
 
-def get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuffer:
+def _get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuffer:
     """
     Get a C API compatible view on a uniform buffer.
 
@@ -193,10 +177,10 @@ def get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuf
     Returns:
         the C API buffer view.
     """
-    properties = get_uniform_buffer_properties(data)
+    properties = _get_uniform_buffer_properties(data)
 
     return CBuffer(
-        data=get_raw_data_view(data, schema),
+        data=_get_raw_data_view(data, schema),
         indptr=IdxPtr(),
         n_elements_per_scenario=properties.n_elements_per_scenario,
         batch_size=properties.batch_size,
@@ -204,7 +188,7 @@ def get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuf
     )
 
 
-def get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMetaData) -> CBuffer:
+def _get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMetaData) -> CBuffer:
     """
     Get a C API compatible view on a sparse buffer.
 
@@ -218,11 +202,11 @@ def get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMeta
     contents = data["data"]
     indptr = data["indptr"]
 
-    properties = get_sparse_buffer_properties(data)
+    properties = _get_sparse_buffer_properties(data)
 
     return CBuffer(
-        data=get_raw_data_view(contents, schema),
-        indptr=get_indptr_view(indptr),
+        data=_get_raw_data_view(contents, schema),
+        indptr=_get_indptr_view(indptr),
         n_elements_per_scenario=properties.n_elements_per_scenario,
         batch_size=properties.batch_size,
         total_elements=properties.n_total_elements,
@@ -241,9 +225,9 @@ def get_buffer_view(data: Union[np.ndarray, Mapping[str, np.ndarray]], schema: C
         the C API buffer view.
     """
     if isinstance(data, np.ndarray):
-        return get_uniform_buffer_view(data, schema)
+        return _get_uniform_buffer_view(data, schema)
 
-    return get_sparse_buffer_view(data, schema)
+    return _get_sparse_buffer_view(data, schema)
 
 
 def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Union[np.ndarray, Dict[str, np.ndarray]]:
@@ -252,7 +236,7 @@ def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Un
 
     Args:
         properties: the desired buffer properties.
-        dtype: the data type of the buffer.
+        schema: the data type of the buffer.
 
     Raises:
         ValueError: if the buffer properties are not consistent.
@@ -261,18 +245,18 @@ def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Un
         Union[np.ndarray, Dict[str, np.ndarray]]: a buffer with the correct properties.
     """
     if properties.is_sparse:
-        return create_sparse_buffer(properties=properties, schema=schema)
+        return _create_sparse_buffer(properties=properties, schema=schema)
 
-    return create_uniform_buffer(properties=properties, schema=schema)
+    return _create_uniform_buffer(properties=properties, schema=schema)
 
 
-def create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaData) -> np.ndarray:
+def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaData) -> np.ndarray:
     """
     Create a uniform buffer with the provided properties and type.
 
     Args:
         properties: the desired buffer properties.
-        dtype: the data type of the buffer.
+        schema: the data type of the buffer.
 
     Raises:
         ValueError: if the buffer properties are not uniform.
@@ -291,13 +275,13 @@ def create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDat
     return np.empty(shape=shape, dtype=schema.dtype)
 
 
-def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Dict[str, np.ndarray]:
+def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Dict[str, np.ndarray]:
     """
     Create a sparse buffer with the provided properties and type.
 
     Args:
         properties: the desired buffer properties.
-        dtype: the data type of the buffer.
+        schema: the data type of the buffer.
 
     Raises:
         ValueError: if the buffer properties are not sparse.
@@ -308,46 +292,3 @@ def create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData
     data = np.empty(properties.n_total_elements, dtype=schema.dtype)
     indptr = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
     return {"data": data, "indptr": indptr}
-
-
-def get_dataset_view(data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> CDataset:
-    """
-    prepare array for cpp pointers
-    Args:
-        data_type: input, update, or symmetric/asymmetric output
-        array_dict:
-            key: component type
-            value:
-                data array: can be 1D or 2D (in batches)
-                or
-                dict with
-                    key:
-                        data -> data array in flat for batches
-                        indptr -> index pointer for variable length input
-    Returns:
-        instance of CDataset ready to be fed into C API.
-    """
-    schema = power_grid_meta_data[data_type]
-    dataset_dict = {
-        component_name: get_buffer_view(entry, schema[component_name])
-        for component_name, entry in array_dict.items()
-        if component_name in schema
-    }
-
-    n_components = len(dataset_dict)
-    batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
-    if np.unique(batch_sizes).size > 1:
-        raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
-    batch_size = 1 if batch_sizes.size == 0 else batch_sizes[0]
-
-    return CDataset(
-        dataset=dataset_dict,
-        batch_size=batch_size,
-        n_components=n_components,
-        components=(CStr * n_components)(*(x.encode() for x in dataset_dict)),
-        n_component_elements_per_scenario=(IdxC * n_components)(
-            *(x.n_elements_per_scenario for x in dataset_dict.values())
-        ),
-        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore
-        data_ptrs_per_component=(VoidPtr * n_components)(*(x.data for x in dataset_dict.values())),
-    )
