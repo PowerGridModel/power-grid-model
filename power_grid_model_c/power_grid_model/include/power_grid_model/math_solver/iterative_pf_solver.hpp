@@ -143,8 +143,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
                 break;
             case const_y:
                 // power is quadratic relation to voltage
-                output.load_gen[load_gen].s =
-                    input.s_injection[load_gen] * cabs(output.u[bus_number]) * cabs(output.u[bus_number]);
+                output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus_number]);
                 break;
             case const_i:
                 // power is linear relation to voltage
