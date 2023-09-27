@@ -119,6 +119,19 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
 
+  private:
+    Idx n_bus_;
+    std::shared_ptr<DoubleVector const> phase_shift_;
+    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
+    std::shared_ptr<IdxVector const> source_bus_indptr_;
+    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+        : n_bus_{y_bus.size()},
+          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
+          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
+          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
+
     void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                  MathOutput<sym>& output) {
         for (Idx source = (*source_bus_indptr_)[bus_number]; source != (*source_bus_indptr_)[bus_number + 1];
@@ -155,19 +168,6 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
             output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
         }
     }
-
-  private:
-    Idx n_bus_;
-    std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
-    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
-    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : n_bus_{y_bus.size()},
-          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
-          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
-          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };
 
 } // namespace power_grid_model::math_model_impl

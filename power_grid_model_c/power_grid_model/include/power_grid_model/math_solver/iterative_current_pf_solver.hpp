@@ -132,30 +132,8 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 
         // loop buses: i
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
-            // loop loads/generation: j
-            for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
-                 ++load_number) {
-                // load type
-                LoadGenType const type = load_gen_type[load_number];
-                switch (type) {
-                    using enum LoadGenType;
+            add_loads(bus_number, input, load_gen_bus_indptr, load_gen_type, u);
 
-                case const_pq:
-                    // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
-                    rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
-                    break;
-                case const_y:
-                    // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
-                    rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
-                    break;
-                case const_i:
-                    // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
-                    rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
-                    break;
-                default:
-                    throw MissingCaseForEnumError("Injection current calculation", type);
-                }
-            }
             // loop sources: j
             for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
                  ++source_number) {
@@ -192,6 +170,33 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     // sparse solver
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
+
+    void add_loads(Idx const& bus_number, PowerFlowInput<sym> const& input, IdxVector const& load_gen_bus_indptr,
+                   std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {
+        for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
+             ++load_number) {
+            // load type
+            LoadGenType const type = load_gen_type[load_number];
+            switch (type) {
+                using enum LoadGenType;
+
+            case const_pq:
+                // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
+                rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
+                break;
+            case const_y:
+                // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
+                rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
+                break;
+            case const_i:
+                // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
+                rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
+                break;
+            default:
+                throw MissingCaseForEnumError("Injection current calculation", type);
+            }
+        }
+    }
 };
 
 template class IterativeCurrentPFSolver<true>;

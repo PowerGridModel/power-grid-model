@@ -238,6 +238,74 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         }
     }
 
+    // Solve the linear Equations
+    void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
+
+    // Get maximum deviation among all bus voltages
+    double iterate_unknown(ComplexValueVector<sym>& u) {
+        double max_dev = 0.0;
+        // loop each bus as i
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            // angle
+            x_[i].theta() += del_x_pq_[i].theta();
+            // magnitude
+            x_[i].v() += x_[i].v() * del_x_pq_[i].v();
+            // temporary complex phasor
+            // U = V * exp(1i*theta)
+            ComplexValue<sym> const& u_tmp = x_[i].v() * exp(1.0i * x_[i].theta());
+            // get dev of last iteration, get max
+            double const dev = max_val(cabs(u_tmp - u[i]));
+            max_dev = std::max(dev, max_dev);
+            // assign
+            u[i] = u_tmp;
+        }
+        return max_dev;
+    }
+
+  private:
+    // data for jacobian
+    std::vector<PFJacBlock<sym>> data_jac_;
+    // calculation data
+    std::vector<PolarPhasor<sym>> x_; // unknown
+    // this stores in different steps
+    // 1. negative power injection: - p/q_calculated
+    // 2. power unbalance: p/q_specified - p/q_calculated
+    // 3. unknown iterative
+    std::vector<ComplexPower<sym>> del_x_pq_;
+    SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>> sparse_solver_;
+    // permutation array
+    typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
+
+    static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
+                                          ComplexValue<sym> const& uj) {
+        PFJacBlock<sym> block{};
+        // real and imag of addmittance
+        RealTensor<sym> const gij = real(yij);
+        RealTensor<sym> const bij = imag(yij);
+        // diag(Vi) * cos(theta_ij) * diag(Vj)
+        // Ui_r @* Uj_r + Ui_i @* Uj_i
+        // = cij
+        RealTensor<sym> const c_ij =
+            vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
+        // diag(Vi) * sin(theta_ij) * diag(Vj)
+        // = Ui_i @* Uj_r - Ui_r @* Uj_i
+        // = sij
+        RealTensor<sym> const s_ij =
+            vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
+        // calculate H, N, M, L
+        // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
+        // = Gij .* sij - Bij .* cij
+        block.h() = gij * s_ij - bij * c_ij;
+        // Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
+        // = Gij .* cij + Bij .* sij
+        block.n() = gij * c_ij + bij * s_ij;
+        // Mij = - Nij
+        block.m() = -block.n();
+        // Lij = Hij
+        block.l() = block.h();
+        return block;
+    }
+
     void prepare_matrix_and_rhs_from_network_perspective(YBus<sym> const& y_bus, ComplexValueVector<sym> const& u,
                                                          IdxVector const& bus_entry) {
         IdxVector const& indptr = y_bus.row_indptr_lu();
@@ -364,74 +432,6 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
             data_jac_[diagonal_position].m() += block_mm.m();
             data_jac_[diagonal_position].l() += block_mm.l();
         }
-    }
-
-    // Solve the linear Equations
-    void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
-
-    // Get maximum deviation among all bus voltages
-    double iterate_unknown(ComplexValueVector<sym>& u) {
-        double max_dev = 0.0;
-        // loop each bus as i
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            // angle
-            x_[i].theta() += del_x_pq_[i].theta();
-            // magnitude
-            x_[i].v() += x_[i].v() * del_x_pq_[i].v();
-            // temporary complex phasor
-            // U = V * exp(1i*theta)
-            ComplexValue<sym> const& u_tmp = x_[i].v() * exp(1.0i * x_[i].theta());
-            // get dev of last iteration, get max
-            double const dev = max_val(cabs(u_tmp - u[i]));
-            max_dev = std::max(dev, max_dev);
-            // assign
-            u[i] = u_tmp;
-        }
-        return max_dev;
-    }
-
-  private:
-    // data for jacobian
-    std::vector<PFJacBlock<sym>> data_jac_;
-    // calculation data
-    std::vector<PolarPhasor<sym>> x_; // unknown
-    // this stores in different steps
-    // 1. negative power injection: - p/q_calculated
-    // 2. power unbalance: p/q_specified - p/q_calculated
-    // 3. unknown iterative
-    std::vector<ComplexPower<sym>> del_x_pq_;
-    SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>> sparse_solver_;
-    // permutation array
-    typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
-
-    static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
-                                          ComplexValue<sym> const& uj) {
-        PFJacBlock<sym> block{};
-        // real and imag of addmittance
-        RealTensor<sym> const gij = real(yij);
-        RealTensor<sym> const bij = imag(yij);
-        // diag(Vi) * cos(theta_ij) * diag(Vj)
-        // Ui_r @* Uj_r + Ui_i @* Uj_i
-        // = cij
-        RealTensor<sym> const c_ij =
-            vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
-        // diag(Vi) * sin(theta_ij) * diag(Vj)
-        // = Ui_i @* Uj_r - Ui_r @* Uj_i
-        // = sij
-        RealTensor<sym> const s_ij =
-            vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
-        // calculate H, N, M, L
-        // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-        // = Gij .* sij - Bij .* cij
-        block.h() = gij * s_ij - bij * c_ij;
-        // Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
-        // = Gij .* cij + Bij .* sij
-        block.n() = gij * c_ij + bij * s_ij;
-        // Mij = - Nij
-        block.m() = -block.n();
-        // Lij = Hij
-        block.l() = block.h();
-        return block;
     }
 };
 
