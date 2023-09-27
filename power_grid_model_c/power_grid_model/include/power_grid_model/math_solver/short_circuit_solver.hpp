@@ -173,9 +173,9 @@ template <bool sym> class ShortCircuitSolver {
         u_bus = ComplexValue<sym>{0}; // update rhs
     }
 
-    void add_single_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
-                                                                  ComplexTensor<sym>& diagonal_element,
-                                                                  ComplexValue<sym>& u_bus, IntS const& phase_1)
+    void add_single_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<false> const& y_bus,
+                                                                  ComplexTensor<false>& diagonal_element,
+                                                                  ComplexValue<false>& u_bus, IntS const& phase_1)
         requires(!sym)
     {
         for (Idx data_index = y_bus.row_indptr_lu()[bus_number]; data_index != y_bus.row_indptr_lu()[bus_number + 1];
@@ -189,8 +189,8 @@ template <bool sym> class ShortCircuitSolver {
         u_bus(phase_1) = 0; // update rhs
     }
 
-    void add_two_phase_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
-                                                     ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
+    void add_two_phase_fault_with_infinite_impedance(Idx const& bus_number, YBus<false> const& y_bus,
+                                                     ComplexTensor<false>& diagonal_element, ComplexValue<false>& u_bus,
                                                      IntS const& phase_1, IntS const& phase_2)
         requires(!sym)
     {
@@ -211,9 +211,9 @@ template <bool sym> class ShortCircuitSolver {
         u_bus(phase_1) = 0;
     }
 
-    void add_two_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
-                                                               ComplexTensor<sym>& diagonal_element,
-                                                               ComplexValue<sym>& u_bus, IntS const& phase_1,
+    void add_two_phase_to_ground_fault_with_infinite_impedance(Idx const& bus_number, YBus<false> const& y_bus,
+                                                               ComplexTensor<false>& diagonal_element,
+                                                               ComplexValue<false>& u_bus, IntS const& phase_1,
                                                                IntS const& phase_2)
         requires(!sym)
     {
@@ -266,7 +266,7 @@ template <bool sym> class ShortCircuitSolver {
         diagonal_element(phase_1, phase_1) += y_fault;
     }
 
-    void add_two_phase_fault(DoubleComplex const& y_fault, ComplexTensor<sym>& diagonal_element, IntS const& phase_1,
+    void add_two_phase_fault(DoubleComplex const& y_fault, ComplexTensor<false>& diagonal_element, IntS const& phase_1,
                              IntS const& phase_2)
         requires(!sym)
     {
@@ -280,8 +280,8 @@ template <bool sym> class ShortCircuitSolver {
         diagonal_element(phase_2, phase_1) -= y_fault;
     }
 
-    void add_two_phase_to_ground_fault(DoubleComplex const& y_fault, Idx const& bus_number, YBus<sym> const& y_bus,
-                                       ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
+    void add_two_phase_to_ground_fault(DoubleComplex const& y_fault, Idx const& bus_number, YBus<false> const& y_bus,
+                                       ComplexTensor<false>& diagonal_element, ComplexValue<false>& u_bus,
                                        IntS const& phase_1, IntS const& phase_2)
         requires(!sym)
     {
