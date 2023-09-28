@@ -21,12 +21,6 @@ build:
       - find power_grid_model_c/power_grid_model_c/include  -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
-      # download examples
-      - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Make%20Test%20Dataset.ipynb
-      - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Power%20Flow%20Example.ipynb
-      - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/State%20Estimation%20Example.ipynb
-      - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Validation%20Examples.ipynb
-      - wget -P docs/examples https://github.com/PowerGridModel/power-grid-model-workshop/raw/main/examples/Short%20Circuit%20Example.ipynb
       # download support
       - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/RELEASE.md
       - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/SUPPORT.md
