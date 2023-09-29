@@ -16,7 +16,8 @@ from power_grid_model._utils import (
     split_sparse_batches_in_batches,
 )
 from power_grid_model.data_types import BatchDataset, BatchList
-from tests.unit.utils import convert_python_to_numpy
+
+from .utils import convert_python_to_numpy
 
 
 @pytest.fixture(name="two_nodes_one_line")
