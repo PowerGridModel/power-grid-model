@@ -15,6 +15,7 @@ from typing import Dict, List, Optional
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
+from power_grid_model._utils import convert_batch_dataset_to_batch_list
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
     Branch3Side,
@@ -26,7 +27,6 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     MissingValueError,

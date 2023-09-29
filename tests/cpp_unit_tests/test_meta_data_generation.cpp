@@ -14,16 +14,16 @@ namespace power_grid_model {
 
 TEST_CASE("Test column row conversion") {
     SUBCASE("Test meta input data generation") {
-        auto const meta_map = meta_data::meta_data().get_dataset("input");
-        auto const node = meta_map.get_component("node");
-        auto const node_attr = node.attributes;
+        auto const& meta_map = meta_data::meta_data().get_dataset("input");
+        auto const& node = meta_map.get_component("node");
+        auto const& node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
         CHECK(node_attr[0].ctype == CType::c_int32);
         CHECK(node_attr[1].name == "u_rated");
         CHECK(node_attr[1].ctype == CType::c_double);
 
-        auto const sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
-        auto const sensor_attr = sym_voltage_sensor.attributes;
+        auto const& sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
+        auto const& sensor_attr = sym_voltage_sensor.attributes;
         CHECK(sensor_attr[0].name == "id");
         CHECK(sensor_attr[0].ctype == CType::c_int32);
         CHECK(sensor_attr[1].name == "measured_object");
@@ -31,16 +31,16 @@ TEST_CASE("Test column row conversion") {
     }
 
     SUBCASE("Test meta ouput data generation") {
-        auto const meta_map = meta_data::meta_data().get_dataset("asym_output");
-        auto const node = meta_map.get_component("node");
-        auto const node_attr = node.attributes;
+        auto const& meta_map = meta_data::meta_data().get_dataset("asym_output");
+        auto const& node = meta_map.get_component("node");
+        auto const& node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
         CHECK(node_attr[0].ctype == CType::c_int32);
         CHECK(node_attr[2].name == "u_pu");
         CHECK(node_attr[2].ctype == CType::c_double3);
 
-        auto const sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
-        auto const sensor_attr = sym_voltage_sensor.attributes;
+        auto const& sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
+        auto const& sensor_attr = sym_voltage_sensor.attributes;
         CHECK(sensor_attr[0].name == "id");
         CHECK(sensor_attr[0].ctype == CType::c_int32);
         CHECK(sensor_attr[2].name == "u_residual");
@@ -48,16 +48,16 @@ TEST_CASE("Test column row conversion") {
     }
 
     SUBCASE("Test meta update data generation") {
-        auto const meta_map = meta_data::meta_data().get_dataset("update");
-        auto const load = meta_map.get_component("asym_load");
-        auto const load_attr = load.attributes;
+        auto const& meta_map = meta_data::meta_data().get_dataset("update");
+        auto const& load = meta_map.get_component("asym_load");
+        auto const& load_attr = load.attributes;
         CHECK(load_attr[0].name == "id");
         CHECK(load_attr[0].ctype == CType::c_int32);
         CHECK(load_attr[2].name == "p_specified");
         CHECK(load_attr[2].ctype == CType::c_double3);
 
-        auto const sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
-        auto const sensor_attr = sym_voltage_sensor.attributes;
+        auto const& sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
+        auto const& sensor_attr = sym_voltage_sensor.attributes;
         CHECK(sensor_attr[0].name == "id");
         CHECK(sensor_attr[0].ctype == CType::c_int32);
         CHECK(sensor_attr[1].name == "u_sigma");

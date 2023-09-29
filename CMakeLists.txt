@@ -32,6 +32,8 @@ include(GNUInstallDirs)
 
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Boost REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(msgpack-cxx REQUIRED)
 
 if(NOT WIN32)
   # thread

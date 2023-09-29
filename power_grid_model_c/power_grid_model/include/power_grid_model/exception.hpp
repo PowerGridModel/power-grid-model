@@ -170,6 +170,16 @@ class InvalidShortCircuitPhaseOrType : public PowerGridError {
     }
 };
 
+class SerializationError : public PowerGridError {
+  public:
+    explicit SerializationError(std::string const& msg) { append_msg(msg); }
+};
+
+class DatasetError : public PowerGridError {
+  public:
+    explicit DatasetError(std::string const& msg) { append_msg(msg); }
+};
+
 } // namespace power_grid_model
 
 #endif
