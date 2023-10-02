@@ -19,8 +19,9 @@ def deprecated_format_test_case():
 
 
 def test_end_to_end__deprecated_serialization_format_single(deprecated_format_test_case):
-    input_data = import_json_data(deprecated_format_test_case / "input.json", "input")
-    sym_output = import_json_data(deprecated_format_test_case / "sym_output.json", "sym_output")
+    with pytest.deprecated_call():
+        input_data = import_json_data(deprecated_format_test_case / "input.json", "input")
+        sym_output = import_json_data(deprecated_format_test_case / "sym_output.json", "sym_output")
 
     model = PowerGridModel(input_data, system_frequency=50.0)
     result = model.calculate_power_flow()
@@ -29,9 +30,10 @@ def test_end_to_end__deprecated_serialization_format_single(deprecated_format_te
 
 
 def test_end_to_end__deprecated_serialization_format_batch(deprecated_format_test_case):
-    input_data = import_json_data(deprecated_format_test_case / "input.json", "input")
-    update = import_json_data(deprecated_format_test_case / "update_batch.json", "update")
-    sym_output = import_json_data(deprecated_format_test_case / "sym_output_batch.json", "sym_output")
+    with pytest.deprecated_call():
+        input_data = import_json_data(deprecated_format_test_case / "input.json", "input")
+        update = import_json_data(deprecated_format_test_case / "update_batch.json", "update")
+        sym_output = import_json_data(deprecated_format_test_case / "sym_output_batch.json", "sym_output")
 
     model = PowerGridModel(input_data, system_frequency=50.0)
     result = model.calculate_power_flow(update_data=update)
