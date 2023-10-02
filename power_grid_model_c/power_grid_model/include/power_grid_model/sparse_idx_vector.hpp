@@ -22,16 +22,6 @@ objects 6 is coupled to index 2
 
 Another intuitive way to look at this for python developers is like list of lists: [[0, 1, 2], [3, 4, 5], [6]].
 
-SparseIdxVector will help iterate over this indptr like a map via the Iterator interface directly.
-
-While using iterator operations, the 'values' view dereferences the index of outer list. And the 'items' view
-derferences [index of outer list, value]
-
-The 'items' and 'values' functions iterate through each element.
-The 'groups_items' and 'groups_values' functions iterates through the outer index.
-
-The keys of vector are size_t. Outside this class, the indexing is with Idx instead of size_t, hence conversion.
-
 */
 
 namespace power_grid_model::detail {
@@ -40,34 +30,7 @@ class SparseIdxVector {
   public:
     explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr) {}
 
-    template <class Value>
-    class Iterator : public boost::iterator_facade<Iterator<Value>, Value, boost::forward_traversal_tag,
-                                                   boost::iterator_range<IdxCount>, Idx> {
-      public:
-        Iterator() : indptr_(nullptr), idx_(0) {}
-        explicit Iterator(IdxVector indptr) : indptr_(indptr), idx_(0) {}
-        explicit Iterator(IdxVector indptr, Idx idx) : indptr_(indptr), idx_(idx) {}
-
-        auto begin() { return Iterator(indptr_, 0); }
-        auto end() { return Iterator(indptr_, indptr_.size() - 1); }
-
-      private:
-        IdxVector indptr_;
-        Idx idx_;
-        friend class boost::iterator_core_access;
-
-        boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(indptr_[idx_], indptr_[idx_ + 1]);
-        }
-        bool equal(Iterator const& other) const { return idx_ == other.idx_; }
-        void increment() { ++idx_; }
-        // void decrement() { --idx_; }
-        // void advance(Idx n) { idx_ += n; }
-        // Idx distance_to(Iterator const& other) const { return other.idx_ - idx_; }
-    };
-
-    auto group_view_iter(Idx group) { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
-    auto groups() { return Iterator<Idx>(indptr_); }
+    auto group(Idx group) { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
 
   private:
     IdxVector indptr_;

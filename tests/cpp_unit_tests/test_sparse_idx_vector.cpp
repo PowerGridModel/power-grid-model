@@ -20,19 +20,11 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             size_t range_size = sample_indptr[i + 1] - sample_indptr[i];
             actual_idx_counts.clear();
             actual_idx_counts.resize(range_size);
-            auto group_i = sparse_idx_vector.group_view_iter(i);
+            auto group_i = sparse_idx_vector.group(i);
             std::copy(group_i.begin(), group_i.end(), actual_idx_counts.begin());
             if (range_size != 0) {
                 CHECK(actual_idx_counts.front() == IdxCount{sample_indptr[i]});
                 CHECK(actual_idx_counts.back() == IdxCount{sample_indptr[i + 1] - 1});
-            }
-        }
-
-        // Check all groups
-        std::vector<IdxCount> actual_idx_counts_groups{};
-        for (auto element_range : sparse_idx_vector.groups()) {
-            for (auto& element : element_range) {
-                actual_idx_counts_groups.push_back(element);
             }
         }
     }
