@@ -8,74 +8,33 @@
 namespace power_grid_model::detail {
 
 TEST_CASE("Sparse idx data strucuture for topology") {
-    IdxVector const sample_indptr{0, 3, 6, 7};
+    IdxVector const sample_indptr{0, 0, 3, 3, 6, 7, 7};
     SparseIdxVector sparse_idx_vector{sample_indptr};
-    IdxVector expected_groups{0, 0, 0, 1, 1, 1, 2};
+    IdxVector expected_groups{1, 1, 1, 3, 3, 3, 4};
     IdxVector expected_keys{0, 1, 2, 3, 4, 5, 6};
 
-    SUBCASE("Element iterator values") {
-        auto elm_iter = sparse_idx_vector.values();
-        CHECK(elm_iter[0] == 0);
-        CHECK(elm_iter[1] == 0);
-        CHECK(elm_iter[2] == 0);
-        CHECK(elm_iter[3] == 1);
-        CHECK(elm_iter[4] == 1);
-        CHECK(elm_iter[5] == 1);
-        CHECK(elm_iter[6] == 2);
-
-        IdxVector actual_groups{};
-        for (Idx i : elm_iter) {
-            actual_groups.push_back(i);
-        }
-        CHECK(actual_groups == expected_groups);
-
-        CHECK(elm_iter.size() == 7);
-    }
-
-    // TODO Implement items
-    SUBCASE("Element iterator items") {
-        auto elm_iter_items = sparse_idx_vector.items();
-        IdxVector actual_groups{};
-        actual_groups.resize(expected_groups.size());
-        for (auto [key, value] : elm_iter_items) {
-            actual_groups[value] = key;
-        }
-        CHECK(actual_groups == expected_groups);
-    }
-
     SUBCASE("Group iterator values") {
-        auto groups_values = sparse_idx_vector.groups_values();
-
-        using ElmRangeType = SparseIdxVector<Idx>::ElementRange<element_view_t>;
-        ElmRangeType expected_range_0{sample_indptr, 0, 1, 0, 0};
-        ElmRangeType expected_range_1{sample_indptr, 1, 2, 0, 0};
-        ElmRangeType expected_range_2{sample_indptr, 2, 3, 0, 0};
-
-        IdxVector actual_groups{};
-        for (auto element_range : groups_values) {
-            for (auto element : element_range) {
-                actual_groups.push_back(element);
+        // Check each group
+        std::vector<IdxCount> actual_idx_counts{};
+        for (size_t i = 0; i < 6; i++) {
+            size_t range_size = sample_indptr[i + 1] - sample_indptr[i];
+            actual_idx_counts.clear();
+            actual_idx_counts.resize(range_size);
+            auto group_i = sparse_idx_vector.group_view_iter(i);
+            std::copy(group_i.begin(), group_i.end(), actual_idx_counts.begin());
+            if (range_size != 0) {
+                CHECK(actual_idx_counts.front() == IdxCount{sample_indptr[i]});
+                CHECK(actual_idx_counts.back() == IdxCount{sample_indptr[i + 1] - 1});
             }
         }
-        CHECK(actual_groups == expected_groups);
 
-        CHECK(groups_values[0] == expected_range_0);
-        CHECK(groups_values[1] == expected_range_1);
-        CHECK(groups_values[2] == expected_range_2);
-
-        CHECK(groups_values.size() == 3);
-    }
-
-    SUBCASE("Group Iterator items") {
-        auto groups_items = sparse_idx_vector.groups_items();
-        IdxVector actual_groups_items{};
-        actual_groups_items.resize(expected_groups.size());
-        for (auto element_range : groups_items) {
-            for (auto [key, value] : element_range) {
-                actual_groups_items[value] = key;
+        // Check all groups
+        std::vector<IdxCount> actual_idx_counts_groups{};
+        for (auto element_range : sparse_idx_vector.groups()) {
+            for (auto& element : element_range) {
+                actual_idx_counts_groups.push_back(element);
             }
         }
-        CHECK(actual_groups_items == expected_groups);
     }
 }
 
