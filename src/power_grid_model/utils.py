@@ -142,7 +142,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     """
     [deprecated] Import json data.
 
-    This function is deprecated. Please use json_deserialize_from_file instead (requires loading the file yourself).
+    This function is deprecated. Please use json_deserialize_from_file instead.
 
     Args:
         json_file: path to the json file.
