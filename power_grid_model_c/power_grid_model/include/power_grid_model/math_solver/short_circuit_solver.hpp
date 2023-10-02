@@ -178,7 +178,7 @@ template <bool sym> class ShortCircuitSolver {
                                                                   ComplexValue<false>& u_bus, IntS const& phase_1)
         requires(!sym)
     {
-        if constexpr (sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
+        if constexpr (!sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                 Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -196,7 +196,7 @@ template <bool sym> class ShortCircuitSolver {
                                                      IntS const& phase_1, IntS const& phase_2)
         requires(!sym)
     {
-        if constexpr (sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
+        if constexpr (!sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                 Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -221,7 +221,7 @@ template <bool sym> class ShortCircuitSolver {
                                                                IntS const& phase_2)
         requires(!sym)
     {
-        if constexpr (sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
+        if constexpr (!sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                 Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -268,7 +268,7 @@ template <bool sym> class ShortCircuitSolver {
                                           IntS const& phase_1)
         requires(!sym)
     {
-        if constexpr (sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
+        if constexpr (!sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
             // mat_data[bus,bus][phase_1, phase_1] += y_fault
             diagonal_element(phase_1, phase_1) += y_fault;
         }
@@ -278,7 +278,7 @@ template <bool sym> class ShortCircuitSolver {
                              IntS const& phase_2)
         requires(!sym)
     {
-        if constexpr (sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
+        if constexpr (!sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
             // mat_data[bus,bus][phase_1, phase_1] += y_fault
             // mat_data[bus,bus][phase_2, phase_2] += y_fault
             // mat_data[bus,bus][phase_1, phase_2] -= y_fault
@@ -295,7 +295,7 @@ template <bool sym> class ShortCircuitSolver {
                                        IntS const& phase_1, IntS const& phase_2)
         requires(!sym)
     {
-        if constexpr (sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
+        if constexpr (!sym) { // TODO: remove this if statement once the compiler bug for requires(!sym) is fixed
             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                 Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
