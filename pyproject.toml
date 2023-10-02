@@ -7,6 +7,8 @@ requires = [
     "setuptools",
     "wheel",
     "pybuild-header-dependency",
+    "msgpack-cxx",
+    "nlohmann-json",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -29,7 +31,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.8, <3.12"  # numpy does not support python 3.12 yet
+requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.21.0",
 ]
@@ -38,6 +40,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+    "msgpack",
     "pre-commit",
     "pylint",
     "pytest",

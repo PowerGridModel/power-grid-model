@@ -5,7 +5,7 @@
 add_library(power_grid_model INTERFACE)
 
 target_link_libraries(power_grid_model
-	INTERFACE Eigen3::Eigen Boost::headers
+	INTERFACE Eigen3::Eigen Boost::headers msgpack-cxx nlohmann_json::nlohmann_json
 )
 
 if(Threads_FOUND)

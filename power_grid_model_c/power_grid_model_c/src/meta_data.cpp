@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+#include "forward_declarations.hpp"
+
 #include "power_grid_model_c/meta_data.h"
 
 #include "handle.hpp"
@@ -16,27 +18,22 @@ using namespace power_grid_model;
 static_assert(std::is_same_v<PGM_Idx, Idx>);
 static_assert(std::is_same_v<PGM_ID, ID>);
 
-template <class Functor> auto call_with_bound(PGM_Handle* handle, Functor func) -> std::invoke_result_t<Functor> {
-    static std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<Functor>>> const empty{};
-    try {
-        return func();
-    } catch (std::out_of_range& e) {
-        handle->err_code = PGM_regular_error;
-        handle->err_msg = std::string(e.what()) + "\n You supplied wrong name and/or index!\n";
-        return empty;
-    }
-}
+constexpr std::string_view bound_error_msg = "\n You supplied wrong name and/or index!\n";
+
+auto const meta_catch = [](PGM_Handle* handle, auto func) -> decltype(auto) {
+    return call_with_catch<std::out_of_range>(handle, func, PGM_regular_error, bound_error_msg);
+};
+
 } // namespace
 
 // retrieve meta data
 // dataset
 PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return meta_data::meta_data().n_datasets(); }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
-    return call_with_bound(handle, [idx]() -> decltype(auto) { return &meta_data::meta_data().datasets.at(idx); });
+    return meta_catch(handle, [idx]() { return &meta_data::meta_data().datasets.at(idx); });
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
-    return call_with_bound(handle,
-                           [dataset]() -> decltype(auto) { return &meta_data::meta_data().get_dataset(dataset); });
+    return meta_catch(handle, [dataset]() { return &meta_data::meta_data().get_dataset(dataset); });
 }
 char const* PGM_meta_dataset_name(PGM_Handle* /* handle */, PGM_MetaDataset const* dataset) {
     return dataset->name.c_str();
@@ -47,11 +44,11 @@ PGM_Idx PGM_meta_n_components(PGM_Handle* /* handle */, PGM_MetaDataset const* d
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
                                                        PGM_Idx idx) {
-    return call_with_bound(handle, [idx, dataset]() -> decltype(auto) { return &dataset->components.at(idx); });
+    return meta_catch(handle, [idx, dataset]() { return &dataset->components.at(idx); });
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
                                                         char const* component) {
-    return call_with_bound(handle, [component, dataset]() -> decltype(auto) {
+    return meta_catch(handle, [component, dataset]() {
         return &meta_data::meta_data().get_dataset(dataset).get_component(component);
     });
 }
@@ -68,11 +65,11 @@ PGM_Idx PGM_meta_n_attributes(PGM_Handle* /* handle */, PGM_MetaComponent const*
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
                                                        PGM_Idx idx) {
-    return call_with_bound(handle, [idx, component]() -> decltype(auto) { return &component->attributes.at(idx); });
+    return meta_catch(handle, [idx, component]() { return &component->attributes.at(idx); });
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset, char const* component,
                                                         char const* attribute) {
-    return call_with_bound(handle, [component, dataset, attribute]() -> decltype(auto) {
+    return meta_catch(handle, [component, dataset, attribute]() {
         return &meta_data::meta_data().get_dataset(dataset).get_component(component).get_attribute(attribute);
     });
 }

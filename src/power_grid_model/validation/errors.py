@@ -8,7 +8,7 @@ Error classes
 import re
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 
 class ValidationError(ABC):
@@ -115,7 +115,7 @@ class SingleFieldValidationError(ValidationError):
     field: str
     ids: List[int]
 
-    def __init__(self, component: str, field: str, ids: List[int]):
+    def __init__(self, component: str, field: str, ids: Iterable[int]):
         """
         Args:
             component: Component name
@@ -203,7 +203,7 @@ class NotIdenticalError(SingleFieldValidationError):
     unique: Set[Any]
     num_unique: int
 
-    def __init__(self, component: str, field: str, ids: List[int], values: List[Any]):
+    def __init__(self, component: str, field: str, ids: Iterable[int], values: List[Any]):
         super().__init__(component, field, ids)
         self.values = values
         self.unique = set(self.values)

@@ -6,16 +6,13 @@
 Load meta data from C core and define numpy structured array
 """
 
-from ctypes import Array, c_char_p, c_void_p
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Dict, Mapping, Optional, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 
-from power_grid_model.core.error_handling import VALIDATOR_MSG
-from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, IdxPtr
+from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 
 
@@ -161,7 +158,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
 power_grid_meta_data = _generate_meta_data()
 
 
-def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False):
+def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False) -> np.ndarray:
     """
     Initializes an array for use in Power Grid Model calculations
 
@@ -171,7 +168,7 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
         shape: shape of initialization
             integer, it is a 1-dimensional array
             tuple, it is an N-dimensional (tuple.shape) array
-        empty: if leave the memory block un-initialized
+        empty: if True, leave the memory block un-initialized
 
     Returns:
         np structured array with all entries as null value
@@ -185,113 +182,4 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
         fill_value=power_grid_meta_data[data_type][component_type].nan_scalar,
         dtype=power_grid_meta_data[data_type][component_type].dtype,
         order="C",
-    )
-
-
-# prepared data for c api
-@dataclass
-class CBuffer:
-    """
-    Buffer for a single component
-    """
-
-    data: c_void_p
-    indptr: Optional[IdxPtr]  # type: ignore
-    n_elements_per_scenario: int
-    batch_size: int
-
-
-@dataclass
-class CDataset:
-    """
-    Dataset definition
-    """
-
-    dataset: Dict[str, CBuffer]
-    batch_size: int
-    n_components: int
-    components: Array
-    n_component_elements_per_scenario: Array
-    indptrs_per_component: Array
-    data_ptrs_per_component: Array
-
-
-# pylint: disable=R0912
-def prepare_cpp_array(
-    data_type: str, array_dict: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]
-) -> CDataset:
-    """
-    prepare array for cpp pointers
-    Args:
-        data_type: input, update, or symmetric/asymmetric output
-        array_dict:
-            key: component type
-            value:
-                data array: can be 1D or 2D (in batches)
-                or
-                dict with
-                    key:
-                        data -> data array in flat for batches
-                        indptr -> index pointer for variable length input
-    Returns:
-        instance of CDataset ready to be fed into C API
-    """
-    # process
-    schema = power_grid_meta_data[data_type]
-    dataset_dict = {}
-    for component_name, entry in array_dict.items():
-        if component_name not in schema:
-            continue
-        # homogeneous
-        if isinstance(entry, np.ndarray):
-            data = entry
-            ndim = entry.ndim
-            indptr_c = IdxPtr()
-            if ndim == 1:
-                batch_size = 1
-                n_elements_per_scenario = entry.shape[0]
-            elif ndim == 2:  # (n_batch, n_component)
-                batch_size = entry.shape[0]
-                n_elements_per_scenario = entry.shape[1]
-            else:
-                raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
-        # with indptr
-        else:
-            data = entry["data"]
-            indptr: np.ndarray = entry["indptr"]
-            batch_size = indptr.size - 1
-            n_elements_per_scenario = -1
-            if data.ndim != 1:
-                raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
-            if indptr.ndim != 1:
-                raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
-            if indptr[0] != 0 or indptr[-1] != data.size:
-                raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
-            if np.any(np.diff(indptr) < 0):
-                raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-            indptr_c = np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
-        # convert data array
-        data_c = np.ascontiguousarray(data, dtype=schema[component_name].dtype).ctypes.data_as(c_void_p)
-        dataset_dict[component_name] = CBuffer(
-            data=data_c, indptr=indptr_c, n_elements_per_scenario=n_elements_per_scenario, batch_size=batch_size
-        )
-    # total set
-    n_components = len(dataset_dict)
-    if n_components == 0:
-        batch_size = 1
-    else:
-        batch_sizes = np.array([x.batch_size for x in dataset_dict.values()])
-        if np.unique(batch_sizes).size > 1:
-            raise ValueError(f"Batch sizes across all the types should be the same! {VALIDATOR_MSG}")
-        batch_size = batch_sizes[0]
-    return CDataset(
-        dataset=dataset_dict,
-        batch_size=batch_size,
-        n_components=n_components,
-        components=(c_char_p * n_components)(*(x.encode() for x in dataset_dict)),
-        n_component_elements_per_scenario=(IdxC * n_components)(
-            *(x.n_elements_per_scenario for x in dataset_dict.values())
-        ),
-        indptrs_per_component=(IdxPtr * n_components)(*(x.indptr for x in dataset_dict.values())),  # type: ignore
-        data_ptrs_per_component=(c_void_p * n_components)(*(x.data for x in dataset_dict.values())),
     )

@@ -15,7 +15,7 @@ You can also include one or more of the individual headers to use a subset of th
 Main Header
 -----
 
-The main header is `power_grid_model_c.h` with all the functions.
+The main header is `power_grid_model_c.h` with all the core functionality.
 
 .. doxygenfile:: power_grid_model_c.h
 
@@ -52,17 +52,26 @@ The header `power_grid_model_c/meta_data.h` contains functions to retrieve meta 
 Buffer
 -----
 
-The header `power_grid_model_c/buffer.h` contains functions of buffer control.
+The header `power_grid_model_c/buffer.h` contains functions for buffer control.
 
 
 .. doxygenfile:: power_grid_model_c/buffer.h
 
 
 -----
+Dataset
+-----
+
+The header `power_grid_model_c/dataset.h` contains functions for dataset control.
+
+.. doxygenfile:: power_grid_model_c/dataset.h
+
+
+-----
 Options
 -----
 
-The header `power_grid_model_c/options.h` contains functions of creating and setting calculation options.
+The header `power_grid_model_c/options.h` contains functions for creating and setting calculation options.
 
 .. doxygenfile:: power_grid_model_c/options.h
 
@@ -74,6 +83,15 @@ Model
 The header `power_grid_model_c/model.h` contains functions to create and calculate the main model: Power Grid Model.
 
 .. doxygenfile:: power_grid_model_c/model.h
+
+
+-----
+Serialization
+-----
+
+The header `power_grid_model_c/serialization.h` contains functions for serializing and deserializing datasets.
+
+.. doxygenfile:: power_grid_model_c/serialization.h
 
 
 -----

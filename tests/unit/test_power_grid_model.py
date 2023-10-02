@@ -9,10 +9,9 @@ import pytest
 
 from power_grid_model import PowerGridModel, initialize_array
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
-from power_grid_model.utils import convert_python_to_numpy
 from power_grid_model.validation import assert_valid_input_data
 
-from .utils import compare_result
+from .utils import compare_result, convert_python_to_numpy
 
 """
 Testing network

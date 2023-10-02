@@ -2,12 +2,18 @@ name: conda-pgm-env
 channels:
   - conda-forge
 dependencies:
+  # build env
   - python=3.11
   - pip
   - wheel
   - setuptools
+  # build deps
   - boost-cpp
   - eigen
+  - nlohmann_json
+  - msgpack-cxx
   - numpy
+  # test deps
   - pytest
   - pytest-cov
+  - msgpack-python
