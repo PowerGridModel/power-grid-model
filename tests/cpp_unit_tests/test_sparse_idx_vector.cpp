@@ -11,7 +11,8 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     IdxVector const sample_indptr{0, 0, 3, 3, 6, 7, 7};
     SparseIdxVector sparse_idx_vector{sample_indptr};
     IdxVector expected_groups{1, 1, 1, 3, 3, 3, 4};
-    IdxVector expected_keys{0, 1, 2, 3, 4, 5, 6};
+    IdxVector expected_elements{0, 1, 2, 3, 4, 5, 6};
+    std::vector<IdxCount> expected_idx_counts_groups{expected_elements.begin(), expected_elements.end()};
 
     IdxVector sample_dense_vector{1, 1, 1, 3, 3, 3, 4};
     DenseIdxVector dense_idx_vector{sample_dense_vector};
@@ -25,13 +26,23 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             actual_idx_counts.resize(range_size);
             auto group_i = sparse_idx_vector.get_element_range(group_number);
             std::copy(group_i.begin(), group_i.end(), actual_idx_counts.begin());
-            if (range_size == 0)    {
+            if (range_size == 0) {
                 CHECK(actual_idx_counts.empty());
             } else {
                 CHECK(actual_idx_counts.front() == IdxCount{sample_indptr[group_number]});
                 CHECK(actual_idx_counts.back() == IdxCount{sample_indptr[group_number + 1] - 1});
             }
         }
+
+        // Check iterator for all groups
+        std::vector<IdxCount> actual_idx_counts_groups{};
+        for (auto element_range : sparse_idx_vector.groups()) {
+            for (auto& element : element_range) {
+                actual_idx_counts_groups.push_back(element);
+            }
+        }
+        CHECK(actual_idx_counts_groups == expected_idx_counts_groups);
+
     }
 
     SUBCASE("Dense Idx vector") {
@@ -43,16 +54,15 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             actual_idx_counts.resize(range_size);
             auto group_i = dense_idx_vector.get_element_range(group_number);
             std::copy(group_i.begin(), group_i.end(), actual_idx_counts.begin());
-            if (range_size == 0)    {
+            if (range_size == 0) {
                 CHECK(actual_idx_counts.empty());
             } else {
                 CHECK(actual_idx_counts.front() == IdxCount{sample_indptr[group_number]});
                 CHECK(actual_idx_counts.back() == IdxCount{sample_indptr[group_number + 1] - 1});
             }
         }
+
     }
-
-
 }
 
 } // namespace power_grid_model::detail
