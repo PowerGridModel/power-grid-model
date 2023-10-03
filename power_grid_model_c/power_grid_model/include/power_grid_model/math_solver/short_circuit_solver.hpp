@@ -6,6 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
 
+#include "shared_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -97,23 +98,14 @@ template <bool sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            add_sources(source_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus);
+            shared_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
+                                                      diagonal_element, u_bus);
 
             // skip if no fault
             if (!input.faults.empty()) {
                 add_faults(fault_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus,
                            infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
             }
-        }
-    }
-
-    void add_sources(IdxVector const& source_bus_indptr, Idx const& bus_number, YBus<sym> const& y_bus,
-                     ShortCircuitInput const& input, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
-        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-             ++source_number) {
-            ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-            diagonal_element += y_source; // add y_source to the diagonal of Ybus
-            u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source
         }
     }
 

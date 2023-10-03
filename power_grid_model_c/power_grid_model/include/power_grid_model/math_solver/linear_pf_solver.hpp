@@ -30,6 +30,7 @@ if there are sources
 
 */
 
+#include "shared_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -113,7 +114,8 @@ template <bool sym> class LinearPFSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
             add_loads(load_gen_bus_idxptr, bus_number, input, diagonal_element);
-            add_sources(source_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus);
+            shared_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
+                                                      diagonal_element, u_bus);
         }
     }
 
@@ -123,16 +125,6 @@ template <bool sym> class LinearPFSolver {
              ++load_number) {
             // YBus_diag += -conj(S_base)
             add_diag(diagonal_element, -conj(input.s_injection[load_number]));
-        }
-    }
-
-    void add_sources(IdxVector const& source_bus_indptr, Idx const& bus_number, YBus<sym> const& y_bus,
-                     PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
-        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-             ++source_number) {
-            ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
-            diagonal_element += y_source;                                           // YBus_diag += Y_source
-            u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]}); // rhs += Y_source * U_source
         }
     }
 
