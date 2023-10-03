@@ -66,6 +66,7 @@ user_manual/calculations
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
+user_manual/serialization
 ```
 ```{toctree}
 :caption: "API Reference"
@@ -78,6 +79,7 @@ api_reference/power-grid-model-c-api-reference
 :caption: "Examples"
 :maxdepth: 2
 examples/Power Flow Example.ipynb
+examples/Serialization Example.ipynb
 examples/State Estimation Example.ipynb
 examples/Short Circuit Example.ipynb
 examples/Validation Examples.ipynb

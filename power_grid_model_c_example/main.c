@@ -103,12 +103,14 @@ int main(int argc, char** argv) {
     assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** initialize model ****/
-    // component names and sizes
-    char const* components[] = {"source", "sym_load", "node"}; // we use this array for mutiple places
-    PGM_Idx component_sizes[] = {1, 2, 1};
-    void const* input_data[] = {source_input, sym_load_input, node_input};
+    // input dataset
+    PGM_ConstDataset* input_dataset = PGM_create_dataset_const(handle, "input", 0, 1);
+    PGM_dataset_const_add_buffer(handle, input_dataset, "node", 1, 1, NULL, node_input);
+    PGM_dataset_const_add_buffer(handle, input_dataset, "source", 1, 1, NULL, source_input);
+    PGM_dataset_const_add_buffer(handle, input_dataset, "sym_load", 2, 2, NULL, sym_load_input);
+    assert(PGM_error_code(handle) == PGM_no_error);
     // create model
-    PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, 3, components, component_sizes, input_data);
+    PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, input_dataset);
     assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** create output buffer ****/
@@ -118,19 +120,22 @@ int main(int argc, char** argv) {
     // for batch calculation, we need buffer size of 3 because we are going to run 3 scenarios
     void* node_output = PGM_create_buffer(handle, PGM_def_sym_output_node, 3);
     assert(PGM_error_code(handle) == PGM_no_error);
-    void** output_data = &node_output;
     // value arrays to retrieve, for three scenarios
     double u_pu[3];
     double u_angle[3];
+    // dataset single
+    PGM_MutableDataset* single_output_dataset = PGM_create_dataset_mutable(handle, "sym_output", 0, 1);
+    PGM_dataset_mutable_add_buffer(handle, single_output_dataset, "node", 1, 1, NULL, node_output);
+    assert(PGM_error_code(handle) == PGM_no_error);
+    // dataset batch
+    PGM_MutableDataset* batch_output_dataset = PGM_create_dataset_mutable(handle, "sym_output", 1, 3);
+    PGM_dataset_mutable_add_buffer(handle, batch_output_dataset, "node", 1, 3, NULL, node_output);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** one time calculation ****/
     // create options with default value
     PGM_Options* opt = PGM_create_options(handle);
-    PGM_calculate(
-        // one time calculation parameter
-        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
-        // batch parameter
-        0, 0, NULL, NULL, NULL, NULL);
+    PGM_calculate(handle, model, opt, single_output_dataset, NULL);
     assert(PGM_error_code(handle) == PGM_no_error);
     // get value and print
     PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_pu, node_output, u_pu, 0, 1, -1);
@@ -141,11 +146,7 @@ int main(int argc, char** argv) {
     /**** One time calculation error ****/
     // we set max iteration to very low so that it will not converge.
     PGM_set_max_iter(handle, opt, 1);
-    PGM_calculate(
-        // one time calculation parameter
-        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
-        // batch parameter
-        0, 0, NULL, NULL, NULL, NULL);
+    PGM_calculate(handle, model, opt, single_output_dataset, NULL);
     assert(PGM_error_code(handle) != PGM_no_error);
     // print error code and message
     printf("\nOne-time Calculation Error\n");
@@ -176,17 +177,14 @@ int main(int argc, char** argv) {
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     PGM_Idx indptr_load[] = {0, 2, 3, 4}; // 2 updates for #0, 1 update for #1, 2 update for #2
 
-    // update meta data
-    PGM_Idx n_component_elements_per_scenario[] = {1, -1};        // 1 per scenario for source, variable for load
-    PGM_Idx const* indptrs_per_component[] = {NULL, indptr_load}; // variable for load
-    void const* update_data[] = {source_update, load_update};
+    // update batch dataset
+    PGM_ConstDataset* batch_update_dataset = PGM_create_dataset_const(handle, "update", 1, 3);
+    PGM_dataset_const_add_buffer(handle, batch_update_dataset, "source", 1, 3, NULL, source_update);
+    PGM_dataset_const_add_buffer(handle, batch_update_dataset, "sym_load", -1, 4, indptr_load, load_update);
+    assert(PGM_error_code(handle) == PGM_no_error);
 
     /**** Batch calculation ****/
-    PGM_calculate(
-        // one time calculation parameter
-        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
-        // batch parameter
-        3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
+    PGM_calculate(handle, model, opt, batch_output_dataset, batch_update_dataset);
     assert(PGM_error_code(handle) == PGM_no_error);
     // get node result and print
     PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_pu, node_output, u_pu, 0, 3, -1);
@@ -207,11 +205,7 @@ int main(int argc, char** argv) {
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_id, load_update, load_update_id, 0, 4, -1);
     PGM_buffer_set_value(handle, PGM_def_update_sym_load_p_specified, load_update, p_update, 0, 4, -1);
     // calculate
-    PGM_calculate(
-        // one time calculation parameter
-        handle, model, opt, 1, components + 2 /* node at position 2*/, output_data,
-        // batch parameter
-        3, 2, components, n_component_elements_per_scenario, indptrs_per_component, update_data);
+    PGM_calculate(handle, model, opt, batch_output_dataset, batch_update_dataset);
     assert(PGM_error_code(handle) != PGM_no_error);
     // print error
     printf("\nBatch Calculation Error\n");
@@ -233,16 +227,20 @@ int main(int argc, char** argv) {
     // Here we need to release all the resources allocated
     // If you are using C++, you can wrap the resource returned by PGM
     //     in a smart pointer with the destroy function as custom deleter
+    PGM_destroy_dataset_const(batch_update_dataset);
     PGM_destroy_buffer(load_update);
     PGM_destroy_buffer(source_update);
     PGM_destroy_options(opt);
     PGM_destroy_buffer(node_output);
+    PGM_destroy_dataset_mutable(batch_output_dataset);
+    PGM_destroy_dataset_mutable(single_output_dataset);
     PGM_destroy_model(model);
 #ifdef _WIN32
     _aligned_free(source_input);
 #else
     free(source_input);
 #endif
+    PGM_destroy_dataset_const(input_dataset);
     PGM_destroy_buffer(sym_load_input);
     PGM_destroy_buffer(node_input);
     PGM_destroy_handle(handle);
