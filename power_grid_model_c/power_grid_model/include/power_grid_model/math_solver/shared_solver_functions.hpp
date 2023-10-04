@@ -23,6 +23,16 @@ void add_sources(IdxVector const& source_bus_indptr, Idx const& bus_number, YBus
     }
 }
 
+template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
+    ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+    std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {
+        if (k == -1) {
+            return ComplexTensor<sym>{};
+        }
+        return ydata[k];
+    });
+}
+
 } // namespace power_grid_model::shared_solver_functions
 
 #endif
