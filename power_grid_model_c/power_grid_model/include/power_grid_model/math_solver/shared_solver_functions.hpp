@@ -33,6 +33,17 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
     });
 }
 
+template <bool sym>
+void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                             MathOutput<sym>& output, IdxVector const& source_bus_indptr) {
+    for (Idx source = (source_bus_indptr)[bus_number]; source != (source_bus_indptr)[bus_number + 1]; ++source) {
+        ComplexValue<sym> const u_ref{input.source[source]};
+        ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+        output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
+        output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
+    }
+}
+
 } // namespace power_grid_model::shared_solver_functions
 
 #endif

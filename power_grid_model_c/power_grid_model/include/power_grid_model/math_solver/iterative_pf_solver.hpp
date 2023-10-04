@@ -11,6 +11,7 @@
  */
 
 // Check if all includes needed
+#include "shared_solver_functions.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -113,7 +114,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            calculate_source_result(bus_number, y_bus, input, output);
+            shared_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
+                                                                  *source_bus_indptr_);
             calculate_load_gen_result(bus_number, input, output);
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
@@ -131,17 +133,6 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
           source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
-
-    void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                 MathOutput<sym>& output) {
-        for (Idx source = (*source_bus_indptr_)[bus_number]; source != (*source_bus_indptr_)[bus_number + 1];
-             ++source) {
-            ComplexValue<sym> const u_ref{input.source[source]};
-            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-            output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
-            output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
-        }
-    }
 
     void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         for (Idx load_gen = (*load_gen_bus_indptr_)[bus_number]; load_gen != (*load_gen_bus_indptr_)[bus_number + 1];
