@@ -77,16 +77,6 @@ template <bool sym> class ShortCircuitSolver {
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     BlockPermArray perm_;
 
-    // void copy_y_bus(YBus<sym> const& y_bus) {
-    //     ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-    //     std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
-    //         if (k == -1) {
-    //             return ComplexTensor<sym>{};
-    //         }
-    //         return ydata[k];
-    //     });
-    // }
-
     void prepare_matrix_and_rhs(IdxVector const& bus_entry, YBus<sym> const& y_bus, ShortCircuitInput const& input,
                                 ShortCircuitMathOutput<sym>& output, IdxVector& infinite_admittance_fault_counter,
                                 FaultType const& fault_type, IntS const& phase_1, IntS const& phase_2) {
