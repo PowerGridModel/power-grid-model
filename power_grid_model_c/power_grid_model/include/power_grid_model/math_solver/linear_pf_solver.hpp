@@ -132,7 +132,7 @@ template <bool sym> class LinearPFSolver {
             shared_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
                                                                   *source_bus_indptr_);
             shared_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
-                                                                    [](Idx i) { return LoadGenType::const_y; });
+                                                                    [](Idx /*i*/) { return LoadGenType::const_y; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
