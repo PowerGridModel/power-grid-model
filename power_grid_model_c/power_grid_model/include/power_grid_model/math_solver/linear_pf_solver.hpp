@@ -128,21 +128,15 @@ template <bool sym> class LinearPFSolver {
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
+        std::vector<LoadGenType> const load_gen_type(load_gen_bus_indptr_->back(), LoadGenType::const_y);
+
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             shared_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
                                                                   *source_bus_indptr_);
-            calculate_load_gen_result(bus_number, input, output);
+            shared_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+                                                                    load_gen_type);
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
-    }
-
-    void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        for (Idx load_gen = (*load_gen_bus_indptr_)[bus_number]; load_gen != (*load_gen_bus_indptr_)[bus_number + 1];
-             ++load_gen) {
-            // power is always quadratic relation to voltage for linear pf
-            output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus_number]);
-            output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
-        }
     }
 };
 

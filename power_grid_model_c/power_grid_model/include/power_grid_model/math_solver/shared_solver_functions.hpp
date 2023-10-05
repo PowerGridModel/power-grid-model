@@ -44,6 +44,34 @@ void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, Powe
     }
 }
 
+template <bool sym>
+void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output,
+                               IdxVector const& load_gen_bus_indptr, std::vector<LoadGenType> const& load_gen_type) {
+    for (Idx load_gen = (load_gen_bus_indptr)[bus_number]; load_gen != (load_gen_bus_indptr)[bus_number + 1];
+         ++load_gen) {
+        LoadGenType const type = (load_gen_type)[load_gen];
+        switch (type) {
+            using enum LoadGenType;
+
+        case const_pq:
+            // always same power
+            output.load_gen[load_gen].s = input.s_injection[load_gen];
+            break;
+        case const_y:
+            // power is quadratic relation to voltage
+            output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus_number]);
+            break;
+        case const_i:
+            // power is linear relation to voltage
+            output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus_number]);
+            break;
+        default:
+            throw MissingCaseForEnumError("Power injection", type);
+        }
+        output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
+    }
+}
+
 } // namespace power_grid_model::shared_solver_functions
 
 #endif
