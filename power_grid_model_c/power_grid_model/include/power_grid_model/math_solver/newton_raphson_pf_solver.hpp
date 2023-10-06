@@ -353,18 +353,19 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
 
     void add_loads(Idx const& bus_number, Idx const& diagonal_position, PowerFlowInput<sym> const& input,
                    IdxVector const& load_gen_bus_indptr, std::vector<LoadGenType> const& load_gen_type) {
+        using enum LoadGenType;
         for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
              ++load_number) {
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {
-            case LoadGenType::const_pq:
+            case const_pq:
                 add_const_power_load(bus_number, load_number, input);
                 break;
-            case LoadGenType::const_y:
+            case const_y:
                 add_const_impedance_load(bus_number, load_number, diagonal_position, input);
                 break;
-            case LoadGenType::const_i:
+            case const_i:
                 add_const_current_load(bus_number, load_number, diagonal_position, input);
                 break;
             default:

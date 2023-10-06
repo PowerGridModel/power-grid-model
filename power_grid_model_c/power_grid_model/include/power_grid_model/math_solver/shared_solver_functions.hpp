@@ -36,7 +36,7 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
 template <bool sym>
 void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                              MathOutput<sym>& output, IdxVector const& source_bus_indptr) {
-    for (Idx source = (source_bus_indptr)[bus_number]; source != (source_bus_indptr)[bus_number + 1]; ++source) {
+    for (Idx source = source_bus_indptr[bus_number]; source != source_bus_indptr[bus_number + 1]; ++source) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
         output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
@@ -47,10 +47,8 @@ void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, Powe
 template <bool sym, class LoadGenFunc>
 void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output,
                                IdxVector const& load_gen_bus_indptr, LoadGenFunc const& load_gen_func) {
-    for (Idx load_gen = (load_gen_bus_indptr)[bus_number]; load_gen != (load_gen_bus_indptr)[bus_number + 1];
-         ++load_gen) {
-        LoadGenType const type = load_gen_func(load_gen);
-        switch (type) {
+    for (Idx load_gen = load_gen_bus_indptr[bus_number]; load_gen != load_gen_bus_indptr[bus_number + 1]; ++load_gen) {
+        switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
 
         case const_pq:

@@ -41,8 +41,6 @@ template <bool sym> class ShortCircuitSolver {
         // set phase 1 and 2 index for single and two phase faults
         auto const [phase_1, phase_2] = set_phase_index(fault_phase);
 
-        // getter
-        IdxVector const& bus_entry = y_bus.lu_diag();
         // output
         ShortCircuitMathOutput<sym> output;
         output.u_bus.resize(n_bus_);
@@ -53,8 +51,7 @@ template <bool sym> class ShortCircuitSolver {
 
         shared_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
 
-        prepare_matrix_and_rhs(bus_entry, y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1,
-                               phase_2);
+        prepare_matrix_and_rhs(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
 
         // solve matrix
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u_bus, output.u_bus);
@@ -77,11 +74,12 @@ template <bool sym> class ShortCircuitSolver {
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(IdxVector const& bus_entry, YBus<sym> const& y_bus, ShortCircuitInput const& input,
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, ShortCircuitInput const& input,
                                 ShortCircuitMathOutput<sym>& output, IdxVector& infinite_admittance_fault_counter,
                                 FaultType const& fault_type, IntS const& phase_1, IntS const& phase_2) {
+        // getter
+        IdxVector const& bus_entry = y_bus.lu_diag();
         IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        IdxVector const& fault_bus_indptr = input.fault_bus_indptr;
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
@@ -93,16 +91,18 @@ template <bool sym> class ShortCircuitSolver {
 
             // skip if no fault
             if (!input.faults.empty()) {
-                add_faults(fault_bus_indptr, bus_number, y_bus, input, diagonal_element, u_bus,
-                           infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
+                add_faults(bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
+                           fault_type, phase_1, phase_2);
             }
         }
     }
 
-    void add_faults(IdxVector const& fault_bus_indptr, Idx const& bus_number, YBus<sym> const& y_bus,
-                    ShortCircuitInput const& input, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
+    void add_faults(Idx const& bus_number, YBus<sym> const& y_bus, ShortCircuitInput const& input,
+                    ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
                     IdxVector& infinite_admittance_fault_counter, FaultType const& fault_type, IntS const& phase_1,
                     IntS const& phase_2) {
+        IdxVector const& fault_bus_indptr = input.fault_bus_indptr;
+
         for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
              ++fault_number) {
             DoubleComplex const y_fault = input.faults[fault_number].y_fault;
