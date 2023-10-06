@@ -4,6 +4,7 @@
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model.hpp>
 
@@ -13,7 +14,6 @@
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
-#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -25,10 +25,16 @@ namespace {
 
 using nlohmann::json;
 
-// read json file
-json read_json(std::filesystem::path const& json_file) {
+auto read_file(std::filesystem::path const& path) {
+    std::ifstream f{path};
+    std::ostringstream buffer;
+    buffer << f.rdbuf();
+    return buffer.str();
+}
+
+auto read_json(std::filesystem::path const& path) {
     json j;
-    std::ifstream f{json_file};
+    std::ifstream f{path};
     f >> j;
     return j;
 }
@@ -44,78 +50,19 @@ class UnsupportedValidationCase : public PowerGridError {
 };
 
 // memory buffer
-struct BufferDeleter {
-    void operator()(RawDataPtr ptr) { std::free(ptr); }
-};
-using BufferPtr = std::unique_ptr<void, BufferDeleter>;
-BufferPtr create_buffer(size_t size, size_t length) { return BufferPtr(std::malloc(size * length)); }
+using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)>>; // custom deleter at runtime
 struct Buffer {
-    BufferPtr ptr;
+    BufferPtr ptr{nullptr, [](void const*) {}};
     IdxVector indptr;
-    MutableDataPointer data_ptr;
+    MutableDataPointer data_ptr; // TODO(mgovers): remove
 };
 
-void parse_single_object(RawDataPtr ptr, json const& j, MetaComponent const& meta, Idx position) {
-    for (auto const& it : j.items()) {
-        // Allow and skip unknown attributes
-        if (meta.has_attribute(it.key()) == 0) {
-            continue;
-        }
-        MetaAttribute const& attr = meta.get_attribute(it.key());
-        using enum CType;
-        switch (attr.ctype) {
-        case c_int8: {
-            int8_t const value = it.value().get<int8_t>();
-            attr.set_value(ptr, &value, position);
-            break;
-        }
-        case c_int32: {
-            int32_t const value = it.value().get<int32_t>();
-            attr.set_value(ptr, &value, position);
-            break;
-        }
-        case c_double: {
-            double const value = it.value().get<double>();
-            attr.set_value(ptr, &value, position);
-            break;
-        }
-        case c_double3: {
-            std::array<double, 3> const value = it.value().get<std::array<double, 3>>();
-            attr.set_value(ptr, &value, position);
-            break;
-        }
-        default:
-            throw MissingCaseForEnumError("CType for attribute", attr.ctype);
-        }
-    }
-}
-
-Buffer parse_single_type(json const& j, MetaComponent const& meta) {
-    Buffer buffer;
-    size_t const length = j.size();
-    size_t const obj_size = meta.size;
-    buffer.ptr = create_buffer(obj_size, length);
-    meta.set_nan(buffer.ptr.get(), 0, static_cast<PGM_MetaComponent::Idx>(length));
-    for (Idx position = 0; position != static_cast<Idx>(length); ++position) {
-        parse_single_object(buffer.ptr.get(), j[position], meta, position);
-    }
-    buffer.indptr = {0, static_cast<Idx>(length)};
-    buffer.data_ptr = MutableDataPointer{buffer.ptr.get(), buffer.indptr.data(), 1};
-    return buffer;
-}
-
-std::map<std::string, Buffer> parse_single_dict(json const& j, std::string const& data_type) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+struct OwningDataset {
+    Dataset dataset;
+    ConstDataset const_dataset;
     std::map<std::string, Buffer> buffer_map;
-    for (auto const& it : j.items()) {
-        // skip empty list
-        if (it.value().empty()) {
-            continue;
-        }
-        buffer_map[it.key()] = parse_single_type(it.value(), meta.get_component(it.key()));
-    }
-    return buffer_map;
-}
+    std::vector<ConstDataset> batch_scenarios;
+};
 
 template <bool is_const>
 std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
@@ -126,99 +73,60 @@ std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::stri
     return dataset;
 }
 
-struct SingleData {
-    Dataset dataset;
-    ConstDataset const_dataset;
-    std::map<std::string, Buffer> buffer_map;
-};
+auto create_owning_dataset(WritableDatasetHandler& info) {
 
-// parse single json data
-SingleData convert_json_single(json const& j, std::string const& data_type) {
-    SingleData single_data;
-    single_data.buffer_map = parse_single_dict(j, data_type);
-    single_data.const_dataset = generate_dataset<true>(single_data.buffer_map);
-    single_data.dataset = generate_dataset<false>(single_data.buffer_map);
+    Idx const batch_size = info.batch_size();
+    OwningDataset dataset;
 
-    return single_data;
+    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
+        auto const& component_info = info.get_component_info(component_idx);
+        auto const& component_meta = component_info.component;
+
+        Buffer buffer{};
+        buffer.ptr =
+            BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
+        buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
+        buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
+                                             component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr,
+                                             batch_size, component_info.elements_per_scenario};
+
+        info.set_buffer(component_info.component->name, buffer.indptr.data(), buffer.ptr.get());
+        dataset.buffer_map[component_meta->name] = std::move(buffer);
+    }
+    dataset.const_dataset = info.export_dataset<true>();
+    dataset.dataset = info.export_dataset<false>();
+
+    return dataset;
+}
+
+auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
+    for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
+        dataset.batch_scenarios.push_back(info.export_dataset<true>(scenario_idx));
+    }
+}
+
+auto load_dataset(std::filesystem::path const& path) {
+    auto deserializer = Deserializer(power_grid_model::meta_data::from_json, read_file(path));
+    auto& info = deserializer.get_dataset_info();
+    auto dataset = create_owning_dataset(info);
+    deserializer.parse();
+    construct_individual_scenarios(dataset, info);
+    return dataset;
 }
 
 // create single result set
-SingleData create_result_dataset(SingleData const& input, std::string const& data_type, Idx n_batch = 1) {
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
+                                    Idx batch_size = 1) {
     MetaDataset const& meta = meta_data().get_dataset(data_type);
-    SingleData result;
-    for (auto const& [name, buffer] : input.buffer_map) {
-        MetaComponent const& component_meta = meta.get_component(name);
+    WritableDatasetHandler handler{is_batch, batch_size, meta.name};
+
+    for (auto const& [name, data_ptr] : input.const_dataset) {
+        assert(data_ptr.batch_size() == 1);
         Buffer result_buffer;
-        Idx const length = buffer.indptr.back();
-        result_buffer.ptr = create_buffer(component_meta.size, length * n_batch);
-        result_buffer.indptr.resize(n_batch + 1, 0);
-        result_buffer.data_ptr = MutableDataPointer{result_buffer.ptr.get(), result_buffer.indptr.data(), n_batch};
-        // set indptr
-        for (Idx batch = 0; batch != n_batch; ++batch) {
-            result_buffer.indptr[batch + 1] = (batch + 1) * length;
-        }
-        result.buffer_map[name] = std::move(result_buffer);
+        Idx const elements_per_scenario = data_ptr.elements_per_scenario(0);
+        handler.add_component_info(name, elements_per_scenario, elements_per_scenario * batch_size);
     }
-    result.dataset = generate_dataset<false>(result.buffer_map);
-    result.const_dataset = generate_dataset<true>(result.buffer_map);
-    return result;
-}
-
-struct BatchData {
-    Dataset dataset;
-    ConstDataset const_dataset;
-    std::map<std::string, Buffer> buffer_map;
-    std::deque<SingleData> individual_batch;
-};
-
-// parse batch json data
-BatchData convert_json_batch(json const& j, std::string const& data_type) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
-    BatchData batch_data;
-    for (auto const& j_single : j) {
-        batch_data.individual_batch.push_back(convert_json_single(j_single, data_type));
-    }
-    Idx const n_batch = static_cast<Idx>(batch_data.individual_batch.size());
-    // summerize count of object per component
-    std::map<std::string, Idx> obj_count;
-    for (SingleData const& single_data : batch_data.individual_batch) {
-        for (auto const& [name, buffer] : single_data.buffer_map) {
-            obj_count[name] += buffer.indptr.back();
-        }
-    }
-    // allocate and copy object into batch dataset
-    for (auto const& [name, total_length] : obj_count) {
-        MetaComponent const& component_meta = meta.get_component(name);
-        // allocate
-        Buffer batch_buffer;
-        batch_buffer.ptr = create_buffer(component_meta.size, total_length);
-        batch_buffer.indptr.resize(n_batch + 1, 0);
-        batch_buffer.data_ptr = MutableDataPointer{batch_buffer.ptr.get(), batch_buffer.indptr.data(), n_batch};
-        RawDataPtr current_ptr = batch_buffer.ptr.get();
-        // copy buffer
-        for (Idx batch = 0; batch != n_batch; ++batch) {
-            SingleData const& single_data = batch_data.individual_batch[batch];
-            auto const found = single_data.buffer_map.find(name);
-            if (found == single_data.buffer_map.cend()) {
-                batch_buffer.indptr[batch + 1] = batch_buffer.indptr[batch];
-                continue;
-            }
-            Buffer const& single_buffer = found->second;
-            RawDataConstPtr const src_ptr = single_buffer.ptr.get();
-            Idx const length = single_buffer.indptr.back();
-            // copy memory, assign indptr
-            std::memcpy(current_ptr, src_ptr, length * component_meta.size);
-            batch_buffer.indptr[batch + 1] = batch_buffer.indptr[batch] + length;
-            // shift current ptr
-            current_ptr = (char*)current_ptr + length * component_meta.size;
-        }
-        // move into buffer map
-        batch_data.buffer_map[name] = std::move(batch_buffer);
-    }
-    // create dataset
-    batch_data.const_dataset = generate_dataset<true>(batch_data.buffer_map);
-    batch_data.dataset = generate_dataset<false>(batch_data.buffer_map);
-    return batch_data;
+    return create_owning_dataset(handler);
 }
 
 template <typename T>
@@ -294,17 +202,17 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                    std::map<std::string, double> atol, double rtol) {
     MetaDataset const& meta = meta_data().get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
-    // loop all batch
-    for (Idx batch = 0; batch != batch_size; ++batch) {
+    // loop all scenario
+    for (Idx scenario = 0; scenario != batch_size; ++scenario) {
         // loop all component type name
         for (auto const& [type_name, reference_dataset] : reference_result) {
             MetaComponent const& component_meta = meta.get_component(type_name);
-            Idx const length = reference_dataset.elements_per_scenario(batch);
-            // offset batch
+            Idx const length = reference_dataset.elements_per_scenario(scenario);
+            // offset scenario
             RawDataConstPtr const result_ptr =
-                reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * batch * component_meta.size;
+                reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * scenario * component_meta.size;
             RawDataConstPtr const reference_result_ptr =
-                reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * batch * component_meta.size;
+                reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * scenario * component_meta.size;
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
@@ -323,8 +231,9 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
                 bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                std::string const magnitude_name = angle_match[1];
                 MetaAttribute const& possible_attr_magnitude =
-                    is_angle ? component_meta.get_attribute(angle_match[1]) : attr;
+                    is_angle ? component_meta.get_attribute(magnitude_name) : attr;
 
                 // loop all object
                 for (Idx obj = 0; obj != length; ++obj) {
@@ -344,7 +253,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     } else {
                         std::string const case_str =
-                            "batch: #" + std::to_string(batch) + ", Component: " + type_name + " #" +
+                            "scenario: #" + std::to_string(scenario) + ", Component: " + type_name + " #" +
                             std::to_string(obj) + ", attribute: " + attr.name +
                             ": actual = " + get_as_string(result_ptr, attr, obj) +
                             " vs. expected = " + get_as_string(reference_result_ptr, attr, obj);
@@ -527,10 +436,10 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
 // test case with parameter
 struct ValidationCase {
     CaseParam param;
-    SingleData input;
-    SingleData output;
-    BatchData update_batch;
-    BatchData output_batch;
+    OwningDataset input;
+    OwningDataset output;
+    OwningDataset update_batch;
+    OwningDataset output_batch;
 };
 
 ValidationCase create_validation_case(CaseParam const& param) {
@@ -539,14 +448,14 @@ ValidationCase create_validation_case(CaseParam const& param) {
     auto const output_type = get_output_type(param.calculation_type, param.sym);
 
     // input
-    validation_case.input = convert_json_single(read_json(param.case_dir / "input.json"), "input");
+    validation_case.input = load_dataset(param.case_dir / "input.json");
+
     // output and update
     if (!param.is_batch) {
-        validation_case.output = convert_json_single(read_json(param.case_dir / (output_type + ".json")), output_type);
+        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"));
     } else {
-        validation_case.update_batch = convert_json_batch(read_json(param.case_dir / "update_batch.json"), "update");
-        validation_case.output_batch =
-            convert_json_batch(read_json(param.case_dir / (output_type + "_batch.json")), output_type);
+        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json");
+        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"));
     }
     return validation_case;
 }
@@ -605,9 +514,9 @@ void execute_test(CaseParam const& param, T&& func) {
 
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        ValidationCase const validation_case = create_validation_case(param);
-        std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
-        SingleData const result = create_result_dataset(validation_case.input, output_prefix);
+        auto const validation_case = create_validation_case(param);
+        auto const output_prefix = get_output_type(param.calculation_type, param.sym);
+        auto const result = create_result_dataset(validation_case.input, output_prefix);
 
         // create model and run
         MainModel model{50.0, validation_case.input.const_dataset, 0};
@@ -621,32 +530,33 @@ void validate_single_case(CaseParam const& param) {
 
 void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        ValidationCase const validation_case = create_validation_case(param);
-        std::string const output_prefix = get_output_type(param.calculation_type, param.sym);
-        SingleData const result = create_result_dataset(validation_case.input, output_prefix);
+        auto const validation_case = create_validation_case(param);
+        auto const output_prefix = get_output_type(param.calculation_type, param.sym);
+        auto const result = create_result_dataset(validation_case.input, output_prefix);
 
         // create model
         // TODO (mgovers): fix false positive of misc-const-correctness
         // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
-        Idx const n_batch = static_cast<Idx>(validation_case.update_batch.individual_batch.size());
+        Idx const n_scenario = static_cast<Idx>(validation_case.update_batch.batch_scenarios.size());
         CalculationFunc const func = calculation_func(param);
 
         // run in loops
-        for (Idx batch = 0; batch != n_batch; ++batch) {
+        for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
             MainModel model_copy{model};
+
             // update and run
             model_copy.update_component<MainModel::permanent_update_t>(
-                validation_case.update_batch.individual_batch[batch].const_dataset);
+                validation_case.update_batch.batch_scenarios[scenario]);
             func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
 
             // check
-            assert_result(result.const_dataset, validation_case.output_batch.individual_batch[batch].const_dataset,
-                          output_prefix, param.atol, param.rtol);
+            assert_result(result.const_dataset, validation_case.output_batch.batch_scenarios[scenario], output_prefix,
+                          param.atol, param.rtol);
         }
 
         // run in one-go, with different threading possibility
-        SingleData const batch_result = create_result_dataset(validation_case.input, output_prefix, n_batch);
+        auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, n_scenario);
         for (Idx const threading : {-1, 0, 1, 2}) {
             func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
                  validation_case.update_batch.const_dataset, threading);

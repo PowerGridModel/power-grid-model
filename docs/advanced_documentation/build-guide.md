@@ -23,8 +23,8 @@ repository there are three builds:
 ## Build Requirements
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies. In this
-section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 22.04)
-, Windows 10, and macOS (Big Sur).
+section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 22.04),
+Windows 10, and macOS (Big Sur).
 
 ### Architecture Support
 
@@ -73,24 +73,26 @@ This repository uses [CMake](https://cmake.org/) (version 3.23 or later) and [Ni
 
 The table below shows the C++ build dependencies
 
-| Library name                                      | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                       |
-| ------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| [boost](https://www.boost.org/)                   | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt) |
-| [eigen3](https://eigen.tuxfamily.org/)            | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/) |
-| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)             |
-| [nlohmann-json](https://github.com/nlohmann/json) | None                                 | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)              |
+| Library name                                                        | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                                                      |
+| ------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
+| [boost](https://www.boost.org/)                                     | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt)                                |
+| [eigen3](https://eigen.tuxfamily.org/)                              | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
+| [nlohmann-json](https://github.com/nlohmann/json)                   | Will be installed automatically      | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
+| [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Will be installed automatically      | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
+| [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
 
 #### Python
 
 The table below shows the Python dependencies
 
-| Library name                                                                            | Remark                   | License                                                                               |
-| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
-| [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE) |
-| [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                         |
-| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                            |
-| [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                         |
-| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                   |
+| Library name                                                                            | Remark                   | License                                                                                    |
+| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE)      |
+| [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
+| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                                 |
+| [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
+| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
+| [msgpack-python](https://github.com/msgpack/msgpack-python)                             | Development dependency   | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
 
 ## Build Python Package
 
@@ -188,7 +190,7 @@ Go to its website to follow the installation instruction.
 Install the C++ dependencies
 
 ```shell
-brew install boost eigen nlohmann-json doctest cmake
+brew install boost eigen nlohmann-json msgpack-cxx doctest cmake
 ```
 
 ### Build Python Library from Source
@@ -272,7 +274,7 @@ Other toolchains:
 The recommended way to get C++ package is via `conda`. Open a miniconda console.
 
 ```shell
-conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
+conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json msgpack-cxx doctest
 ```
 
 ### Build Python Library from Source
@@ -341,7 +343,7 @@ export CMAKE_PREFIX_PATH=/usr/local
 Install the following packages with [Homebrew](https://brew.sh/).
 
 ```shell
-brew install ninja cmake boost eigen nlohmann-json doctest
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest
 ```
 
 ### Build Python Library from Source

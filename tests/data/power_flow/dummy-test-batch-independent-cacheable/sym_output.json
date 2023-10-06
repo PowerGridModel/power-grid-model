@@ -1,12 +1,18 @@
 {
-  "node": [
-    {
-      "id": 1,
-      "u": 10.0
-    },
-    {
-      "id": 2,
-      "u": 10.0
-    }
-  ]
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "u": 10.0
+      },
+      {
+        "id": 2,
+        "u": 10.0
+      }
+    ]
+  }
 }

@@ -13,6 +13,7 @@
 
 #include <bit>
 #include <string>
+#include <string_view>
 
 namespace power_grid_model::meta_data {
 
@@ -50,6 +51,26 @@ template <class T>
 struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
 template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 
+// function selector based on ctype
+// the operator() of the functor should have a single template parameter
+// the selector will instantiate the operator() with relevant type
+template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor f, Args&&... args) {
+    using enum CType;
+
+    switch (ctype) {
+    case c_double:
+        return f.template operator()<double>(std::forward<Args>(args)...);
+    case c_double3:
+        return f.template operator()<RealValue<false>>(std::forward<Args>(args)...);
+    case c_int8:
+        return f.template operator()<int8_t>(std::forward<Args>(args)...);
+    case c_int32:
+        return f.template operator()<int32_t>(std::forward<Args>(args)...);
+    default:
+        throw MissingCaseForEnumError{"CType selector", ctype};
+    }
+}
+
 // set nan
 inline void set_nan(double& x) { x = nan; }
 inline void set_nan(IntS& x) { x = na_IntS; }
@@ -70,6 +91,9 @@ template <class StructType, auto member_ptr> struct MetaAttributeImpl {
     static bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) {
         return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
     }
+    static bool check_all_nan(RawDataConstPtr buffer_ptr, Idx size) {
+        return std::all_of(IdxCount{0}, IdxCount{size}, [buffer_ptr](Idx i) { return check_nan(buffer_ptr, i); });
+    }
     static void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) {
         (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr = *reinterpret_cast<ValueType const*>(value_ptr);
     }
@@ -89,28 +113,17 @@ template <class StructType, auto member_ptr> struct MetaAttributeImpl {
     }
 };
 
-} // namespace power_grid_model::meta_data
-
-// attribute in global namespace
-struct PGM_MetaAttribute {
-    using Idx = power_grid_model::Idx;
-    using CType = power_grid_model::CType;
-    template <class T> using trait_pointer_to_member = power_grid_model::meta_data::trait_pointer_to_member<T>;
-    template <class StructType, auto member_ptr>
-    using MetaAttributeImpl = power_grid_model::meta_data::MetaAttributeImpl<StructType, member_ptr>;
-    using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
-    using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
-    template <class T> static constexpr CType ctype_v = power_grid_model::meta_data::ctype_v<T>;
-
+struct MetaAttribute {
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    PGM_MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string attr_name)
+    MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string attr_name)
         : name{std::move(attr_name)},
           ctype{ctype_v<ValueType>},
-          offset{power_grid_model::meta_data::get_offset<StructType, member_ptr>()},
+          offset{get_offset<StructType, member_ptr>()},
           size{sizeof(ValueType)},
           component_size{sizeof(StructType)},
           check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
+          check_all_nan{MetaAttributeImpl<StructType, member_ptr>::check_all_nan},
           set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
           get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
           compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
@@ -124,15 +137,18 @@ struct PGM_MetaAttribute {
 
     // function pointers
     std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_nan{};
+    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_all_nan{};
     std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value{};
     std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value{};
     std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value{};
+
+    // get attribute by offsetting the pointer
+    template <class T> T& get_attribute(std::conditional_t<std::is_const_v<T>, RawDataConstPtr, RawDataPtr> ptr) const {
+        assert(ctype_v<std::remove_cv_t<T>> == ctype);
+        using CharType = std::conditional_t<std::is_const_v<T>, char const*, char*>;
+        return *reinterpret_cast<T*>(reinterpret_cast<CharType>(ptr) + offset);
+    }
 };
-
-namespace power_grid_model::meta_data {
-
-// include inside meta data namespace
-using MetaAttribute = PGM_MetaAttribute;
 
 // meta component
 template <class StructType> struct MetaComponentImpl {
@@ -145,22 +161,13 @@ template <class StructType> struct MetaComponentImpl {
     }
 };
 
-} // namespace power_grid_model::meta_data
-
-// component in global name space
-struct PGM_MetaComponent {
-    template <class StructType> using MetaComponentImpl = power_grid_model::meta_data::MetaComponentImpl<StructType>;
-    using MetaAttribute = power_grid_model::meta_data::MetaAttribute;
-    using Idx = power_grid_model::Idx;
-    using RawDataConstPtr = power_grid_model::meta_data::RawDataConstPtr;
-    using RawDataPtr = power_grid_model::meta_data::RawDataPtr;
-
+struct MetaComponent {
     template <class StructType>
-    PGM_MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string comp_name)
+    MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string comp_name)
         : name{std::move(comp_name)},
           size{sizeof(StructType)},
           alignment{alignof(StructType)},
-          attributes{power_grid_model::meta_data::get_attributes_list<StructType>{}()},
+          attributes{get_attributes_list<StructType>{}()},
           set_nan{MetaComponentImpl<StructType>::set_nan},
           create_buffer{MetaComponentImpl<StructType>::create_buffer},
           destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {}
@@ -178,10 +185,10 @@ struct PGM_MetaComponent {
 
     Idx n_attributes() const { return static_cast<Idx>(attributes.size()); }
 
-    MetaAttribute const& get_attribute(std::string const& attribute_name) const {
+    MetaAttribute const& get_attribute(std::string_view attribute_name) const {
         Idx const found = find_attribute(attribute_name);
         if (found < 0) {
-            throw std::out_of_range{"Cannot find attribute with name: " + attribute_name + "!\n"};
+            throw std::out_of_range{"Cannot find attribute with name: " + std::string(attribute_name) + "!\n"};
         }
         return attributes[found];
     }
@@ -195,40 +202,31 @@ struct PGM_MetaComponent {
         return -1;
     }
 
-    Idx has_attribute(std::string const& attribute_name) const {
-        return static_cast<Idx>(find_attribute(attribute_name) >= 0);
+    bool has_attribute(std::string_view attribute_name) const { return find_attribute(attribute_name) >= 0; }
+
+    RawDataPtr advance_ptr(RawDataPtr ptr, Idx difference) const {
+        return reinterpret_cast<char*>(ptr) + difference * size;
+    }
+    RawDataConstPtr advance_ptr(RawDataConstPtr ptr, Idx difference) const {
+        return reinterpret_cast<char const*>(ptr) + difference * size;
     }
 };
 
-namespace power_grid_model::meta_data {
-
-using MetaComponent = PGM_MetaComponent;
-
-} // namespace power_grid_model::meta_data
-
-// meta dataset in global namespace
-struct PGM_MetaDataset {
-    using MetaComponent = power_grid_model::meta_data::MetaComponent;
-    using Idx = power_grid_model::Idx;
-
+struct MetaDataset {
     std::string name;
     std::vector<MetaComponent> components;
 
     Idx n_components() const { return static_cast<Idx>(components.size()); }
 
-    MetaComponent const& get_component(std::string const& component_name) const {
+    MetaComponent const& get_component(std::string_view component_name) const {
         for (auto const& component : components) {
             if (component.name == component_name) {
                 return component;
             }
         }
-        throw std::out_of_range{"Cannot find component with name: " + component_name + "!\n"};
+        throw std::out_of_range{"Cannot find component with name: " + std::string{component_name} + "!\n"};
     }
 };
-
-namespace power_grid_model::meta_data {
-
-using MetaDataset = PGM_MetaDataset;
 
 // meta data
 struct MetaData {
@@ -236,13 +234,13 @@ struct MetaData {
 
     Idx n_datasets() const { return static_cast<Idx>(datasets.size()); }
 
-    MetaDataset const& get_dataset(std::string const& dataset_name) const {
+    MetaDataset const& get_dataset(std::string_view dataset_name) const {
         for (auto const& dataset : datasets) {
             if (dataset.name == dataset_name) {
                 return dataset;
             }
         }
-        throw std::out_of_range{"Cannot find dataset with name: " + dataset_name + "!\n"};
+        throw std::out_of_range{"Cannot find dataset with name: " + std::string{dataset_name} + "!\n"};
     }
 };
 
