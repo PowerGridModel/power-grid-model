@@ -8,7 +8,7 @@ dependencies:
   - wheel
   - setuptools
   # build deps
-  - boost-cpp
+  - libboost-headers
   - eigen
   - nlohmann_json
   - msgpack-cxx
