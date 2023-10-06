@@ -22,6 +22,10 @@ Currently, it supports the following calculations:
 
 For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
+```{note}
+Want to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
+```
+
 ## Install from PyPI
 
 You can directly install the package from PyPI.
