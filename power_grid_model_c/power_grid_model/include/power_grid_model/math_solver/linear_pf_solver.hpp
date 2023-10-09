@@ -108,8 +108,8 @@ template <bool sym> class LinearPFSolver {
         }
     }
 
-    void add_loads(IdxVector const& load_gen_bus_idxptr, Idx const& bus_number, PowerFlowInput<sym> const& input,
-                   ComplexTensor<sym>& diagonal_element) const {
+    static void add_loads(IdxVector const& load_gen_bus_idxptr, Idx const& bus_number, PowerFlowInput<sym> const& input,
+                          ComplexTensor<sym>& diagonal_element) {
         for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
              ++load_number) {
             // YBus_diag += -conj(S_base)
