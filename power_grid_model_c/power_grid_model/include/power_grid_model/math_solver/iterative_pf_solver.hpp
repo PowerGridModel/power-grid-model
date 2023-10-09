@@ -11,7 +11,7 @@
  */
 
 // Check if all includes needed
-#include "shared_solver_functions.hpp"
+#include "common_solver_functions.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -114,9 +114,9 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            shared_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
+            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
                                                                   *source_bus_indptr_);
-            shared_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
                                                                     [this](Idx i) { return (*load_gen_type_)[i]; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);

@@ -30,7 +30,7 @@ if there are sources
 
 */
 
-#include "shared_solver_functions.hpp"
+#include "common_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -66,7 +66,7 @@ template <bool sym> class LinearPFSolver {
 
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
-        shared_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
+        common_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
         prepare_matrix_and_rhs(y_bus, input, output);
 
         // solve
@@ -103,7 +103,7 @@ template <bool sym> class LinearPFSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
             add_loads(load_gen_bus_idxptr, bus_number, input, diagonal_element);
-            shared_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
+            common_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
                                                       diagonal_element, u_bus);
         }
     }
@@ -128,9 +128,9 @@ template <bool sym> class LinearPFSolver {
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            shared_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
+            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
                                                                   *source_bus_indptr_);
-            shared_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
                                                                     [](Idx /*i*/) { return LoadGenType::const_y; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
