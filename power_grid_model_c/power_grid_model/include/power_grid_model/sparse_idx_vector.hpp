@@ -10,6 +10,7 @@
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range.hpp>
+#include <boost/range/combine.hpp>
 #include <boost/range/counting_range.hpp>
 
 /*
@@ -34,15 +35,10 @@ class SparseIdxVector {
     explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr) {}
 
     template <class Value>
-    class Iterator : public boost::iterator_facade<Iterator<Value>, Value, boost::forward_traversal_tag,
+    class Iterator : public boost::iterator_facade<Iterator<Value>, Value, boost::random_access_traversal_tag,
                                                    boost::iterator_range<IdxCount>, Idx> {
       public:
-        Iterator() : indptr_(nullptr), idx_(0) {}
-        explicit Iterator(IdxVector indptr) : indptr_(indptr), idx_(0) {}
         explicit Iterator(IdxVector indptr, Idx idx) : indptr_(indptr), idx_(idx) {}
-
-        auto begin() { return Iterator(indptr_, 0); }
-        auto end() { return Iterator(indptr_, indptr_.size()-1); }
 
       private:
         IdxVector indptr_;
@@ -65,7 +61,10 @@ class SparseIdxVector {
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin());
     }
 
-    auto groups() { return Iterator<Idx>(indptr_); }
+    auto begin() { return Iterator<Idx>(indptr_, 0); }
+    auto end() { return Iterator<Idx>(indptr_, indptr_.size() - 1); }
+    auto size() { return indptr_.back();  }
+
 
   private:
     IdxVector indptr_;
@@ -84,28 +83,29 @@ class DenseIdxVector {
         return boost::iterator_range<IdxCount>(range_pair.first - dense_begin, range_pair.second - dense_begin);
     }
 
-
   private:
     IdxVector dense_idx_vector_;
 };
 
+template<typename T>
+concept sparse_type = std::is_same<T, SparseIdxVector>::value;
 
+template <sparse_type... T>
+auto zip_idx_vector(T&... sparse_vectors) {
+    // assert(all(sparse_vectors.size()...))
 
-// template<class ...T>
-// requires(std::same_as<T, SparseIdxVector>...)
-// auto iter_element_groups(T const& v1...)  {
-//    boost::combine(list_of_a, list_of_b)
-// }
+    // template<bool...> struct bool_pack;
+    // template<bool... bs> 
+    // using all_true = std::is_same<bool_pack<bs..., true>, bool_pack<true, bs...>>;
 
-// for (auto cosnt [bus, group_1_range, group_2_range]: iter_element_groups(v1, v2)) {
-//   // do something with bus
-//   for (auto const source: group_1_range) {
-//     // sowething source
-//   }
-//   for (auto const load: group_2_range) {
-//     // something load
-//   }
-// }
+    // static_assert(all_true<(Numbers == 0 || Numbers == 1)...>::value, "");
+    // Check if all are of same size
+    // Add index at the start position
+
+    auto zip_begin = boost::make_zip_iterator(boost::make_tuple(sparse_vectors.begin()...));
+    auto zip_end = boost::make_zip_iterator(boost::make_tuple(sparse_vectors.end()...));
+    return boost::make_iterator_range(zip_begin, zip_end);
+}
 
 } // namespace power_grid_model::detail
 
