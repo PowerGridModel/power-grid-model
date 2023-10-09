@@ -113,7 +113,7 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
     Returns:
         The deserialized dataset in Power grid model input format.
     """
-    with open(file_path, mode="rb", encoding="utf-8") as file_pointer:
+    with open(file_path, mode="rb") as file_pointer:
         return msgpack_deserialize(file_pointer.read())
 
 
@@ -134,7 +134,7 @@ def msgpack_serialize_to_file(
     """
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
 
-    with open(file_path, mode="wb", encoding="utf-8") as file_pointer:
+    with open(file_path, mode="wb") as file_pointer:
         file_pointer.write(result)
 
 
@@ -142,7 +142,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     """
     [deprecated] Import json data.
 
-    This function is deprecated. Please use json_deserialize_from_file instead (requires loading the file yourself).
+    This function is deprecated. Please use json_deserialize_from_file instead.
 
     Args:
         json_file: path to the json file.
