@@ -55,8 +55,8 @@ Nomenclature:
 */
 
 #include "block_matrix.hpp"
+#include "common_solver_functions.hpp"
 #include "iterative_pf_solver.hpp"
-#include "shared_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -91,7 +91,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         // re-build matrix and prefactorize Build y bus data with source admittance
         if (y_data_ptr_ != &y_bus.admittance()) {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
-            shared_solver_functions::copy_y_bus<sym>(y_bus, mat_data);
+            common_solver_functions::copy_y_bus<sym>(y_bus, mat_data);
 
             // loop bus
             for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {

@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
 
-#include "shared_solver_functions.hpp"
+#include "common_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -49,7 +49,7 @@ template <bool sym> class ShortCircuitSolver {
 
         IdxVector infinite_admittance_fault_counter(n_bus_);
 
-        shared_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
+        common_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
 
         prepare_matrix_and_rhs(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
 
@@ -86,7 +86,7 @@ template <bool sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            shared_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
+            common_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
                                                       diagonal_element, u_bus);
 
             // skip if no fault
