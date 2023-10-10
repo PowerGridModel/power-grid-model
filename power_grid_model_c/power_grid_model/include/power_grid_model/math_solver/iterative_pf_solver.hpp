@@ -11,6 +11,7 @@
  */
 
 // Check if all includes needed
+#include "common_solver_functions.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -112,41 +113,11 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
-        // loop all bus
-        for (Idx bus = 0; bus != n_bus_; ++bus) {
-            // source
-            for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
-                ComplexValue<sym> const u_ref{input.source[source]};
-                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-                output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
-                output.source[source].s = output.u[bus] * conj(output.source[source].i);
-            }
-
-            // load_gen
-            for (Idx load_gen = (*load_gen_bus_indptr_)[bus]; load_gen != (*load_gen_bus_indptr_)[bus + 1];
-                 ++load_gen) {
-                LoadGenType const type = (*load_gen_type_)[load_gen];
-                switch (type) {
-                    using enum LoadGenType;
-
-                case const_pq:
-                    // always same power
-                    output.load_gen[load_gen].s = input.s_injection[load_gen];
-                    break;
-                case const_y:
-                    // power is quadratic relation to voltage
-                    output.load_gen[load_gen].s =
-                        input.s_injection[load_gen] * cabs(output.u[bus]) * cabs(output.u[bus]);
-                    break;
-                case const_i:
-                    // power is linear relation to voltage
-                    output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus]);
-                    break;
-                default:
-                    throw MissingCaseForEnumError("Power injection", type);
-                }
-                output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
-            }
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
+                                                                  *source_bus_indptr_);
+            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+                                                                    [this](Idx i) { return (*load_gen_type_)[i]; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
