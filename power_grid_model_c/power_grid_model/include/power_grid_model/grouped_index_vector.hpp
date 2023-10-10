@@ -136,9 +136,8 @@ concept grouped_idx_vector_type =
 
 template <grouped_idx_vector_type First, grouped_idx_vector_type... Rest>
 auto zip_sequence(First& first, Rest&... rest) {
-
-    assert((first.size() == rest.size()) && ...);
-
+    auto all_equal_sizes = ((first.size() == rest.size()) && ...);
+    assert(all_equal_sizes);
     auto zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
     auto zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
     return boost::make_iterator_range(zip_begin, zip_end);
