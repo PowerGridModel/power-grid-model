@@ -32,8 +32,7 @@ namespace power_grid_model {
 
 class SparseIdxVector {
   private:
-    template <class Value>
-    class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
+    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_(indptr), group_(group) {}
@@ -60,8 +59,8 @@ class SparseIdxVector {
     }
 
     constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
-    constexpr auto begin() const { return GroupIterator<Idx>(indptr_, 0); }
-    constexpr auto end() const { return GroupIterator<Idx>(indptr_, size()); }
+    constexpr auto begin() const { return GroupIterator(indptr_, 0); }
+    constexpr auto end() const { return GroupIterator(indptr_, size()); }
 
     constexpr auto element_size() const { return indptr_.back(); }
     auto get_element_range(Idx group) const {
@@ -78,8 +77,7 @@ class SparseIdxVector {
 
 class DenseIdxVector {
   private:
-    template <class Value>
-    class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
+    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
@@ -112,7 +110,7 @@ class DenseIdxVector {
         }
     };
 
-    constexpr auto group_iterator(Idx group) const { return GroupIterator<Idx>{dense_vector_, group}; }
+    constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
     DenseIdxVector() = default;
