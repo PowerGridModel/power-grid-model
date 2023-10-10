@@ -20,8 +20,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     SparseIdxVector sparse_idx_vector_2{sample_indptr_2};
 
     // Dense Vector (Same configuration as sparse)
-    IdxVector sample_dense_vector{1, 1, 1, 3, 3, 3, 4};
-    DenseIdxVector dense_idx_vector{sample_dense_vector};
+    DenseIdxVector dense_idx_vector{expected_groups, 7}; // 6 groups
 
     SUBCASE("Sparse Idx vector") {
         // Test get_element_range
@@ -33,7 +32,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
             actual_idx_counts.resize(range_size);
 
             auto group_i = sparse_idx_vector.get_element_range(group_number);
-            std::ranges::copy(group_i.begin(), group_i.end(), actual_idx_counts.begin());
+            std::copy(group_i.begin(), group_i.end(), actual_idx_counts.begin());
 
             // Test values for a single group
             if (range_size == 0) {
@@ -80,6 +79,27 @@ TEST_CASE("Sparse idx data strucuture for topology") {
         for (size_t element = 0; element < 7; element++) {
             CHECK(expected_groups[element] == sparse_idx_vector.get_group(element));
         }
+
+        // Test Iteration
+        std::vector<IdxCount> actual_idx_counts_groups{};
+        for (auto element_range : dense_idx_vector) {
+            for (auto& element : element_range) {
+                actual_idx_counts_groups.push_back(element);
+            }
+        }
+        CHECK(actual_idx_counts_groups == expected_idx_counts_groups);
+
+        // Test Reverse Iteration
+        // std::vector<IdxCount> actual_idx_counts_groups_reverse{};
+        // for (auto i = dense_idx_vector.end(); i != dense_idx_vector.begin(); --i) {
+        //     for (auto& element : *i) {
+        //         actual_idx_counts_groups_reverse.push_back(element);
+        //     }
+        // }
+        // std::vector<IdxCount> expected_idx_counts_groups_reverse{6, 5, 4, 3, 2, 1, 0}; 
+        // CHECK(actual_idx_counts_groups_reverse == expected_idx_counts_groups_reverse);
+
+
     }
 
     SUBCASE("Zip iterator") {
