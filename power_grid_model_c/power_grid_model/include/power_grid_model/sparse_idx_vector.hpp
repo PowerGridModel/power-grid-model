@@ -114,8 +114,8 @@ class DenseIdxVector {
 
   public:
     DenseIdxVector() = default;
-    explicit DenseIdxVector(IdxVector const& dense_vector, Idx groups_size)
-        : dense_vector_(dense_vector), groups_size_(groups_size) {}
+    explicit DenseIdxVector(IdxVector dense_vector, Idx groups_size)
+        : dense_vector_(std::move(dense_vector)), groups_size_(groups_size) {}
 
     constexpr auto size() const { return groups_size_; }
     constexpr auto begin() const { return group_iterator(Idx{}); }

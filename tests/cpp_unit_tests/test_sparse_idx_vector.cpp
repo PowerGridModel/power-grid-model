@@ -7,10 +7,34 @@
 
 namespace power_grid_model::detail {
 
-TEST_CASE("Sparse idx data strucuture for topology") {
+auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+    IdxVector result(num_groups + 1);
+    Idx count{0};
+    for (auto element_group : element_groups) {
+        result[element_group + 1] = count++;
+    }
+    return result;
+}
+
+template <std::same_as<DenseIdxVector> IdxVectorType>
+auto construct_from(IdxVector element_groups, Idx num_groups) {
+    return DenseIdxVector{std::move(element_groups), num_groups};
+}
+
+template <std::same_as<SparseIdxVector> IdxVectorType>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return SparseIdxVector{sparse_encode(element_groups, num_groups)};
+}
+
+
+TEST_CASE_TEMPLATE("Sparse idx data strucuture for topology", IdxVectorType, DenseIdxVector, SparseIdxVector) {
+    IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
+    Idx const num_groups{6};
+
+    auto const idx_vector = construct_from<IdxVectorType>(groups, num_groups);
+
     // Sparse vector to test
     IdxVector const sample_indptr{0, 0, 3, 3, 6, 7, 7};
-    IdxVector const expected_groups{1, 1, 1, 3, 3, 3, 4};
     std::vector<IdxCount> expected_idx_counts_groups{0, 1, 2, 3, 4, 5, 6};
     SparseIdxVector sparse_idx_vector{sample_indptr};
 
@@ -20,12 +44,12 @@ TEST_CASE("Sparse idx data strucuture for topology") {
     SparseIdxVector sparse_idx_vector_2{sample_indptr_2};
 
     // Dense Vector (Same configuration as sparse)
-    DenseIdxVector dense_idx_vector{expected_groups, 7}; // 6 groups
+    DenseIdxVector dense_idx_vector{groups, num_groups};
 
     SUBCASE("Sparse Idx vector") {
         // Test get_element_range
         std::vector<IdxCount> actual_idx_counts{};
-        for (size_t group_number = 0; group_number < 6; group_number++) {
+        for (size_t group_number = 0; group_number < num_groups; group_number++) {
             // Prepare values for single group
             size_t range_size = sample_indptr[group_number + 1] - sample_indptr[group_number];
             actual_idx_counts.clear();
@@ -45,7 +69,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
 
         // Test get_group
         for (size_t element = 0; element < 7; element++) {
-            CHECK(expected_groups[element] == sparse_idx_vector.get_group(element));
+            CHECK(groups[element] == sparse_idx_vector.get_group(element));
         }
 
         // Test Iteration
@@ -77,7 +101,7 @@ TEST_CASE("Sparse idx data strucuture for topology") {
 
         // Test get_group
         for (size_t element = 0; element < 7; element++) {
-            CHECK(expected_groups[element] == sparse_idx_vector.get_group(element));
+            CHECK(sparse_idx_vector.get_group(element) == groups[element]);
         }
 
         // Test Iteration
@@ -98,25 +122,39 @@ TEST_CASE("Sparse idx data strucuture for topology") {
         // }
         // std::vector<IdxCount> expected_idx_counts_groups_reverse{6, 5, 4, 3, 2, 1, 0}; 
         // CHECK(actual_idx_counts_groups_reverse == expected_idx_counts_groups_reverse);
-
-
     }
+}
 
-    SUBCASE("Zip iterator") {
-        // Check iteration for all groups for zipped 2 sparse vectors
-        std::vector<IdxCount> actual_idx_counts_groups{};
-        std::vector<IdxCount> actual_idx_counts_groups_2{};
-        for (auto const [group, group_2] : zip_sequence(sparse_idx_vector, sparse_idx_vector_2)) {
-            for (auto& element : group) {
-                actual_idx_counts_groups.push_back(element);
-            }
-            for (auto& element : group_2) {
-                actual_idx_counts_groups_2.push_back(element);
-            }
+TEST_CASE("Zip iterator") {
+    IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
+    Idx const num_groups{6};
+
+    // Sparse vector to test
+    IdxVector const sample_indptr{0, 0, 3, 3, 6, 7, 7};
+    std::vector<IdxCount> expected_idx_counts_groups{0, 1, 2, 3, 4, 5, 6};
+    SparseIdxVector sparse_idx_vector{sample_indptr};
+
+    // 2nd sparse vector
+    IdxVector const sample_indptr_2{0, 0, 1, 3, 6, 6, 6};
+    std::vector<IdxCount> expected_idx_counts_groups_2{0, 1, 2, 3, 4, 5};
+    SparseIdxVector sparse_idx_vector_2{sample_indptr_2};
+
+    // Dense Vector (Same configuration as sparse)
+    DenseIdxVector dense_idx_vector{groups, num_groups};
+
+    // Check iteration for all groups for zipped 2 sparse vectors
+    std::vector<IdxCount> actual_idx_counts_groups{};
+    std::vector<IdxCount> actual_idx_counts_groups_2{};
+    for (auto const [group, group_2] : zip_sequence(sparse_idx_vector, sparse_idx_vector_2)) {
+        for (auto& element : group) {
+            actual_idx_counts_groups.push_back(element);
         }
-        CHECK(actual_idx_counts_groups == expected_idx_counts_groups);
-        CHECK(actual_idx_counts_groups_2 == expected_idx_counts_groups_2);
+        for (auto& element : group_2) {
+            actual_idx_counts_groups_2.push_back(element);
+        }
     }
+    CHECK(actual_idx_counts_groups == expected_idx_counts_groups);
+    CHECK(actual_idx_counts_groups_2 == expected_idx_counts_groups_2);
 }
 
 } // namespace power_grid_model::detail
