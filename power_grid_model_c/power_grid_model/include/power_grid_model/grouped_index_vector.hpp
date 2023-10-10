@@ -59,13 +59,13 @@ class SparseIdxVector {
         assert(!indptr.empty());
     }
 
-    constexpr auto size() { return static_cast<Idx>(indptr_.size()) - 1; }
-    constexpr auto begin() { return GroupIterator<Idx>(indptr_, 0); }
-    constexpr auto end() { return GroupIterator<Idx>(indptr_, size()); }
+    constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
+    constexpr auto begin() const { return GroupIterator<Idx>(indptr_, 0); }
+    constexpr auto end() const { return GroupIterator<Idx>(indptr_, size()); }
 
-    constexpr auto element_size() { return indptr_.back(); }
-    auto get_element_range(Idx group) { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
-    auto get_group(Idx element) {
+    constexpr auto element_size() const { return indptr_.back(); }
+    auto get_element_range(Idx group) const { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
+    auto get_group(Idx element) const {
         assert(element < element_size());
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
     }
