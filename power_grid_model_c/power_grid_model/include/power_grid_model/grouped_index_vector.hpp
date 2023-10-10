@@ -95,8 +95,8 @@ class DenseIdxVector {
         friend class boost::iterator_core_access;
 
         boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(std::distance(std::cbegin(dense_vector_), group_range_.first),
-                                         std::distance(std::cbegin(dense_vector_), group_range_.second));
+            return boost::counting_range(static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
+                                         static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
         }
         constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr void increment() { advance(1); }
