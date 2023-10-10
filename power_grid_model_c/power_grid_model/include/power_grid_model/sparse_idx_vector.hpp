@@ -76,73 +76,50 @@ class SparseIdxVector {
 class DenseIdxVector {
   public:
     DenseIdxVector() = default;
-    explicit DenseIdxVector(IdxVector dense_vector, Idx groups_size) : dense_vector_(dense_vector), groups_size_(groups_size) {}
+    explicit DenseIdxVector(IdxVector const& dense_vector, Idx groups_size)
+        : dense_vector_(dense_vector), groups_size_(groups_size) {}
 
     template <class Value>
     class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::bidirectional_traversal_tag,
-                                                   boost::iterator_range<IdxCount>, Idx> {
+                                                        boost::iterator_range<IdxCount>, Idx> {
       public:
-        GroupIterator() = default;
-        explicit GroupIterator(IdxVector const& dense_vector, Idx const& group)
-            : dense_vector_(dense_vector), group_(group), group_begin_(group), group_end_(group)  {
-              auto dense_begin = dense_vector.begin();
-              auto dense_end = dense_vector.end();
-              if (group < dense_vector.back() || group > dense_vector.front())  {
-                auto range_pair = std::equal_range(dense_begin, dense_end, group);
-                group_begin_ = range_pair.first - dense_begin;
-                group_end_ = range_pair.second - dense_begin;
-              }
-
-            }
+        constexpr GroupIterator() = default;
+        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
+            : dense_vector_{dense_vector},
+              group_{group},
+              group_range_{std::equal_range(std::cbegin(dense_vector_), std::cend(dense_vector_), group)} {}
 
       private:
+        using group_iterator = IdxVector::const_iterator;
+
         IdxVector const& dense_vector_;
         Idx group_;
-        Idx group_begin_;
-        Idx group_end_;
+        std::pair<group_iterator, group_iterator> group_range_;
+
         friend class boost::iterator_core_access;
 
-        Idx find_group_end(Idx const& group_begin)  { 
-            auto dense_begin = dense_vector_.begin();
-            auto find_id = dense_vector_[group_begin];
-            auto x = std::find_if(dense_begin + group_begin, dense_vector_.end(), [&find_id] (auto const elm) { return elm != find_id;  }) - dense_begin;
-            return x;
-        }
-
-        Idx find_group_begin(Idx const& group_end)  {          
-          auto dense_rend = dense_vector_.rend();
-          auto find_id = dense_vector_[group_end];
-          auto x = dense_rend - std::find_if(dense_vector_.rbegin(), dense_rend,
-                                             [&find_id](auto const elm) { return elm != find_id; });
-          return x;
-        }
-
         boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(group_begin_, group_end_);
+            return boost::counting_range(std::distance(std::cbegin(dense_vector_), group_range_.first),
+                                         std::distance(std::cbegin(dense_vector_), group_range_.second));
         }
-          bool equal(GroupIterator const& other) const { return group_ == other.group_; }
-        void increment() {
-            ++group_;
-            group_begin_ = group_end_;
-            if (group_end_ < static_cast<Idx>(dense_vector_.size()))  {
-              group_end_ = find_group_end(group_begin_);
-            }
-        }
-        void decrement() { 
-            --group_;
-            group_end_ = group_begin_;
-            if (group_begin_ >= 0)  {
-              group_begin_ = find_group_begin(group_end_); 
-            }
+        constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
+        constexpr void increment() { advance(1); }
+        constexpr void decrement() { advance(-1); }
+        constexpr void advance(Idx n) {
+            auto const start = n > 0 ? group_range_.second : std::cbegin(dense_vector_);
+            auto const stop = n > 0 ? std::cend(dense_vector_) : group_range_.first;
+
+            group_ += n;
+            group_range_ = std::equal_range(start, stop, group_);
         }
     };
 
     constexpr auto size() { return groups_size_; }
-    auto begin() { return GroupIterator<Idx>(dense_vector_, 0); }
-    auto end() { return GroupIterator<Idx>(dense_vector_, size()); }
+    constexpr auto begin() { return GroupIterator<Idx>{dense_vector_, 0}; }
+    constexpr auto end() { return GroupIterator<Idx>{dense_vector_, size()}; }
 
     constexpr auto element_size() { return dense_vector_.size(); }
-    auto get_group(Idx element) { return dense_vector_[element]; }
+    constexpr auto get_group(Idx element) { return dense_vector_[element]; }
     auto get_element_range(Idx group) {
         auto dense_begin = dense_vector_.begin();
         auto dense_end = dense_vector_.end();
