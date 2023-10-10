@@ -74,13 +74,9 @@ class SparseIdxVector {
 };
 
 class DenseIdxVector {
-  public:
-    DenseIdxVector() = default;
-    explicit DenseIdxVector(IdxVector const& dense_vector, Idx groups_size)
-        : dense_vector_(dense_vector), groups_size_(groups_size) {}
-
+  private:
     template <class Value>
-    class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::bidirectional_traversal_tag,
+    class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
         constexpr GroupIterator() = default;
@@ -114,18 +110,20 @@ class DenseIdxVector {
         }
     };
 
-    constexpr auto size() { return groups_size_; }
-    constexpr auto begin() { return GroupIterator<Idx>{dense_vector_, 0}; }
-    constexpr auto end() { return GroupIterator<Idx>{dense_vector_, size()}; }
+    constexpr auto group_iterator(Idx group) const { return GroupIterator<Idx>{dense_vector_, group}; }
 
-    constexpr auto element_size() { return dense_vector_.size(); }
-    constexpr auto get_group(Idx element) { return dense_vector_[element]; }
-    auto get_element_range(Idx group) {
-        auto dense_begin = dense_vector_.begin();
-        auto dense_end = dense_vector_.end();
-        auto range_pair = std::equal_range(dense_begin, dense_end, group);
-        return boost::iterator_range<IdxCount>(range_pair.first - dense_begin, range_pair.second - dense_begin);
-    }
+  public:
+    DenseIdxVector() = default;
+    explicit DenseIdxVector(IdxVector const& dense_vector, Idx groups_size)
+        : dense_vector_(dense_vector), groups_size_(groups_size) {}
+
+    constexpr auto size() const { return groups_size_; }
+    constexpr auto begin() const { return group_iterator(Idx{}); }
+    constexpr auto end() const { return group_iterator(size()); }
+
+    constexpr auto element_size() const { return dense_vector_.size(); }
+    constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
+    auto get_element_range(Idx group) const { return *group_iterator(group); }
 
   private:
     IdxVector dense_vector_;
