@@ -5,8 +5,9 @@
 #include <doctest/doctest.h>
 #include <power_grid_model/grouped_index_vector.hpp>
 
-namespace power_grid_model::detail {
+namespace power_grid_model {
 
+namespace {
 auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     Idx count{0};
@@ -27,6 +28,7 @@ template <std::same_as<SparseIdxVector> IdxVectorType>
 auto construct_from(IdxVector const& element_groups, Idx num_groups) {
     return SparseIdxVector{sparse_encode(element_groups, num_groups)};
 }
+} // namespace
 
 TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, SparseIdxVector, DenseIdxVector) {
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
@@ -67,13 +69,13 @@ template <typename first, typename second> struct TypePair {
 
 TEST_CASE_TEMPLATE("Zip iterator for grouped structure", IdxVectorTypes, TypePair<SparseIdxVector, SparseIdxVector>,
                    TypePair<SparseIdxVector, DenseIdxVector>, TypePair<DenseIdxVector, DenseIdxVector>) {
-    // First grouped idx vector and its expeceted elements and groups 
+    // First grouped idx vector and its expeceted elements and groups
     IdxVector const first_groups{1, 1, 1, 3, 3, 3, 4};
     Idx const first_num_groups{6};
     std::vector<boost::iterator_range<IdxCount>> first_expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
     std::vector<IdxCount> const first_expected_elements{0, 1, 2, 3, 4, 5, 6};
 
-    // Second grouped idx vector and its expeceted elements and groups 
+    // Second grouped idx vector and its expeceted elements and groups
     IdxVector const second_groups{1, 1, 1, 3, 3, 3, 4};
     Idx const second_num_groups{6};
     std::vector<boost::iterator_range<IdxCount>> second_expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
@@ -106,4 +108,4 @@ TEST_CASE_TEMPLATE("Zip iterator for grouped structure", IdxVectorTypes, TypePai
     CHECK(second_actual_ranges == second_expected_ranges);
 }
 
-} // namespace power_grid_model::detail
+} // namespace power_grid_model

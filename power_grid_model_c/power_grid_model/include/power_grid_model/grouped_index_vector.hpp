@@ -28,10 +28,10 @@ The input, ie. [0, 1, 3] should be strictly increasing
 
 */
 
-namespace power_grid_model::detail {
+namespace power_grid_model {
 
 class SparseIdxVector {
-
+  private:
     template <class Value>
     class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
@@ -59,14 +59,12 @@ class SparseIdxVector {
         assert(!indptr.empty());
     }
 
-    constexpr auto size() const { return indptr_.size() - 1; }
+    constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
     constexpr auto begin() const { return GroupIterator<Idx>(indptr_, 0); }
     constexpr auto end() const { return GroupIterator<Idx>(indptr_, size()); }
 
     constexpr auto element_size() const { return indptr_.back(); }
-    auto get_element_range(Idx group) const {
-        return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]);
-    }
+    auto get_element_range(Idx group) const { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
     auto get_group(Idx element) const {
         assert(element < element_size());
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
@@ -82,7 +80,6 @@ class DenseIdxVector {
     class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
-        constexpr GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
             : dense_vector_{dense_vector},
               group_{group},
@@ -149,6 +146,6 @@ auto zip_sequence(First& first, Rest&... rest) {
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 
-} // namespace power_grid_model::detail
+} // namespace power_grid_model
 
 #endif
