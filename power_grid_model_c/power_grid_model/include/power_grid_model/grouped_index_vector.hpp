@@ -36,7 +36,7 @@ class SparseIdxVector {
     class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
-        explicit GroupIterator(IdxVector const& indptr, Idx group) : indptr_(indptr), group_(group) {}
+        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_(indptr), group_(group) {}
 
       private:
         IdxVector const& indptr_;
@@ -46,11 +46,11 @@ class SparseIdxVector {
         boost::iterator_range<IdxCount> dereference() const {
             return boost::counting_range(indptr_[group_], indptr_[group_ + 1]);
         }
-        bool equal(GroupIterator const& other) const { return group_ == other.group_; }
-        void increment() { ++group_; }
-        void decrement() { --group_; }
-        void advance(Idx n) { group_ += n; }
-        Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
+        constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
+        constexpr void increment() { ++group_; }
+        constexpr void decrement() { --group_; }
+        constexpr void advance(Idx n) { group_ += n; }
+        constexpr Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
     };
 
   public:
@@ -59,13 +59,15 @@ class SparseIdxVector {
         assert(!indptr.empty());
     }
 
-    constexpr auto size() { return indptr_.size() - 1; }
-    auto begin() { return GroupIterator<Idx>(indptr_, 0); }
-    auto end() { return GroupIterator<Idx>(indptr_, size()); }
+    constexpr auto size() const { return indptr_.size() - 1; }
+    constexpr auto begin() const { return GroupIterator<Idx>(indptr_, 0); }
+    constexpr auto end() const { return GroupIterator<Idx>(indptr_, size()); }
 
-    constexpr auto element_size() { return indptr_.back(); }
-    auto get_element_range(Idx group) { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
-    auto get_group(Idx element) {
+    constexpr auto element_size() const { return indptr_.back(); }
+    auto get_element_range(Idx group) const {
+        return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]);
+    }
+    auto get_group(Idx element) const {
         assert(element < element_size());
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
     }
@@ -132,9 +134,11 @@ class DenseIdxVector {
 };
 
 template <typename T>
-concept sparse_type = std::is_same<T, SparseIdxVector>::value;
+concept grouped_idx_vector_type =
+    std::is_same<T, const SparseIdxVector>::value || std::is_same<T, const DenseIdxVector>::value;
 
-template <sparse_type First, sparse_type... Rest> auto zip_sequence(First& first, Rest&... rest) {
+template <grouped_idx_vector_type First, grouped_idx_vector_type... Rest>
+auto zip_sequence(First& first, Rest&... rest) {
 
     assert((first.size() == rest.size()) && ...);
     // TODO Add common index as count at the first postiion
