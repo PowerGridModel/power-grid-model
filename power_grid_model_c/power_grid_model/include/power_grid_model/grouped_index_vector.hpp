@@ -31,11 +31,6 @@ The input, ie. [0, 1, 3] should be strictly increasing
 namespace power_grid_model::detail {
 
 class SparseIdxVector {
-  public:
-    SparseIdxVector() = default;
-    explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr.empty() ? IdxVector{0} : indptr) {
-        assert(!indptr.empty());
-    }
 
     template <class Value>
     class GroupIterator : public boost::iterator_facade<GroupIterator<Value>, Value, boost::random_access_traversal_tag,
@@ -57,6 +52,12 @@ class SparseIdxVector {
         void advance(Idx n) { group_ += n; }
         Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
     };
+
+  public:
+    SparseIdxVector() = default;
+    explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr.empty() ? IdxVector{0} : indptr) {
+        assert(!indptr.empty());
+    }
 
     constexpr auto size() { return indptr_.size() - 1; }
     auto begin() { return GroupIterator<Idx>(indptr_, 0); }

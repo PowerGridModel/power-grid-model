@@ -21,7 +21,7 @@ set(PROJECT_SOURCES
     "test_y_bus.cpp"
     "test_math_solver.cpp"
     "test_topology.cpp"
-    "test_sparse_idx_vector.cpp"
+    "test_grouped_index_vector.cpp"
     "test_container.cpp"
     "test_sparse_mapping.cpp"
     "test_meta_data_generation.cpp"
