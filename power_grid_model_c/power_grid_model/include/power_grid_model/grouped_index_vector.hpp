@@ -138,8 +138,6 @@ template <grouped_idx_vector_type First, grouped_idx_vector_type... Rest>
 auto zip_sequence(First& first, Rest&... rest) {
 
     assert((first.size() == rest.size()) && ...);
-    // TODO Add common index as count at the first postiion
-    // auto common_idx_counter = boost::iterator_range<IdxCount>(0, first.size());
 
     auto zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
     auto zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
