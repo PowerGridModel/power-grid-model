@@ -175,25 +175,24 @@ template <bool sym> class MeasuredValues {
         for (Idx bus = 0; bus != math_topology_->n_bus(); ++bus) {
             Idx const load_gen_begin = math_topology_->load_gen_bus_indptr[bus];
             Idx const load_gen_end = math_topology_->load_gen_bus_indptr[bus + 1];
-            Idx const source_begin = math_topology_->source_bus_indptr[bus];
-            Idx const source_end = math_topology_->source_bus_indptr[bus + 1];
+            auto const sources = math_topology_->source_buses.get_element_range(bus);
 
             // under-determined or exactly determined
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
-                calculate_non_over_determined_injection(
-                    bus_injection_[bus].n_unmeasured_appliances, load_gen_begin, load_gen_end, source_begin, source_end,
-                    bus_appliance_injection_[bus], s[bus], load_gen_flow, source_flow);
+                calculate_non_over_determined_injection(bus_injection_[bus].n_unmeasured_appliances, load_gen_begin,
+                                                        load_gen_end, sources, bus_appliance_injection_[bus], s[bus],
+                                                        load_gen_flow, source_flow);
             }
             // over-determined
             else {
-                calculate_over_determined_injection(load_gen_begin, load_gen_end, source_begin, source_end,
+                calculate_over_determined_injection(load_gen_begin, load_gen_end, sources,
                                                     bus_appliance_injection_[bus], s[bus], load_gen_flow, source_flow);
             }
             // current injection
             for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
                 load_gen_flow[load_gen].i = conj(load_gen_flow[load_gen].s / u[bus]);
             }
-            for (Idx source = source_begin; source != source_end; ++source) {
+            for (Idx source : sources) {
                 source_flow[source].i = conj(source_flow[source].s / u[bus]);
             }
         }
@@ -305,7 +304,7 @@ template <bool sym> class MeasuredValues {
             process_bus_objects(bus, topo.load_gen_bus_indptr, topo.load_gen_power_sensor_indptr, input.load_gen_status,
                                 input.measured_load_gen_power, extra_value_, idx_load_gen_power_);
             // source
-            process_bus_objects(bus, topo.source_bus_indptr, topo.source_power_sensor_indptr, input.source_status,
+            process_bus_objects(bus, topo.source_buses, topo.source_power_sensor_indptr, input.source_status,
                                 input.measured_source_power, extra_value_, idx_source_power_);
 
             combine_appliances_to_injection_measurements(input, topo, bus);
@@ -325,7 +324,7 @@ template <bool sym> class MeasuredValues {
             add_appliance_measurements(idx_load_gen_power_[load_gen], appliance_injection_measurement, n_unmeasured);
         }
 
-        for (Idx source = topo.source_bus_indptr[bus]; source != topo.source_bus_indptr[bus + 1]; ++source) {
+        for (Idx source : topo.source_buses.get_element_range(bus)) {
             add_appliance_measurements(idx_source_power_[source], appliance_injection_measurement, n_unmeasured);
         }
 
@@ -460,6 +459,16 @@ template <bool sym> class MeasuredValues {
         }
     }
 
+    // process objects in batch for shunt, load_gen, source
+    // return the status of the object type, if all the connected objects are measured
+    static void process_bus_objects(Idx const bus, SparseIdxVector const& objects, IdxVector const& sensor_indptr,
+                                    IntSVector const& obj_status, std::vector<SensorCalcParam<sym>> const& input_data,
+                                    std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
+        for (Idx obj : objects.get_element_range(bus)) {
+            result_idx[obj] = process_one_object(obj, sensor_indptr, obj_status, input_data, result_data);
+        }
+    }
+
     // process one object
     static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
     template <class TS, class StatusChecker = decltype(default_status_checker)>
@@ -497,12 +506,13 @@ template <bool sym> class MeasuredValues {
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
-                                                 Idx source_begin, Idx source_end,
+                                                 boost::iterator_range<IdxCount> sources,
                                                  SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
-        ComplexValue<sym> const s_residual_per_appliance = (s - bus_appliance_injection.value) / (double)n_unmeasured;
+        ComplexValue<sym> const s_residual_per_appliance =
+            (s - bus_appliance_injection.value) / static_cast<double>(n_unmeasured);
         for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
@@ -510,7 +520,7 @@ template <bool sym> class MeasuredValues {
                 load_gen_flow[load_gen].s = s_residual_per_appliance;
             }
         }
-        for (Idx source = source_begin; source != source_end; ++source) {
+        for (Idx source : sources) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value;
             } else if (idx_source_power_[source] == unmeasured) {
@@ -519,7 +529,8 @@ template <bool sym> class MeasuredValues {
         }
     }
 
-    void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end, Idx source_begin, Idx source_end,
+    void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end,
+                                             boost::iterator_range<IdxCount> sources,
                                              SensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {
@@ -532,7 +543,7 @@ template <bool sym> class MeasuredValues {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value - (load_gen_power(load_gen).variance) * mu;
             }
         }
-        for (Idx source = source_begin; source != source_end; ++source) {
+        for (Idx source : sources) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value - (source_power(source).variance) * mu;
             }
@@ -608,7 +619,7 @@ template <bool sym> class IterativeLinearSESolver {
         main_timer.stop();
 
         const auto key = Timer::make_key(2228, "Max number of iterations");
-        calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
+        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
 
         return output;
     }

@@ -581,6 +581,55 @@ class Topology {
         }
     }
 
+    // Couple one type of components (e.g. appliances or sensors)
+    // The indptr in math topology will be modified
+    // The coupling element should be pre-allocated in coupling
+    // Only connect the component if include(component_i) returns true
+    template <Idx (MathModelTopology::*n_obj_fn)() const, typename ObjectFinder = SingleTypeObjectFinder,
+              typename Predicate = decltype(include_all)>
+    void couple_object_components(std::invocable<Idx, IdxVector> auto&& assign_indptr, ObjectFinder object_finder,
+                                  std::vector<Idx2D>& coupling, Predicate include = include_all) {
+        auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
+        auto const n_components = object_finder.size();
+        std::vector<IdxVector> topo_obj_idx(n_math_topologies);
+        std::vector<IdxVector> topo_component_idx(n_math_topologies);
+
+        // Collect objects and components per topology
+        for (Idx component_i = 0; component_i != n_components; ++component_i) {
+            if (!include(component_i)) {
+                continue;
+            }
+            Idx2D const math_idx = object_finder.find_math_object(component_i);
+            Idx const topo_idx = math_idx.group;
+            if (topo_idx >= 0) { // Consider non-isolated objects only
+                topo_obj_idx[topo_idx].push_back(math_idx.pos);
+                topo_component_idx[topo_idx].push_back(component_i);
+            }
+        }
+
+        // Couple components per topology
+        for (Idx topo_idx = 0; topo_idx != n_math_topologies; ++topo_idx) {
+            IdxVector const& obj_idx = topo_obj_idx[topo_idx];
+            Idx const n_obj = (math_topology_[topo_idx].*n_obj_fn)();
+
+            // Reorder to compressed format for each math topology
+            SparseMapping map = build_sparse_mapping(obj_idx, n_obj);
+
+            // Assign indptr
+            assign_indptr(topo_idx, std::move(map.indptr));
+
+            // Reorder components within the math model
+            IdxVector const& reorder = map.reorder;
+
+            // Store component coupling for the current topology
+            for (Idx new_math_comp_i = 0; new_math_comp_i != static_cast<Idx>(reorder.size()); ++new_math_comp_i) {
+                Idx const old_math_comp_i = reorder[new_math_comp_i];
+                Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
+                coupling[topo_comp_i] = Idx2D{topo_idx, new_math_comp_i};
+            }
+        }
+    }
+
     void couple_all_appliance() {
         // shunt
         couple_object_components<&MathModelTopology::shunt_bus_indptr, &MathModelTopology::n_bus>(
@@ -604,7 +653,10 @@ class Topology {
         }
 
         // source
-        couple_object_components<&MathModelTopology::source_bus_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].source_buses = SparseIdxVector{std::move(indptr)};
+            },
             {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source,
             [this](Idx i) { return comp_conn_.source_connected[i]; });
     }

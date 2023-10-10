@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
 
 #include "enum.hpp"
+#include "grouped_index_vector.hpp"
 #include "power_grid_model.hpp"
 #include "three_phase_tensor.hpp"
 
@@ -92,7 +93,7 @@ struct MathModelTopology {
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
-    IdxVector source_bus_indptr;
+    SparseIdxVector source_buses; // TODO(mgovers) replace with DenseIdxVector
     IdxVector shunt_bus_indptr;
     IdxVector load_gen_bus_indptr;
     std::vector<LoadGenType> load_gen_type;
@@ -108,7 +109,7 @@ struct MathModelTopology {
 
     Idx n_branch() const { return static_cast<Idx>(branch_bus_idx.size()); }
 
-    Idx n_source() const { return source_bus_indptr.back(); }
+    Idx n_source() const { return source_buses.size(); }
 
     Idx n_shunt() const { return shunt_bus_indptr.back(); }
 

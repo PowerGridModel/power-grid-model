@@ -58,13 +58,20 @@ class SparseIdxVector {
     explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr.empty() ? IdxVector{0} : indptr) {
         assert(!indptr.empty());
     }
+    SparseIdxVector(SparseIdxVector const&) = default;
+    SparseIdxVector(SparseIdxVector&&) = default;
+    SparseIdxVector& operator=(SparseIdxVector const&) = default;
+    SparseIdxVector& operator=(SparseIdxVector&&) = default;
+    ~SparseIdxVector() = default;
 
     constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
     constexpr auto begin() const { return GroupIterator<Idx>(indptr_, 0); }
     constexpr auto end() const { return GroupIterator<Idx>(indptr_, size()); }
 
     constexpr auto element_size() const { return indptr_.back(); }
-    auto get_element_range(Idx group) const { return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]); }
+    auto get_element_range(Idx group) const {
+        return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]);
+    }
     auto get_group(Idx element) const {
         assert(element < element_size());
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
@@ -133,7 +140,7 @@ class DenseIdxVector {
 template <typename T>
 concept sparse_type = std::is_same<T, SparseIdxVector>::value;
 
-template <sparse_type First, sparse_type... Rest> auto zip_sequence(First& first, Rest&... rest) {
+template <sparse_type First, sparse_type... Rest> auto zip_sequence(First const& first, Rest const&... rest) {
 
     assert((first.size() == rest.size()) && ...);
     // TODO Add common index as count at the first postiion

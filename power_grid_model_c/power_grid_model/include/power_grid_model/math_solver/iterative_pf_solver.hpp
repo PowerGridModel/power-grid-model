@@ -30,7 +30,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        auto const& source_buses = *source_buses_;
         std::vector<double> const& phase_shift = *phase_shift_;
 
         // prepare
@@ -47,7 +47,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
             DoubleComplex const u_ref = [&]() {
                 DoubleComplex sum_u_ref = 0.0;
                 for (Idx bus = 0; bus != n_bus_; ++bus) {
-                    for (Idx source = source_bus_indptr[bus]; source != source_bus_indptr[bus + 1]; ++source) {
+                    for (Idx source : source_buses.get_element_range(bus)) {
                         sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                     }
                 }
@@ -109,13 +109,12 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
 
         // prepare source, load gen and bus_injection
-        output.source.resize(source_bus_indptr_->back());
+        output.source.resize(source_buses_->size());
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
-                                                                  *source_bus_indptr_);
+            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output, *source_buses_);
             common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
                                                                     [this](Idx i) { return (*load_gen_type_)[i]; });
         }
@@ -126,13 +125,13 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
+    std::shared_ptr<SparseIdxVector const> source_buses_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           phase_shift_{topo_ptr, &topo_ptr->phase_shift},
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
-          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          source_buses_{topo_ptr, &topo_ptr->source_buses},
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };
 

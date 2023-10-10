@@ -51,7 +51,7 @@ template <bool sym> class LinearPFSolver {
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
-          source_bus_indptr_{topo_ptr, &topo_ptr->source_bus_indptr},
+          source_buses_{topo_ptr, &topo_ptr->source_buses},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(n_bus_) {}
@@ -86,7 +86,7 @@ template <bool sym> class LinearPFSolver {
     Idx n_bus_;
     // shared topo data
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<IdxVector const> source_bus_indptr_;
+    std::shared_ptr<SparseIdxVector const> source_buses_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -97,14 +97,14 @@ template <bool sym> class LinearPFSolver {
         // getter
         IdxVector const& bus_entry = y_bus.lu_diag();
         IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        auto const& source_buses = *source_buses_;
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
             add_loads(load_gen_bus_idxptr, bus_number, input, diagonal_element);
-            common_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
-                                                      diagonal_element, u_bus);
+            common_solver_functions::add_sources<sym>(source_buses, bus_number, y_bus, input.source, diagonal_element,
+                                                      u_bus);
         }
     }
 
@@ -123,13 +123,12 @@ template <bool sym> class LinearPFSolver {
         output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
 
         // prepare source, load gen and node injection
-        output.source.resize(source_bus_indptr_->back());
+        output.source.resize(source_buses_->size());
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
-                                                                  *source_bus_indptr_);
+            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output, *source_buses_);
             common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
                                                                     [](Idx /*i*/) { return LoadGenType::const_y; });
         }

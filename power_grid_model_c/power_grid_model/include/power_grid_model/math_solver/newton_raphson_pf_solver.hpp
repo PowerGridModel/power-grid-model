@@ -225,7 +225,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
+        auto const& source_buses = *this->source_buses_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
         IdxVector const& bus_entry = y_bus.lu_diag();
 
@@ -234,7 +234,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
-            add_sources(bus_number, diagonal_position, y_bus, input, source_bus_indptr, u);
+            add_sources(bus_number, diagonal_position, y_bus, input, source_buses, u);
         }
     }
 
@@ -404,10 +404,9 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     }
 
     void add_sources(Idx const& bus_number, Idx const& diagonal_position, YBus<sym> const& y_bus,
-                     PowerFlowInput<sym> const& input, IdxVector const& source_bus_indptr,
+                     PowerFlowInput<sym> const& input, SparseIdxVector const& source_buses,
                      ComplexValueVector<sym> const& u) {
-        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-             ++source_number) {
+        for (Idx source_number : source_buses.get_element_range(bus_number)) {
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
             ComplexValue<sym> const u_ref{input.source[source_number]};
             // calculate block, um = ui, us = uref
