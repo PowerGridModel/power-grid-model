@@ -227,115 +227,14 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
         IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        IdxVector const& indptr = y_bus.row_indptr_lu();
-        IdxVector const& indices = y_bus.col_indices_lu();
         IdxVector const& bus_entry = y_bus.lu_diag();
-        IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
 
-        // loop for row indices as i for whole matrix
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            // reset power injection
-            del_x_pq_[i].p() = RealValue<sym>{0.0};
-            del_x_pq_[i].q() = RealValue<sym>{0.0};
-            // loop for column for incomplete jacobian and injection
-            // k as data indices
-            // j as column indices
-            for (Idx k = indptr[i]; k != indptr[i + 1]; ++k) {
-                // set to zero and skip if it is a fill-in
-                Idx const k_y_bus = map_lu_y_bus[k];
-                if (k_y_bus == -1) {
-                    data_jac_[k] = PFJacBlock<sym>{};
-                    continue;
-                }
-                Idx const j = indices[k];
-                // incomplete jacobian
-                data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[i], u[j]);
-                // accumulate negative power injection
-                // -P = sum(-N)
-                del_x_pq_[i].p() -= sum_row(data_jac_[k].n());
-                // -Q = sum (-H)
-                del_x_pq_[i].q() -= sum_row(data_jac_[k].h());
-            }
-            // correct diagonal part of jacobian
-            Idx const k = bus_entry[i];
-            // diagonal correction
-            // del_pq has negative injection
-            // H += (-Q)
-            add_diag(data_jac_[k].h(), del_x_pq_[i].q());
-            // N -= (-P)
-            add_diag(data_jac_[k].n(), -del_x_pq_[i].p());
-            // M -= (-P)
-            add_diag(data_jac_[k].m(), -del_x_pq_[i].p());
-            // L -= (-Q)
-            add_diag(data_jac_[k].l(), -del_x_pq_[i].q());
-        }
+        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
-        // loop individual load/source, i as bus number, j as load/source number
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            // k as data sequence number
-            Idx const k = bus_entry[i];
-
-            // loop load
-            for (Idx j = load_gen_bus_indptr[i]; j != load_gen_bus_indptr[i + 1]; ++j) {
-                // load type
-                LoadGenType const type = load_gen_type[j];
-                // modify jacobian and del_pq based on type
-                switch (type) {
-                case LoadGenType::const_pq:
-                    // PQ_sp = PQ_base
-                    del_x_pq_[i].p() += real(input.s_injection[j]);
-                    del_x_pq_[i].q() += imag(input.s_injection[j]);
-                    // -dPQ_sp/dV * V = 0
-                    break;
-                case LoadGenType::const_y:
-                    // PQ_sp = PQ_base * V^2
-                    del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v() * x_[i].v();
-                    del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v() * x_[i].v();
-                    // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
-                    add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
-                    add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
-                    break;
-                case LoadGenType::const_i:
-                    // PQ_sp = PQ_base * V
-                    del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v();
-                    del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v();
-                    // -dPQ_sp/dV * V = -PQ_base * V
-                    add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * x_[i].v());
-                    add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * x_[i].v());
-                    break;
-                default:
-                    throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
-                }
-            }
-
-            // loop source
-            for (Idx j = source_bus_indptr[i]; j != source_bus_indptr[i + 1]; ++j) {
-                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[j];
-                ComplexValue<sym> const u_ref{input.source[j]};
-                // calculate block, um = ui, us = uref
-                PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[i], u[i]);
-                PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[i], u_ref);
-                // P_cal_m = (Nmm + Nms) * I
-                RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
-                // Q_cal_m = (Hmm + Hms) * I
-                RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
-                // correct hnml for mm
-                add_diag(block_mm.h(), -q_cal);
-                add_diag(block_mm.n(), p_cal);
-                add_diag(block_mm.m(), p_cal);
-                add_diag(block_mm.l(), q_cal);
-                // append to del_pq
-                del_x_pq_[i].p() -= p_cal;
-                del_x_pq_[i].q() -= q_cal;
-                // append to jacobian block
-                // hnml -= -dPQ_cal/(dtheta,dV)
-                // hnml += dPQ_cal/(dtheta,dV)
-                data_jac_[k].h() += block_mm.h();
-                data_jac_[k].n() += block_mm.n();
-                data_jac_[k].m() += block_mm.m();
-                data_jac_[k].l() += block_mm.l();
-            }
+        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+            Idx const diagonal_position = bus_entry[bus_number];
+            add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
+            add_sources(bus_number, diagonal_position, y_bus, input, source_bus_indptr, u);
         }
     }
 
@@ -405,6 +304,135 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         // Lij = Hij
         block.l() = block.h();
         return block;
+    }
+
+    void prepare_matrix_and_rhs_from_network_perspective(YBus<sym> const& y_bus, ComplexValueVector<sym> const& u,
+                                                         IdxVector const& bus_entry) {
+        IdxVector const& indptr = y_bus.row_indptr_lu();
+        IdxVector const& indices = y_bus.col_indices_lu();
+        IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+
+        for (Idx row = 0; row != this->n_bus_; ++row) {
+            // reset power injection
+            del_x_pq_[row].p() = RealValue<sym>{0.0};
+            del_x_pq_[row].q() = RealValue<sym>{0.0};
+            // loop for column for incomplete jacobian and injection
+            // k as data indices
+            // j as column indices
+            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                // set to zero and skip if it is a fill-in
+                Idx const k_y_bus = map_lu_y_bus[k];
+                if (k_y_bus == -1) {
+                    data_jac_[k] = PFJacBlock<sym>{};
+                    continue;
+                }
+                Idx const j = indices[k];
+                // incomplete jacobian
+                data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[row], u[j]);
+                // accumulate negative power injection
+                // -P = sum(-N)
+                del_x_pq_[row].p() -= sum_row(data_jac_[k].n());
+                // -Q = sum (-H)
+                del_x_pq_[row].q() -= sum_row(data_jac_[k].h());
+            }
+            // correct diagonal part of jacobian
+            Idx const k = bus_entry[row];
+            // diagonal correction
+            // del_pq has negative injection
+            // H += (-Q)
+            add_diag(data_jac_[k].h(), del_x_pq_[row].q());
+            // N -= (-P)
+            add_diag(data_jac_[k].n(), -del_x_pq_[row].p());
+            // M -= (-P)
+            add_diag(data_jac_[k].m(), -del_x_pq_[row].p());
+            // L -= (-Q)
+            add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
+        }
+    }
+
+    void add_loads(Idx const& bus_number, Idx const& diagonal_position, PowerFlowInput<sym> const& input,
+                   IdxVector const& load_gen_bus_indptr, std::vector<LoadGenType> const& load_gen_type) {
+        using enum LoadGenType;
+        for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
+             ++load_number) {
+            LoadGenType const type = load_gen_type[load_number];
+            // modify jacobian and del_pq based on type
+            switch (type) {
+            case const_pq:
+                add_const_power_load(bus_number, load_number, input);
+                break;
+            case const_y:
+                add_const_impedance_load(bus_number, load_number, diagonal_position, input);
+                break;
+            case const_i:
+                add_const_current_load(bus_number, load_number, diagonal_position, input);
+                break;
+            default:
+                throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
+            }
+        }
+    }
+
+    void add_const_power_load(Idx const& bus_number, Idx const& load_number, PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
+        // -dPQ_sp/dV * V = 0
+    }
+
+    void add_const_impedance_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
+                                  PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base * V^2
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
+        add_diag(data_jac_[diagonal_position].n(),
+                 -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(),
+                 -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+    }
+
+    void add_const_current_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
+                                PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base * V
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
+        // -dPQ_sp/dV * V = -PQ_base * V
+        add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
+    }
+
+    void add_sources(Idx const& bus_number, Idx const& diagonal_position, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input, IdxVector const& source_bus_indptr,
+                     ComplexValueVector<sym> const& u) {
+        for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
+             ++source_number) {
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
+            ComplexValue<sym> const u_ref{input.source[source_number]};
+            // calculate block, um = ui, us = uref
+            PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
+            PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[bus_number], u_ref);
+            // P_cal_m = (Nmm + Nms) * I
+            RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
+            // Q_cal_m = (Hmm + Hms) * I
+            RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
+            // correct hnml for mm
+            add_diag(block_mm.h(), -q_cal);
+            add_diag(block_mm.n(), p_cal);
+            add_diag(block_mm.m(), p_cal);
+            add_diag(block_mm.l(), q_cal);
+            // append to del_pq
+            del_x_pq_[bus_number].p() -= p_cal;
+            del_x_pq_[bus_number].q() -= q_cal;
+            // append to jacobian block
+            // hnml -= -dPQ_cal/(dtheta,dV)
+            // hnml += dPQ_cal/(dtheta,dV)
+            data_jac_[diagonal_position].h() += block_mm.h();
+            data_jac_[diagonal_position].n() += block_mm.n();
+            data_jac_[diagonal_position].m() += block_mm.m();
+            data_jac_[diagonal_position].l() += block_mm.l();
+        }
     }
 };
 

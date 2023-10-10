@@ -30,6 +30,7 @@ if there are sources
 
 */
 
+#include "common_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -57,9 +58,6 @@ template <bool sym> class LinearPFSolver {
 
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    CalculationInfo& calculation_info) {
-        // getter
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        IdxVector const& bus_entry = y_bus.lu_diag();
         // output
         MathOutput<sym> output;
         output.u.resize(n_bus_);
@@ -68,36 +66,8 @@ template <bool sym> class LinearPFSolver {
 
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
-
-        // copy y bus data
-        std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data_.begin(), [&](Idx k) {
-            if (k == -1) {
-                return ComplexTensor<sym>{};
-            }
-            return ydata[k];
-        });
-
-        // loop to all loads and sources, j as load number
-        IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *source_bus_indptr_;
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            Idx const data_sequence = bus_entry[bus_number];
-            // loop loads
-            for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
-                 ++load_number) {
-                // YBus_diag += -conj(S_base)
-                add_diag(mat_data_[data_sequence], -conj(input.s_injection[load_number]));
-            }
-            // loop sources
-            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-                 ++source_number) {
-                // YBus_diag += Y_source
-                mat_data_[data_sequence] += y_bus.math_model_param().source_param[source_number];
-                // rhs += Y_source_j * U_ref_j
-                output.u[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                            ComplexValue<sym>{input.source[source_number]});
-            }
-        }
+        common_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
+        prepare_matrix_and_rhs(y_bus, input, output);
 
         // solve
         // u vector will have I_injection for slack bus for now
@@ -123,6 +93,30 @@ template <bool sym> class LinearPFSolver {
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        // getter
+        IdxVector const& bus_entry = y_bus.lu_diag();
+        IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
+        IdxVector const& source_bus_indptr = *source_bus_indptr_;
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+            Idx const diagonal_position = bus_entry[bus_number];
+            auto& diagonal_element = mat_data_[diagonal_position];
+            auto& u_bus = output.u[bus_number];
+            add_loads(load_gen_bus_idxptr, bus_number, input, diagonal_element);
+            common_solver_functions::add_sources<sym>(source_bus_indptr, bus_number, y_bus, input.source,
+                                                      diagonal_element, u_bus);
+        }
+    }
+
+    static void add_loads(IdxVector const& load_gen_bus_idxptr, Idx const& bus_number, PowerFlowInput<sym> const& input,
+                          ComplexTensor<sym>& diagonal_element) {
+        for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
+             ++load_number) {
+            // YBus_diag += -conj(S_base)
+            add_diag(diagonal_element, -conj(input.s_injection[load_number]));
+        }
+    }
+
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // call y bus
         output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
@@ -133,23 +127,11 @@ template <bool sym> class LinearPFSolver {
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 
-        // loop all bus
-        for (Idx bus = 0; bus != n_bus_; ++bus) {
-            // source
-            for (Idx source = (*source_bus_indptr_)[bus]; source != (*source_bus_indptr_)[bus + 1]; ++source) {
-                ComplexValue<sym> const u_ref{input.source[source]};
-                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-                output.source[source].i = dot(y_ref, u_ref - output.u[bus]);
-                output.source[source].s = output.u[bus] * conj(output.source[source].i);
-            }
-
-            // load_gen
-            for (Idx load_gen = (*load_gen_bus_indptr_)[bus]; load_gen != (*load_gen_bus_indptr_)[bus + 1];
-                 ++load_gen) {
-                // power is always quadratic relation to voltage for linear pf
-                output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus]);
-                output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus]);
-            }
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output,
+                                                                  *source_bus_indptr_);
+            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+                                                                    [](Idx /*i*/) { return LoadGenType::const_y; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
     }
