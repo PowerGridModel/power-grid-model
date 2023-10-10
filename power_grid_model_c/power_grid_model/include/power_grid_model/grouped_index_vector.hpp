@@ -28,7 +28,7 @@ The input, ie. [0, 1, 3] should be strictly increasing
 
 */
 
-namespace power_grid_model::detail {
+namespace power_grid_model {
 
 class SparseIdxVector {
 
@@ -145,6 +145,6 @@ template <sparse_type First, sparse_type... Rest> auto zip_sequence(First& first
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 
-} // namespace power_grid_model::detail
+} // namespace power_grid_model
 
 #endif
