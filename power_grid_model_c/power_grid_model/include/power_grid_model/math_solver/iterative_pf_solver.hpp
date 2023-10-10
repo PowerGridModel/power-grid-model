@@ -109,7 +109,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
 
         // prepare source, load gen and bus_injection
-        output.source.resize(source_buses_->size());
+        output.source.resize(source_buses_->element_size());
         output.load_gen.resize(load_gen_bus_indptr_->back());
         output.bus_injection.resize(n_bus_);
 

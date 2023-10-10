@@ -109,7 +109,7 @@ struct MathModelTopology {
 
     Idx n_branch() const { return static_cast<Idx>(branch_bus_idx.size()); }
 
-    Idx n_source() const { return source_buses.size(); }
+    Idx n_source() const { return source_buses.element_size(); }
 
     Idx n_shunt() const { return shunt_bus_indptr.back(); }
 
