@@ -80,7 +80,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr, // indptr including fill-ins
                    std::shared_ptr<IdxVector const> col_indices,       // indices including fill-ins
                    std::shared_ptr<IdxVector const> diag_lu)
-        : size_{(Idx)row_indptr->size() - 1},
+        : size_{static_cast<Idx>(row_indptr->size()) - 1},
           nnz_{row_indptr->back()},
           row_indptr_{row_indptr},
           col_indices_{std::move(col_indices)},
@@ -314,7 +314,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     // should always found
                     assert(found != col_indices.cbegin() + row_indptr[l_row + 1]);
                     assert(*found == u_col);
-                    a_idx = (Idx)std::distance(col_indices.cbegin(), found);
+                    a_idx = static_cast<Idx>(std::distance(col_indices.cbegin(), found));
                     // subtract
                     lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }

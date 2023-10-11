@@ -205,7 +205,7 @@ struct YBusStructure {
                 }
                 // all entries in the same position are looped, append indptr
                 // need to be offset by fill-in
-                y_bus_entry_indptr.push_back((Idx)(it_element - vec_map_element.cbegin()) - fill_in_counter);
+                y_bus_entry_indptr.push_back(static_cast<Idx>(it_element - vec_map_element.cbegin()) - fill_in_counter);
                 // iterate linear nnz
                 ++nnz_counter;
                 ++nnz_counter_lu;
@@ -253,9 +253,9 @@ struct YBusStructure {
         assert(row_start == n_bus);
         assert(row_start_lu == n_bus);
         // size of y_bus_entry_indptr is nnz + 1
-        assert((Idx)y_bus_entry_indptr.size() == nnz_counter + 1);
+        assert(static_cast<Idx>(y_bus_entry_indptr.size()) == nnz_counter + 1);
         // end of y_bus_entry_indptr is same as size of entry
-        assert(y_bus_entry_indptr.back() == (Idx)y_bus_element.size());
+        assert(y_bus_entry_indptr.back() == static_cast<Idx>(y_bus_element.size()));
 
         // construct transpose entry
         lu_transpose_entry.resize(nnz_counter_lu);
@@ -288,7 +288,7 @@ template <bool sym> class YBus {
     }
 
     // getter
-    Idx size() const { return (Idx)bus_entry().size(); }
+    Idx size() const { return static_cast<Idx>(bus_entry().size()); }
     Idx nnz() const { return row_indptr().back(); }
     Idx nnz_lu() const { return row_indptr_lu().back(); }
     IdxVector const& row_indptr() const { return y_bus_struct_->row_indptr; }

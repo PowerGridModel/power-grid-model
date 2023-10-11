@@ -11,11 +11,11 @@ namespace {
 auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     Idx count{0};
-    for (size_t i = 0; i < result.size(); i++) {
-        while (element_groups[count] == i) {
-            result[i + 1] = count++;
+    for (Idx group = 0; group < num_groups; group++) {
+        while (count < static_cast<Idx>(element_groups.size()) && element_groups[count] == group) {
+            result[group + 1] = count++;
         }
-        result[i + 1] = count;
+        result[group + 1] = count;
     }
     return result;
 }
@@ -26,12 +26,11 @@ template <std::same_as<DenseIdxVector> IdxVectorType> auto construct_from(IdxVec
 
 template <std::same_as<SparseIdxVector> IdxVectorType>
 auto construct_from(IdxVector const& element_groups, Idx num_groups) {
-    auto indptr = sparse_encode(element_groups, num_groups);
-    return SparseIdxVector{indptr};
+    return SparseIdxVector{sparse_encode(element_groups, num_groups)};
 }
 } // namespace
 
-TEST_CASE_TEMPLATE("Sparse idx data strucuture for topology", IdxVectorType, SparseIdxVector, DenseIdxVector) {
+TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, SparseIdxVector, DenseIdxVector) {
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
     Idx const num_groups{6};
     std::vector<boost::iterator_range<IdxCount>> expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
@@ -39,60 +38,108 @@ TEST_CASE_TEMPLATE("Sparse idx data strucuture for topology", IdxVectorType, Spa
 
     auto const idx_vector = construct_from<IdxVectorType>(groups, num_groups);
 
-    // Test get_element_range
-    std::vector<IdxCount> actual_idx_counts{};
-    for (size_t group_number = 0; group_number < num_groups; group_number++) {
-        CHECK(idx_vector.get_element_range(group_number) == expected_ranges[group_number]);
-    }
-
-    // Test get_group
-    for (size_t element = 0; element < groups.size(); element++) {
-        CHECK(idx_vector.get_group(element) == groups[element]);
-    }
-
-    // Test Iteration
-    std::vector<IdxCount> actual_elements{};
-    std::vector<boost::iterator_range<IdxCount>> actual_ranges{};
-    for (auto element_range : idx_vector) {
-        actual_ranges.push_back(element_range);
-        for (auto& element : element_range) {
-            actual_elements.push_back(element);
+    SUBCASE("Grouped Idx vector functionalities") {
+        // Test get_element_range
+        std::vector<IdxCount> actual_idx_counts{};
+        for (size_t group_number = 0; group_number < num_groups; group_number++) {
+            CHECK(idx_vector.get_element_range(group_number) == expected_ranges[group_number]);
         }
+
+        // Test get_group
+        for (size_t element = 0; element < groups.size(); element++) {
+            CHECK(idx_vector.get_group(element) == groups[element]);
+        }
+
+        // Test Iteration
+        std::vector<IdxCount> actual_elements{};
+        std::vector<boost::iterator_range<IdxCount>> actual_ranges{};
+        for (auto element_range : idx_vector) {
+            actual_ranges.push_back(element_range);
+            for (auto& element : element_range) {
+                actual_elements.push_back(element);
+            }
+        }
+        CHECK(actual_elements == expected_elements);
+        CHECK(actual_ranges == expected_ranges);
     }
-    CHECK(actual_elements == expected_elements);
-    CHECK(actual_ranges == expected_ranges);
+
+    SUBCASE("Zipped 1 grouped idx vector") {
+        // Test single zipped iteration
+        std::vector<boost::iterator_range<IdxCount>> actual_ranges{};
+        for (auto [element_range] : zip_sequence(idx_vector)) {
+            actual_ranges.push_back(element_range);
+        }
+        CHECK(actual_ranges == expected_ranges);
+    }
+
+    SUBCASE("Zipped 3 same grouped idx vectors") {
+        // Create additional 2 grouped idx vectors
+        auto const idx_vector_2 = construct_from<IdxVectorType>(groups, num_groups);
+        auto const idx_vector_3 = construct_from<IdxVectorType>(groups, num_groups);
+
+        // Test 3 zipped iterations
+        std::vector<boost::iterator_range<IdxCount>> actual_ranges_1{};
+        std::vector<boost::iterator_range<IdxCount>> actual_ranges_2{};
+        std::vector<boost::iterator_range<IdxCount>> actual_ranges_3{};
+        for (auto [element_range_1, element_range_2, element_range_3] :
+             zip_sequence(idx_vector, idx_vector_2, idx_vector_3)) {
+            actual_ranges_1.push_back(element_range_1);
+            actual_ranges_2.push_back(element_range_2);
+            actual_ranges_3.push_back(element_range_3);
+        }
+        CHECK(actual_ranges_1 == expected_ranges);
+        CHECK(actual_ranges_2 == expected_ranges);
+        CHECK(actual_ranges_3 == expected_ranges);
+    }
 }
 
-TEST_CASE("Zip iterator") {
-    IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
-    Idx const num_groups{6};
+template <typename first, typename second> struct TypePair {
+    using A = first;
+    using B = second;
+};
 
-    // Sparse vector to test
-    IdxVector const sample_indptr{0, 0, 3, 3, 6, 7, 7};
-    std::vector<IdxCount> expected_idx_counts_groups{0, 1, 2, 3, 4, 5, 6};
-    SparseIdxVector sparse_idx_vector{sample_indptr};
+TEST_CASE_TEMPLATE("2 different grouped structures tests with zip iterator", IdxVectorTypes,
+                   TypePair<SparseIdxVector, SparseIdxVector>, TypePair<SparseIdxVector, DenseIdxVector>,
+                   TypePair<DenseIdxVector, SparseIdxVector>, TypePair<DenseIdxVector, DenseIdxVector>) {
+    // First grouped idx vector and its expeceted elements and groups
+    IdxVector const first_groups{1, 1, 1, 3, 3, 3, 4};
+    Idx const first_num_groups{6};
+    std::vector<boost::iterator_range<IdxCount>> first_expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
+    std::vector<IdxCount> const first_expected_elements{0, 1, 2, 3, 4, 5, 6};
 
-    // 2nd sparse vector
-    IdxVector const sample_indptr_2{0, 0, 1, 3, 6, 6, 6};
-    std::vector<IdxCount> expected_idx_counts_groups_2{0, 1, 2, 3, 4, 5};
-    SparseIdxVector sparse_idx_vector_2{sample_indptr_2};
+    // Second grouped idx vector and its expeceted elements and groups
+    IdxVector const second_groups{1, 1, 3, 3, 4};
+    Idx const second_num_groups{6};
+    std::vector<boost::iterator_range<IdxCount>> second_expected_ranges{{0, 0}, {0, 2}, {2, 2}, {2, 4}, {4, 5}, {5, 5}};
+    std::vector<IdxCount> const second_expected_elements{0, 1, 2, 3, 4};
 
-    // Dense Vector (Same configuration as sparse)
-    DenseIdxVector dense_idx_vector{groups, num_groups};
+    // Construct both grouped idx vectors
+    using T1 = typename IdxVectorTypes::A;
+    using T2 = typename IdxVectorTypes::B;
+    auto const first_idx_vector = construct_from<T1>(first_groups, first_num_groups);
+    auto const second_idx_vector = construct_from<T2>(second_groups, second_num_groups);
 
-    // Check iteration for all groups for zipped 2 sparse vectors
-    std::vector<IdxCount> actual_idx_counts_groups{};
-    std::vector<IdxCount> actual_idx_counts_groups_2{};
-    for (auto const [group, group_2] : zip_sequence(sparse_idx_vector, sparse_idx_vector_2)) {
-        for (auto& element : group) {
-            actual_idx_counts_groups.push_back(element);
+    // Check iteration for all groups for zipped grouped idx vectors
+    std::vector<IdxCount> first_actual_idx_counts{};
+    std::vector<IdxCount> second_actual_idx_counts{};
+    std::vector<boost::iterator_range<IdxCount>> first_actual_ranges{};
+    std::vector<boost::iterator_range<IdxCount>> second_actual_ranges{};
+
+    for (auto const [first_group, second_group] : zip_sequence(first_idx_vector, second_idx_vector)) {
+        for (auto& element : first_group) {
+            first_actual_idx_counts.push_back(element);
         }
-        for (auto& element : group_2) {
-            actual_idx_counts_groups_2.push_back(element);
+        for (auto& element : second_group) {
+            second_actual_idx_counts.push_back(element);
         }
+        first_actual_ranges.push_back(first_group);
+        second_actual_ranges.push_back(second_group);
     }
-    CHECK(actual_idx_counts_groups == expected_idx_counts_groups);
-    CHECK(actual_idx_counts_groups_2 == expected_idx_counts_groups_2);
+
+    CHECK(first_actual_idx_counts == first_expected_elements);
+    CHECK(second_actual_idx_counts == second_expected_elements);
+    CHECK(first_actual_ranges == first_expected_ranges);
+    CHECK(second_actual_ranges == second_expected_ranges);
 }
 
 } // namespace power_grid_model
