@@ -632,7 +632,10 @@ class Topology {
 
     void couple_all_appliance() {
         // shunt
-        couple_object_components<&MathModelTopology::shunt_bus_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].shunt_buses = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.shunt_node_idx, comp_coup_.node}, comp_coup_.shunt);
 
         // load gen

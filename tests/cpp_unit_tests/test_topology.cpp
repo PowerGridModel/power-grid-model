@@ -89,10 +89,22 @@
  */
 
 namespace power_grid_model {
+
+namespace {
+
 std::ostream& operator<<(std::ostream& s, Idx2D const& idx) {
     s << "(" << idx.group << ", " << idx.pos << ")";
     return s;
 }
+
+template <grouped_idx_vector_type T> void check_equal(T const& first, T const& second) {
+    REQUIRE(first.size() == second.size());
+    for (auto [first, second] : zip_sequence(first, second)) {
+        CHECK(first == second);
+    }
+}
+
+} // namespace
 
 TEST_CASE("Test topology") {
     // component topology
@@ -243,7 +255,7 @@ TEST_CASE("Test topology") {
     math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
     math0.load_gen_bus_indptr = {0, 0, 0, 1, 1, 2};
     math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
-    math0.shunt_bus_indptr = {0, 0, 1, 1, 1, 1};
+    math0.shunt_buses = {from_sparse, {0, 0, 1, 1, 1, 1}};
     math0.voltage_sensor_indptr = {0, 2, 3, 4, 4, 4};
     math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math0.source_power_sensor_indptr = {0, 0};
@@ -266,7 +278,7 @@ TEST_CASE("Test topology") {
     math1.phase_shift = {0, 0, 0, 0};
     math1.load_gen_bus_indptr = {0, 0, 0, 0, 1};
     math1.load_gen_type = {LoadGenType::const_i};
-    math1.shunt_bus_indptr = {0, 1, 1, 1, 1};
+    math1.shunt_buses = {from_sparse, {0, 1, 1, 1, 1}};
     math1.voltage_sensor_indptr = {0, 0, 0, 0, 1};
     math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
     math1.source_power_sensor_indptr = {0, 2};
@@ -298,15 +310,12 @@ TEST_CASE("Test topology") {
             auto const& math_ref = math_topology_ref[i];
             CHECK(math.slack_bus_ == math_ref.slack_bus_);
             CHECK(math.n_bus() == math_ref.n_bus());
-            REQUIRE(math.source_buses.size() == math_ref.source_buses.size());
-            for (auto [first, second] : zip_sequence(math.source_buses, math_ref.source_buses)) {
-                CHECK(first == second);
-            }
+            check_equal(math.source_buses, math_ref.source_buses);
             CHECK(math.branch_bus_idx == math_ref.branch_bus_idx);
             CHECK(math.phase_shift == math_ref.phase_shift);
             CHECK(math.load_gen_bus_indptr == math_ref.load_gen_bus_indptr);
             CHECK(math.load_gen_type == math_ref.load_gen_type);
-            CHECK(math.shunt_bus_indptr == math_ref.shunt_bus_indptr);
+            check_equal(math.shunt_buses, math_ref.shunt_buses);
             CHECK(math.voltage_sensor_indptr == math_ref.voltage_sensor_indptr);
             CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
             CHECK(math.source_power_sensor_indptr == math_ref.source_power_sensor_indptr);

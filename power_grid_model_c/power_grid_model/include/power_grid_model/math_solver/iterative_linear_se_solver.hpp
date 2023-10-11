@@ -297,7 +297,7 @@ template <bool sym> class MeasuredValues {
                 }
             }
             // shunt
-            process_bus_objects(bus, topo.shunt_bus_indptr, topo.shunt_power_sensor_indptr, input.shunt_status,
+            process_bus_objects(bus, topo.shunt_buses, topo.shunt_power_sensor_indptr, input.shunt_status,
                                 input.measured_shunt_power, main_value_, idx_shunt_power_);
             // injection
             // load_gen
@@ -451,6 +451,7 @@ template <bool sym> class MeasuredValues {
 
     // process objects in batch for shunt, load_gen, source
     // return the status of the object type, if all the connected objects are measured
+    // TODO(mgovers): deprecate + remove
     static void process_bus_objects(Idx const bus, IdxVector const& obj_indptr, IdxVector const& sensor_indptr,
                                     IntSVector const& obj_status, std::vector<SensorCalcParam<sym>> const& input_data,
                                     std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
@@ -461,6 +462,7 @@ template <bool sym> class MeasuredValues {
 
     // process objects in batch for shunt, load_gen, source
     // return the status of the object type, if all the connected objects are measured
+    // TODO(mgovers): get element range of single bus instead of bus + objects
     static void process_bus_objects(Idx const bus, grouped_idx_vector_type auto const& objects,
                                     IdxVector const& sensor_indptr, IntSVector const& obj_status,
                                     std::vector<SensorCalcParam<sym>> const& input_data,
