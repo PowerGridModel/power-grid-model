@@ -32,7 +32,7 @@ namespace power_grid_model {
 
 namespace detail {
 
-auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     auto next_group = std::begin(element_groups);
     for (Idx group = 0; group < num_groups; group++) {
@@ -42,7 +42,7 @@ auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     return result;
 }
 
-auto sparse_decode(IdxVector const& indptr) {
+inline auto sparse_decode(IdxVector const& indptr) {
     auto result = IdxVector(indptr.back());
     for (Idx group{}; group < static_cast<Idx>(indptr.size()) - 1; ++group) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
