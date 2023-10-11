@@ -28,6 +28,12 @@ template <std::same_as<SparseIdxVector> IdxVectorType>
 auto construct_from(IdxVector const& element_groups, Idx num_groups) {
     return SparseIdxVector{sparse_encode(element_groups, num_groups)};
 }
+
+template <typename first, typename second> struct TypePair {
+    using A = first;
+    using B = second;
+};
+
 } // namespace
 
 TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, SparseIdxVector, DenseIdxVector) {
@@ -49,6 +55,10 @@ TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, Sp
         for (size_t element = 0; element < groups.size(); element++) {
             CHECK(idx_vector.get_group(element) == groups[element]);
         }
+
+        // Test sizes
+        CHECK(idx_vector.size() == num_groups);
+        CHECK(idx_vector.element_size() == expected_elements.size());
 
         // Test Iteration
         std::vector<IdxCount> actual_elements{};
@@ -93,31 +103,27 @@ TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, Sp
     }
 }
 
-template <typename first, typename second> struct TypePair {
-    using A = first;
-    using B = second;
-};
-
 TEST_CASE_TEMPLATE("2 different grouped structures tests with zip iterator", IdxVectorTypes,
                    TypePair<SparseIdxVector, SparseIdxVector>, TypePair<SparseIdxVector, DenseIdxVector>,
                    TypePair<DenseIdxVector, SparseIdxVector>, TypePair<DenseIdxVector, DenseIdxVector>) {
+    // Number of groups need to be equal
+    Idx const num_groups{6};
+
     // First grouped idx vector and its expeceted elements and groups
     IdxVector const first_groups{1, 1, 1, 3, 3, 3, 4};
-    Idx const first_num_groups{6};
     std::vector<boost::iterator_range<IdxCount>> first_expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
     std::vector<IdxCount> const first_expected_elements{0, 1, 2, 3, 4, 5, 6};
 
     // Second grouped idx vector and its expeceted elements and groups
-    IdxVector const second_groups{1, 1, 3, 3, 4};
-    Idx const second_num_groups{6};
-    std::vector<boost::iterator_range<IdxCount>> second_expected_ranges{{0, 0}, {0, 2}, {2, 2}, {2, 4}, {4, 5}, {5, 5}};
-    std::vector<IdxCount> const second_expected_elements{0, 1, 2, 3, 4};
+    IdxVector const second_groups{0, 1, 1, 3, 3, 4, 5, 5};
+    std::vector<boost::iterator_range<IdxCount>> second_expected_ranges{{0, 1}, {1, 3}, {3, 3}, {3, 5}, {5, 6}, {6, 8}};
+    std::vector<IdxCount> const second_expected_elements{0, 1, 2, 3, 4, 5, 6, 7};
 
     // Construct both grouped idx vectors
     using T1 = typename IdxVectorTypes::A;
     using T2 = typename IdxVectorTypes::B;
-    auto const first_idx_vector = construct_from<T1>(first_groups, first_num_groups);
-    auto const second_idx_vector = construct_from<T2>(second_groups, second_num_groups);
+    auto const first_idx_vector = construct_from<T1>(first_groups, num_groups);
+    auto const second_idx_vector = construct_from<T2>(second_groups, num_groups);
 
     // Check iteration for all groups for zipped grouped idx vectors
     std::vector<IdxCount> first_actual_idx_counts{};
