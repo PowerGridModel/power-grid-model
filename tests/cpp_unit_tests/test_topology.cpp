@@ -238,7 +238,7 @@ TEST_CASE("Test topology") {
     // Sub graph / math model 0
     MathModelTopology math0;
     math0.slack_bus_ = 4;
-    math0.source_buses = {from_sparse, IdxVector{0, 0, 0, 0, 0, 1}};
+    math0.source_buses = {from_sparse, {0, 0, 0, 0, 0, 1}};
     math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
     math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
     math0.load_gen_bus_indptr = {0, 0, 0, 1, 1, 2};
@@ -259,7 +259,7 @@ TEST_CASE("Test topology") {
     // Sub graph / math model 1
     MathModelTopology math1;
     math1.slack_bus_ = 3;
-    math1.source_buses = {from_sparse, IdxVector{0, 0, 0, 0, 1}};
+    math1.source_buses = {from_sparse, {0, 0, 0, 0, 1}};
     math1.branch_bus_idx = {
         {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
     };

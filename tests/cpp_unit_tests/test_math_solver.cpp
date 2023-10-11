@@ -142,7 +142,7 @@ TEST_CASE("Test math solver") {
     topo.slack_bus_ = 0;
     topo.phase_shift = {0.0, 0.0, -shift_val};
     topo.branch_bus_idx = {{0, 1}, {1, 2}};
-    topo.source_buses = {from_sparse, IdxVector{0, 1, 1, 1}};
+    topo.source_buses = {from_sparse, {0, 1, 1, 1}};
     topo.shunt_bus_indptr = {0, 0, 0, 1};
     topo.load_gen_bus_indptr = {0, 3, 6, 7};
     topo.load_gen_type = {
@@ -677,7 +677,7 @@ TEST_CASE("Short circuit solver") {
     topo_sc.slack_bus_ = 0;
     topo_sc.phase_shift = {0.0, 0.0};
     topo_sc.branch_bus_idx = {{0, 1}};
-    topo_sc.source_buses = {from_sparse, IdxVector{0, 1, 1}};
+    topo_sc.source_buses = {from_sparse, {0, 1, 1}};
     topo_sc.shunt_bus_indptr = {0, 0, 0};
     topo_sc.load_gen_bus_indptr = {0, 0, 0};
     IdxVector const fault_bus_indptr{0, 0, 1};
@@ -865,7 +865,7 @@ TEST_CASE("Short circuit solver") {
         topo_sc.slack_bus_ = 0;
         topo_comp.phase_shift = {0.0};
         topo_comp.branch_bus_idx = {};
-        topo_comp.source_buses = {from_sparse, IdxVector{0, 1}};
+        topo_comp.source_buses = {from_sparse, {0, 1}};
         topo_comp.shunt_bus_indptr = {0, 0};
         topo_comp.load_gen_bus_indptr = {0, 0};
         IdxVector const fault_bus_indptr_2 = {0, 1};
@@ -1040,7 +1040,7 @@ TEST_CASE("Math solver, zero variance test") {
     topo.slack_bus_ = 1;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
-    topo.source_buses = {from_sparse, IdxVector{0, 0, 1}};
+    topo.source_buses = {from_sparse, {0, 0, 1}};
     topo.shunt_bus_indptr = {0, 0, 0};
     topo.load_gen_bus_indptr = {0, 0, 0};
     topo.voltage_sensor_indptr = {0, 0, 1};
@@ -1082,7 +1082,7 @@ TEST_CASE("Math solver, measurements") {
     topo.slack_bus_ = 0;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
-    topo.source_buses = {from_sparse, IdxVector{0, 1, 1}};
+    topo.source_buses = {from_sparse, {0, 1, 1}};
     topo.shunt_bus_indptr = {0, 0, 0};
     topo.load_gen_bus_indptr = {0, 0, 1};
 
