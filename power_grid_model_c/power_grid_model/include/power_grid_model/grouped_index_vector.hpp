@@ -135,16 +135,6 @@ class SparseGroupedIdxVector {
     constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
 
   public:
-    SparseGroupedIdxVector() = default;
-    explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
-        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
-        assert(!indptr_.empty());
-    }
-    SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
-        : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
-    SparseGroupedIdxVector(from_dense_t /* tag */, IdxVector const& dense_group_elements, Idx num_groups)
-        : SparseGroupedIdxVector{detail::sparse_encode(dense_group_elements, num_groups)} {}
-
     constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
     constexpr auto begin() const { return group_iterator(0); }
     constexpr auto end() const { return group_iterator(size()); }
@@ -155,6 +145,18 @@ class SparseGroupedIdxVector {
         assert(element < element_size());
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
     }
+
+    SparseGroupedIdxVector() = default;
+    explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
+        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
+        assert(size() >= 0);
+        assert(element_size() >= 0);
+        assert(std::is_sorted(std::begin(indptr_), std::end(indptr_)));
+    }
+    SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
+        : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
+    SparseGroupedIdxVector(from_dense_t /* tag */, IdxVector const& dense_group_elements, Idx num_groups)
+        : SparseGroupedIdxVector{detail::sparse_encode(dense_group_elements, num_groups)} {}
 
   private:
     IdxVector indptr_;
@@ -202,15 +204,6 @@ class DenseGroupedIdxVector {
     constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
-    DenseGroupedIdxVector() = default;
-    explicit DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
-        : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {}
-    DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)
-        : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
-                                static_cast<Idx>(sparse_group_elements.size()) - 1} {}
-    DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
-        : DenseGroupedIdxVector{dense_group_elements, num_groups} {}
-
     constexpr auto size() const { return num_groups_; }
     constexpr auto begin() const { return group_iterator(Idx{}); }
     constexpr auto end() const { return group_iterator(size()); }
@@ -218,6 +211,20 @@ class DenseGroupedIdxVector {
     constexpr auto element_size() const { return static_cast<Idx>(dense_vector_.size()); }
     constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
     auto get_element_range(Idx group) const { return *group_iterator(group); }
+
+    DenseGroupedIdxVector() = default;
+    explicit DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
+        : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {
+        assert(size() >= 0);
+        assert(element_size() >= 0);
+        assert(std::is_sorted(std::begin(dense_vector_), std::end(dense_vector_)));
+        assert(dense_vector_.empty() || num_groups_ >= dense_vector.back());
+    }
+    DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)
+        : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
+                                static_cast<Idx>(sparse_group_elements.size()) - 1} {}
+    DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
+        : DenseGroupedIdxVector{dense_group_elements, num_groups} {}
 
   private:
     Idx num_groups_;
