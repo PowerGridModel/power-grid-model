@@ -54,7 +54,7 @@ class SparseIdxVector {
 
   public:
     SparseIdxVector() = default;
-    explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr.empty() ? IdxVector{0} : indptr) {
+    explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr.empty() ? IdxVector{0} : std::move(indptr)) {
         assert(!indptr.empty());
     }
 
@@ -109,6 +109,7 @@ class DenseIdxVector {
             group_ += n;
             group_range_ = std::equal_range(start, stop, group_);
         }
+        constexpr Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
     };
 
     constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
