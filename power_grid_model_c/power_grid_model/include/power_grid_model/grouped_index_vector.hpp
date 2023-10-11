@@ -54,45 +54,49 @@ constexpr auto sparse_decode(IdxVector const& indptr) {
 // we have to declare the relevant subset here ourselves.
 template <typename T, typename ElementType>
 concept iterator_like = requires(T const t) {
-    { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
-};
+                            { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
+                        };
 
 template <typename T, typename ElementType>
-concept random_access_iterator_like = iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
-    { t++ } -> std::same_as<T>;
-    { t-- } -> std::same_as<T>;
-    { ++t } -> std::same_as<T&>;
-    { --t } -> std::same_as<T&>;
+concept random_access_iterator_like =
+    iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
+                                                                    { t++ } -> std::same_as<T>;
+                                                                    { t-- } -> std::same_as<T>;
+                                                                    { ++t } -> std::same_as<T&>;
+                                                                    { --t } -> std::same_as<T&>;
 
-    { t + n } -> std::same_as<T>;
-    { t - n } -> std::same_as<T>;
-    { t += n } -> std::same_as<T&>;
-    { t -= n } -> std::same_as<T&>;
-};
+                                                                    { t + n } -> std::same_as<T>;
+                                                                    { t - n } -> std::same_as<T>;
+                                                                    { t += n } -> std::same_as<T&>;
+                                                                    { t -= n } -> std::same_as<T&>;
+                                                                };
 
 template <typename T, typename ElementType>
 concept random_access_iterable_like = requires(T const t) {
-    { t.begin() } -> random_access_iterator_like<ElementType>;
-    { t.end() } -> random_access_iterator_like<ElementType>;
-};
+                                          { t.begin() } -> random_access_iterator_like<ElementType>;
+                                          { t.end() } -> random_access_iterator_like<ElementType>;
+                                      };
 
 template <typename T>
-concept index_range_iterator = random_access_iterator_like<T, typename T::iterator> && requires(T const t) {
-    typename T::iterator;
-    { *t } -> random_access_iterable_like<Idx>;
-};
+concept index_range_iterator =
+    random_access_iterator_like<T, typename T::iterator> && requires(T const t) {
+                                                                typename T::iterator;
+                                                                { *t } -> random_access_iterable_like<Idx>;
+                                                            };
 
 template <typename T>
 concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {
-    { t.size() } -> std::same_as<Idx>;
+                                                                         { t.size() } -> std::same_as<Idx>;
 
-    { t.begin() } -> index_range_iterator;
-    { t.end() } -> index_range_iterator;
-    { t.get_element_range(idx) } -> random_access_iterable_like<Idx>;
+                                                                         { t.begin() } -> index_range_iterator;
+                                                                         { t.end() } -> index_range_iterator;
+                                                                         {
+                                                                             t.get_element_range(idx)
+                                                                             } -> random_access_iterable_like<Idx>;
 
-    { t.element_size() } -> std::same_as<Idx>;
-    { t.get_group(idx) } -> std::same_as<Idx>;
-};
+                                                                         { t.element_size() } -> std::same_as<Idx>;
+                                                                         { t.get_group(idx) } -> std::same_as<Idx>;
+                                                                     };
 } // namespace detail
 
 template <typename T>
