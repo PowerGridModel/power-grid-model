@@ -132,7 +132,10 @@ class DenseIdxVector {
 };
 
 template <typename T>
-concept grouped_idx_vector_type = std::is_same<T, SparseIdxVector>::value || std::is_same<T, DenseIdxVector>::value;
+concept grouped_idx_vector_type = std::same_as<T, SparseIdxVector> || std::same_as<T, DenseIdxVector>;
+
+static_assert(grouped_idx_vector_type<SparseIdxVector>);
+static_assert(grouped_idx_vector_type<DenseIdxVector>);
 
 inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
     auto all_equal_sizes = ((first.size() == rest.size()) && ...);
