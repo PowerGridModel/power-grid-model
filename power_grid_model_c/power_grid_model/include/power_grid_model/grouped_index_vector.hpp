@@ -224,7 +224,7 @@ class DenseGroupedIdxVector {
         : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
                                 static_cast<Idx>(sparse_group_elements.size()) - 1} {}
     DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
-        : DenseGroupedIdxVector{dense_group_elements, num_groups} {}
+        : DenseGroupedIdxVector{std::move(dense_group_elements), num_groups} {}
 
   private:
     Idx num_groups_;
