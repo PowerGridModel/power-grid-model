@@ -50,6 +50,14 @@ inline auto sparse_decode(IdxVector const& indptr) {
     return result;
 }
 
+template <typename T, typename U> constexpr auto narrow_cast(U value) {
+    if constexpr (std::same_as<T, U>) {
+        return value;
+    }
+    assert(std::in_range<T>(value));
+    return static_cast<T>(value);
+}
+
 // boost::iterator_range and boost::iterator_facade do not satisfy all requirements std::*_iterator concepts.
 // we have to declare the relevant subset here ourselves.
 template <typename T, typename ElementType>
@@ -185,8 +193,9 @@ class DenseGroupedIdxVector {
         friend class boost::iterator_core_access;
 
         boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(std::distance(std::cbegin(dense_vector_), group_range_.first),
-                                         std::distance(std::cbegin(dense_vector_), group_range_.second));
+            return boost::counting_range(
+                detail::narrow_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
+                detail::narrow_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
         }
         constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr void increment() { advance(1); }
