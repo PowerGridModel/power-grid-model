@@ -95,8 +95,9 @@ class DenseIdxVector {
         friend class boost::iterator_core_access;
 
         boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
-                                         static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
+            return boost::counting_range(
+                static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
+                static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
         }
         constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr void increment() { advance(1); }
@@ -131,11 +132,9 @@ class DenseIdxVector {
 };
 
 template <typename T>
-concept grouped_idx_vector_type =
-    std::is_same<T, const SparseIdxVector>::value || std::is_same<T, const DenseIdxVector>::value;
+concept grouped_idx_vector_type = std::is_same<T, SparseIdxVector>::value || std::is_same<T, DenseIdxVector>::value;
 
-template <grouped_idx_vector_type First, grouped_idx_vector_type... Rest>
-auto zip_sequence(First& first, Rest&... rest) {
+inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
     auto all_equal_sizes = ((first.size() == rest.size()) && ...);
     assert(all_equal_sizes);
     auto zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
