@@ -13,7 +13,7 @@
 namespace power_grid_model::common_solver_functions {
 
 template <bool sym>
-void add_sources(SparseIdxVector const& source_buses, Idx const& bus_number, YBus<sym> const& y_bus,
+void add_sources(SparseGroupedIdxVector const& source_buses, Idx const& bus_number, YBus<sym> const& y_bus,
                  ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
     for (Idx source_number : source_buses.get_element_range(bus_number)) {
         ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
@@ -34,7 +34,7 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
 
 template <bool sym>
 void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                             MathOutput<sym>& output, SparseIdxVector const& source_buses) {
+                             MathOutput<sym>& output, SparseGroupedIdxVector const& source_buses) {
     for (Idx source : source_buses.get_element_range(bus_number)) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];

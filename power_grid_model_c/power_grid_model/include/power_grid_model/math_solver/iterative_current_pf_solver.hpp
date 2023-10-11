@@ -117,7 +117,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
-        SparseIdxVector const& source_buses = *this->source_buses_;
+        SparseGroupedIdxVector const& source_buses = *this->source_buses_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
 
         // set rhs to zero for iteration start
@@ -185,7 +185,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     }
 
     void add_sources(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                     SparseIdxVector const& source_buses) {
+                     SparseGroupedIdxVector const& source_buses) {
         for (Idx source_number : source_buses.get_element_range(bus_number)) {
             // I_inj_i += Y_source_j * U_ref_j
             rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],

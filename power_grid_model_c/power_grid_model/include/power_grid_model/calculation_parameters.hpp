@@ -93,7 +93,7 @@ struct MathModelTopology {
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
-    SparseIdxVector source_buses; // TODO(mgovers) replace with DenseIdxVector
+    SparseGroupedIdxVector source_buses; // TODO(mgovers) replace with DenseGroupedIdxVector
     IdxVector shunt_bus_indptr;
     IdxVector load_gen_bus_indptr;
     std::vector<LoadGenType> load_gen_type;

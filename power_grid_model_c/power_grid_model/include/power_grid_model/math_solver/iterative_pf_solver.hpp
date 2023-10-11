@@ -125,7 +125,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<SparseIdxVector const> source_buses_;
+    std::shared_ptr<SparseGroupedIdxVector const> source_buses_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},

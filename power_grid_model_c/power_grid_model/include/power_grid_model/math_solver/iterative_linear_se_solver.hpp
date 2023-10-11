@@ -461,8 +461,9 @@ template <bool sym> class MeasuredValues {
 
     // process objects in batch for shunt, load_gen, source
     // return the status of the object type, if all the connected objects are measured
-    static void process_bus_objects(Idx const bus, SparseIdxVector const& objects, IdxVector const& sensor_indptr,
-                                    IntSVector const& obj_status, std::vector<SensorCalcParam<sym>> const& input_data,
+    static void process_bus_objects(Idx const bus, SparseGroupedIdxVector const& objects,
+                                    IdxVector const& sensor_indptr, IntSVector const& obj_status,
+                                    std::vector<SensorCalcParam<sym>> const& input_data,
                                     std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
         for (Idx obj : objects.get_element_range(bus)) {
             result_idx[obj] = process_one_object(obj, sensor_indptr, obj_status, input_data, result_data);

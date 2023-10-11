@@ -23,7 +23,7 @@ objects 6 is coupled to index 2
 
 Another intuitive way to look at this for python developers is like list of lists: [[0, 1, 2], [3, 4, 5], [6]].
 
-DenseIdxVector is a vector of element to group. ie. [0, 1, 1, 4] would denote that [[0], [1, 2], [], [], [3]]
+DenseGroupedIdxVector is a vector of element to group. ie. [0, 1, 1, 4] would denote that [[0], [1, 2], [], [], [3]]
 The input, ie. [0, 1, 3] should be strictly increasing
 
 */
@@ -31,6 +31,24 @@ The input, ie. [0, 1, 3] should be strictly increasing
 namespace power_grid_model {
 
 namespace detail {
+
+auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+    IdxVector result(num_groups + 1);
+    auto next_group = std::begin(element_groups);
+    for (Idx group = 0; group < num_groups; group++) {
+        next_group = std::upper_bound(next_group, std::end(element_groups), group);
+        result[group + 1] = std::distance(std::begin(element_groups), next_group);
+    }
+    return result;
+}
+
+auto sparse_decode(IdxVector const& indptr) {
+    auto result = IdxVector(indptr.back());
+    for (Idx group{}; group < static_cast<Idx>(indptr.size()) - 1; ++group) {
+        std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
+    }
+    return result;
+}
 
 // boost::iterator_range and boost::iterator_facade do not satisfy all requirements std::*_iterator concepts.
 // we have to declare the relevant subset here ourselves.
@@ -84,7 +102,15 @@ concept grouped_index_vector_type = std::default_initializable<T> && requires(T 
 template <typename T>
 concept grouped_idx_vector_type = detail::grouped_index_vector_type<T>;
 
-class SparseIdxVector {
+struct from_sparse_t {};
+struct from_dense_t {};
+
+constexpr auto from_sparse = from_sparse_t{};
+constexpr auto from_dense = from_dense_t{};
+
+class DenseGroupedIdxVector;
+
+class SparseGroupedIdxVector {
   private:
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
@@ -109,32 +135,35 @@ class SparseIdxVector {
     constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
 
   public:
-    SparseIdxVector() = default;
-    explicit SparseIdxVector(IdxVector indptr) : indptr_{indptr.empty() ? IdxVector{0} : std::move(indptr)} {
-        assert(!indptr_.empty());
-    }
-    SparseIdxVector(SparseIdxVector const&) = default;
-    SparseIdxVector(SparseIdxVector&&) = default;
-    SparseIdxVector& operator=(SparseIdxVector const&) = default;
-    SparseIdxVector& operator=(SparseIdxVector&&) = default;
-    ~SparseIdxVector() = default;
-
     constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
     constexpr auto begin() const { return group_iterator(0); }
     constexpr auto end() const { return group_iterator(size()); }
     auto get_element_range(Idx group) const { return *group_iterator(group); }
 
     constexpr auto element_size() const { return indptr_.back(); }
-    auto get_group(Idx element) const {
+    auto get_group(Idx element) const -> Idx {
         assert(element < element_size());
-        return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
+        return std::distance(std::begin(indptr_), std::upper_bound(std::begin(indptr_), std::end(indptr_), element)) -
+               1;
     }
+
+    SparseGroupedIdxVector() = default;
+    explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
+        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
+        assert(size() >= 0);
+        assert(element_size() >= 0);
+        assert(std::is_sorted(std::begin(indptr_), std::end(indptr_)));
+    }
+    SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
+        : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
+    SparseGroupedIdxVector(from_dense_t /* tag */, IdxVector const& dense_group_elements, Idx num_groups)
+        : SparseGroupedIdxVector{detail::sparse_encode(dense_group_elements, num_groups)} {}
 
   private:
     IdxVector indptr_;
 };
 
-class DenseIdxVector {
+class DenseGroupedIdxVector {
   private:
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
@@ -156,9 +185,8 @@ class DenseIdxVector {
         friend class boost::iterator_core_access;
 
         boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(
-                static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
-                static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
+            return boost::counting_range(std::distance(std::cbegin(dense_vector_), group_range_.first),
+                                         std::distance(std::cbegin(dense_vector_), group_range_.second));
         }
         constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr void increment() { advance(1); }
@@ -176,11 +204,7 @@ class DenseIdxVector {
     constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
-    DenseIdxVector() = default;
-    explicit DenseIdxVector(IdxVector dense_vector, Idx groups_size)
-        : dense_vector_(std::move(dense_vector)), groups_size_(groups_size) {}
-
-    constexpr auto size() const { return groups_size_; }
+    constexpr auto size() const { return num_groups_; }
     constexpr auto begin() const { return group_iterator(Idx{}); }
     constexpr auto end() const { return group_iterator(size()); }
 
@@ -188,19 +212,32 @@ class DenseIdxVector {
     constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
     auto get_element_range(Idx group) const { return *group_iterator(group); }
 
+    DenseGroupedIdxVector() = default;
+    explicit DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
+        : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {
+        assert(size() >= 0);
+        assert(element_size() >= 0);
+        assert(std::is_sorted(std::begin(dense_vector_), std::end(dense_vector_)));
+        assert(num_groups_ >= (dense_vector_.empty() ? 0 : dense_vector_.back()));
+    }
+    DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)
+        : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
+                                static_cast<Idx>(sparse_group_elements.size()) - 1} {}
+    DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
+        : DenseGroupedIdxVector{dense_group_elements, num_groups} {}
+
   private:
+    Idx num_groups_;
     IdxVector dense_vector_;
-    Idx groups_size_;
 };
 
-static_assert(grouped_idx_vector_type<SparseIdxVector>);
-static_assert(grouped_idx_vector_type<DenseIdxVector>);
+static_assert(grouped_idx_vector_type<SparseGroupedIdxVector>);
+static_assert(grouped_idx_vector_type<DenseGroupedIdxVector>);
 
 inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
-    auto all_equal_sizes = ((first.size() == rest.size()) && ...);
-    assert(all_equal_sizes);
-    auto zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
-    auto zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
+    assert(((first.size() == rest.size()) && ...));
+    auto const zip_begin = boost::make_zip_iterator(boost::make_tuple(std::begin(first), std::begin(rest)...));
+    auto const zip_end = boost::make_zip_iterator(boost::make_tuple(std::end(first), std::end(rest)...));
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 

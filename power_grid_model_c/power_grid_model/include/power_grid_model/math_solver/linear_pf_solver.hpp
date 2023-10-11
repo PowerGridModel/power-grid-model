@@ -86,7 +86,7 @@ template <bool sym> class LinearPFSolver {
     Idx n_bus_;
     // shared topo data
     std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
-    std::shared_ptr<SparseIdxVector const> source_buses_;
+    std::shared_ptr<SparseGroupedIdxVector const> source_buses_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
