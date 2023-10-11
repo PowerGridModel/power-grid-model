@@ -147,14 +147,14 @@ class SparseGroupedIdxVector {
                1;
     }
 
-    constexpr SparseGroupedIdxVector() = default;
-    explicit constexpr SparseGroupedIdxVector(IdxVector sparse_group_elements)
+    SparseGroupedIdxVector() = default;
+    explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
         : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
         assert(std::is_sorted(std::begin(indptr_), std::end(indptr_)));
     }
-    constexpr SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
+    SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
         : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
     SparseGroupedIdxVector(from_dense_t /* tag */, IdxVector const& dense_group_elements, Idx num_groups)
         : SparseGroupedIdxVector{detail::sparse_encode(dense_group_elements, num_groups)} {}
@@ -212,8 +212,8 @@ class DenseGroupedIdxVector {
     constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
     auto get_element_range(Idx group) const { return *group_iterator(group); }
 
-    constexpr DenseGroupedIdxVector() = default;
-    explicit constexpr DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
+    DenseGroupedIdxVector() = default;
+    explicit DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
         : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
@@ -223,7 +223,7 @@ class DenseGroupedIdxVector {
     DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)
         : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
                                 static_cast<Idx>(sparse_group_elements.size()) - 1} {}
-    constexpr DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
+    DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
         : DenseGroupedIdxVector{dense_group_elements, num_groups} {}
 
   private:
