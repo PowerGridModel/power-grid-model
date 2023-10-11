@@ -34,7 +34,7 @@ namespace detail {
 
 auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
-    auto next_group = element_groups.begin();
+    auto next_group = std::begin(element_groups);
     for (Idx group = 0; group < num_groups; group++) {
         next_group = std::upper_bound(next_group, std::end(element_groups), group);
         result[group + 1] = std::distance(std::begin(element_groups), next_group);
@@ -141,9 +141,10 @@ class SparseGroupedIdxVector {
     auto get_element_range(Idx group) const { return *group_iterator(group); }
 
     constexpr auto element_size() const { return indptr_.back(); }
-    auto get_group(Idx element) const {
+    auto get_group(Idx element) const -> Idx {
         assert(element < element_size());
-        return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
+        return std::distance(std::begin(indptr_), std::upper_bound(std::begin(indptr_), std::end(indptr_), element)) -
+               1;
     }
 
     constexpr SparseGroupedIdxVector() = default;
@@ -184,9 +185,8 @@ class DenseGroupedIdxVector {
         friend class boost::iterator_core_access;
 
         boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(
-                static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
-                static_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
+            return boost::counting_range(std::distance(std::cbegin(dense_vector_), group_range_.first),
+                                         std::distance(std::cbegin(dense_vector_), group_range_.second));
         }
         constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr void increment() { advance(1); }
@@ -236,8 +236,8 @@ static_assert(grouped_idx_vector_type<DenseGroupedIdxVector>);
 
 inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
     assert(((first.size() == rest.size()) && ...));
-    auto const zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
-    auto const zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
+    auto const zip_begin = boost::make_zip_iterator(boost::make_tuple(std::begin(first), std::begin(rest)...));
+    auto const zip_end = boost::make_zip_iterator(boost::make_tuple(std::end(first), std::end(rest)...));
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 
