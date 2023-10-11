@@ -67,7 +67,7 @@ template <bool sym> class ShortCircuitSolver {
     Idx n_fault_;
     Idx n_source_;
     // shared topo data
-    std::shared_ptr<SparseGroupedIdxVector const> source_buses_;
+    std::shared_ptr<DenseGroupedIdxVector const> source_buses_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver

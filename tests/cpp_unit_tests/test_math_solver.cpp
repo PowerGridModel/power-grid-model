@@ -677,7 +677,7 @@ TEST_CASE("Short circuit solver") {
     topo_sc.slack_bus_ = 0;
     topo_sc.phase_shift = {0.0, 0.0};
     topo_sc.branch_bus_idx = {{0, 1}};
-    topo_sc.source_buses = SparseGroupedIdxVector{IdxVector{0, 1, 1}};
+    topo_sc.source_buses = {from_sparse, IdxVector{0, 1, 1}};
     topo_sc.shunt_bus_indptr = {0, 0, 0};
     topo_sc.load_gen_bus_indptr = {0, 0, 0};
     IdxVector const fault_bus_indptr{0, 0, 1};
@@ -1040,7 +1040,7 @@ TEST_CASE("Math solver, zero variance test") {
     topo.slack_bus_ = 1;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
-    topo.source_buses = SparseGroupedIdxVector{IdxVector{0, 0, 1}};
+    topo.source_buses = {from_sparse, IdxVector{0, 0, 1}};
     topo.shunt_bus_indptr = {0, 0, 0};
     topo.load_gen_bus_indptr = {0, 0, 0};
     topo.voltage_sensor_indptr = {0, 0, 1};

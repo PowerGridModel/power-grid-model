@@ -259,7 +259,7 @@ TEST_CASE("Test topology") {
     // Sub graph / math model 1
     MathModelTopology math1;
     math1.slack_bus_ = 3;
-    math1.source_buses = SparseGroupedIdxVector{IdxVector{0, 0, 0, 0, 1}};
+    math1.source_buses = {from_sparse, IdxVector{0, 0, 0, 0, 1}};
     math1.branch_bus_idx = {
         {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
     };
