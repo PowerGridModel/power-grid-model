@@ -192,10 +192,9 @@ static_assert(grouped_idx_vector_type<SparseIdxVector>);
 static_assert(grouped_idx_vector_type<DenseIdxVector>);
 
 inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
-    auto all_equal_sizes = ((first.size() == rest.size()) && ...);
-    assert(all_equal_sizes);
-    auto zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
-    auto zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
+    assert(((first.size() == rest.size()) && ...));
+    auto const zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
+    auto const zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 
