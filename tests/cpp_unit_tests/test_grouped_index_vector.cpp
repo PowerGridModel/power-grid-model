@@ -120,10 +120,8 @@ TEST_CASE_TEMPLATE("2 different grouped structures tests with zip iterator", Idx
     std::vector<IdxCount> const second_expected_elements{0, 1, 2, 3, 4, 5, 6, 7};
 
     // Construct both grouped idx vectors
-    using T1 = typename IdxVectorTypes::A;
-    using T2 = typename IdxVectorTypes::B;
-    auto const first_idx_vector = construct_from<T1>(first_groups, num_groups);
-    auto const second_idx_vector = construct_from<T2>(second_groups, num_groups);
+    auto const first_idx_vector = construct_from<typename IdxVectorTypes::A>(first_groups, num_groups);
+    auto const second_idx_vector = construct_from<typename IdxVectorTypes::B>(second_groups, num_groups);
 
     // Check iteration for all groups for zipped grouped idx vectors
     std::vector<IdxCount> first_actual_idx_counts{};
