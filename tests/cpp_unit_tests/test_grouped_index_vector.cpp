@@ -8,25 +8,28 @@
 namespace power_grid_model {
 
 namespace {
-auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
-    IdxVector result(num_groups + 1);
-    Idx count{0};
-    for (Idx group = 0; group < num_groups; group++) {
-        while (count < static_cast<Idx>(element_groups.size()) && element_groups[count] == group) {
-            result[group + 1] = count++;
-        }
-        result[group + 1] = count;
-    }
-    return result;
-}
+using detail::sparse_encode;
 
-template <std::same_as<DenseIdxVector> IdxVectorType> auto construct_from(IdxVector element_groups, Idx num_groups) {
-    return DenseIdxVector{std::move(element_groups), num_groups};
-}
+struct from_natural_t {};
 
-template <std::same_as<SparseIdxVector> IdxVectorType>
+template <grouped_idx_vector_type IdxVectorType, std::same_as<from_dense_t> ConstructFromTag>
 auto construct_from(IdxVector const& element_groups, Idx num_groups) {
-    return SparseIdxVector{sparse_encode(element_groups, num_groups)};
+    return IdxVectorType{from_dense, element_groups, num_groups};
+}
+
+template <grouped_idx_vector_type IdxVectorType, std::same_as<from_sparse_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{from_sparse, sparse_encode(element_groups, num_groups)};
+}
+
+template <std::same_as<DenseGroupedIdxVector> IdxVectorType, std::same_as<from_natural_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{element_groups, num_groups};
+}
+
+template <std::same_as<SparseGroupedIdxVector> IdxVectorType, std::same_as<from_natural_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{sparse_encode(element_groups, num_groups)};
 }
 
 template <typename first, typename second> struct TypePair {
@@ -36,13 +39,19 @@ template <typename first, typename second> struct TypePair {
 
 } // namespace
 
-TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, SparseIdxVector, DenseIdxVector) {
+TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorConstructor,
+                   TypePair<SparseGroupedIdxVector, from_sparse_t>, TypePair<SparseGroupedIdxVector, from_dense_t>,
+                   TypePair<SparseGroupedIdxVector, from_natural_t>, TypePair<DenseGroupedIdxVector, from_sparse_t>,
+                   TypePair<DenseGroupedIdxVector, from_dense_t>, TypePair<DenseGroupedIdxVector, from_natural_t>) {
+    using IdxVectorType = typename IdxVectorConstructor::A;
+    using ConstructFromTag = typename IdxVectorConstructor::B;
+
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
     Idx const num_groups{6};
     std::vector<boost::iterator_range<IdxCount>> expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
     std::vector<IdxCount> const expected_elements{0, 1, 2, 3, 4, 5, 6};
 
-    auto const idx_vector = construct_from<IdxVectorType>(groups, num_groups);
+    auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
 
     SUBCASE("Grouped Idx vector functionalities") {
         // Test get_element_range
@@ -84,8 +93,8 @@ TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, Sp
 
     SUBCASE("Zipped 3 same grouped idx vectors") {
         // Create additional 2 grouped idx vectors
-        auto const idx_vector_2 = construct_from<IdxVectorType>(groups, num_groups);
-        auto const idx_vector_3 = construct_from<IdxVectorType>(groups, num_groups);
+        auto const idx_vector_2 = construct_from<IdxVectorType, from_natural_t>(groups, num_groups);
+        auto const idx_vector_3 = construct_from<IdxVectorType, from_natural_t>(groups, num_groups);
 
         // Test 3 zipped iterations
         std::vector<boost::iterator_range<IdxCount>> actual_ranges_1{};
@@ -104,8 +113,10 @@ TEST_CASE_TEMPLATE("Grouped idx data strucuture for topology", IdxVectorType, Sp
 }
 
 TEST_CASE_TEMPLATE("2 different grouped structures tests with zip iterator", IdxVectorTypes,
-                   TypePair<SparseIdxVector, SparseIdxVector>, TypePair<SparseIdxVector, DenseIdxVector>,
-                   TypePair<DenseIdxVector, SparseIdxVector>, TypePair<DenseIdxVector, DenseIdxVector>) {
+                   TypePair<SparseGroupedIdxVector, SparseGroupedIdxVector>,
+                   TypePair<SparseGroupedIdxVector, DenseGroupedIdxVector>,
+                   TypePair<DenseGroupedIdxVector, SparseGroupedIdxVector>,
+                   TypePair<DenseGroupedIdxVector, DenseGroupedIdxVector>) {
     // Number of groups need to be equal
     Idx const num_groups{6};
 
@@ -122,8 +133,8 @@ TEST_CASE_TEMPLATE("2 different grouped structures tests with zip iterator", Idx
     // Construct both grouped idx vectors
     using T1 = typename IdxVectorTypes::A;
     using T2 = typename IdxVectorTypes::B;
-    auto const first_idx_vector = construct_from<T1>(first_groups, num_groups);
-    auto const second_idx_vector = construct_from<T2>(second_groups, num_groups);
+    auto const first_idx_vector = construct_from<T1, from_natural_t>(first_groups, num_groups);
+    auto const second_idx_vector = construct_from<T2, from_natural_t>(second_groups, num_groups);
 
     // Check iteration for all groups for zipped grouped idx vectors
     std::vector<IdxCount> first_actual_idx_counts{};
