@@ -30,11 +30,67 @@ The input, ie. [0, 1, 3] should be strictly increasing
 
 namespace power_grid_model {
 
+namespace detail {
+
+// boost::iterator_range and boost::iterator_facade do not satisfy all requirements std::*_iterator concepts.
+// we have to declare the relevant subset here ourselves.
+template <typename T, typename ElementType>
+concept iterator_like = requires(T const t) {
+                            { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
+                        };
+
+template <typename T, typename ElementType>
+concept random_access_iterator_like =
+    iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
+                                                                    { t++ } -> std::same_as<T>;
+                                                                    { t-- } -> std::same_as<T>;
+                                                                    { ++t } -> std::same_as<T&>;
+                                                                    { --t } -> std::same_as<T&>;
+
+                                                                    { t + n } -> std::same_as<T>;
+                                                                    { t - n } -> std::same_as<T>;
+                                                                    { t += n } -> std::same_as<T&>;
+                                                                    { t -= n } -> std::same_as<T&>;
+                                                                };
+
+template <typename T, typename ElementType>
+concept random_access_iterable_like = requires(T const t) {
+                                          { t.begin() } -> random_access_iterator_like<ElementType>;
+                                          { t.end() } -> random_access_iterator_like<ElementType>;
+                                      };
+
+template <typename T>
+concept index_range_iterator =
+    random_access_iterator_like<T, typename T::iterator> && requires(T const t) {
+                                                                typename T::iterator;
+                                                                { *t } -> random_access_iterable_like<Idx>;
+                                                            };
+
+template <typename T>
+concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {
+                                                                         { t.size() } -> std::same_as<Idx>;
+
+                                                                         { t.begin() } -> index_range_iterator;
+                                                                         { t.end() } -> index_range_iterator;
+                                                                         {
+                                                                             t.get_element_range(idx)
+                                                                             } -> random_access_iterable_like<Idx>;
+
+                                                                         { t.element_size() } -> std::same_as<Idx>;
+                                                                         { t.get_group(idx) } -> std::same_as<Idx>;
+                                                                     };
+} // namespace detail
+
+template <typename T>
+concept grouped_idx_vector_type = detail::grouped_index_vector_type<T>;
+
 class SparseIdxVector {
   private:
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
+        using iterator = boost::iterator_range<IdxCount>;
+
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_(indptr), group_(group) {}
 
       private:
@@ -42,9 +98,7 @@ class SparseIdxVector {
         Idx group_;
         friend class boost::iterator_core_access;
 
-        boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(indptr_[group_], indptr_[group_ + 1]);
-        }
+        iterator dereference() const { return boost::counting_range(indptr_[group_], indptr_[group_ + 1]); }
         constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr void increment() { ++group_; }
         constexpr void decrement() { --group_; }
@@ -52,20 +106,20 @@ class SparseIdxVector {
         constexpr Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
     };
 
+    constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
+
   public:
     SparseIdxVector() = default;
-    explicit SparseIdxVector(IdxVector indptr) : indptr_(indptr.empty() ? IdxVector{0} : std::move(indptr)) {
-        assert(!indptr.empty());
+    explicit SparseIdxVector(IdxVector indptr) : indptr_{indptr.empty() ? IdxVector{0} : std::move(indptr)} {
+        assert(!indptr_.empty());
     }
 
     constexpr auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
-    constexpr auto begin() const { return GroupIterator(indptr_, 0); }
-    constexpr auto end() const { return GroupIterator(indptr_, size()); }
+    constexpr auto begin() const { return group_iterator(0); }
+    constexpr auto end() const { return group_iterator(size()); }
+    auto get_element_range(Idx group) const { return *group_iterator(group); }
 
     constexpr auto element_size() const { return indptr_.back(); }
-    auto get_element_range(Idx group) const {
-        return boost::iterator_range<IdxCount>(indptr_[group], indptr_[group + 1]);
-    }
     auto get_group(Idx element) const {
         assert(element < element_size());
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
@@ -80,6 +134,8 @@ class DenseIdxVector {
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
       public:
+        using iterator = boost::iterator_range<IdxCount>;
+
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
             : dense_vector_{dense_vector},
               group_{group},
@@ -123,7 +179,7 @@ class DenseIdxVector {
     constexpr auto begin() const { return group_iterator(Idx{}); }
     constexpr auto end() const { return group_iterator(size()); }
 
-    constexpr auto element_size() const { return dense_vector_.size(); }
+    constexpr auto element_size() const { return static_cast<Idx>(dense_vector_.size()); }
     constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
     auto get_element_range(Idx group) const { return *group_iterator(group); }
 
@@ -132,17 +188,13 @@ class DenseIdxVector {
     Idx groups_size_;
 };
 
-template <typename T>
-concept grouped_idx_vector_type = std::same_as<T, SparseIdxVector> || std::same_as<T, DenseIdxVector>;
-
 static_assert(grouped_idx_vector_type<SparseIdxVector>);
 static_assert(grouped_idx_vector_type<DenseIdxVector>);
 
 inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
-    auto all_equal_sizes = ((first.size() == rest.size()) && ...);
-    assert(all_equal_sizes);
-    auto zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
-    auto zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
+    assert(((first.size() == rest.size()) && ...));
+    auto const zip_begin = boost::make_zip_iterator(boost::make_tuple(first.begin(), rest.begin()...));
+    auto const zip_end = boost::make_zip_iterator(boost::make_tuple(first.end(), rest.end()...));
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 
