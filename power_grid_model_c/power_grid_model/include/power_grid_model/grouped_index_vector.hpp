@@ -32,7 +32,7 @@ namespace power_grid_model {
 
 namespace detail {
 
-constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     auto next_group = element_groups.begin();
     for (Idx group = 0; group < num_groups; group++) {
@@ -42,7 +42,7 @@ constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     return result;
 }
 
-constexpr auto sparse_decode(IdxVector const& indptr) {
+auto sparse_decode(IdxVector const& indptr) {
     auto result = IdxVector(indptr.back());
     for (Idx group{}; group < static_cast<Idx>(indptr.size()) - 1; ++group) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
@@ -146,14 +146,14 @@ class SparseGroupedIdxVector {
         return static_cast<Idx>(std::upper_bound(indptr_.begin(), indptr_.end(), element) - indptr_.begin() - 1);
     }
 
-    SparseGroupedIdxVector() = default;
-    explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
+    constexpr SparseGroupedIdxVector() = default;
+    explicit constexpr SparseGroupedIdxVector(IdxVector sparse_group_elements)
         : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
         assert(std::is_sorted(std::begin(indptr_), std::end(indptr_)));
     }
-    SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
+    constexpr SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
         : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
     SparseGroupedIdxVector(from_dense_t /* tag */, IdxVector const& dense_group_elements, Idx num_groups)
         : SparseGroupedIdxVector{detail::sparse_encode(dense_group_elements, num_groups)} {}
@@ -212,18 +212,18 @@ class DenseGroupedIdxVector {
     constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
     auto get_element_range(Idx group) const { return *group_iterator(group); }
 
-    DenseGroupedIdxVector() = default;
-    explicit DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
+    constexpr DenseGroupedIdxVector() = default;
+    explicit constexpr DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
         : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
         assert(std::is_sorted(std::begin(dense_vector_), std::end(dense_vector_)));
-        assert(dense_vector_.empty() || num_groups_ >= dense_vector.back());
+        assert(num_groups_ >= (dense_vector_.empty() ? 0 : dense_vector_.back()));
     }
     DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)
         : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
                                 static_cast<Idx>(sparse_group_elements.size()) - 1} {}
-    DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
+    constexpr DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
         : DenseGroupedIdxVector{dense_group_elements, num_groups} {}
 
   private:
