@@ -111,7 +111,7 @@ class SparseIdxVector {
   public:
     SparseIdxVector() = default;
     explicit SparseIdxVector(IdxVector indptr) : indptr_{indptr.empty() ? IdxVector{0} : std::move(indptr)} {
-        assert(!indptr.empty());
+        assert(!indptr_.empty());
     }
     SparseIdxVector(SparseIdxVector const&) = default;
     SparseIdxVector(SparseIdxVector&&) = default;
