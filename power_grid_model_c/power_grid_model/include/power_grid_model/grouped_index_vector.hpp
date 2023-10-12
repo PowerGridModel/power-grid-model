@@ -11,6 +11,7 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/zip_iterator.hpp>
 #include <boost/range.hpp>
+#include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/counting_range.hpp>
 
 /*
@@ -253,10 +254,16 @@ class DenseGroupedIdxVector {
 static_assert(grouped_idx_vector_type<SparseGroupedIdxVector>);
 static_assert(grouped_idx_vector_type<DenseGroupedIdxVector>);
 
-inline auto zip_sequence(grouped_idx_vector_type auto const& first, grouped_idx_vector_type auto const&... rest) {
+inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
+                                    grouped_idx_vector_type auto const&... rest) {
     assert(((first.size() == rest.size()) && ...));
-    auto const zip_begin = boost::make_zip_iterator(boost::make_tuple(std::begin(first), std::begin(rest)...));
-    auto const zip_end = boost::make_zip_iterator(boost::make_tuple(std::end(first), std::end(rest)...));
+
+    auto const indices = boost::counting_range(Idx{}, first.size());
+
+    auto const zip_begin =
+        boost::make_zip_iterator(boost::make_tuple(std::begin(indices), std::begin(first), std::begin(rest)...));
+    auto const zip_end =
+        boost::make_zip_iterator(boost::make_tuple(std::end(indices), std::end(first), std::end(rest)...));
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 
