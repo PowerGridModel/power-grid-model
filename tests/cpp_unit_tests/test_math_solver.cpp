@@ -152,7 +152,7 @@ TEST_CASE("Test math solver") {
     };
     topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
     topo.bus_power_sensor_indptr = {0, 1, 1, 1};
-    topo.source_power_sensor_indptr = {0, 2};
+    topo.power_sensors_per_source = {from_sparse, {0, 2}};
     topo.load_gen_power_sensor_indptr = {0, 0, 0, 0, 1, 2, 3, 4};
     topo.shunt_power_sensor_indptr = {0, 1};
     topo.branch_from_power_sensor_indptr = {0, 1, 1};
@@ -1045,7 +1045,7 @@ TEST_CASE("Math solver, zero variance test") {
     topo.load_gens_per_bus = {from_sparse, {0, 0, 0}};
     topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 1}};
     topo.bus_power_sensor_indptr = {0, 0, 0};
-    topo.source_power_sensor_indptr = {0, 0};
+    topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.load_gen_power_sensor_indptr = {0};
     topo.shunt_power_sensor_indptr = {0};
     topo.branch_from_power_sensor_indptr = {0, 0};
@@ -1088,7 +1088,7 @@ TEST_CASE("Math solver, measurements") {
 
     topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
     topo.bus_power_sensor_indptr = {0, 0, 0};
-    topo.source_power_sensor_indptr = {0, 0};
+    topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.load_gen_power_sensor_indptr = {0, 0};
     topo.shunt_power_sensor_indptr = {0};
     topo.branch_from_power_sensor_indptr = {0, 0};
@@ -1114,7 +1114,7 @@ TEST_CASE("Math solver, measurements") {
         source_0(p)               load_0
 
         */
-        topo.source_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.branch_from_power_sensor_indptr = {0, 1};
 
         se_input.measured_source_power = {{1.93, 0.1}};
@@ -1167,7 +1167,7 @@ TEST_CASE("Math solver, measurements") {
 
         */
         topo.bus_power_sensor_indptr = {0, 1, 1};
-        topo.source_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.branch_from_power_sensor_indptr = {0, 1};
 
         se_input.measured_bus_injection = {{2.2, 0.2}};
@@ -1195,7 +1195,7 @@ TEST_CASE("Math solver, measurements") {
 
         */
         topo.bus_power_sensor_indptr = {0, 1, 1};
-        topo.source_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.branch_from_power_sensor_indptr = {0, 1};
 
         se_input.measured_bus_injection = {{2.2, 0.2}};

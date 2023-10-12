@@ -98,7 +98,7 @@ struct MathModelTopology {
     SparseGroupedIdxVector load_gens_per_bus;
     std::vector<LoadGenType> load_gen_type;
     SparseGroupedIdxVector voltage_sensors_per_bus;
-    IdxVector source_power_sensors;            // indptr of the source
+    SparseGroupedIdxVector power_sensors_per_source;
     IdxVector load_gen_power_sensor_indptr;    // indptr of the load_gen
     IdxVector shunt_power_sensor_indptr;       // indptr of the shunt
     IdxVector branch_from_power_sensor_indptr; // indptr of the branch
@@ -117,7 +117,7 @@ struct MathModelTopology {
 
     Idx n_voltage_sensor() const { return voltage_sensors_per_bus.element_size(); }
 
-    Idx n_source_power_sensor() const { return source_power_sensor_indptr.back(); }
+    Idx n_source_power_sensor() const { return power_sensors_per_source.element_size(); }
 
     Idx n_load_gen_power_sensor() const { return load_gen_power_sensor_indptr.back(); }
 

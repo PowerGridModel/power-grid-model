@@ -94,6 +94,8 @@ concept index_range_iterator =
 
 template <typename T>
 concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {
+                                                                         typename T::iterator;
+
                                                                          { t.size() } -> std::same_as<Idx>;
 
                                                                          { t.begin() } -> index_range_iterator;
@@ -143,6 +145,8 @@ class SparseGroupedIdxVector {
     constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
 
   public:
+    using iterator = GroupIterator;
+
     auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
     auto begin() const { return group_iterator(0); }
     auto end() const { return group_iterator(size()); }
@@ -213,6 +217,8 @@ class DenseGroupedIdxVector {
     constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
+    using iterator = GroupIterator;
+
     auto size() const { return num_groups_; }
     auto begin() const { return group_iterator(Idx{}); }
     auto end() const { return group_iterator(size()); }

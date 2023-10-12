@@ -675,7 +675,10 @@ class Topology {
             {comp_topo_.voltage_sensor_node_idx, comp_coup_.node}, comp_coup_.voltage_sensor);
 
         // source power sensors
-        couple_object_components<&MathModelTopology::source_power_sensor_indptr, &MathModelTopology::n_source>(
+        couple_object_components<&MathModelTopology::n_source>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_source = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
 

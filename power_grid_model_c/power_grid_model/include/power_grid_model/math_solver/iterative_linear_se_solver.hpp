@@ -303,7 +303,7 @@ template <bool sym> class MeasuredValues {
             process_bus_objects(bus, topo.load_gens_per_bus, topo.load_gen_power_sensor_indptr, input.load_gen_status,
                                 input.measured_load_gen_power, extra_value_, idx_load_gen_power_);
             // source
-            process_bus_objects(bus, topo.sources_per_bus, topo.source_power_sensor_indptr, input.source_status,
+            process_bus_objects(bus, topo.sources_per_bus, topo.power_sensors_per_source, input.source_status,
                                 input.measured_source_power, extra_value_, idx_source_power_);
 
             combine_appliances_to_injection_measurements(input, topo, bus);
@@ -498,7 +498,7 @@ template <bool sym> class MeasuredValues {
 
     // process objects in batch for shunt, load_gen, source
     // return the status of the object type, if all the connected objects are measured
-    // TODO(mgovers): get element range of single bus instead of bus + objects
+    // TODO(mgovers): deprecate + remove
     static void process_bus_objects(Idx const bus, grouped_idx_vector_type auto const& objects,
                                     IdxVector const& sensor_indptr, IntSVector const& obj_status,
                                     std::vector<SensorCalcParam<sym>> const& input_data,
@@ -508,8 +508,22 @@ template <bool sym> class MeasuredValues {
         }
     }
 
+    // process objects in batch for shunt, load_gen, source
+    // return the status of the object type, if all the connected objects are measured
+    // TODO(mgovers): get element range of single bus instead of bus + objects
+    static void process_bus_objects(Idx const bus, grouped_idx_vector_type auto const& objects,
+                                    grouped_idx_vector_type auto const& sensors, IntSVector const& obj_status,
+                                    std::vector<SensorCalcParam<sym>> const& input_data,
+                                    std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
+        for (Idx obj : objects.get_element_range(bus)) {
+            result_idx[obj] = process_one_object(obj, sensors, obj_status, input_data, result_data);
+        }
+    }
+
     // process one object
     static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
+
+    // TODO(mgovers): deprecate + remove
     template <class TS, class StatusChecker = decltype(default_status_checker)>
     static Idx process_one_object(Idx const obj, IdxVector const& sensor_indptr, std::vector<TS> const& obj_status,
                                   std::vector<SensorCalcParam<sym>> const& input_data,
@@ -524,6 +538,24 @@ template <bool sym> class MeasuredValues {
             return unmeasured;
         }
         result_data.push_back(combine_measurements(input_data, begin, end));
+        return static_cast<Idx>(result_data.size()) - 1;
+    }
+
+    // process one object
+    template <class TS, class StatusChecker = decltype(default_status_checker)>
+    static Idx process_one_object(Idx const obj, grouped_idx_vector_type auto const& sensors_per_obj,
+                                  std::vector<TS> const& obj_status,
+                                  std::vector<SensorCalcParam<sym>> const& input_data,
+                                  std::vector<SensorCalcParam<sym>>& result_data,
+                                  StatusChecker status_checker = default_status_checker) {
+        if (!status_checker(obj_status[obj])) {
+            return disconnected;
+        }
+        auto const sensors = sensors_per_obj.get_element_range(obj);
+        if (boost::empty(sensors) == 0) {
+            return unmeasured;
+        }
+        result_data.push_back(combine_measurements(input_data, sensors));
         return static_cast<Idx>(result_data.size()) - 1;
     }
 
