@@ -58,7 +58,9 @@ template <typename T, typename U> constexpr auto narrow_cast(U value) {
     return static_cast<T>(value);
 }
 
-// boost::iterator_range and boost::iterator_facade do not satisfy all requirements std::*_iterator concepts.
+// TODO(mgovers): replace the below relevant subset here ourselves with the STD equivalent when we have std::ranges.
+// boost::counting_iterator does not satisfy all requirements std::*_iterator concepts:
+static_assert(!std::random_access_iterator<IdxCount>);
 // we have to declare the relevant subset here ourselves.
 template <typename T, typename ElementType>
 concept iterator_like = requires(T const t) {
@@ -67,17 +69,17 @@ concept iterator_like = requires(T const t) {
 
 template <typename T, typename ElementType>
 concept random_access_iterator_like =
-    iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
-                                                                    { t++ } -> std::same_as<T>;
-                                                                    { t-- } -> std::same_as<T>;
-                                                                    { ++t } -> std::same_as<T&>;
-                                                                    { --t } -> std::same_as<T&>;
+    std::regular<T> && iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
+                                                                                       { t++ } -> std::same_as<T>;
+                                                                                       { t-- } -> std::same_as<T>;
+                                                                                       { ++t } -> std::same_as<T&>;
+                                                                                       { --t } -> std::same_as<T&>;
 
-                                                                    { t + n } -> std::same_as<T>;
-                                                                    { t - n } -> std::same_as<T>;
-                                                                    { t += n } -> std::same_as<T&>;
-                                                                    { t -= n } -> std::same_as<T&>;
-                                                                };
+                                                                                       { t + n } -> std::same_as<T>;
+                                                                                       { t - n } -> std::same_as<T>;
+                                                                                       { t += n } -> std::same_as<T&>;
+                                                                                       { t -= n } -> std::same_as<T&>;
+                                                                                   };
 
 template <typename T, typename ElementType>
 concept random_access_iterable_like = requires(T const t) {
@@ -122,25 +124,38 @@ class SparseGroupedIdxVector {
   private:
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
+      private:
+        static auto get_iterator(IdxVector const& indptr, Idx group) {
+            return boost::counting_range(indptr[group], indptr[group + 1]);
+        }
+
       public:
         using iterator = boost::iterator_range<IdxCount>;
 
-        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_(indptr), group_(group) {}
+        GroupIterator() = default;
+        explicit GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} { advance(0); }
 
       private:
-        IdxVector const& indptr_;
-        Idx group_;
+        IdxVector const* indptr_{};
+        Idx group_{};
+        iterator current_{};
+
         friend class boost::iterator_core_access;
 
-        iterator dereference() const { return boost::counting_range(indptr_[group_], indptr_[group_ + 1]); }
-        constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
-        constexpr void increment() { ++group_; }
-        constexpr void decrement() { --group_; }
-        constexpr void advance(Idx n) { group_ += n; }
-        constexpr Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
+        constexpr auto dereference() const -> iterator const& { return current_; }
+        constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
+        constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
+
+        void increment() { ++group_; }
+        void decrement() { --group_; }
+        void advance(Idx n) {
+            assert(indptr_ != nullptr);
+            group_ += n;
+            current_ = get_iterator(*indptr_, group_);
+        }
     };
 
-    constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
+    auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
 
   public:
     auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
@@ -175,42 +190,53 @@ class DenseGroupedIdxVector {
   private:
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
                                                         boost::iterator_range<IdxCount>, Idx> {
-      public:
-        using iterator = boost::iterator_range<IdxCount>;
-
-        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
-            : dense_vector_{dense_vector},
-              group_{group},
-              group_range_{std::equal_range(std::cbegin(dense_vector_), std::cend(dense_vector_), group)} {}
-
       private:
         using group_iterator = IdxVector::const_iterator;
 
-        IdxVector const& dense_vector_;
-        Idx group_;
-        std::pair<group_iterator, group_iterator> group_range_;
+        static auto get_iterator(IdxVector const& dense_vector,
+                                 std::pair<group_iterator, group_iterator> const& group_range) {
+            return boost::counting_range(
+                detail::narrow_cast<Idx>(std::distance(std::cbegin(dense_vector), group_range.first)),
+                detail::narrow_cast<Idx>(std::distance(std::cbegin(dense_vector), group_range.second)));
+        }
+
+      public:
+        using iterator = boost::iterator_range<IdxCount>;
+
+        GroupIterator() = default;
+        explicit GroupIterator(IdxVector const& dense_vector, Idx const& group)
+            : dense_vector_{&dense_vector},
+              group_{group},
+              group_range_{std::equal_range(std::cbegin(*dense_vector_), std::cend(*dense_vector_), group)},
+              current_{get_iterator(*dense_vector_, group_range_)} {}
+
+      private:
+        IdxVector const* dense_vector_{};
+        Idx group_{};
+        std::pair<group_iterator, group_iterator> group_range_{};
+        iterator current_{};
 
         friend class boost::iterator_core_access;
 
-        boost::iterator_range<IdxCount> dereference() const {
-            return boost::counting_range(
-                detail::narrow_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.first)),
-                detail::narrow_cast<Idx>(std::distance(std::cbegin(dense_vector_), group_range_.second)));
-        }
-        constexpr bool equal(GroupIterator const& other) const { return group_ == other.group_; }
-        constexpr void increment() { advance(1); }
-        constexpr void decrement() { advance(-1); }
-        constexpr void advance(Idx n) {
-            auto const start = n > 0 ? group_range_.second : std::cbegin(dense_vector_);
-            auto const stop = n > 0 ? std::cend(dense_vector_) : group_range_.first;
+        constexpr auto dereference() const -> iterator const& { return current_; }
+        constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
+        constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
+
+        void increment() { advance(1); }
+        void decrement() { advance(-1); }
+        void advance(Idx n) {
+            assert(dense_vector_ != nullptr);
+
+            auto const start = n > 0 ? group_range_.second : std::cbegin(*dense_vector_);
+            auto const stop = n < 0 ? group_range_.first : std::cend(*dense_vector_);
 
             group_ += n;
             group_range_ = std::equal_range(start, stop, group_);
+            current_ = get_iterator(*dense_vector_, group_range_);
         }
-        constexpr Idx distance_to(GroupIterator const& other) const { return other.group_ - group_; }
     };
 
-    constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
+    auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
     auto size() const { return num_groups_; }
