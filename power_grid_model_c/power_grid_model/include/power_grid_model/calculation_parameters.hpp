@@ -101,9 +101,9 @@ struct MathModelTopology {
     SparseGroupedIdxVector power_sensors_per_source;
     SparseGroupedIdxVector power_sensors_per_load_gen;
     SparseGroupedIdxVector power_sensors_per_shunt;
-    SparseGroupedIdxVector power_sensors_per_branch_from; // indptr of the branch
-    SparseGroupedIdxVector power_sensors_per_branch_to;   // indptr of the branch
-    IdxVector bus_power_sensor_indptr;                    // indptr of the bus
+    SparseGroupedIdxVector power_sensors_per_branch_from;
+    SparseGroupedIdxVector power_sensors_per_branch_to;
+    SparseGroupedIdxVector power_sensors_per_bus;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
@@ -127,7 +127,7 @@ struct MathModelTopology {
 
     Idx n_branch_to_power_sensor() const { return power_sensors_per_branch_to.element_size(); }
 
-    Idx n_bus_power_sensor() const { return bus_power_sensor_indptr.back(); }
+    Idx n_bus_power_sensor() const { return power_sensors_per_bus.element_size(); }
 };
 
 template <bool sym> struct MathModelParam {

@@ -732,7 +732,10 @@ class Topology {
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
 
         // node injection power sensors
-        couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_bus = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }

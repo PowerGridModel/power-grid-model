@@ -332,8 +332,8 @@ template <bool sym> class MeasuredValues {
 
         // get direct bus injection measurement. It has infinite variance if there is no direct bus injection
         // measurement
-        SensorCalcParam<sym> const direct_injection_measurement = combine_measurements(
-            input.measured_bus_injection, topo.bus_power_sensor_indptr[bus], topo.bus_power_sensor_indptr[bus + 1]);
+        SensorCalcParam<sym> const direct_injection_measurement =
+            combine_measurements(input.measured_bus_injection, topo.power_sensors_per_bus.get_element_range(bus));
 
         // combine valid appliance_injection_measurement and direct_injection_measurement
         // three scenarios; check if we have valid injection measurement
