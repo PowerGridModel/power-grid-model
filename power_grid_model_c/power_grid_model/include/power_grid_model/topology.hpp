@@ -683,7 +683,10 @@ class Topology {
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
 
         // shunt power sensors
-        couple_object_components<&MathModelTopology::shunt_power_sensor_indptr, &MathModelTopology::n_shunt>(
+        couple_object_components<&MathModelTopology::n_shunt>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_shunt = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
 
@@ -712,13 +715,20 @@ class Topology {
         SensorBranchObjectFinder const object_finder_from_sensor{comp_topo_.power_sensor_object_idx,
                                                                  comp_topo_.power_sensor_terminal_type,
                                                                  comp_coup_.branch, comp_coup_.branch3};
-        couple_object_components<&MathModelTopology::branch_from_power_sensor_indptr, &MathModelTopology::n_branch>(
+
+        // branch 'from' power sensors
+        couple_object_components<&MathModelTopology::n_branch>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_branch_from = {from_sparse, std::move(indptr)};
+            },
             object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
 
         // branch 'to' power sensors
-        couple_object_components<&MathModelTopology::branch_to_power_sensor_indptr, &MathModelTopology::n_branch>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor,
-            [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
+        couple_object_components<&MathModelTopology::n_branch>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_branch_to = {from_sparse, std::move(indptr)};
+            },
+            object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
 
         // node injection power sensors
         couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(

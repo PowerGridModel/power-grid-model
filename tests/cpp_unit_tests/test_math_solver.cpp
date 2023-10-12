@@ -154,9 +154,9 @@ TEST_CASE("Test math solver") {
     topo.bus_power_sensor_indptr = {0, 1, 1, 1};
     topo.power_sensors_per_source = {from_sparse, {0, 2}};
     topo.power_sensors_per_load_gen = {from_sparse, {0, 0, 0, 0, 1, 2, 3, 4}};
-    topo.shunt_power_sensor_indptr = {0, 1};
-    topo.branch_from_power_sensor_indptr = {0, 1, 1};
-    topo.branch_to_power_sensor_indptr = {0, 2, 3};
+    topo.power_sensors_per_shunt = {from_sparse, {0, 1}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 1}};
+    topo.power_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
 
     // build param, pf input, output, backwards
     MathModelParam<true> param;
@@ -1047,9 +1047,9 @@ TEST_CASE("Math solver, zero variance test") {
     topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.power_sensors_per_load_gen = {from_sparse, {0}};
-    topo.shunt_power_sensor_indptr = {0};
-    topo.branch_from_power_sensor_indptr = {0, 0};
-    topo.branch_to_power_sensor_indptr = {0, 0};
+    topo.power_sensors_per_shunt = {from_sparse, {0}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
+    topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
     MathModelParam<true> param;
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
     auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
@@ -1090,9 +1090,9 @@ TEST_CASE("Math solver, measurements") {
     topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.power_sensors_per_load_gen = {from_sparse, {0, 0}};
-    topo.shunt_power_sensor_indptr = {0};
-    topo.branch_from_power_sensor_indptr = {0, 0};
-    topo.branch_to_power_sensor_indptr = {0, 0};
+    topo.power_sensors_per_shunt = {from_sparse, {0}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
+    topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
 
     MathModelParam<true> param;
     param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
@@ -1115,7 +1115,7 @@ TEST_CASE("Math solver, measurements") {
 
         */
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
-        topo.branch_from_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
         se_input.measured_source_power = {{1.93, 0.1}};
         se_input.measured_branch_from_power = {{1.97, 0.1}};
@@ -1141,7 +1141,7 @@ TEST_CASE("Math solver, measurements") {
 
         */
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
-        topo.branch_to_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
         se_input.measured_load_gen_power = {{-1.93, 0.1}};
         se_input.measured_branch_to_power = {{-1.97, 0.1}};
@@ -1168,7 +1168,7 @@ TEST_CASE("Math solver, measurements") {
         */
         topo.bus_power_sensor_indptr = {0, 1, 1};
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
-        topo.branch_from_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
         se_input.measured_bus_injection = {{2.2, 0.2}};
         se_input.measured_source_power = {{1.93, 0.1}};
@@ -1196,7 +1196,7 @@ TEST_CASE("Math solver, measurements") {
         */
         topo.bus_power_sensor_indptr = {0, 1, 1};
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
-        topo.branch_from_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
         se_input.measured_bus_injection = {{2.2, 0.2}};
         se_input.measured_source_power = {{1.93, 0.1}};
@@ -1224,7 +1224,7 @@ TEST_CASE("Math solver, measurements") {
         */
         topo.bus_power_sensor_indptr = {0, 0, 1};
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
-        topo.branch_to_power_sensor_indptr = {0, 1};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
         se_input.measured_bus_injection = {{-2.2, 0.2}};
         se_input.measured_load_gen_power = {{-1.93, 0.1}};

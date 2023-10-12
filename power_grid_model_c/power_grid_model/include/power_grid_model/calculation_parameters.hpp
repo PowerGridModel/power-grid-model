@@ -100,10 +100,10 @@ struct MathModelTopology {
     SparseGroupedIdxVector voltage_sensors_per_bus;
     SparseGroupedIdxVector power_sensors_per_source;
     SparseGroupedIdxVector power_sensors_per_load_gen;
-    IdxVector shunt_power_sensor_indptr;       // indptr of the shunt
-    IdxVector branch_from_power_sensor_indptr; // indptr of the branch
-    IdxVector branch_to_power_sensor_indptr;   // indptr of the branch
-    IdxVector bus_power_sensor_indptr;         // indptr of the bus
+    SparseGroupedIdxVector power_sensors_per_shunt;
+    SparseGroupedIdxVector power_sensors_per_branch_from; // indptr of the branch
+    SparseGroupedIdxVector power_sensors_per_branch_to;   // indptr of the branch
+    IdxVector bus_power_sensor_indptr;                    // indptr of the bus
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
@@ -121,11 +121,11 @@ struct MathModelTopology {
 
     Idx n_load_gen_power_sensor() const { return power_sensors_per_load_gen.element_size(); }
 
-    Idx n_shunt_power_power_sensor() const { return shunt_power_sensor_indptr.back(); }
+    Idx n_shunt_power_power_sensor() const { return power_sensors_per_shunt.element_size(); }
 
-    Idx n_branch_from_power_sensor() const { return branch_from_power_sensor_indptr.back(); }
+    Idx n_branch_from_power_sensor() const { return power_sensors_per_branch_from.element_size(); }
 
-    Idx n_branch_to_power_sensor() const { return branch_to_power_sensor_indptr.back(); }
+    Idx n_branch_to_power_sensor() const { return power_sensors_per_branch_to.element_size(); }
 
     Idx n_bus_power_sensor() const { return bus_power_sensor_indptr.back(); }
 };

@@ -259,13 +259,13 @@ TEST_CASE("Test topology") {
     math0.voltage_sensors_per_bus = {from_sparse, {0, 2, 3, 4, 4, 4}};
     math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math0.power_sensors_per_source = {from_sparse, {0, 0}};
-    math0.shunt_power_sensor_indptr = {0, 0};
+    math0.power_sensors_per_shunt = {from_sparse, {0, 0}};
     math0.power_sensors_per_load_gen = {from_sparse, {0, 1, 1}};
-    math0.branch_from_power_sensor_indptr = {0, 0, 2, 2, 2, 3, 4, 5};
+    math0.power_sensors_per_branch_from = {from_sparse, {0, 0, 2, 2, 2, 3, 4, 5}};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
-    math0.branch_to_power_sensor_indptr = {0, 1, 3, 3, 3, 3, 3, 3};
+    math0.power_sensors_per_branch_to = {from_sparse, {0, 1, 3, 3, 3, 3, 3, 3}};
     math0.fill_in = {{3, 4}};
 
     // Sub graph / math model 1
@@ -282,10 +282,10 @@ TEST_CASE("Test topology") {
     math1.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
     math1.power_sensors_per_source = {from_sparse, {0, 2}};
-    math1.shunt_power_sensor_indptr = {0, 2};
+    math1.power_sensors_per_shunt = {from_sparse, {0, 2}};
     math1.power_sensors_per_load_gen = {from_sparse, {0, 2}};
-    math1.branch_from_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
-    math1.branch_to_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
+    math1.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0}};
+    math1.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0}};
 
     std::vector<MathModelTopology> math_topology_ref = {math0, math1};
 
@@ -319,10 +319,10 @@ TEST_CASE("Test topology") {
             check_equal(math.voltage_sensors_per_bus, math_ref.voltage_sensors_per_bus);
             CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
             check_equal(math.power_sensors_per_source, math_ref.power_sensors_per_source);
-            CHECK(math.shunt_power_sensor_indptr == math_ref.shunt_power_sensor_indptr);
+            check_equal(math.power_sensors_per_shunt, math_ref.power_sensors_per_shunt);
             check_equal(math.power_sensors_per_load_gen, math_ref.power_sensors_per_load_gen);
-            CHECK(math.branch_from_power_sensor_indptr == math_ref.branch_from_power_sensor_indptr);
-            CHECK(math.branch_to_power_sensor_indptr == math_ref.branch_to_power_sensor_indptr);
+            check_equal(math.power_sensors_per_branch_from, math_ref.power_sensors_per_branch_from);
+            check_equal(math.power_sensors_per_branch_to, math_ref.power_sensors_per_branch_to);
             CHECK(math.fill_in == math_ref.fill_in);
         }
     }

@@ -296,7 +296,7 @@ template <bool sym> class MeasuredValues {
                 }
             }
             // shunt
-            process_bus_objects(bus, topo.shunts_per_bus, topo.shunt_power_sensor_indptr, input.shunt_status,
+            process_bus_objects(bus, topo.shunts_per_bus, topo.power_sensors_per_shunt, input.shunt_status,
                                 input.measured_shunt_power, main_value_, idx_shunt_power_);
             // injection
             // load_gen
@@ -403,11 +403,11 @@ template <bool sym> class MeasuredValues {
         for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
             // from side
             idx_branch_from_power_[branch] =
-                process_one_object(branch, topo.branch_from_power_sensor_indptr, topo.branch_bus_idx,
+                process_one_object(branch, topo.power_sensors_per_branch_from, topo.branch_bus_idx,
                                    input.measured_branch_from_power, main_value_, branch_from_checker);
             // to side
             idx_branch_to_power_[branch] =
-                process_one_object(branch, topo.branch_to_power_sensor_indptr, topo.branch_bus_idx,
+                process_one_object(branch, topo.power_sensors_per_branch_to, topo.branch_bus_idx,
                                    input.measured_branch_to_power, main_value_, branch_to_checker);
         }
     }
