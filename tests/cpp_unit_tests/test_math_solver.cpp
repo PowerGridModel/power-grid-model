@@ -150,7 +150,7 @@ TEST_CASE("Test math solver") {
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
         LoadGenType::const_pq // not connected
     };
-    topo.voltage_sensor_indptr = {0, 1, 1, 3};
+    topo.voltage_sensor_buses = {from_sparse, {0, 1, 1, 3}};
     topo.bus_power_sensor_indptr = {0, 1, 1, 1};
     topo.source_power_sensor_indptr = {0, 2};
     topo.load_gen_power_sensor_indptr = {0, 0, 0, 0, 1, 2, 3, 4};
@@ -1043,7 +1043,7 @@ TEST_CASE("Math solver, zero variance test") {
     topo.source_buses = {from_sparse, {0, 0, 1}};
     topo.shunt_buses = {from_sparse, {0, 0, 0}};
     topo.load_gen_buses = {from_sparse, {0, 0, 0}};
-    topo.voltage_sensor_indptr = {0, 0, 1};
+    topo.voltage_sensor_buses = {from_sparse, {0, 0, 1}};
     topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.source_power_sensor_indptr = {0, 0};
     topo.load_gen_power_sensor_indptr = {0};
@@ -1086,7 +1086,7 @@ TEST_CASE("Math solver, measurements") {
     topo.shunt_buses = {from_sparse, {0, 0, 0}};
     topo.load_gen_buses = {from_sparse, {0, 0, 1}};
 
-    topo.voltage_sensor_indptr = {0, 1, 1};
+    topo.voltage_sensor_buses = {from_sparse, {0, 1, 1}};
     topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.source_power_sensor_indptr = {0, 0};
     topo.load_gen_power_sensor_indptr = {0, 0};
@@ -1278,7 +1278,7 @@ TEST_CASE("Math solver, measurements") {
         source_0          load_0(p)  gen_1(p)
         */
 
-        topo.voltage_sensor_indptr = {0, 1, 1};
+        topo.voltage_sensor_buses = {from_sparse, {0, 1, 1}};
         topo.load_gen_buses = {from_sparse, {0, 0, 2}};
         topo.load_gen_power_sensor_indptr = {0, 1, 2};
         topo.bus_power_sensor_indptr = {0, 0, 1};

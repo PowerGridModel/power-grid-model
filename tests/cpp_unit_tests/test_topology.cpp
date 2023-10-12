@@ -256,7 +256,7 @@ TEST_CASE("Test topology") {
     math0.load_gen_buses = {from_sparse, {0, 0, 0, 1, 1, 2}};
     math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
     math0.shunt_buses = {from_sparse, {0, 0, 1, 1, 1, 1}};
-    math0.voltage_sensor_indptr = {0, 2, 3, 4, 4, 4};
+    math0.voltage_sensor_buses = {from_sparse, {0, 2, 3, 4, 4, 4}};
     math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math0.source_power_sensor_indptr = {0, 0};
     math0.shunt_power_sensor_indptr = {0, 0};
@@ -279,7 +279,7 @@ TEST_CASE("Test topology") {
     math1.load_gen_buses = {from_sparse, {0, 0, 0, 0, 1}};
     math1.load_gen_type = {LoadGenType::const_i};
     math1.shunt_buses = {from_sparse, {0, 1, 1, 1, 1}};
-    math1.voltage_sensor_indptr = {0, 0, 0, 0, 1};
+    math1.voltage_sensor_buses = {from_sparse, {0, 0, 0, 0, 1}};
     math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
     math1.source_power_sensor_indptr = {0, 2};
     math1.shunt_power_sensor_indptr = {0, 2};
@@ -316,7 +316,7 @@ TEST_CASE("Test topology") {
             check_equal(math.load_gen_buses, math_ref.load_gen_buses);
             CHECK(math.load_gen_type == math_ref.load_gen_type);
             check_equal(math.shunt_buses, math_ref.shunt_buses);
-            CHECK(math.voltage_sensor_indptr == math_ref.voltage_sensor_indptr);
+            check_equal(math.voltage_sensor_buses, math_ref.voltage_sensor_buses);
             CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
             CHECK(math.source_power_sensor_indptr == math_ref.source_power_sensor_indptr);
             CHECK(math.shunt_power_sensor_indptr == math_ref.shunt_power_sensor_indptr);

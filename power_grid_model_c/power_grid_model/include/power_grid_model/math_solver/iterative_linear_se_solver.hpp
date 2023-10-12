@@ -267,20 +267,20 @@ template <bool sym> class MeasuredValues {
         for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
             // voltage
             {
-                Idx const begin = topo.voltage_sensor_indptr[bus];
-                Idx const end = topo.voltage_sensor_indptr[bus + 1];
+                auto const voltage_sensors = topo.voltage_sensor_buses.get_element_range(bus);
 
                 SensorCalcParam<sym> aggregated{ComplexValue<sym>{0.0}, std::numeric_limits<double>::infinity()};
                 bool angle_measured{false};
 
                 // check if there is nan
-                if (std::any_of(input.measured_voltage.cbegin() + begin, input.measured_voltage.cbegin() + end,
+                auto const start = input.measured_voltage.cbegin() + *voltage_sensors.begin();
+                if (std::any_of(start, start + voltage_sensors.size(),
                                 [](auto const& x) { return is_nan(imag(x.value)); })) {
                     // only keep magnitude
-                    aggregated = combine_measurements<true>(input.measured_voltage, begin, end);
+                    aggregated = combine_measurements<true>(input.measured_voltage, voltage_sensors);
                 } else {
                     // keep complex number
-                    aggregated = combine_measurements(input.measured_voltage, begin, end);
+                    aggregated = combine_measurements(input.measured_voltage, voltage_sensors);
                     angle_measured = true;
                 }
                 if (std::isinf(aggregated.variance)) {
@@ -416,12 +416,49 @@ template <bool sym> class MeasuredValues {
     // using Kalman filter
     // if only_magnitude = true, combine the abs value of the individual data
     //      set imag part to nan, to signal this is a magnitude only measurement
+    // TODO(mgovers) deprecate
     template <bool only_magnitude = false>
     static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data, Idx begin,
                                                      Idx end) {
         double accumulated_inverse_variance{};
         ComplexValue<sym> accumulated_value{};
         for (Idx pos = begin; pos != end; ++pos) {
+            auto const& measurement = data[pos];
+            auto const inv_variance = 1.0 / measurement.variance;
+
+            accumulated_inverse_variance += inv_variance;
+            if constexpr (only_magnitude) {
+                ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
+                if (is_nan(imag(measurement.value))) {
+                    abs_value += real(measurement.value); // only keep real part
+                } else {
+                    abs_value += cabs(measurement.value); // get abs of the value
+                }
+                accumulated_value += abs_value * inv_variance;
+            } else {
+                // accumulate value
+                accumulated_value += measurement.value * inv_variance;
+            }
+        }
+
+        if (!std::isnormal(accumulated_inverse_variance)) {
+            return SensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
+        }
+
+        return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
+                                    1.0 / accumulated_inverse_variance};
+    }
+
+    // combine multiple measurements of one quantity
+    // using Kalman filter
+    // if only_magnitude = true, combine the abs value of the individual data
+    //      set imag part to nan, to signal this is a magnitude only measurement
+    template <bool only_magnitude = false>
+    static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data,
+                                                     boost::iterator_range<IdxCount> const& sensors) {
+        double accumulated_inverse_variance{};
+        ComplexValue<sym> accumulated_value{};
+        for (auto pos : sensors) {
             auto const& measurement = data[pos];
             auto const inv_variance = 1.0 / measurement.variance;
 
