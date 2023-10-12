@@ -204,8 +204,9 @@ class DenseGroupedIdxVector {
 
         auto dereference() const -> iterator {
             assert(dense_vector_ != nullptr);
-            return boost::counting_range(std::distance(std::cbegin(*dense_vector_), group_range_.first),
-                                         std::distance(std::cbegin(*dense_vector_), group_range_.second));
+            return boost::counting_range(
+                detail::narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.first)),
+                detail::narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.second)));
         }
         constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
