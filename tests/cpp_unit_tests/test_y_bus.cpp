@@ -49,7 +49,7 @@ TEST_CASE("Test y bus") {
     param_sym.branch_param = {// ff, ft, tf, tt
                               {1.0i, 2.0i, 3.0i, 4.0i}, {5.0, 6.0, 7.0, 8.0},     {9.0i, 10.0i, 11.0i, 12.0i},
                               {13.0, 14.0, 15.0, 16.0}, {17.0, 18.0, 19.0, 20.0}, {1000i, 0.0, 0.0, 0.0}};
-    topo.shunt_buses = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
+    topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
 
     // get shared ptr
@@ -202,7 +202,7 @@ TEST_CASE("Test one bus system") {
     MathModelParam<true> const param;
 
     topo.phase_shift = {0.0};
-    topo.shunt_buses = {from_sparse, {0, 0}};
+    topo.shunts_per_bus = {from_sparse, {0, 0}};
 
     // output
     IdxVector indptr = {0, 1};
@@ -243,7 +243,7 @@ TEST_CASE("Test fill-in y bus") {
         {1, 0}, // branch 0 from node 1 to 0
         {0, 2}, // branch 1 from node 0 to 2
     };
-    topo.shunt_buses = {from_sparse, {0, 0, 0, 0}};
+    topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
     topo.fill_in = {{1, 2}};
 
     IdxVector row_indptr = {0, 3, 5, 7};

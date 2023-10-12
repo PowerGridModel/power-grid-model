@@ -28,7 +28,7 @@ template <bool sym> class ShortCircuitSolver {
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           n_source_{topo_ptr->n_source()},
-          source_buses_{topo_ptr, &topo_ptr->source_buses},
+          sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
@@ -67,7 +67,7 @@ template <bool sym> class ShortCircuitSolver {
     Idx n_fault_;
     Idx n_source_;
     // shared topo data
-    std::shared_ptr<DenseGroupedIdxVector const> source_buses_;
+    std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -79,15 +79,15 @@ template <bool sym> class ShortCircuitSolver {
                                 FaultType const& fault_type, IntS const& phase_1, IntS const& phase_2) {
         // getter
         IdxVector const& bus_entry = y_bus.lu_diag();
-        auto const& source_buses = *source_buses_;
+        auto const& sources_per_bus = *sources_per_bus_;
         // loop through all buses
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            common_solver_functions::add_sources<sym>(source_buses, bus_number, y_bus, input.source, diagonal_element,
-                                                      u_bus);
+            common_solver_functions::add_sources<sym>(sources_per_bus, bus_number, y_bus, input.source,
+                                                      diagonal_element, u_bus);
 
             // skip if no fault
             if (!input.faults.empty()) {
@@ -305,7 +305,7 @@ template <bool sym> class ShortCircuitSolver {
 
                 ComplexValue<sym> i_source_bus{};    // total source current in to the bus
                 ComplexValue<sym> i_source_inject{}; // total raw source current as a Norton equivalent
-                for (Idx source_number : source_buses_->get_element_range(bus_number)) {
+                for (Idx source_number : sources_per_bus_->get_element_range(bus_number)) {
                     ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                     ComplexValue<sym> const i_source_inject_single =
                         dot(y_source, ComplexValue<sym>{input.source[source_number]});

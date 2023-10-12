@@ -117,7 +117,7 @@ struct YBusStructure {
         }
         // loop shunt
         for (Idx bus = 0; bus != n_bus; ++bus) {
-            for (Idx shunt : topo.shunt_buses.get_element_range(bus)) {
+            for (Idx shunt : topo.shunts_per_bus.get_element_range(bus)) {
                 append_element_vector(vec_map_element, bus, bus, YBusElementType::shunt, shunt);
             }
         }
@@ -403,7 +403,7 @@ template <bool sym> class YBus {
         std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
         // loop all bus, then all shunt within the bus
         for (Idx bus = 0; bus != size(); ++bus) {
-            for (Idx shunt : math_topology_->shunt_buses.get_element_range(bus)) {
+            for (Idx shunt : math_topology_->shunts_per_bus.get_element_range(bus)) {
                 // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);

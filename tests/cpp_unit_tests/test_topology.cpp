@@ -250,13 +250,13 @@ TEST_CASE("Test topology") {
     // Sub graph / math model 0
     MathModelTopology math0;
     math0.slack_bus_ = 4;
-    math0.source_buses = {from_sparse, {0, 0, 0, 0, 0, 1}};
+    math0.sources_per_bus = {from_sparse, {0, 0, 0, 0, 0, 1}};
     math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
     math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
-    math0.load_gen_buses = {from_sparse, {0, 0, 0, 1, 1, 2}};
+    math0.load_gens_per_bus = {from_sparse, {0, 0, 0, 1, 1, 2}};
     math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
-    math0.shunt_buses = {from_sparse, {0, 0, 1, 1, 1, 1}};
-    math0.voltage_sensor_buses = {from_sparse, {0, 2, 3, 4, 4, 4}};
+    math0.shunts_per_bus = {from_sparse, {0, 0, 1, 1, 1, 1}};
+    math0.voltage_sensors_per_bus = {from_sparse, {0, 2, 3, 4, 4, 4}};
     math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math0.source_power_sensor_indptr = {0, 0};
     math0.shunt_power_sensor_indptr = {0, 0};
@@ -271,15 +271,15 @@ TEST_CASE("Test topology") {
     // Sub graph / math model 1
     MathModelTopology math1;
     math1.slack_bus_ = 3;
-    math1.source_buses = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.sources_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.branch_bus_idx = {
         {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
     };
     math1.phase_shift = {0, 0, 0, 0};
-    math1.load_gen_buses = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.load_gen_type = {LoadGenType::const_i};
-    math1.shunt_buses = {from_sparse, {0, 1, 1, 1, 1}};
-    math1.voltage_sensor_buses = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
+    math1.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
     math1.source_power_sensor_indptr = {0, 2};
     math1.shunt_power_sensor_indptr = {0, 2};
@@ -310,13 +310,13 @@ TEST_CASE("Test topology") {
             auto const& math_ref = math_topology_ref[i];
             CHECK(math.slack_bus_ == math_ref.slack_bus_);
             CHECK(math.n_bus() == math_ref.n_bus());
-            check_equal(math.source_buses, math_ref.source_buses);
+            check_equal(math.sources_per_bus, math_ref.sources_per_bus);
             CHECK(math.branch_bus_idx == math_ref.branch_bus_idx);
             CHECK(math.phase_shift == math_ref.phase_shift);
-            check_equal(math.load_gen_buses, math_ref.load_gen_buses);
+            check_equal(math.load_gens_per_bus, math_ref.load_gens_per_bus);
             CHECK(math.load_gen_type == math_ref.load_gen_type);
-            check_equal(math.shunt_buses, math_ref.shunt_buses);
-            check_equal(math.voltage_sensor_buses, math_ref.voltage_sensor_buses);
+            check_equal(math.shunts_per_bus, math_ref.shunts_per_bus);
+            check_equal(math.voltage_sensors_per_bus, math_ref.voltage_sensors_per_bus);
             CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
             CHECK(math.source_power_sensor_indptr == math_ref.source_power_sensor_indptr);
             CHECK(math.shunt_power_sensor_indptr == math_ref.shunt_power_sensor_indptr);

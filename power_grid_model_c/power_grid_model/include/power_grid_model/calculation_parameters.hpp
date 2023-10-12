@@ -93,12 +93,12 @@ struct MathModelTopology {
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
-    DenseGroupedIdxVector source_buses; // TODO(mgovers): rename to sources_per_bus or bus_sources???
-    SparseGroupedIdxVector shunt_buses;
-    SparseGroupedIdxVector load_gen_buses;
+    DenseGroupedIdxVector sources_per_bus;
+    SparseGroupedIdxVector shunts_per_bus;
+    SparseGroupedIdxVector load_gens_per_bus;
     std::vector<LoadGenType> load_gen_type;
-    SparseGroupedIdxVector voltage_sensor_buses;
-    IdxVector source_power_sensor_indptr;      // indptr of the source
+    SparseGroupedIdxVector voltage_sensors_per_bus;
+    IdxVector source_power_sensors;            // indptr of the source
     IdxVector load_gen_power_sensor_indptr;    // indptr of the load_gen
     IdxVector shunt_power_sensor_indptr;       // indptr of the shunt
     IdxVector branch_from_power_sensor_indptr; // indptr of the branch
@@ -109,13 +109,13 @@ struct MathModelTopology {
 
     Idx n_branch() const { return static_cast<Idx>(branch_bus_idx.size()); }
 
-    Idx n_source() const { return source_buses.element_size(); }
+    Idx n_source() const { return sources_per_bus.element_size(); }
 
-    Idx n_shunt() const { return shunt_buses.element_size(); }
+    Idx n_shunt() const { return shunts_per_bus.element_size(); }
 
-    Idx n_load_gen() const { return load_gen_buses.element_size(); }
+    Idx n_load_gen() const { return load_gens_per_bus.element_size(); }
 
-    Idx n_voltage_sensor() const { return voltage_sensor_buses.element_size(); }
+    Idx n_voltage_sensor() const { return voltage_sensors_per_bus.element_size(); }
 
     Idx n_source_power_sensor() const { return source_power_sensor_indptr.back(); }
 

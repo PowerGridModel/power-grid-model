@@ -85,7 +85,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const& /* output */) {
-        auto const& source_buses = *this->source_buses_;
+        auto const& sources_per_bus = *this->sources_per_bus_;
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
@@ -97,7 +97,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
             for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
                 Idx const data_sequence = bus_entry[bus_number];
                 // loop sources
-                for (auto source_number : source_buses.get_element_range(bus_number)) {
+                for (auto source_number : sources_per_bus.get_element_range(bus_number)) {
                     // YBus_diag += Y_source
                     mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
                 }
@@ -116,8 +116,8 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        auto const& load_gen_buses = *this->load_gen_buses_;
-        auto const& source_buses = *this->source_buses_;
+        auto const& load_gens_per_bus = *this->load_gens_per_bus_;
+        auto const& sources_per_bus = *this->sources_per_bus_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
 
         // set rhs to zero for iteration start
@@ -125,8 +125,8 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 
         // loop buses: i
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
-            add_loads(bus_number, input, load_gen_buses, load_gen_type, u);
-            add_sources(bus_number, y_bus, input, source_buses);
+            add_loads(bus_number, input, load_gens_per_bus, load_gen_type, u);
+            add_sources(bus_number, y_bus, input, sources_per_bus);
         }
     }
 
@@ -158,9 +158,9 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     std::shared_ptr<BlockPermArray const> perm_;
 
     void add_loads(Idx const& bus_number, PowerFlowInput<sym> const& input,
-                   grouped_idx_vector_type auto const& load_gen_buses, std::vector<LoadGenType> const& load_gen_type,
+                   grouped_idx_vector_type auto const& load_gens_per_bus, std::vector<LoadGenType> const& load_gen_type,
                    ComplexValueVector<sym> const& u) {
-        for (auto load_number : load_gen_buses.get_element_range(bus_number)) {
+        for (auto load_number : load_gens_per_bus.get_element_range(bus_number)) {
             // load type
             LoadGenType const type = load_gen_type[load_number];
             switch (type) {
@@ -185,8 +185,8 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     }
 
     void add_sources(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                     grouped_idx_vector_type auto const& source_buses) {
-        for (Idx source_number : source_buses.get_element_range(bus_number)) {
+                     grouped_idx_vector_type auto const& sources_per_bus) {
+        for (Idx source_number : sources_per_bus.get_element_range(bus_number)) {
             // I_inj_i += Y_source_j * U_ref_j
             rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                       ComplexValue<sym>{input.source[source_number]});
