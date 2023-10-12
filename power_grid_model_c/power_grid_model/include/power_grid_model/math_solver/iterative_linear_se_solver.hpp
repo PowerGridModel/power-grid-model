@@ -351,7 +351,7 @@ template <bool sym> class MeasuredValues {
             } else {
                 // both valid, we combine again
                 main_value_.push_back(
-                    combine_measurements({direct_injection_measurement, appliance_injection_measurement}, 0, 2));
+                    combine_measurements({direct_injection_measurement, appliance_injection_measurement}));
             }
         } else {
             bus_injection_[bus].idx_bus_injection = unmeasured;
@@ -416,43 +416,6 @@ template <bool sym> class MeasuredValues {
     // using Kalman filter
     // if only_magnitude = true, combine the abs value of the individual data
     //      set imag part to nan, to signal this is a magnitude only measurement
-    // TODO(mgovers) deprecate
-    template <bool only_magnitude = false>
-    static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data, Idx begin,
-                                                     Idx end) {
-        double accumulated_inverse_variance{};
-        ComplexValue<sym> accumulated_value{};
-        for (Idx pos = begin; pos != end; ++pos) {
-            auto const& measurement = data[pos];
-            auto const inv_variance = 1.0 / measurement.variance;
-
-            accumulated_inverse_variance += inv_variance;
-            if constexpr (only_magnitude) {
-                ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                if (is_nan(imag(measurement.value))) {
-                    abs_value += real(measurement.value); // only keep real part
-                } else {
-                    abs_value += cabs(measurement.value); // get abs of the value
-                }
-                accumulated_value += abs_value * inv_variance;
-            } else {
-                // accumulate value
-                accumulated_value += measurement.value * inv_variance;
-            }
-        }
-
-        if (!std::isnormal(accumulated_inverse_variance)) {
-            return SensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
-        }
-
-        return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
-                                    1.0 / accumulated_inverse_variance};
-    }
-
-    // combine multiple measurements of one quantity
-    // using Kalman filter
-    // if only_magnitude = true, combine the abs value of the individual data
-    //      set imag part to nan, to signal this is a magnitude only measurement
     template <bool only_magnitude = false>
     static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data,
                                                      boost::iterator_range<IdxCount> const& sensors) {
@@ -483,6 +446,11 @@ template <bool sym> class MeasuredValues {
 
         return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
                                     1.0 / accumulated_inverse_variance};
+    }
+
+    template <bool only_magnitude = false>
+    static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data) {
+        return combine_measurements<only_magnitude>(data, boost::counting_range(Idx{}, static_cast<Idx>(data.size())));
     }
 
     // process objects in batch for shunt, load_gen, source
