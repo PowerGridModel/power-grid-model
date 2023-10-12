@@ -47,7 +47,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
             DoubleComplex const u_ref = [&]() {
                 DoubleComplex sum_u_ref = 0.0;
                 for (Idx bus = 0; bus != n_bus_; ++bus) {
-                    for (Idx source : sources_per_bus.get_element_range(bus)) {
+                    for (Idx const source : sources_per_bus.get_element_range(bus)) {
                         sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                     }
                 }

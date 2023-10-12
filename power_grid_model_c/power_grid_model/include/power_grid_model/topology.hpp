@@ -587,8 +587,10 @@ class Topology {
     // Only connect the component if include(component_i) returns true
     template <Idx (MathModelTopology::*n_obj_fn)() const, typename ObjectFinder = SingleTypeObjectFinder,
               typename Predicate = decltype(include_all)>
-    void couple_object_components(std::invocable<Idx, IdxVector> auto&& assign_indptr, ObjectFinder object_finder,
-                                  std::vector<Idx2D>& coupling, Predicate include = include_all) {
+    void couple_object_components(auto&& assign_indptr, ObjectFinder object_finder, std::vector<Idx2D>& coupling,
+                                  Predicate include = include_all)
+        requires std::invocable<std::remove_cvref_t<decltype(assign_indptr)>, Idx, IdxVector>
+    {
         auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
         auto const n_components = object_finder.size();
         std::vector<IdxVector> topo_obj_idx(n_math_topologies);
@@ -659,8 +661,8 @@ class Topology {
 
         // source
         couple_object_components<&MathModelTopology::n_bus>(
-            [this](Idx topo_idx, IdxVector indptr) {
-                math_topology_[topo_idx].sources_per_bus = {from_sparse, std::move(indptr)};
+            [this](Idx topo_idx, IdxVector const& indptr) {
+                math_topology_[topo_idx].sources_per_bus = {from_sparse, indptr};
             },
             {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source,
             [this](Idx i) { return comp_conn_.source_connected[i]; });

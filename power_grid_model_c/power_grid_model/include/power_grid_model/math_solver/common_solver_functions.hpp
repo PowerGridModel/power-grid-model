@@ -15,7 +15,7 @@ namespace power_grid_model::common_solver_functions {
 template <bool sym>
 void add_sources(grouped_idx_vector_type auto const& sources_per_bus, Idx const& bus_number, YBus<sym> const& y_bus,
                  ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
-    for (Idx source_number : sources_per_bus.get_element_range(bus_number)) {
+    for (Idx const source_number : sources_per_bus.get_element_range(bus_number)) {
         ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
         diagonal_element += y_source; // add y_source to the diagonal of Ybus
         u_bus += dot(y_source, ComplexValue<sym>{u_source_vector[source_number]}); // rhs += Y_source * U_source
@@ -35,7 +35,7 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
 template <bool sym>
 void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                              MathOutput<sym>& output, grouped_idx_vector_type auto const& sources_per_bus) {
-    for (Idx source : sources_per_bus.get_element_range(bus_number)) {
+    for (Idx const source : sources_per_bus.get_element_range(bus_number)) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
         output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);

@@ -406,7 +406,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     void add_sources(Idx const& bus_number, Idx const& diagonal_position, YBus<sym> const& y_bus,
                      PowerFlowInput<sym> const& input, grouped_idx_vector_type auto const& sources_per_bus,
                      ComplexValueVector<sym> const& u) {
-        for (Idx source_number : sources_per_bus.get_element_range(bus_number)) {
+        for (Idx const source_number : sources_per_bus.get_element_range(bus_number)) {
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
             ComplexValue<sym> const u_ref{input.source[source_number]};
             // calculate block, um = ui, us = uref

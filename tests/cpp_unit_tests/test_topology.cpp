@@ -92,11 +92,6 @@ namespace power_grid_model {
 
 namespace {
 
-std::ostream& operator<<(std::ostream& s, Idx2D const& idx) {
-    s << "(" << idx.group << ", " << idx.pos << ")";
-    return s;
-}
-
 template <grouped_idx_vector_type T> void check_equal(T const& first, T const& second) {
     REQUIRE(first.size() == second.size());
     for ([[maybe_unused]] auto const& [index, first, second] : enumerated_zip_sequence(first, second)) {

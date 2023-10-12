@@ -186,7 +186,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 
     void add_sources(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                      grouped_idx_vector_type auto const& sources_per_bus) {
-        for (Idx source_number : sources_per_bus.get_element_range(bus_number)) {
+        for (Idx const source_number : sources_per_bus.get_element_range(bus_number)) {
             // I_inj_i += Y_source_j * U_ref_j
             rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                       ComplexValue<sym>{input.source[source_number]});

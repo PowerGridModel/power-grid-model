@@ -188,10 +188,10 @@ template <bool sym> class MeasuredValues {
                                                     load_gen_flow, source_flow);
             }
             // current injection
-            for (Idx load_gen : load_gens) {
+            for (Idx const load_gen : load_gens) {
                 load_gen_flow[load_gen].i = conj(load_gen_flow[load_gen].s / u[bus]);
             }
-            for (Idx source : sources) {
+            for (Idx const source : sources) {
                 source_flow[source].i = conj(source_flow[source].s / u[bus]);
             }
         }
@@ -319,11 +319,11 @@ template <bool sym> class MeasuredValues {
         Idx n_unmeasured = 0;
         SensorCalcParam<sym> appliance_injection_measurement{};
 
-        for (Idx load_gen : topo.load_gens_per_bus.get_element_range(bus)) {
+        for (Idx const load_gen : topo.load_gens_per_bus.get_element_range(bus)) {
             add_appliance_measurements(idx_load_gen_power_[load_gen], appliance_injection_measurement, n_unmeasured);
         }
 
-        for (Idx source : topo.sources_per_bus.get_element_range(bus)) {
+        for (Idx const source : topo.sources_per_bus.get_element_range(bus)) {
             add_appliance_measurements(idx_source_power_[source], appliance_injection_measurement, n_unmeasured);
         }
 
@@ -487,35 +487,12 @@ template <bool sym> class MeasuredValues {
 
     // process objects in batch for shunt, load_gen, source
     // return the status of the object type, if all the connected objects are measured
-    // TODO(mgovers): deprecate + remove
-    static void process_bus_objects(Idx const bus, IdxVector const& obj_indptr, IdxVector const& sensor_indptr,
-                                    IntSVector const& obj_status, std::vector<SensorCalcParam<sym>> const& input_data,
-                                    std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
-        for (Idx obj = obj_indptr[bus]; obj != obj_indptr[bus + 1]; ++obj) {
-            result_idx[obj] = process_one_object(obj, sensor_indptr, obj_status, input_data, result_data);
-        }
-    }
-
-    // process objects in batch for shunt, load_gen, source
-    // return the status of the object type, if all the connected objects are measured
-    // TODO(mgovers): deprecate + remove
-    static void process_bus_objects(Idx const bus, grouped_idx_vector_type auto const& objects,
-                                    IdxVector const& sensor_indptr, IntSVector const& obj_status,
-                                    std::vector<SensorCalcParam<sym>> const& input_data,
-                                    std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
-        for (Idx obj : objects.get_element_range(bus)) {
-            result_idx[obj] = process_one_object(obj, sensor_indptr, obj_status, input_data, result_data);
-        }
-    }
-
-    // process objects in batch for shunt, load_gen, source
-    // return the status of the object type, if all the connected objects are measured
     // TODO(mgovers): get element range of single bus instead of bus + objects
     static void process_bus_objects(Idx const bus, grouped_idx_vector_type auto const& objects,
                                     grouped_idx_vector_type auto const& sensors, IntSVector const& obj_status,
                                     std::vector<SensorCalcParam<sym>> const& input_data,
                                     std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
-        for (Idx obj : objects.get_element_range(bus)) {
+        for (Idx const obj : objects.get_element_range(bus)) {
             result_idx[obj] = process_one_object(obj, sensors, obj_status, input_data, result_data);
         }
     }
@@ -523,25 +500,6 @@ template <bool sym> class MeasuredValues {
     // process one object
     static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
 
-    // TODO(mgovers): deprecate + remove
-    template <class TS, class StatusChecker = decltype(default_status_checker)>
-    static Idx process_one_object(Idx const obj, IdxVector const& sensor_indptr, std::vector<TS> const& obj_status,
-                                  std::vector<SensorCalcParam<sym>> const& input_data,
-                                  std::vector<SensorCalcParam<sym>>& result_data,
-                                  StatusChecker status_checker = default_status_checker) {
-        Idx const begin = sensor_indptr[obj];
-        Idx const end = sensor_indptr[obj + 1];
-        if (!status_checker(obj_status[obj])) {
-            return disconnected;
-        }
-        if (begin == end) {
-            return unmeasured;
-        }
-        result_data.push_back(combine_measurements(input_data, begin, end));
-        return static_cast<Idx>(result_data.size()) - 1;
-    }
-
-    // process one object
     template <class TS, class StatusChecker = decltype(default_status_checker)>
     static Idx process_one_object(Idx const obj, grouped_idx_vector_type auto const& sensors_per_obj,
                                   std::vector<TS> const& obj_status,
@@ -584,14 +542,14 @@ template <bool sym> class MeasuredValues {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
         ComplexValue<sym> const s_residual_per_appliance =
             (s - bus_appliance_injection.value) / static_cast<double>(n_unmeasured);
-        for (Idx load_gen : load_gens) {
+        for (Idx const load_gen : load_gens) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
             } else if (idx_load_gen_power_[load_gen] == unmeasured) {
                 load_gen_flow[load_gen].s = s_residual_per_appliance;
             }
         }
-        for (Idx source : sources) {
+        for (Idx const source : sources) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value;
             } else if (idx_source_power_[source] == unmeasured) {
@@ -609,12 +567,12 @@ template <bool sym> class MeasuredValues {
         // mu = (sum[S_i] - S_cal) / sum[variance]
         ComplexValue<sym> const mu = (bus_appliance_injection.value - s) / bus_appliance_injection.variance;
         // S_i = S_i_mea - var_i * mu
-        for (Idx load_gen : load_gens) {
+        for (Idx const load_gen : load_gens) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value - (load_gen_power(load_gen).variance) * mu;
             }
         }
-        for (Idx source : sources) {
+        for (Idx const source : sources) {
             if (has_source(source)) {
                 source_flow[source].s = source_power(source).value - (source_power(source).variance) * mu;
             }
