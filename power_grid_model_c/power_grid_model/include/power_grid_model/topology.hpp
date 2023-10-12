@@ -728,7 +728,8 @@ class Topology {
             [this](Idx topo_idx, IdxVector indptr) {
                 math_topology_[topo_idx].power_sensors_per_branch_to = {from_sparse, std::move(indptr)};
             },
-            object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
+            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor,
+            [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
 
         // node injection power sensors
         couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(
