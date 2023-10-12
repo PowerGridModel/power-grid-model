@@ -110,12 +110,12 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
 
         // prepare source, load gen and bus_injection
         output.source.resize(source_buses_->element_size());
-        output.load_gen.resize(load_gen_bus_indptr_->back());
+        output.load_gen.resize(load_gen_buses_->element_size());
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output, *source_buses_);
-            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_buses_,
                                                                     [this](Idx i) { return (*load_gen_type_)[i]; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);
@@ -124,13 +124,13 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
   private:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
+    std::shared_ptr<SparseGroupedIdxVector const> load_gen_buses_;
     std::shared_ptr<DenseGroupedIdxVector const> source_buses_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           phase_shift_{topo_ptr, &topo_ptr->phase_shift},
-          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
+          load_gen_buses_{topo_ptr, &topo_ptr->load_gen_buses},
           source_buses_{topo_ptr, &topo_ptr->source_buses},
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };

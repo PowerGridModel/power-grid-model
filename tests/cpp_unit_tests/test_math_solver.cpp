@@ -144,7 +144,7 @@ TEST_CASE("Test math solver") {
     topo.branch_bus_idx = {{0, 1}, {1, 2}};
     topo.source_buses = {from_sparse, {0, 1, 1, 1}};
     topo.shunt_buses = {from_sparse, {0, 0, 0, 1}};
-    topo.load_gen_bus_indptr = {0, 3, 6, 7};
+    topo.load_gen_buses = {from_sparse, {0, 3, 6, 7}};
     topo.load_gen_type = {
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
         LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
@@ -679,7 +679,7 @@ TEST_CASE("Short circuit solver") {
     topo_sc.branch_bus_idx = {{0, 1}};
     topo_sc.source_buses = {from_sparse, {0, 1, 1}};
     topo_sc.shunt_buses = {from_sparse, {0, 0, 0}};
-    topo_sc.load_gen_bus_indptr = {0, 0, 0};
+    topo_sc.load_gen_buses = {from_sparse, {0, 0, 0}};
     IdxVector const fault_bus_indptr{0, 0, 1};
 
     // Impedance / admittances
@@ -867,7 +867,7 @@ TEST_CASE("Short circuit solver") {
         topo_comp.branch_bus_idx = {};
         topo_comp.source_buses = {from_sparse, {0, 1}};
         topo_comp.shunt_buses = {from_sparse, {0, 0}};
-        topo_comp.load_gen_bus_indptr = {0, 0};
+        topo_comp.load_gen_buses = {from_sparse, {0, 0}};
         IdxVector const fault_bus_indptr_2 = {0, 1};
         // params source injection
         MathModelParam<false> asym_param_comp;
@@ -1042,7 +1042,7 @@ TEST_CASE("Math solver, zero variance test") {
     topo.branch_bus_idx = {{0, 1}};
     topo.source_buses = {from_sparse, {0, 0, 1}};
     topo.shunt_buses = {from_sparse, {0, 0, 0}};
-    topo.load_gen_bus_indptr = {0, 0, 0};
+    topo.load_gen_buses = {from_sparse, {0, 0, 0}};
     topo.voltage_sensor_indptr = {0, 0, 1};
     topo.bus_power_sensor_indptr = {0, 0, 0};
     topo.source_power_sensor_indptr = {0, 0};
@@ -1084,7 +1084,7 @@ TEST_CASE("Math solver, measurements") {
     topo.branch_bus_idx = {{0, 1}};
     topo.source_buses = {from_sparse, {0, 1, 1}};
     topo.shunt_buses = {from_sparse, {0, 0, 0}};
-    topo.load_gen_bus_indptr = {0, 0, 1};
+    topo.load_gen_buses = {from_sparse, {0, 0, 1}};
 
     topo.voltage_sensor_indptr = {0, 1, 1};
     topo.bus_power_sensor_indptr = {0, 0, 0};
@@ -1251,7 +1251,7 @@ TEST_CASE("Math solver, measurements") {
 
         */
 
-        topo.load_gen_bus_indptr = {0, 0, 2};
+        topo.load_gen_buses = {from_sparse, {0, 0, 2}};
         topo.load_gen_power_sensor_indptr = {0, 1, 2};
 
         se_input.load_gen_status = {1, 1};
@@ -1279,7 +1279,7 @@ TEST_CASE("Math solver, measurements") {
         */
 
         topo.voltage_sensor_indptr = {0, 1, 1};
-        topo.load_gen_bus_indptr = {0, 0, 2};
+        topo.load_gen_buses = {from_sparse, {0, 0, 2}};
         topo.load_gen_power_sensor_indptr = {0, 1, 2};
         topo.bus_power_sensor_indptr = {0, 0, 1};
 

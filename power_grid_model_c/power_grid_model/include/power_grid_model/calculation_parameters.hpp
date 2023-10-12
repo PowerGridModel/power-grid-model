@@ -95,7 +95,7 @@ struct MathModelTopology {
     std::vector<BranchIdx> fill_in;
     DenseGroupedIdxVector source_buses; // TODO(mgovers): rename to sources_per_bus or bus_sources???
     SparseGroupedIdxVector shunt_buses;
-    IdxVector load_gen_bus_indptr;
+    SparseGroupedIdxVector load_gen_buses;
     std::vector<LoadGenType> load_gen_type;
     IdxVector voltage_sensor_indptr;
     IdxVector source_power_sensor_indptr;      // indptr of the source
@@ -113,7 +113,7 @@ struct MathModelTopology {
 
     Idx n_shunt() const { return shunt_buses.element_size(); }
 
-    Idx n_load_gen() const { return load_gen_bus_indptr.back(); }
+    Idx n_load_gen() const { return load_gen_buses.element_size(); }
 
     Idx n_voltage_sensor() const { return voltage_sensor_indptr.back(); }
 

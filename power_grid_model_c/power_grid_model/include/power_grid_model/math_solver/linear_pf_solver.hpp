@@ -50,7 +50,7 @@ template <bool sym> class LinearPFSolver {
   public:
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
-          load_gen_bus_indptr_{topo_ptr, &topo_ptr->load_gen_bus_indptr},
+          load_gen_buses_{topo_ptr, &topo_ptr->load_gen_buses},
           source_buses_{topo_ptr, &topo_ptr->source_buses},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
@@ -85,7 +85,7 @@ template <bool sym> class LinearPFSolver {
   private:
     Idx n_bus_;
     // shared topo data
-    std::shared_ptr<IdxVector const> load_gen_bus_indptr_;
+    std::shared_ptr<SparseGroupedIdxVector const> load_gen_buses_;
     std::shared_ptr<DenseGroupedIdxVector const> source_buses_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
@@ -96,22 +96,21 @@ template <bool sym> class LinearPFSolver {
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         // getter
         IdxVector const& bus_entry = y_bus.lu_diag();
-        IdxVector const& load_gen_bus_idxptr = *load_gen_bus_indptr_;
+        auto const& load_gen_buses = *load_gen_buses_;
         auto const& source_buses = *source_buses_;
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
-            add_loads(load_gen_bus_idxptr, bus_number, input, diagonal_element);
+            add_loads(load_gen_buses, bus_number, input, diagonal_element);
             common_solver_functions::add_sources<sym>(source_buses, bus_number, y_bus, input.source, diagonal_element,
                                                       u_bus);
         }
     }
 
-    static void add_loads(IdxVector const& load_gen_bus_idxptr, Idx const& bus_number, PowerFlowInput<sym> const& input,
-                          ComplexTensor<sym>& diagonal_element) {
-        for (Idx load_number = load_gen_bus_idxptr[bus_number]; load_number != load_gen_bus_idxptr[bus_number + 1];
-             ++load_number) {
+    static void add_loads(grouped_idx_vector_type auto const& load_gen_buses, Idx const& bus_number,
+                          PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element) {
+        for (auto load_number : load_gen_buses.get_element_range(bus_number)) {
             // YBus_diag += -conj(S_base)
             add_diag(diagonal_element, -conj(input.s_injection[load_number]));
         }
@@ -124,12 +123,12 @@ template <bool sym> class LinearPFSolver {
 
         // prepare source, load gen and node injection
         output.source.resize(source_buses_->element_size());
-        output.load_gen.resize(load_gen_bus_indptr_->back());
+        output.load_gen.resize(load_gen_buses_->element_size());
         output.bus_injection.resize(n_bus_);
 
         for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
             common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output, *source_buses_);
-            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_bus_indptr_,
+            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gen_buses_,
                                                                     [](Idx /*i*/) { return LoadGenType::const_y; });
         }
         output.bus_injection = y_bus.calculate_injection(output.u);

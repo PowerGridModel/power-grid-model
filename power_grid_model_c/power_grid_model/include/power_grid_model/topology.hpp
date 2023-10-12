@@ -637,9 +637,11 @@ class Topology {
                 math_topology_[topo_idx].shunt_buses = {from_sparse, std::move(indptr)};
             },
             {comp_topo_.shunt_node_idx, comp_coup_.node}, comp_coup_.shunt);
-
-        // load gen
-        couple_object_components<&MathModelTopology::load_gen_bus_indptr, &MathModelTopology::n_bus>(
+        // shunt
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].load_gen_buses = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.load_gen_node_idx, comp_coup_.node}, comp_coup_.load_gen);
 
         // set load gen type

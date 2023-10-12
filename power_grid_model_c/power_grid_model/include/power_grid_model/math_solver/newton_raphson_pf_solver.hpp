@@ -224,7 +224,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        auto const& load_gen_buses = *this->load_gen_buses_;
         auto const& source_buses = *this->source_buses_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
         IdxVector const& bus_entry = y_bus.lu_diag();
@@ -233,7 +233,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
 
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(bus_number, diagonal_position, input, load_gen_bus_indptr, load_gen_type);
+            add_loads(bus_number, diagonal_position, input, load_gen_buses, load_gen_type);
             add_sources(bus_number, diagonal_position, y_bus, input, source_buses, u);
         }
     }
@@ -352,10 +352,9 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     }
 
     void add_loads(Idx const& bus_number, Idx const& diagonal_position, PowerFlowInput<sym> const& input,
-                   IdxVector const& load_gen_bus_indptr, std::vector<LoadGenType> const& load_gen_type) {
+                   grouped_idx_vector_type auto const& load_gen_buses, std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
-        for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
-             ++load_number) {
+        for (Idx load_number : load_gen_buses.get_element_range(bus_number)) {
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {

@@ -173,23 +173,22 @@ template <bool sym> class MeasuredValues {
         std::vector<ApplianceMathOutput<sym>> source_flow(math_topology_->n_source());
         // loop all buses
         for (Idx bus = 0; bus != math_topology_->n_bus(); ++bus) {
-            Idx const load_gen_begin = math_topology_->load_gen_bus_indptr[bus];
-            Idx const load_gen_end = math_topology_->load_gen_bus_indptr[bus + 1];
+            auto const load_gens = math_topology_->load_gen_buses.get_element_range(bus);
             auto const sources = math_topology_->source_buses.get_element_range(bus);
 
             // under-determined or exactly determined
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
-                calculate_non_over_determined_injection(bus_injection_[bus].n_unmeasured_appliances, load_gen_begin,
-                                                        load_gen_end, sources, bus_appliance_injection_[bus], s[bus],
-                                                        load_gen_flow, source_flow);
+                calculate_non_over_determined_injection(bus_injection_[bus].n_unmeasured_appliances, load_gens, sources,
+                                                        bus_appliance_injection_[bus], s[bus], load_gen_flow,
+                                                        source_flow);
             }
             // over-determined
             else {
-                calculate_over_determined_injection(load_gen_begin, load_gen_end, sources,
-                                                    bus_appliance_injection_[bus], s[bus], load_gen_flow, source_flow);
+                calculate_over_determined_injection(load_gens, sources, bus_appliance_injection_[bus], s[bus],
+                                                    load_gen_flow, source_flow);
             }
             // current injection
-            for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
+            for (Idx load_gen : load_gens) {
                 load_gen_flow[load_gen].i = conj(load_gen_flow[load_gen].s / u[bus]);
             }
             for (Idx source : sources) {
@@ -301,7 +300,7 @@ template <bool sym> class MeasuredValues {
                                 input.measured_shunt_power, main_value_, idx_shunt_power_);
             // injection
             // load_gen
-            process_bus_objects(bus, topo.load_gen_bus_indptr, topo.load_gen_power_sensor_indptr, input.load_gen_status,
+            process_bus_objects(bus, topo.load_gen_buses, topo.load_gen_power_sensor_indptr, input.load_gen_status,
                                 input.measured_load_gen_power, extra_value_, idx_load_gen_power_);
             // source
             process_bus_objects(bus, topo.source_buses, topo.source_power_sensor_indptr, input.source_status,
@@ -320,7 +319,7 @@ template <bool sym> class MeasuredValues {
         Idx n_unmeasured = 0;
         SensorCalcParam<sym> appliance_injection_measurement{};
 
-        for (Idx load_gen = topo.load_gen_bus_indptr[bus]; load_gen != topo.load_gen_bus_indptr[bus + 1]; ++load_gen) {
+        for (Idx load_gen : topo.load_gen_buses.get_element_range(bus)) {
             add_appliance_measurements(idx_load_gen_power_[load_gen], appliance_injection_measurement, n_unmeasured);
         }
 
@@ -508,7 +507,7 @@ template <bool sym> class MeasuredValues {
         std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
-    void calculate_non_over_determined_injection(Idx n_unmeasured, Idx load_gen_begin, Idx load_gen_end,
+    void calculate_non_over_determined_injection(Idx n_unmeasured, boost::iterator_range<IdxCount> load_gens,
                                                  boost::iterator_range<IdxCount> sources,
                                                  SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
@@ -516,7 +515,7 @@ template <bool sym> class MeasuredValues {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
         ComplexValue<sym> const s_residual_per_appliance =
             (s - bus_appliance_injection.value) / static_cast<double>(n_unmeasured);
-        for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
+        for (Idx load_gen : load_gens) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
             } else if (idx_load_gen_power_[load_gen] == unmeasured) {
@@ -532,7 +531,7 @@ template <bool sym> class MeasuredValues {
         }
     }
 
-    void calculate_over_determined_injection(Idx load_gen_begin, Idx load_gen_end,
+    void calculate_over_determined_injection(boost::iterator_range<IdxCount> load_gens,
                                              boost::iterator_range<IdxCount> sources,
                                              SensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
@@ -541,7 +540,7 @@ template <bool sym> class MeasuredValues {
         // mu = (sum[S_i] - S_cal) / sum[variance]
         ComplexValue<sym> const mu = (bus_appliance_injection.value - s) / bus_appliance_injection.variance;
         // S_i = S_i_mea - var_i * mu
-        for (Idx load_gen = load_gen_begin; load_gen != load_gen_end; ++load_gen) {
+        for (Idx load_gen : load_gens) {
             if (has_load_gen(load_gen)) {
                 load_gen_flow[load_gen].s = load_gen_power(load_gen).value - (load_gen_power(load_gen).variance) * mu;
             }

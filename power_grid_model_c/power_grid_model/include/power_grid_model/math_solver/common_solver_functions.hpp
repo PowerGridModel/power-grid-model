@@ -45,8 +45,8 @@ void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, Powe
 
 template <bool sym, class LoadGenFunc>
 void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output,
-                               IdxVector const& load_gen_bus_indptr, LoadGenFunc const& load_gen_func) {
-    for (Idx load_gen = load_gen_bus_indptr[bus_number]; load_gen != load_gen_bus_indptr[bus_number + 1]; ++load_gen) {
+                               grouped_idx_vector_type auto const& load_gen_buses, LoadGenFunc const& load_gen_func) {
+    for (auto load_gen : load_gen_buses.get_element_range(bus_number)) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
 

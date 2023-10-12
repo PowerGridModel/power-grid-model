@@ -116,7 +116,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
+        auto const& load_gen_buses = *this->load_gen_buses_;
         auto const& source_buses = *this->source_buses_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
 
@@ -125,7 +125,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 
         // loop buses: i
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
-            add_loads(bus_number, input, load_gen_bus_indptr, load_gen_type, u);
+            add_loads(bus_number, input, load_gen_buses, load_gen_type, u);
             add_sources(bus_number, y_bus, input, source_buses);
         }
     }
@@ -157,10 +157,10 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
 
-    void add_loads(Idx const& bus_number, PowerFlowInput<sym> const& input, IdxVector const& load_gen_bus_indptr,
-                   std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {
-        for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
-             ++load_number) {
+    void add_loads(Idx const& bus_number, PowerFlowInput<sym> const& input,
+                   grouped_idx_vector_type auto const& load_gen_buses, std::vector<LoadGenType> const& load_gen_type,
+                   ComplexValueVector<sym> const& u) {
+        for (auto load_number : load_gen_buses.get_element_range(bus_number)) {
             // load type
             LoadGenType const type = load_gen_type[load_number];
             switch (type) {
