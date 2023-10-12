@@ -300,7 +300,7 @@ template <bool sym> class MeasuredValues {
                                 input.measured_shunt_power, main_value_, idx_shunt_power_);
             // injection
             // load_gen
-            process_bus_objects(bus, topo.load_gens_per_bus, topo.load_gen_power_sensor_indptr, input.load_gen_status,
+            process_bus_objects(bus, topo.load_gens_per_bus, topo.power_sensors_per_load_gen, input.load_gen_status,
                                 input.measured_load_gen_power, extra_value_, idx_load_gen_power_);
             // source
             process_bus_objects(bus, topo.sources_per_bus, topo.power_sensors_per_source, input.source_status,
@@ -552,7 +552,7 @@ template <bool sym> class MeasuredValues {
             return disconnected;
         }
         auto const sensors = sensors_per_obj.get_element_range(obj);
-        if (boost::empty(sensors) == 0) {
+        if (boost::empty(sensors)) {
             return unmeasured;
         }
         result_data.push_back(combine_measurements(input_data, sensors));

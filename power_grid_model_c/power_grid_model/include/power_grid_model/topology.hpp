@@ -688,8 +688,12 @@ class Topology {
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
 
         // load + generator power sensors
-        couple_object_components<&MathModelTopology::load_gen_power_sensor_indptr, &MathModelTopology::n_load_gen>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor, [this](Idx i) {
+        couple_object_components<&MathModelTopology::n_load_gen>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_load_gen = {from_sparse, std::move(indptr)};
+            },
+            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor,
+            [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });

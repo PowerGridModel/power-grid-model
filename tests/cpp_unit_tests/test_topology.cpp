@@ -99,7 +99,7 @@ std::ostream& operator<<(std::ostream& s, Idx2D const& idx) {
 
 template <grouped_idx_vector_type T> void check_equal(T const& first, T const& second) {
     REQUIRE(first.size() == second.size());
-    for (auto [first, second] : zip_sequence(first, second)) {
+    for ([[maybe_unused]] auto const& [index, first, second] : enumerated_zip_sequence(first, second)) {
         CHECK(first == second);
     }
 }
@@ -260,7 +260,7 @@ TEST_CASE("Test topology") {
     math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math0.power_sensors_per_source = {from_sparse, {0, 0}};
     math0.shunt_power_sensor_indptr = {0, 0};
-    math0.load_gen_power_sensor_indptr = {0, 1, 1};
+    math0.power_sensors_per_load_gen = {from_sparse, {0, 1, 1}};
     math0.branch_from_power_sensor_indptr = {0, 0, 2, 2, 2, 3, 4, 5};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
@@ -283,7 +283,7 @@ TEST_CASE("Test topology") {
     math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
     math1.power_sensors_per_source = {from_sparse, {0, 2}};
     math1.shunt_power_sensor_indptr = {0, 2};
-    math1.load_gen_power_sensor_indptr = {0, 2};
+    math1.power_sensors_per_load_gen = {from_sparse, {0, 2}};
     math1.branch_from_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
     math1.branch_to_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
 
@@ -320,7 +320,7 @@ TEST_CASE("Test topology") {
             CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
             check_equal(math.power_sensors_per_source, math_ref.power_sensors_per_source);
             CHECK(math.shunt_power_sensor_indptr == math_ref.shunt_power_sensor_indptr);
-            CHECK(math.load_gen_power_sensor_indptr == math_ref.load_gen_power_sensor_indptr);
+            check_equal(math.power_sensors_per_load_gen, math_ref.power_sensors_per_load_gen);
             CHECK(math.branch_from_power_sensor_indptr == math_ref.branch_from_power_sensor_indptr);
             CHECK(math.branch_to_power_sensor_indptr == math_ref.branch_to_power_sensor_indptr);
             CHECK(math.fill_in == math_ref.fill_in);
