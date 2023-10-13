@@ -46,7 +46,7 @@ TEST_CASE("C API Model") {
     PGM_Options* opt = unique_options.get();
 
     // input data
-    ConstDatasetPtr const unique_input_dataset{PGM_create_dataset_const(hl, "input", false, 1)};
+    ConstDatasetPtr const unique_input_dataset{PGM_create_dataset_const(hl, "input", 0, 1)};
     PGM_ConstDataset* input_dataset = unique_input_dataset.get();
     NodeInput node_input{{0}, 100.0};
     SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, 1000.0, 0.0, 1.0};
@@ -70,10 +70,10 @@ TEST_CASE("C API Model") {
     std::array<NodeOutput<true>, 2> sym_node_outputs{};
     NodeOutput<true>& node_result_0 = sym_node_outputs[0];
     NodeOutput<true>& node_result_1 = sym_node_outputs[1];
-    MutableDatasetPtr const unique_single_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", false, 1)};
+    MutableDatasetPtr const unique_single_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", 0, 1)};
     PGM_MutableDataset* single_output_dataset = unique_single_output_dataset.get();
     PGM_dataset_mutable_add_buffer(hl, single_output_dataset, "node", 1, 1, nullptr, sym_node_outputs.data());
-    MutableDatasetPtr const unique_batch_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", true, 2)};
+    MutableDatasetPtr const unique_batch_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", 1, 2)};
     PGM_MutableDataset* batch_output_dataset = unique_batch_output_dataset.get();
     PGM_dataset_mutable_add_buffer(hl, batch_output_dataset, "node", 1, 2, nullptr, sym_node_outputs.data());
 
@@ -90,11 +90,11 @@ TEST_CASE("C API Model") {
     load_updates[1].id = 2;
     load_updates[1].q_specified = 300.0;
     // dataset
-    ConstDatasetPtr const unique_single_update_dataset{PGM_create_dataset_const(hl, "update", false, 1)};
+    ConstDatasetPtr const unique_single_update_dataset{PGM_create_dataset_const(hl, "update", 0, 1)};
     PGM_ConstDataset* single_update_dataset = unique_single_update_dataset.get();
     PGM_dataset_const_add_buffer(hl, single_update_dataset, "source", 1, 1, nullptr, &source_update);
     PGM_dataset_const_add_buffer(hl, single_update_dataset, "sym_load", 1, 1, nullptr, load_updates.data());
-    ConstDatasetPtr const unique_batch_update_dataset{PGM_create_dataset_const(hl, "update", true, 2)};
+    ConstDatasetPtr const unique_batch_update_dataset{PGM_create_dataset_const(hl, "update", 1, 2)};
     PGM_ConstDataset* batch_update_dataset = unique_batch_update_dataset.get();
     PGM_dataset_const_add_buffer(hl, batch_update_dataset, "source", -1, 1, source_update_indptr.data(),
                                  &source_update);
