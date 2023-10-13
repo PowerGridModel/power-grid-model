@@ -26,7 +26,7 @@ namespace {
 using nlohmann::json;
 
 auto read_file(std::filesystem::path const& path) {
-    std::ifstream f{path};
+    std::ifstream const f{path};
     std::ostringstream buffer;
     buffer << f.rdbuf();
     return buffer.str();
@@ -122,7 +122,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
 
     for (auto const& [name, data_ptr] : input.const_dataset) {
         assert(data_ptr.batch_size() == 1);
-        Buffer result_buffer;
+        Buffer const result_buffer;
         Idx const elements_per_scenario = data_ptr.elements_per_scenario(0);
         handler.add_component_info(name, elements_per_scenario, elements_per_scenario * batch_size);
     }

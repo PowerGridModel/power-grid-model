@@ -16,6 +16,15 @@ struct cached_update {
     using update_type = MainModel::cached_update_t;
 };
 
+namespace test {
+static constexpr double z_bus_2 = 1.0 / (0.015 + 0.5e6 / 10e3 / 10e3 * 2);
+static constexpr double z_total = z_bus_2 + 10.0;
+static constexpr double u1 = 1.05 * z_bus_2 / (z_bus_2 + 10.0);
+static constexpr double i = 1.05 * 10e3 / z_total / sqrt3;
+static constexpr double i_shunt = 0.015 / 0.025 * i;
+static constexpr double i_load = 0.005 / 0.025 * i;
+} // namespace test
+
 struct State {
     std::vector<NodeInput> node_input{{{1}, 10e3}, {{2}, 10e3}, {{3}, 10e3}};
     std::vector<LineInput> line_input{{{{4}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
@@ -57,13 +66,6 @@ struct State {
 
     std::vector<FaultInput> fault_input{{{30}, 1, FaultType::single_phase_to_ground, FaultPhase::a, 3, 0.1, 0.1}};
 
-    double const z_bus_2 = 1.0 / (0.015 + 0.5e6 / 10e3 / 10e3 * 2);
-    double const z_total = z_bus_2 + 10.0;
-    double const u1 = 1.05 * z_bus_2 / (z_bus_2 + 10.0);
-    double const i = 1.05 * 10e3 / z_total / sqrt3;
-    double const i_shunt = 0.015 / 0.025 * i;
-    double const i_load = 0.005 / 0.025 * i;
-
     // output vector
     std::vector<NodeOutput<true>> sym_node = std::vector<NodeOutput<true>>(3);
     std::vector<BranchOutput<true>> sym_branch = std::vector<BranchOutput<true>>(2);
@@ -100,7 +102,7 @@ struct State {
     std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, 1}, 1.0e6, nan}};
     std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, 0}, RealValue<false>{nan}, RealValue<false>{nan}}};
     std::vector<ShuntUpdate> shunt_update{{{{9}, 0}, nan, 0.02, nan, 0.02}};
-    std::vector<SourceUpdate> source_update{{{{10}, 1}, u1, nan}};
+    std::vector<SourceUpdate> source_update{{{{10}, 1}, test::u1, nan}};
     std::vector<BranchUpdate> link_update{{{5}, 1, 0}};
     std::vector<FaultUpdate> fault_update{{{30}, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
 };
@@ -201,14 +203,14 @@ TEST_CASE("Test copy main model") {
         model_2.output_result<Branch>(math_output, state.sym_branch.begin());
         model_2.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Copied - Asymmetrical") {
         auto const math_output = model_2.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
@@ -216,14 +218,14 @@ TEST_CASE("Test copy main model") {
         model_2.output_result<Branch>(math_output, state.asym_branch.begin());
         model_2.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
     model_2 = main_model;
     SUBCASE("Assigned - Symmetrical") {
@@ -233,14 +235,14 @@ TEST_CASE("Test copy main model") {
         model_2.output_result<Appliance>(math_output, state.sym_appliance.begin());
         // TODO: check voltage angle
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Assigned - Asymmetrical") {
         auto const math_output = model_2.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
@@ -248,14 +250,14 @@ TEST_CASE("Test copy main model") {
         model_2.output_result<Branch>(math_output, state.asym_branch.begin());
         model_2.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Original - Symmetrical") {
         auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
@@ -263,14 +265,14 @@ TEST_CASE("Test copy main model") {
         main_model.output_result<Branch>(math_output, state.sym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Original - Asymmetrical") {
         auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
@@ -278,14 +280,14 @@ TEST_CASE("Test copy main model") {
         main_model.output_result<Branch>(math_output, state.asym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
 }
 
@@ -299,14 +301,14 @@ TEST_CASE("Test main model - iterative calculation") {
         main_model.output_result<Branch>(math_output, state.sym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Asymmetrical") {
         auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson);
@@ -314,14 +316,14 @@ TEST_CASE("Test main model - iterative calculation") {
         main_model.output_result<Branch>(math_output, state.asym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
 }
 
@@ -336,8 +338,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         main_model.output_result<Appliance>(res, state.sym_appliance.begin());
 
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         CHECK(state.sym_node[0].p == doctest::Approx(state.sym_appliance[0].p).scale(1e3));
         CHECK(state.sym_node[1].p == doctest::Approx(0.0).scale(1e3));
         CHECK(
@@ -359,7 +361,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     SUBCASE("Line, sym output") {
         main_model.output_result<Line>(res, state.sym_line.begin());
 
-        CHECK(state.sym_line[0].i_from == doctest::Approx(state.i));
+        CHECK(state.sym_line[0].i_from == doctest::Approx(test::i));
         /*
         TODO
         - i_to
@@ -373,7 +375,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     SUBCASE("Link, sym output") {
         main_model.output_result<Link>(res, state.sym_link.begin());
 
-        CHECK(state.sym_link[0].i_from == doctest::Approx(state.i));
+        CHECK(state.sym_link[0].i_from == doctest::Approx(test::i));
         /*
         TODO
         - i_to
@@ -390,7 +392,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         main_model.output_result<Source>(res, state.sym_source.begin());
         main_model.output_result<Node>(res, state.sym_node.begin());
 
-        CHECK(state.sym_source[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_source[0].i == doctest::Approx(test::i));
         CHECK(state.sym_source[1].i == doctest::Approx(0.0));
         /*
         TODO
@@ -403,7 +405,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     SUBCASE("SymLoad, sym output") {
         main_model.output_result<SymLoad>(res, state.sym_load_sym.begin());
 
-        CHECK(state.sym_load_sym[0].i == doctest::Approx(state.i_load));
+        CHECK(state.sym_load_sym[0].i == doctest::Approx(test::i_load));
         /*
         TODO
         - p
@@ -415,7 +417,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     SUBCASE("AsymLoad, sym output") {
         main_model.output_result<AsymLoad>(res, state.sym_load_asym.begin());
 
-        CHECK(state.sym_load_asym[0].i == doctest::Approx(state.i_load));
+        CHECK(state.sym_load_asym[0].i == doctest::Approx(test::i_load));
         /*
         TODO
         - p
@@ -428,8 +430,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         main_model.output_result<Node>(res, state.sym_node.begin());
         main_model.output_result<Shunt>(res, state.sym_shunt.begin());
         auto const& output = state.sym_shunt[0];
-        CHECK(output.i == doctest::Approx(state.i_shunt));
-        CHECK(output.p == doctest::Approx(sqrt3 * state.i_shunt * state.sym_node[2].u));
+        CHECK(output.i == doctest::Approx(test::i_shunt));
+        CHECK(output.p == doctest::Approx(sqrt3 * test::i_shunt * state.sym_node[2].u));
         CHECK(output.q == doctest::Approx(0.0));
         CHECK(output.s == doctest::Approx(output.p));
         CHECK(output.pf == doctest::Approx(1.0));
@@ -539,8 +541,8 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
         main_model.output_result<Appliance>(res, state.asym_appliance.begin());
 
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
 
         CHECK(state.asym_node[0].p(0) == doctest::Approx(state.asym_appliance[0].p(0)).scale(1e3));
         CHECK(state.asym_node[1].p(1) == doctest::Approx(0.0).scale(1e3));
@@ -683,14 +685,14 @@ TEST_CASE("Test main model - linear calculation") {
         main_model.output_result<Branch>(math_output, state.sym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Asymmetrical") {
         auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
@@ -698,14 +700,14 @@ TEST_CASE("Test main model - linear calculation") {
         main_model.output_result<Branch>(math_output, state.asym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
 }
 
@@ -729,14 +731,14 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
         main_model.output_result<Branch>(math_output, state.sym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load * 2));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2));
         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Asymmetrical") {
         auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
@@ -744,14 +746,14 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
         main_model.output_result<Branch>(math_output, state.asym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load * 2));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2));
         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
 }
 
@@ -769,12 +771,12 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
         main_model.output_result<Branch>(math_output, state.sym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load * 2 + state.i_shunt));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2 + test::i_shunt));
         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
         CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
     }
@@ -784,12 +786,12 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
         main_model.output_result<Branch>(math_output, state.asym_branch.begin());
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load * 2 + state.i_shunt));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2 + test::i_shunt));
         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
     }
@@ -814,11 +816,11 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
         main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         CHECK(state.sym_branch[0].i_from == doctest::Approx(0.0).epsilon(1e-6));
         CHECK(state.sym_appliance[0].i == doctest::Approx(0.0).epsilon(1e-6));
-        CHECK(state.sym_appliance[1].i == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(state.i));
+        CHECK(state.sym_appliance[1].i == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
         CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
     }
@@ -829,11 +831,11 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
         CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(0.0).epsilon(1e-6));
         CHECK(state.asym_appliance[0].i(1) == doctest::Approx(0.0).epsilon(1e-6));
-        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i));
+        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
     }
@@ -856,19 +858,19 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
         main_model.output_result<Appliance>(math_output_result, state.sym_appliance.begin());
 
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
         if constexpr (settings::update_type::value) {
-            CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load));
-            CHECK(state.sym_appliance[3].i == doctest::Approx(state.i_load));
+            CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+            CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
         } else {
-            CHECK(state.sym_appliance[2].i == doctest::Approx(state.i_load * 2));
+            CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2));
             CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
         }
-        CHECK(state.sym_appliance[4].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Asymmetrical") {
         auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
@@ -877,19 +879,19 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
         main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
 
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(state.i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(state.i));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
         if constexpr (settings::update_type::value) {
-            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load));
-            CHECK(state.asym_appliance[3].i(1) == doctest::Approx(state.i_load));
+            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+            CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
         } else {
-            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(state.i_load * 2));
+            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2));
             CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
         }
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(state.i_shunt));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
 }
 
@@ -944,30 +946,30 @@ TEST_CASE("Test main model - runtime dispatch") {
         // calculation
         model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
-        CHECK(state.sym_line[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_link[0].i_from == doctest::Approx(state.i));
-        CHECK(state.sym_source[0].i == doctest::Approx(state.i));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_line[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_link[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_source[0].i == doctest::Approx(test::i));
         CHECK(state.sym_source[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_load_sym[0].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_load_asym[0].i == doctest::Approx(state.i_load));
-        CHECK(state.sym_shunt[0].i == doctest::Approx(state.i_shunt));
+        CHECK(state.sym_load_sym[0].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_load_asym[0].i == doctest::Approx(test::i_load));
+        CHECK(state.sym_shunt[0].i == doctest::Approx(test::i_shunt));
         model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(state.u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
 
         // update and calculation
         model.update_component<MainModel::permanent_update_t>(update_data);
         model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
 
         // test batch calculation
         model = MainModel{50.0, input_data};
@@ -975,24 +977,24 @@ TEST_CASE("Test main model - runtime dispatch") {
         model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data, update_data, -1);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         // symmetric parallel
         model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::newton_raphson, sym_result_data, update_data, 0);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(state.u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         // asymmetric sequential
         model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data, update_data,
                                           -1);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
         // asymmetric parallel
         model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson, asym_result_data, update_data,
                                           0);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(state.u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
     }
 
     SUBCASE("no dependent updates within batches") {

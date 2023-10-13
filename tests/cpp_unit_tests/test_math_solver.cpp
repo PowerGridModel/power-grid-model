@@ -22,6 +22,18 @@ using FaultType::single_phase_to_ground;
 using FaultType::three_phase;
 using FaultType::two_phase;
 using FaultType::two_phase_to_ground;
+
+template <bool sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
+    if constexpr (sym) {
+        CHECK(cabs((x) - (y)) < (tolerance));
+    } else {
+        CHECK((cabs((x) - (y)) < (tolerance)).all());
+    }
+}
+
+template <bool sym> void check_close(auto const& x, auto const& y) { check_close<sym>(x, y, numerical_tolerance); }
+void check_close(auto const& x, auto const& y, auto const& tolerance) { check_close<true>(x, y, tolerance); }
+void check_close(auto const& x, auto const& y) { check_close<true>(x, y); }
 } // namespace
 
 TEST_CASE("Test block") {
@@ -47,51 +59,42 @@ TEST_CASE("Test block") {
         b.n() += n;
         b.m() += m;
         b.l() += l;
-        CHECK((cabs(b.h() - h) < numerical_tolerance).all());
-        CHECK((cabs(b.n() - n) < numerical_tolerance).all());
-        CHECK((cabs(b.m() - m) < numerical_tolerance).all());
-        CHECK((cabs(b.l() - l) < numerical_tolerance).all());
+        check_close<false>(b.h(), h, numerical_tolerance);
+        check_close<false>(b.n(), n, numerical_tolerance);
+        check_close<false>(b.m(), m, numerical_tolerance);
+        check_close<false>(b.l(), l, numerical_tolerance);
     }
 }
 
 namespace {
-
-#define CHECK_CLOSE(x, y, tolerance)                                                                                   \
-    do {                                                                                                               \
-        if constexpr (sym) {                                                                                           \
-            CHECK(cabs((x) - (y)) < (tolerance));                                                                      \
-        } else {                                                                                                       \
-            CHECK((cabs((x) - (y)) < (tolerance)).all());                                                              \
-        }                                                                                                              \
-    } while (false)
 
 template <bool sym>
 void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
                    double tolerance = numerical_tolerance) {
     DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
     for (size_t i = 0; i != output.u.size(); ++i) {
-        CHECK_CLOSE(output.u[i], output_ref.u[i] * phase_offset, tolerance);
+        check_close<sym>(output.u[i], output_ref.u[i] * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.bus_injection.size(); ++i) {
-        CHECK_CLOSE(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
+        check_close<sym>(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
     }
     for (size_t i = 0; i != output.branch.size(); ++i) {
-        CHECK_CLOSE(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
-        CHECK_CLOSE(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
-        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
-        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
+        check_close<sym>(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
+        check_close<sym>(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
+        check_close<sym>(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
+        check_close<sym>(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.source.size(); ++i) {
-        CHECK_CLOSE(output.source[i].s, output_ref.source[i].s, tolerance);
-        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
+        check_close<sym>(output.source[i].s, output_ref.source[i].s, tolerance);
+        check_close<sym>(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.load_gen.size(); ++i) {
-        CHECK_CLOSE(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
-        CHECK_CLOSE(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
+        check_close<sym>(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
+        check_close<sym>(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
     }
     for (size_t i = 0; i != output.shunt.size(); ++i) {
-        CHECK_CLOSE(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
-        CHECK_CLOSE(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
+        check_close<sym>(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
+        check_close<sym>(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
     }
 }
 
@@ -99,23 +102,21 @@ template <bool sym>
 void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
                       double tolerance = numerical_tolerance) {
     for (size_t i = 0; i != output.u_bus.size(); ++i) {
-        CHECK_CLOSE(output.u_bus[i], output_ref.u_bus[i], tolerance);
+        check_close<sym>(output.u_bus[i], output_ref.u_bus[i], tolerance);
     }
     for (size_t i = 0; i != output.branch.size(); ++i) {
-        CHECK_CLOSE(output.branch[i].i_f, output_ref.branch[i].i_f, tolerance);
+        check_close<sym>(output.branch[i].i_f, output_ref.branch[i].i_f, tolerance);
     }
     for (size_t i = 0; i != output.branch.size(); ++i) {
-        CHECK_CLOSE(output.branch[i].i_t, output_ref.branch[i].i_t, tolerance);
+        check_close<sym>(output.branch[i].i_t, output_ref.branch[i].i_t, tolerance);
     }
     for (size_t i = 0; i != output.fault.size(); ++i) {
-        CHECK_CLOSE(output.fault[i].i_fault, output_ref.fault[i].i_fault, tolerance);
+        check_close<sym>(output.fault[i].i_fault, output_ref.fault[i].i_fault, tolerance);
     }
     for (size_t i = 0; i != output.source.size(); ++i) {
-        CHECK_CLOSE(output.source[i].i, output_ref.source[i].i, tolerance);
+        check_close<sym>(output.source[i].i, output_ref.source[i].i, tolerance);
     }
 }
-
-#undef CHECK_CLOSE
 
 } // namespace
 
@@ -324,7 +325,7 @@ TEST_CASE("Test math solver") {
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_asym);
     YBus<true> y_bus_sym{topo_ptr, param_ptr};
-    YBus<false> y_bus_asym{topo_ptr, param_asym_ptr};
+    YBus<false> const y_bus_asym{topo_ptr, param_asym_ptr};
 
     // state estimation input
     // symmetric, with u angle, with u angle and const z, without u angle
@@ -731,7 +732,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph solid fault") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -741,7 +742,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params") {
-        YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
         MathSolver<true> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, z0, z0_0, vref, zref);
@@ -756,7 +757,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
-        YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
         MathSolver<true> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -766,7 +767,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
@@ -781,7 +782,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg solid fault") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input =
             create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr);
@@ -792,7 +793,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, z0, z0_0, vref, zref);
@@ -807,7 +808,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph solid fault") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -817,7 +818,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
@@ -832,7 +833,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg solid") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input =
             create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
@@ -843,8 +844,8 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver no faults") {
-        YBus<true> y_bus_sym{topo_sc_ptr, param_sym_ptr};
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver_asym{topo_sc_ptr};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
@@ -1026,8 +1027,6 @@ TEST_CASE("Short circuit solver") {
     }
 }
 
-#define CHECK_CLOSE(x, y) CHECK(cabs((x) - (y)) < numerical_tolerance)
-
 TEST_CASE("Math solver, zero variance test") {
     /*
     network, v means voltage measured
@@ -1065,8 +1064,8 @@ TEST_CASE("Math solver, zero variance test") {
     MathOutput<true> output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
     // check both voltage
-    CHECK_CLOSE(output.u[0], 1.0);
-    CHECK_CLOSE(output.u[1], 1.0);
+    check_close(output.u[0], 1.0);
+    check_close(output.u[1], 1.0);
 }
 
 TEST_CASE("Math solver, measurements") {
@@ -1122,7 +1121,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
@@ -1148,7 +1147,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
@@ -1176,7 +1175,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
@@ -1204,7 +1203,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
@@ -1232,7 +1231,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
@@ -1259,7 +1258,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 
@@ -1289,7 +1288,7 @@ TEST_CASE("Math solver, measurements") {
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> y_bus_sym{topo_ptr, param_ptr};
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
 

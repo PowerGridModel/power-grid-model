@@ -502,8 +502,8 @@ template <bool sym> class MeasuredValues {
         std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
-    void calculate_non_over_determined_injection(Idx n_unmeasured, boost::iterator_range<IdxCount> load_gens,
-                                                 boost::iterator_range<IdxCount> sources,
+    void calculate_non_over_determined_injection(Idx n_unmeasured, boost::iterator_range<IdxCount> const& load_gens,
+                                                 boost::iterator_range<IdxCount> const& sources,
                                                  SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
@@ -526,8 +526,8 @@ template <bool sym> class MeasuredValues {
         }
     }
 
-    void calculate_over_determined_injection(boost::iterator_range<IdxCount> load_gens,
-                                             boost::iterator_range<IdxCount> sources,
+    void calculate_over_determined_injection(boost::iterator_range<IdxCount> const& load_gens,
+                                             boost::iterator_range<IdxCount> const& sources,
                                              SensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {
@@ -594,7 +594,7 @@ template <bool sym> class IterativeLinearSESolver {
 
         // loop to iterate
         Idx num_iter = 0;
-        do {
+        while (max_dev > err_tol || num_iter == 0) {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
@@ -605,7 +605,7 @@ template <bool sym> class IterativeLinearSESolver {
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
-        } while (max_dev > err_tol);
+        };
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");

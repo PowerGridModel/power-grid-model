@@ -101,7 +101,7 @@ TEST_CASE("Serialization") {
             node[0] = {};
             // get dataset
             auto* const dataset = PGM_deserializer_get_dataset(hl, deserializer);
-            auto* const info = PGM_dataset_writable_get_info(hl, dataset);
+            auto const* const info = PGM_dataset_writable_get_info(hl, dataset);
             // check meta data
             CHECK(PGM_dataset_info_name(hl, info) == "input"s);
             CHECK(PGM_dataset_info_is_batch(hl, info) == is_batch);

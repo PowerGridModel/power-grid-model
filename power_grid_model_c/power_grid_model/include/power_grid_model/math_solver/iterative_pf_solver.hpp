@@ -67,7 +67,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         // start calculation
         // iteration
         Idx num_iter = 0;
-        do {
+        while (max_dev > err_tol || num_iter == 0) {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
@@ -86,7 +86,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{calculation_info, 2224, "Iterate unknown"};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
-        } while (max_dev > err_tol);
+        }
 
         // calculate math result
         {

@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+// issue in msgpack: may call free on deleted data from unique_ptr
+#ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
+
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
@@ -455,3 +458,5 @@ TEST_CASE("Deserializer with error") {
 }
 
 } // namespace power_grid_model::meta_data
+
+#endif // __clang_analyzer__ // issue in msgpack
