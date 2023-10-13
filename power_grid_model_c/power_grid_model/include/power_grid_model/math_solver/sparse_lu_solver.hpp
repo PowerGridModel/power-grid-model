@@ -9,6 +9,7 @@
 #include "../exception.hpp"
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+#include "../typing.hpp"
 
 #include <memory>
 
@@ -314,7 +315,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     // should always found
                     assert(found != col_indices.cbegin() + row_indptr[l_row + 1]);
                     assert(*found == u_col);
-                    a_idx = static_cast<Idx>(std::distance(col_indices.cbegin(), found));
+                    a_idx = narrow_cast<Idx>(std::distance(col_indices.cbegin(), found));
                     // subtract
                     lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }
