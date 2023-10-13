@@ -566,7 +566,7 @@ class Topology {
             Idx const n_obj = (math_topology_[topo_idx].*n_obj_fn)();
 
             // Reorder to compressed format for each math topology
-            SparseMapping map = build_sparse_mapping(obj_idx, n_obj);
+            auto&& map = build_sparse_mapping(obj_idx, n_obj);
 
             // Assign indptr
             assign_indptr(topo_idx, std::move(map.indptr));
