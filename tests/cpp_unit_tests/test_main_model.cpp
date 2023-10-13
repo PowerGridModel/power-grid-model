@@ -17,12 +17,12 @@ struct cached_update {
 };
 
 namespace test {
-static constexpr double z_bus_2 = 1.0 / (0.015 + 0.5e6 / 10e3 / 10e3 * 2);
-static constexpr double z_total = z_bus_2 + 10.0;
-static constexpr double u1 = 1.05 * z_bus_2 / (z_bus_2 + 10.0);
-static constexpr double i = 1.05 * 10e3 / z_total / sqrt3;
-static constexpr double i_shunt = 0.015 / 0.025 * i;
-static constexpr double i_load = 0.005 / 0.025 * i;
+constexpr double z_bus_2 = 1.0 / (0.015 + 0.5e6 / 10e3 / 10e3 * 2);
+constexpr double z_total = z_bus_2 + 10.0;
+constexpr double u1 = 1.05 * z_bus_2 / (z_bus_2 + 10.0);
+constexpr double i = 1.05 * 10e3 / z_total / sqrt3;
+constexpr double i_shunt = 0.015 / 0.025 * i;
+constexpr double i_load = 0.005 / 0.025 * i;
 } // namespace test
 
 struct State {

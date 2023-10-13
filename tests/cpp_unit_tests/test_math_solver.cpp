@@ -717,7 +717,7 @@ TEST_CASE("Short circuit solver") {
     auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_sc_asym);
 
     SUBCASE("Test short circuit solver 3ph") {
-        YBus<false> y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, z0, z0_0, vref, zref);
@@ -881,8 +881,8 @@ TEST_CASE("Short circuit solver") {
         auto sym_param_comp_ptr = std::make_shared<MathModelParam<true> const>(sym_param_comp);
         MathSolver<false> solver{topo_comp_ptr};
         MathSolver<true> sym_solver{topo_comp_ptr};
-        YBus<false> y_bus_asym{topo_comp_ptr, asym_param_comp_ptr};
-        YBus<true> y_bus_sym{topo_comp_ptr, sym_param_comp_ptr};
+        YBus<false> const y_bus_asym{topo_comp_ptr, asym_param_comp_ptr};
+        YBus<true> const y_bus_sym{topo_comp_ptr, sym_param_comp_ptr};
 
         DoubleComplex const if_comp = vref / (zref + z_fault);
         DoubleComplex const uf_comp = vref - if_comp * zref;
@@ -1053,7 +1053,7 @@ TEST_CASE("Math solver, zero variance test") {
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
     auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-    YBus<true> y_bus_sym{topo_ptr, param_ptr};
+    YBus<true> const y_bus_sym{topo_ptr, param_ptr};
 
     StateEstimationInput<true> se_input;
     se_input.source_status = {1};
