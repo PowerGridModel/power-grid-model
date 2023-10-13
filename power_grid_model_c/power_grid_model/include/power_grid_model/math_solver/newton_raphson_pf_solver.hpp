@@ -355,7 +355,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                    grouped_idx_vector_type auto const& load_gens_per_bus,
                    std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
-        for (Idx load_number : load_gens_per_bus.get_element_range(bus_number)) {
+        for (Idx const load_number : load_gens_per_bus.get_element_range(bus_number)) {
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {

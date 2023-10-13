@@ -305,7 +305,7 @@ template <bool sym> class ShortCircuitSolver {
 
                 ComplexValue<sym> i_source_bus{};    // total source current in to the bus
                 ComplexValue<sym> i_source_inject{}; // total raw source current as a Norton equivalent
-                for (Idx source_number : sources_per_bus_->get_element_range(bus_number)) {
+                for (Idx const source_number : sources_per_bus_->get_element_range(bus_number)) {
                     ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
                     ComplexValue<sym> const i_source_inject_single =
                         dot(y_source, ComplexValue<sym>{input.source[source_number]});
