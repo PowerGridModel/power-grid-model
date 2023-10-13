@@ -319,12 +319,16 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
       public:
         explicit Proxy(container_type& container)
             : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {}
-        Iterator<Gettable> begin() { return begin_; }
-        Iterator<Gettable> end() { return end_; }
+
+        auto begin() -> Iterator<Gettable> { return begin_; }
+        auto end() -> Iterator<Gettable> { return end_; }
+
+        constexpr auto begin() const -> Iterator<Gettable> const& { return begin_; }
+        constexpr auto end() const -> Iterator<Gettable> const& { return end_; }
 
       private:
-        Iterator<Gettable> const begin_;
-        Iterator<Gettable> const end_;
+        Iterator<Gettable> begin_;
+        Iterator<Gettable> end_;
     };
 
   public:
