@@ -89,7 +89,7 @@
       "environment": {
         "CC": "clang-cl.exe",
         "CXX": "clang-cl.exe",
-        "CXXFLAGS": "$penv{CXXFLAGS} -Wno-uninitialized-const-reference"
+        "CXXFLAGS": "$penv{CXXFLAGS} -Wno-uninitialized-const-reference -Wno-unknown-attributes"
       },
       "inherits": "windows-base"
     },
@@ -115,7 +115,7 @@
         "CMAKE_C_CLANG_TIDY": "clang-tidy.exe;--extra-arg=/EHsc",
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy.exe;--extra-arg=/EHsc"
       },
-      "inherits": "windows-base",
+      "inherits": "clang-cl-base",
       "hidden": true
     },
     {
