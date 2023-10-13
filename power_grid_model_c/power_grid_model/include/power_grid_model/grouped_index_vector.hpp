@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 
 #include "power_grid_model.hpp"
+#include "typing.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/zip_iterator.hpp>
@@ -49,14 +50,6 @@ inline auto sparse_decode(IdxVector const& indptr) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;
-}
-
-template <typename T, typename U> constexpr auto narrow_cast(U value) {
-    if constexpr (std::same_as<T, U>) {
-        return value;
-    }
-    assert(std::in_range<T>(value));
-    return static_cast<T>(value);
 }
 
 // TODO(mgovers): replace the below relevant subset here ourselves with the STD equivalent when we have std::ranges.
@@ -209,8 +202,8 @@ class DenseGroupedIdxVector {
         auto dereference() const -> iterator {
             assert(dense_vector_ != nullptr);
             return boost::counting_range(
-                detail::narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.first)),
-                detail::narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.second)));
+                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.first)),
+                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.second)));
         }
         constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }

@@ -273,9 +273,8 @@ template <bool sym> class MeasuredValues {
                 bool angle_measured{false};
 
                 // check if there is nan
-                auto const start = input.measured_voltage.cbegin() + *voltage_sensors.begin();
-                if (std::any_of(start, start + voltage_sensors.size(),
-                                [](auto const& x) { return is_nan(imag(x.value)); })) {
+                if (auto const start = input.measured_voltage.cbegin() + *voltage_sensors.begin(); std::any_of(
+                        start, start + voltage_sensors.size(), [](auto const& x) { return is_nan(imag(x.value)); })) {
                     // only keep magnitude
                     aggregated = combine_measurements<true>(input.measured_voltage, voltage_sensors);
                 } else {

@@ -94,8 +94,8 @@ namespace {
 
 template <grouped_idx_vector_type T> void check_equal(T const& first, T const& second) {
     REQUIRE(first.size() == second.size());
-    for ([[maybe_unused]] auto const& [index, first, second] : enumerated_zip_sequence(first, second)) {
-        CHECK(first == second);
+    for ([[maybe_unused]] auto const& [index, first_element, second_element] : enumerated_zip_sequence(first, second)) {
+        CHECK(first_element == second_element);
     }
 }
 

@@ -556,12 +556,11 @@ class Topology {
     // The indptr in math topology will be modified
     // The coupling element should be pre-allocated in coupling
     // Only connect the component if include(component_i) returns true
-    template <Idx (MathModelTopology::*n_obj_fn)() const, typename ObjectFinder = SingleTypeObjectFinder,
-              typename Predicate = decltype(include_all)>
-    void couple_object_components(auto&& assign_indptr, ObjectFinder object_finder, std::vector<Idx2D>& coupling,
-                                  Predicate include = include_all)
-        requires std::invocable<std::remove_cvref_t<decltype(assign_indptr)>, Idx, IdxVector&&>
-    {
+    template <Idx (MathModelTopology::*n_obj_fn)() const, typename AssignIndptr,
+              typename ObjectFinder = SingleTypeObjectFinder, typename Predicate = decltype(include_all)>
+        requires std::invocable<std::remove_cvref_t<AssignIndptr>, Idx, IdxVector&&>
+    void couple_object_components(AssignIndptr&& assign_indptr, ObjectFinder object_finder,
+                                  std::vector<Idx2D>& coupling, Predicate include = include_all) {
         auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
         auto const n_components = object_finder.size();
         std::vector<IdxVector> topo_obj_idx(n_math_topologies);
@@ -712,7 +711,7 @@ class Topology {
             {comp_topo_->power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_->power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }
-};
+}; // namespace power_grid_model
 
 } // namespace power_grid_model
 
