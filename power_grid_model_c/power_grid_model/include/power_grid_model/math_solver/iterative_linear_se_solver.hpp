@@ -501,8 +501,8 @@ template <bool sym> class MeasuredValues {
         std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
-    void calculate_non_over_determined_injection(Idx n_unmeasured, boost::iterator_range<IdxCount> load_gens,
-                                                 boost::iterator_range<IdxCount> sources,
+    void calculate_non_over_determined_injection(Idx n_unmeasured, boost::iterator_range<IdxCount> const& load_gens,
+                                                 boost::iterator_range<IdxCount> const& sources,
                                                  SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
@@ -525,8 +525,8 @@ template <bool sym> class MeasuredValues {
         }
     }
 
-    void calculate_over_determined_injection(boost::iterator_range<IdxCount> load_gens,
-                                             boost::iterator_range<IdxCount> sources,
+    void calculate_over_determined_injection(boost::iterator_range<IdxCount> const& load_gens,
+                                             boost::iterator_range<IdxCount> const& sources,
                                              SensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {

@@ -47,8 +47,8 @@ TEST_CASE("narrow_cast") {
         check_narrow_cast<Idx>();
         check_narrow_cast<ID>();
         check_narrow_cast<uint8_t>();
-        check_narrow_cast<long>();
-        check_narrow_cast<long long>();
+        check_narrow_cast<int32_t>();
+        check_narrow_cast<int64_t>();
     }
 
     SUBCASE("Different types (in range)") {
@@ -59,8 +59,8 @@ TEST_CASE("narrow_cast") {
         check_narrow_cast<uint8_t, ID>();
         check_narrow_cast<ID, uint8_t>();
 
-        check_narrow_cast<long, long long>();
-        check_narrow_cast<long long, long>();
+        check_narrow_cast<int32_t, int64_t>();
+        check_narrow_cast<int64_t, int32_t>();
     }
 }
 } // namespace
