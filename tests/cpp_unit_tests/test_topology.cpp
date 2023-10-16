@@ -89,10 +89,17 @@
  */
 
 namespace power_grid_model {
-std::ostream& operator<<(std::ostream& s, Idx2D const& idx) {
-    s << "(" << idx.group << ", " << idx.pos << ")";
-    return s;
+
+namespace {
+
+template <grouped_idx_vector_type T> void check_equal(T const& first, T const& second) {
+    REQUIRE(first.size() == second.size());
+    for ([[maybe_unused]] auto const& [index, first_element, second_element] : enumerated_zip_sequence(first, second)) {
+        CHECK(first_element == second_element);
+    }
 }
+
+} // namespace
 
 TEST_CASE("Test topology") {
     // component topology
@@ -238,42 +245,42 @@ TEST_CASE("Test topology") {
     // Sub graph / math model 0
     MathModelTopology math0;
     math0.slack_bus_ = 4;
-    math0.source_bus_indptr = {0, 0, 0, 0, 0, 1};
+    math0.sources_per_bus = {from_sparse, {0, 0, 0, 0, 0, 1}};
     math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
     math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
-    math0.load_gen_bus_indptr = {0, 0, 0, 1, 1, 2};
+    math0.load_gens_per_bus = {from_sparse, {0, 0, 0, 1, 1, 2}};
     math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
-    math0.shunt_bus_indptr = {0, 0, 1, 1, 1, 1};
-    math0.voltage_sensor_indptr = {0, 2, 3, 4, 4, 4};
-    math0.bus_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
-    math0.source_power_sensor_indptr = {0, 0};
-    math0.shunt_power_sensor_indptr = {0, 0};
-    math0.load_gen_power_sensor_indptr = {0, 1, 1};
-    math0.branch_from_power_sensor_indptr = {0, 0, 2, 2, 2, 3, 4, 5};
+    math0.shunts_per_bus = {from_sparse, {0, 0, 1, 1, 1, 1}};
+    math0.voltage_sensors_per_bus = {from_sparse, {0, 2, 3, 4, 4, 4}};
+    math0.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 0, 0}};
+    math0.power_sensors_per_source = {from_sparse, {0, 0}};
+    math0.power_sensors_per_shunt = {from_sparse, {0, 0}};
+    math0.power_sensors_per_load_gen = {from_sparse, {0, 1, 1}};
+    math0.power_sensors_per_branch_from = {from_sparse, {0, 0, 2, 2, 2, 3, 4, 5}};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
-    math0.branch_to_power_sensor_indptr = {0, 1, 3, 3, 3, 3, 3, 3};
+    math0.power_sensors_per_branch_to = {from_sparse, {0, 1, 3, 3, 3, 3, 3, 3}};
     math0.fill_in = {{3, 4}};
 
     // Sub graph / math model 1
     MathModelTopology math1;
     math1.slack_bus_ = 3;
-    math1.source_bus_indptr = {0, 0, 0, 0, 1};
+    math1.sources_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.branch_bus_idx = {
         {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
     };
     math1.phase_shift = {0, 0, 0, 0};
-    math1.load_gen_bus_indptr = {0, 0, 0, 0, 1};
+    math1.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.load_gen_type = {LoadGenType::const_i};
-    math1.shunt_bus_indptr = {0, 1, 1, 1, 1};
-    math1.voltage_sensor_indptr = {0, 0, 0, 0, 1};
-    math1.bus_power_sensor_indptr = {0, 0, 0, 0, 1};
-    math1.source_power_sensor_indptr = {0, 2};
-    math1.shunt_power_sensor_indptr = {0, 2};
-    math1.load_gen_power_sensor_indptr = {0, 2};
-    math1.branch_from_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
-    math1.branch_to_power_sensor_indptr = {0, 0, 0, 0, 0, 0};
+    math1.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
+    math1.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.power_sensors_per_source = {from_sparse, {0, 2}};
+    math1.power_sensors_per_shunt = {from_sparse, {0, 2}};
+    math1.power_sensors_per_load_gen = {from_sparse, {0, 2}};
+    math1.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0}};
+    math1.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0}};
 
     std::vector<MathModelTopology> math_topology_ref = {math0, math1};
 
@@ -298,19 +305,19 @@ TEST_CASE("Test topology") {
             auto const& math_ref = math_topology_ref[i];
             CHECK(math.slack_bus_ == math_ref.slack_bus_);
             CHECK(math.n_bus() == math_ref.n_bus());
-            CHECK(math.source_bus_indptr == math_ref.source_bus_indptr);
+            check_equal(math.sources_per_bus, math_ref.sources_per_bus);
             CHECK(math.branch_bus_idx == math_ref.branch_bus_idx);
             CHECK(math.phase_shift == math_ref.phase_shift);
-            CHECK(math.load_gen_bus_indptr == math_ref.load_gen_bus_indptr);
+            check_equal(math.load_gens_per_bus, math_ref.load_gens_per_bus);
             CHECK(math.load_gen_type == math_ref.load_gen_type);
-            CHECK(math.shunt_bus_indptr == math_ref.shunt_bus_indptr);
-            CHECK(math.voltage_sensor_indptr == math_ref.voltage_sensor_indptr);
-            CHECK(math.bus_power_sensor_indptr == math_ref.bus_power_sensor_indptr);
-            CHECK(math.source_power_sensor_indptr == math_ref.source_power_sensor_indptr);
-            CHECK(math.shunt_power_sensor_indptr == math_ref.shunt_power_sensor_indptr);
-            CHECK(math.load_gen_power_sensor_indptr == math_ref.load_gen_power_sensor_indptr);
-            CHECK(math.branch_from_power_sensor_indptr == math_ref.branch_from_power_sensor_indptr);
-            CHECK(math.branch_to_power_sensor_indptr == math_ref.branch_to_power_sensor_indptr);
+            check_equal(math.shunts_per_bus, math_ref.shunts_per_bus);
+            check_equal(math.voltage_sensors_per_bus, math_ref.voltage_sensors_per_bus);
+            check_equal(math.power_sensors_per_bus, math_ref.power_sensors_per_bus);
+            check_equal(math.power_sensors_per_source, math_ref.power_sensors_per_source);
+            check_equal(math.power_sensors_per_shunt, math_ref.power_sensors_per_shunt);
+            check_equal(math.power_sensors_per_load_gen, math_ref.power_sensors_per_load_gen);
+            check_equal(math.power_sensors_per_branch_from, math_ref.power_sensors_per_branch_from);
+            check_equal(math.power_sensors_per_branch_to, math_ref.power_sensors_per_branch_to);
             CHECK(math.fill_in == math_ref.fill_in);
         }
     }

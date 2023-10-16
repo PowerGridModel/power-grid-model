@@ -13,10 +13,9 @@
 namespace power_grid_model::common_solver_functions {
 
 template <bool sym>
-void add_sources(IdxVector const& source_bus_indptr, Idx const& bus_number, YBus<sym> const& y_bus,
+void add_sources(grouped_idx_vector_type auto const& sources_per_bus, Idx const& bus_number, YBus<sym> const& y_bus,
                  ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
-    for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-         ++source_number) {
+    for (Idx const source_number : sources_per_bus.get_element_range(bus_number)) {
         ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
         diagonal_element += y_source; // add y_source to the diagonal of Ybus
         u_bus += dot(y_source, ComplexValue<sym>{u_source_vector[source_number]}); // rhs += Y_source * U_source
@@ -35,8 +34,8 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
 
 template <bool sym>
 void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                             MathOutput<sym>& output, IdxVector const& source_bus_indptr) {
-    for (Idx source = source_bus_indptr[bus_number]; source != source_bus_indptr[bus_number + 1]; ++source) {
+                             MathOutput<sym>& output, grouped_idx_vector_type auto const& sources_per_bus) {
+    for (Idx const source : sources_per_bus.get_element_range(bus_number)) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
         output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
@@ -46,8 +45,9 @@ void calculate_source_result(Idx const& bus_number, YBus<sym> const& y_bus, Powe
 
 template <bool sym, class LoadGenFunc>
 void calculate_load_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output,
-                               IdxVector const& load_gen_bus_indptr, LoadGenFunc const& load_gen_func) {
-    for (Idx load_gen = load_gen_bus_indptr[bus_number]; load_gen != load_gen_bus_indptr[bus_number + 1]; ++load_gen) {
+                               grouped_idx_vector_type auto const& load_gens_per_bus,
+                               LoadGenFunc const& load_gen_func) {
+    for (auto load_gen : load_gens_per_bus.get_element_range(bus_number)) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
 

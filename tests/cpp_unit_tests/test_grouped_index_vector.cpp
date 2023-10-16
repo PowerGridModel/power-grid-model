@@ -57,7 +57,7 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
     auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
 
     // Test get_element_range
-    std::vector<IdxCount> actual_idx_counts{};
+    std::vector<IdxCount> const actual_idx_counts{};
     for (size_t group_number = 0; group_number < num_groups; group_number++) {
         CHECK(idx_vector.get_element_range(group_number) == expected_ranges[group_number]);
     }
@@ -74,7 +74,7 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
     // Test Iteration
     std::vector<IdxCount> actual_elements{};
     CountingRanges actual_ranges{};
-    for (auto element_range : idx_vector) {
+    for (auto const& element_range : idx_vector) {
         actual_ranges.push_back(element_range);
         for (auto& element : element_range) {
             actual_elements.push_back(element);

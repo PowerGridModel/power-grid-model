@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 
 #include "power_grid_model.hpp"
+#include "typing.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/zip_iterator.hpp>
@@ -51,14 +52,6 @@ inline auto sparse_decode(IdxVector const& indptr) {
     return result;
 }
 
-template <typename T, typename U> constexpr auto narrow_cast(U value) {
-    if constexpr (std::same_as<T, U>) {
-        return value;
-    }
-    assert(std::in_range<T>(value));
-    return static_cast<T>(value);
-}
-
 // TODO(mgovers): replace the below relevant subset here ourselves with the STD equivalent when we have std::ranges.
 // boost::counting_iterator does not satisfy all requirements std::*_iterator concepts:
 static_assert(!std::random_access_iterator<IdxCount>);
@@ -97,6 +90,8 @@ concept index_range_iterator =
 
 template <typename T>
 concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {
+                                                                         typename T::iterator;
+
                                                                          { t.size() } -> std::same_as<Idx>;
 
                                                                          { t.begin() } -> index_range_iterator;
@@ -152,6 +147,8 @@ class SparseGroupedIdxVector {
     auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
 
   public:
+    using iterator = GroupIterator;
+
     auto size() const { return static_cast<Idx>(indptr_.size()) - 1; }
     auto begin() const { return group_iterator(0); }
     auto end() const { return group_iterator(size()); }
@@ -205,8 +202,8 @@ class DenseGroupedIdxVector {
         auto dereference() const -> iterator {
             assert(dense_vector_ != nullptr);
             return boost::counting_range(
-                detail::narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.first)),
-                detail::narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.second)));
+                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.first)),
+                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.second)));
         }
         constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
@@ -225,6 +222,8 @@ class DenseGroupedIdxVector {
     auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
+    using iterator = GroupIterator;
+
     auto size() const { return num_groups_; }
     auto begin() const { return group_iterator(Idx{}); }
     auto end() const { return group_iterator(size()); }

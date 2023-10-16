@@ -117,7 +117,7 @@ struct YBusStructure {
         }
         // loop shunt
         for (Idx bus = 0; bus != n_bus; ++bus) {
-            for (Idx shunt = topo.shunt_bus_indptr[bus]; shunt != topo.shunt_bus_indptr[bus + 1]; ++shunt) {
+            for (Idx const shunt : topo.shunts_per_bus.get_element_range(bus)) {
                 append_element_vector(vec_map_element, bus, bus, YBusElementType::shunt, shunt);
             }
         }
@@ -205,7 +205,7 @@ struct YBusStructure {
                 }
                 // all entries in the same position are looped, append indptr
                 // need to be offset by fill-in
-                y_bus_entry_indptr.push_back((Idx)(it_element - vec_map_element.cbegin()) - fill_in_counter);
+                y_bus_entry_indptr.push_back(static_cast<Idx>(it_element - vec_map_element.cbegin()) - fill_in_counter);
                 // iterate linear nnz
                 ++nnz_counter;
                 ++nnz_counter_lu;
@@ -253,9 +253,9 @@ struct YBusStructure {
         assert(row_start == n_bus);
         assert(row_start_lu == n_bus);
         // size of y_bus_entry_indptr is nnz + 1
-        assert((Idx)y_bus_entry_indptr.size() == nnz_counter + 1);
+        assert(static_cast<Idx>(y_bus_entry_indptr.size()) == nnz_counter + 1);
         // end of y_bus_entry_indptr is same as size of entry
-        assert(y_bus_entry_indptr.back() == (Idx)y_bus_element.size());
+        assert(y_bus_entry_indptr.back() == static_cast<Idx>(y_bus_element.size()));
 
         // construct transpose entry
         lu_transpose_entry.resize(nnz_counter_lu);
@@ -288,7 +288,7 @@ template <bool sym> class YBus {
     }
 
     // getter
-    Idx size() const { return (Idx)bus_entry().size(); }
+    Idx size() const { return static_cast<Idx>(bus_entry().size()); }
     Idx nnz() const { return row_indptr().back(); }
     Idx nnz_lu() const { return row_indptr_lu().back(); }
     IdxVector const& row_indptr() const { return y_bus_struct_->row_indptr; }
@@ -403,8 +403,7 @@ template <bool sym> class YBus {
         std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
         // loop all bus, then all shunt within the bus
         for (Idx bus = 0; bus != size(); ++bus) {
-            for (Idx shunt = math_topology_->shunt_bus_indptr[bus]; shunt != math_topology_->shunt_bus_indptr[bus + 1];
-                 ++shunt) {
+            for (Idx const shunt : math_topology_->shunts_per_bus.get_element_range(bus)) {
                 // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);

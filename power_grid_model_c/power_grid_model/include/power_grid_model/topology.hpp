@@ -536,10 +536,11 @@ class Topology {
     // The indptr in math topology will be modified
     // The coupling element should be pre-allocated in coupling
     // Only connect the component if include(component_i) returns true
-    template <IdxVector MathModelTopology::*indptr, Idx (MathModelTopology::*n_obj_fn)() const,
+    template <Idx (MathModelTopology::*n_obj_fn)() const, typename AssignIndptr,
               typename ObjectFinder = SingleTypeObjectFinder, typename Predicate = decltype(include_all)>
-    void couple_object_components(ObjectFinder object_finder, std::vector<Idx2D>& coupling,
-                                  Predicate include = include_all) {
+        requires std::invocable<std::remove_cvref_t<AssignIndptr>, Idx, IdxVector&&>
+    void couple_object_components(AssignIndptr&& assign_indptr, ObjectFinder object_finder,
+                                  std::vector<Idx2D>& coupling, Predicate include = include_all) {
         auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
         auto const n_components = object_finder.size();
         std::vector<IdxVector> topo_obj_idx(n_math_topologies);
@@ -564,10 +565,10 @@ class Topology {
             Idx const n_obj = (math_topology_[topo_idx].*n_obj_fn)();
 
             // Reorder to compressed format for each math topology
-            SparseMapping map = build_sparse_mapping(obj_idx, n_obj);
+            auto&& map = build_sparse_mapping(obj_idx, n_obj);
 
             // Assign indptr
-            math_topology_[topo_idx].*indptr = std::move(map.indptr);
+            assign_indptr(topo_idx, std::move(map.indptr));
 
             // Reorder components within the math model
             IdxVector const& reorder = map.reorder;
@@ -583,11 +584,16 @@ class Topology {
 
     void couple_all_appliance() {
         // shunt
-        couple_object_components<&MathModelTopology::shunt_bus_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].shunts_per_bus = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.shunt_node_idx, comp_coup_.node}, comp_coup_.shunt);
-
-        // load gen
-        couple_object_components<&MathModelTopology::load_gen_bus_indptr, &MathModelTopology::n_bus>(
+        // load_gen
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].load_gens_per_bus = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.load_gen_node_idx, comp_coup_.node}, comp_coup_.load_gen);
 
         // set load gen type
@@ -604,29 +610,45 @@ class Topology {
         }
 
         // source
-        couple_object_components<&MathModelTopology::source_bus_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector const& indptr) {
+                math_topology_[topo_idx].sources_per_bus = {from_sparse, indptr};
+            },
             {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source,
             [this](Idx i) { return comp_conn_.source_connected[i]; });
     }
 
     void couple_sensors() {
         // voltage sensors
-        couple_object_components<&MathModelTopology::voltage_sensor_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].voltage_sensors_per_bus = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.voltage_sensor_node_idx, comp_coup_.node}, comp_coup_.voltage_sensor);
 
         // source power sensors
-        couple_object_components<&MathModelTopology::source_power_sensor_indptr, &MathModelTopology::n_source>(
+        couple_object_components<&MathModelTopology::n_source>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_source = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
 
         // shunt power sensors
-        couple_object_components<&MathModelTopology::shunt_power_sensor_indptr, &MathModelTopology::n_shunt>(
+        couple_object_components<&MathModelTopology::n_shunt>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_shunt = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
 
         // load + generator power sensors
-        couple_object_components<&MathModelTopology::load_gen_power_sensor_indptr, &MathModelTopology::n_load_gen>(
-            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor, [this](Idx i) {
+        couple_object_components<&MathModelTopology::n_load_gen>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_load_gen = {from_sparse, std::move(indptr)};
+            },
+            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor,
+            [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });
@@ -645,20 +667,31 @@ class Topology {
         SensorBranchObjectFinder const object_finder_from_sensor{comp_topo_.power_sensor_object_idx,
                                                                  comp_topo_.power_sensor_terminal_type,
                                                                  comp_coup_.branch, comp_coup_.branch3};
-        couple_object_components<&MathModelTopology::branch_from_power_sensor_indptr, &MathModelTopology::n_branch>(
+
+        // branch 'from' power sensors
+        couple_object_components<&MathModelTopology::n_branch>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_branch_from = {from_sparse, std::move(indptr)};
+            },
             object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
 
         // branch 'to' power sensors
-        couple_object_components<&MathModelTopology::branch_to_power_sensor_indptr, &MathModelTopology::n_branch>(
+        couple_object_components<&MathModelTopology::n_branch>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_branch_to = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
 
         // node injection power sensors
-        couple_object_components<&MathModelTopology::bus_power_sensor_indptr, &MathModelTopology::n_bus>(
+        couple_object_components<&MathModelTopology::n_bus>(
+            [this](Idx topo_idx, IdxVector indptr) {
+                math_topology_[topo_idx].power_sensors_per_bus = {from_sparse, std::move(indptr)};
+            },
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }
-};
+}; // namespace power_grid_model
 
 } // namespace power_grid_model
 
