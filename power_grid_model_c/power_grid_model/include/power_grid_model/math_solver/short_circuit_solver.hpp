@@ -77,17 +77,15 @@ template <bool sym> class ShortCircuitSolver {
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, ShortCircuitInput const& input,
                                 ShortCircuitMathOutput<sym>& output, IdxVector& infinite_admittance_fault_counter,
                                 FaultType const& fault_type, IntS phase_1, IntS phase_2) {
-        // getter
         IdxVector const& bus_entry = y_bus.lu_diag();
-        auto const& sources_per_bus = *sources_per_bus_;
-        // loop through all buses
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) { // TODO(mgovers): zip
+
+        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            common_solver_functions::add_sources<sym>(sources_per_bus.get_element_range(bus_number), bus_number, y_bus,
-                                                      input.source, diagonal_element, u_bus);
+            common_solver_functions::add_sources<sym>(sources, bus_number, y_bus, input.source, diagonal_element,
+                                                      u_bus);
 
             // skip if no fault
             if (!input.faults.empty()) {
