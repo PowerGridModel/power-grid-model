@@ -417,7 +417,7 @@ template <bool sym> class MeasuredValues {
     //      set imag part to nan, to signal this is a magnitude only measurement
     template <bool only_magnitude = false>
     static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data,
-                                                     boost::iterator_range<IdxCount> const& sensors) {
+                                                     IdxRange const& sensors) {
         double accumulated_inverse_variance{};
         ComplexValue<sym> accumulated_value{};
         for (auto pos : sensors) {
@@ -501,8 +501,7 @@ template <bool sym> class MeasuredValues {
         std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
-    void calculate_non_over_determined_injection(Idx n_unmeasured, boost::iterator_range<IdxCount> const& load_gens,
-                                                 boost::iterator_range<IdxCount> const& sources,
+    void calculate_non_over_determined_injection(Idx n_unmeasured, IdxRange const& load_gens, IdxRange const& sources,
                                                  SensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
@@ -525,8 +524,7 @@ template <bool sym> class MeasuredValues {
         }
     }
 
-    void calculate_over_determined_injection(boost::iterator_range<IdxCount> const& load_gens,
-                                             boost::iterator_range<IdxCount> const& sources,
+    void calculate_over_determined_injection(IdxRange const& load_gens, IdxRange const& sources,
                                              SensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {

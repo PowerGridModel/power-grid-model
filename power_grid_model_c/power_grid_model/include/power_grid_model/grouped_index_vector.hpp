@@ -118,10 +118,10 @@ class DenseGroupedIdxVector;
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
-                                                        boost::iterator_range<IdxCount>, Idx> {
+    class GroupIterator
+        : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag, IdxRange, Idx> {
       public:
-        using iterator = boost::iterator_range<IdxCount>;
+        using iterator = IdxRange;
 
         GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
@@ -179,10 +179,10 @@ class SparseGroupedIdxVector {
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
-                                                        boost::iterator_range<IdxCount>, Idx> {
+    class GroupIterator
+        : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag, IdxRange, Idx> {
       public:
-        using iterator = boost::iterator_range<IdxCount>;
+        using iterator = IdxRange;
 
         GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)

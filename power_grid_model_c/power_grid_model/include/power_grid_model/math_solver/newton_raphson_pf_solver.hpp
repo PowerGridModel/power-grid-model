@@ -352,8 +352,8 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         }
     }
 
-    void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, Idx diagonal_position,
-                   PowerFlowInput<sym> const& input, std::vector<LoadGenType> const& load_gen_type) {
+    void add_loads(IdxRange const& load_gens, Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
+                   std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
         for (Idx const load_number : load_gens) {
             LoadGenType const type = load_gen_type[load_number];
@@ -403,8 +403,8 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
     }
 
-    void add_sources(boost::iterator_range<IdxCount> const& sources, Idx bus_number, Idx diagonal_position,
-                     YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+    void add_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
         for (Idx const source_number : sources) {
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
             ComplexValue<sym> const u_ref{input.source[source_number]};

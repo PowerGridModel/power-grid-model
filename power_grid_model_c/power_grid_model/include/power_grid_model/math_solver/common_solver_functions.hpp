@@ -13,7 +13,7 @@
 namespace power_grid_model::common_solver_functions {
 
 template <bool sym>
-void add_sources(boost::iterator_range<IdxCount> const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
+void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
                  ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
     for (Idx const source_number : sources) {
         ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
@@ -33,9 +33,9 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
 }
 
 template <bool sym>
-void calculate_source_result(Idx bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                             MathOutput<sym>& output, grouped_idx_vector_type auto const& sources_per_bus) {
-    for (Idx const source : sources_per_bus.get_element_range(bus_number)) {
+void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
+                             PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    for (Idx const source : sources) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
         output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
@@ -44,10 +44,9 @@ void calculate_source_result(Idx bus_number, YBus<sym> const& y_bus, PowerFlowIn
 }
 
 template <bool sym, class LoadGenFunc>
-void calculate_load_gen_result(Idx bus_number, PowerFlowInput<sym> const& input, MathOutput<sym>& output,
-                               grouped_idx_vector_type auto const& load_gens_per_bus,
-                               LoadGenFunc const& load_gen_func) {
-    for (auto load_gen : load_gens_per_bus.get_element_range(bus_number)) {
+void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+                               MathOutput<sym>& output, LoadGenFunc const& load_gen_func) {
+    for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
 

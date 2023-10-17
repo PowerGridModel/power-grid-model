@@ -8,8 +8,7 @@
 namespace power_grid_model {
 
 namespace {
-using CountingRange = boost::iterator_range<IdxCount>;
-using CountingRanges = std::vector<CountingRange>;
+using IdxRanges = std::vector<IdxRange>;
 
 using detail::sparse_encode;
 
@@ -51,7 +50,7 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
 
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
     Idx const num_groups{6};
-    CountingRanges expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
+    IdxRanges expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
     std::vector<IdxCount> const expected_elements{0, 1, 2, 3, 4, 5, 6};
 
     auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
@@ -73,7 +72,7 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
 
     // Test Iteration
     std::vector<IdxCount> actual_elements{};
-    CountingRanges actual_ranges{};
+    IdxRanges actual_ranges{};
     for (auto const& element_range : idx_vector) {
         actual_ranges.push_back(element_range);
         for (auto& element : element_range) {
@@ -98,12 +97,12 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
     // First grouped idx vector and its expeceted elements and groups
     IdxVector const groups_a{1, 1, 1, 3, 3, 3, 4};
-    CountingRanges expected_ranges_a{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
+    IdxRanges expected_ranges_a{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
     std::vector<IdxCount> const expected_elements_a{0, 1, 2, 3, 4, 5, 6};
 
     // Second grouped idx vector and its expeceted elements and groups
     IdxVector const groups_b{0, 1, 1, 3, 3, 4, 5, 5};
-    CountingRanges expected_ranges_b{{0, 1}, {1, 3}, {3, 3}, {3, 5}, {5, 6}, {6, 8}};
+    IdxRanges expected_ranges_b{{0, 1}, {1, 3}, {3, 3}, {3, 5}, {5, 6}, {6, 8}};
     std::vector<IdxCount> const expected_elements_b{0, 1, 2, 3, 4, 5, 6, 7};
 
     // reuse for brevity
@@ -117,7 +116,7 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
     SUBCASE("1 input") {
         // Test single zipped iteration
-        CountingRanges actual_ranges_a{};
+        IdxRanges actual_ranges_a{};
         Idx current_index{};
         for (auto [index, element_range] : enumerated_zip_sequence(idx_vector_a)) {
             actual_ranges_a.push_back(element_range);
@@ -130,8 +129,8 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
     SUBCASE("2 inputs") {
         std::vector<IdxCount> actual_idx_counts_a{};
         std::vector<IdxCount> actual_idx_counts_b{};
-        CountingRanges actual_ranges_a{};
-        CountingRanges actual_ranges_b{};
+        IdxRanges actual_ranges_a{};
+        IdxRanges actual_ranges_b{};
         Idx current_index{};
         for (auto const [index, first_group, second_group] : enumerated_zip_sequence(idx_vector_a, idx_vector_b)) {
             for (auto& element : first_group) {
@@ -154,9 +153,9 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
     SUBCASE("3 inputs") {
         // Test 3 zipped iterations
-        CountingRanges actual_ranges_a{};
-        CountingRanges actual_ranges_b{};
-        CountingRanges actual_ranges_c{};
+        IdxRanges actual_ranges_a{};
+        IdxRanges actual_ranges_b{};
+        IdxRanges actual_ranges_c{};
         Idx current_index{};
         for (auto [index, element_range_1, element_range_2, element_range_3] :
              enumerated_zip_sequence(idx_vector_a, idx_vector_b, idx_vector_c)) {
