@@ -185,7 +185,7 @@ class DenseGroupedIdxVector {
         using iterator = boost::iterator_range<IdxCount>;
 
         GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
+        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
             : dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::equal_range(std::cbegin(*dense_vector_), std::cend(*dense_vector_), group)} {}

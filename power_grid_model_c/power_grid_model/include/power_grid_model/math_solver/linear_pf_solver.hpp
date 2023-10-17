@@ -98,17 +98,17 @@ template <bool sym> class LinearPFSolver {
         IdxVector const& bus_entry = y_bus.lu_diag();
         auto const& load_gens_per_bus = *load_gens_per_bus_;
         auto const& sources_per_bus = *sources_per_bus_;
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) { // TODO(mgovers): zip
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
             add_loads(load_gens_per_bus, bus_number, input, diagonal_element);
-            common_solver_functions::add_sources<sym>(sources_per_bus, bus_number, y_bus, input.source,
-                                                      diagonal_element, u_bus);
+            common_solver_functions::add_sources<sym>(sources_per_bus.get_element_range(bus_number), bus_number, y_bus,
+                                                      input.source, diagonal_element, u_bus);
         }
     }
 
-    static void add_loads(grouped_idx_vector_type auto const& load_gens_per_bus, Idx const& bus_number,
+    static void add_loads(grouped_idx_vector_type auto const& load_gens_per_bus, Idx bus_number,
                           PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element) {
         for (auto load_number : load_gens_per_bus.get_element_range(bus_number)) {
             // YBus_diag += -conj(S_base)

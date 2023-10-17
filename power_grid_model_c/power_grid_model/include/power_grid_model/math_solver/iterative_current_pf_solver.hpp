@@ -124,9 +124,9 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
 
         // loop buses: i
-        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) { // TODO(mgovers): zip
             add_loads(bus_number, input, load_gens_per_bus, load_gen_type, u);
-            add_sources(bus_number, y_bus, input, sources_per_bus);
+            add_sources(sources_per_bus.get_element_range(bus_number), bus_number, y_bus, input);
         }
     }
 
@@ -157,7 +157,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
 
-    void add_loads(Idx const& bus_number, PowerFlowInput<sym> const& input,
+    void add_loads(Idx bus_number, PowerFlowInput<sym> const& input,
                    grouped_idx_vector_type auto const& load_gens_per_bus, std::vector<LoadGenType> const& load_gen_type,
                    ComplexValueVector<sym> const& u) {
         for (auto load_number : load_gens_per_bus.get_element_range(bus_number)) {
@@ -184,9 +184,9 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         }
     }
 
-    void add_sources(Idx const& bus_number, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                     grouped_idx_vector_type auto const& sources_per_bus) {
-        for (Idx const source_number : sources_per_bus.get_element_range(bus_number)) {
+    void add_sources(boost::iterator_range<IdxCount> const& sources, Idx bus_number, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input) {
+        for (Idx const source_number : sources) {
             // I_inj_i += Y_source_j * U_ref_j
             rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                       ComplexValue<sym>{input.source[source_number]});

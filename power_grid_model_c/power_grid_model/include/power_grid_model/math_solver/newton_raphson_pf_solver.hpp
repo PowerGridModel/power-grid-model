@@ -234,7 +234,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(bus_number, diagonal_position, input, load_gens_per_bus, load_gen_type);
-            add_sources(bus_number, diagonal_position, y_bus, input, sources_per_bus, u);
+            add_sources(sources_per_bus.get_element_range(bus_number), bus_number, diagonal_position, y_bus, input, u);
         }
     }
 
@@ -351,7 +351,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         }
     }
 
-    void add_loads(Idx const& bus_number, Idx const& diagonal_position, PowerFlowInput<sym> const& input,
+    void add_loads(Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
                    grouped_idx_vector_type auto const& load_gens_per_bus,
                    std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
@@ -374,14 +374,14 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         }
     }
 
-    void add_const_power_load(Idx const& bus_number, Idx const& load_number, PowerFlowInput<sym> const& input) {
+    void add_const_power_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base
         del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
         del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
         // -dPQ_sp/dV * V = 0
     }
 
-    void add_const_impedance_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
+    void add_const_impedance_load(Idx bus_number, Idx load_number, Idx diagonal_position,
                                   PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base * V^2
         del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
@@ -393,7 +393,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
                  -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
     }
 
-    void add_const_current_load(Idx const& bus_number, Idx const& load_number, Idx const& diagonal_position,
+    void add_const_current_load(Idx bus_number, Idx load_number, Idx diagonal_position,
                                 PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base * V
         del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
@@ -403,10 +403,9 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
     }
 
-    void add_sources(Idx const& bus_number, Idx const& diagonal_position, YBus<sym> const& y_bus,
-                     PowerFlowInput<sym> const& input, grouped_idx_vector_type auto const& sources_per_bus,
-                     ComplexValueVector<sym> const& u) {
-        for (Idx const source_number : sources_per_bus.get_element_range(bus_number)) {
+    void add_sources(boost::iterator_range<IdxCount> const& sources, Idx bus_number, Idx diagonal_position,
+                     YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+        for (Idx const source_number : sources) {
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
             ComplexValue<sym> const u_ref{input.source[source_number]};
             // calculate block, um = ui, us = uref

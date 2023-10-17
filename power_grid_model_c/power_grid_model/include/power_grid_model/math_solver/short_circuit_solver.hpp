@@ -76,18 +76,18 @@ template <bool sym> class ShortCircuitSolver {
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, ShortCircuitInput const& input,
                                 ShortCircuitMathOutput<sym>& output, IdxVector& infinite_admittance_fault_counter,
-                                FaultType const& fault_type, IntS const& phase_1, IntS const& phase_2) {
+                                FaultType const& fault_type, IntS phase_1, IntS phase_2) {
         // getter
         IdxVector const& bus_entry = y_bus.lu_diag();
         auto const& sources_per_bus = *sources_per_bus_;
         // loop through all buses
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) { // TODO(mgovers): zip
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            common_solver_functions::add_sources<sym>(sources_per_bus, bus_number, y_bus, input.source,
-                                                      diagonal_element, u_bus);
+            common_solver_functions::add_sources<sym>(sources_per_bus.get_element_range(bus_number), bus_number, y_bus,
+                                                      input.source, diagonal_element, u_bus);
 
             // skip if no fault
             if (!input.faults.empty()) {
@@ -97,14 +97,14 @@ template <bool sym> class ShortCircuitSolver {
         }
     }
 
-    void add_faults(Idx const& bus_number, YBus<sym> const& y_bus, ShortCircuitInput const& input,
+    void add_faults(Idx bus_number, YBus<sym> const& y_bus, ShortCircuitInput const& input,
                     ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
-                    IdxVector& infinite_admittance_fault_counter, FaultType const& fault_type, IntS const& phase_1,
-                    IntS const& phase_2) {
+                    IdxVector& infinite_admittance_fault_counter, FaultType const& fault_type, IntS phase_1,
+                    IntS phase_2) {
         IdxVector const& fault_bus_indptr = input.fault_bus_indptr;
 
         for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
-             ++fault_number) {
+             ++fault_number) { // TODO(mgovers): DenseGroupedIdxVector
             DoubleComplex const y_fault = input.faults[fault_number].y_fault;
             if (std::isinf(y_fault.real())) {
                 assert(std::isinf(y_fault.imag()));
@@ -120,9 +120,9 @@ template <bool sym> class ShortCircuitSolver {
         }
     }
 
-    void add_fault_with_infinite_impedance(Idx const& bus_number, YBus<sym> const& y_bus,
-                                           ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
-                                           FaultType const& fault_type, IntS const& phase_1, IntS const& phase_2) {
+    void add_fault_with_infinite_impedance(Idx bus_number, YBus<sym> const& y_bus, ComplexTensor<sym>& diagonal_element,
+                                           ComplexValue<sym>& u_bus, FaultType const& fault_type, IntS phase_1,
+                                           IntS phase_2) {
         if (fault_type == FaultType::three_phase) { // three phase fault
             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
@@ -183,9 +183,9 @@ template <bool sym> class ShortCircuitSolver {
         }
     }
 
-    void add_fault(DoubleComplex const& y_fault, Idx const& bus_number, YBus<sym> const& y_bus,
+    void add_fault(DoubleComplex const& y_fault, Idx bus_number, YBus<sym> const& y_bus,
                    ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus, FaultType const& fault_type,
-                   IntS const& phase_1, IntS const& phase_2) {
+                   IntS phase_1, IntS phase_2) {
         if (fault_type == FaultType::three_phase) { // three phase fault
             // mat_data[bus,bus] += y_fault
             diagonal_element += ComplexTensor<sym>{y_fault};
