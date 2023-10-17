@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-// issue in msgpack: may call free on deleted data from unique_ptr
+// Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
+// May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
 
 #include <power_grid_model/auxiliary/input.hpp>

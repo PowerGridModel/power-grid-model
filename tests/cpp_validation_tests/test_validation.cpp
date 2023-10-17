@@ -74,7 +74,6 @@ std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::stri
 }
 
 auto create_owning_dataset(WritableDatasetHandler& info) {
-
     Idx const batch_size = info.batch_size();
     OwningDataset dataset;
 
@@ -106,12 +105,19 @@ auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandl
 }
 
 auto load_dataset(std::filesystem::path const& path) {
-    auto deserializer = Deserializer(power_grid_model::meta_data::from_json, read_file(path));
+// Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
+// May be a Clang Analyzer bug
+#ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
+    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path)};
     auto& info = deserializer.get_dataset_info();
     auto dataset = create_owning_dataset(info);
     deserializer.parse();
     construct_individual_scenarios(dataset, info);
     return dataset;
+#else  // __clang_analyzer__ // issue in msgpack
+    (void)path;
+    return OwningDataset{}; // fallback for https://github.com/msgpack/msgpack-c/issues/1098
+#endif // __clang_analyzer__ // issue in msgpack
 }
 
 // create single result set
