@@ -32,6 +32,8 @@ The input, ie. [0, 1, 3] should be strictly increasing
 
 namespace power_grid_model {
 
+using IdxRange = boost::iterator_range<IdxCount>;
+
 namespace detail {
 
 inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {

@@ -45,7 +45,6 @@ using IntS = int8_t;
 
 // couting iterator
 using IdxCount = boost::counting_iterator<Idx>;
-using IdxRange = boost::iterator_range<IdxCount>;
 
 // struct of indexing to sub modules
 struct Idx2D {

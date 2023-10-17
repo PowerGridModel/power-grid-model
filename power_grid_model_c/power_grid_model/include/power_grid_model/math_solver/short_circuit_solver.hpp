@@ -79,7 +79,8 @@ template <bool sym> class ShortCircuitSolver {
                                 FaultType const& fault_type, IntS phase_1, IntS phase_2) {
         IdxVector const& bus_entry = y_bus.lu_diag();
 
-        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
+        for (auto const& [bus_number, sources, faults] :
+             enumerated_zip_sequence(*sources_per_bus_, input.fault_buses)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
@@ -89,20 +90,17 @@ template <bool sym> class ShortCircuitSolver {
 
             // skip if no fault
             if (!input.faults.empty()) {
-                add_faults(bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
+                add_faults(faults, bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
                            fault_type, phase_1, phase_2);
             }
         }
     }
 
-    void add_faults(Idx bus_number, YBus<sym> const& y_bus, ShortCircuitInput const& input,
+    void add_faults(IdxRange const& faults, Idx bus_number, YBus<sym> const& y_bus, ShortCircuitInput const& input,
                     ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
                     IdxVector& infinite_admittance_fault_counter, FaultType const& fault_type, IntS phase_1,
                     IntS phase_2) {
-        IdxVector const& fault_bus_indptr = input.fault_bus_indptr;
-
-        for (Idx fault_number = fault_bus_indptr[bus_number]; fault_number != fault_bus_indptr[bus_number + 1];
-             ++fault_number) { // TODO(mgovers): DenseGroupedIdxVector
+        for (Idx const fault_number : faults) {
             DoubleComplex const y_fault = input.faults[fault_number].y_fault;
             if (std::isinf(y_fault.real())) {
                 assert(std::isinf(y_fault.imag()));
@@ -235,8 +233,7 @@ template <bool sym> class ShortCircuitSolver {
                 static_cast<double>(infinite_admittance_fault_counter[bus_number]);
 
             if (!input.faults.empty()) {
-                for (Idx fault_number = input.fault_bus_indptr[bus_number];
-                     fault_number != input.fault_bus_indptr[bus_number + 1]; ++fault_number) {
+                for (Idx const fault_number : input.fault_buses.get_element_range(bus_number)) {
                     auto& i_fault = output.fault[fault_number].i_fault;
                     auto& u_bus = output.u_bus[bus_number];
                     DoubleComplex const y_fault = input.faults[fault_number].y_fault;
@@ -314,8 +311,7 @@ template <bool sym> class ShortCircuitSolver {
 
                 // compensate source current into hard fault
                 // compensate source current into two phase to ground fault with impedance
-                for (Idx fault_number = input.fault_bus_indptr[bus_number];
-                     fault_number != input.fault_bus_indptr[bus_number + 1]; ++fault_number) {
+                for (Idx const fault_number : input.fault_buses.get_element_range(bus_number)) {
                     auto& i_fault = output.fault[fault_number].i_fault;
                     DoubleComplex const y_fault = input.faults[fault_number].y_fault;
 
@@ -351,8 +347,8 @@ template <bool sym> class ShortCircuitSolver {
                         if constexpr (!sym) {
                             if ((fault_type == FaultType::two_phase_to_ground) &&
                                 (infinite_admittance_fault_counter_bus == 0.0)) {
-                                auto const finite_admittance_fault_counter_bus = static_cast<double>(
-                                    input.fault_bus_indptr[bus_number + 1] - input.fault_bus_indptr[bus_number]);
+                                auto const finite_admittance_fault_counter_bus =
+                                    static_cast<double>(input.fault_buses.get_element_range(bus_number).size());
                                 // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2 - u_12 * y_fault
                                 // i_fault_2_p = i_inj_1 + u_12 * y_fault
                                 //      i_fault_2_p is the i_fault_2 status quo after the first fault loop

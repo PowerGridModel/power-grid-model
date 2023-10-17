@@ -155,7 +155,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
 
-    void add_loads(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+    void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {
         for (Idx const load_number : load_gens) {
             // load type
@@ -181,7 +181,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         }
     }
 
-    void add_sources(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
+    void add_sources(boost::iterator_range<IdxCount> const& sources, Idx bus_number, YBus<sym> const& y_bus,
                      PowerFlowInput<sym> const& input) {
         for (Idx const source_number : sources) {
             // I_inj_i += Y_source_j * U_ref_j

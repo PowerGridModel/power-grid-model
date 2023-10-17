@@ -1058,7 +1058,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{i, reordered_idx};
             }
 
-            sc_input[i].fault_bus_indptr = std::move(map.indptr);
+            sc_input[i].fault_buses = {from_sparse, std::move(map.indptr)};
             sc_input[i].faults.resize(state_.components.template size<Fault>());
             sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
