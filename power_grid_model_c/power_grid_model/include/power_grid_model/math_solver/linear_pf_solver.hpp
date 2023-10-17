@@ -102,15 +102,15 @@ template <bool sym> class LinearPFSolver {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
-            add_loads(load_gens_per_bus, bus_number, input, diagonal_element);
+            add_loads(load_gens_per_bus.get_element_range(bus_number), bus_number, input, diagonal_element);
             common_solver_functions::add_sources<sym>(sources_per_bus.get_element_range(bus_number), bus_number, y_bus,
                                                       input.source, diagonal_element, u_bus);
         }
     }
 
-    static void add_loads(grouped_idx_vector_type auto const& load_gens_per_bus, Idx bus_number,
+    static void add_loads(boost::iterator_range<IdxCount> const& load_gens_per_bus, Idx /* bus_number */,
                           PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element) {
-        for (auto load_number : load_gens_per_bus.get_element_range(bus_number)) {
+        for (auto load_number : load_gens_per_bus) {
             // YBus_diag += -conj(S_base)
             add_diag(diagonal_element, -conj(input.s_injection[load_number]));
         }

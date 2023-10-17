@@ -233,7 +233,8 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
 
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(bus_number, diagonal_position, input, load_gens_per_bus, load_gen_type);
+            add_loads(load_gens_per_bus.get_element_range(bus_number), bus_number, diagonal_position, input,
+                      load_gen_type);
             add_sources(sources_per_bus.get_element_range(bus_number), bus_number, diagonal_position, y_bus, input, u);
         }
     }
@@ -351,11 +352,10 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
         }
     }
 
-    void add_loads(Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
-                   grouped_idx_vector_type auto const& load_gens_per_bus,
-                   std::vector<LoadGenType> const& load_gen_type) {
+    void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, Idx diagonal_position,
+                   PowerFlowInput<sym> const& input, std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
-        for (Idx const load_number : load_gens_per_bus.get_element_range(bus_number)) {
+        for (Idx const load_number : load_gens) {
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {

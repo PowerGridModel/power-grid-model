@@ -125,7 +125,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 
         // loop buses: i
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) { // TODO(mgovers): zip
-            add_loads(bus_number, input, load_gens_per_bus, load_gen_type, u);
+            add_loads(load_gens_per_bus.get_element_range(bus_number), bus_number, input, load_gen_type, u);
             add_sources(sources_per_bus.get_element_range(bus_number), bus_number, y_bus, input);
         }
     }
@@ -157,10 +157,9 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
 
-    void add_loads(Idx bus_number, PowerFlowInput<sym> const& input,
-                   grouped_idx_vector_type auto const& load_gens_per_bus, std::vector<LoadGenType> const& load_gen_type,
-                   ComplexValueVector<sym> const& u) {
-        for (auto load_number : load_gens_per_bus.get_element_range(bus_number)) {
+    void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+                   std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {
+        for (auto load_number : load_gens) {
             // load type
             LoadGenType const type = load_gen_type[load_number];
             switch (type) {
