@@ -114,8 +114,6 @@ struct from_dense_t {};
 constexpr auto from_sparse = from_sparse_t{};
 constexpr auto from_dense = from_dense_t{};
 
-class DenseGroupedIdxVector;
-
 class SparseGroupedIdxVector {
   private:
     class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
