@@ -593,7 +593,7 @@ template <bool sym> class IterativeLinearSESolver {
 
         // loop to iterate
         Idx num_iter = 0;
-        do {
+        while (max_dev > err_tol || num_iter == 0) {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
@@ -604,7 +604,7 @@ template <bool sym> class IterativeLinearSESolver {
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
-        } while (max_dev > err_tol);
+        };
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");

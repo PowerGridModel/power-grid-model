@@ -36,9 +36,9 @@ TEST_CASE("Serialization") {
     std::vector<Idx> const total_elements = {1, 2};
 
     SUBCASE("Serializer") {
-        ConstDatasetPtr unique_dataset{PGM_create_dataset_const(hl, "input", is_batch, batch_size)};
+        ConstDatasetPtr const unique_dataset{PGM_create_dataset_const(hl, "input", is_batch, batch_size)};
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        auto const dataset = unique_dataset.get();
+        auto* const dataset = unique_dataset.get();
         PGM_dataset_const_add_buffer(hl, dataset, "node", elements_per_scenario[0], total_elements[0], nullptr,
                                      node.data());
         PGM_dataset_const_add_buffer(hl, dataset, "source", elements_per_scenario[1], total_elements[1], nullptr,
@@ -46,9 +46,9 @@ TEST_CASE("Serialization") {
         CHECK(PGM_error_code(hl) == PGM_no_error);
 
         SUBCASE("json") {
-            SerializerPtr json_serializer{
+            SerializerPtr const json_serializer{
                 PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::json))};
-            auto const serializer = json_serializer.get();
+            auto* const serializer = json_serializer.get();
             CHECK(PGM_error_code(hl) == PGM_no_error);
 
             // to string
@@ -66,9 +66,9 @@ TEST_CASE("Serialization") {
         }
 
         SUBCASE("msgpack") {
-            SerializerPtr msgpack_serializer{
+            SerializerPtr const msgpack_serializer{
                 PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::msgpack))};
-            auto const serializer = msgpack_serializer.get();
+            auto* const serializer = msgpack_serializer.get();
 
             // round trip
             char const* msgpack_data{};
@@ -87,10 +87,10 @@ TEST_CASE("Serialization") {
         std::vector<char> msgpack_data;
         nlohmann::json::to_msgpack(json_document, msgpack_data);
 
-        DeserializerPtr unique_deserializer_json(PGM_create_deserializer_from_null_terminated_string(
+        DeserializerPtr const unique_deserializer_json(PGM_create_deserializer_from_null_terminated_string(
             hl, json_data, static_cast<PGM_Idx>(SerializationFormat::json)));
         CHECK(PGM_error_code(hl) == PGM_no_error);
-        DeserializerPtr unique_deserializer_msgpack(
+        DeserializerPtr const unique_deserializer_msgpack(
             PGM_create_deserializer_from_binary_buffer(hl, msgpack_data.data(), static_cast<Idx>(msgpack_data.size()),
                                                        static_cast<PGM_Idx>(SerializationFormat::msgpack)));
         CHECK(PGM_error_code(hl) == PGM_no_error);
@@ -100,8 +100,8 @@ TEST_CASE("Serialization") {
             // reset data
             node[0] = {};
             // get dataset
-            auto const dataset = PGM_deserializer_get_dataset(hl, deserializer);
-            auto const info = PGM_dataset_writable_get_info(hl, dataset);
+            auto* const dataset = PGM_deserializer_get_dataset(hl, deserializer);
+            auto const* const info = PGM_dataset_writable_get_info(hl, dataset);
             // check meta data
             CHECK(PGM_dataset_info_name(hl, info) == "input"s);
             CHECK(PGM_dataset_info_is_batch(hl, info) == is_batch);
@@ -109,7 +109,7 @@ TEST_CASE("Serialization") {
             CHECK(PGM_dataset_info_n_components(hl, info) == n_components);
             CHECK(PGM_dataset_info_component_name(hl, info, 0) == "node"s);
             CHECK(PGM_dataset_info_component_name(hl, info, 1) == "source"s);
-            for (Idx idx : {0, 1}) {
+            for (Idx const idx : {0, 1}) {
                 CHECK(PGM_dataset_info_elements_per_scenario(hl, info, idx) == elements_per_scenario[idx]);
                 CHECK(PGM_dataset_info_total_elements(hl, info, idx) == total_elements[idx]);
             }

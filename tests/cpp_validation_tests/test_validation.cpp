@@ -26,7 +26,7 @@ namespace {
 using nlohmann::json;
 
 auto read_file(std::filesystem::path const& path) {
-    std::ifstream f{path};
+    std::ifstream const f{path};
     std::ostringstream buffer;
     buffer << f.rdbuf();
     return buffer.str();
@@ -74,7 +74,6 @@ std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::stri
 }
 
 auto create_owning_dataset(WritableDatasetHandler& info) {
-
     Idx const batch_size = info.batch_size();
     OwningDataset dataset;
 
@@ -106,12 +105,19 @@ auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandl
 }
 
 auto load_dataset(std::filesystem::path const& path) {
-    auto deserializer = Deserializer(power_grid_model::meta_data::from_json, read_file(path));
+// Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
+// May be a Clang Analyzer bug
+#ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
+    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path)};
     auto& info = deserializer.get_dataset_info();
     auto dataset = create_owning_dataset(info);
     deserializer.parse();
     construct_individual_scenarios(dataset, info);
     return dataset;
+#else  // __clang_analyzer__ // issue in msgpack
+    (void)path;
+    return OwningDataset{}; // fallback for https://github.com/msgpack/msgpack-c/issues/1098
+#endif // __clang_analyzer__ // issue in msgpack
 }
 
 // create single result set
@@ -122,7 +128,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
 
     for (auto const& [name, data_ptr] : input.const_dataset) {
         assert(data_ptr.batch_size() == 1);
-        Buffer result_buffer;
+        Buffer const result_buffer;
         Idx const elements_per_scenario = data_ptr.elements_per_scenario(0);
         handler.add_component_info(name, elements_per_scenario, elements_per_scenario * batch_size);
     }

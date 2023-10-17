@@ -136,7 +136,7 @@ TEST_CASE("Test y bus") {
 
         SUBCASE("Test y bus structure getter") {
             YBusStructure ybus_struct_ref{topo};
-            auto ybus_struct = ybus.get_y_bus_structure();
+            auto const& ybus_struct = ybus.get_y_bus_structure();
             CHECK(ybus_struct->bus_entry == ybus_struct_ref.bus_entry);
             CHECK(ybus_struct->col_indices == ybus_struct_ref.col_indices);
             CHECK(ybus_struct->col_indices_lu == ybus_struct_ref.col_indices_lu);

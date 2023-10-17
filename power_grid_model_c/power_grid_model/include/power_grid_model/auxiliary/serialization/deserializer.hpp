@@ -104,6 +104,7 @@ class Deserializer {
     // movable
     Deserializer(Deserializer&&) = default;
     Deserializer& operator=(Deserializer&&) = default;
+
     // destructor
     ~Deserializer() = default;
 

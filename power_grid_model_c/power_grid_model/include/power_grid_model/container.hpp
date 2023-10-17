@@ -12,6 +12,7 @@
 #include "power_grid_model.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/range.hpp>
 
 #include <functional>
 #include <memory>
@@ -309,28 +310,17 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         Idx idx_;
     };
 
-    // define proxy
-    template <class Gettable> class Proxy {
-      private:
-        static constexpr bool is_const = std::is_const_v<Gettable>;
-        using base_type = std::remove_cv_t<Gettable>;
-        using container_type = std::conditional_t<is_const, Container const, Container>;
-
-      public:
-        explicit Proxy(container_type& container)
-            : begin_{&container, 0}, end_{&container, container.template size<base_type>()} {}
-        Iterator<Gettable> begin() { return begin_; }
-        Iterator<Gettable> end() { return end_; }
-
-      private:
-        Iterator<Gettable> const begin_;
-        Iterator<Gettable> const end_;
-    };
-
   public:
-    template <class Gettable> Proxy<Gettable> iter() { return Proxy<Gettable>{*this}; }
-    template <class Gettable> Proxy<Gettable const> iter() const { return Proxy<Gettable const>{*this}; }
-    template <class Gettable> Proxy<Gettable const> citer() const { return iter<Gettable>(); }
+    template <class Gettable> auto iter() {
+        return boost::make_iterator_range(Iterator<Gettable>{this, 0},
+                                          Iterator<Gettable>{this, this->template size<std::remove_cv_t<Gettable>>()});
+    }
+    template <class Gettable> auto iter() const {
+        return boost::make_iterator_range(
+            Iterator<Gettable const>{this, 0},
+            Iterator<Gettable const>{this, this->template size<std::remove_cv_t<Gettable>>()});
+    }
+    template <class Gettable> auto citer() const { return iter<Gettable>(); }
 };
 
 // type traits to instantiate container
