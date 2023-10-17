@@ -94,16 +94,16 @@ struct MathModelTopology {
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
     DenseGroupedIdxVector sources_per_bus;
-    SparseGroupedIdxVector shunts_per_bus;
+    DenseGroupedIdxVector shunts_per_bus;
     SparseGroupedIdxVector load_gens_per_bus;
     std::vector<LoadGenType> load_gen_type;
-    SparseGroupedIdxVector voltage_sensors_per_bus;
-    SparseGroupedIdxVector power_sensors_per_source;
-    SparseGroupedIdxVector power_sensors_per_load_gen;
-    SparseGroupedIdxVector power_sensors_per_shunt;
-    SparseGroupedIdxVector power_sensors_per_branch_from;
-    SparseGroupedIdxVector power_sensors_per_branch_to;
-    SparseGroupedIdxVector power_sensors_per_bus;
+    DenseGroupedIdxVector voltage_sensors_per_bus;
+    DenseGroupedIdxVector power_sensors_per_source;
+    DenseGroupedIdxVector power_sensors_per_load_gen;
+    DenseGroupedIdxVector power_sensors_per_shunt;
+    DenseGroupedIdxVector power_sensors_per_branch_from;
+    DenseGroupedIdxVector power_sensors_per_branch_to;
+    DenseGroupedIdxVector power_sensors_per_bus;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
