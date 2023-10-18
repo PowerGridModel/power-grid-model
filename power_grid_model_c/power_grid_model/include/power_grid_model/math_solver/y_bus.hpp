@@ -116,8 +116,8 @@ struct YBusStructure {
             }
         }
         // loop shunt
-        for (Idx bus = 0; bus != n_bus; ++bus) {
-            for (Idx const shunt : topo.shunts_per_bus.get_element_range(bus)) {
+        for (auto const& [bus, shunts] : enumerated_zip_sequence(topo.shunts_per_bus)) {
+            for (Idx const shunt : shunts) {
                 append_element_vector(vec_map_element, bus, bus, YBusElementType::shunt, shunt);
             }
         }
@@ -401,9 +401,8 @@ template <bool sym> class YBus {
                  std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
     std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
         std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
-        // loop all bus, then all shunt within the bus
-        for (Idx bus = 0; bus != size(); ++bus) {
-            for (Idx const shunt : math_topology_->shunts_per_bus.get_element_range(bus)) {
+        for (auto const [bus, shunts] : enumerated_zip_sequence(math_topology_->shunts_per_bus)) {
+            for (Idx const shunt : shunts) {
                 // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);
