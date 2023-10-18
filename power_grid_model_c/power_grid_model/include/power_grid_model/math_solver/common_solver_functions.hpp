@@ -44,8 +44,10 @@ void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> 
 }
 
 template <bool sym, class LoadGenFunc>
+    requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
+             std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
-                               MathOutput<sym>& output, LoadGenFunc const& load_gen_func) {
+                               MathOutput<sym>& output, LoadGenFunc&& load_gen_func) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
