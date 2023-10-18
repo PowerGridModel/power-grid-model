@@ -69,6 +69,33 @@ void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerF
     }
 }
 
+template <bool sym, typename LoadGenFunc>
+    requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
+             std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
+void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                      grouped_idx_vector_type auto const& sources_per_bus,
+                      grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
+                      LoadGenFunc&& load_gen_func) {
+    assert(sources_per_bus.size() == load_gens_per_bus.size());
+
+    // call y bus
+    output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
+    output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
+
+    // prepare source, load gen and node injection
+    output.source.resize(sources_per_bus.element_size());
+    output.load_gen.resize(load_gens_per_bus.element_size());
+    output.bus_injection.resize(sources_per_bus.size());
+
+    for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
+        common_solver_functions::calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
+    }
+    for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(load_gens_per_bus)) {
+        common_solver_functions::calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
+    }
+    output.bus_injection = y_bus.calculate_injection(output.u);
+}
+
 } // namespace power_grid_model::common_solver_functions
 
 #endif

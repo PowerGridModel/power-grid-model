@@ -102,24 +102,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        // pending to correct
-        // call y bus
-        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
-
-        // prepare source, load gen and bus_injection
-        output.source.resize(sources_per_bus_->element_size());
-        output.load_gen.resize(load_gens_per_bus_->element_size());
-        output.bus_injection.resize(n_bus_);
-
-        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
-            common_solver_functions::calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
-        }
-        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*load_gens_per_bus_)) {
-            common_solver_functions::calculate_load_gen_result<sym>(load_gens, bus_number, input, output,
-                                                                    [this](Idx i) { return (*load_gen_type_)[i]; });
-        }
-        output.bus_injection = y_bus.calculate_injection(output.u);
+        common_solver_functions::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                                  [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
   private:

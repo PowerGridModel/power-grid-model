@@ -116,7 +116,9 @@ template <bool sym> class ShortCircuitSolver {
     void add_fault_with_infinite_impedance(Idx bus_number, YBus<sym> const& y_bus, ComplexTensor<sym>& diagonal_element,
                                            ComplexValue<sym>& u_bus, FaultType const& fault_type, IntS phase_1,
                                            IntS phase_2) {
-        if (fault_type == FaultType::three_phase) { // three phase fault
+        using enum FaultType;
+
+        if (fault_type == three_phase) { // three phase fault
             for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                  data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                 Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -128,7 +130,7 @@ template <bool sym> class ShortCircuitSolver {
             u_bus = ComplexValue<sym>{0}; // update rhs
         }
         if constexpr (!sym) {
-            if (fault_type == FaultType::single_phase_to_ground) {
+            if (fault_type == single_phase_to_ground) {
                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                     Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -138,7 +140,7 @@ template <bool sym> class ShortCircuitSolver {
                 // mat_data[bus,bus][phase_1, phase_1] = -1
                 diagonal_element(phase_1, phase_1) = -1;
                 u_bus(phase_1) = 0; // update rhs
-            } else if (fault_type == FaultType::two_phase) {
+            } else if (fault_type == two_phase) {
                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                     Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -154,7 +156,7 @@ template <bool sym> class ShortCircuitSolver {
                 // update rhs
                 u_bus(phase_2) += u_bus(phase_1);
                 u_bus(phase_1) = 0;
-            } else if (fault_type == FaultType::two_phase_to_ground) {
+            } else if (fault_type == two_phase_to_ground) {
                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                     Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -171,7 +173,7 @@ template <bool sym> class ShortCircuitSolver {
                 u_bus(phase_1) = 0;
                 u_bus(phase_2) = 0;
             } else {
-                assert((fault_type == FaultType::three_phase));
+                assert((fault_type == three_phase));
             }
         }
     }
@@ -179,15 +181,17 @@ template <bool sym> class ShortCircuitSolver {
     void add_fault(DoubleComplex const& y_fault, Idx bus_number, YBus<sym> const& y_bus,
                    ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus, FaultType const& fault_type,
                    IntS phase_1, IntS phase_2) {
-        if (fault_type == FaultType::three_phase) { // three phase fault
+        using enum FaultType;
+
+        if (fault_type == three_phase) { // three phase fault
             // mat_data[bus,bus] += y_fault
             diagonal_element += ComplexTensor<sym>{y_fault};
         }
         if constexpr (!sym) {
-            if (fault_type == FaultType::single_phase_to_ground) {
+            if (fault_type == single_phase_to_ground) {
                 // mat_data[bus,bus][phase_1, phase_1] += y_fault
                 diagonal_element(phase_1, phase_1) += y_fault;
-            } else if (fault_type == FaultType::two_phase) {
+            } else if (fault_type == two_phase) {
                 // mat_data[bus,bus][phase_1, phase_1] += y_fault
                 // mat_data[bus,bus][phase_2, phase_2] += y_fault
                 // mat_data[bus,bus][phase_1, phase_2] -= y_fault
@@ -196,7 +200,7 @@ template <bool sym> class ShortCircuitSolver {
                 diagonal_element(phase_2, phase_2) += y_fault;
                 diagonal_element(phase_1, phase_2) -= y_fault;
                 diagonal_element(phase_2, phase_1) -= y_fault;
-            } else if (fault_type == FaultType::two_phase_to_ground) {
+            } else if (fault_type == two_phase_to_ground) {
                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
                     Idx const col_data_index = y_bus.lu_transpose_entry()[data_index];
@@ -215,7 +219,7 @@ template <bool sym> class ShortCircuitSolver {
                 u_bus(phase_2) += u_bus(phase_1);
                 u_bus(phase_1) = 0;
             } else {
-                assert((fault_type == FaultType::three_phase));
+                assert((fault_type == three_phase));
             }
         }
     }
@@ -223,6 +227,8 @@ template <bool sym> class ShortCircuitSolver {
     void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
                           int const phase_1, int const phase_2) const {
+        using enum FaultType;
+
         for (auto const& [bus_number, faults, sources] :
              enumerated_zip_sequence(input.fault_buses, *sources_per_bus_)) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
@@ -236,27 +242,27 @@ template <bool sym> class ShortCircuitSolver {
 
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
-                    if (fault_type == FaultType::three_phase) { // three phase fault
+                    if (fault_type == three_phase) { // three phase fault
                         i_fault = -1.0 * static_cast<ComplexValue<sym>>(x_bus_subtotal) /
                                   infinite_admittance_fault_counter_bus; // injection is
                                                                          // negative to fault
                         u_bus = ComplexValue<sym>{0.0};
                     }
                     if constexpr (!sym) {
-                        if (fault_type == FaultType::single_phase_to_ground) {
+                        if (fault_type == single_phase_to_ground) {
                             i_fault(phase_1) = -1.0 * x_bus_subtotal[phase_1] / infinite_admittance_fault_counter_bus;
                             u_bus(phase_1) = 0.0;
-                        } else if (fault_type == FaultType::two_phase) {
+                        } else if (fault_type == two_phase) {
                             i_fault(phase_1) = -1.0 * x_bus_subtotal[phase_2] / infinite_admittance_fault_counter_bus;
                             i_fault(phase_2) = -1.0 * i_fault(phase_1);
                             u_bus(phase_2) = u_bus(phase_1);
-                        } else if (fault_type == FaultType::two_phase_to_ground) {
+                        } else if (fault_type == two_phase_to_ground) {
                             i_fault(phase_1) = -1.0 * x_bus_subtotal[phase_1] / infinite_admittance_fault_counter_bus;
                             i_fault(phase_2) = -1.0 * x_bus_subtotal[phase_2] / infinite_admittance_fault_counter_bus;
                             u_bus(phase_1) = 0.0;
                             u_bus(phase_2) = 0.0;
                         } else {
-                            assert((fault_type == FaultType::three_phase));
+                            assert((fault_type == three_phase));
                             continue;
                         }
                     }
@@ -267,21 +273,21 @@ template <bool sym> class ShortCircuitSolver {
                         // bus
                         continue;
                     }
-                    if (fault_type == FaultType::three_phase) { // three phase fault
+                    if (fault_type == three_phase) { // three phase fault
                         i_fault = static_cast<ComplexValue<sym>>(y_fault * x_bus_subtotal);
                     }
                     if constexpr (!sym) {
-                        if (fault_type == FaultType::single_phase_to_ground) {
+                        if (fault_type == single_phase_to_ground) {
                             i_fault(phase_1) = y_fault * x_bus_subtotal[phase_1];
-                        } else if (fault_type == FaultType::two_phase) {
+                        } else if (fault_type == two_phase) {
                             i_fault(phase_1) = y_fault * x_bus_subtotal[phase_1] - y_fault * x_bus_subtotal[phase_2];
                             i_fault(phase_2) = y_fault * x_bus_subtotal[phase_2] - y_fault * x_bus_subtotal[phase_1];
-                        } else if (fault_type == FaultType::two_phase_to_ground) {
+                        } else if (fault_type == two_phase_to_ground) {
                             i_fault(phase_1) = -1.0 * x_bus_subtotal[phase_2];
                             i_fault(phase_2) = -1.0 * i_fault(phase_1) + y_fault * x_bus_subtotal[phase_1];
                             u_bus(phase_2) = u_bus(phase_1);
                         } else {
-                            assert((fault_type == FaultType::three_phase));
+                            assert((fault_type == three_phase));
                             continue;
                         }
                     }
@@ -307,13 +313,13 @@ template <bool sym> class ShortCircuitSolver {
 
                 if (std::isinf(y_fault.real())) {
                     assert(std::isinf(y_fault.imag()));
-                    if (fault_type == FaultType::three_phase) {
+                    if (fault_type == three_phase) {
                         i_fault += static_cast<ComplexValue<sym>>(i_source_bus / infinite_admittance_fault_counter_bus);
                     }
                     if constexpr (!sym) {
-                        if (fault_type == FaultType::single_phase_to_ground) {
+                        if (fault_type == single_phase_to_ground) {
                             i_fault(phase_1) += i_source_bus[phase_1] / infinite_admittance_fault_counter_bus;
-                        } else if (fault_type == FaultType::two_phase) {
+                        } else if (fault_type == two_phase) {
                             i_fault(phase_1) += i_source_inject[phase_1] / infinite_admittance_fault_counter_bus;
                             // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2
                             // i_fault_2_p = i_inj_1
@@ -322,11 +328,11 @@ template <bool sym> class ShortCircuitSolver {
                             // i_fault_2 = i_ref_2 - i_inj_2 = i_ref_2 + i_inj_1 - i_ref_1 - i_ref_2
                             //           = i_inj_1 - i_ref_1 = i_fault_2_p - i_ref_1
                             i_fault(phase_2) -= i_source_inject[phase_1] / infinite_admittance_fault_counter_bus;
-                        } else if (fault_type == FaultType::two_phase_to_ground) {
+                        } else if (fault_type == two_phase_to_ground) {
                             i_fault(phase_1) += i_source_bus[phase_1];
                             i_fault(phase_2) += i_source_bus[phase_2];
                         } else {
-                            assert((fault_type == FaultType::three_phase));
+                            assert((fault_type == three_phase));
                             continue;
                         }
                     }
@@ -334,8 +340,7 @@ template <bool sym> class ShortCircuitSolver {
                     // compensate for 2 phase to ground fault with impedance
                     assert(!std::isinf(y_fault.imag()));
                     if constexpr (!sym) {
-                        if ((fault_type == FaultType::two_phase_to_ground) &&
-                            (infinite_admittance_fault_counter_bus == 0.0)) {
+                        if ((fault_type == two_phase_to_ground) && (infinite_admittance_fault_counter_bus == 0.0)) {
                             auto const finite_admittance_fault_counter_bus = static_cast<double>(faults.size());
                             // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2 - u_12 * y_fault
                             // i_fault_2_p = i_inj_1 + u_12 * y_fault
