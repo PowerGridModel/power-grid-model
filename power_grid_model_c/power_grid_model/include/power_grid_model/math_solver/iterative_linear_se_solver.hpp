@@ -261,8 +261,6 @@ template <bool sym> class MeasuredValues {
         The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
         and idx_shunt_power_ (for shunt).
         */
-        MathModelTopology const& topo = math_topology();
-
         RealValue<sym> angle_cum = process_voltage_measurements(input);
         process_appliance_measurements(input);
 
@@ -275,7 +273,7 @@ template <bool sym> class MeasuredValues {
     RealValue<sym> process_voltage_measurements(StateEstimationInput<sym> const& input) {
         MathModelTopology const& topo = math_topology();
 
-        RealValue<sym> angle_cum;
+        RealValue<sym> angle_cum{};
         for (auto const& [bus, sensors] : enumerated_zip_sequence(topo.voltage_sensors_per_bus)) {
             angle_cum += process_bus_voltage_measurements(bus, sensors, input);
         }
@@ -284,10 +282,10 @@ template <bool sym> class MeasuredValues {
 
     RealValue<sym> process_bus_voltage_measurements(Idx bus, IdxRange const& sensors,
                                                     StateEstimationInput<sym> const& input) {
+        RealValue<sym> angle_cum{};
+
         SensorCalcParam<sym> aggregated{ComplexValue<sym>{0.0}, std::numeric_limits<double>::infinity()};
         bool angle_measured{false};
-
-        RealValue<sym> angle_cum{};
 
         // check if there is nan
         if (auto const start = input.measured_voltage.cbegin() + *sensors.begin();
