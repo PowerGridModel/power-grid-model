@@ -200,7 +200,7 @@ def _compatibility_deprecated_export_json_data(
 ):
     serialized_data = json_serialize(data=data, use_compact_list=compact, indent=-1 if indent is None else indent)
     old_format_serialized_data = json.dumps(json.loads(serialized_data)["data"])
-    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
+    with open(json_file, mode="w", encoding="utf-8") as file_pointer:
         file_pointer.write(old_format_serialized_data)
 
 
