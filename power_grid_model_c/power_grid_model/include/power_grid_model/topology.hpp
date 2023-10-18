@@ -141,8 +141,9 @@ class Topology {
 
   private:
     // input
-    ComponentTopology const& comp_topo_;
-    ComponentConnections const& comp_conn_;
+    ComponentTopology const& comp_topo_;    // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    ComponentConnections const& comp_conn_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
     // intermediate
     GlobalGraph global_graph_;
     DoubleVector phase_shift_;
