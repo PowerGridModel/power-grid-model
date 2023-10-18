@@ -48,7 +48,7 @@ inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
 
 inline auto sparse_decode(IdxVector const& indptr) {
     auto result = IdxVector(indptr.back());
-    for (Idx group{}; group < static_cast<Idx>(indptr.size()) - 1; ++group) {
+    for (Idx const group : boost::counting_range(Idx{}, static_cast<Idx>(indptr.size()) - 1)) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;

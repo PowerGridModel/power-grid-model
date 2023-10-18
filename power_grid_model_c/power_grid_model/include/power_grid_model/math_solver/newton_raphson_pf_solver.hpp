@@ -224,18 +224,16 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        auto const& load_gens_per_bus = *this->load_gens_per_bus_;
-        auto const& sources_per_bus = *this->sources_per_bus_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
-        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+        for (const auto& [bus_number, load_gens, sources] :
+             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(load_gens_per_bus.get_element_range(bus_number), bus_number, diagonal_position, input,
-                      load_gen_type);
-            add_sources(sources_per_bus.get_element_range(bus_number), bus_number, diagonal_position, y_bus, input, u);
+            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
+            add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
         }
     }
 

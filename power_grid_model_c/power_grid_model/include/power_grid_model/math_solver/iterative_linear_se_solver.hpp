@@ -171,11 +171,10 @@ template <bool sym> class MeasuredValues {
                                                 ComplexValueVector<sym> const& s) const {
         std::vector<ApplianceMathOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
         std::vector<ApplianceMathOutput<sym>> source_flow(math_topology_->n_source());
-        // loop all buses
-        for (Idx bus = 0; bus != math_topology_->n_bus(); ++bus) {
-            auto const load_gens = math_topology_->load_gens_per_bus.get_element_range(bus);
-            auto const sources = math_topology_->sources_per_bus.get_element_range(bus);
 
+        // loop all buses
+        for (auto const& [bus, load_gens, sources] :
+             enumerated_zip_sequence(math_topology_->load_gens_per_bus, math_topology_->sources_per_bus)) {
             // under-determined or exactly determined
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
                 calculate_non_over_determined_injection(bus_injection_[bus].n_unmeasured_appliances, load_gens, sources,
@@ -421,7 +420,7 @@ template <bool sym> class MeasuredValues {
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
         static constexpr auto branch_to_checker = [](BranchIdx x) { return x[1] != -1; };
-        for (Idx branch = 0; branch != topo.n_branch(); ++branch) {
+        for (Idx const branch : boost::counting_range(Idx{}, topo.n_branch())) {
             // from side
             idx_branch_from_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_from, topo.branch_bus_idx,

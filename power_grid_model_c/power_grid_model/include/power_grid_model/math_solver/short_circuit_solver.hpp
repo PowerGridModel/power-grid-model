@@ -336,8 +336,7 @@ template <bool sym> class ShortCircuitSolver {
                     if constexpr (!sym) {
                         if ((fault_type == FaultType::two_phase_to_ground) &&
                             (infinite_admittance_fault_counter_bus == 0.0)) {
-                            auto const finite_admittance_fault_counter_bus =
-                                static_cast<double>(input.fault_buses.get_element_range(bus_number).size());
+                            auto const finite_admittance_fault_counter_bus = static_cast<double>(faults.size());
                             // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2 - u_12 * y_fault
                             // i_fault_2_p = i_inj_1 + u_12 * y_fault
                             //      i_fault_2_p is the i_fault_2 status quo after the first fault loop

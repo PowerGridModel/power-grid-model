@@ -30,7 +30,6 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
-        auto const& sources_per_bus = *sources_per_bus_;
         std::vector<double> const& phase_shift = *phase_shift_;
 
         // prepare
@@ -46,8 +45,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
             // average u_ref of all sources
             DoubleComplex const u_ref = [&]() {
                 DoubleComplex sum_u_ref = 0.0;
-                for (Idx bus = 0; bus != n_bus_; ++bus) {
-                    for (Idx const source : sources_per_bus.get_element_range(bus)) {
+                for (auto const& [bus, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
+                    for (Idx const source : sources) {
                         sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                     }
                 }
