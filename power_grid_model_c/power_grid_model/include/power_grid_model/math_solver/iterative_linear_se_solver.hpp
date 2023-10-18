@@ -261,23 +261,22 @@ template <bool sym> class MeasuredValues {
         The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
         and idx_shunt_power_ (for shunt).
         */
-        RealValue<sym> angle_cum = process_voltage_measurements(input);
+        process_voltage_measurements(input);
         process_appliance_measurements(input);
-
-        // assign a meaningful mean angle shift, if at least one voltage has angle measurement
-        if (n_angle_ > 0) {
-            mean_angle_shift_ = angle_cum / n_angle_;
-        }
     }
 
-    RealValue<sym> process_voltage_measurements(StateEstimationInput<sym> const& input) {
+    void process_voltage_measurements(StateEstimationInput<sym> const& input) {
         MathModelTopology const& topo = math_topology();
 
         RealValue<sym> angle_cum{};
         for (auto const& [bus, sensors] : enumerated_zip_sequence(topo.voltage_sensors_per_bus)) {
             angle_cum += process_bus_voltage_measurements(bus, sensors, input);
         }
-        return angle_cum;
+
+        // assign a meaningful mean angle shift, if at least one voltage has angle measurement
+        if (n_angle_ > 0) {
+            mean_angle_shift_ = angle_cum / n_angle_;
+        }
     }
 
     RealValue<sym> process_bus_voltage_measurements(Idx bus, IdxRange const& sensors,
