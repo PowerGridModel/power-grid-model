@@ -98,7 +98,7 @@ template <bool sym> class LinearPFSolver {
 
         IdxVector const& bus_entry = y_bus.lu_diag();
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*load_gens_per_bus_, *sources_per_bus_)) { // TODO(mgovers): zip
+             enumerated_zip_sequence(*load_gens_per_bus_, *sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
@@ -125,9 +125,10 @@ template <bool sym> class LinearPFSolver {
         output.load_gen.resize(load_gens_per_bus_->element_size());
         output.bus_injection.resize(n_bus_);
 
-        for (auto const& [bus_number, sources, load_gens] :
-             enumerated_zip_sequence(*sources_per_bus_, *load_gens_per_bus_)) {
+        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
             common_solver_functions::calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
+        }
+        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*load_gens_per_bus_)) {
             common_solver_functions::calculate_load_gen_result<sym>(load_gens, bus_number, input, output,
                                                                     [](Idx /*i*/) { return LoadGenType::const_y; });
         }

@@ -93,7 +93,6 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
             common_solver_functions::copy_y_bus<sym>(y_bus, mat_data);
 
-            // loop bus
             for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
                 Idx const data_sequence = bus_entry[bus_number];
                 for (auto source_number : sources) {
@@ -121,9 +120,10 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
 
         // loop buses: i
-        for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*this->load_gens_per_bus_)) {
             add_loads(load_gens, bus_number, input, load_gen_type, u);
+        }
+        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*this->sources_per_bus_)) {
             add_sources(sources, bus_number, y_bus, input);
         }
     }

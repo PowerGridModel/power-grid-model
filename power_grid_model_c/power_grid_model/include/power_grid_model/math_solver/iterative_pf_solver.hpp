@@ -113,9 +113,10 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         output.load_gen.resize(load_gens_per_bus_->element_size());
         output.bus_injection.resize(n_bus_);
 
-        for (auto const& [bus_number, sources, load_gens] :
-             enumerated_zip_sequence(*sources_per_bus_, *load_gens_per_bus_)) {
+        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
             common_solver_functions::calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
+        }
+        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*load_gens_per_bus_)) {
             common_solver_functions::calculate_load_gen_result<sym>(load_gens, bus_number, input, output,
                                                                     [this](Idx i) { return (*load_gen_type_)[i]; });
         }
