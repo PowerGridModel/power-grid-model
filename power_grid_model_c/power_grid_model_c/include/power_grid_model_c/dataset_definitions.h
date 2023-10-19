@@ -220,9 +220,10 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_measured_object;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_measured_terminal_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_power_sigma;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_reactive_power_sigma;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_p_measured;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_q_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_p_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_q_sigma;
 // component asym_power_sensor
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_asym_power_sensor;
 // attributes of input asym_power_sensor
@@ -230,9 +231,10 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_id
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_measured_object;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_measured_terminal_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_power_sigma;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_reactive_power_sigma;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_p_measured;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_q_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_p_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_q_sigma;
 // component fault
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_fault;
 // attributes of input fault
@@ -670,6 +672,8 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_update_sym_power_sensor_id
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_sym_power_sensor_power_sigma;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_sym_power_sensor_p_measured;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_sym_power_sensor_q_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_sym_power_sensor_p_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_sym_power_sensor_q_sigma;
 // component asym_power_sensor
 PGM_API extern PGM_MetaComponent const* const PGM_def_update_asym_power_sensor;
 // attributes of update asym_power_sensor
@@ -677,6 +681,8 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_i
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_power_sigma;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_p_measured;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_q_measured;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_p_sigma;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_q_sigma;
 // component fault
 PGM_API extern PGM_MetaComponent const* const PGM_def_update_fault;
 // attributes of update fault

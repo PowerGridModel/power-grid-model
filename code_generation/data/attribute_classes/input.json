@@ -360,12 +360,7 @@
                 {
                     "data_type": "double",
                     "names": "power_sigma",
-                    "description": "sigma of error margin of power measurement"
-                },
-                {
-                    "data_type": "double",
-                    "names": "reactive_power_sigma",
-                    "description": "sigma of error margin of reactive power measurement"
+                    "description": "sigma of error margin of apparent power measurement"
                 }
             ]
         },
@@ -381,6 +376,14 @@
                         "q_measured"
                     ],
                     "description": "measured active/reactive power"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_sigma",
+                        "q_sigma"
+                    ],
+                    "description": "sigma of error margin of active/reactive power measurement"
                 }
             ]
         },

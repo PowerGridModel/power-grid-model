@@ -179,14 +179,15 @@ using AsymVoltageSensorInput = VoltageSensorInput<false>;
 
 struct GenericPowerSensorInput : SensorInput {
     MeasuredTerminalType measured_terminal_type;  // type of measured terminal
-    double power_sigma;  // sigma of error margin of power measurement
-    double reactive_power_sigma;  // sigma of error margin of reactive power measurement
+    double power_sigma;  // sigma of error margin of apparent power measurement
 };
 
 template <bool sym>
 struct PowerSensorInput : GenericPowerSensorInput {
     RealValue<sym> p_measured;  // measured active/reactive power
     RealValue<sym> q_measured;  // measured active/reactive power
+    RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
+    RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
 };
 using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;

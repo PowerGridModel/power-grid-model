@@ -167,6 +167,8 @@ struct get_attributes_list<PowerSensorUpdate<sym>> {
             {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>{}, "power_sigma"},
             {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>{}, "p_measured"},
             {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>{}, "q_measured"},
+            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_sigma>{}, "p_sigma"},
+            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_sigma>{}, "q_sigma"},
         };
     }
 };
@@ -339,6 +341,8 @@ struct get_component_nan<PowerSensorUpdate<sym>> {
         set_nan(comp.power_sigma);
         set_nan(comp.p_measured);
         set_nan(comp.q_measured);
+        set_nan(comp.p_sigma);
+        set_nan(comp.q_sigma);
         return comp;
     }
 };

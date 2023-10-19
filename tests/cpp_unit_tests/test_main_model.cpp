@@ -38,23 +38,50 @@ struct State {
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<SymPowerSensorInput> sym_power_sensor_input{
-        {{{{11}, 4}, MeasuredTerminalType::branch_from, 0.02, nan}, 1.1e6, 1.1e3},
-        {{{{13}, 6}, MeasuredTerminalType::source, 0.02, nan}, 1.3e6, 1.3e3},
-        {{{{14}, 6}, MeasuredTerminalType::source, 0.02, nan}, 1.4e6, 1.4e3},
-        {{{{15}, 9}, MeasuredTerminalType::shunt, 0.02, nan}, 1.5e6, 1.5e3},
-        {{{{16}, 7}, MeasuredTerminalType::load, 0.02, nan}, 1.6e6, 1.6e3},
-        {{{{17}, 8}, MeasuredTerminalType::load, 0.02, nan}, 1.7e6, 1.7e3},
-        {{{{28}, 3}, MeasuredTerminalType::node, 0.02, nan}, 3.0e6, 3.0e3}};
+        {{{{11}, 4}, MeasuredTerminalType::branch_from, 0.02}, 1.1e6, 1.1e3, nan, nan},
+        {{{{13}, 6}, MeasuredTerminalType::source, 0.02}, 1.3e6, 1.3e3, nan, nan},
+        {{{{14}, 6}, MeasuredTerminalType::source, 0.02}, 1.4e6, 1.4e3, nan, nan},
+        {{{{15}, 9}, MeasuredTerminalType::shunt, 0.02}, 1.5e6, 1.5e3, nan, nan},
+        {{{{16}, 7}, MeasuredTerminalType::load, 0.02}, 1.6e6, 1.6e3, nan, nan},
+        {{{{17}, 8}, MeasuredTerminalType::load, 0.02}, 1.7e6, 1.7e3, nan, nan},
+        {{{{28}, 3}, MeasuredTerminalType::node, 0.02}, 3.0e6, 3.0e3, nan, nan}};
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
-    std::vector<AsymPowerSensorInput> asym_power_sensor_input{
-        {{{{18}, 4}, MeasuredTerminalType::branch_from, 0.02, nan}, {2.11e6, 2.12e6, 2.13e6}, {2.11e3, 2.12e3, 2.13e3}},
-        {{{{20}, 6}, MeasuredTerminalType::source, 0.02, nan}, {2.31e6, 2.32e6, 2.33e6}, {2.31e3, 2.32e3, 2.33e3}},
-        {{{{21}, 6}, MeasuredTerminalType::source, 0.02, nan}, {2.41e6, 2.42e6, 2.43e6}, {2.41e3, 2.42e3, 2.43e3}},
-        {{{{22}, 9}, MeasuredTerminalType::shunt, 0.02, nan}, {2.51e6, 2.52e6, 2.53e6}, {2.51e3, 2.52e3, 2.53e3}},
-        {{{{23}, 7}, MeasuredTerminalType::load, 0.02, nan}, {2.61e6, 2.62e6, 2.63e6}, {2.61e3, 2.62e3, 2.63e3}},
-        {{{{24}, 8}, MeasuredTerminalType::load, 0.02, nan}, {2.71e6, 2.72e6, 2.73e6}, {2.71e3, 2.72e3, 2.73e3}},
-        {{{{29}, 3}, MeasuredTerminalType::node, 0.02, nan}, {5.01e6, 5.02e6, 5.03e6}, {5.01e3, 5.02e3, 5.03e3}}};
+    std::vector<AsymPowerSensorInput> asym_power_sensor_input{{{{{18}, 4}, MeasuredTerminalType::branch_from, 0.02},
+                                                               {2.11e6, 2.12e6, 2.13e6},
+                                                               {2.11e3, 2.12e3, 2.13e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}},
+                                                              {{{{20}, 6}, MeasuredTerminalType::source, 0.02},
+                                                               {2.31e6, 2.32e6, 2.33e6},
+                                                               {2.31e3, 2.32e3, 2.33e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}},
+                                                              {{{{21}, 6}, MeasuredTerminalType::source, 0.02},
+                                                               {2.41e6, 2.42e6, 2.43e6},
+                                                               {2.41e3, 2.42e3, 2.43e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}},
+                                                              {{{{22}, 9}, MeasuredTerminalType::shunt, 0.02},
+                                                               {2.51e6, 2.52e6, 2.53e6},
+                                                               {2.51e3, 2.52e3, 2.53e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}},
+                                                              {{{{23}, 7}, MeasuredTerminalType::load, 0.02},
+                                                               {2.61e6, 2.62e6, 2.63e6},
+                                                               {2.61e3, 2.62e3, 2.63e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}},
+                                                              {{{{24}, 8}, MeasuredTerminalType::load, 0.02},
+                                                               {2.71e6, 2.72e6, 2.73e6},
+                                                               {2.71e3, 2.72e3, 2.73e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}},
+                                                              {{{{29}, 3}, MeasuredTerminalType::node, 0.02},
+                                                               {5.01e6, 5.02e6, 5.03e6},
+                                                               {5.01e3, 5.02e3, 5.03e3},
+                                                               {nan, nan, nan},
+                                                               {nan, nan, nan}}};
 
     // {{{id}, measured_object}, u_sigma, u_measured, u_angle_measured}
     std::vector<SymVoltageSensorInput> sym_voltage_sensor_input{{{{{25}, 1}, 105.0}, 10.1e3, 0.1},
