@@ -209,6 +209,7 @@ PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_id = PGM_meta_get_
 PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_measured_object = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_power_sensor", "measured_object");
 PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_measured_terminal_type = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_power_sensor", "measured_terminal_type");
 PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_power_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_power_sensor", "power_sigma");
+PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_reactive_power_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_power_sensor", "reactive_power_sigma");
 PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_p_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_power_sensor", "p_measured");
 PGM_MetaAttribute const* const PGM_def_input_sym_power_sensor_q_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_power_sensor", "q_measured");
 // component asym_power_sensor
@@ -218,6 +219,7 @@ PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_id = PGM_meta_get
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_measured_object = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "measured_object");
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_measured_terminal_type = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "measured_terminal_type");
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_power_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "power_sigma");
+PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_reactive_power_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "reactive_power_sigma");
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_p_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "p_measured");
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_q_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "q_measured");
 // component fault

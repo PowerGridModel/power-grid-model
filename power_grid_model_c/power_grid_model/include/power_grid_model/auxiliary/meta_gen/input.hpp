@@ -341,6 +341,7 @@ struct get_attributes_list<GenericPowerSensorInput> {
             {MetaAttributeImpl<GenericPowerSensorInput, &GenericPowerSensorInput::measured_object>{}, "measured_object"},
             {MetaAttributeImpl<GenericPowerSensorInput, &GenericPowerSensorInput::measured_terminal_type>{}, "measured_terminal_type"},
             {MetaAttributeImpl<GenericPowerSensorInput, &GenericPowerSensorInput::power_sigma>{}, "power_sigma"},
+            {MetaAttributeImpl<GenericPowerSensorInput, &GenericPowerSensorInput::reactive_power_sigma>{}, "reactive_power_sigma"},
         };
     }
 };
@@ -355,6 +356,7 @@ struct get_attributes_list<PowerSensorInput<sym>> {
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::measured_object>{}, "measured_object"},
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::measured_terminal_type>{}, "measured_terminal_type"},
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::power_sigma>{}, "power_sigma"},
+            {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::reactive_power_sigma>{}, "reactive_power_sigma"},
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::p_measured>{}, "p_measured"},
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::q_measured>{}, "q_measured"},
         };
@@ -703,6 +705,7 @@ struct get_component_nan<GenericPowerSensorInput> {
         set_nan(comp.measured_object);
         set_nan(comp.measured_terminal_type);
         set_nan(comp.power_sigma);
+        set_nan(comp.reactive_power_sigma);
         return comp;
     }
 };
@@ -717,6 +720,7 @@ struct get_component_nan<PowerSensorInput<sym>> {
         set_nan(comp.measured_object);
         set_nan(comp.measured_terminal_type);
         set_nan(comp.power_sigma);
+        set_nan(comp.reactive_power_sigma);
         set_nan(comp.p_measured);
         set_nan(comp.q_measured);
         return comp;

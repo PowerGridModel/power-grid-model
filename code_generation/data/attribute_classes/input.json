@@ -361,6 +361,11 @@
                     "data_type": "double",
                     "names": "power_sigma",
                     "description": "sigma of error margin of power measurement"
+                },
+                {
+                    "data_type": "double",
+                    "names": "reactive_power_sigma",
+                    "description": "sigma of error margin of reactive power measurement"
                 }
             ]
         },
