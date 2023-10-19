@@ -32,6 +32,8 @@ The input, ie. [0, 1, 3] should be strictly increasing
 
 namespace power_grid_model {
 
+using IdxRange = boost::iterator_range<IdxCount>;
+
 namespace detail {
 
 inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
@@ -46,7 +48,7 @@ inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
 
 inline auto sparse_decode(IdxVector const& indptr) {
     auto result = IdxVector(indptr.back());
-    for (Idx group{}; group < static_cast<Idx>(indptr.size()) - 1; ++group) {
+    for (Idx const group : boost::counting_range(Idx{}, static_cast<Idx>(indptr.size()) - 1)) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;
@@ -116,10 +118,10 @@ constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
-                                                        boost::iterator_range<IdxCount>, Idx> {
+    class GroupIterator
+        : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag, IdxRange, Idx> {
       public:
-        using iterator = boost::iterator_range<IdxCount>;
+        using iterator = IdxRange;
 
         GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
@@ -177,13 +179,13 @@ class SparseGroupedIdxVector {
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag,
-                                                        boost::iterator_range<IdxCount>, Idx> {
+    class GroupIterator
+        : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag, IdxRange, Idx> {
       public:
-        using iterator = boost::iterator_range<IdxCount>;
+        using iterator = IdxRange;
 
         GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx const& group)
+        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
             : dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::equal_range(std::cbegin(*dense_vector_), std::cend(*dense_vector_), group)} {}

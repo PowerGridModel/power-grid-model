@@ -584,9 +584,9 @@ TEST_CASE("Test math solver") {
 namespace {
 
 ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_phase, DoubleComplex const& y_fault,
-                                       double const vref, IdxVector const& fault_bus_indptr) {
+                                       double const vref, grouped_idx_vector_type auto const& fault_buses) {
     ShortCircuitInput sc_input;
-    sc_input.fault_bus_indptr = fault_bus_indptr;
+    sc_input.fault_buses = fault_buses;
     sc_input.source = {vref};
     sc_input.faults = {{y_fault, fault_type, fault_phase}};
     return sc_input;
@@ -681,7 +681,7 @@ TEST_CASE("Short circuit solver") {
     topo_sc.sources_per_bus = {from_sparse, {0, 1, 1}};
     topo_sc.shunts_per_bus = {from_sparse, {0, 0, 0}};
     topo_sc.load_gens_per_bus = {from_sparse, {0, 0, 0}};
-    IdxVector const fault_bus_indptr{0, 0, 1};
+    DenseGroupedIdxVector const fault_buses{from_sparse, {0, 0, 1}};
 
     // Impedance / admittances
     // source
@@ -719,14 +719,14 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 3ph") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
-            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_buses);
         CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
@@ -734,7 +734,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 3ph solid fault") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
@@ -744,14 +744,14 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 3ph sym params") {
         YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
         MathSolver<true> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
         assert_sc_output<true>(output, sc_output_ref);
 
         auto sc_input_default =
-            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+            create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_buses);
         CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_sym),
                         InvalidShortCircuitPhaseOrType);
     }
@@ -759,7 +759,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
         YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
         MathSolver<true> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
@@ -769,14 +769,14 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 1phg") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
-            create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+            create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_buses);
         CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
@@ -784,8 +784,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 1phg solid fault") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input =
-            create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
@@ -795,14 +794,13 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 2ph") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
-        auto sc_input_default =
-            create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+        auto sc_input_default = create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref, fault_buses);
         CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
@@ -810,7 +808,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 2ph solid fault") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
@@ -820,14 +818,14 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 2phg") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
         assert_sc_output<false>(output, sc_output_ref);
 
         auto sc_input_default =
-            create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_bus_indptr);
+            create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_buses);
         CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
                         InvalidShortCircuitPhaseOrType);
     }
@@ -835,8 +833,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test short circuit solver 2phg solid") {
         YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
         MathSolver<false> solver{topo_sc_ptr};
-        auto sc_input =
-            create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr);
+        auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
@@ -849,6 +846,7 @@ TEST_CASE("Short circuit solver") {
         MathSolver<false> solver_asym{topo_sc_ptr};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
+        sc_input.fault_buses = {from_dense, {}, topo_sc_ptr->n_bus()};
         auto asym_sc_output_ref = blank_sc_output<false>(vref);
         CalculationInfo info;
         auto asym_output = solver_asym.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
@@ -869,7 +867,7 @@ TEST_CASE("Short circuit solver") {
         topo_comp.sources_per_bus = {from_sparse, {0, 1}};
         topo_comp.shunts_per_bus = {from_sparse, {0, 0}};
         topo_comp.load_gens_per_bus = {from_sparse, {0, 0}};
-        IdxVector const fault_bus_indptr_2 = {0, 1};
+        DenseGroupedIdxVector const fault_buses_2 = {from_sparse, {0, 1}};
         // params source injection
         MathModelParam<false> asym_param_comp;
         asym_param_comp.source_param = {yref_asym};
@@ -911,7 +909,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{if_comp}};
 
-            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
             assert_sc_output<true>(output, sc_output_ref);
@@ -924,7 +922,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{if_comp_solid}};
 
-            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
             assert_sc_output<true>(output, sc_output_ref);
@@ -937,7 +935,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{ComplexValue<false>{if_comp}}};
 
-            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
@@ -950,8 +948,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{ComplexValue<false>{if_comp, 0, 0}}};
 
-            auto sc_input =
-                create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
@@ -965,7 +962,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.source = {{ComplexValue<false>{if_comp_solid, 0, 0}}};
 
             auto sc_input =
-                create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_bus_indptr_2);
+                create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
@@ -978,7 +975,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_comp, -if_b_comp}}};
 
-            auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
@@ -991,7 +988,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
 
-            auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
@@ -1004,8 +1001,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.branch = {};
             sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_2phg, if_c_2phg}}};
 
-            auto sc_input =
-                create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_bus_indptr_2);
+            auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);
@@ -1019,7 +1015,7 @@ TEST_CASE("Short circuit solver") {
             sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
 
             auto sc_input =
-                create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_bus_indptr_2);
+                create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
             assert_sc_output<false>(output, sc_output_ref);

@@ -159,7 +159,7 @@ template <bool sym> struct StateEstimationInput {
 };
 
 struct ShortCircuitInput {
-    IdxVector fault_bus_indptr; // indptr of the fault
+    DenseGroupedIdxVector fault_buses;
     std::vector<FaultCalcParam> faults;
     ComplexVector source; // Complex u_ref of each source
 };

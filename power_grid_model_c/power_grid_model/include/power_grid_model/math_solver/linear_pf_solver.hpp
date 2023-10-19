@@ -94,44 +94,30 @@ template <bool sym> class LinearPFSolver {
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        // getter
+        using common_solver_functions::add_sources;
+
         IdxVector const& bus_entry = y_bus.lu_diag();
-        auto const& load_gens_per_bus = *load_gens_per_bus_;
-        auto const& sources_per_bus = *sources_per_bus_;
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
+        for (auto const& [bus_number, load_gens, sources] :
+             enumerated_zip_sequence(*load_gens_per_bus_, *sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
-            add_loads(load_gens_per_bus, bus_number, input, diagonal_element);
-            common_solver_functions::add_sources<sym>(sources_per_bus, bus_number, y_bus, input.source,
-                                                      diagonal_element, u_bus);
+            add_loads(load_gens, bus_number, input, diagonal_element);
+            add_sources(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
         }
     }
 
-    static void add_loads(grouped_idx_vector_type auto const& load_gens_per_bus, Idx const& bus_number,
+    static void add_loads(boost::iterator_range<IdxCount> const& load_gens_per_bus, Idx /* bus_number */,
                           PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element) {
-        for (auto load_number : load_gens_per_bus.get_element_range(bus_number)) {
+        for (auto load_number : load_gens_per_bus) {
             // YBus_diag += -conj(S_base)
             add_diag(diagonal_element, -conj(input.s_injection[load_number]));
         }
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        // call y bus
-        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
-
-        // prepare source, load gen and node injection
-        output.source.resize(sources_per_bus_->element_size());
-        output.load_gen.resize(load_gens_per_bus_->element_size());
-        output.bus_injection.resize(n_bus_);
-
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output, *sources_per_bus_);
-            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gens_per_bus_,
-                                                                    [](Idx /*i*/) { return LoadGenType::const_y; });
-        }
-        output.bus_injection = y_bus.calculate_injection(output.u);
+        common_solver_functions::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                                  [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
 

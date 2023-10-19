@@ -30,7 +30,6 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
-        auto const& sources_per_bus = *sources_per_bus_;
         std::vector<double> const& phase_shift = *phase_shift_;
 
         // prepare
@@ -46,8 +45,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
             // average u_ref of all sources
             DoubleComplex const u_ref = [&]() {
                 DoubleComplex sum_u_ref = 0.0;
-                for (Idx bus = 0; bus != n_bus_; ++bus) {
-                    for (Idx const source : sources_per_bus.get_element_range(bus)) {
+                for (auto const& [bus, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
+                    for (Idx const source : sources) {
                         sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                     }
                 }
@@ -103,22 +102,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        // pending to correct
-        // call y bus
-        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
-
-        // prepare source, load gen and bus_injection
-        output.source.resize(sources_per_bus_->element_size());
-        output.load_gen.resize(load_gens_per_bus_->element_size());
-        output.bus_injection.resize(n_bus_);
-
-        for (Idx bus_number = 0; bus_number != n_bus_; ++bus_number) {
-            common_solver_functions::calculate_source_result<sym>(bus_number, y_bus, input, output, *sources_per_bus_);
-            common_solver_functions::calculate_load_gen_result<sym>(bus_number, input, output, *load_gens_per_bus_,
-                                                                    [this](Idx i) { return (*load_gen_type_)[i]; });
-        }
-        output.bus_injection = y_bus.calculate_injection(output.u);
+        common_solver_functions::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                                  [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
   private:

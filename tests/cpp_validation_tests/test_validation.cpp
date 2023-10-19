@@ -54,7 +54,7 @@ using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)
 struct Buffer {
     BufferPtr ptr{nullptr, [](void const*) {}};
     IdxVector indptr;
-    MutableDataPointer data_ptr; // TODO(mgovers): remove
+    MutableDataPointer data_ptr;
 };
 
 struct OwningDataset {
