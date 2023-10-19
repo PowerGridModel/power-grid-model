@@ -475,9 +475,8 @@ Because of this distribution, at least one appliance is required to be connected
 | `reactive_power_sigma`   | `double`                                                                      | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; |                        `> 0`                         |
 
 ```{note}
-If `reactive_power_sigma` **is not** provided, `power_sigma` represents the standard deviation of the apparent power. I.e., $$\sigma_P = \sigma_Q = \sqrt{\frac{\text{power_sigma}}{2}}$$
-
-If `reactive_power_sigma` **is** provided, `power_sigma` represents the standard deviation of the active power, only. I.e., $$\sigma_P = \text{power_sigma}$$, $$\sigma_Q = \text{reactive_power_sigma}$$
+If `reactive_power_sigma` **is not** provided, `power_sigma` represents the standard deviation of the apparent power. I.e., $\sigma_P = \sigma_Q = \sqrt{\frac{\texttt{power_sigma}}{2}}$
+If `reactive_power_sigma` **is** provided, `power_sigma` represents the standard deviation of the active power, only. I.e., $\sigma_P = \texttt{power_sigma}$, $\sigma_Q = \texttt{reactive_power_sigma}$
 ```
 
 #### Power Sensor Concrete Types
