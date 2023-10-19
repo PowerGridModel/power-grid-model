@@ -472,7 +472,13 @@ Because of this distribution, at least one appliance is required to be connected
 | ------------------------ | ----------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- | :-------------------------------------: | :------: | :--------------------------------------------------: |
 | `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                          | indicate if it measures an `appliance` or a `branch`                                                            |                &#10004;                 | &#10060; | the terminal type should match the `measured_object` |
 | `power_sigma`            | `double`                                                                      | volt-ampere (VA)           | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. |   &#10024; only for state estimation    | &#10004; |                        `> 0`                         |
-| `reactive_power_sigma`   | `double`                                                                      | volt-ampere-reactive (var) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; default equal to `power_sigma` | &#10004; |                        `> 0`                         |
+| `reactive_power_sigma`   | `double`                                                                      | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; default 0. | &#10004; |                        `> 0`                         |
+
+```{note}
+If `reactive_power_sigma` **is not** provided, `power_sigma` represents the standard deviation of the apparent power. I.e., $$\sigma_P = \sigma_Q = \sqrt{\frac{\text{power_sigma}}{2}}$$
+
+If `reactive_power_sigma` **is** provided, `power_sigma` represents the standard deviation of the active power, only. I.e., $$\sigma_P = \text{power_sigma}$$, $$\sigma_Q = \text{reactive_power_sigma}$$
+```
 
 #### Power Sensor Concrete Types
 
