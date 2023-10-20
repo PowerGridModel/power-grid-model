@@ -68,18 +68,49 @@ template <bool sym> struct ApplianceShortCircuitMathOutput {
     ComplexValue<sym> i;
 };
 
-// sensor calculation parameters for state estimation
-template <bool sym> struct SensorCalcParam {
-    // measured value of the sensor in p.u.
-    // for voltage it is a complex voltage
-    // 	   If the imaginary part is NaN, it means the angle calculation is not correct
-    // for power it is a complex power
-    //      for appliance it is always in injection direction
-    //      for branch the direction is node -> branch
-    ComplexValue<sym> value;
-    // variance (sigma^2) of the error range, in p.u.
-    double variance;
+template <typename T>
+concept sensor_calc_param_type = requires(T t) {
+                                     { T::symmetric } -> std::convertible_to<bool>;
+                                     { t.value } -> std::convertible_to<ComplexValue<T::symmetric>>;
+                                     { t.variance };
+                                 };
+
+// Complex measured value of a sensor in p.u. with a uniform variance across all phases and complex axes
+template <bool sym> struct UniformSensorCalcParam {
+    static constexpr bool symmetric{sym};
+    ComplexValue<sym> value; // complex voltage
+    double variance;         // variance (sigma^2) of the error range, in p.u.
 };
+
+// Complex measured value of a sensor in p.u. with a variance that may vary across phases and complex axes
+template <bool sym> struct NonUniformSensorCalcParam {
+    static constexpr bool symmetric{sym};
+    ComplexValue<sym> value;
+    ComplexValue<sym> variance;
+};
+
+static_assert(sensor_calc_param_type<UniformSensorCalcParam<true>>);
+static_assert(sensor_calc_param_type<UniformSensorCalcParam<false>>);
+static_assert(sensor_calc_param_type<NonUniformSensorCalcParam<true>>);
+static_assert(sensor_calc_param_type<NonUniformSensorCalcParam<false>>);
+
+// voltage sensor calculation parameters for state estimation
+// The value is the complex voltage
+// If the imaginary part is NaN, it means the angle calculation is not correct
+template <bool sym> using VoltageSensorCalcParam = UniformSensorCalcParam<sym>;
+
+static_assert(sensor_calc_param_type<VoltageSensorCalcParam<true>>);
+static_assert(sensor_calc_param_type<VoltageSensorCalcParam<false>>);
+
+// power sensor calculation parameters for state estimation
+// The value is the complex power
+//   * for appliances, it is always in injection direction
+//   * for branches, the direction is node -> branch
+template <bool sym>
+using PowerSensorCalcParam = UniformSensorCalcParam<sym>; // TODO(mgovers) change to NonUniformSensorCalcParam
+
+static_assert(sensor_calc_param_type<PowerSensorCalcParam<true>>);
+static_assert(sensor_calc_param_type<PowerSensorCalcParam<false>>);
 
 // from, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
@@ -149,13 +180,13 @@ template <bool sym> struct StateEstimationInput {
     IntSVector load_gen_status;
     IntSVector source_status;
     // measured value
-    std::vector<SensorCalcParam<sym>> measured_voltage;
-    std::vector<SensorCalcParam<sym>> measured_source_power;
-    std::vector<SensorCalcParam<sym>> measured_load_gen_power;
-    std::vector<SensorCalcParam<sym>> measured_shunt_power;
-    std::vector<SensorCalcParam<sym>> measured_branch_from_power;
-    std::vector<SensorCalcParam<sym>> measured_branch_to_power;
-    std::vector<SensorCalcParam<sym>> measured_bus_injection;
+    std::vector<VoltageSensorCalcParam<sym>> measured_voltage;
+    std::vector<PowerSensorCalcParam<sym>> measured_source_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_load_gen_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_shunt_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_branch_from_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_branch_to_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_bus_injection;
 };
 
 struct ShortCircuitInput {

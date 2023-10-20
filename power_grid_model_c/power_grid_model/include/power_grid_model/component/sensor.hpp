@@ -17,11 +17,18 @@
 
 namespace power_grid_model {
 
+template <template <bool symmetric> typename SensorCalcParam>
+    requires sensor_calc_param_type<SensorCalcParam<true>> && sensor_calc_param_type<SensorCalcParam<false>>
 class Sensor : public Base {
   public:
     static constexpr char const* name = "sensor";
     using InputType = SensorInput;
     using ShortCircuitOutputType = SensorShortCircuitOutput;
+
+    template <bool sym> using SensorCalcParamType = SensorCalcParam<sym>;
+
+    using SymSensorCalcParamType = SensorCalcParam<true>;
+    using AsymSensorCalcParamType = SensorCalcParam<false>;
 
     // constructor
     explicit Sensor(SensorInput const& sensor_input)
@@ -34,7 +41,7 @@ class Sensor : public Base {
     ComponentType math_model_type() const final { return ComponentType::sensor; }
 
     // getter for calculation param
-    template <bool sym> SensorCalcParam<sym> calc_param() const {
+    template <bool sym> SensorCalcParamType<sym> calc_param() const {
         if constexpr (sym) {
             return sym_calc_param();
         } else {
@@ -47,8 +54,8 @@ class Sensor : public Base {
 
     // virtual function getter for sym and asym param
     // override them in real sensors function
-    virtual SensorCalcParam<true> sym_calc_param() const = 0;
-    virtual SensorCalcParam<false> asym_calc_param() const = 0;
+    virtual SymSensorCalcParamType sym_calc_param() const = 0;
+    virtual AsymSensorCalcParamType asym_calc_param() const = 0;
 };
 
 } // namespace power_grid_model

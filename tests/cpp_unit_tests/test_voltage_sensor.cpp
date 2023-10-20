@@ -64,7 +64,7 @@ TEST_CASE("Test voltage sensor") {
         CHECK(update.topo == false);
 
         ComplexValue<true> const expected_param_value{0.5 * exp(1i * 2.0)};
-        SensorCalcParam<true> param = voltage_sensor.calc_param<true>();
+        VoltageSensorCalcParam<true> param = voltage_sensor.calc_param<true>();
         CHECK(param.variance == doctest::Approx(2.25));
         CHECK(param.value == expected_param_value);
 
@@ -93,7 +93,7 @@ TEST_CASE("Test voltage sensor") {
         CHECK(update.param == false);
         CHECK(update.topo == false);
 
-        SensorCalcParam<false> param = voltage_sensor.calc_param<false>();
+        VoltageSensorCalcParam<false> param = voltage_sensor.calc_param<false>();
         CHECK(param.variance == doctest::Approx(6.75));
 
         ComplexValue<false> expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
@@ -131,8 +131,8 @@ TEST_CASE("Test voltage sensor") {
 
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
-        SensorCalcParam<true> const sym_sensor_sym_param = voltage_sensor.calc_param<true>();
-        SensorCalcParam<false> const sym_sensor_asym_param = voltage_sensor.calc_param<false>();
+        VoltageSensorCalcParam<true> const sym_sensor_sym_param = voltage_sensor.calc_param<true>();
+        VoltageSensorCalcParam<false> const sym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test sym voltage sensor with sym param calculation
         CHECK(real(sym_sensor_sym_param.value) == doctest::Approx(1.01));
@@ -167,8 +167,8 @@ TEST_CASE("Test voltage sensor") {
 
         VoltageSensor<true> const voltage_sensor{voltage_sensor_input, u_rated};
 
-        SensorCalcParam<true> const sym_sensor_sym_param = voltage_sensor.calc_param<true>();
-        SensorCalcParam<false> const sym_sensor_asym_param = voltage_sensor.calc_param<false>();
+        VoltageSensorCalcParam<true> const sym_sensor_sym_param = voltage_sensor.calc_param<true>();
+        VoltageSensorCalcParam<false> const sym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test sym voltage sensor with sym param calculation
         CHECK(real(sym_sensor_sym_param.value) == doctest::Approx(1.01));
@@ -203,8 +203,8 @@ TEST_CASE("Test voltage sensor") {
 
         VoltageSensor<false> const voltage_sensor{voltage_sensor_input, u_rated};
 
-        SensorCalcParam<true> const asym_sensor_sym_param = voltage_sensor.calc_param<true>();
-        SensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
+        VoltageSensorCalcParam<true> const asym_sensor_sym_param = voltage_sensor.calc_param<true>();
+        VoltageSensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test asym voltage sensor with sym param calculation
         CHECK(real(asym_sensor_sym_param.value) ==
@@ -242,8 +242,8 @@ TEST_CASE("Test voltage sensor") {
 
         VoltageSensor<false> const voltage_sensor{voltage_sensor_input, u_rated};
 
-        SensorCalcParam<true> const asym_sensor_sym_param = voltage_sensor.calc_param<true>();
-        SensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
+        VoltageSensorCalcParam<true> const asym_sensor_sym_param = voltage_sensor.calc_param<true>();
+        VoltageSensorCalcParam<false> const asym_sensor_asym_param = voltage_sensor.calc_param<false>();
 
         // Test asym voltage sensor with sym param calculation
         CHECK(real(asym_sensor_sym_param.value) == doctest::Approx((1.01 + 1.02 + 1.03) / 3));

@@ -854,7 +854,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      *
      * @tparam CalcParamOut
      *      The data type for the desired calculation for the given ComponentIn (e.g. SourceCalcParam<sym> or
-     *      SensorCalcParam<sym>).
+     *      VoltageSensorCalcParam<sym>).
      *
      * @tparam comp_vect
      *      The (pre-allocated and resized) vector of CalcParamOuts which shall be filled with component specific
@@ -990,23 +990,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(state_.topo_comp_coup->source,
                                                                                      se_input);
 
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>, &StateEstimationInput<sym>::measured_voltage,
-                      GenericVoltageSensor>(state_.topo_comp_coup->voltage_sensor, se_input);
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, VoltageSensorCalcParam<sym>,
+                      &StateEstimationInput<sym>::measured_voltage, GenericVoltageSensor>(
+            state_.topo_comp_coup->voltage_sensor, se_input);
+        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_source_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input,
             [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_load_gen_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
             });
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>, &StateEstimationInput<sym>::measured_shunt_power,
-                      GenericPowerSensor>(state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
-            return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt;
-        });
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
+                      &StateEstimationInput<sym>::measured_shunt_power, GenericPowerSensor>(
+            state_.topo_comp_coup->power_sensor, se_input,
+            [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
+        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
@@ -1015,12 +1016,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
                        state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
             });
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input, [this](Idx i) {
                 return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
             });
-        prepare_input<StateEstimationInput<sym>, SensorCalcParam<sym>,
+        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
             state_.topo_comp_coup->power_sensor, se_input,
             [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::node; });

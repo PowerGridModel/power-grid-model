@@ -29,8 +29,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -120,8 +120,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -211,8 +211,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -302,8 +302,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -393,8 +393,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -484,8 +484,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
@@ -597,8 +597,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -689,8 +689,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -781,8 +781,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -873,8 +873,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -965,8 +965,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
@@ -1057,8 +1057,8 @@ TEST_CASE("Test power sensor") {
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-        SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-        SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+        PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+        PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
         PowerSensorOutput<true> sym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
         PowerSensorOutput<false> sym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);

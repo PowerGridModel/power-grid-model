@@ -145,22 +145,16 @@ template <bool sym> class MeasuredValues {
     }
 
     // power measurement
-    SensorCalcParam<sym> const& bus_injection(Idx bus) const {
-        return main_value_[bus_injection_[bus].idx_bus_injection];
-    }
-    SensorCalcParam<sym> const& branch_from_power(Idx branch) const {
-        return main_value_[idx_branch_from_power_[branch]];
-    }
-    SensorCalcParam<sym> const& branch_to_power(Idx branch) const { return main_value_[idx_branch_to_power_[branch]]; }
-    SensorCalcParam<sym> const& shunt_power(Idx shunt) const { return main_value_[idx_shunt_power_[shunt]]; }
-    SensorCalcParam<sym> const& load_gen_power(Idx load_gen) const {
-        return extra_value_[idx_load_gen_power_[load_gen]];
-    }
-    SensorCalcParam<sym> const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
+    constexpr auto const& bus_injection(Idx bus) const { return main_value_[bus_injection_[bus].idx_bus_injection]; }
+    constexpr auto const& branch_from_power(Idx branch) const { return main_value_[idx_branch_from_power_[branch]]; }
+    constexpr auto const& branch_to_power(Idx branch) const { return main_value_[idx_branch_to_power_[branch]]; }
+    constexpr auto const& shunt_power(Idx shunt) const { return main_value_[idx_shunt_power_[shunt]]; }
+    constexpr auto const& load_gen_power(Idx load_gen) const { return extra_value_[idx_load_gen_power_[load_gen]]; }
+    constexpr auto const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
 
     // getter mean angle shift
     RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
-    bool has_angle_measurement() const { return n_angle_ > 0; }
+    constexpr bool has_angle_measurement() const { return n_angle_ > 0; }
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
@@ -204,12 +198,12 @@ template <bool sym> class MeasuredValues {
 
     // flat array of all the relevant measurement for the main calculation
     // branch/shunt flow, bus voltage, injection flow
-    std::vector<SensorCalcParam<sym>> main_value_;
+    std::vector<UniformSensorCalcParam<sym>> main_value_;
     // flat array of all the load_gen/source measurement
     // not relevant for the main calculation, as extra data for load_gen/source calculation
-    std::vector<SensorCalcParam<sym>> extra_value_;
+    std::vector<UniformSensorCalcParam<sym>> extra_value_;
     // array of total appliance injection measurement per bus, regardless of the bus has all applianced measured or not
-    std::vector<SensorCalcParam<sym>> bus_appliance_injection_;
+    std::vector<UniformSensorCalcParam<sym>> bus_appliance_injection_;
 
     // indexing array of the entries
     // for unmeasured (non bus injection): connected, but no measurement
@@ -283,7 +277,7 @@ template <bool sym> class MeasuredValues {
                                                     StateEstimationInput<sym> const& input) {
         RealValue<sym> angle_cum{};
 
-        SensorCalcParam<sym> aggregated{ComplexValue<sym>{0.0}, std::numeric_limits<double>::infinity()};
+        VoltageSensorCalcParam<sym> aggregated{ComplexValue<sym>{0.0}, std::numeric_limits<double>::infinity()};
         bool angle_measured{false};
 
         // check if there is nan
@@ -334,7 +328,7 @@ template <bool sym> class MeasuredValues {
     void combine_appliances_to_injection_measurements(StateEstimationInput<sym> const& input,
                                                       MathModelTopology const& topo, Idx const bus) {
         Idx n_unmeasured = 0;
-        SensorCalcParam<sym> appliance_injection_measurement{};
+        PowerSensorCalcParam<sym> appliance_injection_measurement{};
 
         for (Idx const load_gen : topo.load_gens_per_bus.get_element_range(bus)) {
             add_appliance_measurements(idx_load_gen_power_[load_gen], appliance_injection_measurement, n_unmeasured);
@@ -349,7 +343,7 @@ template <bool sym> class MeasuredValues {
 
         // get direct bus injection measurement. It has infinite variance if there is no direct bus injection
         // measurement
-        SensorCalcParam<sym> const direct_injection_measurement =
+        PowerSensorCalcParam<sym> const direct_injection_measurement =
             combine_measurements(input.measured_bus_injection, topo.power_sensors_per_bus.get_element_range(bus));
 
         // combine valid appliance_injection_measurement and direct_injection_measurement
@@ -378,7 +372,8 @@ template <bool sym> class MeasuredValues {
     // if all the connected load_gen/source are measured, their sum can be considered as an injection
     // measurement. zero injection (no connected appliances) is also considered as measured
     // invalid measurements (infinite sigma) are considered unmeasured
-    void add_appliance_measurements(Idx const appliance_idx, SensorCalcParam<sym>& measurements, Idx& n_unmeasured) {
+    void add_appliance_measurements(Idx const appliance_idx, PowerSensorCalcParam<sym>& measurements,
+                                    Idx& n_unmeasured) {
         if (appliance_idx == unmeasured) {
             ++n_unmeasured;
             return;
@@ -434,8 +429,8 @@ template <bool sym> class MeasuredValues {
     // if only_magnitude = true, combine the abs value of the individual data
     //      set imag part to nan, to signal this is a magnitude only measurement
     template <bool only_magnitude = false>
-    static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data,
-                                                     IdxRange const& sensors) {
+    static UniformSensorCalcParam<sym> combine_measurements(std::vector<UniformSensorCalcParam<sym>> const& data,
+                                                            IdxRange const& sensors) {
         double accumulated_inverse_variance{};
         ComplexValue<sym> accumulated_value{};
         for (auto pos : sensors) {
@@ -458,15 +453,15 @@ template <bool sym> class MeasuredValues {
         }
 
         if (!std::isnormal(accumulated_inverse_variance)) {
-            return SensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
+            return UniformSensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
         }
 
-        return SensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
-                                    1.0 / accumulated_inverse_variance};
+        return UniformSensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
+                                           1.0 / accumulated_inverse_variance};
     }
 
     template <bool only_magnitude = false>
-    static SensorCalcParam<sym> combine_measurements(std::vector<SensorCalcParam<sym>> const& data) {
+    static UniformSensorCalcParam<sym> combine_measurements(std::vector<UniformSensorCalcParam<sym>> const& data) {
         return combine_measurements<only_magnitude>(data, boost::counting_range(Idx{}, static_cast<Idx>(data.size())));
     }
 
@@ -474,8 +469,8 @@ template <bool sym> class MeasuredValues {
     // return the status of the object type, if all the connected objects are measured
     static void process_bus_objects(IdxRange const& objects, grouped_idx_vector_type auto const& sensors_per_object,
                                     IntSVector const& object_status,
-                                    std::vector<SensorCalcParam<sym>> const& input_data,
-                                    std::vector<SensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
+                                    std::vector<PowerSensorCalcParam<sym>> const& input_data,
+                                    std::vector<PowerSensorCalcParam<sym>>& result_data, IdxVector& result_idx) {
         for (Idx const object : objects) {
             result_idx[object] = process_one_object(object, sensors_per_object, object_status, input_data, result_data);
         }
@@ -487,8 +482,8 @@ template <bool sym> class MeasuredValues {
     template <class TS, class StatusChecker = decltype(default_status_checker)>
     static Idx process_one_object(Idx const object, grouped_idx_vector_type auto const& sensors_per_object,
                                   std::vector<TS> const& object_status,
-                                  std::vector<SensorCalcParam<sym>> const& input_data,
-                                  std::vector<SensorCalcParam<sym>>& result_data,
+                                  std::vector<PowerSensorCalcParam<sym>> const& input_data,
+                                  std::vector<PowerSensorCalcParam<sym>>& result_data,
                                   StatusChecker status_checker = default_status_checker) {
         if (!status_checker(object_status[object])) {
             return disconnected;
@@ -508,18 +503,19 @@ template <bool sym> class MeasuredValues {
     void normalize_variance() {
         // loop to find min_var
         double min_var = std::numeric_limits<double>::infinity();
-        for (SensorCalcParam<sym> const& x : main_value_) {
+        for (UniformSensorCalcParam<sym> const& x : main_value_) {
             // only non-zero variance is considered
             if (x.variance != 0.0) {
                 min_var = std::min(min_var, x.variance);
             }
         }
         // scale
-        std::for_each(main_value_.begin(), main_value_.end(), [&](SensorCalcParam<sym>& x) { x.variance /= min_var; });
+        std::for_each(main_value_.begin(), main_value_.end(),
+                      [&](UniformSensorCalcParam<sym>& x) { x.variance /= min_var; });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, IdxRange const& load_gens, IdxRange const& sources,
-                                                 SensorCalcParam<sym> const& bus_appliance_injection,
+                                                 PowerSensorCalcParam<sym> const& bus_appliance_injection,
                                                  ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                                  FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
@@ -542,7 +538,7 @@ template <bool sym> class MeasuredValues {
     }
 
     void calculate_over_determined_injection(IdxRange const& load_gens, IdxRange const& sources,
-                                             SensorCalcParam<sym> const& bus_appliance_injection,
+                                             PowerSensorCalcParam<sym> const& bus_appliance_injection,
                                              ComplexValue<sym> const& s, FlowVector& load_gen_flow,
                                              FlowVector& source_flow) const {
         // residual normalized by variance
@@ -772,7 +768,7 @@ template <bool sym> class IterativeLinearSESolver {
                 // shunt
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
-                        SensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
+                        PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
                         // eta -= Ys^H * i_shunt / variance
                         rhs_block.eta() -=
                             dot(hermitian_transpose(param.shunt_param[obj]), conj(m.value / u[bus])) / m.variance;
@@ -787,7 +783,7 @@ template <bool sym> class IterativeLinearSESolver {
                     for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                         // has measurement
                         if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                            SensorCalcParam<sym> const& m =
+                            PowerSensorCalcParam<sym> const& m =
                                 std::invoke(branch_power_[measured_side], measured_value, obj);
                             // the current needs to be calculated with the voltage of the measured bus side
                             // NOTE: not the current bus!
