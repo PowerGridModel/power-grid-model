@@ -133,7 +133,7 @@ class Fault final : public Base {
 
         constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
 
-        if (std::find(cbegin(supported), cend(supported), fault_type_) == cend(supported)) {
+        if (std::ranges::find(supported, fault_type_) == cend(supported)) {
             throw InvalidShortCircuitType(fault_type_);
         }
 
@@ -184,7 +184,7 @@ class Fault final : public Base {
         using enum FaultPhase;
 
         auto const check_supported = [&](auto const& iterable) {
-            if (std::find(cbegin(iterable), cend(iterable), fault_phase_) == cend(iterable)) {
+            if (std::ranges::find(iterable, fault_phase_) == cend(iterable)) {
                 throw InvalidShortCircuitPhases(fault_type_, fault_phase_);
             }
         };

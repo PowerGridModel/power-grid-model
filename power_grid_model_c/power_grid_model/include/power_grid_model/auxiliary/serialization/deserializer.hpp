@@ -243,8 +243,7 @@ class Deserializer {
 
     static Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
         auto const kv_map = map.as<MapSpan>();
-        auto const found =
-            std::find_if(kv_map.begin(), kv_map.end(), [key](auto const& x) { return key_to_string(x) == key; });
+        auto const found = std::find_if(kv_map, [key](auto const& x) { return key_to_string(x) == key; });
         if (found == kv_map.end()) {
             return -1;
         }
