@@ -60,7 +60,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 **macOS**
 
-* Clang >= 14.0
+* Clang >= 14.0.3
   * Latest release tested in CI
 
 ### Build System for CMake Project
