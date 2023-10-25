@@ -87,9 +87,9 @@ static_assert(!is_copyable_to<GenericPowerSensor, GenericPowerSensor>);
 static_assert(std::is_abstract_v<GenericVoltageSensor>);
 static_assert(!is_copyable_to<GenericVoltageSensor, GenericVoltageSensor>);
 
-static_assert(std::is_abstract_v<Sensor<UniformSensorCalcParam>>);
-static_assert(std::is_abstract_v<Sensor<NonUniformSensorCalcParam>>);
-static_assert(!is_copyable_to<Sensor<UniformSensorCalcParam>, Sensor<UniformSensorCalcParam>>);
-static_assert(!is_copyable_to<Sensor<NonUniformSensorCalcParam>, Sensor<NonUniformSensorCalcParam>>);
+static_assert(std::is_abstract_v<Sensor<VoltageSensorCalcParam>>);
+static_assert(std::is_abstract_v<Sensor<PowerSensorCalcParam>>);
+static_assert(!is_copyable_to<Sensor<VoltageSensorCalcParam>, Sensor<VoltageSensorCalcParam>>);
+static_assert(!is_copyable_to<Sensor<PowerSensorCalcParam>, Sensor<PowerSensorCalcParam>>);
 
 } // namespace power_grid_model

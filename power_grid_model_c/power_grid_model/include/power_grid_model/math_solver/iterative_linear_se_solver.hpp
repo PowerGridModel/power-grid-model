@@ -198,12 +198,12 @@ template <bool sym> class MeasuredValues {
 
     // flat array of all the relevant measurement for the main calculation
     // branch/shunt flow, bus voltage, injection flow
-    std::vector<UniformSensorCalcParam<sym>> main_value_;
+    std::vector<UniformComplexRandomVariable<sym>> main_value_;
     // flat array of all the load_gen/source measurement
     // not relevant for the main calculation, as extra data for load_gen/source calculation
-    std::vector<UniformSensorCalcParam<sym>> extra_value_;
+    std::vector<UniformComplexRandomVariable<sym>> extra_value_;
     // array of total appliance injection measurement per bus, regardless of the bus has all applianced measured or not
-    std::vector<UniformSensorCalcParam<sym>> bus_appliance_injection_;
+    std::vector<UniformComplexRandomVariable<sym>> bus_appliance_injection_;
 
     // indexing array of the entries
     // for unmeasured (non bus injection): connected, but no measurement
@@ -429,8 +429,8 @@ template <bool sym> class MeasuredValues {
     // if only_magnitude = true, combine the abs value of the individual data
     //      set imag part to nan, to signal this is a magnitude only measurement
     template <bool only_magnitude = false>
-    static UniformSensorCalcParam<sym> combine_measurements(std::vector<UniformSensorCalcParam<sym>> const& data,
-                                                            IdxRange const& sensors) {
+    static UniformComplexRandomVariable<sym>
+    combine_measurements(std::vector<UniformComplexRandomVariable<sym>> const& data, IdxRange const& sensors) {
         double accumulated_inverse_variance{};
         ComplexValue<sym> accumulated_value{};
         for (auto pos : sensors) {
@@ -453,15 +453,16 @@ template <bool sym> class MeasuredValues {
         }
 
         if (!std::isnormal(accumulated_inverse_variance)) {
-            return UniformSensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
+            return UniformComplexRandomVariable<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
         }
 
-        return UniformSensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
-                                           1.0 / accumulated_inverse_variance};
+        return UniformComplexRandomVariable<sym>{accumulated_value / accumulated_inverse_variance,
+                                                 1.0 / accumulated_inverse_variance};
     }
 
     template <bool only_magnitude = false>
-    static UniformSensorCalcParam<sym> combine_measurements(std::vector<UniformSensorCalcParam<sym>> const& data) {
+    static UniformComplexRandomVariable<sym>
+    combine_measurements(std::vector<UniformComplexRandomVariable<sym>> const& data) {
         return combine_measurements<only_magnitude>(data, boost::counting_range(Idx{}, static_cast<Idx>(data.size())));
     }
 
@@ -503,7 +504,7 @@ template <bool sym> class MeasuredValues {
     void normalize_variance() {
         // loop to find min_var
         double min_var = std::numeric_limits<double>::infinity();
-        for (UniformSensorCalcParam<sym> const& x : main_value_) {
+        for (UniformComplexRandomVariable<sym> const& x : main_value_) {
             // only non-zero variance is considered
             if (x.variance != 0.0) {
                 min_var = std::min(min_var, x.variance);
@@ -511,7 +512,7 @@ template <bool sym> class MeasuredValues {
         }
         // scale
         std::for_each(main_value_.begin(), main_value_.end(),
-                      [&](UniformSensorCalcParam<sym>& x) { x.variance /= min_var; });
+                      [&](UniformComplexRandomVariable<sym>& x) { x.variance /= min_var; });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, IdxRange const& load_gens, IdxRange const& sources,
