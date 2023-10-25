@@ -89,10 +89,8 @@ void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
     output.load_gen.resize(load_gens_per_bus.element_size());
     output.bus_injection.resize(sources_per_bus.size());
 
-    for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
+    for (auto const& [bus_number, sources, load_gens] : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus)) {
         common_solver_functions::calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
-    }
-    for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(load_gens_per_bus)) {
         common_solver_functions::calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
     }
     output.bus_injection = y_bus.calculate_injection(output.u);
