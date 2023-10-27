@@ -68,35 +68,27 @@ template <bool sym> struct ApplianceShortCircuitMathOutput {
     ComplexValue<sym> i{};
 };
 
-// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
-// (circularly symmetric)
-template <bool sym> struct UniformRealRandomVariable {
-    static constexpr bool symmetric{sym};
-
-    RealValue<sym> value{};
-    RealValue<sym> variance{}; // variance (sigma^2) of the error range, in p.u.
-};
-
-// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
-// (circularly symmetric)
-template <bool sym> struct UniformComplexRandomVariable {
+// voltage sensor calculation parameters for state estimation
+// The value is the complex voltage
+// If the imaginary part is NaN, it means the angle calculation is not correct
+template <bool sym> struct VoltageSensorCalcParam {
     static constexpr bool symmetric{sym};
 
     ComplexValue<sym> value{};
     double variance{}; // variance (sigma^2) of the error range, in p.u.
 };
 
-// voltage sensor calculation parameters for state estimation
-// The value is the complex voltage
-// If the imaginary part is NaN, it means the angle calculation is not correct
-template <bool sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
-
 // power sensor calculation parameters for state estimation
 // The value is the complex power
 //   * for appliances, it is always in injection direction
 //   * for branches, the direction is node -> branch
-template <bool sym>
-using PowerSensorCalcParam = UniformComplexRandomVariable<sym>; // TODO(mgovers) change to UnCorrelatedSensorCalcParam
+template <bool sym> struct PowerSensorCalcParam {
+    static constexpr bool symmetric{sym};
+
+    ComplexValue<sym> value{};
+    RealValue<sym> p_variance{}; // variance (sigma^2) of the error range of the active power, in p.u.
+    RealValue<sym> q_variance{}; // variance (sigma^2) of the error range of the reactive power, in p.u.
+};
 
 template <typename T>
 concept sensor_calc_param_type =
