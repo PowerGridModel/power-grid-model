@@ -104,13 +104,15 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
 
     PowerSensorCalcParam<true> sym_calc_param() const final {
         PowerSensorCalcParam<true> calc_param{};
-        calc_param.variance = apparent_power_sigma_ * apparent_power_sigma_;
+        calc_param.p_variance = apparent_power_sigma_ * apparent_power_sigma_ / 2;
+        calc_param.q_variance = apparent_power_sigma_ * apparent_power_sigma_ / 2;
         calc_param.value = mean_val(s_measured_);
         return calc_param;
     }
     PowerSensorCalcParam<false> asym_calc_param() const final {
         PowerSensorCalcParam<false> calc_param{};
-        calc_param.variance = apparent_power_sigma_ * apparent_power_sigma_;
+        calc_param.p_variance = RealValue<false>{apparent_power_sigma_ * apparent_power_sigma_ / 2};
+        calc_param.q_variance = RealValue<false>{apparent_power_sigma_ * apparent_power_sigma_ / 2};
         calc_param.value = piecewise_complex_value(s_measured_);
         return calc_param;
     }
