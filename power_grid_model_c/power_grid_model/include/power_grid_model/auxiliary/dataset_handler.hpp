@@ -122,7 +122,7 @@ class DatasetHandler {
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
-        requires(indptr_mutable)
+        requires indptr_mutable
     {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
@@ -142,7 +142,7 @@ class DatasetHandler {
     }
 
     void set_buffer(std::string_view component, Indptr* indptr, Data* data)
-        requires(indptr_mutable)
+        requires indptr_mutable
     {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = dataset_info_.component_info[idx];
