@@ -380,26 +380,27 @@ TEST_CASE("Test math solver") {
     se_input_asym_angle.measured_bus_injection = {
         {(output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s) *
              RealValue<false>{1.0},
-         1.0}};
-    se_input_asym_angle.measured_source_power = {{output_ref.source[0].s * RealValue<false>{1.0}, 1.0},
-                                                 {output_ref.source[0].s * RealValue<false>{1.0}, 1.0}};
+         RealValue<false>{1.0}}};
+    se_input_asym_angle.measured_source_power = {
+        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{1.0}}};
     se_input_asym_angle.measured_load_gen_power = {
-        {output_ref.load_gen[3].s * RealValue<false>{1.0}, 1.0},
-        {output_ref.load_gen[4].s * RealValue<false>{1.0}, 1.0},
-        {output_ref.load_gen[5].s * RealValue<false>{1.0}, 1.0},
-        {500.0 * RealValue<false>{1.0}, 1.0},
+        {output_ref.load_gen[3].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.load_gen[4].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.load_gen[5].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {500.0 * RealValue<false>{1.0}, RealValue<false>{1.0}},
     };
     se_input_asym_angle.measured_shunt_power = {
-        {output_ref.shunt[0].s * RealValue<false>{1.0}, 1.0},
+        {output_ref.shunt[0].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
     };
 
     se_input_asym_angle.measured_branch_from_power = {
-        {output_ref.branch[0].s_f * RealValue<false>{1.0}, 1.0},
+        {output_ref.branch[0].s_f * RealValue<false>{1.0}, RealValue<false>{1.0}},
     };
     se_input_asym_angle.measured_branch_to_power = {
-        {output_ref.branch[0].s_t * RealValue<false>{1.0}, 1.0},
-        {output_ref.branch[0].s_t * RealValue<false>{1.0}, 1.0},
-        {output_ref.branch[1].s_t * RealValue<false>{1.0}, 1.0},
+        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.branch[1].s_t * RealValue<false>{1.0}, RealValue<false>{1.0}},
     };
     // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
     StateEstimationInput<false> se_input_asym_no_angle = se_input_asym_angle;

@@ -119,7 +119,7 @@ template <bool sym> class MeasuredValues {
     // use checker first
 
     // getter of voltage variance
-    double voltage_var(Idx bus) const { return main_value_[idx_voltage_[bus]].variance; }
+    double voltage_var(Idx bus) const { return voltage_main_value_[idx_voltage_[bus]].variance; }
     // getter of voltage value for all buses
     // for no measurement, the voltage phasor is used from the current iteration
     // for magnitude only measurement, angle is added from the current iteration
@@ -132,23 +132,27 @@ template <bool sym> class MeasuredValues {
                 u[bus] = current_u[bus];
             }
             // no angle measurement
-            else if (is_nan(imag(main_value_[idx_voltage_[bus]].value))) {
-                u[bus] = real(main_value_[idx_voltage_[bus]].value) * current_u[bus] /
+            else if (is_nan(imag(voltage_main_value_[idx_voltage_[bus]].value))) {
+                u[bus] = real(voltage_main_value_[idx_voltage_[bus]].value) * current_u[bus] /
                          cabs(current_u[bus]); // U / |U| to get angle shift
             }
             // full measurement
             else {
-                u[bus] = main_value_[idx_voltage_[bus]].value;
+                u[bus] = voltage_main_value_[idx_voltage_[bus]].value;
             }
         }
         return u;
     }
 
     // power measurement
-    constexpr auto const& bus_injection(Idx bus) const { return main_value_[bus_injection_[bus].idx_bus_injection]; }
-    constexpr auto const& branch_from_power(Idx branch) const { return main_value_[idx_branch_from_power_[branch]]; }
-    constexpr auto const& branch_to_power(Idx branch) const { return main_value_[idx_branch_to_power_[branch]]; }
-    constexpr auto const& shunt_power(Idx shunt) const { return main_value_[idx_shunt_power_[shunt]]; }
+    constexpr auto const& bus_injection(Idx bus) const {
+        return power_main_value_[bus_injection_[bus].idx_bus_injection];
+    }
+    constexpr auto const& branch_from_power(Idx branch) const {
+        return power_main_value_[idx_branch_from_power_[branch]];
+    }
+    constexpr auto const& branch_to_power(Idx branch) const { return power_main_value_[idx_branch_to_power_[branch]]; }
+    constexpr auto const& shunt_power(Idx shunt) const { return power_main_value_[idx_shunt_power_[shunt]]; }
     constexpr auto const& load_gen_power(Idx load_gen) const { return extra_value_[idx_load_gen_power_[load_gen]]; }
     constexpr auto const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
 
@@ -196,14 +200,16 @@ template <bool sym> class MeasuredValues {
     // cache topology
     std::shared_ptr<MathModelTopology const> math_topology_;
 
-    // flat array of all the relevant measurement for the main calculation
+    // flat arrays of all the relevant measurement for the main calculation
     // branch/shunt flow, bus voltage, injection flow
-    std::vector<UniformComplexRandomVariable<sym>> main_value_;
+    std::vector<VoltageSensorCalcParam<sym>> voltage_main_value_;
+    std::vector<PowerSensorCalcParam<sym>> power_main_value_;
+
     // flat array of all the load_gen/source measurement
     // not relevant for the main calculation, as extra data for load_gen/source calculation
-    std::vector<UniformComplexRandomVariable<sym>> extra_value_;
+    std::vector<PowerSensorCalcParam<sym>> extra_value_;
     // array of total appliance injection measurement per bus, regardless of the bus has all applianced measured or not
-    std::vector<UniformComplexRandomVariable<sym>> bus_appliance_injection_;
+    std::vector<PowerSensorCalcParam<sym>> bus_appliance_injection_;
 
     // indexing array of the entries
     // for unmeasured (non bus injection): connected, but no measurement
@@ -237,22 +243,22 @@ template <bool sym> class MeasuredValues {
 
         This function loops through all buses
         For each bus all voltage sensor measurements are combined in a weighted average, which is appended to
-        main_value_. For each bus, for all connected components, all power sensor measurements (per component (shunt,
-        load_gen, source)) are combined in a weighted average, which is appended to main_value_ (for shunt) or
-        extra_value_ (for load_gen and source). E.g. a value in extra_value contains the weighted average of all sensors
-        connected to one component. The extra_value_ of all load_gen and source, connected to the bus, are added and
-        appended to appliace_injection_measurement.
+        voltage_main_value_. For each bus, for all connected components, all power sensor measurements (per component
+        (shunt, load_gen, source)) are combined in a weighted average, which is appended to power_main_value_ (for
+        shunt) or extra_value_ (for load_gen and source). E.g. a value in extra_value contains the weighted average of
+        all sensors connected to one component. The extra_value_ of all load_gen and source, connected to the bus, are
+        added and appended to appliace_injection_measurement.
 
         We combine all the available load_gen and source measurements into appliance_injection_measurement by summing
         them up, and store it in bus_appliance_injection_. If all the connected load_gen and source are measured, we
         further combine the appliance_injection_measurement into the (if available) direct bus injection measurement,
-        and put it into main_value_.
+        and put it into power_main_value_.
 
         NOTE: if all load_gen and source are not connected (disconnected). It is a zero injection constraint,
         which is considered as a measurement in the main_value_ with zero variance.
 
-        The voltage values in main_value_ can be found using idx_voltage.
-        The power values in main_value_ can be found using bus_injection_ (for combined load_gen and source)
+        The voltage values in voltage_main_value_ can be found using idx_voltage.
+        The power values in power_main_value_ can be found using bus_injection_ (for combined load_gen and source)
         and idx_shunt_power_ (for shunt).
         */
         process_voltage_measurements(input);
@@ -291,11 +297,11 @@ template <bool sym> class MeasuredValues {
             angle_measured = true;
         }
 
-        if (std::isinf(aggregated.variance)) {
+        if (is_inf(aggregated.variance)) {
             idx_voltage_[bus] = unmeasured;
         } else {
-            idx_voltage_[bus] = static_cast<Idx>(main_value_.size());
-            main_value_.push_back(aggregated);
+            idx_voltage_[bus] = static_cast<Idx>(voltage_main_value_.size());
+            voltage_main_value_.push_back(aggregated);
             if (angle_measured) {
                 ++n_angle_;
                 // accumulate angle, offset by intrinsic phase shift
@@ -310,7 +316,7 @@ template <bool sym> class MeasuredValues {
 
         for (auto const& [bus, shunts] : enumerated_zip_sequence(topo.shunts_per_bus)) {
             process_bus_objects(shunts, topo.power_sensors_per_shunt, input.shunt_status, input.measured_shunt_power,
-                                main_value_, idx_shunt_power_);
+                                power_main_value_, idx_shunt_power_);
         }
         for (auto const& [bus, load_gens] : enumerated_zip_sequence(topo.load_gens_per_bus)) {
             process_bus_objects(load_gens, topo.power_sensors_per_load_gen, input.load_gen_status,
@@ -348,24 +354,27 @@ template <bool sym> class MeasuredValues {
 
         // combine valid appliance_injection_measurement and direct_injection_measurement
         // three scenarios; check if we have valid injection measurement
-        if (n_unmeasured == 0 || !std::isinf(direct_injection_measurement.variance)) {
-            bus_injection_[bus].idx_bus_injection = static_cast<Idx>(main_value_.size());
-            if (n_unmeasured > 0) {
-                // only direct injection
-                main_value_.push_back(direct_injection_measurement);
-            } else if (std::isinf(direct_injection_measurement.variance) ||
-                       appliance_injection_measurement.variance == 0.0) {
-                // only appliance injection if
-                //    there is no direct injection measurement,
-                //    or we have zero injection
-                main_value_.push_back(appliance_injection_measurement);
+        auto const uncertain_direct_injection =
+            is_inf(direct_injection_measurement.p_variance) || is_inf(direct_injection_measurement.q_variance);
+
+        bus_injection_[bus].idx_bus_injection = static_cast<Idx>(power_main_value_.size());
+        if (n_unmeasured > 0) {
+            if (uncertain_direct_injection) {
+                bus_injection_[bus].idx_bus_injection = unmeasured;
             } else {
-                // both valid, we combine again
-                main_value_.push_back(
-                    combine_measurements({direct_injection_measurement, appliance_injection_measurement}));
+                // only direct injection
+                power_main_value_.push_back(direct_injection_measurement);
             }
+        } else if (uncertain_direct_injection || any_zero(appliance_injection_measurement.p_variance) ||
+                   any_zero(appliance_injection_measurement.q_variance)) {
+            // only appliance injection if
+            //    there is no direct injection measurement,
+            //    or we have zero injection
+            power_main_value_.push_back(appliance_injection_measurement);
         } else {
-            bus_injection_[bus].idx_bus_injection = unmeasured;
+            // both valid, we combine again
+            power_main_value_.push_back(
+                combine_measurements(std::vector{direct_injection_measurement, appliance_injection_measurement}));
         }
     }
 
@@ -383,12 +392,13 @@ template <bool sym> class MeasuredValues {
         }
 
         auto const& appliance_measurement = extra_value_[appliance_idx];
-        if (std::isinf(appliance_measurement.variance)) {
+        if (is_inf(appliance_measurement.p_variance) || is_inf(appliance_measurement.q_variance)) {
             ++n_unmeasured;
             return;
         }
         measurements.value += appliance_measurement.value;
-        measurements.variance += appliance_measurement.variance;
+        measurements.p_variance += appliance_measurement.p_variance;
+        measurements.q_variance += appliance_measurement.q_variance;
     }
 
     void process_branch_measurements(StateEstimationInput<sym> const& input) {
@@ -404,10 +414,12 @@ template <bool sym> class MeasuredValues {
         If the branch_bus_idx = disconnected, idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
         If the side is connected, but there are no measurements in this branch side
         idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
-        Else, idx_branch_to_power_/idx_branch_from_power_ is set to the index of the aggregated data in main_value_.
+        Else, idx_branch_to_power_/idx_branch_from_power_ is set to the index of the aggregated data in
+        power_main_value_.
 
         All measurement values for a single side of a branch are combined in a weighted average, which is appended to
-        main_value_. The power values in main_value_ can be found using idx_branch_to_power_/idx_branch_from_power_.
+        power_main_value_. The values in power_main_value_ can be found using
+        idx_branch_to_power_/idx_branch_from_power_.
         */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
@@ -416,11 +428,11 @@ template <bool sym> class MeasuredValues {
             // from side
             idx_branch_from_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_from, topo.branch_bus_idx,
-                                   input.measured_branch_from_power, main_value_, branch_from_checker);
+                                   input.measured_branch_from_power, power_main_value_, branch_from_checker);
             // to side
             idx_branch_to_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_to, topo.branch_bus_idx,
-                                   input.measured_branch_to_power, main_value_, branch_to_checker);
+                                   input.measured_branch_to_power, power_main_value_, branch_to_checker);
         }
     }
 
@@ -429,8 +441,8 @@ template <bool sym> class MeasuredValues {
     // if only_magnitude = true, combine the abs value of the individual data
     //      set imag part to nan, to signal this is a magnitude only measurement
     template <bool only_magnitude = false>
-    static UniformComplexRandomVariable<sym>
-    combine_measurements(std::vector<UniformComplexRandomVariable<sym>> const& data, IdxRange const& sensors) {
+    static VoltageSensorCalcParam<sym> combine_measurements(std::vector<VoltageSensorCalcParam<sym>> const& data,
+                                                            IdxRange const& sensors) {
         double accumulated_inverse_variance{};
         ComplexValue<sym> accumulated_value{};
         for (auto pos : sensors) {
@@ -452,17 +464,54 @@ template <bool sym> class MeasuredValues {
             }
         }
 
-        if (!std::isnormal(accumulated_inverse_variance)) {
-            return UniformComplexRandomVariable<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
+        if (!is_normal(accumulated_inverse_variance)) {
+            return VoltageSensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
         }
 
-        return UniformComplexRandomVariable<sym>{accumulated_value / accumulated_inverse_variance,
-                                                 1.0 / accumulated_inverse_variance};
+        return VoltageSensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
+                                           1.0 / accumulated_inverse_variance};
     }
 
+    // combine multiple measurements of one quantity
+    // using Kalman filter
+    // if only_magnitude = true, combine the abs value of the individual data
+    //      set imag part to nan, to signal this is a magnitude only measurement
+    //
+    // Since p and q are entirely decoupled, the real and imaginary components accumulate separately
     template <bool only_magnitude = false>
-    static UniformComplexRandomVariable<sym>
-    combine_measurements(std::vector<UniformComplexRandomVariable<sym>> const& data) {
+        requires(!only_magnitude)
+    static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
+                                                          IdxRange const& sensors) {
+        RealValue<sym> accumulated_inverse_p_variance{};
+        RealValue<sym> accumulated_inverse_q_variance{};
+        RealValue<sym> accumulated_p_value{};
+        RealValue<sym> accumulated_q_value{};
+        for (auto pos : sensors) {
+            auto const& measurement = data[pos];
+
+            auto const inv_p_variance = RealValue<sym>{1.0} / measurement.p_variance;
+            auto const inv_q_variance = RealValue<sym>{1.0} / measurement.q_variance;
+
+            accumulated_inverse_p_variance += inv_p_variance;
+            accumulated_inverse_q_variance += inv_q_variance;
+
+            accumulated_p_value += real(measurement.value) * inv_p_variance;
+            accumulated_q_value += imag(measurement.value) * inv_q_variance;
+        }
+
+        if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
+            return PowerSensorCalcParam<sym>{accumulated_p_value / accumulated_inverse_p_variance +
+                                                 1.0i * accumulated_q_value / accumulated_inverse_q_variance,
+                                             RealValue<sym>{1.0} / accumulated_inverse_p_variance,
+                                             RealValue<sym>{1.0} / accumulated_inverse_q_variance};
+        }
+        return PowerSensorCalcParam<sym>{accumulated_p_value + 1.0i * accumulated_q_value,
+                                         RealValue<sym>{std::numeric_limits<double>::infinity()},
+                                         RealValue<sym>{std::numeric_limits<double>::infinity()}};
+    }
+
+    template <sensor_calc_param_type CalcParam, bool only_magnitude = false>
+    static auto combine_measurements(std::vector<CalcParam> const& data) {
         return combine_measurements<only_magnitude>(data, boost::counting_range(Idx{}, static_cast<Idx>(data.size())));
     }
 
@@ -502,17 +551,48 @@ template <bool sym> class MeasuredValues {
     // scale the smallest variance to one
     // in the gain matrix, the biggest weighting factor is then one
     void normalize_variance() {
+        normalize_variance(voltage_main_value_);
+        normalize_variance(power_main_value_);
+    }
+
+    static void normalize_variance(std::vector<VoltageSensorCalcParam<sym>>& values) {
         // loop to find min_var
         double min_var = std::numeric_limits<double>::infinity();
-        for (UniformComplexRandomVariable<sym> const& x : main_value_) {
+        for (auto const& x : values) {
             // only non-zero variance is considered
             if (x.variance != 0.0) {
                 min_var = std::min(min_var, x.variance);
             }
         }
         // scale
-        std::for_each(main_value_.begin(), main_value_.end(),
-                      [&](UniformComplexRandomVariable<sym>& x) { x.variance /= min_var; });
+        std::for_each(values.begin(), values.end(), [&](auto& x) { x.variance /= min_var; });
+    }
+
+    static void normalize_variance(std::vector<PowerSensorCalcParam<sym>>& values) {
+        // loop to find min_var
+        double min_var = std::numeric_limits<double>::infinity();
+        auto const unconstrained_min = [&min_var](double v) {
+            // only non-zero variance is considered
+            if (v != 0.0) {
+                min_var = std::min(min_var, v);
+            }
+        };
+        for (auto const& x : values) {
+            if constexpr (sym) {
+                unconstrained_min(x.p_variance);
+                unconstrained_min(x.q_variance);
+            } else {
+                for (Idx phase : {0, 1, 2}) {
+                    unconstrained_min(x.p_variance[phase]);
+                    unconstrained_min(x.q_variance[phase]);
+                }
+            }
+        }
+        // scale
+        std::for_each(values.begin(), values.end(), [&](auto& x) {
+            x.p_variance /= min_var;
+            x.q_variance /= min_var;
+        });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, IdxRange const& load_gens, IdxRange const& sources,
@@ -544,16 +624,23 @@ template <bool sym> class MeasuredValues {
                                              FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        ComplexValue<sym> const mu = (bus_appliance_injection.value - s) / bus_appliance_injection.variance;
+        ComplexValue<sym> const mu = (bus_appliance_injection.value - s) /
+                                     (bus_appliance_injection.p_variance + bus_appliance_injection.q_variance);
+
         // S_i = S_i_mea - var_i * mu
+        auto const calculate_injection = [&mu](auto const& power) {
+            // TODO(mgovers): shouldn't this be p_variance + i * q_variance???
+            return power.value - (power.p_variance + power.q_variance) * mu;
+        };
+
         for (Idx const load_gen : load_gens) {
             if (has_load_gen(load_gen)) {
-                load_gen_flow[load_gen].s = load_gen_power(load_gen).value - (load_gen_power(load_gen).variance) * mu;
+                load_gen_flow[load_gen].s = calculate_injection(load_gen_power(load_gen));
             }
         }
         for (Idx const source : sources) {
             if (has_source(source)) {
-                source_flow[source].s = source_power(source).value - (source_power(source).variance) * mu;
+                source_flow[source].s = calculate_injection(source_power(source));
             }
         }
     }
@@ -682,9 +769,11 @@ template <bool sym> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += Ys^H * Ys / variance
-                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]), param.shunt_param[obj]) /
-                                         measured_value.shunt_power(obj).variance;
+                            // G += Ys^H * Ys * (variance^-1)
+                            auto const& shunt_power = measured_value.shunt_power(obj);
+                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]), param.shunt_param[obj],
+                                             inv(ComplexTensor<sym>{static_cast<ComplexValue<sym>>(
+                                                 shunt_power.p_variance + shunt_power.q_variance)}));
                         }
                     }
                     // branch
@@ -696,11 +785,13 @@ template <bool sym> class IterativeLinearSESolver {
                         for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                             // has measurement
                             if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                                // G += Y{side, b0}^H * Y{side, b1} / variance
+                                // G += Y{side, b0}^H * Y{side, b1} * (variance^-1)
+                                auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
                                 block.g() +=
                                     dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        param.branch_param[obj].value[measured_side * 2 + b1]) /
-                                    std::invoke(branch_power_[measured_side], measured_value, obj).variance;
+                                        param.branch_param[obj].value[measured_side * 2 + b1],
+                                        inv(ComplexTensor<sym>{
+                                            static_cast<ComplexValue<sym>>(power.p_variance + power.q_variance)}));
                             }
                         }
                     }
@@ -713,7 +804,9 @@ template <bool sym> class IterativeLinearSESolver {
                     // R_ii = -variance, only diagonal
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
-                        block.r() = ComplexTensor<sym>{-measured_value.bus_injection(row).variance};
+                        auto const& injection = measured_value.bus_injection(row);
+                        block.r() = ComplexTensor<sym>{
+                            static_cast<ComplexValue<sym>>(-(injection.p_variance + injection.q_variance))};
                     }
                 }
                 // injection measurement not exist
@@ -771,8 +864,8 @@ template <bool sym> class IterativeLinearSESolver {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
                         // eta -= Ys^H * i_shunt / variance
-                        rhs_block.eta() -=
-                            dot(hermitian_transpose(param.shunt_param[obj]), conj(m.value / u[bus])) / m.variance;
+                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]), conj(m.value / u[bus])) /
+                                           (m.p_variance + m.q_variance);
                     }
                 }
                 // branch
@@ -793,7 +886,7 @@ template <bool sym> class IterativeLinearSESolver {
                             rhs_block.eta() +=
                                 dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
                                     conj(m.value / u[measured_bus])) /
-                                m.variance;
+                                (m.p_variance + m.q_variance);
                         }
                     }
                 }

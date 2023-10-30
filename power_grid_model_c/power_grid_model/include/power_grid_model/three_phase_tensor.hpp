@@ -174,24 +174,30 @@ template <bool sym, class T> inline auto process_mean_val(const T& m) {
     }
 }
 
+template <column_vector Derived> inline auto as_diag(Eigen::ArrayBase<Derived> const& x) {
+    return x.matrix().asDiagonal();
+}
+inline auto as_diag(double x) { return x; }
+
 // diagonal multiply
 template <column_vector DerivedA, rk2_tensor DerivedB, column_vector DerivedC>
 inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y,
                       Eigen::ArrayBase<DerivedC> const& z) {
-    return (x.matrix().asDiagonal() * y.matrix() * z.matrix().asDiagonal()).array();
+    return (as_diag(x) * y.matrix() * as_diag(z)).array();
 }
 // double overload
-inline double diag_mult(double x, double y, double z) { return x * y * z; }
+inline auto diag_mult(double x, double y, double z) { return x * y * z; }
 
 // calculate positive sequence
 template <column_vector Derived> inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
 
-inline DoubleComplex pos_seq(DoubleComplex const& val) { return val; }
+inline auto pos_seq(DoubleComplex const& val) { return val; }
 
 // inverse of tensor
-inline DoubleComplex inv(DoubleComplex const& val) { return 1.0 / val; }
+inline auto inv(double val) { return 1.0 / val; }
+inline auto inv(DoubleComplex const& val) { return 1.0 / val; }
 inline auto inv(ComplexTensor<false> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
@@ -217,7 +223,7 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
 
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
-inline bool is_nan(double x) { return std::isnan(x); }
+inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
 inline bool is_nan(ID x) { return x == na_IntID; }
 inline bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
@@ -225,6 +231,20 @@ template <class Enum>
 inline bool is_nan(Enum x) {
     return static_cast<IntS>(x) == na_IntS;
 }
+
+// is normal
+inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
+inline auto is_normal(RealValue<false> const& value) {
+    return is_normal(value(0)) && is_normal(value(1)) && is_normal(value(2));
+}
+
+// isinf
+inline auto is_inf(std::floating_point auto value) { return std::isinf(value); }
+inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || is_inf(value(1)) || is_inf(value(2)); }
+
+// any_zero
+inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
+inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
 
 /* update real values
 
