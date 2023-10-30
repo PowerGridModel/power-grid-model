@@ -335,25 +335,26 @@ TEST_CASE("Test math solver") {
     se_input_angle.source_status = {1};
     se_input_angle.measured_voltage = {{output_ref.u[0], 1.0}, {output_ref.u[2], 1.0}, {output_ref.u[2], 1.0}};
     se_input_angle.measured_bus_injection = {
-        {output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s, 1.0}};
-    se_input_angle.measured_source_power = {{output_ref.source[0].s, 1.0}, {output_ref.source[0].s, 1.0}};
+        {output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s, 0.5,
+         0.5}};
+    se_input_angle.measured_source_power = {{output_ref.source[0].s, 0.5, 0.5}, {output_ref.source[0].s, 0.5, 0.5}};
     se_input_angle.measured_load_gen_power = {
-        {output_ref.load_gen[3].s, 1.0},
-        {output_ref.load_gen[4].s, 1.0},
-        {output_ref.load_gen[5].s, 1.0},
-        {500.0, 1.0},
+        {output_ref.load_gen[3].s, 0.5, 0.5},
+        {output_ref.load_gen[4].s, 0.5, 0.5},
+        {output_ref.load_gen[5].s, 0.5, 0.5},
+        {500.0, 0.5, 0.5},
     };
     se_input_angle.measured_shunt_power = {
-        {output_ref.shunt[0].s, 1.0},
+        {output_ref.shunt[0].s, 0.5, 0.5},
     };
 
     se_input_angle.measured_branch_from_power = {
-        {output_ref.branch[0].s_f, 1.0},
+        {output_ref.branch[0].s_f, 0.5, 0.5},
     };
     se_input_angle.measured_branch_to_power = {
-        {output_ref.branch[0].s_t, 1.0},
-        {output_ref.branch[0].s_t, 1.0},
-        {output_ref.branch[1].s_t, 1.0},
+        {output_ref.branch[0].s_t, 0.5, 0.5},
+        {output_ref.branch[0].s_t, 0.5, 0.5},
+        {output_ref.branch[1].s_t, 0.5, 0.5},
     };
     // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
     StateEstimationInput<true> se_input_no_angle = se_input_angle;
@@ -380,27 +381,27 @@ TEST_CASE("Test math solver") {
     se_input_asym_angle.measured_bus_injection = {
         {(output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s) *
              RealValue<false>{1.0},
-         RealValue<false>{1.0}}};
+         RealValue<false>{0.5}, RealValue<false>{0.5}}};
     se_input_asym_angle.measured_source_power = {
-        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
-        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{1.0}}};
+        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}}};
     se_input_asym_angle.measured_load_gen_power = {
-        {output_ref.load_gen[3].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
-        {output_ref.load_gen[4].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
-        {output_ref.load_gen[5].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
-        {500.0 * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.load_gen[3].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.load_gen[4].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.load_gen[5].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {500.0 * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
     };
     se_input_asym_angle.measured_shunt_power = {
-        {output_ref.shunt[0].s * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.shunt[0].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
     };
 
     se_input_asym_angle.measured_branch_from_power = {
-        {output_ref.branch[0].s_f * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.branch[0].s_f * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
     };
     se_input_asym_angle.measured_branch_to_power = {
-        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{1.0}},
-        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{1.0}},
-        {output_ref.branch[1].s_t * RealValue<false>{1.0}, RealValue<false>{1.0}},
+        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.branch[1].s_t * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
     };
     // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
     StateEstimationInput<false> se_input_asym_no_angle = se_input_asym_angle;
@@ -1113,8 +1114,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_source_power = {{1.93, 0.1, 0.1}};
-        se_input.measured_branch_from_power = {{1.97, 0.1, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
+        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1139,8 +1140,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_load_gen_power = {{-1.93, 0.1, 0.1}};
-        se_input.measured_branch_to_power = {{-1.97, 0.1, 0.1}};
+        se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
+        se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1166,9 +1167,9 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {{2.2, 0.2}};
-        se_input.measured_source_power = {{1.93, 0.1, 0.1}};
-        se_input.measured_branch_from_power = {{1.97, 0.1, 0.1}};
+        se_input.measured_bus_injection = {{2.2, 0.1, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
+        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1194,9 +1195,9 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {{2.2, 0.2}};
-        se_input.measured_source_power = {{1.93, 0.1, 0.1}};
-        se_input.measured_branch_from_power = {{1.97, 0.1, 0.1}};
+        se_input.measured_bus_injection = {{2.2, 0.1, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
+        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1222,9 +1223,9 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {{-2.2, 0.2}};
-        se_input.measured_load_gen_power = {{-1.93, 0.1, 0.1}};
-        se_input.measured_branch_to_power = {{-1.97, 0.1, 0.1}};
+        se_input.measured_bus_injection = {{-2.2, 0.1, 0.1}};
+        se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
+        se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1251,7 +1252,7 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-3.0, 0.1, 0.1}, {1.0, 0.1, 0.1}};
+        se_input.measured_load_gen_power = {{-3.0, 0.05, 0.05}, {1.0, 0.05, 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1280,8 +1281,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-1.8, 0.1, 0.1}, {0.9, 0.1, 0.1}};
-        se_input.measured_bus_injection = {{-1.1, 0.2}};
+        se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.05, 0.05}};
+        se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
