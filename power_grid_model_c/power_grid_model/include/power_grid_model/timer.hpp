@@ -57,7 +57,7 @@ class Timer {
         if (info_ != nullptr) {
             auto const now = Clock::now();
             auto const duration = Duration(now - start_);
-            info_->operator[](Timer::make_key(code_, name_)) += (double)duration.count();
+            info_->operator[](Timer::make_key(code_, name_)) += duration.count();
             info_ = nullptr;
         }
     }
