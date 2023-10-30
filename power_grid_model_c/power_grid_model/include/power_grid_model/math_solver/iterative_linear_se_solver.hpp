@@ -542,30 +542,12 @@ template <bool sym> class MeasuredValues {
         return static_cast<Idx>(result_data.size()) - 1;
     }
 
-    // normalize the variance in the main value
+    // normalize the variance in the main values
     // pick the smallest variance (except zero, which is a constraint)
-    // scale the smallest variance to one
-    // in the gain matrix, the biggest weighting factor is then one
+    // p and q variances are combined (see also https://en.wikipedia.org/wiki/Complex_random_variable)
+    // scale the smallest variance
+    // to one in the gain matrix, the biggest weighting factor is then one
     void normalize_variance() {
-        normalize_variance(voltage_main_value_);
-        normalize_variance(power_main_value_);
-    }
-
-    static void normalize_variance(std::vector<VoltageSensorCalcParam<sym>>& values) {
-        // loop to find min_var
-        double min_var = std::numeric_limits<double>::infinity();
-        for (auto const& x : values) {
-            // only non-zero variance is considered
-            if (x.variance != 0.0) {
-                min_var = std::min(min_var, x.variance);
-            }
-        }
-        // scale
-        std::for_each(values.begin(), values.end(), [&](auto& x) { x.variance /= min_var; });
-    }
-
-    static void normalize_variance(std::vector<PowerSensorCalcParam<sym>>& values) {
-        // loop to find min_var
         double min_var = std::numeric_limits<double>::infinity();
         auto const unconstrained_min = [&min_var](double v) {
             // only non-zero variance is considered
@@ -573,19 +555,24 @@ template <bool sym> class MeasuredValues {
                 min_var = std::min(min_var, v);
             }
         };
-        for (auto const& x : values) {
+        for (auto const& x : voltage_main_value_) {
+            unconstrained_min(x.variance);
+        }
+        for (auto const& x : power_main_value_) {
+            auto const variance = x.p_variance + x.q_variance;
             if constexpr (sym) {
-                unconstrained_min(x.p_variance);
-                unconstrained_min(x.q_variance);
+                unconstrained_min(variance);
             } else {
                 for (Idx phase : {0, 1, 2}) {
-                    unconstrained_min(x.p_variance[phase]);
-                    unconstrained_min(x.q_variance[phase]);
+                    unconstrained_min(variance[phase] + variance[phase]);
                 }
             }
         }
+
         // scale
-        std::for_each(values.begin(), values.end(), [&](auto& x) {
+        std::for_each(voltage_main_value_.begin(), voltage_main_value_.end(),
+                      [min_var](auto& x) { x.variance /= min_var; });
+        std::for_each(power_main_value_.begin(), power_main_value_.end(), [min_var](auto& x) {
             x.p_variance /= min_var;
             x.q_variance /= min_var;
         });

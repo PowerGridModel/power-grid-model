@@ -499,6 +499,8 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 3. Providing only one of `p_sigma` and `q_sigma` results in undefined behaviour.
 ```
 
+It is up to the chosen [calculation method](calculations.md#state-estimation-algorithms) whether and how the variances (both for the active and reactive power, and for the individual phases) are taken into account, and may be changed in the future to improve calculation accuracy.
+
 ##### Steady state output
 
 | name         | data type         | unit                       | description                                                                  |

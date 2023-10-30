@@ -21,10 +21,12 @@ Power flow is a "what-if" based grid calculation that will calculate the node vo
 Some typical use-cases are network planning and contingency analysis.
 
 Input:
+
 - Network data: topology + component attributes
 - Assumed load/generation profile
 
 Output:
+
 - Node voltage magnitude and angle
 - Power flow through branches
 
@@ -35,10 +37,12 @@ network data and measurements. Measurements meaning power flow or voltage values
 either measured, estimated or forecasted.
 
 Input:
+
 - Network data: topology + component attributes
 - Power flow / voltage measurements with uncertainty
 
 Output:
+
 - Node voltage magnitude and angle
 - Power flow through branches
 - Deviation between measurement values and estimated state
@@ -63,30 +67,34 @@ $$
 $$
 
 The number of measurements can be found by the sum of the following:
+
 - number of nodes with a voltage sensor with magnitude only
 - two times the number of nodes with a voltage sensor with magnitude and angle
 - two times the number of nodes without appliances connected
 - two times the number of nodes where all connected appliances are measured by a power sensor
 - two times the number of branches with a power sensor
 
-Note: enough measurements doesn't necessarily mean that the system is observable. The location of the measurements is also
+```{note}
+Having enough measurements does not necessarily mean that the system is observable. The location of the measurements is also
 of importance. Also, there should be at least one voltage measurement. The [iterative linear](#iterative-linear) 
 state estimation algorithm assumes voltage angles to be zero when not given. This might result in the calculation succeeding, but giving 
-a faulty outcome instead of raising a singular matrix error. 
+a faulty outcome instead of raising a singular matrix error.
+```
 
 #### Short Circuit Calculations
-
 
 Short circuit calculation is carried out to analyze the worst case scenario when a fault has occurred.
 The currents flowing through branches and node voltages are calculated.
 Some typical use-cases are selection or design of components like conductors or breakers and power system protection, e.g. relay co-ordination.
 
 Input:
+
 - Network data: topology + component attributes
 - Fault type and impedance.
 - In the API call: choose between `minimum` and `maximum` voltage scaling to calculate the minimum or maximum short circuit currents (according to IEC 60909).
 
 Output:
+
 - Node voltage magnitude and angle
 - Current flowing through branches and fault.
 
@@ -104,11 +112,11 @@ The table below can be used to pick the right algorithm. Below the table a more 
 | [Linear](calculations.md#linear)                       | &#10004; |          | `CalculationMethod.linear`            |
 | [Linear current](calculations.md#linear-current)       | &#10004; |          | `CalculationMethod.linear_current`    |
 
-```note
+```{note}
 By default, the Newton-Raphson method is used.
 ```
 
-```note
+```{note}
 When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
 This is because this method will then be accurate and fastest.
 ```
@@ -228,14 +236,15 @@ This algorithm is a Jacobi-like method for powerflow analysis.
 It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
 
 The algorithm is as follows:
+
 1. Build $Y_{bus}$ matrix 
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
-$
-   \begin{eqnarray}
-      I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
-   \end{eqnarray}
-$
+   $
+      \begin{eqnarray}
+         I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
+      \end{eqnarray}
+   $
 4. Solve linear equation: $YU_N^i = I_N^i$ 
 5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
 
@@ -254,8 +263,9 @@ It will be more accurate when most of the load/generation types are of constant 
 When all the load/generation types are of constant impedance, power-grid-model uses Linear method regardless of the input provided by the user. This is because this method will then be accurate and fastest. 
 
 The algorithm is as follows:
+
 1. Assume injected currents by loads $I_N=0$ since we model loads/generation as impedance. 
-Admittance of each load/generation is calculated from rated power as $y=-\overline{S}$ 
+   Admittance of each load/generation is calculated from rated power as $y=-\overline{S}$ 
 2. Build $Y{bus}$. Add the admittances of loads/generation to the diagonal elements.
 3. Solve linear equation: $YU_N = I_N$ for $U_N$
 
@@ -367,8 +377,8 @@ Linear WLS requires all measurements to be linear. This is only possible is all 
 which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
 
 - Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small, 
-it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
-magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
+  it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
+  magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
 $$
    \begin{eqnarray}
@@ -394,6 +404,8 @@ $$
             \underline{I} = (\underline{S}/\underline{U})^*
    \end{eqnarray}
 $$
+
+The apparent power flow is considered as a single measurement, with variance $V_S = V_P + V_Q$.
 
 The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of 
 bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS 
@@ -421,8 +433,10 @@ the system error of the phase shift converges to zero. Because the matrix is pre
 pre-factorized, the computation cost of each iteration is much smaller than Newton-Raphson
 method, where the Jacobian matrix needs to be constructed and factorized each time.
 
-NOTE: Since the algorithm will assume angles to be zero if not given, this might result in not having a 
+```{warning}
+Since the algorithm will assume angles to be zero if not given, this might result in not having a 
 crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
+```
 
 Algorithm call: `CalculationMethod.iterative_linear`
 
@@ -441,11 +455,11 @@ The assumptions used for calculations in power-grid-model are aligned to the one
 - The pre-fault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
 - The calculations are assumed to be time-independent. (Voltages are sine throughout with the fault occurring at a zero crossing of the voltage, the complexity of rotating machines and harmonics are neglected, etc.)
 - To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. 
-The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents. 
-The table to derive `c` according to IEC 60909 is shown below. 
+  The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents. 
+  The table to derive `c` according to IEC 60909 is shown below. 
 
 | Algorithm      | c_max | c_min |
-|----------------|-------|-------|
+| -------------- | ----- | ----- |
 | `U_nom` <= 1kV | 1.10  | 0.95  |
 | `U_nom` > 1kV  | 1.10  | 1.00  |
 

@@ -89,8 +89,10 @@ In this way, the library is handling the memory (de-)allocation.
 e.g., `aligned_alloc` and `free`.
 You need to first call `PGM_meta_*` functions to retrieve the size and alignment of a component.
 
-NOTE: Do not mix these two methods in creation and destruction.
+```{warning}
+Do not mix these two methods in creation and destruction.
 You cannot use `PGM_destroy_buffer` to release a buffer created in your own code, or vice versa.
+```
 
 ### Set and Get Attribute
 
@@ -127,8 +129,10 @@ The newly added attribute will have rubbish value in the memory.
 
 Therefore, it is your choice of trade-off: maximum performance or backwards compatibility.
 
-NOTE: you do not need to call `PGM_buffer_set_nan` on output buffers, 
+```{note}
+You do not need to call `PGM_buffer_set_nan` on output buffers, 
 because the buffer will be overwritten in the calculation core with the real output data.
+```
 
 ## Dataset views
 
