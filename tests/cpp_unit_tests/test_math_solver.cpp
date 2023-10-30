@@ -1113,8 +1113,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_source_power = {{1.93, 0.1}};
-        se_input.measured_branch_from_power = {{1.97, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.1, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1139,8 +1139,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_load_gen_power = {{-1.93, 0.1}};
-        se_input.measured_branch_to_power = {{-1.97, 0.1}};
+        se_input.measured_load_gen_power = {{-1.93, 0.1, 0.1}};
+        se_input.measured_branch_to_power = {{-1.97, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1167,8 +1167,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
         se_input.measured_bus_injection = {{2.2, 0.2}};
-        se_input.measured_source_power = {{1.93, 0.1}};
-        se_input.measured_branch_from_power = {{1.97, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.1, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1195,8 +1195,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
         se_input.measured_bus_injection = {{2.2, 0.2}};
-        se_input.measured_source_power = {{1.93, 0.1}};
-        se_input.measured_branch_from_power = {{1.97, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.1, 0.1}};
+        se_input.measured_branch_from_power = {{1.97, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1223,8 +1223,8 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
         se_input.measured_bus_injection = {{-2.2, 0.2}};
-        se_input.measured_load_gen_power = {{-1.93, 0.1}};
-        se_input.measured_branch_to_power = {{-1.97, 0.1}};
+        se_input.measured_load_gen_power = {{-1.93, 0.1, 0.1}};
+        se_input.measured_branch_to_power = {{-1.97, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1251,7 +1251,7 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-3.0, 0.1}, {1.0, 0.1}};
+        se_input.measured_load_gen_power = {{-3.0, 0.1, 0.1}, {1.0, 0.1, 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -1280,7 +1280,7 @@ TEST_CASE("Math solver, measurements") {
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-1.8, 0.1}, {0.9, 0.1}};
+        se_input.measured_load_gen_power = {{-1.8, 0.1, 0.1}, {0.9, 0.1, 0.1}};
         se_input.measured_bus_injection = {{-1.1, 0.2}};
 
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
