@@ -314,19 +314,15 @@ template <bool sym> class MeasuredValues {
     void process_appliance_measurements(StateEstimationInput<sym> const& input) {
         MathModelTopology const& topo = math_topology();
 
-        for (auto const& [bus, shunts] : enumerated_zip_sequence(topo.shunts_per_bus)) {
+        for (auto const& [bus, shunts, load_gens, sources] :
+             enumerated_zip_sequence(topo.shunts_per_bus, topo.load_gens_per_bus, topo.sources_per_bus)) {
             process_bus_objects(shunts, topo.power_sensors_per_shunt, input.shunt_status, input.measured_shunt_power,
                                 power_main_value_, idx_shunt_power_);
-        }
-        for (auto const& [bus, load_gens] : enumerated_zip_sequence(topo.load_gens_per_bus)) {
             process_bus_objects(load_gens, topo.power_sensors_per_load_gen, input.load_gen_status,
                                 input.measured_load_gen_power, extra_value_, idx_load_gen_power_);
-        }
-        for (auto const& [bus, sources] : enumerated_zip_sequence(topo.sources_per_bus)) {
             process_bus_objects(sources, topo.power_sensors_per_source, input.source_status,
                                 input.measured_source_power, extra_value_, idx_source_power_);
-        }
-        for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
+
             combine_appliances_to_injection_measurements(input, topo, bus);
         }
     }
