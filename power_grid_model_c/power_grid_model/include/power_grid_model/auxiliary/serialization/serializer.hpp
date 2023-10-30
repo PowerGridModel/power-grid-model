@@ -20,8 +20,10 @@
 #include <string_view>
 
 // custom packers
-namespace msgpack::adaptor {
+namespace msgpack {
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
+    namespace adaptor {
+
     // pack name of component and attribute
     template <class T>
         requires(std::same_as<T, power_grid_model::meta_data::MetaComponent> ||
@@ -50,9 +52,9 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             return p;
         }
     };
-
+    } // namespace adaptor
 } // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
-} // namespace msgpack::adaptor
+} // namespace msgpack
 
 namespace power_grid_model::meta_data {
 
