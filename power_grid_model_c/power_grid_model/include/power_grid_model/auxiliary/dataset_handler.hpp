@@ -105,8 +105,9 @@ class DatasetHandler {
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
     Idx find_component(std::string_view component, bool required = false) const {
-        auto const found = std::find_if(dataset_info_.component_info.cbegin(), dataset_info_.component_info.cend(),
-                                        [component](ComponentInfo const& x) { return x.component->name == component; });
+        auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
+            return x.component->name == component;
+        });
         if (found == dataset_info_.component_info.cend()) {
             if (required) {
                 using namespace std::string_literals;
