@@ -24,7 +24,7 @@ class Fault final : public Base {
     template <bool sym> using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
-    ComponentType math_model_type() const final { return ComponentType::fault; }
+    ComponentType math_model_type() const override { return ComponentType::fault; }
 
     explicit Fault(FaultInput const& fault_input)
         : Base{fault_input},
@@ -111,7 +111,7 @@ class Fault final : public Base {
         return {false, false}; // topology and parameters do not change
     }
 
-    constexpr bool energized(bool is_connected_to_source) const final { return is_connected_to_source; }
+    constexpr bool energized(bool is_connected_to_source) const override { return is_connected_to_source; }
 
     constexpr bool status() const { return status_; }
 

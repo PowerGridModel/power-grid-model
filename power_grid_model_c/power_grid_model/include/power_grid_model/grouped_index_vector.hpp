@@ -208,13 +208,13 @@ class DenseGroupedIdxVector {
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
 
         constexpr void increment() {
-            group_ += 1;
+            ++group_;
             group_range_ = std::make_pair(group_range_.second,
                                           std::find_if(group_range_.second, std::cend(*dense_vector_),
                                                        [group = group_](Idx value) { return value > group; }));
         }
         constexpr void decrement() {
-            group_ -= 1;
+            --group_;
             group_range_ =
                 std::make_pair(std::find_if(std::make_reverse_iterator(group_range_.first), std::crend(*dense_vector_),
                                             [group = group_](Idx value) { return value < group; })

@@ -64,7 +64,13 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
     using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
-    static constexpr char const* name = sym ? (is_gen ? "sym_gen" : "sym_load") : (is_gen ? "asym_gen" : "asym_load");
+    static constexpr char const* name = [] {
+        if constexpr (sym) {
+            return is_gen ? "sym_gen" : "sym_load";
+        } else {
+            return is_gen ? "asym_gen" : "asym_load";
+        }
+    }();
 
     LoadGen(LoadGenInput<sym> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
         set_power(load_gen_input.p_specified, load_gen_input.q_specified);
@@ -96,18 +102,18 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     static constexpr double direction_ = is_gen ? 1.0 : -1.0;
 
     // override calc_param
-    ComplexValue<true> sym_calc_param() const final { return mean_val(s_specified_); }
-    ComplexValue<false> asym_calc_param() const final { return piecewise_complex_value(s_specified_); }
+    ComplexValue<true> sym_calc_param() const override { return mean_val(s_specified_); }
+    ComplexValue<false> asym_calc_param() const override { return piecewise_complex_value(s_specified_); }
     template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         appliance_math_output.s = scale_power<sym_calc>(u);
         appliance_math_output.i = conj(appliance_math_output.s / u);
         return appliance_math_output;
     }
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
+    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const override { return u2si<true>(u); }
+    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const override { return u2si<false>(u); }
 
-    double injection_direction() const final { return direction_; }
+    double injection_direction() const override { return direction_; }
 
     // scale load
     template <bool sym_calc> ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
