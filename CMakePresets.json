@@ -160,25 +160,17 @@
       ]
     },
     {
-      "name": "clang-base",
-      "environment": {
-        "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -stdlib=libc++"
-      },
-      "inherits": "unix-sanitizer",
-      "hidden": true
-    },
-    {
       "name": "clang-debug",
       "inherits": [
         "debug",
-        "clang-base"
+        "unix-sanitizer"
       ]
     },
     {
       "name": "clang-release",
       "inherits": [
         "release",
-        "clang-base"
+        "unix-sanitizer"
       ]
     },
     {
