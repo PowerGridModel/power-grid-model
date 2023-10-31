@@ -60,20 +60,17 @@ class GenericGenerator : public GenericLoadGen {
 
 template <bool sym, bool is_gen>
 class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, GenericLoad> {
-
-    static constexpr char const* get_name() {
+  public:
+    using InputType = LoadGenInput<sym>;
+    using UpdateType = LoadGenUpdate<sym>;
+    using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
+    static constexpr char const* name = [] {
         if constexpr (sym) {
             return is_gen ? "sym_gen" : "sym_load";
         } else {
             return is_gen ? "asym_gen" : "asym_load";
         }
-    }
-
-  public:
-    using InputType = LoadGenInput<sym>;
-    using UpdateType = LoadGenUpdate<sym>;
-    using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
-    static constexpr char const* name = get_name();
+    }();
 
     LoadGen(LoadGenInput<sym> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
         set_power(load_gen_input.p_specified, load_gen_input.q_specified);
