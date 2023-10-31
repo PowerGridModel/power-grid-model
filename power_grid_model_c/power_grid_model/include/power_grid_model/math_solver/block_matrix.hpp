@@ -16,15 +16,14 @@ namespace power_grid_model::math_model_impl {
 
 template <scalar_value T, bool sym, bool is_tensor, int n_sub_block> struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
-
-    static constexpr int get_ncol() {
+    static constexpr int n_col = [] {
         if constexpr (is_tensor) {
             return sym ? n_sub_block : n_sub_block * 3;
         } else {
             return 1;
         }
-    }
-    static constexpr int n_col = get_ncol();
+    }();
+
     using ArrayType = Eigen::Array<T, n_row, n_col, Eigen::ColMajor>;
 };
 
