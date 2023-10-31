@@ -45,8 +45,8 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
   * Version 12.x tested using the version in the `manylinux_2_28` container.
   * Version 12.x tested using the musllinux build with custom compiler
   * Version 11.x tested in CI
-* Clang >= 14.0
-  * Version 14.x tested in CI
+* Clang >= 15.0
+  * Version 15.x tested in CI
   * Version 15.x tested in CI with code quality checks
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
@@ -55,7 +55,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 * MSVC >= 17.5
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
-* Clang CL >= 14.0
+* Clang CL >= 15.0
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
 **macOS**
@@ -137,7 +137,7 @@ using `cmake <project_dir>` from a terminal that has the environment set up. E.g
 
 * For x64 Windows native development using MSVC or Clang CL, use the `x64 Native Command Prompt`, which uses
   `vcvarsall.bat` to set the appropriate build environment.
-* For Linux/WSL using the LLVM-14 `clang`, `source` or `export` `CC=clang-14`, `CXX=clang++-14` and `LLVM_COV=llvm-cov-14`. Optionally, you can `export` `CLANG_TIDY=clang-tidy-14`.
+* For Linux/WSL using the LLVM-15 `clang`, `source` or `export` `CC=clang-15`, `CXX=clang++-15` and `LLVM_COV=llvm-cov-15`. Optionally, you can `export` `CLANG_TIDY=clang-tidy-15`.
 ```
 
 ## Build Script for Linux/macOS
@@ -166,11 +166,11 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-14            # or g++-11
-export CC=clang-14               # gcc-11
+export CXX=clang++-15            # or g++-11
+export CC=clang-15               # gcc-11
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
-export LLVM_COV=llvm-cov-14
-export CLANG_TIDY=clang-tidy-14  # only if you want to use one of the clang-tidy presets
+export LLVM_COV=llvm-cov-15
+export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
 ```
 
 ### Ubuntu Software Packages

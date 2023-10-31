@@ -28,17 +28,17 @@ class Link final : public Branch {
         : Branch{link_input}, base_i_from_{base_power_3p / u1 / sqrt3}, base_i_to_{base_power_3p / u2 / sqrt3} {}
 
     // override getter
-    double base_i_from() const final { return base_i_from_; }
-    double base_i_to() const final { return base_i_to_; }
-    double loading(double /* max_s */, double /* max_i */) const final { return 0.0; };
-    double phase_shift() const final { return 0.0; }
-    bool is_param_mutable() const final { return false; }
+    double base_i_from() const override { return base_i_from_; }
+    double base_i_to() const override { return base_i_to_; }
+    double loading(double /* max_s */, double /* max_i */) const override { return 0.0; };
+    double phase_shift() const override { return 0.0; }
+    bool is_param_mutable() const override { return false; }
 
   private:
     double base_i_from_;
     double base_i_to_;
-    BranchCalcParam<true> sym_calc_param() const final { return calc_param_y_sym(y_link, 0.0, 1.0); }
-    BranchCalcParam<false> asym_calc_param() const final { return calc_param_y_asym(y_link, 0.0, y_link, 0.0, 1.0); }
+    BranchCalcParam<true> sym_calc_param() const override { return calc_param_y_sym(y_link, 0.0, 1.0); }
+    BranchCalcParam<false> asym_calc_param() const override { return calc_param_y_asym(y_link, 0.0, y_link, 0.0, 1.0); }
 };
 } // namespace power_grid_model
 
