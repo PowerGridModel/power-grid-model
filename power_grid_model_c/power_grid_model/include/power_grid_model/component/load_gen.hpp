@@ -64,7 +64,13 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
     using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
-    static constexpr char const* name = sym ? (is_gen ? "sym_gen" : "sym_load") : (is_gen ? "asym_gen" : "asym_load");
+    static constexpr char const* name = [] {
+        if constexpr (sym) {
+            return is_gen ? "sym_gen" : "sym_load";
+        } else {
+            return is_gen ? "asym_gen" : "asym_load";
+        }
+    }();
 
     LoadGen(LoadGenInput<sym> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
         set_power(load_gen_input.p_specified, load_gen_input.q_specified);
