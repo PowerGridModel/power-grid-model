@@ -83,15 +83,25 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
     UpdateChange update(PowerSensorUpdate<sym> const& power_sensor_update) {
         set_power(power_sensor_update.p_measured, power_sensor_update.q_measured);
 
-        if (!is_nan(power_sensor_update.power_sigma)) {
-            apparent_power_sigma_ = power_sensor_update.power_sigma / base_power<sym>;
-        }
+        auto const update_value = [](auto& value, auto const& new_value) {
+            if (!is_nan(new_value)) {
+                value = new_value / base_power<sym>;
+            }
+        };
+
+        update_value(apparent_power_sigma_, power_sensor_update.power_sigma);
+        update_value(p_sigma_, power_sensor_update.p_sigma);
+        update_value(q_sigma_, power_sensor_update.q_sigma);
+
         return {false, false};
     }
 
   private:
     ComplexValue<sym> s_measured_{};
+
     double apparent_power_sigma_{};
+    RealValue<sym> p_sigma_{};
+    RealValue<sym> q_sigma_{};
 
     void set_power(RealValue<sym> const& p_measured, RealValue<sym> const& q_measured) {
         double const scalar = convert_direction() / base_power<sym>;
@@ -104,15 +114,29 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
 
     PowerSensorCalcParam<true> sym_calc_param() const final {
         PowerSensorCalcParam<true> calc_param{};
-        calc_param.p_variance = apparent_power_sigma_ * apparent_power_sigma_ / 2;
-        calc_param.q_variance = apparent_power_sigma_ * apparent_power_sigma_ / 2;
+        if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
+            calc_param.p_variance = mean_val(p_sigma_ * p_sigma_);
+            calc_param.q_variance = mean_val(q_sigma_ * q_sigma_);
+        } else {
+            auto const variance = is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
+                                                   : std::numeric_limits<double>::infinity();
+            calc_param.p_variance = variance;
+            calc_param.q_variance = variance;
+        }
         calc_param.value = mean_val(s_measured_);
         return calc_param;
     }
     PowerSensorCalcParam<false> asym_calc_param() const final {
         PowerSensorCalcParam<false> calc_param{};
-        calc_param.p_variance = RealValue<false>{apparent_power_sigma_ * apparent_power_sigma_ / 2};
-        calc_param.q_variance = RealValue<false>{apparent_power_sigma_ * apparent_power_sigma_ / 2};
+        if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
+            calc_param.p_variance = piecewise_real_value(p_sigma_ * p_sigma_);
+            calc_param.q_variance = piecewise_real_value(q_sigma_ * q_sigma_);
+        } else {
+            auto const variance = RealValue<false>{is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
+                                                                    : std::numeric_limits<double>::infinity()};
+            calc_param.p_variance = variance;
+            calc_param.q_variance = variance;
+        }
         calc_param.value = piecewise_complex_value(s_measured_);
         return calc_param;
     }
