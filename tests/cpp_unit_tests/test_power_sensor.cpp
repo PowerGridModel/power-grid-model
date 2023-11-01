@@ -23,6 +23,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.power_sigma = 1.0 * 1e5;
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -64,6 +66,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_update.power_sigma = 2.0 * 1e5;
         sym_power_sensor_update.p_measured = 3.0 * 1e3;
         sym_power_sensor_update.q_measured = 4.0 * 1e3;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
         sym_power_sensor.update(sym_power_sensor_update);
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -120,6 +124,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.power_sigma = 1.0 * 1e5;
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -161,6 +167,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_update.power_sigma = 2.0 * 1e5;
         sym_power_sensor_update.p_measured = 3.0 * 1e3;
         sym_power_sensor_update.q_measured = 4.0 * 1e3;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
         sym_power_sensor.update(sym_power_sensor_update);
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -217,6 +225,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.power_sigma = 1.0 * 1e5;
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -258,6 +268,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_update.power_sigma = 2.0 * 1e5;
         sym_power_sensor_update.p_measured = 3.0 * 1e3;
         sym_power_sensor_update.q_measured = 4.0 * 1e3;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
         sym_power_sensor.update(sym_power_sensor_update);
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -314,6 +326,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.power_sigma = 1.0 * 1e5;
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -355,6 +369,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_update.power_sigma = 2.0 * 1e5;
         sym_power_sensor_update.p_measured = 3.0 * 1e3;
         sym_power_sensor_update.q_measured = 4.0 * 1e3;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
         sym_power_sensor.update(sym_power_sensor_update);
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -411,6 +427,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.power_sigma = 1.0 * 1e5;
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -452,6 +470,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_update.power_sigma = 2.0 * 1e5;
         sym_power_sensor_update.p_measured = 3.0 * 1e3;
         sym_power_sensor_update.q_measured = 4.0 * 1e3;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
         sym_power_sensor.update(sym_power_sensor_update);
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -508,6 +528,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_input.power_sigma = 1.0 * 1e5;
         sym_power_sensor_input.p_measured = 1.0 * 1e3;
         sym_power_sensor_input.q_measured = 0.8 * 1e3;
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -549,6 +571,8 @@ TEST_CASE("Test power sensor") {
         sym_power_sensor_update.power_sigma = 2.0 * 1e5;
         sym_power_sensor_update.p_measured = 3.0 * 1e3;
         sym_power_sensor_update.q_measured = 4.0 * 1e3;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
         sym_power_sensor.update(sym_power_sensor_update);
 
         sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -603,10 +627,14 @@ TEST_CASE("Test power sensor") {
         PowerSensorInput<true> sym_power_sensor_input{};
         sym_power_sensor_input.p_measured = r_nan;
         sym_power_sensor_input.q_measured = RealValue<true>{1.0};
+        sym_power_sensor_input.p_sigma = r_nan;
+        sym_power_sensor_input.q_sigma = r_nan;
 
         PowerSensorUpdate<true> sym_power_sensor_update{};
         sym_power_sensor_update.p_measured = RealValue<true>{1.0};
         sym_power_sensor_update.q_measured = r_nan;
+        sym_power_sensor_update.p_sigma = r_nan;
+        sym_power_sensor_update.q_sigma = r_nan;
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
         sym_power_sensor.update(sym_power_sensor_update);
@@ -627,6 +655,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.power_sigma = 1.0 * 1e5;
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_input.q_sigma = RealValue<false>{nan};
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -668,6 +698,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_update.power_sigma = 2.0 * 1e5;
         asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_update.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_update.q_sigma = RealValue<false>{nan};
         asym_power_sensor.update(asym_power_sensor_update);
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -723,6 +755,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.power_sigma = 1.0 * 1e5;
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_input.q_sigma = RealValue<false>{nan};
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -764,6 +798,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_update.power_sigma = 2.0 * 1e5;
         asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_update.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_update.q_sigma = RealValue<false>{nan};
         asym_power_sensor.update(asym_power_sensor_update);
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -819,6 +855,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.power_sigma = 1.0 * 1e5;
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_input.q_sigma = RealValue<false>{nan};
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -860,6 +898,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_update.power_sigma = 2.0 * 1e5;
         asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_update.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_update.q_sigma = RealValue<false>{nan};
         asym_power_sensor.update(asym_power_sensor_update);
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -915,6 +955,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.power_sigma = 1.0 * 1e5;
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_input.q_sigma = RealValue<false>{nan};
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -956,6 +998,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_update.power_sigma = 2.0 * 1e5;
         asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_update.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_update.q_sigma = RealValue<false>{nan};
         asym_power_sensor.update(asym_power_sensor_update);
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -1011,6 +1055,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.power_sigma = 1.0 * 1e5;
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_input.q_sigma = RealValue<false>{nan};
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -1052,6 +1098,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_update.power_sigma = 2.0 * 1e5;
         asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_update.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_update.q_sigma = RealValue<false>{nan};
         asym_power_sensor.update(asym_power_sensor_update);
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -1107,6 +1155,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_input.power_sigma = 1.0 * 1e5;
         asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_input.q_sigma = RealValue<false>{nan};
 
         ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
         ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
@@ -1148,6 +1198,8 @@ TEST_CASE("Test power sensor") {
         asym_power_sensor_update.power_sigma = 2.0 * 1e5;
         asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+        asym_power_sensor_update.p_sigma = RealValue<false>{nan};
+        asym_power_sensor_update.q_sigma = RealValue<false>{nan};
         asym_power_sensor.update(asym_power_sensor_update);
 
         sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -1201,10 +1253,14 @@ TEST_CASE("Test power sensor") {
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.p_measured = r_nan;
         asym_power_sensor_input.q_measured = RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = r_nan;
+        asym_power_sensor_input.q_sigma = r_nan;
 
         PowerSensorUpdate<false> asym_power_sensor_update{};
         asym_power_sensor_update.p_measured = RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = r_nan;
+        asym_power_sensor_update.p_sigma = r_nan;
+        asym_power_sensor_update.q_sigma = r_nan;
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
         asym_power_sensor.update(asym_power_sensor_update);

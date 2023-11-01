@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-// In this unit test the powerflow and state estimation solvers are tested
+// In this unit test the powerflow, state estimation and short circuit solvers are tested
 
 #include <power_grid_model/exception.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
@@ -422,18 +422,15 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr};
         CalculationInfo info;
         MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
-        // verify
         assert_output(output, output_ref);
         // copy
         MathSolver<true> solver2{solver};
         solver2.clear_solver();
         output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
-        // verify
         assert_output(output, output_ref);
         // move
         MathSolver<true> solver3{std::move(solver)};
         output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
-        // verify
         assert_output(output, output_ref);
     }
 
@@ -441,7 +438,6 @@ TEST_CASE("Test math solver") {
         MathSolver<true> solver{topo_ptr};
         CalculationInfo info;
         MathOutput<true> const output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current, y_bus_sym);
-        // verify
         assert_output(output, output_ref);
     }
 
@@ -454,7 +450,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<true> const output =
             solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current, y_bus_sym);
-        // verify
         assert_output(output, output_ref, false, result_tolerance);
     }
 
@@ -473,7 +468,6 @@ TEST_CASE("Test math solver") {
 
         // const z
         MathOutput<true> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
-        // verify
         assert_output(output, output_ref_z);
     }
 
@@ -505,7 +499,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> const output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson, y_bus_asym);
-        // verify
         assert_output(output, output_ref_asym);
     }
 
@@ -514,7 +507,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> const output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current, y_bus_asym);
-        // verify
         assert_output(output, output_ref_asym);
     }
 
@@ -523,7 +515,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         // const z
         MathOutput<false> const output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear, y_bus_asym);
-        // verify
         assert_output(output, output_ref_asym_z);
     }
 
@@ -532,7 +523,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<true> const output =
             solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
-        // verify
         assert_output(output, output_ref);
     }
 
@@ -541,7 +531,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<true> const output =
             solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
-        // verify
         assert_output(output, output_ref, true);
     }
 
@@ -550,8 +539,18 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<true> const output =
             solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
-        // verify
         assert_output(output, output_ref_z);
+    }
+
+    SUBCASE("Test sym se with angle and different power variances") {
+        MathSolver<true> solver{topo_ptr};
+        CalculationInfo info;
+        auto& branch_from_power = se_input_angle.measured_branch_from_power.front();
+        branch_from_power.p_variance = 0.25;
+        branch_from_power.q_variance = 0.75;
+        MathOutput<true> const output =
+            solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        assert_output(output, output_ref);
     }
 
     SUBCASE("Test asym se with angle") {
@@ -559,7 +558,6 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> const output =
             solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
-        // verify
         assert_output(output, output_ref_asym);
     }
 
@@ -568,18 +566,26 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
         MathOutput<false> const output =
             solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
-        // verify
         assert_output(output, output_ref_asym, true);
     }
 
     SUBCASE("Test asym se with angle, const z") {
         MathSolver<false> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> const output = solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info,
-
-                                                                     iterative_linear, y_bus_asym);
-        // verify
+        MathOutput<false> const output =
+            solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_asym);
         assert_output(output, output_ref_asym_z);
+    }
+
+    SUBCASE("Test asym se with angle and different power variances") {
+        MathSolver<false> solver{topo_ptr};
+        CalculationInfo info;
+        auto& branch_from_power = se_input_asym_angle.measured_branch_from_power.front();
+        branch_from_power.p_variance = RealValue<false>{0.25};
+        branch_from_power.q_variance = RealValue<false>{0.75};
+        MathOutput<false> const output =
+            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        assert_output(output, output_ref_asym);
     }
 }
 
@@ -1293,6 +1299,37 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
         CHECK(real(output.load_gen[1].s) == doctest::Approx(0.85));
+    }
+
+    SUBCASE("Node injection, load and gen with different variances") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1(p)
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+        */
+
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.025, 0.075}};
+        se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<true> solver{topo_ptr};
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        // the different aggregation of the load gen's P and Q measurements cause differences compared to the case with
+        // identical variances
+        CHECK(real(output.bus_injection[1]) > doctest::Approx(-1.0));
+        CHECK(real(output.load_gen[0].s) > doctest::Approx(-1.85));
+        CHECK(real(output.load_gen[1].s) > doctest::Approx(0.85));
     }
 
     const ComplexValue<true> load_gen_s =

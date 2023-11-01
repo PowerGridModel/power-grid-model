@@ -365,11 +365,12 @@ $$
    \begin{eqnarray}
             \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k 
             \quad\text{and}\quad
-            \sigma^2 = \sum_{k=1}^{N_{appliance}} \sigma_k^2
+            \sigma_P^2 = \sum_{k=1}^{N_{appliance}} \sigma_{P,k}^2
+            \sigma_Q^2 = \sum_{k=1}^{N_{appliance}} \sigma_{Q,k}^2
    \end{eqnarray}
 $$
 
-Where $S_k$ and $\sigma_k$ are the measured value and the standard deviation of the individual appliances.
+Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual appliances.
 
 #### Iterative linear
 
@@ -405,7 +406,7 @@ $$
    \end{eqnarray}
 $$
 
-The apparent power flow is considered as a single measurement, with variance $V_S = V_P + V_Q$.
+The aggregated apparent power flow is considered as a single measurement, with variance $\sigma_S^2 = \sigma_P^2 + \sigma_Q^2$.
 
 The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of 
 bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS 

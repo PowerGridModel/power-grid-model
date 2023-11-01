@@ -161,7 +161,7 @@ class SparseGroupedIdxVector {
                1;
     }
 
-    SparseGroupedIdxVector() = default;
+    SparseGroupedIdxVector() : indptr_{0} {};
     explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
         : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
         assert(size() >= 0);

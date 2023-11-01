@@ -10,6 +10,8 @@
 iterative linear state estimation solver
 */
 
+#include "block_matrix.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -82,8 +84,8 @@ template <bool sym> class MeasuredValues {
 
   public:
     // construct
-    MeasuredValues(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input)
-        : math_topology_{y_bus.shared_topology()},
+    MeasuredValues(std::shared_ptr<MathModelTopology const> topo, StateEstimationInput<sym> const& input)
+        : math_topology_{topo},
           bus_appliance_injection_(math_topology().n_bus()),
           idx_voltage_(math_topology().n_bus()),
           bus_injection_(math_topology().n_bus()),
@@ -564,7 +566,7 @@ template <bool sym> class MeasuredValues {
                 unconstrained_min(variance);
             } else {
                 for (Idx phase : {0, 1, 2}) {
-                    unconstrained_min(variance[phase] + variance[phase]);
+                    unconstrained_min(variance[phase]);
                 }
             }
         }
@@ -660,7 +662,7 @@ template <bool sym> class IterativeLinearSESolver {
 
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
-        MeasuredValues<sym> const measured_values{y_bus, input};
+        MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
 
         // prepare matrix, including pre-factorization
         sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");

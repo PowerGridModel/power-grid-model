@@ -76,7 +76,9 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
 
     explicit PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input},
-          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<sym>} {
+          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<sym>},
+          p_sigma_{power_sensor_input.p_sigma / base_power<sym>},
+          q_sigma_{power_sensor_input.q_sigma / base_power<sym>} {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };
 

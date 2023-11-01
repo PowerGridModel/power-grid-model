@@ -55,32 +55,42 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
 
     auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
 
-    // Test get_element_range
-    std::vector<IdxCount> const actual_idx_counts{};
-    for (size_t group_number = 0; group_number < num_groups; group_number++) {
-        CHECK(idx_vector.get_element_range(group_number) == expected_ranges[group_number]);
+    SUBCASE("Empty grouped idx vector") {
+        IdxVectorType const indices{};
+        CHECK(indices.element_size() == 0);
+        CHECK(indices.size() == 0);
     }
 
-    // Test get_group
-    for (size_t element = 0; element < groups.size(); element++) {
-        CHECK(idx_vector.get_group(element) == groups[element]);
-    }
-
-    // Test sizes
-    CHECK(idx_vector.size() == num_groups);
-    CHECK(idx_vector.element_size() == expected_elements.size());
-
-    // Test Iteration
-    std::vector<IdxCount> actual_elements{};
-    IdxRanges actual_ranges{};
-    for (auto const& element_range : idx_vector) {
-        actual_ranges.push_back(element_range);
-        for (auto& element : element_range) {
-            actual_elements.push_back(element);
+    SUBCASE("Element range") {
+        std::vector<IdxCount> const actual_idx_counts{};
+        for (size_t group_number = 0; group_number < num_groups; group_number++) {
+            CHECK(idx_vector.get_element_range(group_number) == expected_ranges[group_number]);
         }
     }
-    CHECK(actual_elements == expected_elements);
-    CHECK(actual_ranges == expected_ranges);
+
+    SUBCASE("get_group") {
+        for (size_t element = 0; element < groups.size(); element++) {
+            CHECK(idx_vector.get_group(element) == groups[element]);
+        }
+    }
+
+    SUBCASE("sizes") {
+        CHECK(idx_vector.size() == num_groups);
+        CHECK(idx_vector.element_size() == expected_elements.size());
+    }
+
+    SUBCASE("iteration") {
+        std::vector<IdxCount> actual_elements{};
+        IdxRanges actual_ranges{};
+        for (auto const& element_range : idx_vector) {
+            actual_ranges.push_back(element_range);
+            for (auto& element : element_range) {
+                actual_elements.push_back(element);
+            }
+        }
+        CHECK(actual_elements == expected_elements);
+        CHECK(actual_ranges == expected_ranges);
+    }
 }
 
 TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", IdxVectorTypes,
