@@ -122,6 +122,20 @@ TEST_CASE("Test power sensor") {
             CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            sym_power_sensor_update.p_sigma = 1.0e5;
+            sym_power_sensor_update.q_sigma = 3.0e5;
+            sym_power_sensor.update(sym_power_sensor_update);
+
+            sym_sensor_param = sym_power_sensor.calc_param<true>();
+            asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(1.0 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(9.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(1.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(9.0 / 1e2));
         }
     }
 
@@ -227,6 +241,20 @@ TEST_CASE("Test power sensor") {
             CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            sym_power_sensor_update.p_sigma = 1.0e5;
+            sym_power_sensor_update.q_sigma = 3.0e5;
+            sym_power_sensor.update(sym_power_sensor_update);
+
+            sym_sensor_param = sym_power_sensor.calc_param<true>();
+            asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(1.0 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(9.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(1.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(9.0 / 1e2));
         }
     }
 
@@ -356,6 +384,24 @@ TEST_CASE("Test power sensor") {
             CHECK(imag(asym_sensor_param.value[0]) == doctest::Approx(24.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(27.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[2]) == doctest::Approx(12.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            asym_power_sensor_update.p_sigma = {1.0e5, 0.5e5, 2.0e5};
+            asym_power_sensor_update.q_sigma = {3.0e5, 2.0e5, 4.0e5};
+            asym_power_sensor.update(asym_power_sensor_update);
+
+            sym_sensor_param = asym_power_sensor.calc_param<true>();
+            asym_sensor_param = asym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(15.75 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(87.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(9.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[1] == doctest::Approx(2.25 / 1e2));
+            CHECK(asym_sensor_param.p_variance[2] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[0] == doctest::Approx(81.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[2] == doctest::Approx(144.0 / 1e2));
         }
     }
 
@@ -460,6 +506,24 @@ TEST_CASE("Test power sensor") {
             CHECK(imag(asym_sensor_param.value[0]) == doctest::Approx(-24.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-27.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[2]) == doctest::Approx(-12.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            asym_power_sensor_update.p_sigma = {1.0e5, 0.5e5, 2.0e5};
+            asym_power_sensor_update.q_sigma = {3.0e5, 2.0e5, 4.0e5};
+            asym_power_sensor.update(asym_power_sensor_update);
+
+            sym_sensor_param = asym_power_sensor.calc_param<true>();
+            asym_sensor_param = asym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(15.75 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(87.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(9.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[1] == doctest::Approx(2.25 / 1e2));
+            CHECK(asym_sensor_param.p_variance[2] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[0] == doctest::Approx(81.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[2] == doctest::Approx(144.0 / 1e2));
         }
     }
 

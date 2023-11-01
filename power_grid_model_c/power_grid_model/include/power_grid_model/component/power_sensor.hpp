@@ -78,17 +78,15 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
     };
 
     UpdateChange update(PowerSensorUpdate<sym> const& power_sensor_update) {
+        constexpr double scalar = 1.0 / base_power<sym>;
+
         set_power(power_sensor_update.p_measured, power_sensor_update.q_measured);
 
-        auto const update_value = [](auto& value, auto const& new_value) {
-            if (!is_nan(new_value)) {
-                value = new_value / base_power<sym>;
-            }
-        };
-
-        update_value(apparent_power_sigma_, power_sensor_update.power_sigma);
-        update_value(p_sigma_, power_sensor_update.p_sigma);
-        update_value(q_sigma_, power_sensor_update.q_sigma);
+        if (!is_nan(power_sensor_update.power_sigma)) {
+            apparent_power_sigma_ = power_sensor_update.power_sigma * scalar;
+        }
+        update_real_value<sym>(power_sensor_update.p_sigma, p_sigma_, scalar);
+        update_real_value<sym>(power_sensor_update.q_sigma, q_sigma_, scalar);
 
         return {false, false};
     }
