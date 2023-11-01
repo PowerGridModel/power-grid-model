@@ -487,14 +487,11 @@ template <bool sym> class MeasuredValues {
         for (auto pos : sensors) {
             auto const& measurement = data[pos];
 
-            auto const inv_p_variance = RealValue<sym>{1.0} / measurement.p_variance;
-            auto const inv_q_variance = RealValue<sym>{1.0} / measurement.q_variance;
+            accumulated_inverse_p_variance += RealValue<sym>{1.0} / measurement.p_variance;
+            accumulated_inverse_q_variance += RealValue<sym>{1.0} / measurement.q_variance;
 
-            accumulated_inverse_p_variance += inv_p_variance;
-            accumulated_inverse_q_variance += inv_q_variance;
-
-            accumulated_p_value += real(measurement.value) * inv_p_variance;
-            accumulated_q_value += imag(measurement.value) * inv_q_variance;
+            accumulated_p_value += real(measurement.value) / measurement.p_variance;
+            accumulated_q_value += imag(measurement.value) / measurement.q_variance;
         }
 
         if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
