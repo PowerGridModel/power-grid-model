@@ -23,17 +23,17 @@ void check_close(auto const& x, auto const& y) { check_close<true>(x, y); }
 
 TEST_CASE("Measured Values") {
     SUBCASE("Accumulate single injection power sensor - sym") {
-        auto topo = std::make_shared<MathModelTopology>(0, std::vector{0.0});
-        topo->shunts_per_bus = {from_dense, {}, 1};
-        topo->load_gens_per_bus = {from_dense, {0}, 1};
-        topo->sources_per_bus = {from_dense, {}, 1};
-        topo->power_sensors_per_load_gen = {from_dense, {0}, 1};
+        auto topo = MathModelTopology{0, std::vector{0.0}};
+        topo.shunts_per_bus = {from_dense, {}, 1};
+        topo.load_gens_per_bus = {from_dense, {0}, 1};
+        topo.sources_per_bus = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
         StateEstimationInput<true> input{};
         input.measured_load_gen_power = {{1.0 + 0.1i, 0.3, 0.1}};
         input.load_gen_status = {1};
 
-        MeasuredValues<true> values{topo, input};
+        MeasuredValues<true> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -43,17 +43,17 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate single injection power sensor - asym") {
-        auto topo = std::make_shared<MathModelTopology>(0, std::vector{0.0});
-        topo->shunts_per_bus = {from_dense, {}, 1};
-        topo->load_gens_per_bus = {from_dense, {0}, 1};
-        topo->sources_per_bus = {from_dense, {}, 1};
-        topo->power_sensors_per_load_gen = {from_dense, {0}, 1};
+        auto topo = MathModelTopology{0, std::vector{0.0}};
+        topo.shunts_per_bus = {from_dense, {}, 1};
+        topo.load_gens_per_bus = {from_dense, {0}, 1};
+        topo.sources_per_bus = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
         StateEstimationInput<false> input{};
         input.measured_load_gen_power = {{{1.0, 1.1 + 0.1i, 1.2 - 0.2i}, {0.3, 0.6, 0.65}, {0.1, 0.2, 0.05}}};
         input.load_gen_status = {1};
 
-        MeasuredValues<false> values{topo, input};
+        MeasuredValues<false> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -63,17 +63,17 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate two power sensors on same injection - sym") {
-        auto topo = std::make_shared<MathModelTopology>(0, std::vector{0.0});
-        topo->shunts_per_bus = {from_dense, {}, 1};
-        topo->load_gens_per_bus = {from_dense, {0}, 1};
-        topo->sources_per_bus = {from_dense, {}, 1};
-        topo->power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
+        auto topo = MathModelTopology{0, std::vector{0.0}};
+        topo.shunts_per_bus = {from_dense, {}, 1};
+        topo.load_gens_per_bus = {from_dense, {0}, 1};
+        topo.sources_per_bus = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
 
         StateEstimationInput<true> input{};
         input.measured_load_gen_power = {{1.0 + 1.5i, 1.0, 5.0}, {4.0 + 0.7i, 2.0, 3.0}};
         input.load_gen_status = {1};
 
-        MeasuredValues<true> values{topo, input};
+        MeasuredValues<true> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -83,17 +83,17 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate power sensors on two injections on same bus - sym") {
-        auto topo = std::make_shared<MathModelTopology>(0, std::vector{0.0});
-        topo->shunts_per_bus = {from_dense, {}, 1};
-        topo->load_gens_per_bus = {from_dense, {0, 0}, 1};
-        topo->sources_per_bus = {from_dense, {}, 1};
-        topo->power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
+        auto topo = MathModelTopology{0, std::vector{0.0}};
+        topo.shunts_per_bus = {from_dense, {}, 1};
+        topo.load_gens_per_bus = {from_dense, {0, 0}, 1};
+        topo.sources_per_bus = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
 
         StateEstimationInput<true> input{};
         input.measured_load_gen_power = {{1.0 + 1.5i, 1.0, 4.0}, {4.0 + 0.7i, 2.0, 3.0}};
         input.load_gen_status = {1, 1};
 
-        MeasuredValues<true> values{topo, input};
+        MeasuredValues<true> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -103,18 +103,18 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate power sensors on two injections on same bus - asym") {
-        auto topo = std::make_shared<MathModelTopology>(0, std::vector{0.0});
-        topo->shunts_per_bus = {from_dense, {}, 1};
-        topo->load_gens_per_bus = {from_dense, {0, 0}, 1};
-        topo->sources_per_bus = {from_dense, {}, 1};
-        topo->power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
+        auto topo = MathModelTopology{0, std::vector{0.0}};
+        topo.shunts_per_bus = {from_dense, {}, 1};
+        topo.load_gens_per_bus = {from_dense, {0, 0}, 1};
+        topo.sources_per_bus = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
 
         StateEstimationInput<false> input{};
         input.measured_load_gen_power = {{{1.0 + 1.5i, 0.5 + 1.0i, 2.0 + 0.5i}, {1.0, 0.5, 3.0}, {4.0, 3.5, 1.5}},
                                          {{4.0 + 0.7i, -0.4 - 0.8i, -1.2 + 2.5i}, {2.0, 1.5, 5.5}, {3.0, 5.0, 0.5}}};
         input.load_gen_status = {1, 1};
 
-        MeasuredValues<false> values{topo, input};
+        MeasuredValues<false> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
