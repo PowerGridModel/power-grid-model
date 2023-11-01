@@ -23,7 +23,8 @@ void check_close(auto const& x, auto const& y) { check_close<true>(x, y); }
 
 TEST_CASE("Measured Values") {
     SUBCASE("Accumulate single injection power sensor - sym") {
-        auto topo = MathModelTopology{0, std::vector{0.0}};
+        auto topo = MathModelTopology{};
+        topo.phase_shift = {0.0};
         topo.shunts_per_bus = {from_dense, {}, 1};
         topo.load_gens_per_bus = {from_dense, {0}, 1};
         topo.sources_per_bus = {from_dense, {}, 1};
@@ -43,7 +44,8 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate single injection power sensor - asym") {
-        auto topo = MathModelTopology{0, std::vector{0.0}};
+        auto topo = MathModelTopology{};
+        topo.phase_shift = {0.0};
         topo.shunts_per_bus = {from_dense, {}, 1};
         topo.load_gens_per_bus = {from_dense, {0}, 1};
         topo.sources_per_bus = {from_dense, {}, 1};
@@ -63,7 +65,8 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate two power sensors on same injection - sym") {
-        auto topo = MathModelTopology{0, std::vector{0.0}};
+        auto topo = MathModelTopology{};
+        topo.phase_shift = {0.0};
         topo.shunts_per_bus = {from_dense, {}, 1};
         topo.load_gens_per_bus = {from_dense, {0}, 1};
         topo.sources_per_bus = {from_dense, {}, 1};
@@ -83,7 +86,8 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate power sensors on two injections on same bus - sym") {
-        auto topo = MathModelTopology{0, std::vector{0.0}};
+        auto topo = MathModelTopology{};
+        topo.phase_shift = {0.0};
         topo.shunts_per_bus = {from_dense, {}, 1};
         topo.load_gens_per_bus = {from_dense, {0, 0}, 1};
         topo.sources_per_bus = {from_dense, {}, 1};
@@ -103,7 +107,8 @@ TEST_CASE("Measured Values") {
     }
 
     SUBCASE("Accumulate power sensors on two injections on same bus - asym") {
-        auto topo = MathModelTopology{0, std::vector{0.0}};
+        auto topo = MathModelTopology{};
+        topo.phase_shift = {0.0};
         topo.shunts_per_bus = {from_dense, {}, 1};
         topo.load_gens_per_bus = {from_dense, {0, 0}, 1};
         topo.sources_per_bus = {from_dense, {}, 1};
