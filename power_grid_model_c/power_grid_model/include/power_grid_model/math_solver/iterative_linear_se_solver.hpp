@@ -569,9 +569,8 @@ template <bool sym> class MeasuredValues {
         }
 
         // scale
-        std::for_each(voltage_main_value_.begin(), voltage_main_value_.end(),
-                      [min_var](auto& x) { x.variance /= min_var; });
-        std::for_each(power_main_value_.begin(), power_main_value_.end(), [min_var](auto& x) {
+        std::ranges::for_each(voltage_main_value_, [min_var](auto& x) { x.variance /= min_var; });
+        std::ranges::for_each(power_main_value_, [min_var](auto& x) {
             x.p_variance /= min_var;
             x.q_variance /= min_var;
         });
@@ -611,7 +610,6 @@ template <bool sym> class MeasuredValues {
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {
-            // TODO(mgovers): shouldn't this be p_variance + i * q_variance???
             return power.value - (power.p_variance + power.q_variance) * mu;
         };
 
