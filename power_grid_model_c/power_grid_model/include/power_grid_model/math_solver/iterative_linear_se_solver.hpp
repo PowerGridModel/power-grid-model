@@ -85,7 +85,7 @@ template <bool sym> class MeasuredValues {
   public:
     // construct
     MeasuredValues(std::shared_ptr<MathModelTopology const> topo, StateEstimationInput<sym> const& input)
-        : math_topology_{topo},
+        : math_topology_{std::move(topo)},
           bus_appliance_injection_(math_topology().n_bus()),
           idx_voltage_(math_topology().n_bus()),
           bus_injection_(math_topology().n_bus()),
@@ -565,7 +565,7 @@ template <bool sym> class MeasuredValues {
             if constexpr (sym) {
                 unconstrained_min(variance);
             } else {
-                for (Idx phase : {0, 1, 2}) {
+                for (Idx const phase : {0, 1, 2}) {
                     unconstrained_min(variance[phase]);
                 }
             }
