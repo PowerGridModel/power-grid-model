@@ -49,13 +49,14 @@ class Sensor : public Base {
         }
     }
 
-  private:
-    ID measured_object_;
-
+  protected:
     // virtual function getter for sym and asym param
     // override them in real sensors function
     virtual SymSensorCalcParamType sym_calc_param() const = 0;
     virtual AsymSensorCalcParamType asym_calc_param() const = 0;
+
+  private:
+    ID measured_object_;
 };
 
 } // namespace power_grid_model
