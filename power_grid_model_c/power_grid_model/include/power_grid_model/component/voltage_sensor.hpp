@@ -58,11 +58,6 @@ class GenericVoltageSensor : public Sensor<VoltageSensorCalcParam> {
   private:
     virtual VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const = 0;
     virtual VoltageSensorOutput<false> get_asym_output(ComplexValue<false> const& u) const = 0;
-
-    // virtual function getter for sym and asym param
-    // override them in real sensors function
-    virtual VoltageSensorCalcParam<true> sym_calc_param() const = 0;
-    virtual VoltageSensorCalcParam<false> asym_calc_param() const = 0;
 };
 
 template <bool sym> class VoltageSensor : public GenericVoltageSensor {
