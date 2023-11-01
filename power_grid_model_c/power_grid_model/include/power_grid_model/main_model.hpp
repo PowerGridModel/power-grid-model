@@ -66,8 +66,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         static constexpr size_t n_types = sizeof...(C);
 
         static size_t find_index(std::string const& name) {
-            auto const found = std::find_if(component_index_map.cbegin(), component_index_map.cend(),
-                                            [&name](auto x) { return x == name; });
+            auto const found = std::ranges::find_if(component_index_map, [&name](auto x) { return x == name; });
             assert(found != component_index_map.cend());
             return found->index;
         }

@@ -157,8 +157,7 @@ class SparseGroupedIdxVector {
     auto element_size() const { return indptr_.back(); }
     auto get_group(Idx element) const -> Idx {
         assert(element < element_size());
-        return std::distance(std::begin(indptr_), std::upper_bound(std::begin(indptr_), std::end(indptr_), element)) -
-               1;
+        return std::distance(std::begin(indptr_), std::ranges::upper_bound(indptr_, element)) - 1;
     }
 
     SparseGroupedIdxVector() : indptr_{0} {};
