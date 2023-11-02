@@ -320,6 +320,7 @@ class Deserializer {
         bool is_batch{};
         Idx batch_size{};
         Idx global_map_size = parse_map_array<true, false, true>().size;
+        std::vector<std::pair<std::string_view, std::vector<std::string_view>>> attributes;
         bool has_data{}, has_version{}, has_attributes{}, has_is_batch{}, has_type{};
 
         while (global_map_size-- != 0) {
@@ -339,7 +340,7 @@ class Deserializer {
             } else if (key == "attributes") {
                 root_key_ = "attributes";
                 has_attributes = true;
-                // parse attributes
+                attributes = read_predefined_attributes();
             } else if (key == "data") {
                 root_key_ = "data";
                 has_data = true;
@@ -358,28 +359,20 @@ class Deserializer {
         root_key_ = "";
     }
 
-    void read_predefined_attributes() {
-        for (auto const& kv : get_value_from_root("attributes", msgpack_map).as<MapSpan>()) {
-            component_key_ = key_to_string(kv);
-            MetaComponent const& component = dataset_handler_.dataset().get_component(component_key_);
-            attributes_[component.name] = read_component_attributes(component, kv.val);
+    std::vector<std::pair<std::string_view, std::vector<std::string_view>>> read_predefined_attributes() {
+        std::vector<std::pair<std::string_view, std::vector<std::string_view>>> attributes;
+        Idx n_components = parse_map_array<true, false, true>().size;
+        while (n_components-- != 0) {
+            component_key_ = parse_string();
+            attributes.push_back({component_key_, {}});
+            auto& attributes_per_component = attributes.front().second;
+            Idx const n_attributes_per_component = parse_map_array<false, true, true>().size;
+            for (element_number_ = 0; element_number_ != n_attributes_per_component; ++element_number_) {
+                attributes_per_component.push_back(parse_string());
+            }
+            element_number_ = -1;
         }
-        component_key_ = "";
-    }
-
-    std::vector<MetaAttribute const*> read_component_attributes(MetaComponent const& component,
-                                                                msgpack::object const& attribute_list) {
-        if (attribute_list.type != msgpack_array) {
-            throw SerializationError{
-                "Each entry of attribute dictionary should be a list for the corresponding component!\n"};
-        }
-        auto const attributes_span = attribute_list.as<ArraySpan>();
-        std::vector<MetaAttribute const*> attributes(attributes_span.size());
-        for (element_number_ = 0; element_number_ != static_cast<Idx>(attributes_span.size()); ++element_number_) {
-            attributes[element_number_] =
-                &component.get_attribute(attributes_span[element_number_].as<std::string_view>());
-        }
-        element_number_ = -1;
+        component_key_ = {};
         return attributes;
     }
 
