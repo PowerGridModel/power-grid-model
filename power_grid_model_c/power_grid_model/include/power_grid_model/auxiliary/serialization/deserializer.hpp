@@ -116,6 +116,62 @@ class Deserializer {
         std::string get_err_msg() { return std::string{T::static_err_msg}; }
     };
 
+    template <bool enable_map, bool enable_array>
+    struct ArrayMapVisitor
+        : DefaultErrorVisitor<ArrayMapVisitor<enable_map, enable_array>> requires(enable_map || enable_array) {
+        static constexpr std::string_view static_err_msg =
+            enable_map ? (enable_array ? "Expect a map or array." : "Expect a map.") : "Expect an array.";
+
+        Idx size{};
+        bool is_map{};
+        bool start_map(uint32_t num_kv_pairs)
+            requires(enable_map)
+        {
+            size = static_cast<Idx>(num_kv_pairs);
+            is_map = true;
+            return true;
+        }
+        bool start_map_key()
+            requires(enable_map)
+        {
+            return false;
+        }
+        bool end_map()
+            requires(enable_map)
+        {
+            assert(size == 0);
+            return true;
+        }
+        bool start_array(uint32_t num_elements)
+            requires(enable_array)
+        {
+            size = static_cast<Idx>(num_elements);
+            is_map = false;
+            return true;
+        }
+        bool start_array_item()
+            requires(enable_array)
+        {
+            return false;
+        }
+        bool end_array()
+            requires(enable_array)
+        {
+            assert(size == 0);
+            return true;
+        }
+    };
+
+    struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
+        static constexpr std::string_view static_err_msg = "Expect a string.";
+
+        std::string_view str{};
+        bool visit_str(const char* v, uint32_t size) {
+            str = {v, size};
+            return true;
+        }
+    };
+
   public:
     using ArraySpan = std::span<msgpack::object const>;
     using MapSpan = std::span<msgpack::object_kv const>;
