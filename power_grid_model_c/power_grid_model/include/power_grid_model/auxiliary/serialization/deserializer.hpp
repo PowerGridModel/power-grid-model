@@ -461,18 +461,15 @@ class Deserializer {
         Idx const batch_size = handler.batch_size();
         // count number of element of all scenarios
         IdxVector counter(batch_size);
+        std::vector<size_t> component_offsets(batch_size);
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
+            auto const& scenario_counts = data_counts[scenario_number_];
+            auto const found_component = std::ranges::find_if(
+                scenario_counts, [component](auto const& x) { return x.component == component.name; });
 
-
-            msgpack::object const& scenario = batch_data[scenario_number_];
-            Idx const found_component_idx = find_key_from_map(scenario, component.name);
-            if (found_component_idx >= 0) {
-                msgpack::object const& element_array = as_map(scenario).ptr[found_component_idx].val;
-                if (element_array.type != msgpack_array) {
-                    throw SerializationError{"Each entry of component per scenario should be a list!\n"};
-                }
-                counter[scenario_number_] = static_cast<Idx>(as_array(element_array).size);
-                element_array >> msg_data[scenario_number_];
+            if (found_component != scenario_counts.cend()) {
+                counter[scenario_number_] = found_component->size;
+                component_offsets[scenario_number_] = found_component->offset;
             }
         }
         scenario_number_ = -1;
@@ -481,8 +478,8 @@ class Deserializer {
         Idx const total_elements = // total element based on is_uniform
             elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
                 elements_per_scenario * batch_size;                                     // multiply
-        dataset_handler_.add_component_info(component_key_, elements_per_scenario, total_elements);
-        msg_views_.push_back(msg_data);
+        handler.add_component_info(component_key_, elements_per_scenario, total_elements);
+        msg_data_offsets_.push_back(component_offsets);
         component_key_ = {};
     }
 
