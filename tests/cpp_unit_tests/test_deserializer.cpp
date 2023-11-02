@@ -248,6 +248,7 @@ constexpr std::string_view json_batch = R"(
 
 namespace {
 
+/*
 void check_error(std::string_view json, char const* err_msg) {
     std::vector<NodeInput> node(1);
 
@@ -259,6 +260,7 @@ void check_error(std::string_view json, char const* err_msg) {
 
     CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), std::exception);
 }
+*/
 
 } // namespace
 
