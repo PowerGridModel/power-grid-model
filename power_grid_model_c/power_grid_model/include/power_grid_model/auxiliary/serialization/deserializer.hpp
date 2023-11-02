@@ -417,10 +417,19 @@ class Deserializer {
         }
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
             std::vector<ComponentByteMeta> count_per_scenario;
+            Idx n_components = parse_map_array<true, false, true>().size;
+            while (n_components-- != 0) {
+                component_key_ = parse_string();
+                Idx const component_size = parse_map_array<false, true, false>().size;
+                count_per_scenario.push_back({component_key_, component_size, offset_});
+                // null visitor to skip all the real content
+                DefaultNullVisitor visitor{};
+                msgpack::parse(data_, size_, offset_, visitor);
+            }
+            component_key_ = {};
             data_counts.push_back(count_per_scenario);
         }
         scenario_number_ = -1;
-
         return data_counts;
     }
 
