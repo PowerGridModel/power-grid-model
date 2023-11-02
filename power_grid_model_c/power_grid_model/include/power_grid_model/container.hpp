@@ -188,7 +188,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // cache a Storagable item with index pos to restore to when restore_values() is called
     template <class Storageable> void cache_item(Idx pos) {
-        const auto& value = get_raw<Storageable, Storageable>(pos);
+        auto const& value = get_raw<Storageable, Storageable>(pos);
         auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
 
         cached_vec.emplace_back(pos, value);

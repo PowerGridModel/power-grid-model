@@ -409,7 +409,7 @@ template <bool sym> class ShortCircuitSolver {
             return std::pair{FaultType::nan, FaultPhase::nan};
         }
 
-        const auto& first = faults.front();
+        auto const& first = faults.front();
         return std::pair{first.fault_type, first.fault_phase};
     }
 

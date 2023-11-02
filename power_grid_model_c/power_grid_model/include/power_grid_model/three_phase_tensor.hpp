@@ -105,19 +105,6 @@ template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
 // piecewise factory construction for complex vector
-template <bool sym = false> inline RealValue<sym> piecewise_real_value(double x) {
-    if constexpr (sym) {
-        return x;
-    } else {
-        return RealValue<false>{std::piecewise_construct, x};
-    }
-}
-
-template <column_vector DerivedA> inline RealValue<false> piecewise_real_value(Eigen::ArrayBase<DerivedA> const& val) {
-    return val;
-}
-
-// piecewise factory construction for complex vector
 template <bool sym = false> inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
     if constexpr (sym) {
         return x;

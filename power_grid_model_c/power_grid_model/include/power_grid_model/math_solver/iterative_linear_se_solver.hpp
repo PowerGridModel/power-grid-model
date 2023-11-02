@@ -693,7 +693,7 @@ template <bool sym> class IterativeLinearSESolver {
         sub_timer.stop();
         main_timer.stop();
 
-        const auto key = Timer::make_key(2228, "Max number of iterations");
+        auto const key = Timer::make_key(2228, "Max number of iterations");
         calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
 
         return output;
@@ -716,6 +716,10 @@ template <bool sym> class IterativeLinearSESolver {
     // solver
     SparseLUSolver<SEGainBlock<sym>, SERhs<sym>, SEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<SEGainBlock<sym>, SERhs<sym>, SEUnknown<sym>>::BlockPermArray perm_;
+
+    auto diagonal_inverse(RealValue<sym> const& value) {
+        return ComplexTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};
+    }
 
     void prepare_matrix(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value) {
         MathModelParam<sym> const& param = y_bus.math_model_param();
@@ -749,11 +753,11 @@ template <bool sym> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += Ys^H * Ys * (variance^-1)
+                            // G += Ys^H * (variance^-1) * Ys
                             auto const& shunt_power = measured_value.shunt_power(obj);
-                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]), param.shunt_param[obj],
-                                             inv(ComplexTensor<sym>{static_cast<ComplexValue<sym>>(
-                                                 shunt_power.p_variance + shunt_power.q_variance)}));
+                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
+                                             diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance),
+                                             param.shunt_param[obj]);
                         }
                     }
                     // branch
@@ -765,13 +769,12 @@ template <bool sym> class IterativeLinearSESolver {
                         for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                             // has measurement
                             if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                                // G += Y{side, b0}^H * Y{side, b1} * (variance^-1)
+                                // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
                                 auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
                                 block.g() +=
                                     dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        param.branch_param[obj].value[measured_side * 2 + b1],
-                                        inv(ComplexTensor<sym>{
-                                            static_cast<ComplexValue<sym>>(power.p_variance + power.q_variance)}));
+                                        diagonal_inverse(power.p_variance + power.q_variance),
+                                        param.branch_param[obj].value[measured_side * 2 + b1]);
                             }
                         }
                     }
@@ -843,9 +846,9 @@ template <bool sym> class IterativeLinearSESolver {
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
-                        // eta -= Ys^H * i_shunt / variance
-                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]), conj(m.value / u[bus])) /
-                                           (m.p_variance + m.q_variance);
+                        // eta -= Ys^H * (variance^-1) * i_shunt
+                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
+                                               diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
                     }
                 }
                 // branch
@@ -862,11 +865,10 @@ template <bool sym> class IterativeLinearSESolver {
                             // the current needs to be calculated with the voltage of the measured bus side
                             // NOTE: not the current bus!
                             Idx const measured_bus = branch_bus_idx[obj][measured_side];
-                            // eta += Y{side, b}^H * i_branch_{f, t} / variance
+                            // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
                             rhs_block.eta() +=
                                 dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                    conj(m.value / u[measured_bus])) /
-                                (m.p_variance + m.q_variance);
+                                    diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
                         }
                     }
                 }

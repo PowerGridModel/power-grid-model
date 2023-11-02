@@ -118,20 +118,24 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
             calc_param.p_variance = variance;
             calc_param.q_variance = variance;
         }
+        assert(is_nan(calc_param.p_variance) == is_nan(calc_param.q_variance));
+
         calc_param.value = mean_val(s_measured_);
         return calc_param;
     }
     PowerSensorCalcParam<false> asym_calc_param() const final {
         PowerSensorCalcParam<false> calc_param{};
         if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
-            calc_param.p_variance = piecewise_real_value(p_sigma_ * p_sigma_);
-            calc_param.q_variance = piecewise_real_value(q_sigma_ * q_sigma_);
+            calc_param.p_variance = RealValue<false>{p_sigma_ * p_sigma_};
+            calc_param.q_variance = RealValue<false>{q_sigma_ * q_sigma_};
         } else {
             auto const variance = RealValue<false>{is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
                                                                     : std::numeric_limits<double>::infinity()};
             calc_param.p_variance = variance;
             calc_param.q_variance = variance;
         }
+        assert(is_nan(calc_param.p_variance) == is_nan(calc_param.q_variance));
+
         calc_param.value = piecewise_complex_value(s_measured_);
         return calc_param;
     }

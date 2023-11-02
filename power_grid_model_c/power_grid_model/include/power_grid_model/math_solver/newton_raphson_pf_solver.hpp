@@ -229,7 +229,7 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
-        for (const auto& [bus_number, load_gens, sources] :
+        for (auto const& [bus_number, load_gens, sources] :
              enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);

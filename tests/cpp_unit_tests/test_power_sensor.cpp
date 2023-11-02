@@ -8,7 +8,7 @@
 
 namespace power_grid_model {
 namespace {
-const auto r_nan = RealValue<false>{nan};
+auto const r_nan = RealValue<false>{nan};
 }
 
 // TO TEST
