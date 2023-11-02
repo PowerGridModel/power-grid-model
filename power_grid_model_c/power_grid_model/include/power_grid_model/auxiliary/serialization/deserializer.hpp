@@ -93,12 +93,13 @@ class Deserializer {
         : Deserializer{create_from_format(data_buffer, serialization_format)} {}
 
     Deserializer(from_json_t /* tag */, std::string_view json_string)
-        : Deserializer{from_msgpack, json_to_msgpack(json_string)} {}
+        : buffer_from_json_{json_to_msgpack(json_string)},
+          data_{buffer_from_json_.data()},
+          size_{buffer_from_json_.size()},
+          dataset_handler_{create_dataset_handler()} {}
 
     Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data)
-        : handle_{msgpack::unpack(msgpack_data.data(), msgpack_data.size())},
-          version_{get_value_from_root("version", msgpack_string).as<std::string>()},
-          dataset_handler_{create_dataset_handler()} {
+        : data_{msgpack_data.data()}, size_{msgpack_data.size()}, dataset_handler_{create_dataset_handler()} {
         try {
             post_serialization();
         } catch (std::exception& e) {
@@ -111,6 +112,15 @@ class Deserializer {
     void parse() {}
 
   private:
+    // data members are order dependent
+    // DO NOT modify the order!
+    // own buffer if from json
+    std::vector<char> buffer_from_json_;
+    // pointer to buffers
+    char const* data_;
+    size_t size_;
+    // global offset
+    size_t offset_{};
     // attributes to track the movement of the position
     // for error report purpose
     std::string_view root_key_;
@@ -170,6 +180,7 @@ class Deserializer {
     }
 
     WritableDatasetHandler create_dataset_handler() {
+        version_ = get_value_from_root("version", msgpack_string).as<std::string>();
         auto const dataset = get_value_from_root("type", msgpack_string).as<std::string_view>();
         auto const is_batch = get_value_from_root("is_batch", msgpack_bool).as<bool>();
         auto const& obj = get_data_handle(is_batch);
