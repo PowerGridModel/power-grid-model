@@ -182,6 +182,11 @@ class Deserializer {
         }
     };
 
+    struct ComponentByteMeta {
+        std::string_view component;
+        size_t offset;
+    };
+
   public:
     using ArraySpan = std::span<msgpack::object const>;
     using MapSpan = std::span<msgpack::object_kv const>;
@@ -237,8 +242,9 @@ class Deserializer {
     std::string version_;
     WritableDatasetHandler dataset_handler_;
     std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
-    // vector of components of spans of msgpack object of each batch
-    std::vector<std::vector<ArraySpan>> msg_views_;
+    // offset of the msgpack bytes for the actual data, per component (outer), per batch (inner)
+    // if a component has no element for a certain scenario, that offset will be zero.
+    std::vector<std::vector<size_t>> msg_data_offsets_;
 
     static std::vector<char> json_to_msgpack(std::string_view json_string) {
         nlohmann::json json_document = nlohmann::json::parse(json_string);
@@ -321,7 +327,8 @@ class Deserializer {
         Idx batch_size{};
         Idx global_map_size = parse_map_array<true, false, true>().size;
         std::vector<std::pair<std::string_view, std::vector<std::string_view>>> attributes;
-        bool has_data{}, has_version{}, has_attributes{}, has_is_batch{}, has_type{};
+        std::vector<std::vector<ComponentByteMeta>> data_counts;
+        bool has_version{}, has_type{}, has_is_batch{}, has_attributes{}, has_data{};
 
         while (global_map_size-- != 0) {
             std::string_view key = parse_string();
@@ -349,14 +356,24 @@ class Deserializer {
             root_key_ = {};
         }
 
+        if (!has_version) {
+            throw SerializationError{"Key version not found!\n"};
+        }
+        if (!has_type) {
+            throw SerializationError{"Key type not found!\n"};
+        }
+        if (!has_is_batch) {
+            throw SerializationError{"Key is_batch not found!\n"};
+        }
+        if (!has_attributes) {
+            throw SerializationError{"Key attributes not found!\n"};
+        }
+        if (!has_data) {
+            throw SerializationError{"Key data not found!\n"};
+        }
+
         WritableDatasetHandler handler{is_batch, batch_size, dataset};
         return handler;
-    }
-
-    void post_serialization() {
-        read_predefined_attributes();
-        count_data();
-        root_key_ = "";
     }
 
     std::vector<std::pair<std::string_view, std::vector<std::string_view>>> read_predefined_attributes() {
@@ -376,8 +393,9 @@ class Deserializer {
         return attributes;
     }
 
+
+
     void count_data() {
-        auto const& obj = get_data_handle(dataset_handler_.is_batch());
         // pointer to array (or single value) of msgpack objects to the data
         auto const batch_data =
             dataset_handler_.is_batch() ? ArraySpan{as_array(obj).ptr, as_array(obj).size} : ArraySpan{&obj, 1};
