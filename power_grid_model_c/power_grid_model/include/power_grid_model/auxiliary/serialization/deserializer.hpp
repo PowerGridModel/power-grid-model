@@ -117,8 +117,8 @@ class Deserializer {
     };
 
     template <bool enable_map, bool enable_array>
-    struct ArrayMapVisitor
-        : DefaultErrorVisitor<ArrayMapVisitor<enable_map, enable_array>> requires(enable_map || enable_array) {
+        requires(enable_map || enable_array)
+    struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<enable_map, enable_array>> {
         static constexpr std::string_view static_err_msg =
             enable_map ? (enable_array ? "Expect a map or array." : "Expect a map.") : "Expect an array.";
 
@@ -172,6 +172,16 @@ class Deserializer {
         }
     };
 
+    struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
+        static constexpr std::string_view static_err_msg = "Expect a boolean.";
+
+        bool value{};
+        bool visit_boolean(bool v) {
+            value = v;
+            return true;
+        }
+    };
+
   public:
     using ArraySpan = std::span<msgpack::object const>;
     using MapSpan = std::span<msgpack::object_kv const>;
@@ -196,16 +206,10 @@ class Deserializer {
         : buffer_from_json_{json_to_msgpack(json_string)},
           data_{buffer_from_json_.data()},
           size_{buffer_from_json_.size()},
-          dataset_handler_{create_dataset_handler()} {}
+          dataset_handler_{pre_parse()} {}
 
     Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data)
-        : data_{msgpack_data.data()}, size_{msgpack_data.size()}, dataset_handler_{create_dataset_handler()} {
-        try {
-            post_serialization();
-        } catch (std::exception& e) {
-            handle_error(e);
-        }
-    }
+        : data_{msgpack_data.data()}, size_{msgpack_data.size()}, dataset_handler_{pre_parse()} {}
 
     WritableDatasetHandler& get_dataset_info() { return dataset_handler_; }
 
@@ -230,7 +234,6 @@ class Deserializer {
     Idx element_number_{-1};
     Idx attribute_number_{-1};
     // class members
-    msgpack::object_handle handle_;
     std::string version_;
     WritableDatasetHandler dataset_handler_;
     std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
@@ -279,55 +282,80 @@ class Deserializer {
         }
     }
 
-    WritableDatasetHandler create_dataset_handler() {
-        version_ = get_value_from_root("version", msgpack_string).as<std::string>();
-        auto const dataset = get_value_from_root("type", msgpack_string).as<std::string_view>();
-        auto const is_batch = get_value_from_root("is_batch", msgpack_bool).as<bool>();
-        auto const& obj = get_data_handle(is_batch);
-        Idx const batch_size = is_batch ? static_cast<Idx>(as_array(obj).size) : 1;
-        return WritableDatasetHandler{is_batch, batch_size, dataset};
+    template <bool enable_map, bool enable_array, bool move_forward>
+    MapArrayVisitor<enable_map, enable_array> parse_map_array() {
+        MapArrayVisitor<enable_map, enable_array> visitor{};
+        if constexpr (move_forward) {
+            // move offset forward by giving a reference
+            msgpack::parse(data_, size_, offset_, visitor);
+        } else {
+            // parse but without changing offset
+            msgpack::parse(data_ + offset_, size_ - offset_, visitor);
+        }
+        return visitor;
+    }
+
+    std::string_view parse_string() {
+        StringVisitor visitor{};
+        msgpack::parse(data_, size_, offset_, visitor);
+        return visitor.str;
+    }
+
+    bool parse_bool() {
+        BoolVisitor visitor{};
+        msgpack::parse(data_, size_, offset_, visitor);
+        return visitor.value;
+    }
+
+    WritableDatasetHandler pre_parse() {
+        try {
+            return pre_parse_impl();
+        } catch (std::exception& e) {
+            handle_error(e);
+        }
+    }
+
+    WritableDatasetHandler pre_parse_impl() {
+        std::string_view dataset;
+        bool is_batch{};
+        Idx batch_size{};
+        Idx global_map_size = parse_map_array<true, false, true>().size;
+        bool has_data{}, has_version{}, has_attributes{}, has_is_batch{}, has_type{};
+
+        while (global_map_size-- != 0) {
+            std::string_view key = parse_string();
+            if (key == "version") {
+                root_key_ = "version";
+                has_version = true;
+                version_ = parse_string();
+            } else if (key == "type") {
+                root_key_ = "type";
+                has_type = true;
+                dataset = parse_string();
+            } else if (key == "is_batch") {
+                root_key_ = "is_batch";
+                has_is_batch = true;
+                is_batch = parse_bool();
+            } else if (key == "attributes") {
+                root_key_ = "attributes";
+                has_attributes = true;
+                // parse attributes
+            } else if (key == "data") {
+                root_key_ = "data";
+                has_data = true;
+                // parse data
+            }
+            root_key_ = {};
+        }
+
+        WritableDatasetHandler handler{is_batch, batch_size, dataset};
+        return handler;
     }
 
     void post_serialization() {
         read_predefined_attributes();
         count_data();
         root_key_ = "";
-    }
-
-    msgpack::object const& get_data_handle(bool is_batch) {
-        return get_value_from_root("data", is_batch ? msgpack_array : msgpack_map);
-    }
-
-    msgpack::object const& get_value_from_root(std::string_view key, msgpack::type::object_type type) {
-        msgpack::object const& root = handle_.get();
-        if (root.type != msgpack_map) {
-            throw SerializationError{"The root level object should be a dictionary!\n"};
-        }
-        root_key_ = key;
-        return get_value_from_map(root, key, type);
-    }
-
-    static msgpack::object const& get_value_from_map(msgpack::object const& map, std::string_view key,
-                                                     msgpack::type::object_type type) {
-        Idx const idx = find_key_from_map(map, key);
-        if (idx < 0) {
-            throw SerializationError{"Cannot find key " + std::string(key) + " in the root level dictionary!\n"};
-        }
-        msgpack::object const& obj = as_map(map).ptr[idx].val;
-        if (obj.type != type) {
-            throw SerializationError{"Wrong data type for key " + std::string(key) +
-                                     " in the root level dictionary!\n"};
-        }
-        return obj;
-    }
-
-    static Idx find_key_from_map(msgpack::object const& map, std::string_view key) {
-        auto const kv_map = map.as<MapSpan>();
-        auto const found = std::ranges::find_if(kv_map, [key](auto const& x) { return key_to_string(x) == key; });
-        if (found == kv_map.end()) {
-            return -1;
-        }
-        return std::distance(kv_map.begin(), found);
     }
 
     void read_predefined_attributes() {
