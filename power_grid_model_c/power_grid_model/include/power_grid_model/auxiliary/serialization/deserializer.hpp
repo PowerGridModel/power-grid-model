@@ -188,6 +188,9 @@ class Deserializer {
         size_t offset;
     };
 
+    using DataByteMeta = std::vector<std::vector<ComponentByteMeta>>;
+    using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;
+
   public:
     using ArraySpan = std::span<msgpack::object const>;
     using MapSpan = std::span<msgpack::object_kv const>;
@@ -327,8 +330,8 @@ class Deserializer {
         std::string_view dataset;
         Idx batch_size{};
         Idx global_map_size = parse_map_array<true, false, true>().size;
-        std::vector<std::pair<std::string_view, std::vector<std::string_view>>> attributes;
-        std::vector<std::vector<ComponentByteMeta>> data_counts{};
+        AttributeByteMeta attributes;
+        DataByteMeta data_counts{};
         bool has_version{}, has_type{}, has_is_batch{}, has_attributes{}, has_data{};
 
         while (global_map_size-- != 0) {
@@ -380,11 +383,12 @@ class Deserializer {
         }
 
         WritableDatasetHandler handler{is_batch_, batch_size, dataset};
+        count_data(handler, data_counts);
         return handler;
     }
 
-    std::vector<std::pair<std::string_view, std::vector<std::string_view>>> read_predefined_attributes() {
-        std::vector<std::pair<std::string_view, std::vector<std::string_view>>> attributes;
+    AttributeByteMeta read_predefined_attributes() {
+        AttributeByteMeta attributes;
         Idx n_components = parse_map_array<true, false, true>().size;
         while (n_components-- != 0) {
             component_key_ = parse_string();
@@ -400,8 +404,8 @@ class Deserializer {
         return attributes;
     }
 
-    std::vector<std::vector<ComponentByteMeta>> pre_count_data(bool has_is_batch) {
-        std::vector<std::vector<ComponentByteMeta>> data_counts{};
+    DataByteMeta pre_count_data(bool has_is_batch) {
+        DataByteMeta data_counts{};
         auto const root_visitor = parse_map_array<true, true, false>();
         Idx batch_size{};
         if (has_is_batch && (is_batch_ != !root_visitor.is_map)) {
@@ -433,39 +437,33 @@ class Deserializer {
         return data_counts;
     }
 
-    void count_data() {
-        // pointer to array (or single value) of msgpack objects to the data
-        auto const batch_data =
-            dataset_handler_.is_batch() ? ArraySpan{as_array(obj).ptr, as_array(obj).size} : ArraySpan{&obj, 1};
-
+    void count_data(WritableDatasetHandler& handler, DataByteMeta const& data_counts) {
         // get set of all components
         std::set<MetaComponent const*> all_components;
-        for (scenario_number_ = 0; scenario_number_ != static_cast<Idx>(batch_data.size()); ++scenario_number_) {
-            msgpack::object const& scenario = batch_data[scenario_number_];
-            if (scenario.type != msgpack_map) {
-                throw SerializationError{"The data object of each scenario should be a dictionary!\n"};
+        for (scenario_number_ = 0; scenario_number_ != static_cast<Idx>(data_counts.size()); ++scenario_number_) {
+            for (auto const& component_byte_meta : data_counts[scenario_number_]) {
+                component_key_ = component_byte_meta.component;
+                all_components.insert(&handler.dataset().get_component(component_key_));
             }
-            for (msgpack::object_kv const& kv : scenario.as<MapSpan>()) {
-                component_key_ = key_to_string(kv);
-                all_components.insert(&dataset_handler_.dataset().get_component(component_key_));
-            }
-            component_key_ = "";
+            component_key_ = {};
         }
         scenario_number_ = -1;
 
         // create buffer object
         for (MetaComponent const* const component : all_components) {
-            count_component(batch_data, *component);
+            count_component(handler, data_counts, *component);
         }
     }
 
-    void count_component(ArraySpan batch_data, MetaComponent const& component) {
+    void count_component(WritableDatasetHandler& handler, DataByteMeta const& data_counts,
+                         MetaComponent const& component) {
         component_key_ = component.name;
-        Idx const batch_size = dataset_handler_.batch_size();
+        Idx const batch_size = handler.batch_size();
         // count number of element of all scenarios
         IdxVector counter(batch_size);
-        std::vector<ArraySpan> msg_data(batch_size);
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
+
+
             msgpack::object const& scenario = batch_data[scenario_number_];
             Idx const found_component_idx = find_key_from_map(scenario, component.name);
             if (found_component_idx >= 0) {
@@ -485,7 +483,7 @@ class Deserializer {
                 elements_per_scenario * batch_size;                                     // multiply
         dataset_handler_.add_component_info(component_key_, elements_per_scenario, total_elements);
         msg_views_.push_back(msg_data);
-        component_key_ = "";
+        component_key_ = {};
     }
 
     bool check_uniform(IdxVector const& counter) {
