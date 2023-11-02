@@ -199,7 +199,7 @@ class Deserializer {
     // class members
     std::string version_;
     bool is_batch_{};
-    std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
+    std::map<MetaComponent const*, std::vector<MetaAttribute const*>, std::less<>> attributes_;
     // offset of the msgpack bytes for the actual data, per component (outer), per batch (inner)
     // if a component has no element for a certain scenario, that offset will be zero.
     std::vector<std::vector<size_t>> msg_data_offsets_;
@@ -338,6 +338,7 @@ class Deserializer {
 
         WritableDatasetHandler handler{is_batch_, batch_size, dataset};
         count_data(handler, data_counts);
+        parse_predefined_attributes(handler.dataset(), attributes);
         return handler;
     }
 
@@ -347,7 +348,7 @@ class Deserializer {
         while (n_components-- != 0) {
             component_key_ = parse_string();
             attributes.push_back({component_key_, {}});
-            auto& attributes_per_component = attributes.front().second;
+            auto& attributes_per_component = attributes.back().second;
             Idx const n_attributes_per_component = parse_map_array<false, true, true>().size;
             for (element_number_ = 0; element_number_ != n_attributes_per_component; ++element_number_) {
                 attributes_per_component.push_back(parse_string());
@@ -356,6 +357,23 @@ class Deserializer {
         }
         component_key_ = {};
         return attributes;
+    }
+
+    void parse_predefined_attributes(MetaDataset const& dataset, AttributeByteMeta const& attributes) {
+        root_key_ = "attributes";
+        for (auto const& single_component : attributes) {
+            component_key_ = single_component.first;
+            MetaComponent const* const component = &dataset.get_component(component_key_);
+            std::vector<MetaAttribute const*> attributes_per_component;
+            for (element_number_ = 0; element_number_ != static_cast<Idx>(single_component.second.size());
+                 ++element_number_) {
+                attributes_per_component.push_back(&component->get_attribute(single_component.second[element_number_]));
+            }
+            attributes_[component] = std::move(attributes_per_component);
+            element_number_ = -1;
+        }
+        component_key_ = {};
+        root_key_ = {};
     }
 
     DataByteMeta pre_count_data(bool has_is_batch) {
@@ -392,6 +410,7 @@ class Deserializer {
     }
 
     void count_data(WritableDatasetHandler& handler, DataByteMeta const& data_counts) {
+        root_key_ = "data";
         // get set of all components
         std::set<MetaComponent const*> all_components;
         for (scenario_number_ = 0; scenario_number_ != static_cast<Idx>(data_counts.size()); ++scenario_number_) {
@@ -407,6 +426,7 @@ class Deserializer {
         for (MetaComponent const* const component : all_components) {
             count_component(handler, data_counts, *component);
         }
+        root_key_ = {};
     }
 
     void count_component(WritableDatasetHandler& handler, DataByteMeta const& data_counts,
