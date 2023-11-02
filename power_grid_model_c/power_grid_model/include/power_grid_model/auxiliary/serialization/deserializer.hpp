@@ -124,39 +124,29 @@ class Deserializer {
 
         Idx size{};
         bool is_map{};
-        bool start_map(uint32_t num_kv_pairs)
-            requires(enable_map)
-        {
+        bool start_map(uint32_t num_kv_pairs) {
+            if constexpr (!enable_map) {
+                this->throw_error();
+            }
             size = static_cast<Idx>(num_kv_pairs);
             is_map = true;
             return true;
         }
-        bool start_map_key()
-            requires(enable_map)
-        {
-            return false;
-        }
-        bool end_map()
-            requires(enable_map)
-        {
+        bool start_map_key() { return false; }
+        bool end_map() {
             assert(size == 0);
             return true;
         }
-        bool start_array(uint32_t num_elements)
-            requires(enable_array)
-        {
+        bool start_array(uint32_t num_elements) {
+            if constexpr (!enable_array) {
+                this->throw_error();
+            }
             size = static_cast<Idx>(num_elements);
             is_map = false;
             return true;
         }
-        bool start_array_item()
-            requires(enable_array)
-        {
-            return false;
-        }
-        bool end_array()
-            requires(enable_array)
-        {
+        bool start_array_item() { return false; }
+        bool end_array() {
             assert(size == 0);
             return true;
         }
@@ -529,7 +519,7 @@ class Deserializer {
         }
     }
 
-    void handle_error(std::exception& e) {
+    [[noreturn]] void handle_error(std::exception& e) {
         std::stringstream ss;
         ss << e.what();
         if (!root_key_.empty()) {
