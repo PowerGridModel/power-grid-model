@@ -29,9 +29,31 @@ constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 } // namespace power_grid_model::meta_data
 
+// converter for double[3]
 namespace msgpack {
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
+
+    template <> struct convert<power_grid_model::RealValue<false>> {
+        msgpack::object const& operator()(msgpack::object const& o, power_grid_model::RealValue<false>& v) const {
+            using power_grid_model::meta_data::as_array;
+
+            if (o.type != msgpack::type::ARRAY) {
+                throw msgpack::type_error();
+            }
+            if (as_array(o).size != 3) {
+                throw msgpack::type_error();
+            }
+            for (int8_t i = 0; i != 3; ++i) {
+                if (as_array(o).ptr[i].is_nil()) {
+                    continue;
+                }
+                as_array(o).ptr[i] >> v(i);
+            }
+            return o;
+        }
+    };
+
     template <class T>
         requires(std::same_as<T, msgpack::object> || std::same_as<T, msgpack::object_kv>)
     struct convert<std::span<const T>> {
@@ -108,7 +130,16 @@ class Deserializer {
 
     WritableDatasetHandler& get_dataset_info() { return dataset_handler_; }
 
-    void parse() {}
+    void parse() {
+        root_key_ = "data";
+        try {
+            for (Idx i = 0; i != dataset_handler_.n_components(); ++i) {
+                parse_component(i);
+            }
+        } catch (std::exception& e) {
+            handle_error(e);
+        }
+    }
 
   private:
     // attributes to track the movement of the position
@@ -316,6 +347,109 @@ class Deserializer {
             return 0;
         }
         return counter.front();
+    }
+
+    void parse_component(Idx component_idx) {
+        auto const& buffer = dataset_handler_.get_buffer(component_idx);
+        auto const& info = dataset_handler_.get_component_info(component_idx);
+        auto const& msg_data = msg_views_[component_idx];
+        Idx const batch_size = dataset_handler_.batch_size();
+        component_key_ = info.component->name;
+        // handle indptr
+        if (info.elements_per_scenario < 0) {
+            // first always zero
+            buffer.indptr.front() = 0;
+            // accumulate sum
+            // TODO (TonyXiang8787) Apple Clang cannot compile transform_inclusive_scan correctly
+            // So we disable the good code and write the loop manually
+            // std::transform_inclusive_scan(msg_data.cbegin(), msg_data.cend(),
+            //                               buffer.indptr.begin() + 1,
+            //                               std::plus{}, [](auto const& x) { return static_cast<Idx>(x.size()); });
+            for (Idx batch_idx = 0; batch_idx != batch_size; ++batch_idx) {
+                buffer.indptr[batch_idx + 1] = buffer.indptr[batch_idx] + static_cast<Idx>(msg_data[batch_idx].size());
+            }
+        }
+        // set nan
+        info.component->set_nan(buffer.data, 0, info.total_elements);
+        // attributes
+        auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
+            auto const found = attributes_.find(info.component->name);
+            if (found == attributes_.cend()) {
+                return {};
+            }
+            return found->second;
+        }();
+        // all scenarios
+        for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
+            Idx const scenario_offset = info.elements_per_scenario < 0 ? buffer.indptr[scenario_number_]
+                                                                       : scenario_number_ * info.elements_per_scenario;
+#ifndef NDEBUG
+            if (info.elements_per_scenario < 0) {
+                assert(buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_] ==
+                       static_cast<Idx>(msg_data[scenario_number_].size()));
+
+            } else {
+                assert(info.elements_per_scenario == static_cast<Idx>(msg_data[scenario_number_].size()));
+            }
+#endif
+            void* scenario_pointer = info.component->advance_ptr(buffer.data, scenario_offset);
+            parse_scenario(*info.component, scenario_pointer, msg_data[scenario_number_], attributes);
+        }
+        scenario_number_ = -1;
+        component_key_ = "";
+    }
+
+    void parse_scenario(MetaComponent const& component, void* scenario_pointer, ArraySpan msg_data,
+                        std::span<MetaAttribute const* const> attributes) {
+        for (element_number_ = 0; element_number_ != static_cast<Idx>(msg_data.size()); ++element_number_) {
+            void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
+            msgpack::object const& obj = msg_data[element_number_];
+            if (obj.type == msgpack_array) {
+                parse_array_element(element_pointer, obj, attributes);
+            } else if (obj.type == msgpack_map) {
+                parse_map_element(element_pointer, obj, component);
+            } else {
+                throw SerializationError{"An element can only be a list or dictionary!\n"};
+            }
+        }
+        element_number_ = -1;
+    }
+
+    void parse_array_element(void* element_pointer, msgpack::object const& obj,
+                             std::span<MetaAttribute const* const> attributes) {
+        auto const arr = obj.as<ArraySpan>();
+        if (arr.size() != attributes.size()) {
+            throw SerializationError{
+                "An element of a list should have same length as the list of predefined attributes!\n"};
+        }
+        for (attribute_number_ = 0; attribute_number_ != static_cast<Idx>(attributes.size()); ++attribute_number_) {
+            parse_attribute(element_pointer, arr[attribute_number_], *attributes[attribute_number_]);
+        }
+        attribute_number_ = -1;
+    }
+
+    void parse_map_element(void* element_pointer, msgpack::object const& obj, MetaComponent const& component) {
+        for (msgpack::object_kv const& kv : obj.as<MapSpan>()) {
+            attribute_key_ = key_to_string(kv);
+            Idx const found_idx = component.find_attribute(attribute_key_);
+            if (found_idx < 0) {
+                attribute_key_ = "";
+                continue; // allow unknown key for additional user info
+            }
+            parse_attribute(element_pointer, kv.val, component.attributes[found_idx]);
+        }
+        attribute_key_ = "";
+    }
+
+    static void parse_attribute(void* element_pointer, msgpack::object const& obj, MetaAttribute const& attribute) {
+        // skip for none
+        if (obj.is_nil()) {
+            return;
+        }
+        // call relevant parser
+        ctype_func_selector(attribute.ctype, [element_pointer, &obj, &attribute]<class T> {
+            obj >> attribute.get_attribute<T>(element_pointer);
+        });
     }
 
     static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
