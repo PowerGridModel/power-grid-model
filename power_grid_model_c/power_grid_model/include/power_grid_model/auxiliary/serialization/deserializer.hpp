@@ -21,37 +21,6 @@
 #include <sstream>
 #include <string_view>
 
-// as array and map
-namespace power_grid_model::meta_data {
-// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-constexpr auto const& as_array(msgpack::object const& obj) { return obj.via.array; }
-constexpr auto const& as_map(msgpack::object const& obj) { return obj.via.map; }
-// NOLINTEND(cppcoreguidelines-pro-type-union-access)
-} // namespace power_grid_model::meta_data
-
-namespace msgpack {
-MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
-    namespace adaptor {
-    template <class T>
-        requires(std::same_as<T, msgpack::object> || std::same_as<T, msgpack::object_kv>)
-    struct convert<std::span<const T>> {
-        msgpack::object const& operator()(msgpack::object const& o, std::span<const T>& span) const {
-            using power_grid_model::meta_data::as_array;
-            using power_grid_model::meta_data::as_map;
-
-            if constexpr (std::same_as<T, msgpack::object>) {
-                span = {as_array(o).ptr, as_array(o).size};
-            } else {
-                span = {as_map(o).ptr, as_map(o).size};
-            }
-            return o;
-        }
-    };
-
-    } // namespace adaptor
-} // MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS)
-} // namespace msgpack
-
 namespace power_grid_model::meta_data {
 
 struct from_string_t {};
@@ -67,11 +36,6 @@ struct from_json_t {};
 constexpr from_json_t from_json;
 
 class Deserializer {
-    static constexpr auto msgpack_string = msgpack::type::STR;
-    static constexpr auto msgpack_bool = msgpack::type::BOOLEAN;
-    static constexpr auto msgpack_array = msgpack::type::ARRAY;
-    static constexpr auto msgpack_map = msgpack::type::MAP;
-
     // visitors for parsing
     struct DefaultNullVisitor : msgpack::null_visitor {
         static std::string msg_for_parse_error(size_t parsed_offset, size_t error_offset, std::string_view msg) {
