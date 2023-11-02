@@ -184,7 +184,13 @@ class Deserializer {
 
     struct ComponentByteMeta {
         std::string_view component;
+        Idx size;
         size_t offset;
+    };
+
+    struct DataCounts {
+        bool is_batch;
+        std::vector<std::vector<ComponentByteMeta>> counts;
     };
 
   public:
@@ -240,11 +246,12 @@ class Deserializer {
     Idx attribute_number_{-1};
     // class members
     std::string version_;
-    WritableDatasetHandler dataset_handler_;
+    bool is_batch_{};
     std::map<std::string, std::vector<MetaAttribute const*>, std::less<>> attributes_;
     // offset of the msgpack bytes for the actual data, per component (outer), per batch (inner)
     // if a component has no element for a certain scenario, that offset will be zero.
     std::vector<std::vector<size_t>> msg_data_offsets_;
+    WritableDatasetHandler dataset_handler_;
 
     static std::vector<char> json_to_msgpack(std::string_view json_string) {
         nlohmann::json json_document = nlohmann::json::parse(json_string);
@@ -323,11 +330,10 @@ class Deserializer {
 
     WritableDatasetHandler pre_parse_impl() {
         std::string_view dataset;
-        bool is_batch{};
         Idx batch_size{};
         Idx global_map_size = parse_map_array<true, false, true>().size;
         std::vector<std::pair<std::string_view, std::vector<std::string_view>>> attributes;
-        std::vector<std::vector<ComponentByteMeta>> data_counts;
+        DataCounts data_counts{};
         bool has_version{}, has_type{}, has_is_batch{}, has_attributes{}, has_data{};
 
         while (global_map_size-- != 0) {
@@ -343,7 +349,7 @@ class Deserializer {
             } else if (key == "is_batch") {
                 root_key_ = "is_batch";
                 has_is_batch = true;
-                is_batch = parse_bool();
+                is_batch_ = parse_bool();
             } else if (key == "attributes") {
                 root_key_ = "attributes";
                 has_attributes = true;
@@ -351,7 +357,8 @@ class Deserializer {
             } else if (key == "data") {
                 root_key_ = "data";
                 has_data = true;
-                // parse data
+                data_counts = pre_count_data();
+                batch_size = static_cast<Idx>(data_counts.counts.size());
             }
             root_key_ = {};
         }
@@ -371,8 +378,11 @@ class Deserializer {
         if (!has_data) {
             throw SerializationError{"Key data not found!\n"};
         }
+        if (is_batch_ != data_counts.is_batch) {
+            throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
+        }
 
-        WritableDatasetHandler handler{is_batch, batch_size, dataset};
+        WritableDatasetHandler handler{is_batch_, batch_size, dataset};
         return handler;
     }
 
@@ -393,7 +403,25 @@ class Deserializer {
         return attributes;
     }
 
+    DataCounts pre_count_data() {
+        DataCounts data_counts{};
+        auto const root_visitor = parse_map_array<true, true, false>();
+        Idx batch_size{};
+        data_counts.is_batch = !root_visitor.is_map;
+        if (root_visitor.is_map) {
+            batch_size = 1;
+        } else {
+            batch_size = root_visitor.size;
+            parse_map_array<false, true, true>();
+        }
+        for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
+            std::vector<ComponentByteMeta> count_per_scenario;
+            data_counts.counts.push_back(count_per_scenario);
+        }
+        scenario_number_ = -1;
 
+        return data_counts;
+    }
 
     void count_data() {
         // pointer to array (or single value) of msgpack objects to the data
@@ -503,7 +531,7 @@ class Deserializer {
             ss << "Position of error: " << root_key_;
             root_key_ = "";
         }
-        if (dataset_handler_.is_batch() && scenario_number_ >= 0) {
+        if (is_batch_ && scenario_number_ >= 0) {
             ss << "/" << scenario_number_;
             scenario_number_ = -1;
         }
