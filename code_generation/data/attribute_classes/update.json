@@ -162,6 +162,14 @@
                         "q_measured"
                     ],
                     "description": "measured active/reactive power"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_sigma",
+                        "q_sigma"
+                    ],
+                    "description": "sigma of error margin of active/reactive power measurement"
                 }
             ]
         },

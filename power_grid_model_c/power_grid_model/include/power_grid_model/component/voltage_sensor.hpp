@@ -46,7 +46,21 @@ class GenericVoltageSensor : public Sensor {
 
     SensorShortCircuitOutput get_null_sc_output() const { return {{id(), 0}}; }
 
+    // getter for calculation param
+    template <bool sym> VoltageSensorCalcParam<sym> calc_param() const {
+        if constexpr (sym) {
+            return sym_calc_param();
+        } else {
+            return asym_calc_param();
+        }
+    }
+
   private:
+    // virtual function getter for sym and asym param
+    // override them in real sensors function
+    virtual VoltageSensorCalcParam<true> sym_calc_param() const = 0;
+    virtual VoltageSensorCalcParam<false> asym_calc_param() const = 0;
+
     virtual VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const = 0;
     virtual VoltageSensorOutput<false> get_asym_output(ComplexValue<false> const& u) const = 0;
 };
@@ -91,7 +105,7 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
         }
     }
 
-    SensorCalcParam<true> sym_calc_param() const final {
+    VoltageSensorCalcParam<true> sym_calc_param() const final {
         double const u_variance = u_sigma_ * u_sigma_;
         if (has_angle()) {
             ComplexValue<true> const u = pos_seq(u_measured_ * exp(1i * u_angle_measured_));
@@ -101,7 +115,7 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
         return {u, u_variance};
     }
 
-    SensorCalcParam<false> asym_calc_param() const final {
+    VoltageSensorCalcParam<false> asym_calc_param() const final {
         double const u_variance = u_sigma_ * u_sigma_;
         if (has_angle()) {
             ComplexValue<false> const u{u_measured_ * exp(1i * u_angle_measured_)};

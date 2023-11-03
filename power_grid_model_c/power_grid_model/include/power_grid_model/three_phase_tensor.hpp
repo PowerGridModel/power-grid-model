@@ -26,6 +26,7 @@ namespace three_phase_tensor {
 
 template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T> using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
+template <class T> using Eigen3DiagonalTensor = Eigen::DiagonalMatrix<T, 3>;
 
 template <scalar_value T> class Vector : public Eigen3Vector<T> {
   public:
@@ -68,15 +69,37 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
     }
 };
 
+template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> {
+  public:
+    DiagonalTensor() { (*this) = Eigen3DiagonalTensor<T>::Zero(); }
+    // additional constructors
+    explicit DiagonalTensor(T const& x) : Eigen3DiagonalTensor<T>{x, x, x} {}
+    explicit DiagonalTensor(Vector<T> const& v) : Eigen3DiagonalTensor<T>{v(0), v(1), v(2)} {}
+    // eigen expression
+    template <typename OtherDerived>
+    DiagonalTensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3DiagonalTensor<T>{other} {}
+
+    template <typename OtherDerived> DiagonalTensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+        this->Eigen3DiagonalTensor<T>::operator=(other);
+        return *this;
+    }
+};
 } // namespace three_phase_tensor
 
 // three phase vector and tensor
 template <bool sym> using RealTensor = std::conditional_t<sym, double, three_phase_tensor::Tensor<double>>;
 template <bool sym>
 using ComplexTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
+
+template <bool sym>
+using RealDiagonalTensor = std::conditional_t<sym, double, three_phase_tensor::DiagonalTensor<double>>;
+template <bool sym>
+using ComplexDiagonalTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
+
 template <bool sym> using RealValue = std::conditional_t<sym, double, three_phase_tensor::Vector<double>>;
 template <bool sym>
 using ComplexValue = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
+
 // asserts to ensure alignment
 static_assert(sizeof(RealTensor<false>) == sizeof(double[9]));
 static_assert(alignof(RealTensor<false>) == alignof(double[9]));
@@ -133,15 +156,33 @@ inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::Arr
     return (x.matrix() * y.matrix().transpose()).array();
 }
 
+namespace detail {
+template <column_vector_or_tensor Derived> inline auto const& dot_prepare(Eigen::DiagonalBase<Derived> const& x) {
+    return x;
+}
+template <column_vector_or_tensor Derived> inline auto const& dot_prepare(Eigen::MatrixBase<Derived> const& x) {
+    return x;
+}
+template <column_vector_or_tensor Derived> inline auto dot_prepare(Eigen::ArrayBase<Derived> const& x) {
+    return x.matrix();
+}
+} // namespace detail
+
 // calculate matrix multiply, dot
 inline double dot(double x, double y) { return x * y; }
 inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) { return x * y; }
 
 template <scalar_value... T> inline auto dot(T const&... x) { return (... * x); }
 
-template <column_vector_or_tensor... Derived> inline auto dot(Eigen::ArrayBase<Derived> const&... x) {
-    auto res_mat = (... * x.matrix());
-    return res_mat.array();
+template <column_vector_or_tensor... Derived> inline auto dot(Derived const&... x) {
+    using detail::dot_prepare;
+    return (... * dot_prepare(x)).array();
+}
+
+template <column_vector_or_tensor... Derived>
+    requires(std::derived_from<Derived, Eigen::DiagonalBase<Derived>> && ...)
+inline auto dot(Derived const&... x) {
+    return (... * detail::dot_prepare(x));
 }
 
 // max of a vector
@@ -174,24 +215,30 @@ template <bool sym, class T> inline auto process_mean_val(const T& m) {
     }
 }
 
+template <column_vector Derived> inline auto as_diag(Eigen::ArrayBase<Derived> const& x) {
+    return x.matrix().asDiagonal();
+}
+inline auto as_diag(double x) { return x; }
+
 // diagonal multiply
 template <column_vector DerivedA, rk2_tensor DerivedB, column_vector DerivedC>
 inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y,
                       Eigen::ArrayBase<DerivedC> const& z) {
-    return (x.matrix().asDiagonal() * y.matrix() * z.matrix().asDiagonal()).array();
+    return (as_diag(x) * y.matrix() * as_diag(z)).array();
 }
 // double overload
-inline double diag_mult(double x, double y, double z) { return x * y * z; }
+inline auto diag_mult(double x, double y, double z) { return x * y * z; }
 
 // calculate positive sequence
 template <column_vector Derived> inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
 
-inline DoubleComplex pos_seq(DoubleComplex const& val) { return val; }
+inline auto pos_seq(DoubleComplex const& val) { return val; }
 
 // inverse of tensor
-inline DoubleComplex inv(DoubleComplex const& val) { return 1.0 / val; }
+inline auto inv(double val) { return 1.0 / val; }
+inline auto inv(DoubleComplex const& val) { return 1.0 / val; }
 inline auto inv(ComplexTensor<false> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
@@ -217,7 +264,7 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
 
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
-inline bool is_nan(double x) { return std::isnan(x); }
+inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
 inline bool is_nan(ID x) { return x == na_IntID; }
 inline bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
@@ -225,6 +272,20 @@ template <class Enum>
 inline bool is_nan(Enum x) {
     return static_cast<IntS>(x) == na_IntS;
 }
+
+// is normal
+inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
+inline auto is_normal(RealValue<false> const& value) {
+    return is_normal(value(0)) && is_normal(value(1)) && is_normal(value(2));
+}
+
+// isinf
+inline auto is_inf(std::floating_point auto value) { return std::isinf(value); }
+inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || is_inf(value(1)) || is_inf(value(2)); }
+
+// any_zero
+inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
+inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
 
 /* update real values
 

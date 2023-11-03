@@ -15,8 +15,8 @@ namespace power_grid_model {
 
 // Entry of YBus, node addmittance matrix
 struct YBusElement {
-    YBusElementType element_type;
-    Idx idx; // index of the component
+    YBusElementType element_type{};
+    Idx idx{}; // index of the component
 };
 
 // everything here always per unit
@@ -36,50 +36,73 @@ template <bool sym> struct BranchCalcParam {
 };
 
 template <bool sym> struct BranchMathOutput {
-    ComplexValue<sym> s_f;
-    ComplexValue<sym> s_t;
-    ComplexValue<sym> i_f;
-    ComplexValue<sym> i_t;
+    ComplexValue<sym> s_f{};
+    ComplexValue<sym> s_t{};
+    ComplexValue<sym> i_f{};
+    ComplexValue<sym> i_t{};
 };
 
 template <bool sym> struct BranchShortCircuitMathOutput {
-    ComplexValue<sym> i_f;
-    ComplexValue<sym> i_t;
+    ComplexValue<sym> i_f{};
+    ComplexValue<sym> i_t{};
 };
 
 // fault math calculation parameters and math output
 struct FaultCalcParam {
-    DoubleComplex y_fault;
-    FaultType fault_type;
-    FaultPhase fault_phase;
+    DoubleComplex y_fault{};
+    FaultType fault_type{};
+    FaultPhase fault_phase{};
 };
 
 template <bool sym> struct FaultShortCircuitMathOutput {
-    ComplexValue<sym> i_fault;
+    ComplexValue<sym> i_fault{};
 };
 
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
 template <bool sym> struct ApplianceMathOutput {
-    ComplexValue<sym> s;
-    ComplexValue<sym> i;
+    ComplexValue<sym> s{};
+    ComplexValue<sym> i{};
 };
 template <bool sym> struct ApplianceShortCircuitMathOutput {
-    ComplexValue<sym> i;
+    ComplexValue<sym> i{};
 };
 
-// sensor calculation parameters for state estimation
-template <bool sym> struct SensorCalcParam {
-    // measured value of the sensor in p.u.
-    // for voltage it is a complex voltage
-    // 	   If the imaginary part is NaN, it means the angle calculation is not correct
-    // for power it is a complex power
-    //      for appliance it is always in injection direction
-    //      for branch the direction is node -> branch
-    ComplexValue<sym> value;
-    // variance (sigma^2) of the error range, in p.u.
-    double variance;
+// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
+// (circularly symmetric)
+template <bool sym> struct UniformComplexRandomVariable {
+    static constexpr bool symmetric{sym};
+
+    ComplexValue<sym> value{};
+    double variance{}; // variance (sigma^2) of the error range, in p.u.
 };
+
+// voltage sensor calculation parameters for state estimation
+// The value is the complex voltage
+// If the imaginary part is NaN, it means the angle calculation is not correct
+template <bool sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
+
+// power sensor calculation parameters for state estimation
+// The value is the complex power
+//   * for appliances, it is always in injection direction
+//   * for branches, the direction is node -> branch
+template <bool sym> struct PowerSensorCalcParam {
+    static constexpr bool symmetric{sym};
+
+    ComplexValue<sym> value{};
+    RealValue<sym> p_variance{}; // variance (sigma^2) of the error range of the active power, in p.u.
+    RealValue<sym> q_variance{}; // variance (sigma^2) of the error range of the reactive power, in p.u.
+};
+
+template <typename T>
+concept sensor_calc_param_type =
+    std::same_as<T, VoltageSensorCalcParam<true>> || std::same_as<T, VoltageSensorCalcParam<false>> ||
+    std::same_as<T, PowerSensorCalcParam<true>> || std::same_as<T, PowerSensorCalcParam<false>>;
+
+static_assert(sensor_calc_param_type<VoltageSensorCalcParam<true>>);
+static_assert(sensor_calc_param_type<VoltageSensorCalcParam<false>>);
+static_assert(sensor_calc_param_type<PowerSensorCalcParam<true>>);
+static_assert(sensor_calc_param_type<PowerSensorCalcParam<false>>);
 
 // from, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
@@ -89,7 +112,7 @@ using BranchIdx = std::array<Idx, 2>;
 using Branch3Idx = std::array<Idx, 3>;
 
 struct MathModelTopology {
-    Idx slack_bus_;
+    Idx slack_bus_{};
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
@@ -149,13 +172,13 @@ template <bool sym> struct StateEstimationInput {
     IntSVector load_gen_status;
     IntSVector source_status;
     // measured value
-    std::vector<SensorCalcParam<sym>> measured_voltage;
-    std::vector<SensorCalcParam<sym>> measured_source_power;
-    std::vector<SensorCalcParam<sym>> measured_load_gen_power;
-    std::vector<SensorCalcParam<sym>> measured_shunt_power;
-    std::vector<SensorCalcParam<sym>> measured_branch_from_power;
-    std::vector<SensorCalcParam<sym>> measured_branch_to_power;
-    std::vector<SensorCalcParam<sym>> measured_bus_injection;
+    std::vector<VoltageSensorCalcParam<sym>> measured_voltage;
+    std::vector<PowerSensorCalcParam<sym>> measured_source_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_load_gen_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_shunt_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_branch_from_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_branch_to_power;
+    std::vector<PowerSensorCalcParam<sym>> measured_bus_injection;
 };
 
 struct ShortCircuitInput {
@@ -259,7 +282,7 @@ static_assert(math_output_type<ShortCircuitMathOutput<false>>);
 // node1, node2, node3 indices for 3-way branches
 // node indices for source, load_gen, shunt
 struct ComponentTopology {
-    Idx n_node;
+    Idx n_node{};
     std::vector<BranchIdx> branch_node_idx;
     std::vector<Branch3Idx> branch3_node_idx;
     IdxVector shunt_node_idx;
@@ -291,7 +314,7 @@ struct ComponentConnections {
 // they are always in the same math model group
 // sequence numbers of 3 virtual branches are saved in pos
 struct Idx2DBranch3 {
-    Idx group;
+    Idx group{};
     // 0: node 0 -> internal node
     // 1: node 1 -> internal node
     // 2: node 2 -> internal node

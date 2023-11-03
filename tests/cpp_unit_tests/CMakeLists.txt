@@ -20,6 +20,7 @@ set(PROJECT_SOURCES
     "test_sparse_lu_solver.cpp"
     "test_y_bus.cpp"
     "test_math_solver.cpp"
+    "test_measured_values.cpp"
     "test_topology.cpp"
     "test_grouped_index_vector.cpp"
     "test_container.cpp"
