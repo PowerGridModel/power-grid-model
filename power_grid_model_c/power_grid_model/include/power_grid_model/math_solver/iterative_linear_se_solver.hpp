@@ -718,7 +718,7 @@ template <bool sym> class IterativeLinearSESolver {
     typename SparseLUSolver<SEGainBlock<sym>, SERhs<sym>, SEUnknown<sym>>::BlockPermArray perm_;
 
     auto diagonal_inverse(RealValue<sym> const& value) {
-        return ComplexTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};
+        return ComplexDiagonalTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 
     void prepare_matrix(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value) {
