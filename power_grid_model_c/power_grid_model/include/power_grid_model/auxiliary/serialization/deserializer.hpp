@@ -233,9 +233,6 @@ class Deserializer {
     using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;
 
   public:
-    using ArraySpan = std::span<msgpack::object const>;
-    using MapSpan = std::span<msgpack::object_kv const>;
-
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
