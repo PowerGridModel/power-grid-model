@@ -40,7 +40,7 @@ class Deserializer {
     struct DefaultNullVisitor : msgpack::null_visitor {
         static std::string msg_for_parse_error(size_t parsed_offset, size_t error_offset, std::string_view msg) {
             std::stringstream ss;
-            ss << msg << ", parsed_offset: " << parsed_offset << ", error_offset: " << error_offset << '.\n';
+            ss << msg << ", parsed_offset: " << parsed_offset << ", error_offset: " << error_offset << ".\n";
             return ss.str();
         }
 
