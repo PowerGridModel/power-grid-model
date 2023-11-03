@@ -176,7 +176,17 @@ class Deserializer {
 
     WritableDatasetHandler& get_dataset_info() { return dataset_handler_; }
 
-    void parse() {}
+    void parse() {
+        root_key_ = "data";
+        try {
+            for (Idx i = 0; i != dataset_handler_.n_components(); ++i) {
+                parse_component(i);
+            }
+        } catch (std::exception& e) {
+            handle_error(e);
+        }
+        root_key_ = {};
+    }
 
   private:
     // data members are order dependent
@@ -481,6 +491,111 @@ class Deserializer {
             return 0;
         }
         return counter.front();
+    }
+
+    void parse_component(Idx component_idx) {
+        auto const& buffer = dataset_handler_.get_buffer(component_idx);
+        auto const& info = dataset_handler_.get_component_info(component_idx);
+        auto const& msg_data = msg_data_offsets_[component_idx];
+        Idx const batch_size = dataset_handler_.batch_size();
+        component_key_ = info.component->name;
+        // handle indptr
+        if (info.elements_per_scenario < 0) {
+            // first always zero
+            buffer.indptr.front() = 0;
+            // accumulate sum
+            // TODO (TonyXiang8787) Apple Clang cannot compile transform_inclusive_scan correctly
+            // So we disable the good code and write the loop manually
+            // std::transform_inclusive_scan(msg_data.cbegin(), msg_data.cend(),
+            //                               buffer.indptr.begin() + 1,
+            //                               std::plus{}, [](auto const& x) { return x.size; });
+            for (Idx batch_idx = 0; batch_idx != batch_size; ++batch_idx) {
+                buffer.indptr[batch_idx + 1] = buffer.indptr[batch_idx] + msg_data[batch_idx].size;
+            }
+        }
+        // set nan
+        info.component->set_nan(buffer.data, 0, info.total_elements);
+        // attributes
+        auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
+            auto const found = attributes_.find(info.component);
+            if (found == attributes_.cend()) {
+                return {};
+            }
+            return found->second;
+        }();
+        // all scenarios
+        for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
+            Idx const scenario_offset = info.elements_per_scenario < 0 ? buffer.indptr[scenario_number_]
+                                                                       : scenario_number_ * info.elements_per_scenario;
+#ifndef NDEBUG
+            if (info.elements_per_scenario < 0) {
+                assert(buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_] ==
+                       msg_data[scenario_number_].size);
+
+            } else {
+                assert(info.elements_per_scenario == msg_data[scenario_number_].size);
+            }
+#endif
+            void* scenario_pointer = info.component->advance_ptr(buffer.data, scenario_offset);
+            parse_scenario(*info.component, scenario_pointer, msg_data[scenario_number_], attributes);
+        }
+        scenario_number_ = -1;
+        component_key_ = "";
+    }
+
+    void parse_scenario(MetaComponent const& component, void* scenario_pointer, ComponentByteMeta const& msg_data,
+                        std::span<MetaAttribute const* const> attributes) {
+        // set offset and skip array header
+        offset_ = msg_data.offset;
+        parse_map_array<false, true, true>();
+        for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
+            void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
+            // check the element is map or array
+            auto const element_visitor = parse_map_array<true, true, true>();
+            if (element_visitor.is_map) {
+                parse_map_element(element_pointer, element_visitor.size, component);
+            } else {
+                parse_array_element(element_pointer, element_visitor.size, attributes);
+            }
+        }
+        element_number_ = -1;
+    }
+
+    void parse_map_element(void* element_pointer, Idx map_size, MetaComponent const& component) {
+        while (map_size-- != 0) {
+            attribute_key_ = parse_string();
+            Idx const found_idx = component.find_attribute(attribute_key_);
+            if (found_idx < 0) {
+                attribute_key_ = {};
+                // allow unknown key for additional user info
+                parse_skip();
+                continue;
+            }
+            parse_attribute(element_pointer, component.attributes[found_idx]);
+        }
+        attribute_key_ = "";
+    }
+
+    void parse_array_element(void* element_pointer, Idx array_size, std::span<MetaAttribute const* const> attributes) {
+        if (array_size != static_cast<Idx>(attributes.size())) {
+            throw SerializationError{
+                "An element of a list should have same length as the list of predefined attributes!\n"};
+        }
+        for (attribute_number_ = 0; attribute_number_ != array_size; ++attribute_number_) {
+            parse_attribute(element_pointer, *attributes[attribute_number_]);
+        }
+        attribute_number_ = -1;
+    }
+
+    void parse_attribute(void* element_pointer, MetaAttribute const& attribute) {
+        //// skip for none
+        // if (obj.is_nil()) {
+        //     return;
+        // }
+        //// call relevant parser
+        // ctype_func_selector(attribute.ctype, [element_pointer, &obj, &attribute]<class T> {
+        //     obj >> attribute.get_attribute<T>(element_pointer);
+        // });
     }
 
     static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
