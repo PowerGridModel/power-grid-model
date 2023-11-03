@@ -37,6 +37,8 @@ class Sensor : public Base {
     Sensor(Sensor&&) = default;
     Sensor& operator=(Sensor const&) = default;
     Sensor& operator=(Sensor&&) = default;
+
+  public:
     ~Sensor() override = default;
 
   private:

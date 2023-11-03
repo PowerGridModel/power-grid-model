@@ -9,7 +9,7 @@
 namespace power_grid_model {
 namespace {
 auto const r_nan = RealValue<false>{nan};
-}
+} // namespace
 
 // TO TEST
 // calc_param of Sensor
