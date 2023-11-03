@@ -287,7 +287,6 @@ TEST_CASE("Deserializer") {
             CHECK(info.get_component_info("sym_load").total_elements == 4);
         }
 
-        /*
         SUBCASE("Check parse") {
             std::vector<NodeInput> node(3);
             std::vector<LineInput> line(2);
@@ -338,7 +337,6 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load[3].p_specified == -std::numeric_limits<double>::infinity());
             CHECK(sym_load[3].q_specified == std::numeric_limits<double>::infinity());
         }
-        */
     }
 
     SUBCASE("Batch dataset") {
@@ -359,7 +357,6 @@ TEST_CASE("Deserializer") {
             CHECK(info.get_component_info("asym_load").total_elements == 4);
         }
 
-        /*
         SUBCASE("Check parse") {
             std::vector<SymLoadGenUpdate> sym_load(4);
             std::vector<AsymLoadGenUpdate> asym_load(4);
@@ -409,7 +406,6 @@ TEST_CASE("Deserializer") {
             CHECK(asym_load[3].q_specified(1) == doctest::Approx(80.0));
             CHECK(asym_load[3].q_specified(2) == std::numeric_limits<double>::infinity());
         }
-        */
     }
 }
 
@@ -442,11 +438,10 @@ TEST_CASE("Deserializer with error") {
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [[5]]}})";
         check_error(unequal_attributes, "Position of error: data/node/0");
         constexpr std::string_view wrong_type_list =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["id"]}, "data": {"node": [[true]]}})";
-        check_error(wrong_type_list, "Position of error: data/node/0/0");
-        constexpr std::string_view wrong_type_dict =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id": true}]}})";
-        check_error(wrong_type_dict, "Position of error: data/node/0/id");
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["id"]}, "data": {"node":
+[[true]]}})"; check_error(wrong_type_list, "Position of error: data/node/0/0"); constexpr std::string_view
+wrong_type_dict = R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id":
+true}]}})"; check_error(wrong_type_dict, "Position of error: data/node/0/id");
     }
 
     SUBCASE("Error in batch data") {
@@ -457,11 +452,10 @@ TEST_CASE("Deserializer with error") {
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [[5]]}]})";
         check_error(unequal_attributes, "Position of error: data/0/node/0");
         constexpr std::string_view wrong_type_list =
-            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {"node": ["id"]}, "data": [{"node": [[true]]}]})";
-        check_error(wrong_type_list, "Position of error: data/0/node/0/0");
-        constexpr std::string_view wrong_type_dict =
-            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id": true}]}]})";
-        check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {"node": ["id"]}, "data": [{"node":
+[[true]]}]})"; check_error(wrong_type_list, "Position of error: data/0/node/0/0"); constexpr std::string_view
+wrong_type_dict = R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id":
+true}]}]})"; check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
     }
 }
 */

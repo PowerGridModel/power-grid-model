@@ -136,7 +136,9 @@ class Deserializer {
         }
     };
 
-    template <std::integral T> struct IntVisitor : DefaultErrorVisitor<IntVisitor<T>> {
+    template <class T> struct ValueVisitor;
+
+    template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
         static constexpr std::string_view static_err_msg = "Expect an interger.";
         T& value;
         bool visit_nil() { return true; }
@@ -150,16 +152,16 @@ class Deserializer {
         }
     };
 
-    struct DoubleVisitor : DefaultErrorVisitor<DoubleVisitor> {
+    template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
         static constexpr std::string_view static_err_msg = "Expect a number.";
         double& value;
         bool visit_nil() { return true; }
         bool visit_positive_integer(uint64_t v) {
-            value = v;
+            value = static_cast<double>(v);
             return true;
         }
         bool visit_negative_integer(int64_t v) {
-            value = v;
+            value = static_cast<double>(v);
             return true;
         }
         bool visit_float32(float v) {
@@ -168,6 +170,55 @@ class Deserializer {
         }
         bool visit_float64(double v) {
             value = v;
+            return true;
+        }
+    };
+
+    template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
+        static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
+        RealValue<false>& value;
+        Idx idx{};
+        bool inside_array{};
+        bool visit_nil() { return true; }
+        bool start_array(uint32_t num_elements) {
+            if (inside_array || num_elements != 3) {
+                this->throw_error();
+            }
+            inside_array = true;
+            return true;
+        }
+        using msgpack::null_visitor::start_array_item;
+        bool end_array_item() {
+            ++idx;
+            return true;
+        }
+        using msgpack::null_visitor::end_array;
+        bool visit_positive_integer(uint64_t v) {
+            if (!inside_array) {
+                this->throw_error();
+            }
+            value[idx] = static_cast<double>(v);
+            return true;
+        }
+        bool visit_negative_integer(int64_t v) {
+            if (!inside_array) {
+                this->throw_error();
+            }
+            value[idx] = static_cast<double>(v);
+            return true;
+        }
+        bool visit_float32(float v) {
+            if (!inside_array) {
+                this->throw_error();
+            }
+            value[idx] = v;
+            return true;
+        }
+        bool visit_float64(double v) {
+            if (!inside_array) {
+                this->throw_error();
+            }
+            value[idx] = v;
             return true;
         }
     };
@@ -624,14 +675,11 @@ class Deserializer {
     }
 
     void parse_attribute(void* element_pointer, MetaAttribute const& attribute) {
-        //// skip for none
-        // if (obj.is_nil()) {
-        //     return;
-        // }
-        //// call relevant parser
-        // ctype_func_selector(attribute.ctype, [element_pointer, &obj, &attribute]<class T> {
-        //     obj >> attribute.get_attribute<T>(element_pointer);
-        // });
+        // call relevant parser
+        ctype_func_selector(attribute.ctype, [element_pointer, &attribute, this]<class T> {
+            ValueVisitor<T> visitor{{}, attribute.get_attribute<T>(element_pointer)};
+            msgpack::parse(data_, size_, offset_, visitor);
+        });
     }
 
     static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
