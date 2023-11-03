@@ -44,9 +44,11 @@ class Deserializer {
             return ss.str();
         }
 
+        // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
         void parse_error(size_t parsed_offset, size_t error_offset) {
             throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Error in parsing")};
         }
+        // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
         void insufficient_bytes(size_t parsed_offset, size_t error_offset) {
             throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Insufficient bytes")};
         }
@@ -155,7 +157,7 @@ class Deserializer {
     template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
         static constexpr std::string_view static_err_msg = "Expect a number.";
         double& value;
-        bool visit_nil() { return true; }
+        bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
         bool visit_positive_integer(uint64_t v) {
             value = static_cast<double>(v);
             return true;
@@ -179,7 +181,7 @@ class Deserializer {
         RealValue<false>& value;
         Idx idx{};
         bool inside_array{};
-        bool visit_nil() { return true; }
+        bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
         bool start_array(uint32_t num_elements) {
             if (inside_array || num_elements != 3) {
                 this->throw_error();
@@ -386,10 +388,11 @@ class Deserializer {
         Idx global_map_size = parse_map_array<true, false, true>().size;
         AttributeByteMeta attributes;
         DataByteMeta data_counts{};
+        // NOLINTNEXTLINE(readability-isolate-declaration)
         bool has_version{}, has_type{}, has_is_batch{}, has_attributes{}, has_data{};
 
         while (global_map_size-- != 0) {
-            std::string_view key = parse_string();
+            std::string_view const key = parse_string();
             if (key == "version") {
                 root_key_ = "version";
                 has_version = true;
@@ -403,9 +406,8 @@ class Deserializer {
                 bool const is_batch = parse_bool();
                 if (has_data && (is_batch_ != is_batch)) {
                     throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
-                } else {
-                    is_batch_ = is_batch;
                 }
+                is_batch_ = is_batch;
                 has_is_batch = true;
             } else if (key == "attributes") {
                 root_key_ = "attributes";
@@ -485,9 +487,8 @@ class Deserializer {
         Idx batch_size{};
         if (has_is_batch && (is_batch_ != !root_visitor.is_map)) {
             throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
-        } else {
-            is_batch_ = !root_visitor.is_map;
         }
+        is_batch_ = !root_visitor.is_map;
         if (root_visitor.is_map) {
             batch_size = 1;
         } else {
