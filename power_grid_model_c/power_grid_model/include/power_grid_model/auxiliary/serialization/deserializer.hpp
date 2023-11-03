@@ -629,6 +629,10 @@ class Deserializer {
 
     void parse_scenario(MetaComponent const& component, void* scenario_pointer, ComponentByteMeta const& msg_data,
                         std::span<MetaAttribute const* const> attributes) {
+        // skip for empty scenario
+        if (msg_data.size == 0) {
+            return;
+        }
         // set offset and skip array header
         offset_ = msg_data.offset;
         parse_map_array<false, true, true>();
@@ -643,6 +647,7 @@ class Deserializer {
             }
         }
         element_number_ = -1;
+        offset_ = 0;
     }
 
     void parse_map_element(void* element_pointer, Idx map_size, MetaComponent const& component) {
