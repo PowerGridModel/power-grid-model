@@ -89,7 +89,21 @@ static_assert(!is_copyable_to<GenericVoltageSensor, GenericVoltageSensor>);
 
 // pseudo-abstract classes (not abstract but no constructors)
 static_assert(!std::is_default_constructible_v<Sensor>);
-static_assert(!std::is_constructible_v<Sensor, SensorInput>);
+static_assert(!std::constructible_from<Sensor, SensorInput>);
 static_assert(!is_copyable_to<Sensor, Sensor>);
+
+static_assert(!std::constructible_from<Sensor, GenericPowerSensor>);
+static_assert(!std::constructible_from<Sensor, GenericVoltageSensor>);
+static_assert(!std::constructible_from<Sensor, SymPowerSensor>);
+static_assert(!std::constructible_from<Sensor, AsymPowerSensor>);
+static_assert(!std::constructible_from<Sensor, SymVoltageSensor>);
+static_assert(!std::constructible_from<Sensor, AsymVoltageSensor>);
+
+static_assert(!is_copyable_to<GenericPowerSensor, Sensor>);
+static_assert(!is_copyable_to<GenericVoltageSensor, Sensor>);
+static_assert(!is_copyable_to<SymPowerSensor, Sensor>);
+static_assert(!is_copyable_to<AsymPowerSensor, Sensor>);
+static_assert(!is_copyable_to<SymVoltageSensor, Sensor>);
+static_assert(!is_copyable_to<AsymVoltageSensor, Sensor>);
 
 } // namespace power_grid_model
