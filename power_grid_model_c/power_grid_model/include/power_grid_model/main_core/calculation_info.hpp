@@ -13,7 +13,7 @@ namespace power_grid_model::main_core {
 inline CalculationInfo merge_calculation_info(std::vector<CalculationInfo> const& infos) {
     CalculationInfo result;
 
-    const auto key = Timer::make_key(2226, "Max number of iterations");
+    auto const key = Timer::make_key(2226, "Max number of iterations");
     for (auto const& info : infos) {
         for (auto const& [k, v] : info) {
             if (k == key) {

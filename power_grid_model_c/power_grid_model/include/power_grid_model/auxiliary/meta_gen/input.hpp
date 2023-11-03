@@ -357,6 +357,8 @@ struct get_attributes_list<PowerSensorInput<sym>> {
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::power_sigma>{}, "power_sigma"},
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::p_measured>{}, "p_measured"},
             {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::q_measured>{}, "q_measured"},
+            {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::p_sigma>{}, "p_sigma"},
+            {MetaAttributeImpl<PowerSensorInput<sym>, &PowerSensorInput<sym>::q_sigma>{}, "q_sigma"},
         };
     }
 };
@@ -719,6 +721,8 @@ struct get_component_nan<PowerSensorInput<sym>> {
         set_nan(comp.power_sigma);
         set_nan(comp.p_measured);
         set_nan(comp.q_measured);
+        set_nan(comp.p_sigma);
+        set_nan(comp.q_sigma);
         return comp;
     }
 };

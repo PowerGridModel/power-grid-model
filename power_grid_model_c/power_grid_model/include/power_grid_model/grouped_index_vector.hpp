@@ -160,7 +160,7 @@ class SparseGroupedIdxVector {
         return std::distance(std::begin(indptr_), std::ranges::upper_bound(indptr_, element)) - 1;
     }
 
-    SparseGroupedIdxVector() = default;
+    SparseGroupedIdxVector() : indptr_{0} {};
     explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
         : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
         assert(size() >= 0);

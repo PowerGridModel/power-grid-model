@@ -7,6 +7,10 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+auto const r_nan = RealValue<false>{nan};
+} // namespace
+
 // TO TEST
 // calc_param of Sensor
 // get_output of GenericPowerSensor
@@ -27,20 +31,23 @@ TEST_CASE("Test power sensor") {
             sym_power_sensor_input.power_sigma = 1.0 * 1e5;
             sym_power_sensor_input.p_measured = 1.0 * 1e3;
             sym_power_sensor_input.q_measured = 0.8 * 1e3;
+            sym_power_sensor_input.p_sigma = nan;
+            sym_power_sensor_input.q_sigma = nan;
 
             ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
             ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
             PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-            SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-            SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+            PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+            PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
             PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
             PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
             // Check symmetric sensor output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(1.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(1.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(8.0 * 1e-4));
 
@@ -50,7 +57,8 @@ TEST_CASE("Test power sensor") {
             CHECK(sym_sensor_output.q_residual == doctest::Approx(1.0 * 1e2));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(1.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(1.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(1.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(8.0 * 1e-4));
 
@@ -66,6 +74,8 @@ TEST_CASE("Test power sensor") {
             sym_power_sensor_update.power_sigma = 2.0 * 1e5;
             sym_power_sensor_update.p_measured = 3.0 * 1e3;
             sym_power_sensor_update.q_measured = 4.0 * 1e3;
+            sym_power_sensor_update.p_sigma = nan;
+            sym_power_sensor_update.q_sigma = nan;
             sym_power_sensor.update(sym_power_sensor_update);
 
             sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -77,7 +87,8 @@ TEST_CASE("Test power sensor") {
             sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
             // Check symmetric sensor output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
 
@@ -85,7 +96,8 @@ TEST_CASE("Test power sensor") {
             CHECK(sym_sensor_output.q_residual == doctest::Approx(3.3 * 1e3));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
 
@@ -101,13 +113,29 @@ TEST_CASE("Test power sensor") {
             sym_sensor_param = sym_power_sensor.calc_param<true>();
             asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-            CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(4.0 * 1e-3));
 
-            CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(4.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            sym_power_sensor_update.p_sigma = 1.0e5;
+            sym_power_sensor_update.q_sigma = 3.0e5;
+            sym_power_sensor.update(sym_power_sensor_update);
+
+            sym_sensor_param = sym_power_sensor.calc_param<true>();
+            asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(1.0 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(9.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(1.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(9.0 / 1e2));
         }
     }
 
@@ -122,20 +150,23 @@ TEST_CASE("Test power sensor") {
             sym_power_sensor_input.power_sigma = 1.0 * 1e5;
             sym_power_sensor_input.p_measured = 1.0 * 1e3;
             sym_power_sensor_input.q_measured = 0.8 * 1e3;
+            sym_power_sensor_input.p_sigma = nan;
+            sym_power_sensor_input.q_sigma = nan;
 
             ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
             ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
             PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
 
-            SensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
-            SensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
+            PowerSensorCalcParam<true> sym_sensor_param = sym_power_sensor.calc_param<true>();
+            PowerSensorCalcParam<false> asym_sensor_param = sym_power_sensor.calc_param<false>();
 
             PowerSensorOutput<true> sym_sensor_output = sym_power_sensor.get_output<true>(s_sym);
             PowerSensorOutput<false> sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
             // Check symmetric sensor output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(1.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(1.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(-1.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(-8.0 * 1e-4));
 
@@ -145,7 +176,8 @@ TEST_CASE("Test power sensor") {
             CHECK(sym_sensor_output.q_residual == doctest::Approx(1.5 * 1e3));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(1.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(1.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(1.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-1.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-8.0 * 1e-4));
 
@@ -161,6 +193,8 @@ TEST_CASE("Test power sensor") {
             sym_power_sensor_update.power_sigma = 2.0 * 1e5;
             sym_power_sensor_update.p_measured = 3.0 * 1e3;
             sym_power_sensor_update.q_measured = 4.0 * 1e3;
+            sym_power_sensor_update.p_sigma = nan;
+            sym_power_sensor_update.q_sigma = nan;
             sym_power_sensor.update(sym_power_sensor_update);
 
             sym_sensor_param = sym_power_sensor.calc_param<true>();
@@ -172,7 +206,8 @@ TEST_CASE("Test power sensor") {
             sym_sensor_output_asym_param = sym_power_sensor.get_output<false>(s_asym);
 
             // Check symmetric sensor output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(-4.0 * 1e-3));
 
@@ -180,7 +215,8 @@ TEST_CASE("Test power sensor") {
             CHECK(sym_sensor_output.q_residual == doctest::Approx(4.7 * 1e3));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
 
@@ -196,26 +232,44 @@ TEST_CASE("Test power sensor") {
             sym_sensor_param = sym_power_sensor.calc_param<true>();
             asym_sensor_param = sym_power_sensor.calc_param<false>();
 
-            CHECK(sym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(-4.0 * 1e-3));
 
-            CHECK(asym_sensor_param.variance == doctest::Approx(4.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(4.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(4.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-4.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            sym_power_sensor_update.p_sigma = 1.0e5;
+            sym_power_sensor_update.q_sigma = 3.0e5;
+            sym_power_sensor.update(sym_power_sensor_update);
+
+            sym_sensor_param = sym_power_sensor.calc_param<true>();
+            asym_sensor_param = sym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(1.0 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(9.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(1.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(9.0 / 1e2));
         }
     }
 
     SUBCASE("Symmetric Power Sensor - Partial initialization and full update") {
-        auto const r_nan = RealValue<true>{nan};
-
         PowerSensorInput<true> sym_power_sensor_input{};
-        sym_power_sensor_input.p_measured = r_nan;
+        sym_power_sensor_input.p_measured = nan;
         sym_power_sensor_input.q_measured = RealValue<true>{1.0};
+        sym_power_sensor_input.p_sigma = nan;
+        sym_power_sensor_input.q_sigma = nan;
 
         PowerSensorUpdate<true> sym_power_sensor_update{};
         sym_power_sensor_update.p_measured = RealValue<true>{1.0};
-        sym_power_sensor_update.q_measured = r_nan;
+        sym_power_sensor_update.q_measured = nan;
+        sym_power_sensor_update.p_sigma = nan;
+        sym_power_sensor_update.q_sigma = nan;
 
         PowerSensor<true> sym_power_sensor{sym_power_sensor_input};
         sym_power_sensor.update(sym_power_sensor_update);
@@ -240,20 +294,23 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_input.power_sigma = 1.0 * 1e5;
             asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
             asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+            asym_power_sensor_input.p_sigma = r_nan;
+            asym_power_sensor_input.q_sigma = r_nan;
 
             ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
             ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
             PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-            SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-            SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+            PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+            PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
             PowerSensorOutput<true> asym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
             PowerSensorOutput<false> asym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
             // Check asymmetric output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(9.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(9.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(24.0 * 1e-4));
 
@@ -263,7 +320,8 @@ TEST_CASE("Test power sensor") {
             CHECK(asym_sensor_output.q_residual == doctest::Approx(1.7 * 1e3));
 
             // Check asymmetric output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(9.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(9.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(24.0 * 1e-4));
 
@@ -279,6 +337,8 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_update.power_sigma = 2.0 * 1e5;
             asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
             asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+            asym_power_sensor_update.p_sigma = r_nan;
+            asym_power_sensor_update.q_sigma = r_nan;
             asym_power_sensor.update(asym_power_sensor_update);
 
             sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -290,7 +350,8 @@ TEST_CASE("Test power sensor") {
             asym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
             // Check asymmetric output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(3.6 / 1e1 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(3.6 / 1e1 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(9.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(12.0 * 1e-3));
 
@@ -298,7 +359,8 @@ TEST_CASE("Test power sensor") {
             CHECK(asym_sensor_output.q_residual == doctest::Approx(11.3 * 1e3));
 
             // Check asymmetric output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(3.6 / 1e1 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(3.6 / 1e1 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(9.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(12.0 * 1e-3));
 
@@ -322,6 +384,24 @@ TEST_CASE("Test power sensor") {
             CHECK(imag(asym_sensor_param.value[0]) == doctest::Approx(24.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(27.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[2]) == doctest::Approx(12.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            asym_power_sensor_update.p_sigma = {1.0e5, 0.5e5, 2.0e5};
+            asym_power_sensor_update.q_sigma = {3.0e5, 2.0e5, 4.0e5};
+            asym_power_sensor.update(asym_power_sensor_update);
+
+            sym_sensor_param = asym_power_sensor.calc_param<true>();
+            asym_sensor_param = asym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(15.75 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(87.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(9.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[1] == doctest::Approx(2.25 / 1e2));
+            CHECK(asym_sensor_param.p_variance[2] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[0] == doctest::Approx(81.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[2] == doctest::Approx(144.0 / 1e2));
         }
     }
 
@@ -336,20 +416,23 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_input.power_sigma = 1.0 * 1e5;
             asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<false>{1.0};
             asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<false>{1.0};
+            asym_power_sensor_input.p_sigma = r_nan;
+            asym_power_sensor_input.q_sigma = r_nan;
 
             ComplexValue<true> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
             ComplexValue<false> const s_asym = s_sym * RealValue<false>{1.0};
 
             PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
 
-            SensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
-            SensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
+            PowerSensorCalcParam<true> sym_sensor_param = asym_power_sensor.calc_param<true>();
+            PowerSensorCalcParam<false> asym_sensor_param = asym_power_sensor.calc_param<false>();
 
             PowerSensorOutput<true> asym_sensor_output = asym_power_sensor.get_output<true>(s_sym);
             PowerSensorOutput<false> asym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
             // Check asymmetric output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(9.0 / 1e2 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(9.0 / 1e2 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(-24.0 * 1e-4));
 
@@ -359,7 +442,8 @@ TEST_CASE("Test power sensor") {
             CHECK(asym_sensor_output.q_residual == doctest::Approx(3.1 * 1e3));
 
             // Check asymmetric output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(9.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(9.0 / 1e2 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(9.0 / 1e2 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-3.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-24.0 * 1e-4));
 
@@ -375,6 +459,8 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_update.power_sigma = 2.0 * 1e5;
             asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<false>{1.0};
             asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<false>{1.0};
+            asym_power_sensor_update.p_sigma = r_nan;
+            asym_power_sensor_update.q_sigma = r_nan;
             asym_power_sensor.update(asym_power_sensor_update);
 
             sym_sensor_param = asym_power_sensor.calc_param<true>();
@@ -386,7 +472,8 @@ TEST_CASE("Test power sensor") {
             asym_sensor_output_asym_param = asym_power_sensor.get_output<false>(s_asym);
 
             // Check asymmetric output for symmetric parameters
-            CHECK(sym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(3.6 / 1e1 / 2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(3.6 / 1e1 / 2));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(-9.0 * 1e-3));
             CHECK(imag(sym_sensor_param.value) == doctest::Approx(-12.0 * 1e-3));
 
@@ -394,7 +481,8 @@ TEST_CASE("Test power sensor") {
             CHECK(asym_sensor_output.q_residual == doctest::Approx(12.7 * 1e3));
 
             // Check asymmetric output for asymmetric parameters
-            CHECK(asym_sensor_param.variance == doctest::Approx(3.6 / 1e1));
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(3.6 / 1e1 / 2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(3.6 / 1e1 / 2));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(-9.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-12.0 * 1e-3));
 
@@ -418,19 +506,39 @@ TEST_CASE("Test power sensor") {
             CHECK(imag(asym_sensor_param.value[0]) == doctest::Approx(-24.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(-27.0 * 1e-3));
             CHECK(imag(asym_sensor_param.value[2]) == doctest::Approx(-12.0 * 1e-3));
+
+            // Check update with different p and q sigma variances
+            asym_power_sensor_update.p_sigma = {1.0e5, 0.5e5, 2.0e5};
+            asym_power_sensor_update.q_sigma = {3.0e5, 2.0e5, 4.0e5};
+            asym_power_sensor.update(asym_power_sensor_update);
+
+            sym_sensor_param = asym_power_sensor.calc_param<true>();
+            asym_sensor_param = asym_power_sensor.calc_param<false>();
+
+            CHECK(sym_sensor_param.p_variance == doctest::Approx(15.75 / 1e2));
+            CHECK(sym_sensor_param.q_variance == doctest::Approx(87.0 / 1e2));
+
+            CHECK(asym_sensor_param.p_variance[0] == doctest::Approx(9.0 / 1e2));
+            CHECK(asym_sensor_param.p_variance[1] == doctest::Approx(2.25 / 1e2));
+            CHECK(asym_sensor_param.p_variance[2] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[0] == doctest::Approx(81.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[1] == doctest::Approx(36.0 / 1e2));
+            CHECK(asym_sensor_param.q_variance[2] == doctest::Approx(144.0 / 1e2));
         }
     }
 
     SUBCASE("Asymmetric Power Sensor - Partial initialization and full update") {
-        auto const r_nan = RealValue<false>{nan};
-
         PowerSensorInput<false> asym_power_sensor_input{};
         asym_power_sensor_input.p_measured = r_nan;
         asym_power_sensor_input.q_measured = RealValue<false>{1.0};
+        asym_power_sensor_input.p_sigma = r_nan;
+        asym_power_sensor_input.q_sigma = r_nan;
 
         PowerSensorUpdate<false> asym_power_sensor_update{};
         asym_power_sensor_update.p_measured = RealValue<false>{1.0};
         asym_power_sensor_update.q_measured = r_nan;
+        asym_power_sensor_update.p_sigma = r_nan;
+        asym_power_sensor_update.q_sigma = r_nan;
 
         PowerSensor<false> asym_power_sensor{asym_power_sensor_input};
         asym_power_sensor.update(asym_power_sensor_update);

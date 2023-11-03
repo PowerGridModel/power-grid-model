@@ -78,6 +78,8 @@ struct PowerSensorUpdate : BaseUpdate {
     double power_sigma;  // sigma of error margin of power measurement
     RealValue<sym> p_measured;  // measured active/reactive power
     RealValue<sym> q_measured;  // measured active/reactive power
+    RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
+    RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
 };
 using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;

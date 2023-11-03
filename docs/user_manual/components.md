@@ -107,7 +107,7 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 
 ### Line
 
-* type name: 'line'
+* type name: `line`
 
 `line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance. A cable is
 also modeled as `line`. A `line` can only connect two nodes with the same rated voltage. 
@@ -463,15 +463,14 @@ measuring a `source`, a positive `p_measured` indicates that the active power fl
 2. The node injection power sensor gets placed on a node. 
 In the state estimation result, the power from this injection is distributed equally among the connected appliances at that node.
 Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor is placed for it to function.
-
 ```
 
 ##### Input
 
-| name                     | data type                                                                     | unit             | description                                                                                                     |              required              |  update  |                     valid values                     |
-| ------------------------ | ----------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- | :--------------------------------: | :------: | :--------------------------------------------------: |
-| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                | indicate if it measures an `appliance` or a `branch`                                                            |              &#10004;              | &#10060; | the terminal type should match the `measured_object` |
-| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
+| name                     | data type                                                                     | unit             | description                                                                                                                                                                                 |              required               |  update  |                     valid values                     |
+| ------------------------ | ----------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------: | :------: | :--------------------------------------------------: |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                | indicate if it measures an `appliance` or a `branch`                                                                                                                                        |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
+| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See {hoverxreftooltip}`user_manual/components:Power Sensor Complete Types`. | &#10024; only for state estimation. | &#10004; |                        `> 0`                         |
 
 #### Power Sensor Concrete Types
 
@@ -485,10 +484,22 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 
 ##### Input
 
-| name         | data type        | unit                       | description             |              required              |  update  |
-| ------------ | ---------------- | -------------------------- | ----------------------- | :--------------------------------: | :------: |
-| `p_measured` | `RealValueInput` | watt (W)                   | measured active power   | &#10024; only for state estimation | &#10004; |
-| `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power | &#10024; only for state estimation | &#10004; |
+| name         | data type        | unit                       | description                                                                                                                    |              required               |  update  |
+| ------------ | ---------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------: | :------: |
+| `p_measured` | `RealValueInput` | watt (W)                   | measured active power                                                                                                          | &#10024; only for state estimation  | &#10004; |
+| `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power                                                                                                        | &#10024; only for state estimation  | &#10004; |
+| `p_sigma`    | `RealValueInput` | watt (W)                   | standard deviation of the active power measurement error. Usually this is the absolute measurement error range divided by 3.   | &#10060; see the explanation below. | &#10004; | `> 0` |
+| `q_sigma`    | `RealValueInput` | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; | `> 0` |
+
+```{note}
+1. If both `p_sigma` and `q_sigma` are provided, they represent the standard deviation of the active and reactive power, respectively, and the value of `power_sigma` is ignored. Any infinite component invalidates the entire measurement.
+
+2. If neither `p_sigma` nor `q_sigma` are provided, `power_sigma` represents the standard deviation of the apparent power.
+
+3. Providing only one of `p_sigma` and `q_sigma` results in undefined behaviour.
+```
+
+See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details per method on how the variances are taken into account for both the active and reactive power and for the individual phases.
 
 ##### Steady state output
 

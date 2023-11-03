@@ -95,7 +95,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         main_timer.stop();
 
-        const auto key = Timer::make_key(2226, "Max number of iterations");
+        auto const key = Timer::make_key(2226, "Max number of iterations");
         calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
 
         return output;
