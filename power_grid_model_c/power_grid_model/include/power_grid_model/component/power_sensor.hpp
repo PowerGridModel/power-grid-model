@@ -15,13 +15,12 @@
 
 namespace power_grid_model {
 
-class GenericPowerSensor : public Sensor<PowerSensorCalcParam> {
+class GenericPowerSensor : public Sensor {
   public:
     static constexpr char const* name = "generic_power_sensor";
 
     explicit GenericPowerSensor(GenericPowerSensorInput const& generic_power_sensor_input)
-        : Sensor<PowerSensorCalcParam>{generic_power_sensor_input},
-          terminal_type_{generic_power_sensor_input.measured_terminal_type} {}
+        : Sensor{generic_power_sensor_input}, terminal_type_{generic_power_sensor_input.measured_terminal_type} {}
 
     MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
 
@@ -57,6 +56,11 @@ class GenericPowerSensor : public Sensor<PowerSensorCalcParam> {
 
   private:
     MeasuredTerminalType terminal_type_;
+
+    // virtual function getter for sym and asym param
+    // override them in real sensors function
+    virtual PowerSensorCalcParam<true> sym_calc_param() const = 0;
+    virtual PowerSensorCalcParam<false> asym_calc_param() const = 0;
 
     virtual PowerSensorOutput<true> get_sym_output(ComplexValue<true> const& s) const = 0;
     virtual PowerSensorOutput<false> get_asym_output(ComplexValue<false> const& s) const = 0;

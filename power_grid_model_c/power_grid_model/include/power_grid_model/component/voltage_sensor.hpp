@@ -17,12 +17,12 @@
 
 namespace power_grid_model {
 
-class GenericVoltageSensor : public Sensor<VoltageSensorCalcParam> {
+class GenericVoltageSensor : public Sensor {
   public:
     static constexpr char const* name = "generic_voltage_sensor";
 
     explicit GenericVoltageSensor(GenericVoltageSensorInput const& generic_voltage_sensor_input)
-        : Sensor<VoltageSensorCalcParam>{generic_voltage_sensor_input} {};
+        : Sensor{generic_voltage_sensor_input} {};
 
     template <bool sym> VoltageSensorOutput<sym> get_output(ComplexValue<sym> const& u) const {
         if constexpr (sym) {
@@ -56,6 +56,11 @@ class GenericVoltageSensor : public Sensor<VoltageSensorCalcParam> {
     }
 
   private:
+    // virtual function getter for sym and asym param
+    // override them in real sensors function
+    virtual VoltageSensorCalcParam<true> sym_calc_param() const = 0;
+    virtual VoltageSensorCalcParam<false> asym_calc_param() const = 0;
+
     virtual VoltageSensorOutput<true> get_sym_output(ComplexValue<true> const& u) const = 0;
     virtual VoltageSensorOutput<false> get_asym_output(ComplexValue<false> const& u) const = 0;
 };

@@ -17,22 +17,11 @@
 
 namespace power_grid_model {
 
-template <template <bool symmetric> typename SensorCalcParam>
-    requires sensor_calc_param_type<SensorCalcParam<true>> && sensor_calc_param_type<SensorCalcParam<false>>
 class Sensor : public Base {
   public:
     static constexpr char const* name = "sensor";
     using InputType = SensorInput;
     using ShortCircuitOutputType = SensorShortCircuitOutput;
-
-    template <bool sym> using SensorCalcParamType = SensorCalcParam<sym>;
-
-    using SymSensorCalcParamType = SensorCalcParam<true>;
-    using AsymSensorCalcParamType = SensorCalcParam<false>;
-
-    // constructor
-    explicit Sensor(SensorInput const& sensor_input)
-        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {}
 
     ID measured_object() const { return measured_object_; };
 
@@ -40,20 +29,15 @@ class Sensor : public Base {
     bool energized(bool /* is_connected_to_source */) const final { return true; }
     ComponentType math_model_type() const final { return ComponentType::sensor; }
 
-    // getter for calculation param
-    template <bool sym> SensorCalcParamType<sym> calc_param() const {
-        if constexpr (sym) {
-            return sym_calc_param();
-        } else {
-            return asym_calc_param();
-        }
-    }
-
   protected:
-    // virtual function getter for sym and asym param
-    // override them in real sensors function
-    virtual SymSensorCalcParamType sym_calc_param() const = 0;
-    virtual AsymSensorCalcParamType asym_calc_param() const = 0;
+    // constructor
+    explicit Sensor(SensorInput const& sensor_input)
+        : Base{sensor_input}, measured_object_{sensor_input.measured_object} {}
+    Sensor(Sensor const&) = default;
+    Sensor(Sensor&&) = default;
+    Sensor& operator=(Sensor const&) = default;
+    Sensor& operator=(Sensor&&) = default;
+    ~Sensor() = default;
 
   private:
     ID measured_object_;
