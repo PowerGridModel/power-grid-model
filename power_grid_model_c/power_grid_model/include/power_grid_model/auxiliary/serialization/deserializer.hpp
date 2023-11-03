@@ -136,6 +136,42 @@ class Deserializer {
         }
     };
 
+    template <std::integral T> struct IntVisitor : DefaultErrorVisitor<IntVisitor<T>> {
+        static constexpr std::string_view static_err_msg = "Expect an interger.";
+        T& value;
+        bool visit_nil() { return true; }
+        bool visit_positive_integer(uint64_t v) {
+            value = static_cast<T>(v);
+            return true;
+        }
+        bool visit_negative_integer(int64_t v) {
+            value = static_cast<T>(v);
+            return true;
+        }
+    };
+
+    struct DoubleVisitor : DefaultErrorVisitor<DoubleVisitor> {
+        static constexpr std::string_view static_err_msg = "Expect a number.";
+        double& value;
+        bool visit_nil() { return true; }
+        bool visit_positive_integer(uint64_t v) {
+            value = v;
+            return true;
+        }
+        bool visit_negative_integer(int64_t v) {
+            value = v;
+            return true;
+        }
+        bool visit_float32(float v) {
+            value = v;
+            return true;
+        }
+        bool visit_float64(double v) {
+            value = v;
+            return true;
+        }
+    };
+
     struct ComponentByteMeta {
         std::string_view component;
         Idx size;
