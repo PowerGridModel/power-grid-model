@@ -200,9 +200,10 @@ class Deserializer {
     std::string version_;
     bool is_batch_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>, std::less<>> attributes_;
-    // offset of the msgpack bytes for the actual data, per component (outer), per batch (inner)
-    // if a component has no element for a certain scenario, that offset will be zero.
-    std::vector<std::vector<size_t>> msg_data_offsets_;
+    // offset of the msgpack bytes, the number of elements,
+    //     for the actual data, per component (outer), per batch (inner)
+    // if a component has no element for a certain scenario, that offset and size will be zero.
+    std::vector<std::vector<ComponentByteMeta>> msg_data_offsets_;
     WritableDatasetHandler dataset_handler_;
 
     static std::vector<char> json_to_msgpack(std::string_view json_string) {
@@ -272,6 +273,11 @@ class Deserializer {
         return visitor.value;
     }
 
+    void parse_skip() {
+        DefaultNullVisitor visitor{};
+        msgpack::parse(data_, size_, offset_, visitor);
+    }
+
     WritableDatasetHandler pre_parse() {
         try {
             return pre_parse_impl();
@@ -316,6 +322,9 @@ class Deserializer {
                 has_data = true;
                 data_counts = pre_count_data(has_is_batch);
                 batch_size = static_cast<Idx>(data_counts.size());
+            } else {
+                // null visitor to skip
+                parse_skip();
             }
             root_key_ = {};
         }
@@ -398,9 +407,8 @@ class Deserializer {
                 component_key_ = parse_string();
                 Idx const component_size = parse_map_array<false, true, false>().size;
                 count_per_scenario.push_back({component_key_, component_size, offset_});
-                // null visitor to skip all the real content
-                DefaultNullVisitor visitor{};
-                msgpack::parse(data_, size_, offset_, visitor);
+                // skip all the real content
+                parse_skip();
             }
             component_key_ = {};
             data_counts.push_back(count_per_scenario);
@@ -435,7 +443,7 @@ class Deserializer {
         Idx const batch_size = handler.batch_size();
         // count number of element of all scenarios
         IdxVector counter(batch_size);
-        std::vector<size_t> component_offsets(batch_size);
+        std::vector<ComponentByteMeta> component_byte_meta(batch_size);
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
             auto const& scenario_counts = data_counts[scenario_number_];
             auto const found_component = std::ranges::find_if(
@@ -443,7 +451,7 @@ class Deserializer {
 
             if (found_component != scenario_counts.cend()) {
                 counter[scenario_number_] = found_component->size;
-                component_offsets[scenario_number_] = found_component->offset;
+                component_byte_meta[scenario_number_] = *found_component;
             }
         }
         scenario_number_ = -1;
@@ -453,7 +461,7 @@ class Deserializer {
             elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
                 elements_per_scenario * batch_size;                                     // multiply
         handler.add_component_info(component_key_, elements_per_scenario, total_elements);
-        msg_data_offsets_.push_back(component_offsets);
+        msg_data_offsets_.push_back(component_byte_meta);
         component_key_ = {};
     }
 
