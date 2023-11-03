@@ -1328,7 +1328,7 @@ TEST_CASE("Math solver, measurements") {
         // the different aggregation of the load gen's P and Q measurements cause differences compared to the case with
         // identical variances
         CHECK(real(output.bus_injection[1]) > doctest::Approx(-1.0));
-        CHECK(real(output.load_gen[0].s) > doctest::Approx(-1.85));
+        CHECK(real(output.load_gen[0].s) < doctest::Approx(-1.85));
         CHECK(real(output.load_gen[1].s) > doctest::Approx(0.85));
     }
 

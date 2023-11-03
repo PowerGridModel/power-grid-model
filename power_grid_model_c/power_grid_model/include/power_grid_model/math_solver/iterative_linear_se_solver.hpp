@@ -605,12 +605,13 @@ template <bool sym> class MeasuredValues {
                                              FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        ComplexValue<sym> const mu = (bus_appliance_injection.value - s) /
-                                     (bus_appliance_injection.p_variance + bus_appliance_injection.q_variance);
+        auto const delta = bus_appliance_injection.value - s;
+        ComplexValue<sym> const mu =
+            real(delta) / bus_appliance_injection.p_variance + 1.0i * imag(delta) / bus_appliance_injection.q_variance;
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {
-            return power.value - (power.p_variance + power.q_variance) * mu;
+            return power.value - (power.p_variance * real(mu) + 1.0i * power.q_variance * imag(mu));
         };
 
         for (Idx const load_gen : load_gens) {
