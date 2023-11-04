@@ -35,202 +35,212 @@ constexpr from_msgpack_t from_msgpack;
 struct from_json_t {};
 constexpr from_json_t from_json;
 
+namespace detail {
+
+// visitors for parsing
+struct DefaultNullVisitor : msgpack::null_visitor {
+    static std::string msg_for_parse_error(size_t parsed_offset, size_t error_offset, std::string_view msg) {
+        std::stringstream ss;
+        ss << msg << ", parsed_offset: " << parsed_offset << ", error_offset: " << error_offset << ".\n";
+        return ss.str();
+    }
+
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    void parse_error(size_t parsed_offset, size_t error_offset) {
+        throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Error in parsing")};
+    }
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    void insufficient_bytes(size_t parsed_offset, size_t error_offset) {
+        throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Insufficient bytes")};
+    }
+};
+
+template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
+    static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
+
+    bool visit_nil() { return throw_error(); }
+    bool visit_boolean(bool /*v*/) { return throw_error(); }
+    bool visit_positive_integer(uint64_t /*v*/) { return throw_error(); }
+    bool visit_negative_integer(int64_t /*v*/) { return throw_error(); }
+    bool visit_float32(float /*v*/) { return throw_error(); }
+    bool visit_float64(double /*v*/) { return throw_error(); }
+    bool visit_str(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool visit_bin(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool visit_ext(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool start_array(uint32_t /*num_elements*/) { return throw_error(); }
+    bool start_array_item() { return throw_error(); }
+    bool end_array_item() { return throw_error(); }
+    bool end_array() { return throw_error(); }
+    bool start_map(uint32_t /*num_kv_pairs*/) { return throw_error(); }
+    bool start_map_key() { return throw_error(); }
+    bool end_map_key() { return throw_error(); }
+    bool start_map_value() { return throw_error(); }
+    bool end_map_value() { return throw_error(); }
+    bool end_map() { return throw_error(); }
+
+    bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
+
+    std::string get_err_msg() { return std::string{T::static_err_msg}; }
+};
+
+template <bool enable_map, bool enable_array>
+    requires(enable_map || enable_array)
+struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<enable_map, enable_array>> {
+    static constexpr std::string_view static_err_msg =
+        enable_map ? (enable_array ? "Expect a map or array." : "Expect a map.") : "Expect an array.";
+
+    Idx size{};
+    bool is_map{};
+    bool start_map(uint32_t num_kv_pairs) {
+        if constexpr (!enable_map) {
+            this->throw_error();
+        }
+        size = static_cast<Idx>(num_kv_pairs);
+        is_map = true;
+        return true;
+    }
+    bool start_map_key() { return false; }
+    bool end_map() {
+        assert(size == 0);
+        return true;
+    }
+    bool start_array(uint32_t num_elements) {
+        if constexpr (!enable_array) {
+            this->throw_error();
+        }
+        size = static_cast<Idx>(num_elements);
+        is_map = false;
+        return true;
+    }
+    bool start_array_item() { return false; }
+    bool end_array() {
+        assert(size == 0);
+        return true;
+    }
+};
+
+struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
+    static constexpr std::string_view static_err_msg = "Expect a string.";
+
+    std::string_view str{};
+    bool visit_str(const char* v, uint32_t size) {
+        str = {v, size};
+        return true;
+    }
+};
+
+struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
+    static constexpr std::string_view static_err_msg = "Expect a boolean.";
+
+    bool value{};
+    bool visit_boolean(bool v) {
+        value = v;
+        return true;
+    }
+};
+
+template <class T> struct ValueVisitor;
+
+template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
+    static constexpr std::string_view static_err_msg = "Expect an interger.";
+    T& value;
+    bool visit_nil() { return true; }
+    bool visit_positive_integer(uint64_t v) {
+        value = static_cast<T>(v);
+        return true;
+    }
+    bool visit_negative_integer(int64_t v) {
+        value = static_cast<T>(v);
+        return true;
+    }
+};
+
+template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
+    static constexpr std::string_view static_err_msg = "Expect a number.";
+    double& value;
+    bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
+    bool visit_positive_integer(uint64_t v) {
+        value = static_cast<double>(v);
+        return true;
+    }
+    bool visit_negative_integer(int64_t v) {
+        value = static_cast<double>(v);
+        return true;
+    }
+    bool visit_float32(float v) {
+        value = v;
+        return true;
+    }
+    bool visit_float64(double v) {
+        value = v;
+        return true;
+    }
+};
+
+template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
+    static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
+    RealValue<false>& value;
+    Idx idx{};
+    bool inside_array{};
+    bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
+    bool start_array(uint32_t num_elements) {
+        if (inside_array || num_elements != 3) {
+            this->throw_error();
+        }
+        inside_array = true;
+        return true;
+    }
+    using msgpack::null_visitor::start_array_item;
+    bool end_array_item() {
+        ++idx;
+        return true;
+    }
+    using msgpack::null_visitor::end_array;
+    bool visit_positive_integer(uint64_t v) {
+        if (!inside_array) {
+            this->throw_error();
+        }
+        value[idx] = static_cast<double>(v);
+        return true;
+    }
+    bool visit_negative_integer(int64_t v) {
+        if (!inside_array) {
+            this->throw_error();
+        }
+        value[idx] = static_cast<double>(v);
+        return true;
+    }
+    bool visit_float32(float v) {
+        if (!inside_array) {
+            this->throw_error();
+        }
+        value[idx] = v;
+        return true;
+    }
+    bool visit_float64(double v) {
+        if (!inside_array) {
+            this->throw_error();
+        }
+        value[idx] = v;
+        return true;
+    }
+};
+
+} // namespace detail
+
 class Deserializer {
-    // visitors for parsing
-    struct DefaultNullVisitor : msgpack::null_visitor {
-        static std::string msg_for_parse_error(size_t parsed_offset, size_t error_offset, std::string_view msg) {
-            std::stringstream ss;
-            ss << msg << ", parsed_offset: " << parsed_offset << ", error_offset: " << error_offset << ".\n";
-            return ss.str();
-        }
-
-        // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-        void parse_error(size_t parsed_offset, size_t error_offset) {
-            throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Error in parsing")};
-        }
-        // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-        void insufficient_bytes(size_t parsed_offset, size_t error_offset) {
-            throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Insufficient bytes")};
-        }
-    };
-
-    template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
-        static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
-
-        bool visit_nil() { return throw_error(); }
-        bool visit_boolean(bool /*v*/) { return throw_error(); }
-        bool visit_positive_integer(uint64_t /*v*/) { return throw_error(); }
-        bool visit_negative_integer(int64_t /*v*/) { return throw_error(); }
-        bool visit_float32(float /*v*/) { return throw_error(); }
-        bool visit_float64(double /*v*/) { return throw_error(); }
-        bool visit_str(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
-        bool visit_bin(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
-        bool visit_ext(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
-        bool start_array(uint32_t /*num_elements*/) { return throw_error(); }
-        bool start_array_item() { return throw_error(); }
-        bool end_array_item() { return throw_error(); }
-        bool end_array() { return throw_error(); }
-        bool start_map(uint32_t /*num_kv_pairs*/) { return throw_error(); }
-        bool start_map_key() { return throw_error(); }
-        bool end_map_key() { return throw_error(); }
-        bool start_map_value() { return throw_error(); }
-        bool end_map_value() { return throw_error(); }
-        bool end_map() { return throw_error(); }
-
-        bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
-
-        std::string get_err_msg() { return std::string{T::static_err_msg}; }
-    };
-
+    using DefaultNullVisitor = detail::DefaultNullVisitor;
     template <bool enable_map, bool enable_array>
-        requires(enable_map || enable_array)
-    struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<enable_map, enable_array>> {
-        static constexpr std::string_view static_err_msg =
-            enable_map ? (enable_array ? "Expect a map or array." : "Expect a map.") : "Expect an array.";
-
-        Idx size{};
-        bool is_map{};
-        bool start_map(uint32_t num_kv_pairs) {
-            if constexpr (!enable_map) {
-                this->throw_error();
-            }
-            size = static_cast<Idx>(num_kv_pairs);
-            is_map = true;
-            return true;
-        }
-        bool start_map_key() { return false; }
-        bool end_map() {
-            assert(size == 0);
-            return true;
-        }
-        bool start_array(uint32_t num_elements) {
-            if constexpr (!enable_array) {
-                this->throw_error();
-            }
-            size = static_cast<Idx>(num_elements);
-            is_map = false;
-            return true;
-        }
-        bool start_array_item() { return false; }
-        bool end_array() {
-            assert(size == 0);
-            return true;
-        }
-    };
-
-    struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
-        static constexpr std::string_view static_err_msg = "Expect a string.";
-
-        std::string_view str{};
-        bool visit_str(const char* v, uint32_t size) {
-            str = {v, size};
-            return true;
-        }
-    };
-
-    struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
-        static constexpr std::string_view static_err_msg = "Expect a boolean.";
-
-        bool value{};
-        bool visit_boolean(bool v) {
-            value = v;
-            return true;
-        }
-    };
-
-    template <class T> struct ValueVisitor;
-
-    template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
-        static constexpr std::string_view static_err_msg = "Expect an interger.";
-        T& value;
-        bool visit_nil() { return true; }
-        bool visit_positive_integer(uint64_t v) {
-            value = static_cast<T>(v);
-            return true;
-        }
-        bool visit_negative_integer(int64_t v) {
-            value = static_cast<T>(v);
-            return true;
-        }
-    };
-
-    template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
-        static constexpr std::string_view static_err_msg = "Expect a number.";
-        double& value;
-        bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
-        bool visit_positive_integer(uint64_t v) {
-            value = static_cast<double>(v);
-            return true;
-        }
-        bool visit_negative_integer(int64_t v) {
-            value = static_cast<double>(v);
-            return true;
-        }
-        bool visit_float32(float v) {
-            value = v;
-            return true;
-        }
-        bool visit_float64(double v) {
-            value = v;
-            return true;
-        }
-    };
-
-    template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
-        static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
-        RealValue<false>& value;
-        Idx idx{};
-        bool inside_array{};
-        bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
-        bool start_array(uint32_t num_elements) {
-            if (inside_array || num_elements != 3) {
-                this->throw_error();
-            }
-            inside_array = true;
-            return true;
-        }
-        using msgpack::null_visitor::start_array_item;
-        bool end_array_item() {
-            ++idx;
-            return true;
-        }
-        using msgpack::null_visitor::end_array;
-        bool visit_positive_integer(uint64_t v) {
-            if (!inside_array) {
-                this->throw_error();
-            }
-            value[idx] = static_cast<double>(v);
-            return true;
-        }
-        bool visit_negative_integer(int64_t v) {
-            if (!inside_array) {
-                this->throw_error();
-            }
-            value[idx] = static_cast<double>(v);
-            return true;
-        }
-        bool visit_float32(float v) {
-            if (!inside_array) {
-                this->throw_error();
-            }
-            value[idx] = v;
-            return true;
-        }
-        bool visit_float64(double v) {
-            if (!inside_array) {
-                this->throw_error();
-            }
-            value[idx] = v;
-            return true;
-        }
-    };
+    using MapArrayVisitor = detail::MapArrayVisitor<enable_map, enable_array>;
+    using StringVisitor = detail::StringVisitor;
+    using BoolVisitor = detail::BoolVisitor;
+    template <class T> using ValueVisitor = detail::ValueVisitor<T>;
 
     struct ComponentByteMeta {
         std::string_view component;
         Idx size;
         size_t offset;
     };
-
     using DataByteMeta = std::vector<std::vector<ComponentByteMeta>>;
     using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;
 
