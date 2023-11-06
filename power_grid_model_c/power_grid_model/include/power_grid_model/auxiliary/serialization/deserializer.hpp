@@ -20,6 +20,7 @@
 #include <span>
 #include <sstream>
 #include <string_view>
+#include <utility>
 
 namespace power_grid_model::meta_data {
 
@@ -155,10 +156,16 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
     T& value;
     bool visit_nil() { return true; }
     bool visit_positive_integer(uint64_t v) {
+        if (!std::in_range<T>(v)) {
+            throw SerializationError{"Integer value overflows the data type!\n"};
+        }
         value = static_cast<T>(v);
         return true;
     }
     bool visit_negative_integer(int64_t v) {
+        if (!std::in_range<T>(v)) {
+            throw SerializationError{"Integer value overflows the data type!\n"};
+        }
         value = static_cast<T>(v);
         return true;
     }
@@ -613,8 +620,9 @@ class Deserializer {
             // accumulate sum
             // TODO (TonyXiang8787) Apple Clang cannot compile transform_inclusive_scan correctly
             // So we disable the good code and write the loop manually
-            std::transform_inclusive_scan(msg_data.cbegin(), msg_data.cend(), buffer.indptr.begin() + 1, std::plus{},
-                                          [](auto const& x) { return x.size; });
+            std::transform_inclusive_scan(
+                msg_data.cbegin(), msg_data.cend(), buffer.indptr.begin() + 1, std::plus{},
+                [](auto const& x) { return x.size; }, Idx{});
             // for (Idx batch_idx = 0; batch_idx != batch_size; ++batch_idx) {
             //    buffer.indptr[batch_idx + 1] = buffer.indptr[batch_idx] + msg_data[batch_idx].size;
             //}
