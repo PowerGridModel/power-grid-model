@@ -507,7 +507,7 @@ class Deserializer {
         DataByteMeta data_counts{};
         auto const root_visitor = parse_map_array<visit_map_array_t, stay_offset>();
         Idx batch_size{};
-        if (has_is_batch && (is_batch_ != !root_visitor.is_map)) {
+        if (has_is_batch && (is_batch_ == root_visitor.is_map)) {
             throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
         }
         is_batch_ = !root_visitor.is_map;
