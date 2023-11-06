@@ -83,9 +83,18 @@ template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
     std::string get_err_msg() { return std::string{T::static_err_msg}; }
 };
 
-template <bool enable_map, bool enable_array>
-    requires(enable_map || enable_array)
-struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<enable_map, enable_array>> {
+struct visit_map_t;
+struct visit_array_t;
+struct visit_map_array_t;
+
+template <class map_array>
+    requires(std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_array_t> ||
+             std::same_as<map_array, visit_map_array_t>)
+struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
+    static constexpr bool enable_map =
+        std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_map_array_t>;
+    static constexpr bool enable_array =
+        std::same_as<map_array, visit_array_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr std::string_view static_err_msg =
         enable_map ? (enable_array ? "Expect a map or array." : "Expect a map.") : "Expect an array.";
 
@@ -230,11 +239,15 @@ template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVis
 
 class Deserializer {
     using DefaultNullVisitor = detail::DefaultNullVisitor;
-    template <bool enable_map, bool enable_array>
-    using MapArrayVisitor = detail::MapArrayVisitor<enable_map, enable_array>;
+    template <class map_array> using MapArrayVisitor = detail::MapArrayVisitor<map_array>;
     using StringVisitor = detail::StringVisitor;
     using BoolVisitor = detail::BoolVisitor;
     template <class T> using ValueVisitor = detail::ValueVisitor<T>;
+    static constexpr bool move_forward = true;
+    static constexpr bool stay_offset = false;
+    using visit_map_t = detail::visit_map_t;
+    using visit_array_t = detail::visit_array_t;
+    using visit_map_array_t = detail::visit_map_array_t;
 
     struct ComponentByteMeta {
         std::string_view component;
@@ -354,9 +367,8 @@ class Deserializer {
         }
     }
 
-    template <bool enable_map, bool enable_array, bool move_forward>
-    MapArrayVisitor<enable_map, enable_array> parse_map_array() {
-        MapArrayVisitor<enable_map, enable_array> visitor{};
+    template <class map_array, bool move_forward> MapArrayVisitor<map_array> parse_map_array() {
+        MapArrayVisitor<map_array> visitor{};
         if constexpr (move_forward) {
             // move offset forward by giving a reference
             msgpack::parse(data_, size_, offset_, visitor);
@@ -395,7 +407,7 @@ class Deserializer {
     WritableDatasetHandler pre_parse_impl() {
         std::string_view dataset;
         Idx batch_size{};
-        Idx global_map_size = parse_map_array<true, false, true>().size;
+        Idx global_map_size = parse_map_array<visit_map_t, move_forward>().size;
         AttributeByteMeta attributes;
         DataByteMeta data_counts{};
         // NOLINTNEXTLINE(readability-isolate-declaration)
@@ -459,12 +471,12 @@ class Deserializer {
 
     AttributeByteMeta read_predefined_attributes() {
         AttributeByteMeta attributes;
-        Idx n_components = parse_map_array<true, false, true>().size;
+        Idx n_components = parse_map_array<visit_map_t, move_forward>().size;
         while (n_components-- != 0) {
             component_key_ = parse_string();
             attributes.push_back({component_key_, {}});
             auto& attributes_per_component = attributes.back().second;
-            Idx const n_attributes_per_component = parse_map_array<false, true, true>().size;
+            Idx const n_attributes_per_component = parse_map_array<visit_array_t, move_forward>().size;
             for (element_number_ = 0; element_number_ != n_attributes_per_component; ++element_number_) {
                 attributes_per_component.push_back(parse_string());
             }
@@ -493,7 +505,7 @@ class Deserializer {
 
     DataByteMeta pre_count_data(bool has_is_batch) {
         DataByteMeta data_counts{};
-        auto const root_visitor = parse_map_array<true, true, false>();
+        auto const root_visitor = parse_map_array<visit_map_array_t, stay_offset>();
         Idx batch_size{};
         if (has_is_batch && (is_batch_ != !root_visitor.is_map)) {
             throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
@@ -503,14 +515,14 @@ class Deserializer {
             batch_size = 1;
         } else {
             batch_size = root_visitor.size;
-            parse_map_array<false, true, true>();
+            parse_map_array<visit_array_t, move_forward>();
         }
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
             std::vector<ComponentByteMeta> count_per_scenario;
-            Idx n_components = parse_map_array<true, false, true>().size;
+            Idx n_components = parse_map_array<visit_map_t, move_forward>().size;
             while (n_components-- != 0) {
                 component_key_ = parse_string();
-                Idx const component_size = parse_map_array<false, true, false>().size;
+                Idx const component_size = parse_map_array<visit_array_t, stay_offset>().size;
                 count_per_scenario.push_back({component_key_, component_size, offset_});
                 // skip all the real content
                 parse_skip();
@@ -646,11 +658,11 @@ class Deserializer {
         }
         // set offset and skip array header
         offset_ = msg_data.offset;
-        parse_map_array<false, true, true>();
+        parse_map_array<visit_array_t, move_forward>();
         for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
             void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
             // check the element is map or array
-            auto const element_visitor = parse_map_array<true, true, true>();
+            auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
             if (element_visitor.is_map) {
                 parse_map_element(element_pointer, element_visitor.size, component);
             } else {
