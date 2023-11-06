@@ -613,12 +613,11 @@ class Deserializer {
             // accumulate sum
             // TODO (TonyXiang8787) Apple Clang cannot compile transform_inclusive_scan correctly
             // So we disable the good code and write the loop manually
-            // std::transform_inclusive_scan(msg_data.cbegin(), msg_data.cend(),
-            //                               buffer.indptr.begin() + 1,
-            //                               std::plus{}, [](auto const& x) { return x.size; });
-            for (Idx batch_idx = 0; batch_idx != batch_size; ++batch_idx) {
-                buffer.indptr[batch_idx + 1] = buffer.indptr[batch_idx] + msg_data[batch_idx].size;
-            }
+            std::transform_inclusive_scan(msg_data.cbegin(), msg_data.cend(), buffer.indptr.begin() + 1, std::plus{},
+                                          [](auto const& x) { return x.size; });
+            // for (Idx batch_idx = 0; batch_idx != batch_size; ++batch_idx) {
+            //    buffer.indptr[batch_idx + 1] = buffer.indptr[batch_idx] + msg_data[batch_idx].size;
+            //}
         }
         // set nan
         info.component->set_nan(buffer.data, 0, info.total_elements);
