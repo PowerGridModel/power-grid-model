@@ -525,20 +525,24 @@ class Deserializer {
             parse_map_array<visit_array_t, move_forward>();
         }
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
-            std::vector<ComponentByteMeta> count_per_scenario;
-            Idx n_components = parse_map_array<visit_map_t, move_forward>().size;
-            while (n_components-- != 0) {
-                component_key_ = parse_string();
-                Idx const component_size = parse_map_array<visit_array_t, stay_offset>().size;
-                count_per_scenario.push_back({component_key_, component_size, offset_});
-                // skip all the real content
-                parse_skip();
-            }
-            component_key_ = {};
-            data_counts.push_back(count_per_scenario);
+            data_counts.push_back(pre_count_scenario());
         }
         scenario_number_ = -1;
         return data_counts;
+    }
+
+    std::vector<ComponentByteMeta> pre_count_scenario() {
+        std::vector<ComponentByteMeta> count_per_scenario;
+        Idx n_components = parse_map_array<visit_map_t, move_forward>().size;
+        while (n_components-- != 0) {
+            component_key_ = parse_string();
+            Idx const component_size = parse_map_array<visit_array_t, stay_offset>().size;
+            count_per_scenario.push_back({component_key_, component_size, offset_});
+            // skip all the real content
+            parse_skip();
+        }
+        component_key_ = {};
+        return count_per_scenario;
     }
 
     void count_data(WritableDatasetHandler& handler, DataByteMeta const& data_counts) {
