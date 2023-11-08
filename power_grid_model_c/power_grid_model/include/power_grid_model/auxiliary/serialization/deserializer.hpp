@@ -47,11 +47,11 @@ struct DefaultNullVisitor : msgpack::null_visitor {
     }
 
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    void parse_error(size_t parsed_offset, size_t error_offset) {
+    [[noreturn]] void parse_error(size_t parsed_offset, size_t error_offset) {
         throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Error in parsing")};
     }
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    void insufficient_bytes(size_t parsed_offset, size_t error_offset) {
+    [[noreturn]] void insufficient_bytes(size_t parsed_offset, size_t error_offset) {
         throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Insufficient bytes")};
     }
 };
@@ -417,8 +417,11 @@ class Deserializer {
         Idx global_map_size = parse_map_array<visit_map_t, move_forward>().size;
         AttributeByteMeta attributes;
         DataByteMeta data_counts{};
-        // NOLINTNEXTLINE(readability-isolate-declaration)
-        bool has_version{}, has_type{}, has_is_batch{}, has_attributes{}, has_data{};
+        bool has_version{};
+        bool has_type{};
+        bool has_is_batch{};
+        bool has_attributes{};
+        bool has_data{};
 
         while (global_map_size-- != 0) {
             std::string_view const key = parse_string();
@@ -575,8 +578,7 @@ class Deserializer {
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
             auto const& scenario_counts = data_counts[scenario_number_];
             auto const found_component = std::ranges::find_if(
-                scenario_counts, [component](auto const& x) { return x.component == component.name; });
-
+                scenario_counts, [&component](auto const& x) { return x.component == component.name; });
             if (found_component != scenario_counts.cend()) {
                 counter[scenario_number_] = found_component->size;
                 component_byte_meta[scenario_number_] = *found_component;
@@ -741,7 +743,7 @@ class Deserializer {
         }
     }
 
-    [[noreturn]] void handle_error(std::exception& e) {
+    [[noreturn]] void handle_error(std::exception const& e) {
         std::stringstream ss;
         ss << e.what();
         if (!root_key_.empty()) {
