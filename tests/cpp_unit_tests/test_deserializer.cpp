@@ -412,7 +412,7 @@ TEST_CASE("Deserializer with error") {
         constexpr std::string_view no_version = R"({})";
         check_error(no_version, "version");
         constexpr std::string_view wrong_dataset =
-            R"({"version": "1.0", "type": "sym_input", "is_batch": false, "data": {}})";
+            R"({"version": "1.0", "attributes": {}, "type": "sym_input", "is_batch": false, "data": {}})";
         check_error(wrong_dataset, "sym_input");
         constexpr std::string_view wrong_is_batch = R"({"version": "1.0", "type": "input", "is_batch": 5})";
         check_error(wrong_is_batch, "is_batch");
@@ -435,10 +435,12 @@ TEST_CASE("Deserializer with error") {
             R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [[5]]}})";
         check_error(unequal_attributes, "Position of error: data/node/0");
         constexpr std::string_view wrong_type_list =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["id"]}, "data": {"node": [[true]]}})";
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {"node": ["id"]}, "data": {"node":
+[[true]]}})";
         check_error(wrong_type_list, "Position of error: data/node/0/0");
         constexpr std::string_view wrong_type_dict =
-            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id": true}]}})";
+            R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"node": [{"id":
+true}]}})";
         check_error(wrong_type_dict, "Position of error: data/node/0/id");
     }
 
@@ -450,10 +452,12 @@ TEST_CASE("Deserializer with error") {
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [[5]]}]})";
         check_error(unequal_attributes, "Position of error: data/0/node/0");
         constexpr std::string_view wrong_type_list =
-            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {"node": ["id"]}, "data": [{"node": [[true]]}]})";
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {"node": ["id"]}, "data": [{"node":
+[[true]]}]})";
         check_error(wrong_type_list, "Position of error: data/0/node/0/0");
         constexpr std::string_view wrong_type_dict =
-            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id": true}]}]})";
+            R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id":
+true}]}]})";
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
     }
 }
