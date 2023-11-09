@@ -57,6 +57,9 @@ struct JsonMapArrayPacker {
 
 struct JsonSAXVisitor {
     template <class T> bool pack_data(T&& val) {
+        if (packers.empty()) {
+            throw SerializationError{"Json root should be a map!\n"};
+        }
         packers.top().packer.pack(val);
         ++packers.top().data.size;
         return true;
@@ -80,11 +83,14 @@ struct JsonSAXVisitor {
             return pack_data(val);
         }
     }
-    bool key(json::string_t const& val) { return pack_data(val); }
+    bool key(json::string_t const& val) {
+        packers.top().packer.pack(val);
+        return true;
+    }
     bool binary(json::binary_t const& /* val */) { return true; }
 
     bool start_object(size_t /* elements */) {
-        packers.push({});
+        packers.emplace();
         return true;
     }
     bool end_object() {
@@ -93,15 +99,35 @@ struct JsonSAXVisitor {
         if (!std::in_range<uint32_t>(object_data.size)) {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
         }
+        if (packers.empty()) {
+            msgpack::packer<msgpack::sbuffer> root_packer{root_buffer};
+            root_packer.pack_map(static_cast<uint32_t>(object_data.size));
+            root_buffer.write(object_data.buffer.data(), object_data.buffer.size());
+        } else {
+            packers.top().packer.pack_map(static_cast<uint32_t>(object_data.size));
+            packers.top().data.buffer.write(object_data.buffer.data(), object_data.buffer.size());
+        }
         return true;
     }
     bool start_array(size_t /* elements */) {
-        packers.push({});
+        packers.emplace();
         return true;
     }
-    bool end_array();
+    bool end_array() {
+        JsonMapArrayData array_data{std::move(packers.top().data)};
+        packers.pop();
+        if (!std::in_range<uint32_t>(array_data.size)) {
+            throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
+        }
+        if (packers.empty()) {
+            throw SerializationError{"Json root should be a map!\n"};
+        } else {
+            packers.top().packer.pack_array(static_cast<uint32_t>(array_data.size));
+            packers.top().data.buffer.write(array_data.buffer.data(), array_data.buffer.size());
+        }
+    }
 
-    bool parse_error(std::size_t position, std::string const& last_token, json::exception const& ex) {
+    [[noreturn]] bool parse_error(std::size_t position, std::string const& last_token, json::exception const& ex) {
         std::stringstream ss;
         ss << "Parse error in JSON. Position: " << position << ", last token: " << last_token
            << ". Exception message: " << ex.what() << '\n';
