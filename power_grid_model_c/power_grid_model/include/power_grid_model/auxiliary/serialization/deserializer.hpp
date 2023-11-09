@@ -106,6 +106,7 @@ struct JsonSAXVisitor {
         } else {
             packers.top().packer.pack_map(static_cast<uint32_t>(object_data.size));
             packers.top().data.buffer.write(object_data.buffer.data(), object_data.buffer.size());
+            ++packers.top().data.size;
         }
         return true;
     }
@@ -124,13 +125,16 @@ struct JsonSAXVisitor {
         } else {
             packers.top().packer.pack_array(static_cast<uint32_t>(array_data.size));
             packers.top().data.buffer.write(array_data.buffer.data(), array_data.buffer.size());
+            ++packers.top().data.size;
         }
+        return true;
     }
 
     [[noreturn]] bool parse_error(std::size_t position, std::string const& last_token, json::exception const& ex) {
         std::stringstream ss;
         ss << "Parse error in JSON. Position: " << position << ", last token: " << last_token
            << ". Exception message: " << ex.what() << '\n';
+        throw SerializationError{ss.str()};
     }
 
     std::stack<JsonMapArrayPacker, std::list<JsonMapArrayPacker>> packers{};
@@ -354,6 +358,7 @@ class Deserializer {
     using visit_map_t = detail::visit_map_t;
     using visit_array_t = detail::visit_array_t;
     using visit_map_array_t = detail::visit_map_array_t;
+    using JsonSAXVisitor = detail::JsonSAXVisitor;
 
     struct ComponentByteMeta {
         std::string_view component;
@@ -407,7 +412,7 @@ class Deserializer {
     // data members are order dependent
     // DO NOT modify the order!
     // own buffer if from json
-    std::vector<char> buffer_from_json_;
+    msgpack::sbuffer buffer_from_json_;
     // pointer to buffers
     char const* data_;
     size_t size_;
@@ -431,46 +436,11 @@ class Deserializer {
     std::vector<std::vector<ComponentByteMeta>> msg_data_offsets_;
     WritableDatasetHandler dataset_handler_;
 
-    static std::vector<char> json_to_msgpack(std::string_view json_string) {
-        nlohmann::json json_document = nlohmann::json::parse(json_string);
-        json_convert_inf(json_document);
-        std::vector<char> msgpack_data;
-        nlohmann::json::to_msgpack(json_document, msgpack_data);
+    static msgpack::sbuffer json_to_msgpack(std::string_view json_string) {
+        JsonSAXVisitor visitor{};
+        nlohmann::json::sax_parse(json_string, &visitor);
+        msgpack::sbuffer msgpack_data{std::move(visitor.root_buffer)};
         return msgpack_data;
-    }
-
-    static void json_convert_inf(nlohmann::json& json_document) {
-        switch (json_document.type()) {
-        case nlohmann::json::value_t::object:
-        case nlohmann::json::value_t::array:
-            for (auto& value : json_document) {
-                json_convert_inf(value);
-            }
-            break;
-        case nlohmann::json::value_t::string:
-            json_string_to_inf(json_document);
-            break;
-        default:
-            break;
-        }
-    }
-
-    static void json_string_to_inf(nlohmann::json& value) {
-        std::string const str = value.get<std::string>();
-        if (str == "inf" || str == "+inf") {
-            value = std::numeric_limits<double>::infinity();
-        }
-        if (str == "-inf") {
-            value = -std::numeric_limits<double>::infinity();
-        }
-    }
-
-    static std::string_view key_to_string(msgpack::object_kv const& kv) {
-        try {
-            return kv.key.as<std::string_view>();
-        } catch (msgpack::type_error&) {
-            throw SerializationError{"Keys in the dictionary should always be a string!\n"};
-        }
     }
 
     template <class map_array, bool move_forward> MapArrayVisitor<map_array> parse_map_array() {
