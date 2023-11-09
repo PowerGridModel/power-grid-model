@@ -16,9 +16,11 @@
 
 #include <msgpack.hpp>
 
+#include <list>
 #include <set>
 #include <span>
 #include <sstream>
+#include <stack>
 #include <string_view>
 #include <utility>
 
@@ -37,6 +39,51 @@ struct from_json_t {};
 constexpr from_json_t from_json;
 
 namespace detail {
+
+using nlohmann::json;
+
+// visitor for json conversion
+struct JsonMapArrayData {
+    bool is_map;
+    size_t size{};
+    msgpack::sbuffer buffer{};
+};
+
+struct JsonMapArrayPacker {
+    JsonMapArrayPacker(bool is_map) : data{.is_map = is_map}, packer{data.buffer} {}
+
+    JsonMapArrayData data;
+    msgpack::packer<msgpack::sbuffer> packer;
+};
+
+struct JsonSAXVisitor {
+    bool null();
+
+    bool boolean(bool val);
+
+    bool number_integer(json::number_integer_t val);
+    bool number_unsigned(json::number_unsigned_t val);
+
+    bool number_float(json::number_float_t val, json::string_t const& s);
+
+    bool string(json::string_t const& val);
+    bool binary(json::binary_t const& /* val */) { return true; }
+
+    bool start_object(size_t /* elements */);
+    bool end_object();
+    bool start_array(size_t /* elements */);
+    bool end_array();
+    bool key(json::string_t const& val);
+
+    bool parse_error(std::size_t position, std::string const& last_token, json::exception const& ex) {
+        std::stringstream ss;
+        ss << "Parse error in JSON. Position: " << position << ", last token: " << last_token
+           << ". Exception message: " << ex.what() << '\n';
+    }
+
+    std::stack<JsonMapArrayPacker, std::list<JsonMapArrayPacker>> packers{};
+    msgpack::sbuffer root_buffer{};
+};
 
 // visitors for parsing
 struct DefaultNullVisitor : msgpack::null_visitor {
