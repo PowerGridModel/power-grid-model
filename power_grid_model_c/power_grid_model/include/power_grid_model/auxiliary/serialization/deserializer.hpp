@@ -48,12 +48,14 @@ struct JsonMapArrayData {
 };
 
 struct JsonSAXVisitor {
-    msgpack::packer<msgpack::sbuffer> top_packer() { return {data_buffers.top().buffer}; }
-
-    template <class T> bool pack_data(T&& val) {
+    msgpack::packer<msgpack::sbuffer> top_packer() {
         if (data_buffers.empty()) {
             throw SerializationError{"Json root should be a map!\n"};
         }
+        return {data_buffers.top().buffer};
+    }
+
+    template <class T> bool pack_data(T&& val) {
         top_packer().pack(val);
         ++data_buffers.top().size;
         return true;
@@ -114,13 +116,9 @@ struct JsonSAXVisitor {
         if (!std::in_range<uint32_t>(array_data.size)) {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
         }
-        if (data_buffers.empty()) {
-            throw SerializationError{"Json root should be a map!\n"};
-        } else {
-            top_packer().pack_array(static_cast<uint32_t>(array_data.size));
-            data_buffers.top().buffer.write(array_data.buffer.data(), array_data.buffer.size());
-            ++data_buffers.top().size;
-        }
+        top_packer().pack_array(static_cast<uint32_t>(array_data.size));
+        data_buffers.top().buffer.write(array_data.buffer.data(), array_data.buffer.size());
+        ++data_buffers.top().size;
         return true;
     }
 
