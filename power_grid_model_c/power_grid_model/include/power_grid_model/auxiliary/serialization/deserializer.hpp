@@ -16,7 +16,6 @@
 
 #include <msgpack.hpp>
 
-#include <list>
 #include <set>
 #include <span>
 #include <sstream>
@@ -48,26 +47,21 @@ struct JsonMapArrayData {
     msgpack::sbuffer buffer{};
 };
 
-struct JsonMapArrayPacker {
-    JsonMapArrayPacker() : data{}, packer{data.buffer} {}
-
-    JsonMapArrayData data;
-    msgpack::packer<msgpack::sbuffer> packer;
-};
-
 struct JsonSAXVisitor {
+    msgpack::packer<msgpack::sbuffer> top_packer() { return {data_buffers.top().buffer}; }
+
     template <class T> bool pack_data(T&& val) {
-        if (packers.empty()) {
+        if (data_buffers.empty()) {
             throw SerializationError{"Json root should be a map!\n"};
         }
-        packers.top().packer.pack(val);
-        ++packers.top().data.size;
+        top_packer().pack(val);
+        ++data_buffers.top().size;
         return true;
     }
 
     bool null() {
-        packers.top().packer.pack_nil();
-        ++packers.top().data.size;
+        top_packer().pack_nil();
+        ++data_buffers.top().size;
         return true;
     }
     bool boolean(bool val) { return pack_data(val); }
@@ -84,48 +78,48 @@ struct JsonSAXVisitor {
         }
     }
     bool key(json::string_t const& val) {
-        packers.top().packer.pack(val);
+        top_packer().pack(val);
         return true;
     }
     bool binary(json::binary_t const& /* val */) { return true; }
 
     bool start_object(size_t /* elements */) {
-        packers.emplace();
+        data_buffers.emplace();
         return true;
     }
     bool end_object() {
-        JsonMapArrayData object_data{std::move(packers.top().data)};
-        packers.pop();
+        JsonMapArrayData object_data{std::move(data_buffers.top())};
+        data_buffers.pop();
         if (!std::in_range<uint32_t>(object_data.size)) {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
         }
-        if (packers.empty()) {
+        if (data_buffers.empty()) {
             msgpack::packer<msgpack::sbuffer> root_packer{root_buffer};
             root_packer.pack_map(static_cast<uint32_t>(object_data.size));
             root_buffer.write(object_data.buffer.data(), object_data.buffer.size());
         } else {
-            packers.top().packer.pack_map(static_cast<uint32_t>(object_data.size));
-            packers.top().data.buffer.write(object_data.buffer.data(), object_data.buffer.size());
-            ++packers.top().data.size;
+            top_packer().pack_map(static_cast<uint32_t>(object_data.size));
+            data_buffers.top().buffer.write(object_data.buffer.data(), object_data.buffer.size());
+            ++data_buffers.top().size;
         }
         return true;
     }
     bool start_array(size_t /* elements */) {
-        packers.emplace();
+        data_buffers.emplace();
         return true;
     }
     bool end_array() {
-        JsonMapArrayData array_data{std::move(packers.top().data)};
-        packers.pop();
+        JsonMapArrayData array_data{std::move(data_buffers.top())};
+        data_buffers.pop();
         if (!std::in_range<uint32_t>(array_data.size)) {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
         }
-        if (packers.empty()) {
+        if (data_buffers.empty()) {
             throw SerializationError{"Json root should be a map!\n"};
         } else {
-            packers.top().packer.pack_array(static_cast<uint32_t>(array_data.size));
-            packers.top().data.buffer.write(array_data.buffer.data(), array_data.buffer.size());
-            ++packers.top().data.size;
+            top_packer().pack_array(static_cast<uint32_t>(array_data.size));
+            data_buffers.top().buffer.write(array_data.buffer.data(), array_data.buffer.size());
+            ++data_buffers.top().size;
         }
         return true;
     }
@@ -137,7 +131,7 @@ struct JsonSAXVisitor {
         throw SerializationError{ss.str()};
     }
 
-    std::stack<JsonMapArrayPacker, std::list<JsonMapArrayPacker>> packers{};
+    std::stack<JsonMapArrayData> data_buffers{};
     msgpack::sbuffer root_buffer{};
 };
 
