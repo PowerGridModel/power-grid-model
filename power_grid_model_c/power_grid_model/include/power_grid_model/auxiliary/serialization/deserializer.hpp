@@ -44,36 +44,62 @@ using nlohmann::json;
 
 // visitor for json conversion
 struct JsonMapArrayData {
-    bool is_map;
     size_t size{};
     msgpack::sbuffer buffer{};
 };
 
 struct JsonMapArrayPacker {
-    JsonMapArrayPacker(bool is_map) : data{.is_map = is_map}, packer{data.buffer} {}
+    JsonMapArrayPacker() : data{}, packer{data.buffer} {}
 
     JsonMapArrayData data;
     msgpack::packer<msgpack::sbuffer> packer;
 };
 
 struct JsonSAXVisitor {
-    bool null();
+    template <class T> bool pack_data(T&& val) {
+        packers.top().packer.pack(val);
+        ++packers.top().data.size;
+        return true;
+    }
 
-    bool boolean(bool val);
-
-    bool number_integer(json::number_integer_t val);
-    bool number_unsigned(json::number_unsigned_t val);
-
-    bool number_float(json::number_float_t val, json::string_t const& s);
-
-    bool string(json::string_t const& val);
+    bool null() {
+        packers.top().packer.pack_nil();
+        ++packers.top().data.size;
+        return true;
+    }
+    bool boolean(bool val) { return pack_data(val); }
+    bool number_integer(json::number_integer_t val) { return pack_data(val); }
+    bool number_unsigned(json::number_unsigned_t val) { return pack_data(val); }
+    bool number_float(json::number_float_t val, json::string_t const& /* s */) { return pack_data(val); }
+    bool string(json::string_t const& val) {
+        if (val == "inf" || val == "+inf") {
+            return pack_data(std::numeric_limits<double>::infinity());
+        } else if (val == "-inf") {
+            return pack_data(-std::numeric_limits<double>::infinity());
+        } else {
+            return pack_data(val);
+        }
+    }
+    bool key(json::string_t const& val) { return pack_data(val); }
     bool binary(json::binary_t const& /* val */) { return true; }
 
-    bool start_object(size_t /* elements */);
-    bool end_object();
-    bool start_array(size_t /* elements */);
+    bool start_object(size_t /* elements */) {
+        packers.push({});
+        return true;
+    }
+    bool end_object() {
+        JsonMapArrayData object_data{std::move(packers.top().data)};
+        packers.pop();
+        if (!std::in_range<uint32_t>(object_data.size)) {
+            throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
+        }
+        return true;
+    }
+    bool start_array(size_t /* elements */) {
+        packers.push({});
+        return true;
+    }
     bool end_array();
-    bool key(json::string_t const& val);
 
     bool parse_error(std::size_t position, std::string const& last_token, json::exception const& ex) {
         std::stringstream ss;
