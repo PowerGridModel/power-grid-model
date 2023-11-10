@@ -63,8 +63,8 @@ namespace power_grid_model::meta_data {
 
 namespace json_converter {
 
-struct JsonConverter : msgpack::null_visitor {
-    static constexpr char indent_char = ' ';
+struct JsonConverter {
+    static constexpr char sep_char = ' ';
 
     Idx indent{-1};
     std::stringstream ss{};
@@ -77,8 +77,15 @@ struct JsonConverter : msgpack::null_visitor {
         ss << '\n';
         size_t indent_size = map_array.size();
         while (indent_size-- != 0) {
-            ss << indent_char;
+            ss << sep_char;
         }
+    }
+
+    void print_key_val_sep() {
+        if (indent < 0) {
+            return;
+        }
+        ss << sep_char;
     }
 
     bool visit_nil() {
@@ -104,41 +111,61 @@ struct JsonConverter : msgpack::null_visitor {
         ss << '"' << std::string_view{v, size} << '"';
         return true;
     }
-    bool start_array(uint32_t /*num_elements*/) {
-        m_s += "[";
+    bool start_array(uint32_t num_elements) {
+        map_array.push(num_elements);
+        ss << '[';
+        return true;
+    }
+    bool start_array_item() {
+        print_indent();
         return true;
     }
     bool end_array_item() {
-        m_s += ",";
+        --map_array.top();
+        if (map_array.top() > 0) {
+            ss << ',';
+        }
         return true;
     }
     bool end_array() {
-        m_s.erase(m_s.size() - 1, 1); // remove the last ','
-        m_s += "]";
+        map_array.pop();
+        print_indent();
+        ss << ']';
         return true;
     }
-    bool start_map(uint32_t /*num_kv_pairs*/) {
-        m_s += "{";
+    bool start_map(uint32_t num_kv_pairs) {
+        map_array.push(num_kv_pairs);
+        ss << '{';
+        return true;
+    }
+    bool start_map_key() {
+        print_indent();
         return true;
     }
     bool end_map_key() {
-        m_s += ":";
+        ss << ':';
+        print_key_val_sep();
         return true;
     }
+    bool start_map_value() { return true; }
     bool end_map_value() {
-        m_s += ",";
+        --map_array.top();
+        if (map_array.top() > 0) {
+            ss << ',';
+        }
         return true;
     }
     bool end_map() {
-        m_s.erase(m_s.size() - 1, 1); // remove the last ','
-        m_s += "}";
+        map_array.pop();
+        print_indent();
+        ss << '}';
         return true;
     }
     void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        // report error.
+        // ignore.
     }
     void insufficient_bytes(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        // report error.
+        // ignore.
     }
 };
 
