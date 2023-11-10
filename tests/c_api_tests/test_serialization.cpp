@@ -19,7 +19,7 @@ namespace {
 using namespace std::string_literals;
 
 constexpr char const* json_data =
-    R"({"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]},"is_batch":false,"type":"input","version":"1.0"})";
+    R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]}})";
 } // namespace
 
 TEST_CASE("Serialization") {
