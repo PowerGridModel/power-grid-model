@@ -17,6 +17,8 @@
 #include <msgpack.hpp>
 
 #include <span>
+#include <sstream>
+#include <stack>
 #include <string_view>
 
 // custom packers
@@ -58,6 +60,89 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 } // namespace msgpack
 
 namespace power_grid_model::meta_data {
+
+namespace json_converter {
+
+struct JsonConverter : msgpack::null_visitor {
+    static constexpr char indent_char = ' ';
+
+    Idx indent{-1};
+    std::stringstream ss{};
+    std::stack<uint32_t> map_array{};
+
+    void print_indent() {
+        if (indent < 0) {
+            return;
+        }
+        ss << '\n';
+        size_t indent_size = map_array.size();
+        while (indent_size-- != 0) {
+            ss << indent_char;
+        }
+    }
+
+    bool visit_nil() {
+        ss << "null";
+        return true;
+    }
+    bool visit_boolean(bool v) {
+        if (v)
+            ss << "true";
+        else
+            ss << "false";
+        return true;
+    }
+    bool visit_positive_integer(uint64_t v) {
+        ss << v;
+        return true;
+    }
+    bool visit_negative_integer(int64_t v) {
+        ss << v;
+        return true;
+    }
+    bool visit_str(const char* v, uint32_t size) {
+        ss << '"' << std::string_view{v, size} << '"';
+        return true;
+    }
+    bool start_array(uint32_t /*num_elements*/) {
+        m_s += "[";
+        return true;
+    }
+    bool end_array_item() {
+        m_s += ",";
+        return true;
+    }
+    bool end_array() {
+        m_s.erase(m_s.size() - 1, 1); // remove the last ','
+        m_s += "]";
+        return true;
+    }
+    bool start_map(uint32_t /*num_kv_pairs*/) {
+        m_s += "{";
+        return true;
+    }
+    bool end_map_key() {
+        m_s += ":";
+        return true;
+    }
+    bool end_map_value() {
+        m_s += ",";
+        return true;
+    }
+    bool end_map() {
+        m_s.erase(m_s.size() - 1, 1); // remove the last ','
+        m_s += "}";
+        return true;
+    }
+    void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) {
+        // report error.
+    }
+    void insufficient_bytes(size_t /*parsed_offset*/, size_t /*error_offset*/) {
+        // report error.
+    }
+};
+
+} // namespace json_converter
 
 class Serializer {
     using RawElementPtr = void const*;
