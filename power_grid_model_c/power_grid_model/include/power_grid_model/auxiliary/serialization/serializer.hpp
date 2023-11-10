@@ -69,6 +69,7 @@ struct JsonConverter : msgpack::null_visitor {
     static constexpr char sep_char = ' ';
 
     Idx indent;
+    Idx max_indent_level;
     std::stringstream ss{};
     std::stack<uint32_t> map_array{};
 
@@ -76,8 +77,13 @@ struct JsonConverter : msgpack::null_visitor {
         if (indent < 0) {
             return;
         }
+        Idx const indent_level = static_cast<Idx>(map_array.size());
+        if (indent_level > max_indent_level) {
+            ss << sep_char;
+            return;
+        }
         ss << '\n';
-        size_t indent_size = map_array.size() * indent;
+        Idx indent_size = indent_level * indent;
         while (indent_size-- != 0) {
             ss << sep_char;
         }
@@ -330,7 +336,8 @@ class Serializer {
 
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
-            json_converter::JsonConverter visitor{.indent = indent};
+            Idx const max_indent_level = dataset_handler_.is_batch() ? 4 : 3;
+            json_converter::JsonConverter visitor{.indent = indent, .max_indent_level = max_indent_level};
             auto const msgpack_data = get_msgpack(use_compact_list);
             msgpack::parse(msgpack_data.data(), msgpack_data.size(), visitor);
             json_buffer_ = visitor.ss.str();
