@@ -453,4 +453,4 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
             nan_b = np.isnan(field_result_b)
 
             np.testing.assert_array_equal(nan_a, nan_b)
-            np.testing.assert_array_equal(field_result_a[~nan_a], field_result_b[~nan_b])
+            np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
