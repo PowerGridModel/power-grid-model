@@ -16,6 +16,8 @@
 
 #include <msgpack.hpp>
 
+#include <iomanip>
+#include <limits>
 #include <span>
 #include <sstream>
 #include <stack>
@@ -63,10 +65,10 @@ namespace power_grid_model::meta_data {
 
 namespace json_converter {
 
-struct JsonConverter {
+struct JsonConverter : msgpack::null_visitor {
     static constexpr char sep_char = ' ';
 
-    Idx indent{-1};
+    Idx indent;
     std::stringstream ss{};
     std::stack<uint32_t> map_array{};
 
@@ -75,7 +77,7 @@ struct JsonConverter {
             return;
         }
         ss << '\n';
-        size_t indent_size = map_array.size();
+        size_t indent_size = map_array.size() * indent;
         while (indent_size-- != 0) {
             ss << sep_char;
         }
@@ -105,6 +107,19 @@ struct JsonConverter {
     }
     bool visit_negative_integer(int64_t v) {
         ss << v;
+        return true;
+    }
+    bool visit_float32(float v) { return visit_float64(v); }
+    bool visit_float64(double v) {
+        if (std::isinf(v)) {
+            if (v > 0.0) {
+                ss << '"' << "inf" << '"';
+            } else {
+                ss << '"' << "-inf" << '"';
+            }
+        } else {
+            ss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << v;
+        }
         return true;
     }
     bool visit_str(const char* v, uint32_t size) {
@@ -147,7 +162,6 @@ struct JsonConverter {
         print_key_val_sep();
         return true;
     }
-    bool start_map_value() { return true; }
     bool end_map_value() {
         --map_array.top();
         if (map_array.top() > 0) {
@@ -160,12 +174,6 @@ struct JsonConverter {
         print_indent();
         ss << '}';
         return true;
-    }
-    void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        // ignore.
-    }
-    void insufficient_bytes(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        // ignore.
     }
 };
 
@@ -322,10 +330,10 @@ class Serializer {
 
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
-            auto json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
-            json_convert_inf(json_document);
-            json_indent_ = indent;
-            json_buffer_ = json_document.dump(static_cast<int>(indent));
+            json_converter::JsonConverter visitor{.indent = indent};
+            auto const msgpack_data = get_msgpack(use_compact_list);
+            msgpack::parse(msgpack_data.data(), msgpack_data.size(), visitor);
+            json_buffer_ = visitor.ss.str();
         }
         return json_buffer_;
     }
