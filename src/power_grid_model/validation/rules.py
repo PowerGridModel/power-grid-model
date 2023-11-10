@@ -696,6 +696,32 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
             errors.append(MissingValueError(component, field, ids))
     return errors
 
+def exist_in_pairs(data: SingleDataset, component: str, field_1: str, field_2: str) -> bool:
+    """
+    Check if the specific two fields of a particular type of component do (in)exist in pairs.
+    Returns True if the two fields exist in pairs or both do not exist, or False if one of them exist.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field_1, field_2: The fields of interest
+
+    Returns:
+        Boolean value indicating if both fields co-(in)exist or only one exists.
+    """
+    errors = []
+    if isinstance(field_1, str) and isinstance(field_2, str):
+        fields = [field_1, field_2]
+    for field in fields:
+        nan = nan_type(component, field)
+        if np.isnan(nan):
+            invalid = np.isnan(data[component][field])
+        else:
+            invalid = np.equal(data[component][field], nan)
+        if invalid.any():
+            errors.append(False)
+    return len(errors) == 0 or len(errors) == 2
+
 
 def all_valid_clocks(
     data: SingleDataset, component: str, clock_field: str, winding_from_field: str, winding_to_field: str
