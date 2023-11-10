@@ -113,10 +113,11 @@ struct JsonConverter : msgpack::null_visitor {
         return true;
     }
     bool visit_boolean(bool v) {
-        if (v)
+        if (v) {
             ss << "true";
-        else
+        } else {
             ss << "false";
+        }
         return true;
     }
     bool visit_positive_integer(uint64_t v) {

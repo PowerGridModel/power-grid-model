@@ -73,17 +73,17 @@ struct JsonSAXVisitor {
     bool string(json::string_t const& val) {
         if (val == "inf" || val == "+inf") {
             return pack_data(std::numeric_limits<double>::infinity());
-        } else if (val == "-inf") {
-            return pack_data(-std::numeric_limits<double>::infinity());
-        } else {
-            return pack_data(val);
         }
+        if (val == "-inf") {
+            return pack_data(-std::numeric_limits<double>::infinity());
+        }
+        return pack_data(val);
     }
     bool key(json::string_t const& val) {
         top_packer().pack(val);
         return true;
     }
-    bool binary(json::binary_t const& /* val */) { return true; }
+    static bool binary(json::binary_t const& /* val */) { return true; }
 
     bool start_object(size_t /* elements */) {
         data_buffers.emplace();
@@ -122,7 +122,8 @@ struct JsonSAXVisitor {
         return true;
     }
 
-    [[noreturn]] bool parse_error(std::size_t position, std::string const& last_token, json::exception const& ex) {
+    [[noreturn]] static bool parse_error(std::size_t position, std::string const& last_token,
+                                         json::exception const& ex) {
         std::stringstream ss;
         ss << "Parse error in JSON. Position: " << position << ", last token: " << last_token
            << ". Exception message: " << ex.what() << '\n';
