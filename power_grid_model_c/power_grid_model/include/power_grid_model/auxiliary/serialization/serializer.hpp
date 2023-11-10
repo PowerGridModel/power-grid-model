@@ -65,13 +65,21 @@ namespace power_grid_model::meta_data {
 
 namespace json_converter {
 
+struct MapArray {
+    MapArray(uint32_t size_input) : size{size_input}, empty{size_input == 0} {}
+
+    uint32_t size;
+    bool empty;
+    bool begin{true};
+};
+
 struct JsonConverter : msgpack::null_visitor {
     static constexpr char sep_char = ' ';
 
     Idx indent;
     Idx max_indent_level;
     std::stringstream ss{};
-    std::stack<uint32_t> map_array{};
+    std::stack<MapArray> map_array{};
 
     void print_indent() {
         if (indent < 0) {
@@ -79,6 +87,10 @@ struct JsonConverter : msgpack::null_visitor {
         }
         Idx const indent_level = static_cast<Idx>(map_array.size());
         if (indent_level > max_indent_level) {
+            if (map_array.top().begin) {
+                map_array.top().begin = false;
+                return;
+            }
             ss << sep_char;
             return;
         }
@@ -133,7 +145,7 @@ struct JsonConverter : msgpack::null_visitor {
         return true;
     }
     bool start_array(uint32_t num_elements) {
-        map_array.push(num_elements);
+        map_array.emplace(num_elements);
         ss << '[';
         return true;
     }
@@ -142,20 +154,23 @@ struct JsonConverter : msgpack::null_visitor {
         return true;
     }
     bool end_array_item() {
-        --map_array.top();
-        if (map_array.top() > 0) {
+        --map_array.top().size;
+        if (map_array.top().size > 0) {
             ss << ',';
         }
         return true;
     }
     bool end_array() {
+        bool const empty = map_array.top().empty;
         map_array.pop();
-        print_indent();
+        if (static_cast<Idx>(map_array.size()) < max_indent_level && !empty) {
+            print_indent();
+        }
         ss << ']';
         return true;
     }
     bool start_map(uint32_t num_kv_pairs) {
-        map_array.push(num_kv_pairs);
+        map_array.emplace(num_kv_pairs);
         ss << '{';
         return true;
     }
@@ -169,15 +184,18 @@ struct JsonConverter : msgpack::null_visitor {
         return true;
     }
     bool end_map_value() {
-        --map_array.top();
-        if (map_array.top() > 0) {
+        --map_array.top().size;
+        if (map_array.top().size > 0) {
             ss << ',';
         }
         return true;
     }
     bool end_map() {
+        bool const empty = map_array.top().empty;
         map_array.pop();
-        print_indent();
+        if (static_cast<Idx>(map_array.size()) < max_indent_level && !empty) {
+            print_indent();
+        }
         ss << '}';
         return true;
     }

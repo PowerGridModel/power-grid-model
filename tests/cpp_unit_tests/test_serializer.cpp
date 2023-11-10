@@ -22,6 +22,142 @@ constexpr std::string_view batch_dataset_dict =
     R"({"version":"1.0","type":"update","is_batch":true,"attributes":{"asym_gen":["id"],"asym_load":["id","p_specified"],"sym_load":["id","p_specified"]},"data":[{"sym_load":[[9,10],[10,null]],"asym_load":[[5,[10,11,12]],[6,[15,null,16]]]},{"sym_load":[[11,"inf"],[12,"-inf"]],"asym_load":[[13,["inf",11,17]],[14,[10,"-inf",19]]],"asym_gen":[[7]]}]})";
 } // namespace
 
+namespace {
+constexpr std::string_view single_dataset_dict_indent =
+    R"({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_load": [
+      {"id": 9, "p_specified": 10},
+      {"id": 10},
+      {"id": 11, "p_specified": "inf"},
+      {"id": 12, "p_specified": "-inf"}
+    ],
+    "asym_load": [
+      {"id": 5, "p_specified": [10, 11, 12]},
+      {"id": 6, "p_specified": [15, null, 16]},
+      {"id": 13, "p_specified": ["inf", 11, 17]},
+      {"id": 14, "p_specified": [10, "-inf", 19]},
+      {"id": 7}
+    ]
+  }
+})";
+
+constexpr std::string_view single_dataset_list_indent =
+    R"({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {
+    "asym_load": [
+      "id",
+      "p_specified"
+    ],
+    "sym_load": [
+      "id",
+      "p_specified"
+    ]
+  },
+  "data": {
+    "sym_load": [
+      [9, 10],
+      [10, null],
+      [11, "inf"],
+      [12, "-inf"]
+    ],
+    "asym_load": [
+      [5, [10, 11, 12]],
+      [6, [15, null, 16]],
+      [13, ["inf", 11, 17]],
+      [14, [10, "-inf", 19]],
+      [7, null]
+    ]
+  }
+})";
+
+constexpr std::string_view batch_dataset_list_indent =
+    R"({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {
+    "asym_gen": [
+      "id"
+    ],
+    "asym_load": [
+      "id",
+      "p_specified"
+    ],
+    "sym_load": [
+      "id",
+      "p_specified"
+    ]
+  },
+  "data": [
+    {
+      "sym_load": [
+        [9, 10],
+        [10, null]
+      ],
+      "asym_load": [
+        [5, [10, 11, 12]],
+        [6, [15, null, 16]]
+      ]
+    },
+    {
+      "sym_load": [
+        [11, "inf"],
+        [12, "-inf"]
+      ],
+      "asym_load": [
+        [13, ["inf", 11, 17]],
+        [14, [10, "-inf", 19]]
+      ],
+      "asym_gen": [
+        [7]
+      ]
+    }
+  ]
+})";
+
+constexpr std::string_view batch_dataset_dict_indent =
+    R"({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_load": [
+        {"id": 9, "p_specified": 10},
+        {"id": 10}
+      ],
+      "asym_load": [
+        {"id": 5, "p_specified": [10, 11, 12]},
+        {"id": 6, "p_specified": [15, null, 16]}
+      ]
+    },
+    {
+      "sym_load": [
+        {"id": 11, "p_specified": "inf"},
+        {"id": 12, "p_specified": "-inf"}
+      ],
+      "asym_load": [
+        {"id": 13, "p_specified": ["inf", 11, 17]},
+        {"id": 14, "p_specified": [10, "-inf", 19]}
+      ],
+      "asym_gen": [
+        {"id": 7}
+      ]
+    }
+  ]
+})";
+
+} // namespace
+
 TEST_CASE("Serializer") {
 
     std::vector<SymLoadGenUpdate> sym_load_gen(4);
@@ -53,13 +189,11 @@ TEST_CASE("Serializer") {
         handler.add_buffer("sym_load", 4, 4, nullptr, sym_load_gen.data());
         handler.add_buffer("asym_load", 5, 5, nullptr, asym_load_gen.data());
         Serializer serializer{handler, SerializationFormat::json};
-        //std::cout << serializer.get_string(false, -1) << "\n\n";
-        //std::cout << serializer.get_string(true, -1) << "\n\n";
 
-        std::cout << serializer.get_string(false, 2) << "\n\n";
-        std::cout << serializer.get_string(true, 2) << "\n\n";
         CHECK(serializer.get_string(false, -1) == single_dataset_dict);
         CHECK(serializer.get_string(true, -1) == single_dataset_list);
+        CHECK(serializer.get_string(false, 2) == single_dataset_dict_indent);
+        CHECK(serializer.get_string(true, 2) == single_dataset_list_indent);
     }
 
     SUBCASE("Batch dataset") {
@@ -69,13 +203,11 @@ TEST_CASE("Serializer") {
         handler.add_buffer("asym_load", 2, 4, nullptr, asym_load_gen.data());
         handler.add_buffer("asym_gen", -1, 1, indptr_gen.data(), asym_load_gen.data() + 4);
         Serializer serializer{handler, SerializationFormat::json};
-        //std::cout << serializer.get_string(false, -1) << "\n\n";
-        //std::cout << serializer.get_string(true, -1) << "\n\n";
 
-        std::cout << serializer.get_string(false, 2) << "\n\n";
-        std::cout << serializer.get_string(true, 2) << "\n\n";
         CHECK(serializer.get_string(false, -1) == batch_dataset_list);
         CHECK(serializer.get_string(true, -1) == batch_dataset_dict);
+        CHECK(serializer.get_string(false, 2) == batch_dataset_dict_indent);
+        CHECK(serializer.get_string(true, 2) == batch_dataset_list_indent);
     }
 }
 
