@@ -128,9 +128,8 @@ struct JsonConverter : msgpack::null_visitor {
     bool visit_float32(float v) { return visit_float64(v); }
     bool visit_float64(double v) {
         if (std::isinf(v)) {
-            using namespace std::string_literals;
-            auto const str = (v > 0.0 ? "inf"s : "-inf"s);
-            return visit_str(str.c_str(), str.size());
+            using namespace std::string_view_literals;
+            ss << '"' << (v > 0.0 ? "inf"sv : "-inf"sv) << '"';
         }
         ss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << v;
         return true;
