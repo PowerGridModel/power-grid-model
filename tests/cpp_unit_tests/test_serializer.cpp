@@ -20,9 +20,7 @@ constexpr std::string_view batch_dataset_list =
     R"({"version":"1.0","type":"update","is_batch":true,"attributes":{},"data":[{"sym_load":[{"id":9,"p_specified":10},{"id":10}],"asym_load":[{"id":5,"p_specified":[10,11,12]},{"id":6,"p_specified":[15,null,16]}]},{"sym_load":[{"id":11,"p_specified":"inf"},{"id":12,"p_specified":"-inf"}],"asym_load":[{"id":13,"p_specified":["inf",11,17]},{"id":14,"p_specified":[10,"-inf",19]}],"asym_gen":[{"id":7}]}]})";
 constexpr std::string_view batch_dataset_dict =
     R"({"version":"1.0","type":"update","is_batch":true,"attributes":{"asym_gen":["id"],"asym_load":["id","p_specified"],"sym_load":["id","p_specified"]},"data":[{"sym_load":[[9,10],[10,null]],"asym_load":[[5,[10,11,12]],[6,[15,null,16]]]},{"sym_load":[[11,"inf"],[12,"-inf"]],"asym_load":[[13,["inf",11,17]],[14,[10,"-inf",19]]],"asym_gen":[[7]]}]})";
-} // namespace
 
-namespace {
 constexpr std::string_view single_dataset_dict_indent =
     R"({
   "version": "1.0",

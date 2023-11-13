@@ -95,10 +95,7 @@ struct JsonConverter : msgpack::null_visitor {
             return;
         }
         ss << '\n';
-        Idx indent_size = indent_level * indent;
-        while (indent_size-- != 0) {
-            ss << sep_char;
-        }
+        ss << std::string(indent_level * indent, sep_char);
     }
 
     void print_key_val_sep() {
@@ -131,14 +128,11 @@ struct JsonConverter : msgpack::null_visitor {
     bool visit_float32(float v) { return visit_float64(v); }
     bool visit_float64(double v) {
         if (std::isinf(v)) {
-            if (v > 0.0) {
-                ss << '"' << "inf" << '"';
-            } else {
-                ss << '"' << "-inf" << '"';
-            }
-        } else {
-            ss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << v;
+            using namespace std::string_literals;
+            auto const str = (v > 0.0 ? "inf"s : "-inf"s);
+            return visit_str(str.c_str(), str.size());
         }
+        ss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << v;
         return true;
     }
     bool visit_str(const char* v, uint32_t size) {

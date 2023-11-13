@@ -809,7 +809,7 @@ class Deserializer {
         std::stringstream ss;
         ss << e.what();
         if (!root_key_.empty()) {
-            ss << "Position of error: " << root_key_;
+            ss << " Position of error: " << root_key_;
             root_key_ = "";
         }
         if (is_batch_ && scenario_number_ >= 0) {
