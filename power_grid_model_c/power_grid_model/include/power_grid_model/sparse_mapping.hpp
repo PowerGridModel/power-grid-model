@@ -7,7 +7,6 @@
 #define POWER_GRID_MODEL_SPARSE_MAPPING_HPP
 
 #include "power_grid_model.hpp"
-using namespace std;
 
 /*
 Sparse mapping technique
@@ -113,18 +112,62 @@ struct DenseMapping {
 inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
     auto const n_A = static_cast<Idx>(idx_B_in_A.size());
 
+    // int max = 0;
+    // for (auto const& value : idx_B_in_A) {
+    //     if (max < value){
+    //         max = value;
+    //     }
+    // }
+
+    using DenseEntry = std::pair<Idx, Idx>;
+    // entries vector with size n_A
+    std::vector<DenseEntry> entries(n_A);
+    // idx_B_in_A{3, 5, 2, 1, 1, 2}, then count = {0, 1, 2, 3, 4, 5} since count is affected by the length of
+    // idx_B_in_A j_B is an element from idx_B_in_A, and i_A is the current value from IdxCount{0} returns
+    // entries[{0,3},{1,5},{2,2},{3,1},{4,1},{5,2}]
+    std::transform(idx_B_in_A.cbegin(), idx_B_in_A.cend(), IdxCount{0}, entries.begin(), [](Idx j_B, Idx i_A) {
+        return DenseEntry{i_A, j_B};
+    });
+
     DenseMapping dense_mapping;
 
-    dense_mapping.indvector.resize(n_A);
+    dense_mapping.indvector.resize(n_B + 1);
     // size of reorder will be 6
     dense_mapping.reorder.resize(n_A);
 
-    IdxVector vec = idx_B_in_A;
+    IdxVector counter(n_B, 0);
 
-    sort(vec.begin(), vec.end());
+    for (auto const& entry : entries) {
+        ++counter[entry.second];
+    }
 
-    dense_mapping.indvector = vec;
+    // since the counter is already counter = {0, 2, 2, 1, 0, 1, 0}, the goal is to linearly extract {1,1,2,2,3,5}
 
+    // IdxVector counter_sum(n_B+1, 0);
+    // accumulate value to indptr
+    // [a, b, c, d], the inclusive scan would produce [a, a+b, a+b+c, a+b+c+d]
+    // counter = {0, 2, 2, 1, 0, 1, 0}, indptr becomes {0, 0, 2, 4, 5, 5, 6, 6}
+    std::inclusive_scan(counter.cbegin(), counter.cend(), dense_mapping.indvector.begin() + 1);
+
+    // std::copy(counter_sum.cbegin() + 1, counter_sum.cend(), counter.begin());
+
+    // for (auto it_entry = entries.crbegin(); it_entry != entries.crend(); ++it_entry) {
+    //     dense_mapping.indvector[--counter[it_entry->second]] = it_entry->first;
+    // }
+
+    // copy back
+    // copy everything except the indptr[0] to counter.
+    // counter becomes {0, 2, 4, 5, 5, 6, 6}
+    std::copy(dense_mapping.indvector.cbegin() + 1, dense_mapping.indvector.cend(), counter.begin());
+
+    for (auto it_entry = entries.crbegin(); it_entry != entries.crend(); ++it_entry) {
+        dense_mapping.reorder[--counter[it_entry->second]] = it_entry->first;
+    }
+    // the first is the index before reordering of load_gen
+    // it entry second is the index of the bus
+    // reorder at the end contains for each new index of the load gen the old index of the load gen in a linear way
+    assert(dense_mapping.indvector[0] == 0);
+    assert(dense_mapping.indvector.back() == n_A);
     return dense_mapping;
 }
 
