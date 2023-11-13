@@ -46,8 +46,9 @@ struct JsonMapArrayData {
     size_t size{};
     std::shared_ptr<msgpack::sbuffer> buffer{};
 
-    JsonMapArrayData() : size{}, buffer{std::make_shared<msgpack::sbuffer>()} {}
-    JsonMapArrayData(size_t size_, std::shared_ptr<msgpack::sbuffer> buffer_) : size{size_}, buffer{buffer_} {}
+    JsonMapArrayData() : buffer{std::make_shared<msgpack::sbuffer>()} {}
+    JsonMapArrayData(size_t size_, std::shared_ptr<msgpack::sbuffer> buffer_)
+        : size{size_}, buffer{std::move(buffer_)} {}
 };
 
 struct JsonSAXVisitor {
@@ -93,7 +94,7 @@ struct JsonSAXVisitor {
         return true;
     }
     bool end_object() {
-        JsonMapArrayData object_data{std::move(data_buffers.top())};
+        JsonMapArrayData const object_data{std::move(data_buffers.top())};
         data_buffers.pop();
         if (!std::in_range<uint32_t>(object_data.size)) {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
@@ -114,7 +115,7 @@ struct JsonSAXVisitor {
         return true;
     }
     bool end_array() {
-        JsonMapArrayData array_data{std::move(data_buffers.top())};
+        JsonMapArrayData const array_data{std::move(data_buffers.top())};
         data_buffers.pop();
         if (!std::in_range<uint32_t>(array_data.size)) {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
