@@ -253,7 +253,9 @@ template <class T> struct ValueVisitor;
 
 template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
     static constexpr std::string_view static_err_msg = "Expect an interger.";
-    T& value;
+
+    T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
     bool visit_nil() { return true; }
     bool visit_positive_integer(uint64_t v) {
         if (!std::in_range<T>(v)) {
@@ -273,7 +275,9 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
 
 template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
     static constexpr std::string_view static_err_msg = "Expect a number.";
-    double& value;
+
+    double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
     bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
     bool visit_positive_integer(uint64_t v) {
         value = static_cast<double>(v);
@@ -295,9 +299,11 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
 
 template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
     static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
-    RealValue<false>& value;
+
+    RealValue<false>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Idx idx{};
     bool inside_array{};
+
     bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
     bool start_array(uint32_t num_elements) {
         if (inside_array || num_elements != 3) {
