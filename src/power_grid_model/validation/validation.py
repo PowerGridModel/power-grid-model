@@ -53,7 +53,7 @@ from power_grid_model.validation.rules import (
     all_valid_fault_phases,
     all_valid_ids,
     none_missing,
-    exist_in_pairs,
+    any_exists_in_pair,
 )
 from power_grid_model.validation.utils import update_input_data
 
@@ -317,9 +317,9 @@ def validate_required_values(
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
-    if sigma_required and exist_in_pairs(data, "sym_voltage_sensor", "p_sigma", "q_sigma"):
+    if sigma_required and any_exists_in_pair(data, "sym_voltage_sensor", "p_sigma", "q_sigma"):
         required["sym_power_sensor"] += ["p_sigma", "q_sigma"]
-    if sigma_required and exist_in_pairs(data, "asym_voltage_sensor", "p_sigma", "q_sigma"):
+    if sigma_required and any_exists_in_pair(data, "asym_voltage_sensor", "p_sigma", "q_sigma"):
         required["asym_power_sensor"] += ["p_sigma", "q_sigma"]
 
     # Faults

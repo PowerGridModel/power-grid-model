@@ -697,10 +697,10 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
     return errors
 
 
-def exist_in_pairs(data: SingleDataset, component: str, field_1: str, field_2: str) -> bool:
+def any_exists_in_pair(data: SingleDataset, component: str, field_1: str, field_2: str) -> bool:
     """
-    Check if anyone of the specific pair of fields of a particular type of component exist.
-    Returns True if at least one of the two fields exist, or False if none of them exist.
+    Check if any of the specific pair of fields of a particular type of component exists.
+    Returns True if at least one of the two fields exist, or False if none of them exists.
 
     Args:
         data: The input/update data set for all components
@@ -711,8 +711,12 @@ def exist_in_pairs(data: SingleDataset, component: str, field_1: str, field_2: s
         Boolean value indicating if anyone of the fields exist or no one exists.
     """
     fields = []
-    if isinstance(field_1, str) and isinstance(field_2, str):
-        fields = [field_1, field_2]
+    fields_in = [field_1, field_2]
+    for field in fields_in:
+        if isinstance(field, str):
+            if data[component].get(field, None) is not None:
+                fields.append(field)
+    
     for field in fields:
         nan = nan_type(component, field)
         if np.isnan(nan):
