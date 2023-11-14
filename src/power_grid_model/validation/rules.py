@@ -710,12 +710,14 @@ def any_exists_in_pair(data: SingleDataset, component: str, field_1: str, field_
     Returns:
         Boolean value indicating if anyone of the fields exist or no one exists.
     """
+    if data.get(component, None) is None:
+        return False
+    
     fields = []
     fields_in = [field_1, field_2]
     for field in fields_in:
-        if isinstance(field, str):
-            if data[component].get(field, None) is not None:
-                fields.append(field)
+        if isinstance(field, str) and data[component].get(field, None) is not None:
+            fields.append(field)
     
     for field in fields:
         nan = nan_type(component, field)
@@ -725,6 +727,7 @@ def any_exists_in_pair(data: SingleDataset, component: str, field_1: str, field_
             invalid = np.equal(data[component][field], nan)
         if not invalid.any():
             return True
+        
     return False
 
 
