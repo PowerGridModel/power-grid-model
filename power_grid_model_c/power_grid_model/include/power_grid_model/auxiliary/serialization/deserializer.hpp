@@ -44,11 +44,7 @@ using nlohmann::json;
 // visitor for json conversion
 struct JsonMapArrayData {
     size_t size{};
-    std::shared_ptr<msgpack::sbuffer> buffer{};
-
-    JsonMapArrayData() : buffer{std::make_shared<msgpack::sbuffer>()} {}
-    JsonMapArrayData(size_t size_, std::shared_ptr<msgpack::sbuffer> buffer_)
-        : size{size_}, buffer{std::move(buffer_)} {}
+    msgpack::sbuffer buffer{};
 };
 
 struct JsonSAXVisitor {
@@ -56,7 +52,7 @@ struct JsonSAXVisitor {
         if (data_buffers.empty()) {
             throw SerializationError{"Json root should be a map!\n"};
         }
-        return {*data_buffers.top().buffer};
+        return {data_buffers.top().buffer};
     }
 
     template <class T> bool pack_data(T const& val) {
@@ -102,10 +98,10 @@ struct JsonSAXVisitor {
         if (data_buffers.empty()) {
             msgpack::packer<msgpack::sbuffer> root_packer{root_buffer};
             root_packer.pack_map(static_cast<uint32_t>(object_data.size));
-            root_buffer.write(object_data.buffer->data(), object_data.buffer->size());
+            root_buffer.write(object_data.buffer.data(), object_data.buffer.size());
         } else {
             top_packer().pack_map(static_cast<uint32_t>(object_data.size));
-            data_buffers.top().buffer->write(object_data.buffer->data(), object_data.buffer->size());
+            data_buffers.top().buffer.write(object_data.buffer.data(), object_data.buffer.size());
             ++data_buffers.top().size;
         }
         return true;
@@ -121,7 +117,7 @@ struct JsonSAXVisitor {
             throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
         }
         top_packer().pack_array(static_cast<uint32_t>(array_data.size));
-        data_buffers.top().buffer->write(array_data.buffer->data(), array_data.buffer->size());
+        data_buffers.top().buffer.write(array_data.buffer.data(), array_data.buffer.size());
         ++data_buffers.top().size;
         return true;
     }
