@@ -29,7 +29,7 @@ class Node final : public Base {
 
     // update node, nothing happens here
     static constexpr UpdateChange update(BaseUpdate const& /* update_data */) { return {false, false}; }
-    static constexpr BaseUpdate inverse(BaseUpdate update_data) const { return update_data; }
+    static constexpr BaseUpdate inverse(BaseUpdate update_data) { return update_data; }
 
     // energized
     template <bool sym>
