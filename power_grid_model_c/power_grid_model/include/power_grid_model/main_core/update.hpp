@@ -12,19 +12,15 @@
 
 namespace power_grid_model::main_core {
 
-// template to update components
-// using forward interators
-// different selection based on component type
-// if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <std::derived_from<Base> Component, class CacheType, class ComponentContainer,
-          std::forward_iterator ForwardIterator>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
-UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
-                              std::vector<Idx2D> const& sequence_idx = {}) {
+namespace detail {
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          typename Func>
+    requires model_component_state<MainModelState, ComponentContainer, Component> &&
+             std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
+void iterate_component_sequence(Func&& func, MainModelState<ComponentContainer> const& state, ForwardIterator begin,
+                                ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
     bool const has_sequence_id = !sequence_idx.empty();
     Idx seq = 0;
-
-    UpdateChange changed;
 
     // loop to to update component
     for (auto it = begin; it != end; ++it, ++seq) {
@@ -34,12 +30,10 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
         Idx2D const sequence_single =
             has_sequence_id ? sequence_idx[seq] : state.components.template get_idx_by_id<Component>(it->id);
 
-        auto& comp = state.components.template get_item<Component>(sequence_single);
-        changed = changed || comp.update(*it);
+        func(*it, sequence_single);
     }
-
-    return changed;
 }
+} // namespace detail
 
 // template to update components
 // using forward interators
@@ -47,29 +41,39 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state<MainModelState, ComponentContainer, Component>
-std::vector<typename Component::UpdateType> update_inverse(MainModelState<ComponentContainer> const& state,
-                                                           ForwardIterator begin, ForwardIterator end,
-                                                           std::vector<Idx2D> const& sequence_idx = {}) {
+UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
+                              std::vector<Idx2D> const& sequence_idx = {}) {
     using UpdateType = typename Component::UpdateType;
 
-    bool const has_sequence_id = !sequence_idx.empty();
-    Idx seq = 0;
+    UpdateChange changed;
 
-    std::vector<typename Component::UpdateType> result(std::distance(begin, end));
+    detail::iterate_component_sequence<Component>(
+        [&](UpdateType const& update_data, Idx2D const& sequence_single) {
+            auto& comp = state.components.template get_item<Component>(sequence_single);
+            changed = changed || comp.update(update_data);
+        },
+        state, begin, end);
 
-    // loop to to update component
-    std::transform(begin, end, result.begin(), [&](UpdateType const& update_data) {
-        // get component
-        // either using ID via hash map
-        // either directly using sequence id
-        Idx2D const sequence_single =
-            has_sequence_id ? sequence_idx[seq] : state.components.template get_idx_by_id<Component>(update_data.id);
+    return changed;
+}
 
-        auto const& comp = state.components.template get_item<Component>(sequence_single);
-        return comp.inverse(update_data);
-    });
+// template to get the inverse update for components
+// using forward interators
+// different selection based on component type
+// if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<typename Component::UpdateType> OutputIterator>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
+                    OutputIterator destination, std::vector<Idx2D> const& sequence_idx = {}) {
+    using UpdateType = typename Component::UpdateType;
 
-    return result;
+    detail::iterate_component_sequence<Component>(
+        [&](UpdateType const& update_data, Idx2D const& sequence_single) {
+            auto const& comp = state.components.template get_item<Component>(sequence_single);
+            *destination++ = comp.inverse(update_data);
+        },
+        state, begin, end);
 }
 
 template <bool sym>

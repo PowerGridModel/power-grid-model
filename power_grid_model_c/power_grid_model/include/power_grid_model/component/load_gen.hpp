@@ -96,11 +96,13 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     }
 
     LoadGenUpdate<sym> inverse(LoadGenUpdate<sym> update_data) const {
+        double const scalar = direction_ * base_power<sym>;
+
         assert(update_data.id == this->id());
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
-        set_if_not_nan(update_data.p_specified, real(s_specified_));
-        set_if_not_nan(update_data.q_specified, imag(s_specified_));
+        set_if_not_nan(update_data.p_specified, real(s_specified_) * scalar);
+        set_if_not_nan(update_data.q_specified, imag(s_specified_) * scalar);
 
         return update_data;
     }
