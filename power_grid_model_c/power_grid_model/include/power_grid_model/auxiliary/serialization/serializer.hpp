@@ -16,7 +16,11 @@
 
 #include <msgpack.hpp>
 
+#include <iomanip>
+#include <limits>
 #include <span>
+#include <sstream>
+#include <stack>
 #include <string_view>
 
 // custom packers
@@ -58,6 +62,141 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 } // namespace msgpack
 
 namespace power_grid_model::meta_data {
+
+namespace json_converter {
+
+struct MapArray {
+    MapArray(uint32_t size_input) : size{size_input}, empty{size_input == 0} {}
+
+    uint32_t size;
+    bool empty;
+    bool begin{true};
+};
+
+struct JsonConverter : msgpack::null_visitor {
+    static constexpr char sep_char = ' ';
+
+    Idx indent;
+    Idx max_indent_level;
+    std::stringstream ss{};
+    std::stack<MapArray> map_array{};
+
+    void print_indent() {
+        if (indent < 0) {
+            return;
+        }
+        Idx const indent_level = static_cast<Idx>(map_array.size());
+        if (indent_level > max_indent_level) {
+            if (map_array.top().begin) {
+                map_array.top().begin = false;
+                return;
+            }
+            ss << sep_char;
+            return;
+        }
+        ss << '\n';
+        ss << std::string(indent_level * indent, sep_char);
+    }
+
+    void print_key_val_sep() {
+        if (indent < 0) {
+            return;
+        }
+        ss << sep_char;
+    }
+
+    bool visit_nil() {
+        ss << "null";
+        return true;
+    }
+    bool visit_boolean(bool v) {
+        if (v) {
+            ss << "true";
+        } else {
+            ss << "false";
+        }
+        return true;
+    }
+    bool visit_positive_integer(uint64_t v) {
+        ss << v;
+        return true;
+    }
+    bool visit_negative_integer(int64_t v) {
+        ss << v;
+        return true;
+    }
+    bool visit_float32(float v) { return visit_float64(v); }
+    bool visit_float64(double v) {
+        if (std::isinf(v)) {
+            using namespace std::string_view_literals;
+            ss << '"' << (v > 0.0 ? "inf"sv : "-inf"sv) << '"';
+        } else {
+            ss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << v;
+        }
+        return true;
+    }
+    bool visit_str(const char* v, uint32_t size) {
+        ss << '"' << std::string_view{v, size} << '"';
+        return true;
+    }
+    bool start_array(uint32_t num_elements) {
+        map_array.emplace(num_elements);
+        ss << '[';
+        return true;
+    }
+    bool start_array_item() {
+        print_indent();
+        return true;
+    }
+    bool end_array_item() {
+        --map_array.top().size;
+        if (map_array.top().size > 0) {
+            ss << ',';
+        }
+        return true;
+    }
+    bool end_array() {
+        bool const empty = map_array.top().empty;
+        map_array.pop();
+        if (static_cast<Idx>(map_array.size()) < max_indent_level && !empty) {
+            print_indent();
+        }
+        ss << ']';
+        return true;
+    }
+    bool start_map(uint32_t num_kv_pairs) {
+        map_array.emplace(num_kv_pairs);
+        ss << '{';
+        return true;
+    }
+    bool start_map_key() {
+        print_indent();
+        return true;
+    }
+    bool end_map_key() {
+        ss << ':';
+        print_key_val_sep();
+        return true;
+    }
+    bool end_map_value() {
+        --map_array.top().size;
+        if (map_array.top().size > 0) {
+            ss << ',';
+        }
+        return true;
+    }
+    bool end_map() {
+        bool const empty = map_array.top().empty;
+        map_array.pop();
+        if (static_cast<Idx>(map_array.size()) < max_indent_level && !empty) {
+            print_indent();
+        }
+        ss << '}';
+        return true;
+    }
+};
+
+} // namespace json_converter
 
 class Serializer {
     using RawElementPtr = void const*;
@@ -210,10 +349,11 @@ class Serializer {
 
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
-            auto json_document = nlohmann::json::from_msgpack(get_msgpack(use_compact_list));
-            json_convert_inf(json_document);
-            json_indent_ = indent;
-            json_buffer_ = json_document.dump(static_cast<int>(indent));
+            Idx const max_indent_level = dataset_handler_.is_batch() ? 4 : 3;
+            json_converter::JsonConverter visitor{{}, indent, max_indent_level};
+            auto const msgpack_data = get_msgpack(use_compact_list);
+            msgpack::parse(msgpack_data.data(), msgpack_data.size(), visitor);
+            json_buffer_ = visitor.ss.str();
         }
         return json_buffer_;
     }

@@ -19,7 +19,7 @@ namespace {
 using namespace std::string_literals;
 
 constexpr char const* json_data =
-    R"({"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]},"is_batch":false,"type":"input","version":"1.0"})";
+    R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]}})";
 } // namespace
 
 TEST_CASE("Serialization") {
@@ -75,7 +75,7 @@ TEST_CASE("Serialization") {
             Idx msgpack_size{};
             PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
             CHECK(PGM_error_code(hl) == PGM_no_error);
-            auto const json_document = nlohmann::json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
+            auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
             auto const json_result = json_document.dump(-1);
             CHECK(json_result == json_data);
         }
