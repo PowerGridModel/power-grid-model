@@ -17,8 +17,9 @@ template <std::derived_from<Base> Component, class ComponentContainer, std::forw
           typename Func>
     requires model_component_state<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
-void iterate_component_sequence(Func&& func, MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
+inline void iterate_component_sequence(Func&& func, MainModelState<ComponentContainer> const& state,
+                                       ForwardIterator begin, ForwardIterator end,
+                                       std::vector<Idx2D> const& sequence_idx) {
     bool const has_sequence_id = !sequence_idx.empty();
     Idx seq = 0;
 
@@ -41,8 +42,8 @@ void iterate_component_sequence(Func&& func, MainModelState<ComponentContainer> 
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state<MainModelState, ComponentContainer, Component>
-UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
-                              std::vector<Idx2D> const& sequence_idx = {}) {
+inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
+                                     ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
     using UpdateType = typename Component::UpdateType;
 
     UpdateChange changed;
@@ -52,7 +53,7 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
             auto& comp = state.components.template get_item<Component>(sequence_single);
             changed = changed || comp.update(update_data);
         },
-        state, begin, end);
+        state, begin, end, sequence_idx);
 
     return changed;
 }
@@ -64,8 +65,8 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state<MainModelState, ComponentContainer, Component>
-void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
-                    OutputIterator destination, std::vector<Idx2D> const& sequence_idx = {}) {
+inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
+                           OutputIterator destination, std::vector<Idx2D> const& sequence_idx = {}) {
     using UpdateType = typename Component::UpdateType;
 
     detail::iterate_component_sequence<Component>(
@@ -73,17 +74,17 @@ void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIter
             auto const& comp = state.components.template get_item<Component>(sequence_single);
             *destination++ = comp.inverse(update_data);
         },
-        state, begin, end);
+        state, begin, end, sequence_idx);
 }
 
 template <bool sym>
-void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
+inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
     y_bus.update_admittance(math_model_param);
 }
 
 template <bool sym>
-void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
-                  Idx n_math_solvers) {
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
+                         Idx n_math_solvers) {
     for (Idx i = 0; i != n_math_solvers; ++i) {
         if constexpr (sym) {
             update_y_bus(math_state.y_bus_vec_sym[i],
