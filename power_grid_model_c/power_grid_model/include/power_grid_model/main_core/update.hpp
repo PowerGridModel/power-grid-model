@@ -34,16 +34,42 @@ UpdateChange update_component(MainModelState<ComponentContainer>& state, Forward
         Idx2D const sequence_single =
             has_sequence_id ? sequence_idx[seq] : state.components.template get_idx_by_id<Component>(it->id);
 
-        if constexpr (CacheType::value) {
-            state.components.template cache_item<Component>(sequence_single.pos);
-        }
-
         auto& comp = state.components.template get_item<Component>(sequence_single);
-
         changed = changed || comp.update(*it);
     }
 
     return changed;
+}
+
+// template to update components
+// using forward interators
+// different selection based on component type
+// if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+std::vector<typename Component::UpdateType> update_inverse(MainModelState<ComponentContainer> const& state,
+                                                           ForwardIterator begin, ForwardIterator end,
+                                                           std::vector<Idx2D> const& sequence_idx = {}) {
+    using UpdateType = typename Component::UpdateType;
+
+    bool const has_sequence_id = !sequence_idx.empty();
+    Idx seq = 0;
+
+    std::vector<typename Component::UpdateType> result(std::distance(begin, end));
+
+    // loop to to update component
+    std::transform(begin, end, result.begin(), [&](UpdateType const& update_data) {
+        // get component
+        // either using ID via hash map
+        // either directly using sequence id
+        Idx2D const sequence_single =
+            has_sequence_id ? sequence_idx[seq] : state.components.template get_idx_by_id<Component>(update_data.id);
+
+        auto const& comp = state.components.template get_item<Component>(sequence_single);
+        return comp.inverse(update_data);
+    });
+
+    return result;
 }
 
 template <bool sym>

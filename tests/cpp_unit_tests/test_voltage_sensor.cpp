@@ -54,6 +54,7 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensor<true> voltage_sensor{voltage_sensor_input, u_rated};
 
         VoltageSensorUpdate<true> vs_update;
+        vs_update.id = 0;
         vs_update.u_measured = 1.0;
         vs_update.u_angle_measured = 2.0;
         vs_update.u_sigma = 3.0;
@@ -85,6 +86,7 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensor<false> voltage_sensor{voltage_sensor_input, u_rated};
 
         VoltageSensorUpdate<false> vs_update;
+        vs_update.id = 0;
         vs_update.u_measured = {1.0, 1.1, 1.2};
         vs_update.u_angle_measured = {2.0, 2.1, 2.2};
         vs_update.u_sigma = 3.0;

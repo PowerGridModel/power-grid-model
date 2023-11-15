@@ -70,18 +70,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             assert(found != component_index_map.cend());
             return found->index;
         }
+
+        template <class Comp> static constexpr size_t index_of() { return container_impl::get_cls_pos_v<Comp, C...>; }
     };
     using AllComponents = component_list_generator_impl<ComponentList<ComponentType...>,
                                                         std::make_index_sequence<sizeof...(ComponentType)>>;
     static constexpr size_t n_types = AllComponents::n_types;
 
     // function pointer definition
-    using InputFunc = void (*)(MainModelImpl& x, DataPointer<true> const& data_ptr, Idx position);
-    using UpdateFunc = void (*)(MainModelImpl& x, DataPointer<true> const& data_ptr, Idx position,
+    using InputFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position);
+    using UpdateFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position,
                                 std::vector<Idx2D> const& sequence_idx);
     template <math_output_type MathOutputType>
     using OutputFunc = void (*)(MainModelImpl& x, std::vector<MathOutputType> const& math_output,
-                                DataPointer<false> const& data_ptr, Idx position);
+                                MutableDataPointer const& data_ptr, Idx position);
     using CheckUpdateFunc = bool (*)(ConstDataPointer const& component_update);
     using GetSeqIdxFunc = std::vector<Idx2D> (*)(MainModelImpl const& x, ConstDataPointer const& component_update);
     using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
@@ -97,7 +99,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
         static constexpr std::array<InputFunc, n_types> add{
-            [](MainModelImpl& model, DataPointer<true> const& data_ptr, Idx position) {
+            [](MainModelImpl& model, ConstDataPointer const& data_ptr, Idx position) {
                 auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::InputType>(position);
                 model.add_component<ComponentType>(begin, end);
             }...};
@@ -177,7 +179,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void update_component(ConstDataset const& update_data, Idx pos = 0,
                           std::map<std::string, std::vector<Idx2D>, std::less<>> const& sequence_idx_map = {}) {
         static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
-                                                                   DataPointer<true> const& data_ptr, Idx position,
+                                                                   ConstDataPointer const& data_ptr, Idx position,
                                                                    std::vector<Idx2D> const& sequence_idx) {
             auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::UpdateType>(position);
             model.update_component<ComponentType, CacheType>(begin, end, sequence_idx);
@@ -188,22 +190,78 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (found == update_data.cend()) {
                 continue;
             }
-            // try to find sequence idx
-            auto const found_seq = sequence_idx_map.find(entry.name);
-            if (found_seq == sequence_idx_map.cend()) {
-                // if not found sequence, update using IDs
-                update[entry.index](*this, found->second, pos, {});
-            } else {
-                // else update using pre-cached sequence number
+            if (auto const found_seq = sequence_idx_map.find(entry.name); found_seq != sequence_idx_map.cend()) {
+                // update using pre-cached sequence number
                 update[entry.index](*this, found->second, pos, found_seq->second);
+            } else {
+                update[entry.index](*this, found->second, pos, {});
             }
         }
     }
 
+    // template to get the inverse dataset of an update dataset
+    // using forward interators
+    // different selection based on component type
+    // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
+    template <class CompType, std::forward_iterator ForwardIterator>
+    std::vector<typename CompType::UpdateType> update_inverse(ForwardIterator begin, ForwardIterator end,
+                                                              std::vector<Idx2D> const& sequence_idx = {}) const {
+        assert(construction_complete_);
+
+        return main_core::update_inverse<CompType>(state_, begin, end, sequence_idx);
+    }
+
+    // helper function to update vectors of components
+    template <class CompType>
+    std::vector<typename CompType::UpdateType>
+    update_inverse(std::vector<typename CompType::UpdateType> const& components) const {
+        return update_inverse<CompType>(components.cbegin(), components.cend());
+    }
+
+    struct OwnedUpdateDataset {
+        ConstDataset dataset;
+        std::tuple<std::vector<typename ComponentType::UpdateType>...> update_data;
+    };
+
+    // update all components
+    OwnedUpdateDataset
+    update_inverse(ConstDataset const& update_data, Idx pos = 0,
+                   std::map<std::string, std::vector<Idx2D>, std::less<>> const& sequence_idx_map = {}) const {
+        static constexpr std::array<void (*)(MainModelImpl const&, OwnedUpdateDataset&, ConstDataPointer const&, Idx,
+                                             std::vector<Idx2D> const&),
+                                    n_types>
+            get_inverse{[](MainModelImpl const& model, OwnedUpdateDataset& target, ConstDataPointer const& data_ptr,
+                           Idx position, std::vector<Idx2D> const& sequence_idx) {
+                constexpr auto component_index = AllComponents::template index_of<ComponentType>();
+
+                auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::UpdateType>(position);
+
+                auto& update_data = std::get<component_index>(target.update_data);
+                update_data = model.update_inverse<ComponentType>(begin, end, sequence_idx);
+
+                target.dataset[std::get<component_index>(AllComponents::component_index_map).name] =
+                    ConstDataPointer{update_data.data(), data_ptr.elements_per_scenario(position)};
+            }...};
+
+        OwnedUpdateDataset result;
+        for (ComponentEntry const& entry : AllComponents::component_index_map) {
+            auto const found = update_data.find(entry.name);
+            // skip if component does not exist
+            if (found == update_data.cend()) {
+                continue;
+            }
+            if (auto const found_seq = sequence_idx_map.find(entry.name); found_seq != sequence_idx_map.cend()) {
+                // get inverse using pre-cached sequence number
+                get_inverse[entry.index](*this, result, found->second, pos, found_seq->second);
+            } else {
+                get_inverse[entry.index](*this, result, found->second, pos, {});
+            }
+        }
+        return result;
+    }
+
     // restore the initial values of all components
     void restore_components() {
-        state_.components.restore_values();
-
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
     }
@@ -446,6 +504,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
                 // try to update model and run calculation
                 try {
+                    auto const update_inverse = [&] {
+                        Timer const t_update_model(infos[batch_number], 1202, "Update inverse");
+                        return model.update_inverse(update_data, batch_number);
+                    }();
                     {
                         Timer const t_update_model(infos[batch_number], 1200, "Update model");
                         model.template update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
@@ -453,7 +515,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     calculation_fn(model, result_data, batch_number);
                     {
                         Timer const t_update_model(infos[batch_number], 1201, "Restore model");
-                        model.restore_components();
+                        model.template update_component<cached_update_t>(update_inverse.dataset);
                     }
                 } catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
@@ -668,7 +730,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void output_result(std::vector<MathOutputType> const& math_output, Dataset const& result_data, Idx pos = 0) {
         static constexpr std::array<OutputFunc<MathOutputType>, n_types> get_result{
             [](MainModelImpl& model, std::vector<MathOutputType> const& math_output_,
-               DataPointer<false> const& data_ptr, Idx position) {
+               MutableDataPointer const& data_ptr, Idx position) {
                 auto const begin =
                     data_ptr
                         .get_iterators<std::conditional_t<

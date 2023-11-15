@@ -29,6 +29,10 @@ class Node final : public Base {
 
     // update node, nothing happens here
     static constexpr UpdateChange update(BaseUpdate const& /* update_data */) { return {false, false}; }
+    constexpr BaseUpdate inverse(BaseUpdate update_data) const {
+        assert(update_data.id == this->id());
+        return update_data;
+    }
 
     // energized
     template <bool sym>

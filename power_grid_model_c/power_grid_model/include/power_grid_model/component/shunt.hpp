@@ -47,14 +47,25 @@ class Shunt : public Appliance {
         }
     }
 
-    // update for shunt
-    UpdateChange update(ShuntUpdate const& update) {
-        assert(update.id == id());
-        bool changed = set_status(update.status);
-        changed = update_params(update) || changed;
+    UpdateChange update(ShuntUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool changed = set_status(update_data.status);
+        changed = update_params(update_data) || changed;
 
         // change shunt connection will not change topology, but will change parameters
         return {false, changed};
+    }
+
+    ShuntUpdate inverse(ShuntUpdate update_data) const {
+        assert(update_data.id == id());
+
+        set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
+        set_if_not_nan(update_data.g1, g1_);
+        set_if_not_nan(update_data.b1, b1_);
+        set_if_not_nan(update_data.g0, g0_);
+        set_if_not_nan(update_data.b0, b0_);
+
+        return update_data;
     }
 
   private:

@@ -148,11 +148,20 @@ class Branch : public Base {
     }
 
     // default update for branch, will be hidden for transformer
-    UpdateChange update(BranchUpdate const& update) {
-        assert(update.id == id());
-        bool const changed = set_status(update.from_status, update.to_status);
+    UpdateChange update(BranchUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool const changed = set_status(update_data.from_status, update_data.to_status);
         // change branch connection will change both topo and param
         return {changed, changed};
+    }
+
+    auto inverse(std::derived_from<BranchUpdate> auto update_data) const {
+        assert(update_data.id == id());
+
+        set_if_not_nan(update_data.from_status, static_cast<IntS>(from_status_));
+        set_if_not_nan(update_data.to_status, static_cast<IntS>(to_status_));
+
+        return update_data;
     }
 
   protected:

@@ -87,12 +87,22 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     }
 
     // update for load_gen
-    UpdateChange update(LoadGenUpdate<sym> const& update) {
-        assert(update.id == this->id());
-        this->set_status(update.status);
-        set_power(update.p_specified, update.q_specified);
+    UpdateChange update(LoadGenUpdate<sym> const& update_data) {
+        assert(update_data.id == this->id());
+        this->set_status(update_data.status);
+        set_power(update_data.p_specified, update_data.q_specified);
         // change load connection and/or value will not change topology or parameters
         return {false, false};
+    }
+
+    LoadGenUpdate<sym> inverse(LoadGenUpdate<sym> update_data) const {
+        assert(update_data.id == this->id());
+
+        set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
+        set_if_not_nan(update_data.p_specified, real(s_specified_));
+        set_if_not_nan(update_data.q_specified, imag(s_specified_));
+
+        return update_data;
     }
 
   private:

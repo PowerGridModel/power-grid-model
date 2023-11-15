@@ -117,11 +117,20 @@ class ThreeWindingTransformer : public Branch3 {
         return true;
     }
 
-    UpdateChange update(ThreeWindingTransformerUpdate const& update) {
-        assert(update.id == id());
-        bool const topo_changed = set_status(update.status_1, update.status_2, update.status_3);
-        bool const param_changed = set_tap(update.tap_pos) || topo_changed;
+    UpdateChange update(ThreeWindingTransformerUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool const topo_changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
+        bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
+    }
+
+    ThreeWindingTransformerUpdate inverse(ThreeWindingTransformerUpdate update_data) const {
+        assert(update_data.id == id());
+
+        update_data = Branch3::inverse(std::move(update_data));
+        set_if_not_nan(update_data.tap_pos, tap_pos_);
+
+        return update_data;
     }
 
   private:
