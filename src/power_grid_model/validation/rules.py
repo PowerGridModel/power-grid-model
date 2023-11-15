@@ -699,16 +699,16 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
 
 
 def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValidationError]:
-    '''
+    """
     Check if for 'sym_power_sensor' and 'asym_power_sensor' the p_sigma and q_sigma are valid.
 
     Args:
         data: The input/update data set for all components
         component: The component of interest, in this case only 'sym_power_sensor' or 'asym_power_sensor'
-    
+
     Returns:
         A list containing zeor or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch
-    '''
+    """
     errors = []
     p_sigma = data[component]["p_sigma"]
     q_sigma = data[component]["q_sigma"]

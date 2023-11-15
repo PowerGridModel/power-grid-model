@@ -709,7 +709,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         ref_components="node",
         measured_terminal_type=MeasuredTerminalType.node,
     )
-    if component in ('sym_power_sensor', 'asym_power_sensor'):
+    if component in ("sym_power_sensor", "asym_power_sensor"):
         errors += valid_p_q_sigma(data, component)
 
     return errors
