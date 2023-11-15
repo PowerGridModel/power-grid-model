@@ -321,7 +321,7 @@ template <typename T> inline void set_if_not_nan(T& target, T const& value) {
     }
 };
 inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& value) {
-    for (size_t i = 0; i != 3; ++i) {
+    for (Idx i = 0; i != 3; ++i) {
         set_if_not_nan(target(i), value(i));
     }
 };

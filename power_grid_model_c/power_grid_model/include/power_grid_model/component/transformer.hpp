@@ -94,7 +94,7 @@ class Transformer : public Branch {
     TransformerUpdate inverse(TransformerUpdate update_data) const {
         assert(update_data.id == id());
 
-        update_data = Branch::inverse(std::move(update_data));
+        update_data = Branch::inverse(update_data);
         set_if_not_nan(update_data.tap_pos, tap_pos_);
 
         return update_data;
