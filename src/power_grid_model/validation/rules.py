@@ -63,6 +63,7 @@ from power_grid_model.validation.errors import (
     TransformerClockError,
     TwoValuesZeroError,
     ValidationError,
+    MultiFieldValidationError,
 )
 from power_grid_model.validation.utils import eval_expression, nan_type, set_default_value
 
@@ -697,38 +698,28 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
     return errors
 
 
-def any_exists_in_pair(data: SingleDataset, component: str, field_1: str, field_2: str) -> bool:
-    """
-    Check if any of the specific pair of fields of a particular type of component exists.
-    Returns True if at least one of the two fields exist, or False if none of them exists.
+def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValidationError]:
+    '''
+    Check if for 'sym_power_sensor' and 'asym_power_sensor' the p_sigma and q_sigma are valid.
 
     Args:
         data: The input/update data set for all components
-        component: The component of interest
-        field_1, field_2: The fields of interest
-
+        component: The component of interest, in this case only 'sym_power_sensor' or 'asym_power_sensor'
+    
     Returns:
-        Boolean value indicating if anyone of the fields exist or no one exists.
-    """
-    if data.get(component, None) is None:
-        return False
-    
-    fields = []
-    fields_in = [field_1, field_2]
-    for field in fields_in:
-        if isinstance(field, str) and data[component].get(field, None) is not None:
-            fields.append(field)
-    
-    for field in fields:
-        nan = nan_type(component, field)
-        if np.isnan(nan):
-            invalid = np.isnan(data[component][field])
-        else:
-            invalid = np.equal(data[component][field], nan)
-        if not invalid.any():
-            return True
-        
-    return False
+        A list containing zeor or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch
+    '''
+    errors = []
+    p_sigma = data[component]["p_sigma"]
+    q_sigma = data[component]["q_sigma"]
+    ids = [data[component]["id"].flatten().tolist()]
+    p_nan = np.isnan(p_sigma)
+    q_nan = np.isnan(q_sigma)
+    p_inf = np.isinf(p_sigma)
+    q_inf = np.isinf(q_sigma)
+    if np.logical_xor(p_nan.any(), q_nan.any()) or np.logical_or(p_inf.any(), q_inf.any()):
+        errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
+    return errors
 
 
 def all_valid_clocks(

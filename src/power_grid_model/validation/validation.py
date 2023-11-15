@@ -53,7 +53,7 @@ from power_grid_model.validation.rules import (
     all_valid_fault_phases,
     all_valid_ids,
     none_missing,
-    any_exists_in_pair,
+    valid_p_q_sigma,
 )
 from power_grid_model.validation.utils import update_input_data
 
@@ -308,19 +308,13 @@ def validate_required_values(
     required["sensor"] = required["base"] + ["measured_object"]
     required["voltage_sensor"] = required["sensor"].copy()
     required["power_sensor"] = required["sensor"] + ["measured_terminal_type"]
-    sigma_required = False
     if calculation_type is None or calculation_type == CalculationType.state_estimation:
-        sigma_required = True
         required["voltage_sensor"] += ["u_sigma", "u_measured"]
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
-    if sigma_required and any_exists_in_pair(data, "sym_voltage_sensor", "p_sigma", "q_sigma"):
-        required["sym_power_sensor"] += ["p_sigma", "q_sigma"]
-    if sigma_required and any_exists_in_pair(data, "asym_voltage_sensor", "p_sigma", "q_sigma"):
-        required["asym_power_sensor"] += ["p_sigma", "q_sigma"]
 
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
@@ -715,6 +709,8 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         ref_components="node",
         measured_terminal_type=MeasuredTerminalType.node,
     )
+    if component == 'sym_power_sensor' or component == 'asym_power_sensor':
+        errors += valid_p_q_sigma(data, component)
 
     return errors
 
