@@ -49,7 +49,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
     UpdateChange changed;
 
     detail::iterate_component_sequence<Component>(
-        [&](UpdateType const& update_data, Idx2D const& sequence_single) {
+        [&changed, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
             auto& comp = state.components.template get_item<Component>(sequence_single);
             changed = changed || comp.update(update_data);
         },
@@ -70,7 +70,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
     using UpdateType = typename Component::UpdateType;
 
     detail::iterate_component_sequence<Component>(
-        [&](UpdateType const& update_data, Idx2D const& sequence_single) {
+        [&destination, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
             auto const& comp = state.components.template get_item<Component>(sequence_single);
             *destination++ = comp.inverse(update_data);
         },
