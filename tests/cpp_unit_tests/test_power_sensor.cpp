@@ -573,7 +573,7 @@ TEST_CASE("Test power sensor") {
         constexpr auto q_measured = 3.0;
         constexpr auto p_sigma = 4.0;
         constexpr auto q_sigma = 5.0;
-        PowerSensor<true> power_sensor{
+        PowerSensor<true> const power_sensor{
             {{{{1}, 1}, MeasuredTerminalType::branch3_1, power_sigma}, p_measured, q_measured, p_sigma, q_sigma}};
 
         PowerSensorUpdate<true> ps_update{{1}, nan, nan, nan, nan, nan};
