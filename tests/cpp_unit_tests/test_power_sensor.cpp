@@ -639,7 +639,7 @@ TEST_CASE("Test power sensor") {
         RealValue<false> const q_measured{5.0, 6.0, 7.0};
         RealValue<false> const p_sigma{7.0, 8.0, 9.0};
         RealValue<false> const q_sigma{10.0, 11.0, 12.0};
-        PowerSensor<false> power_sensor{
+        PowerSensor<false> const power_sensor{
             {{{{1}, 1}, MeasuredTerminalType::branch3_1, power_sigma}, p_measured, q_measured, p_sigma, q_sigma}};
 
         PowerSensorUpdate<false> ps_update{{1}, nan, r_nan, r_nan, r_nan, r_nan};
