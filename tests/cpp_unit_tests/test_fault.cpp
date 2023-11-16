@@ -7,6 +7,15 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test fault") {
     Fault fault{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, 3.0, 4.0}};
@@ -289,6 +298,66 @@ TEST_CASE("Test fault") {
         CHECK(cabs(param.y_fault - y_f) < numerical_tolerance);
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
         CHECK(param.fault_phase == FaultPhase::ab);
+    }
+
+    SUBCASE("Update inverse") {
+        FaultUpdate fault_update{{1}, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
+        auto expected = fault_update;
+
+        SUBCASE("Identical") {}
+
+        SUBCASE("Status") {
+            SUBCASE("same") { fault_update.status = fault.status(); }
+            SUBCASE("different") { fault_update.status = IntS{0}; }
+            expected.status = fault.status();
+        }
+
+        SUBCASE("Fault type") {
+            SUBCASE("Same") { fault_update.fault_type = fault.get_fault_type(); }
+            SUBCASE("different") { fault_update.fault_type = FaultType::three_phase; }
+            expected.fault_type = fault.get_fault_type();
+        }
+
+        SUBCASE("Fault phase") {
+            SUBCASE("Same") { fault_update.fault_phase = fault.get_fault_phase(); }
+            SUBCASE("different") { fault_update.fault_phase = FaultPhase::abc; }
+            expected.fault_phase = fault.get_fault_phase();
+        }
+
+        SUBCASE("Fault object") {
+            SUBCASE("Same") { fault_update.fault_object = fault.get_fault_object(); }
+            SUBCASE("different") { fault_update.fault_object = 100; }
+            expected.fault_object = fault.get_fault_object();
+        }
+
+        SUBCASE("r_f, x_f") {
+            fault_update.r_f = 6.0;
+            fault_update.x_f = 7.0;
+            expected.r_f = 3.0;
+            expected.x_f = 4.0;
+        }
+
+        SUBCASE("multiple") {
+            fault_update.status = IntS{0};
+            fault_update.fault_type = FaultType::three_phase;
+            fault_update.fault_phase = FaultPhase::abc;
+            fault_update.fault_object = 100;
+            expected.status = fault.status();
+            expected.fault_type = fault.get_fault_type();
+            expected.fault_phase = fault.get_fault_phase();
+            expected.fault_object = fault.get_fault_object();
+        }
+
+        auto const inv = fault.inverse(fault_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        CHECK(inv.fault_type == expected.fault_type);
+        CHECK(inv.fault_phase == expected.fault_phase);
+        CHECK(inv.fault_object == expected.fault_object);
+
+        check_nan_preserving_equality(inv.r_f, expected.r_f);
+        check_nan_preserving_equality(inv.x_f, expected.x_f);
     }
 }
 

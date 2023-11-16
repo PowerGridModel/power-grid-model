@@ -7,6 +7,22 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+
+void check_nan_preserving_equality(RealValue<false> const& actual, RealValue<false> const& expected) {
+    for (auto i : {0, 1, 2}) {
+        CAPTURE(i);
+        check_nan_preserving_equality(actual(i), expected(i));
+    }
+}
+} // namespace
 
 TEST_CASE("Test load generator") {
     LoadGenInput<true> sym_load_gen_input{{{{1}, 2, 1}, LoadGenType::const_pq}, 3e6, 3e6};
@@ -339,6 +355,51 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         auto const result = load_gen.template calc_param<true>(true);
         CHECK_FALSE(std::isnan(result.real()));
         CHECK_FALSE(std::isnan(result.imag()));
+    }
+
+    SUBCASE("Update inverse") {
+        auto const p_specified = RealValueType{1.0};
+        auto const q_specified = RealValueType{2.0};
+        LoadGenType const load_gen{{{{{1}, IntS{1}}, {}}, p_specified, q_specified}, 1.0};
+
+        UpdateType update{{{1}, na_IntS}, r_nan, r_nan};
+        auto expected = update;
+
+        SUBCASE("Identical") {}
+
+        SUBCASE("Status") {
+            SUBCASE("same") { update.status = load_gen.status(); }
+            SUBCASE("different") { update.status = IntS{0}; }
+            expected.status = load_gen.status();
+        }
+
+        SUBCASE("p_specified") {
+            SUBCASE("same") { update.p_specified = p_specified; }
+            SUBCASE("different") { update.p_specified = RealValueType{0.0}; }
+            expected.p_specified = p_specified;
+        }
+
+        SUBCASE("q_specified") {
+            SUBCASE("same") { update.q_specified = q_specified; }
+            SUBCASE("different") { update.q_specified = RealValueType{0.0}; }
+            expected.q_specified = q_specified;
+        }
+
+        SUBCASE("multiple") {
+            update.status = IntS{0};
+            update.p_specified = RealValueType{0.0};
+            update.q_specified = RealValueType{0.1};
+            expected.status = load_gen.status();
+            expected.p_specified = p_specified;
+            expected.q_specified = q_specified;
+        }
+
+        auto const inv = load_gen.inverse(update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        check_nan_preserving_equality(inv.p_specified, expected.p_specified);
+        check_nan_preserving_equality(inv.q_specified, expected.q_specified);
     }
 }
 } // namespace power_grid_model

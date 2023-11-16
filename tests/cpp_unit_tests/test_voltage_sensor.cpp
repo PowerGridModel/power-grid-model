@@ -12,6 +12,22 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+
+void check_nan_preserving_equality(RealValue<false> const& actual, RealValue<false> const& expected) {
+    for (auto i : {0, 1, 2}) {
+        CAPTURE(i);
+        check_nan_preserving_equality(actual(i), expected(i));
+    }
+}
+} // namespace
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
@@ -463,6 +479,112 @@ TEST_CASE("Test voltage sensor") {
             CHECK(is_nan(asym_voltage_sensor_asym_output.u_angle_residual[1]));
             CHECK(is_nan(asym_voltage_sensor_asym_output.u_angle_residual[2]));
         }
+    }
+
+    SUBCASE("Update inverse - sym") {
+        constexpr auto u_sigma = 1.0;
+        constexpr auto u_measured = 2.0;
+        constexpr auto u_angle_measured = 3.0;
+        constexpr auto u_rated = 10.0e3;
+        VoltageSensor<true> voltage_sensor{{{{{1}, 2}, u_sigma}, u_measured, u_angle_measured}, u_rated};
+
+        VoltageSensorUpdate<true> vs_update{{1}, nan, nan, nan};
+        auto expected = vs_update;
+
+        SUBCASE("Identical") {}
+
+        SUBCASE("u_sigma") {
+            SUBCASE("same") { vs_update.u_sigma = u_sigma; }
+            SUBCASE("different") { vs_update.u_sigma = 0.0; }
+            expected.u_sigma = u_sigma;
+        }
+
+        SUBCASE("u_measured") {
+            SUBCASE("same") { vs_update.u_measured = u_measured; }
+            SUBCASE("different") { vs_update.u_measured = 0.0; }
+            expected.u_measured = u_measured;
+        }
+
+        SUBCASE("u_angle_measured") {
+            SUBCASE("same") { vs_update.u_angle_measured = u_angle_measured; }
+            SUBCASE("different") { vs_update.u_angle_measured = 0.0; }
+            expected.u_angle_measured = u_angle_measured;
+        }
+
+        SUBCASE("multiple") {
+            vs_update.u_sigma = 0.0;
+            vs_update.u_measured = 0.0;
+            vs_update.u_angle_measured = 0.0;
+            expected.u_sigma = u_sigma;
+            expected.u_measured = u_measured;
+            expected.u_angle_measured = u_angle_measured;
+        }
+
+        auto const inv = voltage_sensor.inverse(vs_update);
+
+        CHECK(inv.id == expected.id);
+        check_nan_preserving_equality(inv.u_sigma, expected.u_sigma);
+        check_nan_preserving_equality(inv.u_measured, expected.u_measured);
+        check_nan_preserving_equality(inv.u_angle_measured, expected.u_angle_measured);
+    }
+
+    SUBCASE("Update inverse - asym") {
+        constexpr double u_sigma = 1.0;
+        RealValue<false> const u_measured{2.0, 3.0, 4.0};
+        RealValue<false> const u_angle_measured{5.0, 6.0, 7.0};
+        constexpr double u_rated = 10.0e3;
+        VoltageSensor<false> voltage_sensor{{{{{1}, 2}, u_sigma}, u_measured, u_angle_measured}, u_rated};
+
+        VoltageSensorUpdate<false> vs_update{{1}, nan, {nan, nan, nan}, {nan, nan, nan}};
+        auto expected = vs_update;
+
+        SUBCASE("Identical") {}
+
+        SUBCASE("u_sigma") {
+            SUBCASE("same") { vs_update.u_sigma = u_sigma; }
+            SUBCASE("different") { vs_update.u_sigma = 0.0; }
+            expected.u_sigma = u_sigma;
+        }
+
+        SUBCASE("u_measured") {
+            SUBCASE("same") { vs_update.u_measured = u_measured; }
+            SUBCASE("1 different") {
+                vs_update.u_measured = {0.0, nan, nan};
+                expected.u_measured = {u_measured(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                vs_update.u_measured = {0.0, 0.1, 0.2};
+                expected.u_measured = u_measured;
+            }
+        }
+
+        SUBCASE("u_angle_measured") {
+            SUBCASE("same") { vs_update.u_angle_measured = u_angle_measured; }
+            SUBCASE("1 different") {
+                vs_update.u_angle_measured = {0.0, nan, nan};
+                expected.u_angle_measured = {u_angle_measured(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                vs_update.u_angle_measured = {0.0, 0.4, 0.6};
+                expected.u_angle_measured = u_angle_measured;
+            }
+        }
+
+        SUBCASE("multiple") {
+            vs_update.u_sigma = 0.0;
+            vs_update.u_measured = {0.0, 0.1, 0.2};
+            vs_update.u_angle_measured = {0.0, 0.4, 0.6};
+            expected.u_sigma = u_sigma;
+            expected.u_measured = u_measured;
+            expected.u_angle_measured = u_angle_measured;
+        }
+
+        auto const inv = voltage_sensor.inverse(vs_update);
+
+        CHECK(inv.id == expected.id);
+        check_nan_preserving_equality(inv.u_sigma, expected.u_sigma);
+        check_nan_preserving_equality(inv.u_measured, expected.u_measured);
+        check_nan_preserving_equality(inv.u_angle_measured, expected.u_angle_measured);
     }
 }
 
