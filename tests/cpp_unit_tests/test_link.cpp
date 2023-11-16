@@ -119,22 +119,22 @@ TEST_CASE("Test link") {
         SUBCASE("Identical") {}
 
         SUBCASE("From status") {
-            SUBCASE("same") { branch_update.from_status = link.from_status(); }
+            SUBCASE("same") { branch_update.from_status = static_cast<IntS>(link.from_status()); }
             SUBCASE("different") { branch_update.from_status = IntS{0}; }
-            expected.from_status = link.from_status();
+            expected.from_status = static_cast<IntS>(link.from_status());
         }
 
         SUBCASE("To status") {
-            SUBCASE("same") { branch_update.to_status = link.to_status(); }
+            SUBCASE("same") { branch_update.to_status = static_cast<IntS>(link.to_status()); }
             SUBCASE("different") { branch_update.to_status = IntS{0}; }
-            expected.to_status = link.to_status();
+            expected.to_status = static_cast<IntS>(link.to_status());
         }
 
         SUBCASE("multiple") {
             branch_update.from_status = IntS{0};
             branch_update.to_status = IntS{0};
-            expected.from_status = link.from_status();
-            expected.to_status = link.to_status();
+            expected.from_status = static_cast<IntS>(link.from_status());
+            expected.to_status = static_cast<IntS>(link.to_status());
         }
 
         auto const inv = link.inverse(branch_update);

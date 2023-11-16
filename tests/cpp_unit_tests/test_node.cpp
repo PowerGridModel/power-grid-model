@@ -68,7 +68,7 @@ TEST_CASE("Test node") {
     }
 
     SUBCASE("Test update inverse") {
-        BaseUpdate base_update{1};
+        BaseUpdate const base_update{1};
         auto expected = base_update;
         auto const inv = Node::inverse(base_update);
         CHECK(inv.id == expected.id);

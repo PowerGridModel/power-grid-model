@@ -201,9 +201,9 @@ TEST_CASE("Test source") {
         SUBCASE("Identical") {}
 
         SUBCASE("Status") {
-            SUBCASE("same") { source_update.status = source.status(); }
+            SUBCASE("same") { source_update.status = static_cast<IntS>(source.status()); }
             SUBCASE("different") { source_update.status = IntS{0}; }
-            expected.status = source.status();
+            expected.status = static_cast<IntS>(source.status());
         }
 
         SUBCASE("u_ref") {
@@ -221,7 +221,7 @@ TEST_CASE("Test source") {
             source_update.status = IntS{0};
             source_update.u_ref = 0.0;
             source_update.u_ref_angle = 0.1;
-            expected.status = source.status();
+            expected.status = static_cast<IntS>(source.status());
             expected.u_ref = u_input;
             expected.u_ref_angle = nan;
         }

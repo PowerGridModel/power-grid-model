@@ -360,7 +360,7 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
     SUBCASE("Update inverse") {
         auto const p_specified = RealValueType{1.0};
         auto const q_specified = RealValueType{2.0};
-        LoadGenType const load_gen{{{{{1}, IntS{1}}, {}}, p_specified, q_specified}, 1.0};
+        LoadGenType const load_gen{{{{{1}, 2, IntS{1}}, {}}, p_specified, q_specified}, 1.0};
 
         UpdateType update{{{1}, na_IntS}, r_nan, r_nan};
         auto expected = update;
@@ -368,9 +368,9 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         SUBCASE("Identical") {}
 
         SUBCASE("Status") {
-            SUBCASE("same") { update.status = load_gen.status(); }
+            SUBCASE("same") { update.status = static_cast<IntS>(load_gen.status()); }
             SUBCASE("different") { update.status = IntS{0}; }
-            expected.status = load_gen.status();
+            expected.status = static_cast<IntS>(load_gen.status());
         }
 
         SUBCASE("p_specified") {
@@ -389,7 +389,7 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
             update.status = IntS{0};
             update.p_specified = RealValueType{0.0};
             update.q_specified = RealValueType{0.1};
-            expected.status = load_gen.status();
+            expected.status = static_cast<IntS>(load_gen.status());
             expected.p_specified = p_specified;
             expected.q_specified = q_specified;
         }
