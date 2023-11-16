@@ -533,7 +533,7 @@ TEST_CASE("Test voltage sensor") {
         RealValue<false> const u_measured{2.0, 3.0, 4.0};
         RealValue<false> const u_angle_measured{5.0, 6.0, 7.0};
         constexpr double u_rated = 10.0e3;
-        VoltageSensor<false> voltage_sensor{{{{{1}, 2}, u_sigma}, u_measured, u_angle_measured}, u_rated};
+        VoltageSensor<false> const voltage_sensor{{{{{1}, 2}, u_sigma}, u_measured, u_angle_measured}, u_rated};
 
         VoltageSensorUpdate<false> vs_update{{1}, nan, {nan, nan, nan}, {nan, nan, nan}};
         auto expected = vs_update;
