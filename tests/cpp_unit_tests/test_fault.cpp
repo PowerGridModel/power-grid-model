@@ -307,9 +307,9 @@ TEST_CASE("Test fault") {
         SUBCASE("Identical") {}
 
         SUBCASE("Status") {
-            SUBCASE("same") { fault_update.status = fault.status(); }
+            SUBCASE("same") { fault_update.status = static_cast<IntS>(fault.status()); }
             SUBCASE("different") { fault_update.status = IntS{0}; }
-            expected.status = fault.status();
+            expected.status = static_cast<IntS>(fault.status());
         }
 
         SUBCASE("Fault type") {
@@ -342,7 +342,7 @@ TEST_CASE("Test fault") {
             fault_update.fault_type = FaultType::three_phase;
             fault_update.fault_phase = FaultPhase::abc;
             fault_update.fault_object = 100;
-            expected.status = fault.status();
+            expected.status = static_cast<IntS>(fault.status());
             expected.fault_type = fault.get_fault_type();
             expected.fault_phase = fault.get_fault_phase();
             expected.fault_object = fault.get_fault_object();
