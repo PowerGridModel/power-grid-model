@@ -38,14 +38,17 @@ template <bool sym>
 {%- endfor %}
 };
 
-static_assert(std::is_standard_layout_v<{{ attribute_class.name }}>);
 
 {% if attribute_class.is_template -%}
 using Sym{{ attribute_class.name }} = {{ attribute_class.name }}<true>;
 using Asym{{ attribute_class.name }} = {{ attribute_class.name }}<false>;
 
+static_assert(std::is_standard_layout_v<{{ attribute_class.name }}<true>>);
+static_assert(std::is_standard_layout_v<{{ attribute_class.name }}<false>>);
 static_assert(std::is_standard_layout_v<Sym{{ attribute_class.name }}>);
 static_assert(std::is_standard_layout_v<Asym{{ attribute_class.name }}>);
+{% else %}
+static_assert(std::is_standard_layout_v<{{ attribute_class.name }}>);
 {% endif %}
 {%- endfor %}
 
