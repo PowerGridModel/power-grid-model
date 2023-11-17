@@ -45,7 +45,7 @@ using SymNodeOutput = NodeOutput<true>;
 using AsymNodeOutput = NodeOutput<false>;
 
 static_assert(std::is_standard_layout_v<SymNodeOutput>);
-static_assert(std::is_standard_layout_v<AsSymNodeOutput>);
+static_assert(std::is_standard_layout_v<AsymNodeOutput>);
 template <bool sym>
 struct BranchOutput {
     ID id;  // ID of the object
@@ -71,7 +71,7 @@ using SymBranchOutput = BranchOutput<true>;
 using AsymBranchOutput = BranchOutput<false>;
 
 static_assert(std::is_standard_layout_v<SymBranchOutput>);
-static_assert(std::is_standard_layout_v<AsSymBranchOutput>);
+static_assert(std::is_standard_layout_v<AsymBranchOutput>);
 template <bool sym>
 struct Branch3Output {
     ID id;  // ID of the object
@@ -101,7 +101,7 @@ using SymBranch3Output = Branch3Output<true>;
 using AsymBranch3Output = Branch3Output<false>;
 
 static_assert(std::is_standard_layout_v<SymBranch3Output>);
-static_assert(std::is_standard_layout_v<AsSymBranch3Output>);
+static_assert(std::is_standard_layout_v<AsymBranch3Output>);
 template <bool sym>
 struct ApplianceOutput {
     ID id;  // ID of the object
@@ -123,7 +123,7 @@ using SymApplianceOutput = ApplianceOutput<true>;
 using AsymApplianceOutput = ApplianceOutput<false>;
 
 static_assert(std::is_standard_layout_v<SymApplianceOutput>);
-static_assert(std::is_standard_layout_v<AsSymApplianceOutput>);
+static_assert(std::is_standard_layout_v<AsymApplianceOutput>);
 template <bool sym>
 struct VoltageSensorOutput {
     ID id;  // ID of the object
@@ -142,7 +142,7 @@ using SymVoltageSensorOutput = VoltageSensorOutput<true>;
 using AsymVoltageSensorOutput = VoltageSensorOutput<false>;
 
 static_assert(std::is_standard_layout_v<SymVoltageSensorOutput>);
-static_assert(std::is_standard_layout_v<AsSymVoltageSensorOutput>);
+static_assert(std::is_standard_layout_v<AsymVoltageSensorOutput>);
 template <bool sym>
 struct PowerSensorOutput {
     ID id;  // ID of the object
@@ -161,7 +161,7 @@ using SymPowerSensorOutput = PowerSensorOutput<true>;
 using AsymPowerSensorOutput = PowerSensorOutput<false>;
 
 static_assert(std::is_standard_layout_v<SymPowerSensorOutput>);
-static_assert(std::is_standard_layout_v<AsSymPowerSensorOutput>);
+static_assert(std::is_standard_layout_v<AsymPowerSensorOutput>);
 struct FaultOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized

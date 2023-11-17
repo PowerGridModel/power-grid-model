@@ -282,7 +282,7 @@ using SymLoadGenInput = LoadGenInput<true>;
 using AsymLoadGenInput = LoadGenInput<false>;
 
 static_assert(std::is_standard_layout_v<SymLoadGenInput>);
-static_assert(std::is_standard_layout_v<AsSymLoadGenInput>);
+static_assert(std::is_standard_layout_v<AsymLoadGenInput>);
 struct ShuntInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -367,7 +367,7 @@ using SymVoltageSensorInput = VoltageSensorInput<true>;
 using AsymVoltageSensorInput = VoltageSensorInput<false>;
 
 static_assert(std::is_standard_layout_v<SymVoltageSensorInput>);
-static_assert(std::is_standard_layout_v<AsSymVoltageSensorInput>);
+static_assert(std::is_standard_layout_v<AsymVoltageSensorInput>);
 struct GenericPowerSensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
@@ -415,7 +415,7 @@ using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
 
 static_assert(std::is_standard_layout_v<SymPowerSensorInput>);
-static_assert(std::is_standard_layout_v<AsSymPowerSensorInput>);
+static_assert(std::is_standard_layout_v<AsymPowerSensorInput>);
 struct FaultInput {
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected

@@ -116,7 +116,7 @@ using SymLoadGenUpdate = LoadGenUpdate<true>;
 using AsymLoadGenUpdate = LoadGenUpdate<false>;
 
 static_assert(std::is_standard_layout_v<SymLoadGenUpdate>);
-static_assert(std::is_standard_layout_v<AsSymLoadGenUpdate>);
+static_assert(std::is_standard_layout_v<AsymLoadGenUpdate>);
 struct SourceUpdate {
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
@@ -171,7 +171,7 @@ using SymVoltageSensorUpdate = VoltageSensorUpdate<true>;
 using AsymVoltageSensorUpdate = VoltageSensorUpdate<false>;
 
 static_assert(std::is_standard_layout_v<SymVoltageSensorUpdate>);
-static_assert(std::is_standard_layout_v<AsSymVoltageSensorUpdate>);
+static_assert(std::is_standard_layout_v<AsymVoltageSensorUpdate>);
 template <bool sym>
 struct PowerSensorUpdate {
     ID id;  // ID of the object
@@ -192,7 +192,7 @@ using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
 static_assert(std::is_standard_layout_v<SymPowerSensorUpdate>);
-static_assert(std::is_standard_layout_v<AsSymPowerSensorUpdate>);
+static_assert(std::is_standard_layout_v<AsymPowerSensorUpdate>);
 struct FaultUpdate {
     ID id;  // ID of the object
     IntS status;  // whether the fault is connected
