@@ -3,23 +3,22 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
+from typing import Dict
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
 import pytest
 
-from typing import Dict
-
 from power_grid_model import LoadGenType, initialize_array
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
+    get_dataset_batch_size,
     get_dataset_scenario,
     json_deserialize_from_file,
     json_serialize_to_file,
     msgpack_deserialize_from_file,
     msgpack_serialize_to_file,
-    get_dataset_batch_size,
 )
 
 

@@ -14,6 +14,7 @@ from typing import cast as cast_type
 
 import numpy as np
 
+from power_grid_model._utils import get_and_verify_batch_sizes
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
@@ -23,7 +24,6 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
 from power_grid_model.errors import PowerGridSerializationError
-from power_grid_model._utils import get_and_verify_batch_sizes
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
