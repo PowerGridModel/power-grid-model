@@ -208,17 +208,17 @@ increased.
 
 $$
    \begin{eqnarray} 
-        z_{base} = sn/(u2^2),\\
-        |z_{series}| = |uk|/z_{base},\\ 
-        Re(z_{series}) = (`pk`/`sn`)/z_base,\\
-        Im(z_series) = sign(`uk`) * sqrt(|z_series|^2-Re(z_series)^2),\\
-        base_i_to = base_power_3p / u2 / sqrt(3),\\
-        base_y_to = base_i_to^2 / base_power_1p,\\
-        y_{series} = (1/z_seires) / base_y_to,\\
-        |y_{shunt}| = i0 * sn / u2^2\\
-        Re(y_shunt) = p0 / (u2^2)\\
-        Im(y_shunt) = 0 (if Re(y_{shunt}) > |y_{shunt}|) or = -sqrt(y_shunt_abs^2-Re(y_shunt)^2)\\
-        y_{shunt} = y_{shunt} / base_y_to\\
+        z_{base} = sn/(u2^2)\\
+        |Z_{series}| = uk/z_{base}\\ 
+        Re(Z_{series}) = (pk/sn)/z_{base},\\
+        Im(Z_{series}) = uk * \sqrt{|Z_{series}|^2-Re(Z_{series})^2},\\
+        base\_ i\_ to = base\_ power\_ 3p / u2 / sqrt(3),\\
+        base\_ y\_ to = base\_ i\_ to^2 / base\_ power\_ 1p,\\
+        Y_{series} = (1/Z_{seires}) / base\_ y\_ to,\\
+        |Y_{shunt}| = i0 * sn / u2^2\\
+        Re(Y_{shunt}) = p0 / (u2^2)\\
+        Im(Y_{shunt}) = 0 (if Re(Y_{shunt}) > |Y_{shunt}|) or = -sqrt(|Y_{shunt}|^2-Re(Y_{shunt})^2)\\
+        Y_{shunt} = Y_{shunt} / base\_ y\_ to\\
    \end{eqnarray}
 $$
 
@@ -392,27 +392,29 @@ with an internal impedance. The impedance is specified by convention as short ci
 `source` is modeled by an internal constant impedance r+jx with positive sequence and zero sequence.
 Its value can be computed using following equations:
 
-- For positive sequence,
+- for positive sequence,
 
 $$
    \begin{eqnarray} 
-        z_s = s_{base} / sk
+        z\_ source = s_{base} / sk \\
+        x1 = z\_source * \sqrt{1+ rx\_ ratio^2}\\
+        r1= rx\_ ratio * x1
+
    \end{eqnarray}
 $$
-z_s = s_base/sk
 
-x1 = z_s * sqrt(1+ rx_ratio*rx_ratio)
+where $s_{base}$ is a constant value $1 \times 10^6$.
 
-r1= rx_ratio * x1
+- for zero sequence, 
 
-where s_base is a constant value 1e6.
+$$
+   \begin{eqnarray} 
+        z0\_ source = z \_source * z01_ratio\\
+        x0 = z0\_ source * \sqrt{1+ rx\_ ratio^2}\\
+        r0= rx_ratio * x0
+   \end{eqnarray}
+$$
 
-For zero sequence, 
-zs_0 = z_s * z01_ratio
-
-x0 = zs_0 * sqrt(1+ rx_ratio*rx_ratio)
-
-r0= rx_ratio * x0
 
 
 ### Generic Load and Generator
@@ -476,7 +478,8 @@ $$
    \end{eqnarray}
 $$
 
-where s = `p_specified` + j`q_specified`，u is the input variable `u_rated` of a corresponding node. Polarities of load and generator are opposite.
+where S = `p_specified` + j`q_specified`, and u is calculated node voltage, more specifically a complex representation of `u` and `u_angle` attribute of node.
+Polarities of loads and generators are opposite.
 
 
 ### Shunt
@@ -566,12 +569,12 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 
 $$
    \begin{eqnarray} 
-        u\_ residual = u\_ measured - u\_ node \\
-        u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ node
+        && u\_ residual = u\_ measured - u\_ node \\
+        && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ node
    \end{eqnarray}
 $$
 
-where u_node and u_angle_node are the steady state output variables`u` and `u_angle` of corresponding `node`
+where u_node and u_angle_node are the steady state output variables`u` and `u_angle` of corresponding `node` provided at `measured_object`
 
 
 ### Generic Power Sensor
