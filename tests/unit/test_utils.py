@@ -8,6 +8,9 @@ from unittest.mock import MagicMock, mock_open, patch
 import numpy as np
 import pytest
 
+from typing import Dict
+
+from power_grid_model import LoadGenType, initialize_array
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
@@ -16,6 +19,7 @@ from power_grid_model.utils import (
     json_serialize_to_file,
     msgpack_deserialize_from_file,
     msgpack_serialize_to_file,
+    get_dataset_batch_size,
 )
 
 
@@ -40,6 +44,22 @@ def test_get_dataset_scenario():
     with pytest.raises(IndexError):
         get_dataset_scenario(data, 2)
 
+
+@pytest.fixture
+def batch_data() -> Dict[str, np.ndarray]:
+    line = initialize_array("update", "line", (3, 2))
+    line["id"] = [[5, 6], [6, 7], [7, 5]]
+    line["from_status"] = [[1, 1], [1, 1], [1, 1]]
+
+    # Add batch for asym_load, which has 2-D array for p_specified
+    asym_load = initialize_array("update", "asym_load", (3, 2))
+    asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
+
+    return {"line": line, "asym_load": asym_load}
+
+def test_get_dataset_batch_size(batch_data):
+    assert get_dataset_batch_size(batch_data) == 3
+    
 
 @patch("builtins.open", new_callable=mock_open)
 @patch("power_grid_model.utils.json_deserialize")

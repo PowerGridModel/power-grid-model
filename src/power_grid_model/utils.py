@@ -23,6 +23,7 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
 from power_grid_model.errors import PowerGridSerializationError
+from power_grid_model._utils import get_and_verify_batch_sizes
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
@@ -52,6 +53,22 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
         return component_scenarios["data"][indptr[scenario] : indptr[scenario + 1]]
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
+
+
+def get_dataset_batch_size(dataset: BatchDataset) -> int:
+    """
+    Get the number of scenarios in the batch dataset.
+
+    Args:
+        dataset: the batch dataset
+
+    Raises:
+        ValueError: if the batch dataset is inconsistent.
+    
+    Returns:
+        The size of the batch dataset. Making use of existing _utils function.
+    """
+    return get_and_verify_batch_sizes(dataset)
 
 
 def json_deserialize_from_file(file_path: Path) -> Dataset:
