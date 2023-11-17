@@ -32,9 +32,11 @@ class GenericPowerSensor : public Sensor {
         }
     }
 
-    template <bool sym> PowerSensorOutput<sym> get_null_output() const { return {{id(), false}, {}, {}}; }
+    template <bool sym> PowerSensorOutput<sym> get_null_output() const {
+        return {.id = id(), .energized = false, .p_residual = {}, .q_residual = {}};
+    }
 
-    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), 0}}; }
+    SensorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
     // getter for calculation param
     template <bool sym> PowerSensorCalcParam<sym> calc_param() const {

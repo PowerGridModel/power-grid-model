@@ -10,14 +10,10 @@ namespace power_grid_model {
 
 TEST_CASE("Test main model static") {
     // Cacheable and independent base update data
-    std::vector<BranchUpdate> link{{{0}, na_IntS, na_IntS}, {{1}, na_IntS, na_IntS}, {{0}, na_IntS, na_IntS},
-                                   {{1}, na_IntS, na_IntS}, {{0}, na_IntS, na_IntS}, {{3}, na_IntS, na_IntS}};
+    std::vector<BranchUpdate> link{{0, na_IntS, na_IntS}, {1, na_IntS, na_IntS}, {0, na_IntS, na_IntS},
+                                   {1, na_IntS, na_IntS}, {0, na_IntS, na_IntS}, {3, na_IntS, na_IntS}};
 
-    std::vector<SourceUpdate> source{
-        {{{0}, na_IntS}, 1.0, nan},
-        {{{0}, na_IntS}, 1.0, nan},
-        {{{0}, na_IntS}, 1.0, nan},
-    };
+    std::vector<SourceUpdate> source{{0, na_IntS, 1.0, nan}, {0, na_IntS, 1.0, nan}, {0, na_IntS, 1.0, nan}};
 
     Idx const batches = 3;
     std::array<Idx, 4> const link_indptr = {0, 2, 4, 6};

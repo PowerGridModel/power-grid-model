@@ -11,7 +11,20 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test line") {
-    LineInput const input{{{1}, 2, 3, 1, 1}, 0.3, 0.4, 2e-4, 0.1, 0.1, 0.2, 1e-4, 0.2, 200.0};
+    LineInput const input{.id = 1,
+                          .from_node = 2,
+                          .to_node = 3,
+                          .from_status = 1,
+                          .to_status = 1,
+                          .r1 = 0.3,
+                          .x1 = 0.4,
+                          .c1 = 2e-4,
+                          .tan1 = 0.1,
+                          .r0 = 0.1,
+                          .x0 = 0.2,
+                          .c0 = 1e-4,
+                          .tan0 = 0.2,
+                          .i_n = 200.0};
     Line line{input, 50.0, 10.0e3, 10.0e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_i * base_i / base_power_1p;
@@ -72,7 +85,7 @@ TEST_CASE("Test line") {
         CHECK(cabs(param.ytf() - yft1) < numerical_tolerance);
         CHECK(cabs(param.yft() - yft1) < numerical_tolerance);
         // to connected
-        CHECK(branch.update(BranchUpdate{{1}, false, na_IntS}).topo);
+        CHECK(branch.update(BranchUpdate{1, false, na_IntS}).topo);
         param = branch.calc_param<true>();
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytt() - ys1) < numerical_tolerance);

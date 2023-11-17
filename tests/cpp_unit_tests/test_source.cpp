@@ -37,7 +37,14 @@ TEST_CASE("Test source") {
     ComplexTensor<false> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
-    SourceInput const source_input{{{1}, 2, 1}, u_input, nan, sk, rx_ratio, z01_ratio};
+    SourceInput const source_input{.id = 1,
+                                   .node = 2,
+                                   .status = 1,
+                                   .u_ref = u_input,
+                                   .u_ref_angle = nan,
+                                   .sk = sk,
+                                   .rx_ratio = rx_ratio,
+                                   .z01_ratio = z01_ratio};
     Source source{source_input, un};
 
     CHECK(source.math_model_type() == ComponentType::source);
@@ -174,13 +181,13 @@ TEST_CASE("Test source") {
     }
 
     SUBCASE("test update") {
-        auto changed = source.update(SourceUpdate{{{1}, 1}, 1.05, nan});
+        auto changed = source.update(SourceUpdate{.id = 1, .status = 1, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(!changed.topo);
         CHECK(changed.param);
-        changed = source.update(SourceUpdate{{{1}, 0}, 1.05, nan});
+        changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(changed.topo);
         CHECK(changed.param);
-        changed = source.update(SourceUpdate{{{1}, 0}, nan, nan});
+        changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = nan, .u_ref_angle = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
     }

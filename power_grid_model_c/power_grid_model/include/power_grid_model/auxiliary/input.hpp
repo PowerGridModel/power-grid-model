@@ -21,9 +21,8 @@ struct BaseInput {
     ID id;  // ID of the object
 };
 
-
-
 static_assert(std::is_standard_layout_v<BaseInput>);
+
 struct NodeInput {
     ID id;  // ID of the object
     double u_rated;  // rated line-line voltage
@@ -33,9 +32,8 @@ struct NodeInput {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<NodeInput>);
+
 struct BranchInput {
     ID id;  // ID of the object
     ID from_node;  // node IDs to which this branch is connected at both sides
@@ -48,9 +46,8 @@ struct BranchInput {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<BranchInput>);
+
 struct Branch3Input {
     ID id;  // ID of the object
     ID node_1;  // node IDs to which this branch3 is connected at three sides
@@ -65,9 +62,8 @@ struct Branch3Input {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<Branch3Input>);
+
 struct SensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
@@ -77,9 +73,8 @@ struct SensorInput {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<SensorInput>);
+
 struct ApplianceInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -90,9 +85,8 @@ struct ApplianceInput {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<ApplianceInput>);
+
 struct LineInput {
     ID id;  // ID of the object
     ID from_node;  // node IDs to which this branch is connected at both sides
@@ -118,9 +112,8 @@ struct LineInput {
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<LineInput>);
+
 struct LinkInput {
     ID id;  // ID of the object
     ID from_node;  // node IDs to which this branch is connected at both sides
@@ -137,9 +130,8 @@ struct LinkInput {
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<LinkInput>);
+
 struct TransformerInput {
     ID id;  // ID of the object
     ID from_node;  // node IDs to which this branch is connected at both sides
@@ -180,9 +172,8 @@ struct TransformerInput {
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<TransformerInput>);
+
 struct ThreeWindingTransformerInput {
     ID id;  // ID of the object
     ID node_1;  // node IDs to which this branch3 is connected at three sides
@@ -244,9 +235,8 @@ struct ThreeWindingTransformerInput {
     operator Branch3Input const&() const { return reinterpret_cast<Branch3Input const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<ThreeWindingTransformerInput>);
+
 struct GenericLoadGenInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -262,9 +252,8 @@ struct GenericLoadGenInput {
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<GenericLoadGenInput>);
+
 template <bool sym>
 struct LoadGenInput {
     ID id;  // ID of the object
@@ -287,7 +276,6 @@ struct LoadGenInput {
     operator GenericLoadGenInput const&() const { return reinterpret_cast<GenericLoadGenInput const&>(*this); }
 };
 
-
 using SymLoadGenInput = LoadGenInput<true>;
 using AsymLoadGenInput = LoadGenInput<false>;
 
@@ -295,6 +283,7 @@ static_assert(std::is_standard_layout_v<LoadGenInput<true>>);
 static_assert(std::is_standard_layout_v<LoadGenInput<false>>);
 static_assert(std::is_standard_layout_v<SymLoadGenInput>);
 static_assert(std::is_standard_layout_v<AsymLoadGenInput>);
+
 struct ShuntInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -313,9 +302,8 @@ struct ShuntInput {
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<ShuntInput>);
+
 struct SourceInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -335,9 +323,8 @@ struct SourceInput {
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<SourceInput>);
+
 struct GenericVoltageSensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
@@ -352,9 +339,8 @@ struct GenericVoltageSensorInput {
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<GenericVoltageSensorInput>);
+
 template <bool sym>
 struct VoltageSensorInput {
     ID id;  // ID of the object
@@ -376,7 +362,6 @@ struct VoltageSensorInput {
     operator GenericVoltageSensorInput const&() const { return reinterpret_cast<GenericVoltageSensorInput const&>(*this); }
 };
 
-
 using SymVoltageSensorInput = VoltageSensorInput<true>;
 using AsymVoltageSensorInput = VoltageSensorInput<false>;
 
@@ -384,6 +369,7 @@ static_assert(std::is_standard_layout_v<VoltageSensorInput<true>>);
 static_assert(std::is_standard_layout_v<VoltageSensorInput<false>>);
 static_assert(std::is_standard_layout_v<SymVoltageSensorInput>);
 static_assert(std::is_standard_layout_v<AsymVoltageSensorInput>);
+
 struct GenericPowerSensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
@@ -399,9 +385,8 @@ struct GenericPowerSensorInput {
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<GenericPowerSensorInput>);
+
 template <bool sym>
 struct PowerSensorInput {
     ID id;  // ID of the object
@@ -426,7 +411,6 @@ struct PowerSensorInput {
     operator GenericPowerSensorInput const&() const { return reinterpret_cast<GenericPowerSensorInput const&>(*this); }
 };
 
-
 using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
 
@@ -434,6 +418,7 @@ static_assert(std::is_standard_layout_v<PowerSensorInput<true>>);
 static_assert(std::is_standard_layout_v<PowerSensorInput<false>>);
 static_assert(std::is_standard_layout_v<SymPowerSensorInput>);
 static_assert(std::is_standard_layout_v<AsymPowerSensorInput>);
+
 struct FaultInput {
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
@@ -448,9 +433,8 @@ struct FaultInput {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<FaultInput>);
+
 
 
 } // namespace power_grid_model

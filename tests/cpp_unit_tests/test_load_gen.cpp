@@ -9,9 +9,14 @@
 namespace power_grid_model {
 
 TEST_CASE("Test load generator") {
-    LoadGenInput<true> sym_load_gen_input{{{{1}, 2, 1}, LoadGenType::const_pq}, 3e6, 3e6};
-    LoadGenInput<false> asym_load_gen_input{
-        {{{1}, 2, 1}, LoadGenType::const_pq}, RealValue<false>{1e6}, RealValue<false>{1e6}};
+    LoadGenInput<true> sym_load_gen_input{
+        .id = 1, .node = 2, .status = 1, .type = LoadGenType::const_pq, .p_specified = 3e6, .q_specified = 3e6};
+    LoadGenInput<false> asym_load_gen_input{.id = 1,
+                                            .node = 2,
+                                            .status = 1,
+                                            .type = LoadGenType::const_pq,
+                                            .p_specified = RealValue<false>{1e6},
+                                            .q_specified = RealValue<false>{1e6}};
     SymGenerator sym_gen_pq{sym_load_gen_input, 10e3};
     AsymLoad asym_load_pq{asym_load_gen_input, 10e3};
     sym_load_gen_input.type = LoadGenType::const_i;
@@ -256,7 +261,8 @@ TEST_CASE("Test load generator") {
     }
 
     SUBCASE("Test update load") {
-        auto changed = sym_gen_pq.update(SymLoadGenUpdate{{{1}, na_IntS}, 1e6, nan});
+        auto changed =
+            sym_gen_pq.update(SymLoadGenUpdate{.id = 1, .status = na_IntS, .p_specified = 1e6, .q_specified = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
         ApplianceOutput<true> const sym_result = sym_gen_pq.get_output<true>(u);

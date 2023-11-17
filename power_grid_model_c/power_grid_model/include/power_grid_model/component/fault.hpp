@@ -174,7 +174,7 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    template <std::derived_from<BaseOutput> T> T get_null_output_impl() const {
+    template <std::convertible_to<BaseOutput> T> T get_null_output_impl() const {
         T output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;

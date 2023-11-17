@@ -21,9 +21,8 @@ struct BaseUpdate {
     ID id;  // ID of the object
 };
 
-
-
 static_assert(std::is_standard_layout_v<BaseUpdate>);
+
 struct BranchUpdate {
     ID id;  // ID of the object
     IntS from_status;  // whether the branch is connected at each side
@@ -34,9 +33,8 @@ struct BranchUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<BranchUpdate>);
+
 struct Branch3Update {
     ID id;  // ID of the object
     IntS status_1;  // whether the branch is connected at each side
@@ -48,9 +46,8 @@ struct Branch3Update {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<Branch3Update>);
+
 struct ApplianceUpdate {
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
@@ -60,9 +57,8 @@ struct ApplianceUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<ApplianceUpdate>);
+
 struct TransformerUpdate {
     ID id;  // ID of the object
     IntS from_status;  // whether the branch is connected at each side
@@ -78,9 +74,8 @@ struct TransformerUpdate {
     operator BranchUpdate const&() const { return reinterpret_cast<BranchUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<TransformerUpdate>);
+
 struct ThreeWindingTransformerUpdate {
     ID id;  // ID of the object
     IntS status_1;  // whether the branch is connected at each side
@@ -97,9 +92,8 @@ struct ThreeWindingTransformerUpdate {
     operator Branch3Update const&() const { return reinterpret_cast<Branch3Update const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<ThreeWindingTransformerUpdate>);
+
 template <bool sym>
 struct LoadGenUpdate {
     ID id;  // ID of the object
@@ -116,7 +110,6 @@ struct LoadGenUpdate {
     operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-
 using SymLoadGenUpdate = LoadGenUpdate<true>;
 using AsymLoadGenUpdate = LoadGenUpdate<false>;
 
@@ -124,6 +117,7 @@ static_assert(std::is_standard_layout_v<LoadGenUpdate<true>>);
 static_assert(std::is_standard_layout_v<LoadGenUpdate<false>>);
 static_assert(std::is_standard_layout_v<SymLoadGenUpdate>);
 static_assert(std::is_standard_layout_v<AsymLoadGenUpdate>);
+
 struct SourceUpdate {
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
@@ -139,9 +133,8 @@ struct SourceUpdate {
     operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<SourceUpdate>);
+
 struct ShuntUpdate {
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
@@ -159,9 +152,8 @@ struct ShuntUpdate {
     operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<ShuntUpdate>);
+
 template <bool sym>
 struct VoltageSensorUpdate {
     ID id;  // ID of the object
@@ -174,7 +166,6 @@ struct VoltageSensorUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-
 using SymVoltageSensorUpdate = VoltageSensorUpdate<true>;
 using AsymVoltageSensorUpdate = VoltageSensorUpdate<false>;
 
@@ -182,6 +173,7 @@ static_assert(std::is_standard_layout_v<VoltageSensorUpdate<true>>);
 static_assert(std::is_standard_layout_v<VoltageSensorUpdate<false>>);
 static_assert(std::is_standard_layout_v<SymVoltageSensorUpdate>);
 static_assert(std::is_standard_layout_v<AsymVoltageSensorUpdate>);
+
 template <bool sym>
 struct PowerSensorUpdate {
     ID id;  // ID of the object
@@ -196,7 +188,6 @@ struct PowerSensorUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-
 using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
@@ -204,6 +195,7 @@ static_assert(std::is_standard_layout_v<PowerSensorUpdate<true>>);
 static_assert(std::is_standard_layout_v<PowerSensorUpdate<false>>);
 static_assert(std::is_standard_layout_v<SymPowerSensorUpdate>);
 static_assert(std::is_standard_layout_v<AsymPowerSensorUpdate>);
+
 struct FaultUpdate {
     ID id;  // ID of the object
     IntS status;  // whether the fault is connected
@@ -218,9 +210,8 @@ struct FaultUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-
-
 static_assert(std::is_standard_layout_v<FaultUpdate>);
+
 
 
 } // namespace power_grid_model
