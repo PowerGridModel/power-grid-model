@@ -64,7 +64,7 @@ def get_dataset_batch_size(dataset: BatchDataset) -> int:
 
     Raises:
         ValueError: if the batch dataset is inconsistent.
-    
+
     Returns:
         The size of the batch dataset. Making use of existing _utils function.
     """

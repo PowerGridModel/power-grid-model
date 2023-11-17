@@ -57,9 +57,10 @@ def batch_data() -> Dict[str, np.ndarray]:
 
     return {"line": line, "asym_load": asym_load}
 
+
 def test_get_dataset_batch_size(batch_data):
     assert get_dataset_batch_size(batch_data) == 3
-    
+
 
 @patch("builtins.open", new_callable=mock_open)
 @patch("power_grid_model.utils.json_deserialize")
