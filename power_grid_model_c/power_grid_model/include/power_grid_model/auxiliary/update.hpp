@@ -21,77 +21,193 @@ struct BaseUpdate {
     ID id;  // ID of the object
 };
 
-struct BranchUpdate : BaseUpdate {
+static_assert(std::is_standard_layout_v<BaseUpdate>);
+
+struct BranchUpdate {
+    ID id;  // ID of the object
     IntS from_status;  // whether the branch is connected at each side
     IntS to_status;  // whether the branch is connected at each side
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-struct Branch3Update : BaseUpdate {
+static_assert(std::is_standard_layout_v<BranchUpdate>);
+
+struct Branch3Update {
+    ID id;  // ID of the object
     IntS status_1;  // whether the branch is connected at each side
     IntS status_2;  // whether the branch is connected at each side
     IntS status_3;  // whether the branch is connected at each side
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-struct ApplianceUpdate : BaseUpdate {
+static_assert(std::is_standard_layout_v<Branch3Update>);
+
+struct ApplianceUpdate {
+    ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-struct TransformerUpdate : BranchUpdate {
+static_assert(std::is_standard_layout_v<ApplianceUpdate>);
+
+struct TransformerUpdate {
+    ID id;  // ID of the object
+    IntS from_status;  // whether the branch is connected at each side
+    IntS to_status;  // whether the branch is connected at each side
     IntS tap_pos;  // tap changer parameters
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to BranchUpdate
+    operator BranchUpdate&() { return reinterpret_cast<BranchUpdate&>(*this); }
+    operator BranchUpdate const&() const { return reinterpret_cast<BranchUpdate const&>(*this); }
 };
 
-struct ThreeWindingTransformerUpdate : Branch3Update {
+static_assert(std::is_standard_layout_v<TransformerUpdate>);
+
+struct ThreeWindingTransformerUpdate {
+    ID id;  // ID of the object
+    IntS status_1;  // whether the branch is connected at each side
+    IntS status_2;  // whether the branch is connected at each side
+    IntS status_3;  // whether the branch is connected at each side
     IntS tap_pos;  // tap changer parameters
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to Branch3Update
+    operator Branch3Update&() { return reinterpret_cast<Branch3Update&>(*this); }
+    operator Branch3Update const&() const { return reinterpret_cast<Branch3Update const&>(*this); }
 };
+
+static_assert(std::is_standard_layout_v<ThreeWindingTransformerUpdate>);
 
 template <bool sym>
-struct LoadGenUpdate : ApplianceUpdate {
+struct LoadGenUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
     RealValue<sym> p_specified;  // specified active/reactive power
     RealValue<sym> q_specified;  // specified active/reactive power
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to ApplianceUpdate
+    operator ApplianceUpdate&() { return reinterpret_cast<ApplianceUpdate&>(*this); }
+    operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
+
+static_assert(std::is_standard_layout_v<LoadGenUpdate>);
+
 using SymLoadGenUpdate = LoadGenUpdate<true>;
 using AsymLoadGenUpdate = LoadGenUpdate<false>;
 
-struct SourceUpdate : ApplianceUpdate {
+static_assert(std::is_standard_layout_v<SymLoadGenUpdate>);
+static_assert(std::is_standard_layout_v<AsSymLoadGenUpdate>);
+struct SourceUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
     double u_ref;  // reference voltage
     double u_ref_angle;  // reference voltage
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to ApplianceUpdate
+    operator ApplianceUpdate&() { return reinterpret_cast<ApplianceUpdate&>(*this); }
+    operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-struct ShuntUpdate : ApplianceUpdate {
+static_assert(std::is_standard_layout_v<SourceUpdate>);
+
+struct ShuntUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
     double g1;  // positive sequence admittance
     double b1;  // positive sequence admittance
     double g0;  // zero sequence admittance
     double b0;  // zero sequence admittance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to ApplianceUpdate
+    operator ApplianceUpdate&() { return reinterpret_cast<ApplianceUpdate&>(*this); }
+    operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
+static_assert(std::is_standard_layout_v<ShuntUpdate>);
+
 template <bool sym>
-struct VoltageSensorUpdate : BaseUpdate {
+struct VoltageSensorUpdate {
+    ID id;  // ID of the object
     double u_sigma;  // sigma of error margin of voltage measurement
     RealValue<sym> u_measured;  // measured voltage magnitude and angle
     RealValue<sym> u_angle_measured;  // measured voltage magnitude and angle
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
+
+static_assert(std::is_standard_layout_v<VoltageSensorUpdate>);
+
 using SymVoltageSensorUpdate = VoltageSensorUpdate<true>;
 using AsymVoltageSensorUpdate = VoltageSensorUpdate<false>;
 
+static_assert(std::is_standard_layout_v<SymVoltageSensorUpdate>);
+static_assert(std::is_standard_layout_v<AsSymVoltageSensorUpdate>);
 template <bool sym>
-struct PowerSensorUpdate : BaseUpdate {
+struct PowerSensorUpdate {
+    ID id;  // ID of the object
     double power_sigma;  // sigma of error margin of power measurement
     RealValue<sym> p_measured;  // measured active/reactive power
     RealValue<sym> q_measured;  // measured active/reactive power
     RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
     RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
+
+static_assert(std::is_standard_layout_v<PowerSensorUpdate>);
+
 using SymPowerSensorUpdate = PowerSensorUpdate<true>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
 
-struct FaultUpdate : BaseUpdate {
+static_assert(std::is_standard_layout_v<SymPowerSensorUpdate>);
+static_assert(std::is_standard_layout_v<AsSymPowerSensorUpdate>);
+struct FaultUpdate {
+    ID id;  // ID of the object
     IntS status;  // whether the fault is connected
     FaultType fault_type;  // type of the fault
     FaultPhase fault_phase;  // phase(s) of the fault
     ID fault_object;  // ID of the faulted object
     double r_f;  // short circuit impedance
     double x_f;  // short circuit impedance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
+
+static_assert(std::is_standard_layout_v<FaultUpdate>);
 
 
 

@@ -60,8 +60,10 @@ class CodeGenerator:
             if attribute_class.base is not None:
                 base_class = list(filter(lambda x: x.name == attribute_class.base, dataset_meta_data.classes))[0]
                 attribute_class.full_attributes = base_class.full_attributes + attribute_class.attributes
+                attribute_class.base_classes = base_class.base_classes + [attribute_class.base]
             else:
                 attribute_class.full_attributes = attribute_class.attributes
+                attribute_class.base_classes = []
             # add to class dict
             self.all_classes[attribute_class.name] = attribute_class
 
@@ -102,7 +104,7 @@ class CodeGenerator:
         }
 
         # render attribute classes
-        for template_name in render_funcs.keys():
+        for template_name, render_func in render_funcs.items():
             for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
                 output_suffix = template_path.with_suffix("").suffix
                 output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
@@ -110,9 +112,7 @@ class CodeGenerator:
                     output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     print(f"Generating file: {output_path}")
-                    render_funcs[template_name](
-                        template_path=template_path, data_path=data_path, output_path=output_path
-                    )
+                    render_func(template_path=template_path, data_path=data_path, output_path=output_path)
 
 
 if __name__ == "__main__":
