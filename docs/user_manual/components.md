@@ -135,11 +135,13 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 #### Electric Model
 
-`line` is described by π model, 
-where z_series =`r`+j`x`, and y_shunt = 2πf`c`/(tan𝛿 + 1j), and f is system frequency.
+`line` is described by a π model, where 
 
-
-
+$$
+   \begin{eqnarray}
+      z_{series}    & = & r + jx, y_{shunt} & = & 2/pi fc/(tan \sigma +1j). 
+   \end{eqnarray}
+$$
 
 ### Link
 
@@ -151,7 +153,14 @@ two busbars inside a substation. It has a very high admittance (small impedance)
 There is no additional attribute for `link`.
 
 #### Electric Model: 
-`link` is modeled by using an constant value y_series=1e-6.
+`link` is modeled by a constant reactance $y_{series}$, where
+
+$$
+   \begin{eqnarray}
+      y_{series}    & = & 1 &times 10^6&.
+    \end{eqnarray}
+$$
+
 
 
 ### Transformer
@@ -194,35 +203,25 @@ increased.
 ```
 
 #### Electric Model
-`transformer` is described by π model, where z_series and y_shunt can be computed by following equations:
+`transformer` is described by a π model, where $z_{series}$ and $y_{shunt}$ can be computed by following equations:
 
 $$
-
+   \begin{eqnarray} 
+        z_{base} = sn/(u2^2),
+        |z_{series}| = |uk|/z_{base}, 
+        Re(z_{series}) = (`pk`/`sn`)/z_base,
+        Im(z_series) = sign(`uk`) * sqrt(|z_series|^2-Re(z_series)^2),
+        base_i_to = base_power_3p / u2_rated / sqrt(3),
+        base_y_to = base_i_to^2 / base_power_1p,
+        y_{series} = (1/z_seires) / base_y_to,
+        |y_{shunt}| = i0 * sn / u2^2
+        Re(y_shunt) = p0 / (u2^2)
+        Im(y_shunt) = 0 (if Re(y_{shunt}) > |y_{shunt}|) or = -sqrt(y_shunt_abs^2-Re(y_shunt)^2)
+        y_{shunt} = y_{shunt} / base_y_to
+   \end{eqnarray}
 $$
 
-z_base = `sn`/(`u2`^2)
-
-|z_series| = |`uk`|/z_base
-
-Re(z_series) = (`pk`/`sn`)/z_base
-
-Im(z_series) = sign(`uk`) * sqrt(|z_series|^2-Re(z_series)^2)
-
-base_i_to = base_power_3p / u2_rated / sqrt(3),
-
-base_y_to = base_i_to^2 / base_power_1p
-
-y_series = (1/z_seires) / base_y_to
-
-y_shunt_abs = `i0` * `sn` / `u2`^2
-
-Re(y_shunt) = `p0` / (`u2`^2)
-
-Im(y_shunt) = 0 (if Re(y_shunt) > y_shunt_abs) or = -sqrt(y_shunt_abs^2-Re(y_shunt)^2)
-
-y_shunt = y_shunt / base_y_to
-
-where base_power_3p = 1e6, and base_power_1p = base_power_3p / 3. u2_rated is a constant value, which is normally set to 10e3.
+where base_power_3p = $1 \times 10^6$, and base_power_1p = base_power_3p / 3. $u_{2_rated}$ is a constant value, which is normally set to $1 \times 10^3$.
 
 
 ## Branch3
