@@ -175,7 +175,7 @@ class FictionalGridGenerator {
 
         // transformer and mv busbar
         ID const id_mv_busbar = id_gen_++;
-        NodeInput const mv_busbar{{id_mv_busbar}, 10.5e3};
+        NodeInput const mv_busbar{.id = id_mv_busbar, .u_rated = 10.5e3};
         input_.node.push_back(mv_busbar);
         for (Idx i = 0; i != option_.n_parallel_hv_mv_transformer; ++i) {
             // transformer, 150/10.5kV, 60MVA, uk=20.3%
@@ -216,7 +216,7 @@ class FictionalGridGenerator {
         }
 
         // template input
-        NodeInput const mv_node{{0}, 10.5e3};
+        NodeInput const mv_node{0, 10.5e3};
         SymLoadGenInput const mv_sym_load{0, 0, 1, LoadGenType::const_i, 0.8e6, 0.6e6};
         // cable 3 * 630Al XLPE 10kV, per km
         LineInput const mv_line{0, 0, 0, 1, 1, 0.063, 0.103, 0.4e-6, 0.0004, 0.275, 0.101, 0.66e-6, 0.0, 1e3};
@@ -291,7 +291,7 @@ class FictionalGridGenerator {
 
     void generate_lv_grid(ID mv_node, double mv_base_load) {
         ID const id_lv_busbar = id_gen_++;
-        NodeInput const lv_busbar{{id_lv_busbar}, 400.0};
+        NodeInput const lv_busbar{id_lv_busbar, 400.0};
         input_.node.push_back(lv_busbar);
         // transformer, 1500 kVA or mv base load, uk=6%, pk=8.8kW
         TransformerInput const transformer{id_gen_++,
