@@ -13,8 +13,8 @@ from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_
 from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
-    InvalidIdError,
     InfinityError,
+    InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
@@ -441,19 +441,16 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
     ],
 )
 def test_validate_values__bad_p_q_sigma(sensor_type, parameter):
-    def random_id(dim=2):
-        return np.random.randint(0, dim)
-
-    def random_fill(array, sensor_type, parameter):
+    def arbitrary_fill(array, sensor_type, parameter):
         if sensor_type == "sym_power_sensor":
-            array[parameter[random_id()]] = np.random.rand()
+            array[parameter[0]] = 0.5
         else:
-            array[parameter[random_id()]][0][0] = np.random.rand()
-            array[parameter[random_id()]][0][1] = np.random.rand()
-            array[parameter[random_id()]][0][2] = np.random.rand()
+            array[parameter[1]][0][0] = 0.6
+            array[parameter[0]][0][1] = 0.7
+            array[parameter[1]][0][2] = 0.8
 
     sensor_array = initialize_array("input", sensor_type, 1)
-    random_fill(sensor_array, sensor_type, parameter)
+    arbitrary_fill(sensor_array, sensor_type, parameter)
     all_errors = validate_values({sensor_type: sensor_array})
 
     for error in all_errors:

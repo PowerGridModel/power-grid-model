@@ -50,6 +50,7 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
+    MultiFieldValidationError,
     NotBetweenError,
     NotBetweenOrAtError,
     NotBooleanError,
@@ -63,7 +64,6 @@ from power_grid_model.validation.errors import (
     TransformerClockError,
     TwoValuesZeroError,
     ValidationError,
-    MultiFieldValidationError,
 )
 from power_grid_model.validation.utils import eval_expression, nan_type, set_default_value
 
@@ -700,14 +700,14 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
 
 def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValidationError]:
     """
-    Check if for 'sym_power_sensor' and 'asym_power_sensor' the p_sigma and q_sigma are valid.
+    Check validity of the pair `(p_sigma, q_sigma)` for 'sym_power_sensor' and 'asym_power_sensor'.
 
     Args:
         data: The input/update data set for all components
         component: The component of interest, in this case only 'sym_power_sensor' or 'asym_power_sensor'
 
     Returns:
-        A list containing zeor or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch
+        A list containing zero or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch
     """
     errors = []
     p_sigma = data[component]["p_sigma"]
@@ -717,10 +717,8 @@ def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValid
     q_nan = np.isnan(q_sigma)
     p_inf = np.isinf(p_sigma)
     q_inf = np.isinf(q_sigma)
-    if np.logical_xor(p_nan.any(), q_nan.any()) or np.logical_or(p_inf.any(), q_inf.any()):
-        errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
-    mis_match = p_nan != q_nan
-    if mis_match.any():
+    mis_match = p_nan != q_nan  # same logic as np.logical_xor(p_nan.any(axis=-1), q_nan.any(axis=-1)).any()
+    if mis_match.any() or np.logical_or(p_inf.any(), q_inf.any()):
         errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
     return errors
 
