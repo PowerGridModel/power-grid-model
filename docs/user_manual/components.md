@@ -450,15 +450,33 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 `generic_load_gen` are modelled by using the so-called ZIP load model in power-grid-model, 
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
-The injection current I_inj of each ZIP model type can be computed from s = `p_specified` + j`q_specified`as:
+The injection current $I_{inj}$ of each ZIP model type can be computed from s = `p_specified` + j`q_specified`as:
 
-For constant impedance (Z) load: I_inj = S*u
+- for constant impedance (Z) load: 
 
-For Constant current (I) load: I_inj = S*|u|/u = S
+$$
+   \begin{eqnarray} 
+        I_{inj} = S * u
+   \end{eqnarray}
+$$
 
-For constant power (P) load: I_inj = S/u
+- for Constant current (I) load: 
 
-Here u is the input variable `u_rated` of a corresponding node. Polarities of load and generator are opposite.
+$$
+   \begin{eqnarray} 
+        I_{inj} = S*|u|/u = S
+   \end{eqnarray}
+$$
+
+- for constant power (P) load: 
+
+$$
+   \begin{eqnarray} 
+        I_{inj} = S / u
+   \end{eqnarray}
+$$
+
+where s = `p_specified` + j`q_specified`，u is the input variable `u_rated` of a corresponding node. Polarities of load and generator are opposite.
 
 
 ### Shunt
@@ -546,11 +564,14 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 #### Electric Model
 `generic_voltage_sensor` is modeled by following equations:
 
-u_residual = u_measured - “u_node” ,
+$$
+   \begin{eqnarray} 
+        u\_ residual = u\_ measured - u\_ node \\
+        u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ node
+   \end{eqnarray}
+$$
 
-u_angle_residual = u_angle_measured - "u_angle_node",
-
-where “u_node” and "u_angle_node" are the steady state output variables`u` and `u_angle` of corresponding `node`
+where u_node and u_angle_node are the steady state output variables`u` and `u_angle` of corresponding `node`
 
 
 ### Generic Power Sensor
@@ -618,12 +639,13 @@ See the documentation on [state estimation calculation methods](calculations.md#
 #### Electric Model
 `Generic Power Sensor` is modeled by following equations:
 
-p_residual = p_measured - “p_node” ,
-
-q_residual = q_measured - “q_node” ,
-
-where “p_node” and "q_node" are the steady state output variables `p` and `q` of corresponding `node`
-
+$$
+   \begin{eqnarray} 
+        p\_ residual = p\_ measured - p\_ node \\
+        q\_ residual = q\_ measured - q\_ node
+   \end{eqnarray}
+$$
+where “p_node” and "q_node" are the steady state output variables `p` and `q` of corresponding to the element at `measured_object`. The type of flow of this power is given by `measured_terminal_type`
 
 ## Fault
 
@@ -666,11 +688,11 @@ A `fault` has no steady state output.
 | `i_f_angle` | `RealValueOutput` | rad        | current angle |
 
 #### Electric Model
-Four types of short circuit fault are included in power-grid-model.
+Four types of short circuit fault are included in power-grid-model, here `z` =`r_f` + j`r_f`.
 
 | `fault_type`                       | `fault_phase`    | description                                                       |
 | ---------------------------------- | ---------------- |-------------------------------------------------------------------|
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance `z` =`r_f` + j`r_f`.    |
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance `z`.                    |
 | `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase grounded with impedance `z`, and other phases are open. |
 | `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance `z`.                      |
 | `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance `z` then grounded.        |
