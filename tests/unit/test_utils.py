@@ -10,6 +10,8 @@ import numpy as np
 import pytest
 
 from power_grid_model import LoadGenType, initialize_array
+from power_grid_model.core.power_grid_dataset import CConstDataset
+from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
@@ -59,6 +61,29 @@ def batch_data() -> Dict[str, np.ndarray]:
 
 def test_get_dataset_batch_size(batch_data):
     assert get_dataset_batch_size(batch_data) == 3
+
+
+def test_get_dataset_batch_size_sparse():
+    batch_size = 3
+    data = {
+        "node": {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data["input"]["node"]),
+            "indptr": np.array([0, 2, 3, 3]),
+        },
+        "sym_load": {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+            "indptr": np.array([0, 0, 1, 2]),
+        },
+        "asym_load": {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data["input"]["asym_load"]),
+            "indptr": np.array([0, 2, 3, 4]),
+        },
+        "link": np.zeros(shape=(batch_size, 4), dtype=power_grid_meta_data["input"]["link"]),
+    }
+
+    dataset = CConstDataset(data, ["input"])
+
+    assert get_dataset_batch_size(dataset) == 3
 
 
 @patch("builtins.open", new_callable=mock_open)
