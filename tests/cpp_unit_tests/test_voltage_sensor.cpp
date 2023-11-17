@@ -491,7 +491,9 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensorUpdate<true> vs_update{{1}, nan, nan, nan};
         auto expected = vs_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("u_sigma") {
             SUBCASE("same") { vs_update.u_sigma = u_sigma; }
@@ -538,7 +540,9 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensorUpdate<false> vs_update{{1}, nan, {nan, nan, nan}, {nan, nan, nan}};
         auto expected = vs_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("u_sigma") {
             SUBCASE("same") { vs_update.u_sigma = u_sigma; }

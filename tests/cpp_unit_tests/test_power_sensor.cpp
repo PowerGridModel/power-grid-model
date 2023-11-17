@@ -579,7 +579,9 @@ TEST_CASE("Test power sensor") {
         PowerSensorUpdate<true> ps_update{{1}, nan, nan, nan, nan, nan};
         auto expected = ps_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("power_sigma") {
             SUBCASE("same") { ps_update.power_sigma = power_sigma; }
@@ -645,7 +647,9 @@ TEST_CASE("Test power sensor") {
         PowerSensorUpdate<false> ps_update{{1}, nan, r_nan, r_nan, r_nan, r_nan};
         auto expected = ps_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("power_sigma") {
             SUBCASE("same") { ps_update.power_sigma = power_sigma; }

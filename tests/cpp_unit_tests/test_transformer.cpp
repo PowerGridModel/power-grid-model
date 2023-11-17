@@ -210,9 +210,11 @@ TEST_CASE("Test transformer") {
         TransformerUpdate transformer_update{{{1}, na_IntS, na_IntS}, na_IntS};
         auto expected = transformer_update;
 
-        auto& transformer = vec.front();
+        auto const& transformer = vec.front();
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("From status") {
             SUBCASE("same") { transformer_update.from_status = static_cast<IntS>(transformer.from_status()); }

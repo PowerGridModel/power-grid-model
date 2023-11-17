@@ -226,7 +226,9 @@ TEST_CASE("Test line") {
         BranchUpdate branch_update{{1}, na_IntS, na_IntS};
         auto expected = branch_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("From status") {
             SUBCASE("same") { branch_update.from_status = static_cast<IntS>(line.from_status()); }

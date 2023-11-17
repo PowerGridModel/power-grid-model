@@ -304,7 +304,9 @@ TEST_CASE("Test fault") {
         FaultUpdate fault_update{{1}, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
         auto expected = fault_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("Status") {
             SUBCASE("same") { fault_update.status = static_cast<IntS>(fault.status()); }

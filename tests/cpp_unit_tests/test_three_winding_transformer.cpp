@@ -509,9 +509,11 @@ TEST_CASE("Test three winding transformer") {
         ThreeWindingTransformerUpdate three_winding_transformer_update{{{1}, na_IntS, na_IntS, na_IntS}, na_IntS};
         auto expected = three_winding_transformer_update;
 
-        auto& transformer = vec.front();
+        auto const& transformer = vec.front();
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("status_1") {
             SUBCASE("same") { three_winding_transformer_update.status_1 = static_cast<IntS>(transformer.status_1()); }

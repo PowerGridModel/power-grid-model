@@ -365,7 +365,9 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         UpdateType update{{{1}, na_IntS}, r_nan, r_nan};
         auto expected = update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("Status") {
             SUBCASE("same") { update.status = static_cast<IntS>(load_gen.status()); }

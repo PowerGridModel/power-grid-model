@@ -198,7 +198,9 @@ TEST_CASE("Test source") {
         SourceUpdate source_update{{{1}, na_IntS}, nan, nan};
         auto expected = source_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("Status") {
             SUBCASE("same") { source_update.status = static_cast<IntS>(source.status()); }

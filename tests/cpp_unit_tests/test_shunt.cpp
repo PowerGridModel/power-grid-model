@@ -151,7 +151,9 @@ TEST_CASE("Test shunt") {
         ShuntUpdate shunt_update{{{1}, na_IntS}, nan, nan, nan, nan};
         auto expected = shunt_update;
 
-        SUBCASE("Identical") {}
+        SUBCASE("Identical") {
+            // default values
+        }
 
         SUBCASE("Status") {
             SUBCASE("same") { shunt_update.status = static_cast<IntS>(shunt.status()); }
