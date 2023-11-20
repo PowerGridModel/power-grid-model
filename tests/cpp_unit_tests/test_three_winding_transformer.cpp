@@ -504,6 +504,60 @@ TEST_CASE("Test three winding transformer") {
             CHECK(!changed.param);
         }
     }
+
+    SUBCASE("Update inverse") {
+        ThreeWindingTransformerUpdate three_winding_transformer_update{{{1}, na_IntS, na_IntS, na_IntS}, na_IntS};
+        auto expected = three_winding_transformer_update;
+
+        auto const& transformer = vec.front();
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("status_1") {
+            SUBCASE("same") { three_winding_transformer_update.status_1 = static_cast<IntS>(transformer.status_1()); }
+            SUBCASE("different") { three_winding_transformer_update.status_1 = IntS{0}; }
+            expected.status_1 = static_cast<IntS>(transformer.status_1());
+        }
+
+        SUBCASE("status_2") {
+            SUBCASE("same") { three_winding_transformer_update.status_2 = static_cast<IntS>(transformer.status_2()); }
+            SUBCASE("different") { three_winding_transformer_update.status_2 = IntS{0}; }
+            expected.status_2 = static_cast<IntS>(transformer.status_2());
+        }
+
+        SUBCASE("status_3") {
+            SUBCASE("same") { three_winding_transformer_update.status_3 = static_cast<IntS>(transformer.status_3()); }
+            SUBCASE("different") { three_winding_transformer_update.status_3 = IntS{0}; }
+            expected.status_3 = static_cast<IntS>(transformer.status_3());
+        }
+
+        SUBCASE("Tap pos") {
+            SUBCASE("same") { three_winding_transformer_update.tap_pos = IntS{0}; }
+            SUBCASE("different") { three_winding_transformer_update.tap_pos = IntS{0}; }
+            expected.tap_pos = IntS{2};
+        }
+
+        SUBCASE("multiple") {
+            three_winding_transformer_update.status_1 = IntS{0};
+            three_winding_transformer_update.status_2 = IntS{0};
+            three_winding_transformer_update.status_3 = IntS{0};
+            three_winding_transformer_update.tap_pos = IntS{0};
+            expected.status_1 = static_cast<IntS>(transformer.status_1());
+            expected.status_2 = static_cast<IntS>(transformer.status_2());
+            expected.status_3 = static_cast<IntS>(transformer.status_3());
+            expected.tap_pos = IntS{2};
+        }
+
+        auto const inv = transformer.inverse(three_winding_transformer_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status_1 == expected.status_1);
+        CHECK(inv.status_2 == expected.status_2);
+        CHECK(inv.status_3 == expected.status_3);
+        CHECK(inv.tap_pos == expected.tap_pos);
+    }
 } // namespace power_grid_model
 
 } // namespace power_grid_model

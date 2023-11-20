@@ -7,6 +7,15 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test shunt") {
     ShuntInput const shunt_input{{{1}, 2, 1}, 1.0, 2.0, 3.0, 4.0};
@@ -136,6 +145,67 @@ TEST_CASE("Test shunt") {
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
         }
+    }
+
+    SUBCASE("Update inverse") {
+        ShuntUpdate shunt_update{{{1}, na_IntS}, nan, nan, nan, nan};
+        auto expected = shunt_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { shunt_update.status = static_cast<IntS>(shunt.status()); }
+            SUBCASE("different") { shunt_update.status = IntS{0}; }
+            expected.status = static_cast<IntS>(shunt.status());
+        }
+
+        SUBCASE("g1") {
+            SUBCASE("same") { shunt_update.g1 = 1.0; }
+            SUBCASE("different") { shunt_update.g1 = 0.0; }
+            expected.g1 = 1.0;
+        }
+
+        SUBCASE("b1") {
+            SUBCASE("same") { shunt_update.b1 = 2.0; }
+            SUBCASE("different") { shunt_update.b1 = 0.0; }
+            expected.b1 = 2.0;
+        }
+
+        SUBCASE("g0") {
+            SUBCASE("same") { shunt_update.g0 = 3.0; }
+            SUBCASE("different") { shunt_update.g0 = 0.0; }
+            expected.g0 = 3.0;
+        }
+
+        SUBCASE("b0") {
+            SUBCASE("same") { shunt_update.b0 = 4.0; }
+            SUBCASE("different") { shunt_update.b0 = 0.0; }
+            expected.b0 = 4.0;
+        }
+
+        SUBCASE("multiple") {
+            shunt_update.status = IntS{0};
+            shunt_update.g1 = 0.0;
+            shunt_update.b1 = 0.1;
+            shunt_update.g0 = 0.2;
+            shunt_update.b0 = 0.3;
+            expected.status = static_cast<IntS>(shunt.status());
+            expected.g1 = 1.0;
+            expected.b1 = 2.0;
+            expected.g0 = 3.0;
+            expected.b0 = 4.0;
+        }
+
+        auto const inv = shunt.inverse(shunt_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        check_nan_preserving_equality(inv.g1, expected.g1);
+        check_nan_preserving_equality(inv.b1, expected.b1);
+        check_nan_preserving_equality(inv.g0, expected.g0);
+        check_nan_preserving_equality(inv.b0, expected.b0);
     }
 }
 

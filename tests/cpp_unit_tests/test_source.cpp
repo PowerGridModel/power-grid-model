@@ -7,6 +7,15 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test source") {
     double const sk = 10e6;
@@ -183,6 +192,48 @@ TEST_CASE("Test source") {
         changed = source.update(SourceUpdate{{{1}, 0}, nan, nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
+    }
+
+    SUBCASE("Update inverse") {
+        SourceUpdate source_update{{{1}, na_IntS}, nan, nan};
+        auto expected = source_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { source_update.status = static_cast<IntS>(source.status()); }
+            SUBCASE("different") { source_update.status = IntS{0}; }
+            expected.status = static_cast<IntS>(source.status());
+        }
+
+        SUBCASE("u_ref") {
+            SUBCASE("same") { source_update.u_ref = u_input; }
+            SUBCASE("different") { source_update.u_ref = 0.0; }
+            expected.u_ref = u_input;
+        }
+
+        SUBCASE("u_ref_angle") {
+            source_update.u_ref_angle = 0.0;
+            expected.u_ref_angle = nan;
+        }
+
+        SUBCASE("multiple") {
+            source_update.status = IntS{0};
+            source_update.u_ref = 0.0;
+            source_update.u_ref_angle = 0.1;
+            expected.status = static_cast<IntS>(source.status());
+            expected.u_ref = u_input;
+            expected.u_ref_angle = nan;
+        }
+
+        auto const inv = source.inverse(source_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        check_nan_preserving_equality(inv.u_ref, expected.u_ref);
+        check_nan_preserving_equality(inv.u_ref_angle, expected.u_ref_angle);
     }
 }
 
