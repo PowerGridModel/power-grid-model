@@ -19,6 +19,7 @@
 #include <set>
 #include <span>
 #include <sstream>
+#include <stack>
 #include <string_view>
 #include <utility>
 
@@ -37,6 +38,101 @@ struct from_json_t {};
 constexpr from_json_t from_json;
 
 namespace detail {
+
+using nlohmann::json;
+
+// visitor for json conversion
+struct JsonMapArrayData {
+    size_t size{};
+    msgpack::sbuffer buffer{};
+};
+
+struct JsonSAXVisitor {
+    msgpack::packer<msgpack::sbuffer> top_packer() {
+        if (data_buffers.empty()) {
+            throw SerializationError{"Json root should be a map!\n"};
+        }
+        return {data_buffers.top().buffer};
+    }
+
+    template <class T> bool pack_data(T const& val) {
+        top_packer().pack(val);
+        ++data_buffers.top().size;
+        return true;
+    }
+
+    bool null() {
+        top_packer().pack_nil();
+        ++data_buffers.top().size;
+        return true;
+    }
+    bool boolean(bool val) { return pack_data(val); }
+    bool number_integer(json::number_integer_t val) { return pack_data(val); }
+    bool number_unsigned(json::number_unsigned_t val) { return pack_data(val); }
+    bool number_float(json::number_float_t val, json::string_t const& /* s */) { return pack_data(val); }
+    bool string(json::string_t const& val) {
+        if (val == "inf" || val == "+inf") {
+            return pack_data(std::numeric_limits<double>::infinity());
+        }
+        if (val == "-inf") {
+            return pack_data(-std::numeric_limits<double>::infinity());
+        }
+        return pack_data(val);
+    }
+    bool key(json::string_t const& val) {
+        top_packer().pack(val);
+        return true;
+    }
+    static bool binary(json::binary_t const& /* val */) { return true; }
+
+    bool start_object(size_t /* elements */) {
+        data_buffers.emplace();
+        return true;
+    }
+    bool end_object() {
+        JsonMapArrayData const object_data{std::move(data_buffers.top())};
+        data_buffers.pop();
+        if (!std::in_range<uint32_t>(object_data.size)) {
+            throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
+        }
+        if (data_buffers.empty()) {
+            msgpack::packer<msgpack::sbuffer> root_packer{root_buffer};
+            root_packer.pack_map(static_cast<uint32_t>(object_data.size));
+            root_buffer.write(object_data.buffer.data(), object_data.buffer.size());
+        } else {
+            top_packer().pack_map(static_cast<uint32_t>(object_data.size));
+            data_buffers.top().buffer.write(object_data.buffer.data(), object_data.buffer.size());
+            ++data_buffers.top().size;
+        }
+        return true;
+    }
+    bool start_array(size_t /* elements */) {
+        data_buffers.emplace();
+        return true;
+    }
+    bool end_array() {
+        JsonMapArrayData const array_data{std::move(data_buffers.top())};
+        data_buffers.pop();
+        if (!std::in_range<uint32_t>(array_data.size)) {
+            throw SerializationError{"Json map/array size exceeds the msgpack limit (2^32)!\n"};
+        }
+        top_packer().pack_array(static_cast<uint32_t>(array_data.size));
+        data_buffers.top().buffer.write(array_data.buffer.data(), array_data.buffer.size());
+        ++data_buffers.top().size;
+        return true;
+    }
+
+    [[noreturn]] static bool parse_error(std::size_t position, std::string const& last_token,
+                                         json::exception const& ex) {
+        std::stringstream ss;
+        ss << "Parse error in JSON. Position: " << position << ", last token: " << last_token
+           << ". Exception message: " << ex.what() << '\n';
+        throw SerializationError{ss.str()};
+    }
+
+    std::stack<JsonMapArrayData> data_buffers{};
+    msgpack::sbuffer root_buffer{};
+};
 
 // visitors for parsing
 struct DefaultNullVisitor : msgpack::null_visitor {
@@ -153,7 +249,9 @@ template <class T> struct ValueVisitor;
 
 template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
     static constexpr std::string_view static_err_msg = "Expect an interger.";
-    T& value;
+
+    T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
     bool visit_nil() { return true; }
     bool visit_positive_integer(uint64_t v) {
         if (!std::in_range<T>(v)) {
@@ -173,7 +271,9 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
 
 template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
     static constexpr std::string_view static_err_msg = "Expect a number.";
-    double& value;
+
+    double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
     bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
     bool visit_positive_integer(uint64_t v) {
         value = static_cast<double>(v);
@@ -195,9 +295,11 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
 
 template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
     static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
-    RealValue<false>& value;
+
+    RealValue<false>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Idx idx{};
     bool inside_array{};
+
     bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
     bool start_array(uint32_t num_elements) {
         if (inside_array || num_elements != 3) {
@@ -255,6 +357,7 @@ class Deserializer {
     using visit_map_t = detail::visit_map_t;
     using visit_array_t = detail::visit_array_t;
     using visit_map_array_t = detail::visit_map_array_t;
+    using JsonSAXVisitor = detail::JsonSAXVisitor;
 
     struct ComponentByteMeta {
         std::string_view component;
@@ -308,7 +411,7 @@ class Deserializer {
     // data members are order dependent
     // DO NOT modify the order!
     // own buffer if from json
-    std::vector<char> buffer_from_json_;
+    msgpack::sbuffer buffer_from_json_;
     // pointer to buffers
     char const* data_;
     size_t size_;
@@ -332,46 +435,11 @@ class Deserializer {
     std::vector<std::vector<ComponentByteMeta>> msg_data_offsets_;
     WritableDatasetHandler dataset_handler_;
 
-    static std::vector<char> json_to_msgpack(std::string_view json_string) {
-        nlohmann::json json_document = nlohmann::json::parse(json_string);
-        json_convert_inf(json_document);
-        std::vector<char> msgpack_data;
-        nlohmann::json::to_msgpack(json_document, msgpack_data);
+    static msgpack::sbuffer json_to_msgpack(std::string_view json_string) {
+        JsonSAXVisitor visitor{};
+        nlohmann::json::sax_parse(json_string, &visitor);
+        msgpack::sbuffer msgpack_data{std::move(visitor.root_buffer)};
         return msgpack_data;
-    }
-
-    static void json_convert_inf(nlohmann::json& json_document) {
-        switch (json_document.type()) {
-        case nlohmann::json::value_t::object:
-        case nlohmann::json::value_t::array:
-            for (auto& value : json_document) {
-                json_convert_inf(value);
-            }
-            break;
-        case nlohmann::json::value_t::string:
-            json_string_to_inf(json_document);
-            break;
-        default:
-            break;
-        }
-    }
-
-    static void json_string_to_inf(nlohmann::json& value) {
-        std::string const str = value.get<std::string>();
-        if (str == "inf" || str == "+inf") {
-            value = std::numeric_limits<double>::infinity();
-        }
-        if (str == "-inf") {
-            value = -std::numeric_limits<double>::infinity();
-        }
-    }
-
-    static std::string_view key_to_string(msgpack::object_kv const& kv) {
-        try {
-            return kv.key.as<std::string_view>();
-        } catch (msgpack::type_error&) {
-            throw SerializationError{"Keys in the dictionary should always be a string!\n"};
-        }
     }
 
     template <class map_array, bool move_forward> MapArrayVisitor<map_array> parse_map_array() {
@@ -747,7 +815,7 @@ class Deserializer {
         std::stringstream ss;
         ss << e.what();
         if (!root_key_.empty()) {
-            ss << "Position of error: " << root_key_;
+            ss << " Position of error: " << root_key_;
             root_key_ = "";
         }
         if (is_batch_ && scenario_number_ >= 0) {
