@@ -12,25 +12,16 @@ namespace {
 namespace solver = power_grid_model::math_solver;
 using namespace power_grid_model;
 
-void printVectPair(std::vector<std::pair<ID, ID>>& d) {
+void print_vector_pair(std::vector<std::pair<ID, ID>>& d) {
     for (const auto& it : d) {
         std::cout << it.first << ": " << it.second << std::endl;
     }
 }
 
-void printMap(std::map<int, std::vector<int>>& d) {
-    for (const auto& it : d) {
-        std::cout << it.first << ": ";
-        for (const ID& el : it.second) {
-            std::cout << el << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
-void show(std::vector<int> const& input) {
-    for (auto const& i : input)
+void print_vector(std::vector<int> const& input) {
+    for (auto const& i : input) {
         std::cout << i << ", ";
+    }
     std::cout << std::endl;
 }
 } // namespace
@@ -41,7 +32,7 @@ TEST_CASE("Test sparse iteration") {
 
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>>> alpha_fills =
-        solver::minimumDegreeAlgorithm(graph);
+        solver::minimum_degree_ordering(graph);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = duration_cast<std::chrono::microseconds>(stop - start);
@@ -52,6 +43,6 @@ TEST_CASE("Test sparse iteration") {
     */
     std::cout << "Time taken by function: " << seconds << " seconds" << std::endl;
 
-    show(alpha_fills[0].first);
-    printVectPair(alpha_fills[0].second);
+    print_vector(alpha_fills[0].first);
+    print_vector_pair(alpha_fills[0].second);
 }

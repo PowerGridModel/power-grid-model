@@ -17,17 +17,20 @@
 
 namespace power_grid_model::math_solver {
 
-void rmElemVectPair(ID& u, std::vector<std::pair<ID, ID>>& dgd) {
+namespace detail {
+void remove_element_vector_pair(ID& u, std::vector<std::pair<ID, ID>>& dgd) {
     ID i = 0;
-    while (i < dgd.size())
+    while (i < dgd.size()) {
         if (dgd[i].first == u) {
             dgd.erase(dgd.begin() + i);
             break;
-        } else
+        } else {
             i++;
+        }
+    }
 }
 
-void setElemVectPair(ID& u, ID v, std::vector<std::pair<ID, ID>>& dgd) {
+void set_element_vector_pair(ID& u, ID v, std::vector<std::pair<ID, ID>>& dgd) {
     ID i = 0;
     while (i < dgd.size()) {
         if (dgd[i].first == u) {
@@ -55,9 +58,9 @@ std::vector<ID> adj(ID& u, std::map<ID, std::vector<ID>>& d) {
     return l;
 }
 
-bool cmpFirts(std::pair<ID, ID>& a, std::pair<ID, ID>& b) { return a.first < b.first; }
+bool compair_ids(std::pair<ID, ID>& a, std::pair<ID, ID>& b) { return a.first < b.first; }
 
-std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> compSizeDegreesGraph(std::map<ID, std::vector<ID>>& d) {
+std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> comp_size_degrees_graph(std::map<ID, std::vector<ID>>& d) {
     std::vector<std::pair<ID, ID>> dd;
     std::vector<ID> v;
     ID n = 0;
@@ -81,12 +84,13 @@ std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> compSizeDegreesGraph(
         }
     }
 
-    sort(dd.begin(), dd.end(), cmpFirts);
+    sort(dd.begin(), dd.end());
 
     return {{n, dd}};
 }
 
-std::vector<std::pair<std::vector<ID>, std::vector<ID>>> checkIndistguishable(ID& u, std::map<ID, std::vector<ID>>& d) {
+std::vector<std::pair<std::vector<ID>, std::vector<ID>>> check_indistguishable(ID& u,
+                                                                               std::map<ID, std::vector<ID>>& d) {
     std::vector<ID> l, rl, lu, lv, vu{u}, vv;
     l = adj(u, d);
     lu = l;
@@ -106,7 +110,7 @@ std::vector<std::pair<std::vector<ID>, std::vector<ID>>> checkIndistguishable(ID
     return {{l, rl}};
 }
 
-std::map<ID, std::vector<ID>> makeClique(std::vector<ID>& l) {
+std::map<ID, std::vector<ID>> make_clique(std::vector<ID>& l) {
     std::map<ID, std::vector<ID>> d;
     ID b = l.size() - 1;
 
@@ -121,16 +125,17 @@ std::map<ID, std::vector<ID>> makeClique(std::vector<ID>& l) {
     return d;
 }
 
-bool inGraph(std::vector<ID>& e, std::map<ID, std::vector<ID>>& d) {
+bool in_graph(std::vector<ID>& e, std::map<ID, std::vector<ID>>& d) {
     bool t1 = (d.find(e[0]) != d.end()) and (find(d[e[0]].begin(), d[e[0]].end(), e[1]) != d[e[0]].end());
     bool t2 = (d.find(e[1]) != d.end()) and (find(d[e[1]].begin(), d[e[1]].end(), e[0]) != d[e[1]].end());
 
     return (t1 || t2);
 }
 
-std::vector<ID> rmvVerticesUpdateDegrees(ID& u, std::map<ID, std::vector<ID>>& d, std::vector<std::pair<ID, ID>>& dgd,
-                                         std::vector<std::pair<ID, ID>>& fills) {
-    std::vector<std::pair<std::vector<ID>, std::vector<ID>>> nbsrl = checkIndistguishable(u, d);
+std::vector<ID> remove_vertices_update_degrees(ID& u, std::map<ID, std::vector<ID>>& d,
+                                               std::vector<std::pair<ID, ID>>& dgd,
+                                               std::vector<std::pair<ID, ID>>& fills) {
+    std::vector<std::pair<std::vector<ID>, std::vector<ID>>> nbsrl = check_indistguishable(u, d);
     std::vector<ID>& nbs = nbsrl[0].first;
     std::vector<ID>& rl = nbsrl[0].second;
     std::vector<ID> alpha = rl, vu{u};
@@ -142,7 +147,7 @@ std::vector<ID> rmvVerticesUpdateDegrees(ID& u, std::map<ID, std::vector<ID>>& d
         if (uu != u)
             nbs.erase(remove(nbs.begin(), nbs.end(), uu), nbs.end());
 
-        rmElemVectPair(uu, dgd);
+        remove_element_vector_pair(uu, dgd);
         std::vector<ID> el;
         for (auto& it : d) {
             it.second.erase(remove(it.second.begin(), it.second.end(), uu), it.second.end());
@@ -160,13 +165,13 @@ std::vector<ID> rmvVerticesUpdateDegrees(ID& u, std::map<ID, std::vector<ID>>& d
             d.erase(it);
     }
 
-    dd = makeClique(nbs);
+    dd = make_clique(nbs);
 
     for (auto& it : dd) {
         ID k = it.first;
         for (const ID& e : it.second) {
             std::vector<ID> t{k, e};
-            if (not inGraph(t, d)) {
+            if (not in_graph(t, d)) {
                 if (d.find(k) != d.end()) {
                     std::vector<ID> ve{e};
                     d[k].insert(d[k].end(), ve.begin(), ve.end());
@@ -185,20 +190,20 @@ std::vector<ID> rmvVerticesUpdateDegrees(ID& u, std::map<ID, std::vector<ID>>& d
     }
 
     for (auto& e : nbs) {
-        setElemVectPair(e, adj(e, d).size(), dgd);
+        set_element_vector_pair(e, adj(e, d).size(), dgd);
     }
 
     return alpha;
 }
+} // namespace detail
 
 std::vector<std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>>>
-minimumDegreeAlgorithm(std::map<ID, std::vector<ID>>& d) {
-    std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> data = compSizeDegreesGraph(d);
+minimum_degree_ordering(std::map<ID, std::vector<ID>>& d) {
+    std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> data = detail::comp_size_degrees_graph(d);
     ID& n = data[0].first;
     std::vector<std::pair<ID, ID>>& dgd = data[0].second;
     std::vector<ID> alpha;
     std::vector<std::pair<ID, ID>> fills;
-    std::vector<std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>>> alpha_fills;
 
     for (int k = 0; k < n; k++) {
         ID u = get<0>(*min_element(begin(dgd), end(dgd), [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
@@ -216,15 +221,14 @@ minimumDegreeAlgorithm(std::map<ID, std::vector<ID>>& d) {
             }
             break;
         } else {
-            std::vector<ID> va = rmvVerticesUpdateDegrees(u, d, dgd, fills);
+            std::vector<ID> va = detail::remove_vertices_update_degrees(u, d, dgd, fills);
             alpha.insert(alpha.end(), va.begin(), va.end());
             if (d.empty()) {
                 break;
             }
         }
     }
-    alpha_fills = {{alpha, fills}};
-    return alpha_fills;
+    return {{alpha, fills}};
 }
 } // namespace power_grid_model::math_solver
 
