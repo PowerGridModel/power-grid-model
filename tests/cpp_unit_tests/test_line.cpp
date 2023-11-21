@@ -234,6 +234,40 @@ TEST_CASE("Test line") {
         CHECK(sym_output.i_to_angle(1) == doctest::Approx(asym_output.i_to_angle(1)));
         CHECK(sym_output.i_to_angle(2) == doctest::Approx(asym_output.i_to_angle(2)));
     }
+
+    SUBCASE("Update inverse") {
+        BranchUpdate branch_update{{1}, na_IntS, na_IntS};
+        auto expected = branch_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("From status") {
+            SUBCASE("same") { branch_update.from_status = static_cast<IntS>(line.from_status()); }
+            SUBCASE("different") { branch_update.from_status = IntS{0}; }
+            expected.from_status = static_cast<IntS>(line.from_status());
+        }
+
+        SUBCASE("To status") {
+            SUBCASE("same") { branch_update.to_status = static_cast<IntS>(line.to_status()); }
+            SUBCASE("different") { branch_update.to_status = IntS{0}; }
+            expected.to_status = static_cast<IntS>(line.to_status());
+        }
+
+        SUBCASE("multiple") {
+            branch_update.from_status = IntS{0};
+            branch_update.to_status = IntS{0};
+            expected.from_status = static_cast<IntS>(line.from_status());
+            expected.to_status = static_cast<IntS>(line.to_status());
+        }
+
+        auto const inv = line.inverse(branch_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.from_status == expected.from_status);
+        CHECK(inv.to_status == expected.to_status);
+    }
 }
 
 } // namespace power_grid_model

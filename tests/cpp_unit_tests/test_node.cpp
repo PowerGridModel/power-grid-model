@@ -66,6 +66,13 @@ TEST_CASE("Test node") {
         CHECK(update_change.topo == false);
         CHECK(update_change.param == false);
     }
+
+    SUBCASE("Test update inverse") {
+        BaseUpdate const base_update{1};
+        auto expected = base_update;
+        auto const inv = Node::inverse(base_update);
+        CHECK(inv.id == expected.id);
+    }
 }
 
 } // namespace power_grid_model

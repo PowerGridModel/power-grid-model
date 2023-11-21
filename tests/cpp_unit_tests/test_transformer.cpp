@@ -213,6 +213,51 @@ TEST_CASE("Test transformer") {
             }
         }
     }
+
+    SUBCASE("Update inverse") {
+        TransformerUpdate transformer_update{{{1}, na_IntS, na_IntS}, na_IntS};
+        auto expected = transformer_update;
+
+        auto const& transformer = vec.front();
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("From status") {
+            SUBCASE("same") { transformer_update.from_status = static_cast<IntS>(transformer.from_status()); }
+            SUBCASE("different") { transformer_update.from_status = IntS{0}; }
+            expected.from_status = static_cast<IntS>(transformer.from_status());
+        }
+
+        SUBCASE("To status") {
+            SUBCASE("same") { transformer_update.to_status = static_cast<IntS>(transformer.to_status()); }
+            SUBCASE("different") { transformer_update.to_status = IntS{0}; }
+            expected.to_status = static_cast<IntS>(transformer.to_status());
+        }
+
+        SUBCASE("Tap pos") {
+            SUBCASE("same") { transformer_update.tap_pos = transformer.tap_pos(); }
+            SUBCASE("different") { transformer_update.tap_pos = IntS{1}; }
+            expected.tap_pos = transformer.tap_pos();
+        }
+
+        SUBCASE("multiple") {
+            transformer_update.from_status = IntS{0};
+            transformer_update.to_status = IntS{0};
+            transformer_update.tap_pos = IntS{0};
+            expected.from_status = static_cast<IntS>(transformer.from_status());
+            expected.to_status = static_cast<IntS>(transformer.to_status());
+            expected.tap_pos = transformer.tap_pos();
+        }
+
+        auto const inv = transformer.inverse(transformer_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.from_status == expected.from_status);
+        CHECK(inv.to_status == expected.to_status);
+        CHECK(inv.tap_pos == expected.tap_pos);
+    }
 }
 
 TEST_CASE("Test Transfomer - Test 0 YNyn12") {

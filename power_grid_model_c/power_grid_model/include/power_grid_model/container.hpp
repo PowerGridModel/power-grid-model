@@ -186,23 +186,11 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         cum_size_ = {accumulate_size_per_vector<GettableTypes>()...};
     };
 
-    // cache a Storagable item with index pos to restore to when restore_values() is called
-    template <class Storageable> void cache_item(Idx pos) {
-        auto const& value = get_raw<Storageable, Storageable>(pos);
-        auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
-
-        cached_vec.emplace_back(pos, value);
-    }
-
-    void restore_values() { (restore_values_impl<StorageableTypes>(), ...); }
-
   private:
     std::tuple<std::vector<StorageableTypes>...> vectors_;
     std::unordered_map<ID, Idx2D> map_;
     std::array<Idx, num_gettable> size_;
     std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_;
-
-    std::tuple<std::vector<std::pair<Idx, StorageableTypes>>...> cached_reset_values_; // indices + reset values
 
 #ifndef NDEBUG
     // set construction_complete is used for debug assertions only
@@ -260,15 +248,6 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         std::array<Idx, num_storageable + 1> res{};
         std::inclusive_scan(size_vec.begin(), size_vec.end(), res.begin() + 1);
         return res;
-    }
-
-    template <class Storageable> void restore_values_impl() {
-        auto& cached_vec = std::get<std::vector<std::pair<Idx, Storageable>>>(cached_reset_values_);
-        for (auto it = cached_vec.crbegin(); it != cached_vec.crend(); ++it) {
-            auto const& cache = *it;
-            get_raw<Storageable, Storageable>(cache.first) = cache.second;
-        }
-        cached_vec.clear();
     }
 
     // define iterator

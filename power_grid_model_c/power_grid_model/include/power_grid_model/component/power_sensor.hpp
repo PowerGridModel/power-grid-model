@@ -83,18 +83,30 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };
 
-    UpdateChange update(PowerSensorUpdate<sym> const& power_sensor_update) {
+    UpdateChange update(PowerSensorUpdate<sym> const& update_data) {
         constexpr double scalar = 1.0 / base_power<sym>;
 
-        set_power(power_sensor_update.p_measured, power_sensor_update.q_measured);
+        set_power(update_data.p_measured, update_data.q_measured);
 
-        if (!is_nan(power_sensor_update.power_sigma)) {
-            apparent_power_sigma_ = power_sensor_update.power_sigma * scalar;
+        if (!is_nan(update_data.power_sigma)) {
+            apparent_power_sigma_ = update_data.power_sigma * scalar;
         }
-        update_real_value<sym>(power_sensor_update.p_sigma, p_sigma_, scalar);
-        update_real_value<sym>(power_sensor_update.q_sigma, q_sigma_, scalar);
+        update_real_value<sym>(update_data.p_sigma, p_sigma_, scalar);
+        update_real_value<sym>(update_data.q_sigma, q_sigma_, scalar);
 
         return {false, false};
+    }
+
+    PowerSensorUpdate<sym> inverse(PowerSensorUpdate<sym> update_data) const {
+        assert(update_data.id == this->id());
+
+        set_if_not_nan(update_data.p_measured, real(s_measured_) * base_power<sym>);
+        set_if_not_nan(update_data.q_measured, imag(s_measured_) * base_power<sym>);
+        set_if_not_nan(update_data.power_sigma, apparent_power_sigma_ * base_power<sym>);
+        set_if_not_nan(update_data.p_sigma, p_sigma_ * base_power<sym>);
+        set_if_not_nan(update_data.q_sigma, q_sigma_ * base_power<sym>);
+
+        return update_data;
     }
 
   private:
