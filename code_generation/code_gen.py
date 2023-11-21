@@ -67,10 +67,11 @@ class CodeGenerator:
             if attribute_class.base is not None:
                 base_class = list(filter(lambda x: x.name == attribute_class.base, dataset_meta_data.classes))[0]
                 attribute_class.full_attributes = base_class.full_attributes + attribute_class.attributes
-                attribute_class.base_attributes = base_class.full_attributes
+                attribute_class.base_attributes = base_class.base_attributes.copy()
+                attribute_class.base_attributes[base_class.name] = base_class.full_attributes
             else:
                 attribute_class.full_attributes = attribute_class.attributes
-                attribute_class.base_attributes = []
+                attribute_class.base_attributes = {}
             # add to class dict
             self.all_classes[attribute_class.name] = attribute_class
 

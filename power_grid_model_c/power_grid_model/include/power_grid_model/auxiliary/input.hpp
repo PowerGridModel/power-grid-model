@@ -91,6 +91,10 @@ struct LineInput {
     double tan0;  // zero sequence parameters
     double i_n;  // rated current
 
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
     // implicit conversions to BranchInput
     operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
@@ -102,6 +106,10 @@ struct LinkInput {
     ID to_node;  // node IDs to which this branch is connected at both sides
     IntS from_status;  // whether the branch is connected at each side
     IntS to_status;  // whether the branch is connected at each side
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 
     // implicit conversions to BranchInput
     operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
@@ -138,6 +146,10 @@ struct TransformerInput {
     double x_grounding_from;  // grounding information
     double r_grounding_to;  // grounding information
     double x_grounding_to;  // grounding information
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 
     // implicit conversions to BranchInput
     operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
@@ -196,6 +208,10 @@ struct ThreeWindingTransformerInput {
     double r_grounding_3;  // grounding information
     double x_grounding_3;  // grounding information
 
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
     // implicit conversions to Branch3Input
     operator Branch3Input&() { return reinterpret_cast<Branch3Input&>(*this); }
     operator Branch3Input const&() const { return reinterpret_cast<Branch3Input const&>(*this); }
@@ -206,6 +222,10 @@ struct GenericLoadGenInput {
     ID node;  // node ID to which this appliance is connected
     IntS status;  // whether the appliance is connected
     LoadGenType type;  // type of the load_gen
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 
     // implicit conversions to ApplianceInput
     operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
@@ -220,6 +240,14 @@ struct LoadGenInput {
     LoadGenType type;  // type of the load_gen
     RealValue<sym> p_specified;  // specified active/reactive power
     RealValue<sym> q_specified;  // specified active/reactive power
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to ApplianceInput
+    operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
+    operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 
     // implicit conversions to GenericLoadGenInput
     operator GenericLoadGenInput&() { return reinterpret_cast<GenericLoadGenInput&>(*this); }
@@ -238,6 +266,10 @@ struct ShuntInput {
     double g0;  // zero sequence admittance
     double b0;  // zero sequence admittance
 
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
     // implicit conversions to ApplianceInput
     operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
@@ -253,6 +285,10 @@ struct SourceInput {
     double rx_ratio;  // short circuit capacity
     double z01_ratio;  // short circuit capacity
 
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
     // implicit conversions to ApplianceInput
     operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
@@ -262,6 +298,10 @@ struct GenericVoltageSensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     double u_sigma;  // sigma of error margin of voltage measurement
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 
     // implicit conversions to SensorInput
     operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
@@ -276,6 +316,14 @@ struct VoltageSensorInput {
     RealValue<sym> u_measured;  // measured voltage magnitude and angle
     RealValue<sym> u_angle_measured;  // measured voltage magnitude and angle
 
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to SensorInput
+    operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
+    operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
+
     // implicit conversions to GenericVoltageSensorInput
     operator GenericVoltageSensorInput&() { return reinterpret_cast<GenericVoltageSensorInput&>(*this); }
     operator GenericVoltageSensorInput const&() const { return reinterpret_cast<GenericVoltageSensorInput const&>(*this); }
@@ -289,6 +337,10 @@ struct GenericPowerSensorInput {
     ID measured_object;  // ID of the measured object
     MeasuredTerminalType measured_terminal_type;  // type of measured terminal
     double power_sigma;  // sigma of error margin of apparent power measurement
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 
     // implicit conversions to SensorInput
     operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
@@ -305,6 +357,14 @@ struct PowerSensorInput {
     RealValue<sym> q_measured;  // measured active/reactive power
     RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
     RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to SensorInput
+    operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
+    operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 
     // implicit conversions to GenericPowerSensorInput
     operator GenericPowerSensorInput&() { return reinterpret_cast<GenericPowerSensorInput&>(*this); }

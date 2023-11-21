@@ -20,17 +20,18 @@ namespace power_grid_model::test {
 {% for specification in attribute_class.specification_names -%}
 // static asserts for {{ specification }}
 static_assert(std::is_standard_layout_v<{{ specification }}>);
-{% if attribute_class.base -%}
+{% for base_class, base_attributes in attribute_class.base_attributes.items() -%}
+// static asserts for conversion of {{ specification }} to {{ base_class }}
 static_assert(std::alignment_of_v<{{ specification }}> >= std::alignment_of_v<{{ attribute_class.base }}>);
-{% for attribute in attribute_class.base_attributes -%}
-static_assert(std::same_as<decltype({{ specification }}::{{ attribute.names }}), decltype({{ attribute_class.base }}::{{ attribute.names }})>);
+{% for attribute in base_attributes -%}
+static_assert(std::same_as<decltype({{ specification }}::{{ attribute.names }}), decltype({{ base_class }}::{{ attribute.names }})>);
 {% endfor -%}
-{% for attribute in attribute_class.base_attributes -%}
-static_assert(offsetof({{ specification }}, {{ attribute.names }}) == offsetof({{ attribute_class.base }}, {{ attribute.names }}));
-{% endfor -%}
-{% endif %}
+{% for attribute in base_attributes -%}
+static_assert(offsetof({{ specification }}, {{ attribute.names }}) == offsetof({{ base_class }}, {{ attribute.names }}));
 {% endfor -%}
 {% endfor -%}
+{% endfor %}
+{% endfor %}
 
 } // namespace power_grid_model::test
 
