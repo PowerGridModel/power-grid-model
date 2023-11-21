@@ -505,6 +505,7 @@ def test_validate_values__bad_p_q_sigma(sensor_type, parameter, values, error_ty
 
     for error in all_errors:
         assert any(isinstance(error, error_type) for error_type in error_types)
+        assert sensor_array["id"][0] == error.ids[0]
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
