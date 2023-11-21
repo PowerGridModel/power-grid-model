@@ -207,22 +207,22 @@ increased.
 `transformer` is described by a π model, where $Z_{series}$ and $Y_{shunt}$ can be computed by following equations:
 
 $$
+
    \begin{eqnarray} 
-        z_{base} = sn/(u2^2)\\
-        |Z_{series}| = uk/z_{base}\\ 
-        Re(Z_{series}) = (pk/sn)/z_{base},\\
-        Im(Z_{series}) = uk * \sqrt{|Z_{series}|^2-Re(Z_{series})^2},\\
-        base\_ i\_ to = base\_ power\_ 3p / u2 / sqrt(3),\\
-        base\_ y\_ to = base\_ i\_ to^2 / base\_ power\_ 1p,\\
-        Y_{series} = (1/Z_{seires}) / base\_ y\_ to,\\
-        |Y_{shunt}| = i0 * sn / u2^2\\
-        Re(Y_{shunt}) = p0 / (u2^2)\\
-        Im(Y_{shunt}) = 0 (if Re(Y_{shunt}) > |Y_{shunt}|) or = -sqrt(|Y_{shunt}|^2-Re(Y_{shunt})^2)\\
-        Y_{shunt} = Y_{shunt} / base\_ y\_ to\\
+        && |Z_{series}| = uk / z_{base}.\\ 
+        && Re(Z_{series}) = (pk/sn) / z_{base} ,\\
+        && Im(Z_{series}) = sqrt{|Z_{series}|^2-Re(Z_{series})^2} p.u. ,\\
+        && |Y_{shunt}| = i0 / y_{base} \\
+        && Re(Y_{shunt}) = (sn/p0) / y_{base} \\
+        && Im(Y_{shunt}) = \begin{cases} \mbox{0,} & \mbox{if } Re(Y_{shunt}) > |Y_{shunt}|) \\ \mbox{-sqrt(|Y_{shunt}|^2-Re(Y_{shunt})^2) p.u.,} & \mbox{otherwise.} \end{cases} \]
+        && z_{base} = sn/(u2^2)\\
+        && y_{base} = (u2^2)/sn\\
    \end{eqnarray}
+
+
 $$
 
-where base_power_3p = $1 \times 10^6$, and base_power_1p = base_power_3p / 3. 
+where $z_{base} = 1/ y_{base}= `sn`/(`u2`^2)$.
 
 
 ## Branch3
@@ -452,13 +452,12 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 `generic_load_gen` are modelled by using the so-called ZIP load model in power-grid-model, 
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
-The injection current $I_{inj}$ of each ZIP model type can be computed from s = `p_specified` + j`q_specified`as:
-
+The injection current $I_{inj}$ of each ZIP model type can be computed as follows:
 - for constant impedance (Z) load: 
 
 $$
    \begin{eqnarray} 
-        I_{inj} = S * u
+        S = S_{specified} * (u^2)
    \end{eqnarray}
 $$
 
@@ -466,7 +465,7 @@ $$
 
 $$
    \begin{eqnarray} 
-        I_{inj} = S*|u|/u = S
+        S = S_{specified} * u
    \end{eqnarray}
 $$
 
@@ -474,12 +473,11 @@ $$
 
 $$
    \begin{eqnarray} 
-        I_{inj} = S / u
+        S = S_{specfied}
    \end{eqnarray}
 $$
 
-where S = `p_specified` + j`q_specified`, and u is calculated node voltage, more specifically a complex representation of `u` and `u_angle` attribute of node.
-Polarities of loads and generators are opposite.
+where $S_{specified}$ = `p_specified` + j`q_specified`, S = `p` + j`q` which are the result attributes and u is calculated node voltage, more specifically a complex representation of `u` and `u_angle` attribute of node.
 
 
 ### Shunt
