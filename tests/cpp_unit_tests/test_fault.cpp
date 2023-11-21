@@ -308,7 +308,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Update inverse") {
-        FaultUpdate fault_update{{1}, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
+        FaultUpdate fault_update{1, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
         auto expected = fault_update;
 
         SUBCASE("Identical") {
