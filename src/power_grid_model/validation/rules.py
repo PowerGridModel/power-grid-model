@@ -707,7 +707,8 @@ def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValid
         component: The component of interest, in this case only 'sym_power_sensor' or 'asym_power_sensor'
 
     Returns:
-        A list containing zero or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch
+        A list containing zero or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch.
+        Note that with asymetric power sensors, partial assignment of p_sigma and q_sigma is also considered mismatch.
     """
     errors = []
     p_sigma = data[component]["p_sigma"]
@@ -717,7 +718,11 @@ def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValid
     q_nan = np.isnan(q_sigma)
     p_inf = np.isinf(p_sigma)
     q_inf = np.isinf(q_sigma)
-    mis_match = p_nan != q_nan  # same logic as np.logical_xor(p_nan.any(axis=-1), q_nan.any(axis=-1)).any()
+    mis_match = p_nan != q_nan
+    mis_match |= np.logical_xor(p_nan, q_nan).any()
+    if component == "asym_power_sensor":
+        mis_match |= p_nan.any() == (~p_nan).any()
+        mis_match |= q_nan.any() == (~q_nan).any()
     if mis_match.any() or np.logical_or(p_inf.any(), q_inf.any()):
         errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
     return errors

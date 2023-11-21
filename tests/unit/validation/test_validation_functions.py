@@ -434,28 +434,77 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
 
 
 @pytest.mark.parametrize(
-    ("sensor_type", "parameter"),
+    ("sensor_type", "parameter", "values", "error_types"),
     [
-        ("sym_power_sensor", ["p_sigma", "q_sigma"]),
-        ("asym_power_sensor", ["p_sigma", "q_sigma"]),
+        ("sym_power_sensor", ["p_sigma", "q_sigma"], [NaN, NaN], [InvalidIdError]),
+        ("sym_power_sensor", ["p_sigma", "q_sigma"], [0.1, NaN], [InvalidIdError, MultiFieldValidationError]),
+        ("sym_power_sensor", ["p_sigma", "q_sigma"], [NaN, 0.1], [InvalidIdError, MultiFieldValidationError]),
+        ("sym_power_sensor", ["p_sigma", "q_sigma"], [0.1, 0.1], [InvalidIdError]),
+        ("asym_power_sensor", ["p_sigma", "q_sigma"], [[NaN, NaN, NaN], [NaN, NaN, NaN]], [InvalidIdError]),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[0.1, NaN, 0.1], [NaN, 0.1, NaN]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[0.1, NaN, NaN], [NaN, NaN, NaN]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[NaN, NaN, NaN], [0.1, NaN, NaN]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[0.1, 0.1, 0.1], [NaN, NaN, NaN]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[NaN, NaN, NaN], [0.1, 0.1, 0.1]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[NaN, NaN, NaN], [0.1, NaN, NaN]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            ["p_sigma", "q_sigma"],
+            [[0.1, NaN, NaN], [0.1, NaN, NaN]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        ("asym_power_sensor", ["p_sigma", "q_sigma"], [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]], [InvalidIdError]),
     ],
 )
-def test_validate_values__bad_p_q_sigma(sensor_type, parameter):
-    def arbitrary_fill(array, sensor_type, parameter):
+def test_validate_values__bad_p_q_sigma(sensor_type, parameter, values, error_types):
+    def arbitrary_fill(array, sensor_type, parameter, values):
         if sensor_type == "sym_power_sensor":
-            array[parameter[0]] = 0.5
+            array[parameter[0]] = values[0]
+            array[parameter[1]] = values[1]
         else:
-            array[parameter[1]][0][0] = 0.6
-            array[parameter[0]][0][1] = 0.7
-            array[parameter[1]][0][2] = 0.8
+            array[parameter[0]][0][0] = values[0][0]
+            array[parameter[0]][0][1] = values[0][1]
+            array[parameter[0]][0][2] = values[0][2]
+            array[parameter[1]][0][0] = values[1][0]
+            array[parameter[1]][0][1] = values[1][1]
+            array[parameter[1]][0][2] = values[1][2]
 
     sensor_array = initialize_array("input", sensor_type, 1)
-    arbitrary_fill(sensor_array, sensor_type, parameter)
+    arbitrary_fill(sensor_array, sensor_type, parameter, values)
     all_errors = validate_values({sensor_type: sensor_array})
 
     for error in all_errors:
-        if not isinstance(error, InvalidIdError):
-            assert isinstance(error, MultiFieldValidationError)
+        assert any(isinstance(error, error_type) for error_type in error_types)
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
