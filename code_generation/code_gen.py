@@ -43,8 +43,15 @@ class CodeGenerator:
         for attribute_class in dataset_meta_data.classes:
             if attribute_class.is_template:
                 attribute_class.full_name = f"{attribute_class.name}<sym>"
+                attribute_class.specification_names = [
+                    f"{attribute_class.name}<true>",
+                    f"{attribute_class.name}<false>",
+                    f"Sym{attribute_class.name}",
+                    f"Asym{attribute_class.name}",
+                ]
             else:
                 attribute_class.full_name = attribute_class.name
+                attribute_class.specification_names = [attribute_class.name]
             new_attribute_list = []
             for attribute in attribute_class.attributes:
                 if isinstance(attribute.names, str):
@@ -60,10 +67,10 @@ class CodeGenerator:
             if attribute_class.base is not None:
                 base_class = list(filter(lambda x: x.name == attribute_class.base, dataset_meta_data.classes))[0]
                 attribute_class.full_attributes = base_class.full_attributes + attribute_class.attributes
-                attribute_class.base_classes = base_class.base_classes + [attribute_class.base]
+                attribute_class.base_attributes = base_class.full_attributes
             else:
                 attribute_class.full_attributes = attribute_class.attributes
-                attribute_class.base_classes = []
+                attribute_class.base_attributes = []
             # add to class dict
             self.all_classes[attribute_class.name] = attribute_class
 

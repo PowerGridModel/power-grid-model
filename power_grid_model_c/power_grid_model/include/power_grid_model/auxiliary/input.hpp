@@ -21,8 +21,6 @@ struct BaseInput {
     ID id;  // ID of the object
 };
 
-static_assert(std::is_standard_layout_v<BaseInput>);
-
 struct NodeInput {
     ID id;  // ID of the object
     double u_rated;  // rated line-line voltage
@@ -31,8 +29,6 @@ struct NodeInput {
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<NodeInput>);
 
 struct BranchInput {
     ID id;  // ID of the object
@@ -45,8 +41,6 @@ struct BranchInput {
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<BranchInput>);
 
 struct Branch3Input {
     ID id;  // ID of the object
@@ -62,8 +56,6 @@ struct Branch3Input {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
-static_assert(std::is_standard_layout_v<Branch3Input>);
-
 struct SensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
@@ -72,8 +64,6 @@ struct SensorInput {
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<SensorInput>);
 
 struct ApplianceInput {
     ID id;  // ID of the object
@@ -84,8 +74,6 @@ struct ApplianceInput {
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<ApplianceInput>);
 
 struct LineInput {
     ID id;  // ID of the object
@@ -103,16 +91,10 @@ struct LineInput {
     double tan0;  // zero sequence parameters
     double i_n;  // rated current
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to BranchInput
     operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<LineInput>);
 
 struct LinkInput {
     ID id;  // ID of the object
@@ -121,16 +103,10 @@ struct LinkInput {
     IntS from_status;  // whether the branch is connected at each side
     IntS to_status;  // whether the branch is connected at each side
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to BranchInput
     operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<LinkInput>);
 
 struct TransformerInput {
     ID id;  // ID of the object
@@ -163,16 +139,10 @@ struct TransformerInput {
     double r_grounding_to;  // grounding information
     double x_grounding_to;  // grounding information
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to BranchInput
     operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<TransformerInput>);
 
 struct ThreeWindingTransformerInput {
     ID id;  // ID of the object
@@ -226,16 +196,10 @@ struct ThreeWindingTransformerInput {
     double r_grounding_3;  // grounding information
     double x_grounding_3;  // grounding information
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to Branch3Input
     operator Branch3Input&() { return reinterpret_cast<Branch3Input&>(*this); }
     operator Branch3Input const&() const { return reinterpret_cast<Branch3Input const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<ThreeWindingTransformerInput>);
 
 struct GenericLoadGenInput {
     ID id;  // ID of the object
@@ -243,16 +207,10 @@ struct GenericLoadGenInput {
     IntS status;  // whether the appliance is connected
     LoadGenType type;  // type of the load_gen
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to ApplianceInput
     operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<GenericLoadGenInput>);
 
 template <bool sym>
 struct LoadGenInput {
@@ -263,14 +221,6 @@ struct LoadGenInput {
     RealValue<sym> p_specified;  // specified active/reactive power
     RealValue<sym> q_specified;  // specified active/reactive power
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
-    // implicit conversions to ApplianceInput
-    operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
-    operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
-
     // implicit conversions to GenericLoadGenInput
     operator GenericLoadGenInput&() { return reinterpret_cast<GenericLoadGenInput&>(*this); }
     operator GenericLoadGenInput const&() const { return reinterpret_cast<GenericLoadGenInput const&>(*this); }
@@ -278,11 +228,6 @@ struct LoadGenInput {
 
 using SymLoadGenInput = LoadGenInput<true>;
 using AsymLoadGenInput = LoadGenInput<false>;
-
-static_assert(std::is_standard_layout_v<LoadGenInput<true>>);
-static_assert(std::is_standard_layout_v<LoadGenInput<false>>);
-static_assert(std::is_standard_layout_v<SymLoadGenInput>);
-static_assert(std::is_standard_layout_v<AsymLoadGenInput>);
 
 struct ShuntInput {
     ID id;  // ID of the object
@@ -293,16 +238,10 @@ struct ShuntInput {
     double g0;  // zero sequence admittance
     double b0;  // zero sequence admittance
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to ApplianceInput
     operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<ShuntInput>);
 
 struct SourceInput {
     ID id;  // ID of the object
@@ -314,32 +253,20 @@ struct SourceInput {
     double rx_ratio;  // short circuit capacity
     double z01_ratio;  // short circuit capacity
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to ApplianceInput
     operator ApplianceInput&() { return reinterpret_cast<ApplianceInput&>(*this); }
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<SourceInput>);
 
 struct GenericVoltageSensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     double u_sigma;  // sigma of error margin of voltage measurement
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to SensorInput
     operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<GenericVoltageSensorInput>);
 
 template <bool sym>
 struct VoltageSensorInput {
@@ -349,14 +276,6 @@ struct VoltageSensorInput {
     RealValue<sym> u_measured;  // measured voltage magnitude and angle
     RealValue<sym> u_angle_measured;  // measured voltage magnitude and angle
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
-    // implicit conversions to SensorInput
-    operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
-    operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
-
     // implicit conversions to GenericVoltageSensorInput
     operator GenericVoltageSensorInput&() { return reinterpret_cast<GenericVoltageSensorInput&>(*this); }
     operator GenericVoltageSensorInput const&() const { return reinterpret_cast<GenericVoltageSensorInput const&>(*this); }
@@ -365,27 +284,16 @@ struct VoltageSensorInput {
 using SymVoltageSensorInput = VoltageSensorInput<true>;
 using AsymVoltageSensorInput = VoltageSensorInput<false>;
 
-static_assert(std::is_standard_layout_v<VoltageSensorInput<true>>);
-static_assert(std::is_standard_layout_v<VoltageSensorInput<false>>);
-static_assert(std::is_standard_layout_v<SymVoltageSensorInput>);
-static_assert(std::is_standard_layout_v<AsymVoltageSensorInput>);
-
 struct GenericPowerSensorInput {
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     MeasuredTerminalType measured_terminal_type;  // type of measured terminal
     double power_sigma;  // sigma of error margin of apparent power measurement
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
     // implicit conversions to SensorInput
     operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<GenericPowerSensorInput>);
 
 template <bool sym>
 struct PowerSensorInput {
@@ -398,14 +306,6 @@ struct PowerSensorInput {
     RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
     RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
 
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
-    // implicit conversions to SensorInput
-    operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
-    operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
-
     // implicit conversions to GenericPowerSensorInput
     operator GenericPowerSensorInput&() { return reinterpret_cast<GenericPowerSensorInput&>(*this); }
     operator GenericPowerSensorInput const&() const { return reinterpret_cast<GenericPowerSensorInput const&>(*this); }
@@ -413,11 +313,6 @@ struct PowerSensorInput {
 
 using SymPowerSensorInput = PowerSensorInput<true>;
 using AsymPowerSensorInput = PowerSensorInput<false>;
-
-static_assert(std::is_standard_layout_v<PowerSensorInput<true>>);
-static_assert(std::is_standard_layout_v<PowerSensorInput<false>>);
-static_assert(std::is_standard_layout_v<SymPowerSensorInput>);
-static_assert(std::is_standard_layout_v<AsymPowerSensorInput>);
 
 struct FaultInput {
     ID id;  // ID of the object
@@ -432,8 +327,6 @@ struct FaultInput {
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<FaultInput>);
 
 
 

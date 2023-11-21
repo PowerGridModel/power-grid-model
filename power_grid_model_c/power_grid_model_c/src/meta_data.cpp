@@ -10,6 +10,9 @@
 #include "handle.hpp"
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/auxiliary/static_asserts/input.hpp>
+#include <power_grid_model/auxiliary/static_asserts/output.hpp>
+#include <power_grid_model/auxiliary/static_asserts/update.hpp>
 
 namespace {
 using namespace power_grid_model;

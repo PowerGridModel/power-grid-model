@@ -22,8 +22,6 @@ struct BaseOutput {
     IntS energized;  // whether the object is energized
 };
 
-static_assert(std::is_standard_layout_v<BaseOutput>);
-
 template <bool sym>
 struct NodeOutput {
     ID id;  // ID of the object
@@ -41,11 +39,6 @@ struct NodeOutput {
 
 using SymNodeOutput = NodeOutput<true>;
 using AsymNodeOutput = NodeOutput<false>;
-
-static_assert(std::is_standard_layout_v<NodeOutput<true>>);
-static_assert(std::is_standard_layout_v<NodeOutput<false>>);
-static_assert(std::is_standard_layout_v<SymNodeOutput>);
-static_assert(std::is_standard_layout_v<AsymNodeOutput>);
 
 template <bool sym>
 struct BranchOutput {
@@ -68,11 +61,6 @@ struct BranchOutput {
 
 using SymBranchOutput = BranchOutput<true>;
 using AsymBranchOutput = BranchOutput<false>;
-
-static_assert(std::is_standard_layout_v<BranchOutput<true>>);
-static_assert(std::is_standard_layout_v<BranchOutput<false>>);
-static_assert(std::is_standard_layout_v<SymBranchOutput>);
-static_assert(std::is_standard_layout_v<AsymBranchOutput>);
 
 template <bool sym>
 struct Branch3Output {
@@ -100,11 +88,6 @@ struct Branch3Output {
 using SymBranch3Output = Branch3Output<true>;
 using AsymBranch3Output = Branch3Output<false>;
 
-static_assert(std::is_standard_layout_v<Branch3Output<true>>);
-static_assert(std::is_standard_layout_v<Branch3Output<false>>);
-static_assert(std::is_standard_layout_v<SymBranch3Output>);
-static_assert(std::is_standard_layout_v<AsymBranch3Output>);
-
 template <bool sym>
 struct ApplianceOutput {
     ID id;  // ID of the object
@@ -123,11 +106,6 @@ struct ApplianceOutput {
 using SymApplianceOutput = ApplianceOutput<true>;
 using AsymApplianceOutput = ApplianceOutput<false>;
 
-static_assert(std::is_standard_layout_v<ApplianceOutput<true>>);
-static_assert(std::is_standard_layout_v<ApplianceOutput<false>>);
-static_assert(std::is_standard_layout_v<SymApplianceOutput>);
-static_assert(std::is_standard_layout_v<AsymApplianceOutput>);
-
 template <bool sym>
 struct VoltageSensorOutput {
     ID id;  // ID of the object
@@ -142,11 +120,6 @@ struct VoltageSensorOutput {
 
 using SymVoltageSensorOutput = VoltageSensorOutput<true>;
 using AsymVoltageSensorOutput = VoltageSensorOutput<false>;
-
-static_assert(std::is_standard_layout_v<VoltageSensorOutput<true>>);
-static_assert(std::is_standard_layout_v<VoltageSensorOutput<false>>);
-static_assert(std::is_standard_layout_v<SymVoltageSensorOutput>);
-static_assert(std::is_standard_layout_v<AsymVoltageSensorOutput>);
 
 template <bool sym>
 struct PowerSensorOutput {
@@ -163,11 +136,6 @@ struct PowerSensorOutput {
 using SymPowerSensorOutput = PowerSensorOutput<true>;
 using AsymPowerSensorOutput = PowerSensorOutput<false>;
 
-static_assert(std::is_standard_layout_v<PowerSensorOutput<true>>);
-static_assert(std::is_standard_layout_v<PowerSensorOutput<false>>);
-static_assert(std::is_standard_layout_v<SymPowerSensorOutput>);
-static_assert(std::is_standard_layout_v<AsymPowerSensorOutput>);
-
 struct FaultOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -176,8 +144,6 @@ struct FaultOutput {
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<FaultOutput>);
 
 struct FaultShortCircuitOutput {
     ID id;  // ID of the object
@@ -189,8 +155,6 @@ struct FaultShortCircuitOutput {
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<FaultShortCircuitOutput>);
 
 struct NodeShortCircuitOutput {
     ID id;  // ID of the object
@@ -204,8 +168,6 @@ struct NodeShortCircuitOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-static_assert(std::is_standard_layout_v<NodeShortCircuitOutput>);
-
 struct BranchShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -218,8 +180,6 @@ struct BranchShortCircuitOutput {
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<BranchShortCircuitOutput>);
 
 struct Branch3ShortCircuitOutput {
     ID id;  // ID of the object
@@ -236,8 +196,6 @@ struct Branch3ShortCircuitOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-static_assert(std::is_standard_layout_v<Branch3ShortCircuitOutput>);
-
 struct ApplianceShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -249,8 +207,6 @@ struct ApplianceShortCircuitOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-static_assert(std::is_standard_layout_v<ApplianceShortCircuitOutput>);
-
 struct SensorShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -259,8 +215,6 @@ struct SensorShortCircuitOutput {
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
-
-static_assert(std::is_standard_layout_v<SensorShortCircuitOutput>);
 
 
 

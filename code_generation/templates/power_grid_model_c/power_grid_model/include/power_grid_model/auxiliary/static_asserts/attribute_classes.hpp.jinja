@@ -1,0 +1,38 @@
+// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+#pragma once
+#ifndef POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_{{ include_guard }}_HPP
+#define POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_{{ include_guard }}_HPP
+
+#include "../{{ name }}.hpp" // NOLINT
+
+#include <cstddef>
+
+namespace power_grid_model::test {
+
+{% for attribute_class in classes -%}
+
+{% for specification in attribute_class.specification_names -%}
+// static asserts for {{ specification }}
+static_assert(std::is_standard_layout_v<{{ specification }}>);
+{% if attribute_class.base -%}
+static_assert(std::alignment_of_v<{{ specification }}> >= std::alignment_of_v<{{ attribute_class.base }}>);
+{% for attribute in attribute_class.base_attributes -%}
+static_assert(std::same_as<decltype({{ specification }}::{{ attribute.names }}), decltype({{ attribute_class.base }}::{{ attribute.names }})>);
+{% endfor -%}
+{% for attribute in attribute_class.base_attributes -%}
+static_assert(offsetof({{ specification }}, {{ attribute.names }}) == offsetof({{ attribute_class.base }}, {{ attribute.names }}));
+{% endfor -%}
+{% endif %}
+{% endfor -%}
+{% endfor -%}
+
+} // namespace power_grid_model::test
+
+#endif
+// clang-format on

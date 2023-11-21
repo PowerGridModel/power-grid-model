@@ -22,28 +22,20 @@ namespace power_grid_model {
 {%- if attribute_class.is_template -%}
 template <bool sym>
 {% endif -%}
-    struct {{ attribute_class.name }} {
+struct {{ attribute_class.name }} {
 {%- for attribute in attribute_class.full_attributes %}
     {{ attribute.data_type }} {{ attribute.names }};
     {%- if attribute.description %}  // {{ attribute.description }}{%- endif %}
 {%- endfor %}
-{% for base_class in attribute_class.base_classes %}
-    // implicit conversions to {{ base_class }}
-    operator {{ base_class }}&() { return reinterpret_cast<{{ base_class }}&>(*this); }
-    operator {{ base_class }} const&() const { return reinterpret_cast<{{ base_class }} const&>(*this); }
-{% endfor -%}
+{% if attribute_class.base %}
+    // implicit conversions to {{ attribute_class.base }}
+    operator {{ attribute_class.base }}&() { return reinterpret_cast<{{ attribute_class.base }}&>(*this); }
+    operator {{ attribute_class.base }} const&() const { return reinterpret_cast<{{ attribute_class.base }} const&>(*this); }
+{% endif -%}
 };
-
-{% if attribute_class.is_template -%}
+{% if attribute_class.is_template %}
 using Sym{{ attribute_class.name }} = {{ attribute_class.name }}<true>;
 using Asym{{ attribute_class.name }} = {{ attribute_class.name }}<false>;
-
-static_assert(std::is_standard_layout_v<{{ attribute_class.name }}<true>>);
-static_assert(std::is_standard_layout_v<{{ attribute_class.name }}<false>>);
-static_assert(std::is_standard_layout_v<Sym{{ attribute_class.name }}>);
-static_assert(std::is_standard_layout_v<Asym{{ attribute_class.name }}>);
-{% else -%}
-static_assert(std::is_standard_layout_v<{{ attribute_class.name }}>);
 {% endif %}
 {% endfor %}
 
