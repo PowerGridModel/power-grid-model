@@ -215,7 +215,7 @@ TEST_CASE("Test transformer") {
     }
 
     SUBCASE("Update inverse") {
-        TransformerUpdate transformer_update{{{1}, na_IntS, na_IntS}, na_IntS};
+        TransformerUpdate transformer_update{.id = 1, .from_status = na_IntS, .to_status = na_IntS, .tap_pos = na_IntS};
         auto expected = transformer_update;
 
         auto const& transformer = vec.front();

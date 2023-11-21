@@ -366,9 +366,10 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
     SUBCASE("Update inverse") {
         auto const p_specified = RealValueType{1.0};
         auto const q_specified = RealValueType{2.0};
-        LoadGenType const load_gen{{{{{1}, 2, IntS{1}}, {}}, p_specified, q_specified}, 1.0};
+        LoadGenType const load_gen{
+            {.id = 1, .node = 2, .status = 1, .type = {}, .p_specified = p_specified, .q_specified = q_specified}, 1.0};
 
-        UpdateType update{{{1}, na_IntS}, r_nan, r_nan};
+        UpdateType update{.id = 1, .status = na_IntS, .p_specified = r_nan, .q_specified = r_nan};
         auto expected = update;
 
         SUBCASE("Identical") {

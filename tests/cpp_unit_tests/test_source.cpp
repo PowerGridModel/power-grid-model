@@ -202,7 +202,7 @@ TEST_CASE("Test source") {
     }
 
     SUBCASE("Update inverse") {
-        SourceUpdate source_update{{{1}, na_IntS}, nan, nan};
+        SourceUpdate source_update{.id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan};
         auto expected = source_update;
 
         SUBCASE("Identical") {

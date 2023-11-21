@@ -522,7 +522,8 @@ TEST_CASE("Test three winding transformer") {
     }
 
     SUBCASE("Update inverse") {
-        ThreeWindingTransformerUpdate three_winding_transformer_update{{{1}, na_IntS, na_IntS, na_IntS}, na_IntS};
+        ThreeWindingTransformerUpdate three_winding_transformer_update{
+            .id = 1, .status_1 = na_IntS, .status_2 = na_IntS, .status_3 = na_IntS, .tap_pos = na_IntS};
         auto expected = three_winding_transformer_update;
 
         auto const& transformer = vec.front();

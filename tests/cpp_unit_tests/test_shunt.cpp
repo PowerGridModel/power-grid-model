@@ -148,7 +148,7 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("Update inverse") {
-        ShuntUpdate shunt_update{{{1}, na_IntS}, nan, nan, nan, nan};
+        ShuntUpdate shunt_update{1, na_IntS, nan, nan, nan, nan};
         auto expected = shunt_update;
 
         SUBCASE("Identical") {

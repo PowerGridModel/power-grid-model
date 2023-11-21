@@ -574,9 +574,9 @@ TEST_CASE("Test power sensor") {
         constexpr auto p_sigma = 4.0;
         constexpr auto q_sigma = 5.0;
         PowerSensor<true> const power_sensor{
-            {{{{1}, 1}, MeasuredTerminalType::branch3_1, power_sigma}, p_measured, q_measured, p_sigma, q_sigma}};
+            {1, 1, MeasuredTerminalType::branch3_1, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
 
-        PowerSensorUpdate<true> ps_update{{1}, nan, nan, nan, nan, nan};
+        PowerSensorUpdate<true> ps_update{1, nan, nan, nan, nan, nan};
         auto expected = ps_update;
 
         SUBCASE("Identical") {
@@ -642,9 +642,9 @@ TEST_CASE("Test power sensor") {
         RealValue<false> const p_sigma{7.0, 8.0, 9.0};
         RealValue<false> const q_sigma{10.0, 11.0, 12.0};
         PowerSensor<false> const power_sensor{
-            {{{{1}, 1}, MeasuredTerminalType::branch3_1, power_sigma}, p_measured, q_measured, p_sigma, q_sigma}};
+            {1, 1, MeasuredTerminalType::branch3_1, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
 
-        PowerSensorUpdate<false> ps_update{{1}, nan, r_nan, r_nan, r_nan, r_nan};
+        PowerSensorUpdate<false> ps_update{1, nan, r_nan, r_nan, r_nan, r_nan};
         auto expected = ps_update;
 
         SUBCASE("Identical") {

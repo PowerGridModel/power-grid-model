@@ -167,7 +167,7 @@ class Branch3 : public Base {
         return {changed, changed};
     }
 
-    auto inverse(std::derived_from<Branch3Update> auto update_data) const {
+    auto inverse(std::convertible_to<Branch3Update> auto update_data) const {
         assert(update_data.id == id());
 
         set_if_not_nan(update_data.status_1, static_cast<IntS>(status_1_));
