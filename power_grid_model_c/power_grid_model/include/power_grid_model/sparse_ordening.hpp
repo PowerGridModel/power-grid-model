@@ -196,8 +196,7 @@ std::vector<ID> remove_vertices_update_degrees(ID& u, std::map<ID, std::vector<I
 }
 } // namespace detail
 
-std::vector<std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>>>
-minimum_degree_ordering(std::map<ID, std::vector<ID>>& d) {
+std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>> minimum_degree_ordering(std::map<ID, std::vector<ID>>& d) {
     std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> data = detail::comp_size_degrees_graph(d);
     ID& n = data[0].first;
     std::vector<std::pair<ID, ID>>& dgd = data[0].second;
@@ -227,7 +226,7 @@ minimum_degree_ordering(std::map<ID, std::vector<ID>>& d) {
             }
         }
     }
-    return {{alpha, fills}};
+    return {alpha, fills};
 }
 } // namespace power_grid_model
 
