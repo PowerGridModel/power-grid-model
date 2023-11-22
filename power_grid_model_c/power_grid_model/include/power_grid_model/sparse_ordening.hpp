@@ -6,16 +6,15 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_SPARSE_ITERATION_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_ITERATION_HPP
 
-#include "../power_grid_model.hpp"
+#include "power_grid_model.hpp"
 
 #include <algorithm> // remove and remove_if
-#include <iostream>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-namespace power_grid_model::math_solver {
+namespace power_grid_model {
 
 namespace detail {
 void remove_element_vector_pair(ID& u, std::vector<std::pair<ID, ID>>& dgd) {
@@ -230,6 +229,6 @@ minimum_degree_ordering(std::map<ID, std::vector<ID>>& d) {
     }
     return {{alpha, fills}};
 }
-} // namespace power_grid_model::math_solver
+} // namespace power_grid_model
 
 #endif
