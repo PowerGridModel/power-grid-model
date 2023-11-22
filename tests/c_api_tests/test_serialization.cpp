@@ -26,9 +26,9 @@ TEST_CASE("Serialization") {
     // get handle
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
-    std::vector<NodeInput> node{{{5}, nan}};
-    std::vector<SourceInput> source{{{{6}, na_IntID, na_IntS}, nan, nan, nan, nan, nan},
-                                    {{{7}, na_IntID, na_IntS}, nan, nan, nan, nan, nan}};
+    std::vector<NodeInput> node{{5, nan}};
+    std::vector<SourceInput> source{{6, na_IntID, na_IntS, nan, nan, nan, nan, nan},
+                                    {7, na_IntID, na_IntS, nan, nan, nan, nan, nan}};
     Idx const n_components = 2;
     Idx const batch_size = 1;
     Idx const is_batch = 0;

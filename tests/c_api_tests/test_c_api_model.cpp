@@ -48,9 +48,17 @@ TEST_CASE("C API Model") {
     // input data
     ConstDatasetPtr const unique_input_dataset{PGM_create_dataset_const(hl, "input", 0, 1)};
     PGM_ConstDataset* input_dataset = unique_input_dataset.get();
-    NodeInput node_input{{0}, 100.0};
-    SourceInput source_input{{{1}, 0, 1}, 1.0, 0.0, 1000.0, 0.0, 1.0};
-    SymLoadGenInput load_input{{{{2}, 0, 1}, LoadGenType::const_i}, 0.0, 500.0};
+    NodeInput node_input{.id = 0, .u_rated = 100.0};
+    SourceInput source_input{.id = 1,
+                             .node = 0,
+                             .status = 1,
+                             .u_ref = 1.0,
+                             .u_ref_angle = 0.0,
+                             .sk = 1000.0,
+                             .rx_ratio = 0.0,
+                             .z01_ratio = 1.0};
+    SymLoadGenInput load_input{
+        .id = 2, .node = 0, .status = 1, .type = LoadGenType::const_i, .p_specified = 0.0, .q_specified = 500.0};
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     BufferPtr const unique_source_buffer{PGM_create_buffer(hl, PGM_def_input_source, 1)};
     RawDataPtr source_buffer = unique_source_buffer.get();
@@ -78,7 +86,7 @@ TEST_CASE("C API Model") {
     PGM_dataset_mutable_add_buffer(hl, batch_output_dataset, "node", 1, 2, nullptr, sym_node_outputs.data());
 
     // update data
-    SourceUpdate source_update{{{1}, na_IntS}, 0.5, nan};
+    SourceUpdate source_update{.id = 1, .status = na_IntS, .u_ref = 0.5, .u_ref_angle = nan};
     std::array<Idx, 3> source_update_indptr{0, 1, 1};
     std::array<SymLoadGenUpdate, 2> load_updates{};
     // set nan twice with offset

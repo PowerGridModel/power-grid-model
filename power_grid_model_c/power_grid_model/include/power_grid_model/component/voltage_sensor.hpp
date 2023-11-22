@@ -42,9 +42,11 @@ class GenericVoltageSensor : public Sensor {
         }
     }
 
-    template <bool sym> VoltageSensorOutput<sym> get_null_output() const { return {{id(), false}, {}, {}}; }
+    template <bool sym> VoltageSensorOutput<sym> get_null_output() const {
+        return {.id = id(), .energized = false, .u_residual = {}, .u_angle_residual = {}};
+    }
 
-    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), 0}}; }
+    SensorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
     // getter for calculation param
     template <bool sym> VoltageSensorCalcParam<sym> calc_param() const {

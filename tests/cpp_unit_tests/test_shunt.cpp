@@ -18,7 +18,7 @@ void check_nan_preserving_equality(std::floating_point auto actual, std::floatin
 } // namespace
 
 TEST_CASE("Test shunt") {
-    ShuntInput const shunt_input{{{1}, 2, 1}, 1.0, 2.0, 3.0, 4.0};
+    ShuntInput const shunt_input{.id = 1, .node = 2, .status = 1, .g1 = 1.0, .b1 = 2.0, .g0 = 3.0, .b0 = 4.0};
     Shunt shunt{shunt_input, 10e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_power_3p / 10e3 / 10e3;
@@ -95,60 +95,60 @@ TEST_CASE("Test shunt") {
 
     SUBCASE("test change") {
         SUBCASE("status") {
-            auto changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, nan, nan, nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{{{1}, 0}, nan, nan, nan, nan});
+            changed = shunt.update(ShuntUpdate{1, 0, nan, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{{{1}, 1}, 1.0, nan, nan, nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, 1.0, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{{{1}, 1}, 10.0, nan, nan, nan});
+            changed = shunt.update(ShuntUpdate{1, 1, 10.0, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, 2.0, nan, nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, 2.0, nan, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, 20.0, nan, nan});
+            changed = shunt.update(ShuntUpdate{1, 1, nan, 20.0, nan, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, nan, 3.0, nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 3.0, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, nan, 30.0, nan});
+            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 30.0, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, nan, nan, 4.0});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 4.0});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{{{1}, 1}, nan, nan, nan, 40.0});
+            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 40.0});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("all or none") {
-            auto changed_ = shunt.update(ShuntUpdate{{{1}, 1}, 1.0, 2.0, 3.0, 4.0});
+            auto changed_ = shunt.update(ShuntUpdate{1, 1, 1.0, 2.0, 3.0, 4.0});
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
-            changed_ = shunt.update(ShuntUpdate{{{1}, 0}, 10.0, 20.0, 30.0, 40.0});
+            changed_ = shunt.update(ShuntUpdate{1, 0, 10.0, 20.0, 30.0, 40.0});
             CHECK(!changed_.topo);
             CHECK(changed_.param);
-            changed_ = shunt.update(ShuntUpdate{{{1}, na_IntS}, nan, nan, nan, nan});
+            changed_ = shunt.update(ShuntUpdate{1, na_IntS, nan, nan, nan, nan});
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
         }
     }
 
     SUBCASE("Update inverse") {
-        ShuntUpdate shunt_update{{{1}, na_IntS}, nan, nan, nan, nan};
+        ShuntUpdate shunt_update{1, na_IntS, nan, nan, nan, nan};
         auto expected = shunt_update;
 
         SUBCASE("Identical") {

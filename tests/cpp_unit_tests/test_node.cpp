@@ -9,7 +9,7 @@
 namespace power_grid_model {
 
 TEST_CASE("Test node") {
-    Node const node{{{1}, 10.0e3}};
+    Node const node{{.id = 1, .u_rated = 10.0e3}};
     CHECK(node.math_model_type() == ComponentType::node);
     CHECK(node.u_rated() == 10.0e3);
 

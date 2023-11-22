@@ -11,7 +11,7 @@ namespace power_grid_model {
 using namespace std::complex_literals;
 
 TEST_CASE("Test link") {
-    LinkInput input{{{1}, 2, 3, 1, 1}};
+    LinkInput input{.id = 1, .from_node = 2, .to_node = 3, .from_status = 1, .to_status = 1};
     Link link{input, 10e3, 50e3};
     Branch& branch = link;
     double const base_i_from = base_power_1p / (10.0e3 / sqrt3);
@@ -113,7 +113,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Update inverse") {
-        BranchUpdate branch_update{{1}, na_IntS, na_IntS};
+        BranchUpdate branch_update{1, na_IntS, na_IntS};
         auto expected = branch_update;
 
         SUBCASE("Identical") {

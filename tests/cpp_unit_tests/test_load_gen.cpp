@@ -25,9 +25,14 @@ void check_nan_preserving_equality(RealValue<false> const& actual, RealValue<fal
 } // namespace
 
 TEST_CASE("Test load generator") {
-    LoadGenInput<true> sym_load_gen_input{{{{1}, 2, 1}, LoadGenType::const_pq}, 3e6, 3e6};
-    LoadGenInput<false> asym_load_gen_input{
-        {{{1}, 2, 1}, LoadGenType::const_pq}, RealValue<false>{1e6}, RealValue<false>{1e6}};
+    LoadGenInput<true> sym_load_gen_input{
+        .id = 1, .node = 2, .status = 1, .type = LoadGenType::const_pq, .p_specified = 3e6, .q_specified = 3e6};
+    LoadGenInput<false> asym_load_gen_input{.id = 1,
+                                            .node = 2,
+                                            .status = 1,
+                                            .type = LoadGenType::const_pq,
+                                            .p_specified = RealValue<false>{1e6},
+                                            .q_specified = RealValue<false>{1e6}};
     SymGenerator sym_gen_pq{sym_load_gen_input, 10e3};
     AsymLoad asym_load_pq{asym_load_gen_input, 10e3};
     sym_load_gen_input.type = LoadGenType::const_i;
@@ -272,7 +277,8 @@ TEST_CASE("Test load generator") {
     }
 
     SUBCASE("Test update load") {
-        auto changed = sym_gen_pq.update(SymLoadGenUpdate{{{1}, na_IntS}, 1e6, nan});
+        auto changed =
+            sym_gen_pq.update(SymLoadGenUpdate{.id = 1, .status = na_IntS, .p_specified = 1e6, .q_specified = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
         ApplianceOutput<true> const sym_result = sym_gen_pq.get_output<true>(u);
@@ -360,9 +366,10 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
     SUBCASE("Update inverse") {
         auto const p_specified = RealValueType{1.0};
         auto const q_specified = RealValueType{2.0};
-        LoadGenType const load_gen{{{{{1}, 2, IntS{1}}, {}}, p_specified, q_specified}, 1.0};
+        LoadGenType const load_gen{
+            {.id = 1, .node = 2, .status = 1, .type = {}, .p_specified = p_specified, .q_specified = q_specified}, 1.0};
 
-        UpdateType update{{{1}, na_IntS}, r_nan, r_nan};
+        UpdateType update{.id = 1, .status = na_IntS, .p_specified = r_nan, .q_specified = r_nan};
         auto expected = update;
 
         SUBCASE("Identical") {
