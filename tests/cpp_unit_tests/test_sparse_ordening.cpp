@@ -46,7 +46,7 @@ TEST_CASE("Test sparse ordening") {
         std::cout << "Time taken by function: " << duration.count() << " microseconds"
                   << "\n";
 
-        std::cout << to_string(alpha_fills[0].first) << "\n";
-        std::cout << to_string(alpha_fills[0].second) << "\n";
+        CHECK(alpha_fills[0].first == std::vector<ID>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+        CHECK(alpha_fills[0].second == std::vector<std::pair<ID, ID>>{{3, 5}, {4, 5}, {8, 5}, {6, 5}, {7, 5}});
     }
 }
