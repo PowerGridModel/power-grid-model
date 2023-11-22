@@ -11,6 +11,7 @@
 #include "exception.hpp"
 #include "power_grid_model.hpp"
 #include "sparse_mapping.hpp"
+#include "sparse_ordening.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
@@ -310,8 +311,24 @@ class Topology {
         }
 
         // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
-        // TODO(mgovers): fill node_status_
-        // TODO(mgovers): construct fill_in
+        std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
+        for (Idx node_idx : dfs_node) {
+            unique_nearest_neighbours[node_idx] = {};
+        }
+        for (auto const& edge : back_edges) {
+            auto const from{static_cast<Idx>(edge.first)};
+            auto const to{static_cast<Idx>(edge.second)};
+            if (!detail::in_graph(std::pair{from, to}, unique_nearest_neighbours)) {
+                unique_nearest_neighbours[from].push_back(to);
+            }
+        }
+
+        auto alpha_fills = minimum_degree_ordering(unique_nearest_neighbours);
+
+        // TODO(mgovers): set node_status_
+        // TODO(mgovers): fill dfs_node = dfs_node[alpha_fills.first]
+        // TODO(mgovers): construct fill_in = alpha_fills.second
+
         return fill_in;
     }
 

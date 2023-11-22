@@ -11,16 +11,16 @@
 #include <sstream>
 
 namespace {
-using power_grid_model::ID;
+using power_grid_model::Idx;
 } // namespace
 
 TEST_CASE("Test sparse ordening") {
     SUBCASE("minimum_degree_ordening") {
-        std::map<ID, std::vector<ID>> graph{{0, {3, 5}}, {1, {4, 5, 8}}, {2, {4, 5, 6}}, {3, {6, 7}},
-                                            {4, {6, 8}}, {6, {7, 8, 9}}, {7, {8, 9}},    {8, {9}}};
+        std::map<Idx, std::vector<Idx>> graph{{0, {3, 5}}, {1, {4, 5, 8}}, {2, {4, 5, 6}}, {3, {6, 7}},
+                                              {4, {6, 8}}, {6, {7, 8, 9}}, {7, {8, 9}},    {8, {9}}};
 
         auto const start = std::chrono::high_resolution_clock::now();
-        std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>> const alpha_fills =
+        std::pair<std::vector<Idx>, std::vector<std::pair<Idx, Idx>>> const alpha_fills =
             power_grid_model::minimum_degree_ordering(graph);
         auto const stop = std::chrono::high_resolution_clock::now();
 
@@ -28,7 +28,7 @@ TEST_CASE("Test sparse ordening") {
         std::cout << "Time taken by function: " << duration.count() << " microseconds"
                   << "\n";
 
-        CHECK(alpha_fills.first == std::vector<ID>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-        CHECK(alpha_fills.second == std::vector<std::pair<ID, ID>>{{3, 5}, {4, 5}, {8, 5}, {6, 5}, {7, 5}});
+        CHECK(alpha_fills.first == std::vector<Idx>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+        CHECK(alpha_fills.second == std::vector<std::pair<Idx, Idx>>{{3, 5}, {4, 5}, {8, 5}, {6, 5}, {7, 5}});
     }
 }

@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_SPARSE_ITERATION_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_ITERATION_HPP
+#ifndef POWER_GRIdx_MODEL_MATH_SOLVER_SPARSE_ORDENING_HPP
+#define POWER_GRIdx_MODEL_MATH_SOLVER_SPARSE_ORDENING_HPP
 
 #include "power_grid_model.hpp"
 
@@ -17,8 +17,8 @@
 namespace power_grid_model {
 
 namespace detail {
-void remove_element_vector_pair(ID& u, std::vector<std::pair<ID, ID>>& dgd) {
-    ID i = 0;
+inline void remove_element_vector_pair(Idx& u, std::vector<std::pair<Idx, Idx>>& dgd) {
+    Idx i = 0;
     while (i < dgd.size()) {
         if (dgd[i].first == u) {
             dgd.erase(dgd.begin() + i);
@@ -29,8 +29,8 @@ void remove_element_vector_pair(ID& u, std::vector<std::pair<ID, ID>>& dgd) {
     }
 }
 
-void set_element_vector_pair(ID& u, ID v, std::vector<std::pair<ID, ID>>& dgd) {
-    ID i = 0;
+inline void set_element_vector_pair(Idx& u, Idx v, std::vector<std::pair<Idx, Idx>>& dgd) {
+    Idx i = 0;
     while (i < dgd.size()) {
         if (dgd[i].first == u) {
             dgd[i].second = v;
@@ -41,15 +41,15 @@ void set_element_vector_pair(ID& u, ID v, std::vector<std::pair<ID, ID>>& dgd) {
     }
 }
 
-std::vector<ID> adj(ID& u, std::map<ID, std::vector<ID>>& d) {
-    std::vector<ID> l;
+inline std::vector<Idx> adj(Idx& u, std::map<Idx, std::vector<Idx>>& d) {
+    std::vector<Idx> l;
 
     for (const auto& it : d) {
         if (it.first == u)
             l.insert(l.end(), it.second.begin(), it.second.end());
 
         if (find(it.second.begin(), it.second.end(), u) != it.second.end()) {
-            std::vector<ID> v{it.first};
+            std::vector<Idx> v{it.first};
             l.insert(l.end(), v.begin(), v.end());
         }
     }
@@ -57,25 +57,26 @@ std::vector<ID> adj(ID& u, std::map<ID, std::vector<ID>>& d) {
     return l;
 }
 
-bool compair_ids(std::pair<ID, ID>& a, std::pair<ID, ID>& b) { return a.first < b.first; }
+inline bool compair_ids(std::pair<Idx, Idx>& a, std::pair<Idx, Idx>& b) { return a.first < b.first; }
 
-std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> comp_size_degrees_graph(std::map<ID, std::vector<ID>>& d) {
-    std::vector<std::pair<ID, ID>> dd;
-    std::vector<ID> v;
-    ID n = 0;
+inline std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>>
+comp_size_degrees_graph(std::map<Idx, std::vector<Idx>>& d) {
+    std::vector<std::pair<Idx, Idx>> dd;
+    std::vector<Idx> v;
+    Idx n = 0;
 
     for (const auto& it : d) {
-        ID k = it.first;
+        Idx k = it.first;
         if (find(v.begin(), v.end(), k) == v.end()) {
-            std::vector<ID> vk{k};
+            std::vector<Idx> vk{k};
             v.insert(v.end(), vk.begin(), vk.end());
             n += 1;
             dd.push_back({k, adj(k, d).size()});
         }
-        for (const ID& el : it.second) {
-            ID e = el;
+        for (const Idx& el : it.second) {
+            Idx e = el;
             if (find(v.begin(), v.end(), e) == v.end()) {
-                std::vector<ID> ve{e};
+                std::vector<Idx> ve{e};
                 v.insert(v.end(), ve.begin(), ve.end());
                 n += 1;
                 dd.push_back({e, adj(e, d).size()});
@@ -88,9 +89,9 @@ std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> comp_size_degrees_gra
     return {{n, dd}};
 }
 
-std::vector<std::pair<std::vector<ID>, std::vector<ID>>> check_indistguishable(ID& u,
-                                                                               std::map<ID, std::vector<ID>>& d) {
-    std::vector<ID> l, rl, lu, lv, vu{u}, vv;
+inline std::vector<std::pair<std::vector<Idx>, std::vector<Idx>>>
+check_indistguishable(Idx& u, std::map<Idx, std::vector<Idx>>& d) {
+    std::vector<Idx> l, rl, lu, lv, vu{u}, vv;
     l = adj(u, d);
     lu = l;
     lu.insert(lu.end(), vu.begin(), vu.end());
@@ -109,14 +110,14 @@ std::vector<std::pair<std::vector<ID>, std::vector<ID>>> check_indistguishable(I
     return {{l, rl}};
 }
 
-std::map<ID, std::vector<ID>> make_clique(std::vector<ID>& l) {
-    std::map<ID, std::vector<ID>> d;
-    ID b = l.size() - 1;
+inline std::map<Idx, std::vector<Idx>> make_clique(std::vector<Idx>& l) {
+    std::map<Idx, std::vector<Idx>> d;
+    Idx b = l.size() - 1;
 
     for (int i = 0; i < b; i++) {
-        ID index = i + 1;
+        Idx index = i + 1;
         auto start = l.begin() + index;
-        std::vector<ID> sl(l.size() - index);
+        std::vector<Idx> sl(l.size() - index);
         copy(start, l.end(), sl.begin());
         d[l[i]] = sl;
     }
@@ -124,21 +125,28 @@ std::map<ID, std::vector<ID>> make_clique(std::vector<ID>& l) {
     return d;
 }
 
-bool in_graph(std::vector<ID>& e, std::map<ID, std::vector<ID>>& d) {
-    bool t1 = (d.find(e[0]) != d.end()) and (find(d[e[0]].begin(), d[e[0]].end(), e[1]) != d[e[0]].end());
-    bool t2 = (d.find(e[1]) != d.end()) and (find(d[e[1]].begin(), d[e[1]].end(), e[0]) != d[e[1]].end());
-
-    return (t1 || t2);
+inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, std::vector<Idx>> const& d) {
+    if (auto edges_it = d.find(e.first); edges_it != d.cend()) {
+        if (std::ranges::find(edges_it->second, e.second) != edges_it->second.cend()) {
+            return true;
+        }
+    }
+    if (auto edges_it = d.find(e.second); edges_it != d.cend()) {
+        if (std::ranges::find(edges_it->second, e.first) != edges_it->second.cend()) {
+            return true;
+        }
+    }
+    return false;
 }
 
-std::vector<ID> remove_vertices_update_degrees(ID& u, std::map<ID, std::vector<ID>>& d,
-                                               std::vector<std::pair<ID, ID>>& dgd,
-                                               std::vector<std::pair<ID, ID>>& fills) {
-    std::vector<std::pair<std::vector<ID>, std::vector<ID>>> nbsrl = check_indistguishable(u, d);
-    std::vector<ID>& nbs = nbsrl[0].first;
-    std::vector<ID>& rl = nbsrl[0].second;
-    std::vector<ID> alpha = rl, vu{u};
-    std::map<ID, std::vector<ID>> dd;
+inline std::vector<Idx> remove_vertices_update_degrees(Idx& u, std::map<Idx, std::vector<Idx>>& d,
+                                                       std::vector<std::pair<Idx, Idx>>& dgd,
+                                                       std::vector<std::pair<Idx, Idx>>& fills) {
+    std::vector<std::pair<std::vector<Idx>, std::vector<Idx>>> nbsrl = check_indistguishable(u, d);
+    std::vector<Idx>& nbs = nbsrl[0].first;
+    std::vector<Idx>& rl = nbsrl[0].second;
+    std::vector<Idx> alpha = rl, vu{u};
+    std::map<Idx, std::vector<Idx>> dd;
 
     rl.insert(rl.begin(), vu.begin(), vu.end());
 
@@ -147,17 +155,17 @@ std::vector<ID> remove_vertices_update_degrees(ID& u, std::map<ID, std::vector<I
             nbs.erase(remove(nbs.begin(), nbs.end(), uu), nbs.end());
 
         remove_element_vector_pair(uu, dgd);
-        std::vector<ID> el;
+        std::vector<Idx> el;
         for (auto& it : d) {
             it.second.erase(remove(it.second.begin(), it.second.end(), uu), it.second.end());
             if (it.second.empty()) {
-                ID k = it.first;
-                std::vector<ID> vk{k};
+                Idx k = it.first;
+                std::vector<Idx> vk{k};
                 el.insert(el.end(), vk.begin(), vk.end());
             }
         }
 
-        std::vector<ID> vuu{uu};
+        std::vector<Idx> vuu{uu};
         el.insert(el.end(), vuu.begin(), vuu.end());
 
         for (auto& it : el)
@@ -167,20 +175,20 @@ std::vector<ID> remove_vertices_update_degrees(ID& u, std::map<ID, std::vector<I
     dd = make_clique(nbs);
 
     for (auto& it : dd) {
-        ID k = it.first;
-        for (const ID& e : it.second) {
-            std::vector<ID> t{k, e};
-            if (not in_graph(t, d)) {
+        Idx k = it.first;
+        for (const Idx& e : it.second) {
+            std::pair<Idx, Idx> t{k, e};
+            if (!in_graph(t, d)) {
                 if (d.find(k) != d.end()) {
-                    std::vector<ID> ve{e};
+                    std::vector<Idx> ve{e};
                     d[k].insert(d[k].end(), ve.begin(), ve.end());
                     fills.push_back({k, e});
                 } else if (d.find(e) != d.end()) {
-                    std::vector<ID> vk{k};
+                    std::vector<Idx> vk{k};
                     d[e].insert(d[e].end(), vk.begin(), vk.end());
                     fills.push_back({e, k});
                 } else {
-                    std::vector<ID> ve{e};
+                    std::vector<Idx> ve{e};
                     d[k].insert(d[k].end(), ve.begin(), ve.end());
                     fills.push_back({k, e});
                 }
@@ -196,30 +204,32 @@ std::vector<ID> remove_vertices_update_degrees(ID& u, std::map<ID, std::vector<I
 }
 } // namespace detail
 
-std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>> minimum_degree_ordering(std::map<ID, std::vector<ID>>& d) {
-    std::vector<std::pair<ID, std::vector<std::pair<ID, ID>>>> data = detail::comp_size_degrees_graph(d);
-    ID& n = data[0].first;
-    std::vector<std::pair<ID, ID>>& dgd = data[0].second;
-    std::vector<ID> alpha;
-    std::vector<std::pair<ID, ID>> fills;
+inline std::pair<std::vector<Idx>, std::vector<std::pair<Idx, Idx>>>
+minimum_degree_ordering(std::map<Idx, std::vector<Idx>>& d) {
+    std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>> data = detail::comp_size_degrees_graph(d);
+    Idx& n = data[0].first;
+    std::vector<std::pair<Idx, Idx>>& dgd = data[0].second;
+    std::vector<Idx> alpha;
+    std::vector<std::pair<Idx, Idx>> fills;
 
     for (int k = 0; k < n; k++) {
-        ID u = get<0>(*min_element(begin(dgd), end(dgd), [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
-        std::vector<ID> vu{u};
+        Idx u =
+            get<0>(*min_element(begin(dgd), end(dgd), [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
+        std::vector<Idx> vu{u};
         alpha.insert(alpha.end(), vu.begin(), vu.end());
         if ((d.size() == 1) and d.begin()->second.size() == 1) {
-            ID a = d.begin()->first;
-            ID b = d.begin()->second[0];
+            Idx a = d.begin()->first;
+            Idx b = d.begin()->second[0];
             if (alpha.back() == a) {
-                std::vector<ID> vb{b};
+                std::vector<Idx> vb{b};
                 alpha.insert(alpha.end(), vb.begin(), vb.end());
             } else {
-                std::vector<ID> va{a};
+                std::vector<Idx> va{a};
                 alpha.insert(alpha.end(), va.begin(), va.end());
             }
             break;
         } else {
-            std::vector<ID> va = detail::remove_vertices_update_degrees(u, d, dgd, fills);
+            std::vector<Idx> va = detail::remove_vertices_update_degrees(u, d, dgd, fills);
             alpha.insert(alpha.end(), va.begin(), va.end());
             if (d.empty()) {
                 break;
