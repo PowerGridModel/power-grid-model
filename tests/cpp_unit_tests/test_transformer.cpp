@@ -28,33 +28,35 @@ ComplexTensor<false> get_a_inv() {
 } // namespace
 
 TEST_CASE("Test transformer") {
-    TransformerInput input{
-        {{1}, 2, 3, 1, 1},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,              // u1
-        10.0e3,             // u2
-        30e6,               // sn
-        0.203,              // uk
-        100e3,              // pk
-        0.0,                // i0
-        0.0,                // p0
-        WindingType::wye_n, // winding_from
-        WindingType::wye_n, // winding_to
-        12,                 // clock
-        BranchSide::from,   // tap_side
-        0,                  // tap_pos
-        -11,                // tap_min
-        9,                  // tap_max
-        0,                  // tap_nom
-        2.5e3,              // tap_size
-        nan,                // uk_min
-        nan,                // uk_max
-        nan,                // pk_min
-        nan,                // pk_max
-        nan,                // r_grounding_from
-        nan,                // x_grounding_from
-        nan,                // r_grounding_to
-        nan                 // x_grounding_to
-    };
+    TransformerInput input{.id = 1,
+                           .from_node = 2,
+                           .to_node = 3,
+                           .from_status = 1,
+                           .to_status = 1,
+                           .u1 = 155e3,
+                           .u2 = 10.0e3,
+                           .sn = 30e6,
+                           .uk = 0.203,
+                           .pk = 100e3,
+                           .i0 = 0.0,
+                           .p0 = 0.0,
+                           .winding_from = WindingType::wye_n,
+                           .winding_to = WindingType::wye_n,
+                           .clock = 12,
+                           .tap_side = BranchSide::from,
+                           .tap_pos = 0,
+                           .tap_min = -11,
+                           .tap_max = 9,
+                           .tap_nom = 0,
+                           .tap_size = 2.5e3,
+                           .uk_min = nan,
+                           .uk_max = nan,
+                           .pk_min = nan,
+                           .pk_max = nan,
+                           .r_grounding_from = nan,
+                           .x_grounding_from = nan,
+                           .r_grounding_to = nan,
+                           .x_grounding_to = nan};
 
     std::vector<Transformer> vec;
     // 0 YNyn12
@@ -153,7 +155,8 @@ TEST_CASE("Test transformer") {
 
     SUBCASE("symmetric parameters") {
         for (size_t i = 0; i < 5; i++) {
-            auto changed = vec[i].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, -2});
+            auto changed =
+                vec[i].update(TransformerUpdate{.id = 1, .from_status = na_IntS, .to_status = na_IntS, .tap_pos = -2});
             CHECK(!changed.topo);
             CHECK(changed.param);
             BranchCalcParam<true> const param = vec[i].calc_param<true>();
@@ -165,32 +168,37 @@ TEST_CASE("Test transformer") {
 
     SUBCASE("update - check changed") {
         SUBCASE("update tap") {
-            auto changed = vec[0].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, -2});
+            auto changed =
+                vec[0].update(TransformerUpdate{.id = 1, .from_status = na_IntS, .to_status = na_IntS, .tap_pos = -2});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("update from_status") {
-            auto changed = vec[0].update(TransformerUpdate{{{1}, 0, 1}, na_IntS});
+            auto changed =
+                vec[0].update(TransformerUpdate{.id = 1, .from_status = 0, .to_status = 1, .tap_pos = na_IntS});
             CHECK(changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("update to_status") {
-            auto changed = vec[0].update(TransformerUpdate{{{1}, 1, 0}, na_IntS});
+            auto changed =
+                vec[0].update(TransformerUpdate{.id = 1, .from_status = 1, .to_status = 0, .tap_pos = na_IntS});
             CHECK(changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("update status") {
-            auto changed = vec[0].update(TransformerUpdate{{{1}, 0, 0}, na_IntS});
+            auto changed =
+                vec[0].update(TransformerUpdate{.id = 1, .from_status = 0, .to_status = 0, .tap_pos = na_IntS});
             CHECK(changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("update status & tap") {
-            auto changed = vec[0].update(TransformerUpdate{{{1}, 0, 0}, -2});
+            auto changed = vec[0].update(TransformerUpdate{.id = 1, .from_status = 0, .to_status = 0, .tap_pos = -2});
             CHECK(changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("update none") {
-            auto changed = vec[0].update(TransformerUpdate{{{1}, na_IntS, na_IntS}, na_IntS});
+            auto changed = vec[0].update(
+                TransformerUpdate{.id = 1, .from_status = na_IntS, .to_status = na_IntS, .tap_pos = na_IntS});
             CHECK(!changed.topo);
             CHECK(!changed.param);
         }
@@ -205,39 +213,86 @@ TEST_CASE("Test transformer") {
             }
         }
     }
+
+    SUBCASE("Update inverse") {
+        TransformerUpdate transformer_update{.id = 1, .from_status = na_IntS, .to_status = na_IntS, .tap_pos = na_IntS};
+        auto expected = transformer_update;
+
+        auto const& transformer = vec.front();
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("From status") {
+            SUBCASE("same") { transformer_update.from_status = static_cast<IntS>(transformer.from_status()); }
+            SUBCASE("different") { transformer_update.from_status = IntS{0}; }
+            expected.from_status = static_cast<IntS>(transformer.from_status());
+        }
+
+        SUBCASE("To status") {
+            SUBCASE("same") { transformer_update.to_status = static_cast<IntS>(transformer.to_status()); }
+            SUBCASE("different") { transformer_update.to_status = IntS{0}; }
+            expected.to_status = static_cast<IntS>(transformer.to_status());
+        }
+
+        SUBCASE("Tap pos") {
+            SUBCASE("same") { transformer_update.tap_pos = transformer.tap_pos(); }
+            SUBCASE("different") { transformer_update.tap_pos = IntS{1}; }
+            expected.tap_pos = transformer.tap_pos();
+        }
+
+        SUBCASE("multiple") {
+            transformer_update.from_status = IntS{0};
+            transformer_update.to_status = IntS{0};
+            transformer_update.tap_pos = IntS{0};
+            expected.from_status = static_cast<IntS>(transformer.from_status());
+            expected.to_status = static_cast<IntS>(transformer.to_status());
+            expected.tap_pos = transformer.tap_pos();
+        }
+
+        auto const inv = transformer.inverse(transformer_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.from_status == expected.from_status);
+        CHECK(inv.to_status == expected.to_status);
+        CHECK(inv.tap_pos == expected.tap_pos);
+    }
 }
 
 TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     ComplexTensor<false> const A = get_a();
     ComplexTensor<false> const A_inv = get_a_inv();
 
-    TransformerInput const input{
-        {{1}, 2, 3, 1, 1},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,              // u1
-        10.0e3,             // u2
-        30e6,               // sn
-        0.203,              // uk
-        100e3,              // pk
-        0.015,              // i0
-        30.0e4,             // p0
-        WindingType::wye_n, // winding_from
-        WindingType::wye_n, // winding_to
-        12,                 // clock
-        BranchSide::from,   // tap_side
-        -2,                 // tap_pos
-        -11,                // tap_min
-        9,                  // tap_max
-        0,                  // tap_nom
-        2.5e3,              // tap_size
-        nan,                // uk_min
-        nan,                // uk_max
-        nan,                // pk_min
-        nan,                // pk_max
-        0.5,                // r_grounding_from
-        2.0,                // x_grounding_from
-        1.0,                // r_grounding_to
-        4.0                 // x_grounding_to
-    };
+    TransformerInput const input{.id = 1,
+                                 .from_node = 2,
+                                 .to_node = 3,
+                                 .from_status = 1,
+                                 .to_status = 1,
+                                 .u1 = 155e3,
+                                 .u2 = 10.0e3,
+                                 .sn = 30e6,
+                                 .uk = 0.203,
+                                 .pk = 100e3,
+                                 .i0 = 0.015,
+                                 .p0 = 30.0e4,
+                                 .winding_from = WindingType::wye_n,
+                                 .winding_to = WindingType::wye_n,
+                                 .clock = 12,
+                                 .tap_side = BranchSide::from,
+                                 .tap_pos = -2,
+                                 .tap_min = -11,
+                                 .tap_max = 9,
+                                 .tap_nom = 0,
+                                 .tap_size = 2.5e3,
+                                 .uk_min = nan,
+                                 .uk_max = nan,
+                                 .pk_min = nan,
+                                 .pk_max = nan,
+                                 .r_grounding_from = 0.5,
+                                 .x_grounding_from = 2.0,
+                                 .r_grounding_to = 1.0,
+                                 .x_grounding_to = 4.0};
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer YNyn12{input, u1_rated, u2_rated};
@@ -305,33 +360,35 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     ComplexTensor<false> const A = get_a();
     ComplexTensor<false> const A_inv = get_a_inv();
 
-    TransformerInput const input{
-        {{1}, 2, 3, 1, 1},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,              // u1
-        10.0e3,             // u2
-        30e6,               // u1, u2, sn
-        0.203,              // uk
-        100e3,              // pk
-        0.015,              // i0
-        30.0e4,             // p0
-        WindingType::delta, // winding_from
-        WindingType::wye_n, // winding_to
-        11,                 // clock
-        BranchSide::from,   // tap_side
-        -2,                 // tap_pos
-        -11,                // tap_min
-        9,                  // tap_max
-        0,                  // tap_nom
-        2.5e3,              // tap_size
-        nan,                // uk_min
-        nan,                // uk_max
-        nan,                // pk_min
-        nan,                // pk_max
-        nan,                // r_grounding_from
-        nan,                // x_grounding_from
-        1.0,                // r_grounding_to
-        4.0                 // x_grounding_to
-    };
+    TransformerInput const input{.id = 1,
+                                 .from_node = 2,
+                                 .to_node = 3,
+                                 .from_status = 1,
+                                 .to_status = 1,
+                                 .u1 = 155e3,
+                                 .u2 = 10.0e3,
+                                 .sn = 30e6,
+                                 .uk = 0.203,
+                                 .pk = 100e3,
+                                 .i0 = 0.015,
+                                 .p0 = 30.0e4,
+                                 .winding_from = WindingType::delta,
+                                 .winding_to = WindingType::wye_n,
+                                 .clock = 11,
+                                 .tap_side = BranchSide::from,
+                                 .tap_pos = -2,
+                                 .tap_min = -11,
+                                 .tap_max = 9,
+                                 .tap_nom = 0,
+                                 .tap_size = 2.5e3,
+                                 .uk_min = nan,
+                                 .uk_max = nan,
+                                 .pk_min = nan,
+                                 .pk_max = nan,
+                                 .r_grounding_from = nan,
+                                 .x_grounding_from = nan,
+                                 .r_grounding_to = 1.0,
+                                 .x_grounding_to = 4.0};
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer const Dyn11{input, u1_rated, u2_rated};
@@ -412,33 +469,35 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     ComplexTensor<false> const A = get_a();
     ComplexTensor<false> const A_inv = get_a_inv();
 
-    TransformerInput const input{
-        {{1}, 2, 3, 1, 1},     // {{id}, from_node, to_node, from_status, to_status}
-        155e3,                 // u1
-        10.0e3,                // u2
-        30e6,                  // u1, u2, sn
-        0.203,                 // uk
-        100e3,                 // pk
-        0.015,                 // i0
-        30.0e4,                // p0
-        WindingType::wye,      // winding_from
-        WindingType::zigzag_n, // winding_to
-        11,                    // clock
-        BranchSide::from,      // tap_side
-        -2,                    // tap_pos
-        -11,                   // tap_min
-        9,                     // tap_max
-        0,                     // tap_nom
-        2.5e3,                 // tap_size
-        nan,                   // uk_min
-        nan,                   // uk_max
-        nan,                   // pk_min
-        nan,                   // pk_max
-        nan,                   // r_grounding_from
-        nan,                   // x_grounding_from
-        1.0,                   // r_grounding_to
-        4.0                    // x_grounding_to
-    };
+    TransformerInput const input{.id = 1,
+                                 .from_node = 2,
+                                 .to_node = 3,
+                                 .from_status = 1,
+                                 .to_status = 1,
+                                 .u1 = 155e3,
+                                 .u2 = 10.0e3,
+                                 .sn = 30e6,
+                                 .uk = 0.203,
+                                 .pk = 100e3,
+                                 .i0 = 0.015,
+                                 .p0 = 30.0e4,
+                                 .winding_from = WindingType::wye,
+                                 .winding_to = WindingType::zigzag_n,
+                                 .clock = 11,
+                                 .tap_side = BranchSide::from,
+                                 .tap_pos = -2,
+                                 .tap_min = -11,
+                                 .tap_max = 9,
+                                 .tap_nom = 0,
+                                 .tap_size = 2.5e3,
+                                 .uk_min = nan,
+                                 .uk_max = nan,
+                                 .pk_min = nan,
+                                 .pk_max = nan,
+                                 .r_grounding_from = nan,
+                                 .x_grounding_from = nan,
+                                 .r_grounding_to = 1.0,
+                                 .x_grounding_to = 4.0};
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer const Dyn11{input, u1_rated, u2_rated};
@@ -519,33 +578,35 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     ComplexTensor<false> const A = get_a();
     ComplexTensor<false> const A_inv = get_a_inv();
 
-    TransformerInput const input{
-        {{1}, 2, 3, 1, 1},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,              // u1
-        10.0e3,             // u2
-        30e6,               // sn
-        0.203,              // uk
-        100e3,              // pk
-        0.015,              // i0
-        30.0e4,             // p0
-        WindingType::delta, // winding_from
-        WindingType::wye_n, // winding_to
-        11,                 // clock
-        BranchSide::from,   // tap_side
-        -2,                 // tap_pos
-        9,                  // tap_min
-        -11,                // tap_max
-        0,                  // tap_nom
-        2.5e3,              // tap_size
-        nan,                // uk_min
-        nan,                // uk_max
-        nan,                // pk_min
-        nan,                // pk_max
-        nan,                // r_grounding_from
-        nan,                // x_grounding_from
-        1.0,                // r_grounding_to
-        4.0                 // x_grounding_to
-    };
+    TransformerInput const input{.id = 1,
+                                 .from_node = 2,
+                                 .to_node = 3,
+                                 .from_status = 1,
+                                 .to_status = 1,
+                                 .u1 = 155e3,
+                                 .u2 = 10.0e3,
+                                 .sn = 30e6,
+                                 .uk = 0.203,
+                                 .pk = 100e3,
+                                 .i0 = 0.015,
+                                 .p0 = 30.0e4,
+                                 .winding_from = WindingType::delta,
+                                 .winding_to = WindingType::wye_n,
+                                 .clock = 11,
+                                 .tap_side = BranchSide::from,
+                                 .tap_pos = -2,
+                                 .tap_min = 9,
+                                 .tap_max = -11,
+                                 .tap_nom = 0,
+                                 .tap_size = 2.5e3,
+                                 .uk_min = nan,
+                                 .uk_max = nan,
+                                 .pk_min = nan,
+                                 .pk_max = nan,
+                                 .r_grounding_from = nan,
+                                 .x_grounding_from = nan,
+                                 .r_grounding_to = 1.0,
+                                 .x_grounding_to = 4.0};
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer const Dyn11{input, u1_rated, u2_rated};
@@ -623,33 +684,35 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
 }
 
 TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < tap_nom - Dyn11") {
-    TransformerInput const input{
-        {{1}, 2, 3, 1, 1},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,              // u1
-        10.0e3,             // u2
-        30e6,               // sn
-        0.203,              // uk
-        100e3,              // pk
-        0.015,              // i0
-        30.0e4,             // p0
-        WindingType::delta, // winding_from
-        WindingType::wye_n, // winding_to
-        11,                 // clock
-        BranchSide::from,   // tap_side
-        -2,                 // tap_pos
-        -11,                // tap_min
-        9,                  // tap_max
-        0,                  // tap_nom
-        2.5e3,              // tap_size
-        0.1,                // uk_min
-        0.4,                // uk_max
-        50e3,               // pk_min
-        200e3,              // pk_max
-        nan,                // r_grounding_from
-        nan,                // x_grounding_from
-        nan,                // r_grounding_to
-        nan                 // x_grounding_to
-    };
+    TransformerInput const input{.id = 1,
+                                 .from_node = 2,
+                                 .to_node = 3,
+                                 .from_status = 1,
+                                 .to_status = 1,
+                                 .u1 = 155e3,
+                                 .u2 = 10.0e3,
+                                 .sn = 30e6,
+                                 .uk = 0.203,
+                                 .pk = 100e3,
+                                 .i0 = 0.015,
+                                 .p0 = 30.0e4,
+                                 .winding_from = WindingType::delta,
+                                 .winding_to = WindingType::wye_n,
+                                 .clock = 11,
+                                 .tap_side = BranchSide::from,
+                                 .tap_pos = -2,
+                                 .tap_min = -11,
+                                 .tap_max = 9,
+                                 .tap_nom = 0,
+                                 .tap_size = 2.5e3,
+                                 .uk_min = 0.1,
+                                 .uk_max = 0.4,
+                                 .pk_min = 50e3,
+                                 .pk_max = 200e3,
+                                 .r_grounding_from = nan,
+                                 .x_grounding_from = nan,
+                                 .r_grounding_to = nan,
+                                 .x_grounding_to = nan};
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer const Dyn11{input, u1_rated, u2_rated};
@@ -698,33 +761,35 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
 }
 
 TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > tap_nom - Dyn11") {
-    TransformerInput const input{
-        {{1}, 2, 3, 1, 1},  // {{id}, from_node, to_node, from_status, to_status}
-        155e3,              // u1
-        10.0e3,             // u2
-        30e6,               // sn
-        0.203,              // uk
-        100e3,              // pk
-        0.015,              // i0
-        30.0e4,             // p0
-        WindingType::delta, // winding_from
-        WindingType::wye_n, // winding_to
-        11,                 // clock
-        BranchSide::from,   // tap_side
-        2,                  // tap_pos
-        -11,                // tap_min
-        9,                  // tap_max
-        0,                  // tap_nom
-        2.5e3,              // tap_size
-        0.1,                // uk_min
-        0.4,                // uk_max
-        50e3,               // pk_min
-        200e3,              // pk_max
-        nan,                // r_grounding_from
-        nan,                // x_grounding_from
-        nan,                // r_grounding_to
-        nan                 // x_grounding_to
-    };
+    TransformerInput const input{.id = 1,
+                                 .from_node = 2,
+                                 .to_node = 3,
+                                 .from_status = 1,
+                                 .to_status = 1,
+                                 .u1 = 155e3,
+                                 .u2 = 10.0e3,
+                                 .sn = 30e6,
+                                 .uk = 0.203,
+                                 .pk = 100e3,
+                                 .i0 = 0.015,
+                                 .p0 = 30.0e4,
+                                 .winding_from = WindingType::delta,
+                                 .winding_to = WindingType::wye_n,
+                                 .clock = 11,
+                                 .tap_side = BranchSide::from,
+                                 .tap_pos = 2,
+                                 .tap_min = -11,
+                                 .tap_max = 9,
+                                 .tap_nom = 0,
+                                 .tap_size = 2.5e3,
+                                 .uk_min = 0.1,
+                                 .uk_max = 0.4,
+                                 .pk_min = 50e3,
+                                 .pk_max = 200e3,
+                                 .r_grounding_from = nan,
+                                 .x_grounding_from = nan,
+                                 .r_grounding_to = nan,
+                                 .x_grounding_to = nan};
     double const u1_rated{150.0e3};
     double const u2_rated{10.0e3};
     Transformer const Dyn11{input, u1_rated, u2_rated};

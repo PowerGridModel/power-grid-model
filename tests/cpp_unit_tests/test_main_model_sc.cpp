@@ -23,13 +23,13 @@ TEST_CASE("Test main model - short circuit") {
         double const x_f = 0.1;
         DoubleComplex const z_f{r_f, x_f};
 
-        main_model.add_component<Node>({{{1}, u_rated}});
-        main_model.add_component<Source>({{{{2}, 1, 1}, u_ref, nan, sk, rx_ratio, nan}});
+        main_model.add_component<Node>({{1, u_rated}});
+        main_model.add_component<Source>({{2, 1, 1, u_ref, nan, sk, rx_ratio, nan}});
 
         SUBCASE("three phase fault - maximum voltage scaling") {
             ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
             constexpr double voltage_scaling_c = 1.1;
-            main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
+            main_model.add_component<Fault>({{3, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
             main_model.set_construction_complete();
 
             double const u_source = u_rated * voltage_scaling_c / sqrt3;
@@ -69,7 +69,7 @@ TEST_CASE("Test main model - short circuit") {
         SUBCASE("three phase fault - minimum voltage scaling") {
             ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::minimum;
             constexpr double voltage_scaling_c = 1.0;
-            main_model.add_component<Fault>({{{3}, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
+            main_model.add_component<Fault>({{3, 1, FaultType::three_phase, FaultPhase::default_value, 1, r_f, x_f}});
             main_model.set_construction_complete();
 
             double const u_source = u_rated * voltage_scaling_c / sqrt3;
@@ -112,13 +112,13 @@ TEST_CASE("Test main model - short circuit") {
         ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
         constexpr double voltage_scaling_c = 1.1;
 
-        main_model.add_component<Node>({{{1}, 10e4}, {{2}, 10e4}});
-        main_model.add_component<Line>({{{{3}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}});
-        main_model.add_component<Source>({{{{4}, 1, 1}, 1.0, nan, nan, nan, nan}});
+        main_model.add_component<Node>({{1, 10e4}, {2, 10e4}});
+        main_model.add_component<Line>({{3, 1, 2, 1, 1, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}});
+        main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
 
         SUBCASE("single phase to ground fault") {
             main_model.add_component<Fault>(
-                {{{5}, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}});
+                {{5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}});
             main_model.set_construction_complete();
 
             std::vector<ShortCircuitMathOutput<false>> const math_output =
@@ -143,11 +143,11 @@ TEST_CASE("Test main model - short circuit") {
 
 TEST_CASE("Test main model - short circuit - Dataset input") {
     SUBCASE("Two nodes + branch + source") {
-        std::vector<NodeInput> node_input{{{1}, 10e4}, {{2}, 10e4}};
-        std::vector<LineInput> line_input{{{{3}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
-        std::vector<SourceInput> source_input{{{{4}, 1, 1}, 1.0, nan, nan, nan, nan}};
+        std::vector<NodeInput> node_input{{1, 10e4}, {2, 10e4}};
+        std::vector<LineInput> line_input{{3, 1, 2, 1, 1, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
+        std::vector<SourceInput> source_input{{4, 1, 1, 1.0, nan, nan, nan, nan}};
         std::vector<FaultInput> fault_input{
-            {{5}, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}};
+            {5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}};
 
         ConstDataset input_data;
         input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};

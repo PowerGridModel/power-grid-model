@@ -287,19 +287,18 @@ inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || i
 inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
 inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
 
-/* update real values
-
-   RealValue is only updated when the update value is not nan
-
-   symmetric:  update 1.0 with nan -> 1.0
-               update 1.0 with 2.0 -> 2.0
-
-   asymmetric: update [1.0, nan, nan] with [nan, nan, 2.0] -> [1.0, nan, 2.0]
-
-   The function assumes that the current value is normalized and new value should be normalized with scalar
-*/
+// update real values
+//
+// RealValue is only updated when the update value is not nan
+//
+// symmetric:  update 1.0 with nan -> 1.0
+//             update 1.0 with 2.0 -> 2.0
+//
+// asymmetric: update [1.0, nan, nan] with [nan, nan, 2.0] -> [1.0, nan, 2.0]
+//
+// The function assumes that the current value is normalized and new value should be normalized with scalar
 template <bool sym, class Proxy>
-void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
+inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
     if constexpr (sym) {
         if (!is_nan(new_value)) {
             current_value = scalar * new_value;
@@ -312,6 +311,20 @@ void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, d
         }
     }
 }
+
+// update a value if the existing value is not nan
+//
+// contrary to update_real_value, this function retains nan in the target
+template <typename T> inline void set_if_not_nan(T& target, T const& value) {
+    if (!is_nan(target)) {
+        target = value;
+    }
+};
+inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& value) {
+    for (Idx i = 0; i != 3; ++i) {
+        set_if_not_nan(target(i), value(i));
+    }
+};
 
 // symmetric component matrix
 inline ComplexTensor<false> get_sym_matrix() {

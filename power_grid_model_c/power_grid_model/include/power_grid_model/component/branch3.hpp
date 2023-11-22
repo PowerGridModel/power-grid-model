@@ -160,11 +160,21 @@ class Branch3 : public Base {
     }
 
     // default update for branch3, will be hidden for three winding transformer
-    UpdateChange update(Branch3Update const& update) {
-        assert(update.id == id());
-        bool const changed = set_status(update.status_1, update.status_2, update.status_3);
+    UpdateChange update(Branch3Update const& update_data) {
+        assert(update_data.id == id());
+        bool const changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
         // change in branch3 connection will change both topo and param
         return {changed, changed};
+    }
+
+    auto inverse(std::convertible_to<Branch3Update> auto update_data) const {
+        assert(update_data.id == id());
+
+        set_if_not_nan(update_data.status_1, static_cast<IntS>(status_1_));
+        set_if_not_nan(update_data.status_2, static_cast<IntS>(status_2_));
+        set_if_not_nan(update_data.status_3, static_cast<IntS>(status_3_));
+
+        return update_data;
     }
 
   private:
