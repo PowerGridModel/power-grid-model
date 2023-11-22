@@ -17,8 +17,8 @@ namespace power_grid_model::main_core {
 // different selection based on component type
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state<MainModelState, ComponentContainer, Component>
-void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
-                   double system_frequency) {
+inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
+                          double system_frequency) {
     size_t const size = std::distance(begin, end);
     state.components.template reserve<Component>(size);
     // loop to add component

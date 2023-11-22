@@ -26,72 +26,92 @@ constexpr double i_load = 0.005 / 0.025 * i;
 } // namespace test
 
 struct State {
-    std::vector<NodeInput> node_input{{{1}, 10e3}, {{2}, 10e3}, {{3}, 10e3}};
-    std::vector<LineInput> line_input{{{{4}, 1, 2, 1, 1}, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
-    std::vector<LinkInput> link_input{{{{5}, 2, 3, 1, 1}}};
-    std::vector<SourceInput> source_input{{{{6}, 1, 1}, 1.05, nan, 1e12, nan, nan},
-                                          {{{10}, 3, 0}, 1.05, 0.0, 1e12, nan, nan}};
-    std::vector<SymLoadGenInput> sym_load_input{{{{{7}, 3, 1}, LoadGenType::const_y}, 0.5e6, 0.0}};
+    std::vector<NodeInput> node_input{{1, 10e3}, {2, 10e3}, {3, 10e3}};
+    std::vector<LineInput> line_input{{4, 1, 2, 1, 1, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
+    std::vector<LinkInput> link_input{{5, 2, 3, 1, 1}};
+    std::vector<SourceInput> source_input{{6, 1, 1, 1.05, nan, 1e12, nan, nan}, {10, 3, 0, 1.05, 0.0, 1e12, nan, nan}};
+    std::vector<SymLoadGenInput> sym_load_input{{7, 3, 1, LoadGenType::const_y, 0.5e6, 0.0}};
     std::vector<AsymLoadGenInput> asym_load_input{
-        {{{{8}, 3, 1}, LoadGenType::const_y}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
-    std::vector<ShuntInput> shunt_input{{{{9}, 3, 1}, 0.015, 0.0, 0.015, 0.0}};
+        {8, 3, 1, LoadGenType::const_y, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
+    std::vector<ShuntInput> shunt_input{{9, 3, 1, 0.015, 0.0, 0.015, 0.0}};
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<SymPowerSensorInput> sym_power_sensor_input{
-        {{{{11}, 4}, MeasuredTerminalType::branch_from, 0.02}, 1.1e6, 1.1e3, nan, nan},
-        {{{{13}, 6}, MeasuredTerminalType::source, 0.02}, 1.3e6, 1.3e3, nan, nan},
-        {{{{14}, 6}, MeasuredTerminalType::source, 0.02}, 1.4e6, 1.4e3, nan, nan},
-        {{{{15}, 9}, MeasuredTerminalType::shunt, 0.02}, 1.5e6, 1.5e3, nan, nan},
-        {{{{16}, 7}, MeasuredTerminalType::load, 0.02}, 1.6e6, 1.6e3, nan, nan},
-        {{{{17}, 8}, MeasuredTerminalType::load, 0.02}, 1.7e6, 1.7e3, nan, nan},
-        {{{{28}, 3}, MeasuredTerminalType::node, 0.02}, 3.0e6, 3.0e3, nan, nan}};
+        {11, 4, MeasuredTerminalType::branch_from, 0.02, 1.1e6, 1.1e3, nan, nan},
+        {13, 6, MeasuredTerminalType::source, 0.02, 1.3e6, 1.3e3, nan, nan},
+        {14, 6, MeasuredTerminalType::source, 0.02, 1.4e6, 1.4e3, nan, nan},
+        {15, 9, MeasuredTerminalType::shunt, 0.02, 1.5e6, 1.5e3, nan, nan},
+        {16, 7, MeasuredTerminalType::load, 0.02, 1.6e6, 1.6e3, nan, nan},
+        {17, 8, MeasuredTerminalType::load, 0.02, 1.7e6, 1.7e3, nan, nan},
+        {28, 3, MeasuredTerminalType::node, 0.02, 3.0e6, 3.0e3, nan, nan}};
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
-    std::vector<AsymPowerSensorInput> asym_power_sensor_input{{{{{18}, 4}, MeasuredTerminalType::branch_from, 0.02},
+    std::vector<AsymPowerSensorInput> asym_power_sensor_input{{18,
+                                                               4,
+                                                               MeasuredTerminalType::branch_from,
+                                                               0.02,
                                                                {2.11e6, 2.12e6, 2.13e6},
                                                                {2.11e3, 2.12e3, 2.13e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}},
-                                                              {{{{20}, 6}, MeasuredTerminalType::source, 0.02},
+                                                              {20,
+                                                               6,
+                                                               MeasuredTerminalType::source,
+                                                               0.02,
                                                                {2.31e6, 2.32e6, 2.33e6},
                                                                {2.31e3, 2.32e3, 2.33e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}},
-                                                              {{{{21}, 6}, MeasuredTerminalType::source, 0.02},
+                                                              {21,
+                                                               6,
+                                                               MeasuredTerminalType::source,
+                                                               0.02,
                                                                {2.41e6, 2.42e6, 2.43e6},
                                                                {2.41e3, 2.42e3, 2.43e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}},
-                                                              {{{{22}, 9}, MeasuredTerminalType::shunt, 0.02},
+                                                              {22,
+                                                               9,
+                                                               MeasuredTerminalType::shunt,
+                                                               0.02,
                                                                {2.51e6, 2.52e6, 2.53e6},
                                                                {2.51e3, 2.52e3, 2.53e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}},
-                                                              {{{{23}, 7}, MeasuredTerminalType::load, 0.02},
+                                                              {23,
+                                                               7,
+                                                               MeasuredTerminalType::load,
+                                                               0.02,
                                                                {2.61e6, 2.62e6, 2.63e6},
                                                                {2.61e3, 2.62e3, 2.63e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}},
-                                                              {{{{24}, 8}, MeasuredTerminalType::load, 0.02},
+                                                              {24,
+                                                               8,
+                                                               MeasuredTerminalType::load,
+                                                               0.02,
                                                                {2.71e6, 2.72e6, 2.73e6},
                                                                {2.71e3, 2.72e3, 2.73e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}},
-                                                              {{{{29}, 3}, MeasuredTerminalType::node, 0.02},
+                                                              {29,
+                                                               3,
+                                                               MeasuredTerminalType::node,
+                                                               0.02,
                                                                {5.01e6, 5.02e6, 5.03e6},
                                                                {5.01e3, 5.02e3, 5.03e3},
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}}};
 
     // {{{id}, measured_object}, u_sigma, u_measured, u_angle_measured}
-    std::vector<SymVoltageSensorInput> sym_voltage_sensor_input{{{{{25}, 1}, 105.0}, 10.1e3, 0.1},
-                                                                {{{{26}, 2}, 105.0}, 10.2e3, 0.2}};
+    std::vector<SymVoltageSensorInput> sym_voltage_sensor_input{{25, 1, 105.0, 10.1e3, 0.1},
+                                                                {26, 2, 105.0, 10.2e3, 0.2}};
 
     // {{{id}, measured_object}, u_sigma, u_measured, u_angle_measured}
     std::vector<AsymVoltageSensorInput> asym_voltage_sensor_input{
-        {{{{27}, 3}, 105.0}, {10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3}, {0.0, -deg_120, -deg_240}}};
+        {27, 3, 105.0, {10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3}, {0.0, -deg_120, -deg_240}}};
 
-    std::vector<FaultInput> fault_input{{{30}, 1, FaultType::single_phase_to_ground, FaultPhase::a, 3, 0.1, 0.1}};
+    std::vector<FaultInput> fault_input{{30, 1, FaultType::single_phase_to_ground, FaultPhase::a, 3, 0.1, 0.1}};
 
     // output vector
     std::vector<NodeOutput<true>> sym_node = std::vector<NodeOutput<true>>(3);
@@ -126,12 +146,12 @@ struct State {
     std::vector<PowerSensorOutput<false>> sym_power_sensor_asym_output = std::vector<PowerSensorOutput<false>>(7);
 
     // update vector
-    std::vector<SymLoadGenUpdate> sym_load_update{{{{7}, 1}, 1.0e6, nan}};
-    std::vector<AsymLoadGenUpdate> asym_load_update{{{{8}, 0}, RealValue<false>{nan}, RealValue<false>{nan}}};
-    std::vector<ShuntUpdate> shunt_update{{{{9}, 0}, nan, 0.02, nan, 0.02}};
-    std::vector<SourceUpdate> source_update{{{{10}, 1}, test::u1, nan}};
-    std::vector<BranchUpdate> link_update{{{5}, 1, 0}};
-    std::vector<FaultUpdate> fault_update{{{30}, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
+    std::vector<SymLoadGenUpdate> sym_load_update{{7, 1, 1.0e6, nan}};
+    std::vector<AsymLoadGenUpdate> asym_load_update{{8, 0, RealValue<false>{nan}, RealValue<false>{nan}}};
+    std::vector<ShuntUpdate> shunt_update{{9, 0, nan, 0.02, nan, 0.02}};
+    std::vector<SourceUpdate> source_update{{10, 1, test::u1, nan}};
+    std::vector<BranchUpdate> link_update{{5, 1, 0}};
+    std::vector<FaultUpdate> fault_update{{30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
 };
 
 auto default_model(State const& state) -> MainModel {
@@ -742,7 +762,7 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cac
     State const state;
     auto main_model = default_model(state);
 
-    std::vector<SourceUpdate> const source_update2{SourceUpdate{{{100}, true}, nan, nan}};
+    std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
     CHECK_THROWS_AS((main_model.update_component<Source, typename settings::update_type>(source_update2)), IDNotFound);
 }
 
@@ -1029,8 +1049,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         ConstDataset dependent_update_data;
         Dataset dependent_result_data;
 
-        std::vector<SymLoadGenUpdate> sym_load_update_2{
-            {{{7}, 1}, nan, 1.0e7}, {{{7}, 1}, 1.0e3, nan}, {{{7}, 1}, 1.0e3, 1.0e7}};
+        std::vector<SymLoadGenUpdate> sym_load_update_2{{7, 1, nan, 1.0e7}, {7, 1, 1.0e3, nan}, {7, 1, 1.0e3, 1.0e7}};
         dependent_update_data["sym_load"] =
             DataPointer<true>{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
 
@@ -1061,11 +1080,11 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     State state;
     auto main_model = default_model(state);
 
-    std::vector<SourceInput> const incomplete_source_input{{{{6}, 1, 1}, nan, nan, 1e12, nan, nan},
-                                                           {{{10}, 3, 1}, nan, nan, 1e12, nan, nan}};
-    std::vector<SymLoadGenInput> incomplete_sym_load_input{{{{{7}, 3, 1}, LoadGenType::const_y}, nan, nan}};
+    std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
+                                                           {10, 3, 1, nan, nan, 1e12, nan, nan}};
+    std::vector<SymLoadGenInput> incomplete_sym_load_input{{7, 3, 1, LoadGenType::const_y, nan, nan}};
     std::vector<AsymLoadGenInput> incomplete_asym_load_input{
-        {{{{8}, 3, 1}, LoadGenType::const_y}, RealValue<false>{nan}, RealValue<false>{nan}}};
+        {8, 3, 1, LoadGenType::const_y, RealValue<false>{nan}, RealValue<false>{nan}}};
 
     ConstDataset input_data;
     input_data["node"] = DataPointer<true>{state.node_input.data(), static_cast<Idx>(state.node_input.size())};
@@ -1078,10 +1097,10 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
         DataPointer<true>{incomplete_asym_load_input.data(), static_cast<Idx>(incomplete_asym_load_input.size())};
     input_data["shunt"] = DataPointer<true>{state.shunt_input.data(), static_cast<Idx>(state.shunt_input.size())};
 
-    std::vector<SourceUpdate> complete_source_update{{{{6}, 1}, 1.05, nan}, {{{10}, 1}, 1.05, 0}};
-    std::vector<SymLoadGenUpdate> complete_sym_load_update{{{{7}, 1}, 0.5e6, 0.0}};
+    std::vector<SourceUpdate> complete_source_update{{6, 1, 1.05, nan}, {10, 1, 1.05, 0}};
+    std::vector<SymLoadGenUpdate> complete_sym_load_update{{7, 1, 0.5e6, 0.0}};
     std::vector<AsymLoadGenUpdate> complete_asym_load_update{
-        {{{8}, 1}, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
+        {8, 1, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
 
     ConstDataset update_data;
     update_data["source"] =

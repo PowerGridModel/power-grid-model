@@ -96,13 +96,23 @@ class Source : public Appliance {
     }
 
     // update for source
-    UpdateChange update(SourceUpdate const& update) {
-        assert(update.id == id());
-        bool const topo_changed = set_status(update.status);
-        bool const param_changed = set_u_ref(update.u_ref, update.u_ref_angle);
+    UpdateChange update(SourceUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool const topo_changed = set_status(update_data.status);
+        bool const param_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
         // change source connection will change both topo and param
         // change u ref will change param
         return {topo_changed, param_changed || topo_changed};
+    }
+
+    SourceUpdate inverse(SourceUpdate update_data) const {
+        assert(update_data.id == id());
+
+        set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
+        set_if_not_nan(update_data.u_ref, u_ref_);
+        set_if_not_nan(update_data.u_ref_angle, u_ref_angle_);
+
+        return update_data;
     }
 
   private:

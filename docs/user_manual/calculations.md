@@ -435,8 +435,8 @@ pre-factorized, the computation cost of each iteration is much smaller than Newt
 method, where the Jacobian matrix needs to be constructed and factorized each time.
 
 ```{warning}
-Since the algorithm will assume angles to be zero if not given, this might result in not having a 
-crash due to an unobservable system, but succeeding with the calculations and giving faulty results.
+The algorithm will assume angles to be zero by default. This produces more correct outputs when the system is observable, but will
+prevent the calculation from raising an exception if it is unobservable, therefore giving faulty results.
 ```
 
 Algorithm call: `CalculationMethod.iterative_linear`

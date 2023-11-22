@@ -42,9 +42,11 @@ class GenericVoltageSensor : public Sensor {
         }
     }
 
-    template <bool sym> VoltageSensorOutput<sym> get_null_output() const { return {{id(), false}, {}, {}}; }
+    template <bool sym> VoltageSensorOutput<sym> get_null_output() const {
+        return {.id = id(), .energized = false, .u_residual = {}, .u_angle_residual = {}};
+    }
 
-    SensorShortCircuitOutput get_null_sc_output() const { return {{id(), 0}}; }
+    SensorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
     // getter for calculation param
     template <bool sym> VoltageSensorCalcParam<sym> calc_param() const {
@@ -79,16 +81,31 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
           u_measured_{voltage_sensor_input.u_measured / (u_rated_ * u_scale<sym>)},
           u_angle_measured_{voltage_sensor_input.u_angle_measured} {};
 
-    UpdateChange update(VoltageSensorUpdate<sym> const& voltage_sensor_update) {
-        double const scalar = 1 / (u_rated_ * u_scale<sym>);
-        update_real_value<sym>(voltage_sensor_update.u_measured, u_measured_, scalar);
-        update_real_value<sym>(voltage_sensor_update.u_angle_measured, u_angle_measured_, 1.0);
+    UpdateChange update(VoltageSensorUpdate<sym> const& update_data) {
+        assert(update_data.id == this->id());
 
-        if (!is_nan(voltage_sensor_update.u_sigma)) {
-            u_sigma_ = voltage_sensor_update.u_sigma / (u_rated_ * u_scale<sym>);
+        double const scalar = 1 / (u_rated_ * u_scale<sym>);
+
+        update_real_value<sym>(update_data.u_measured, u_measured_, scalar);
+        update_real_value<sym>(update_data.u_angle_measured, u_angle_measured_, 1.0);
+
+        if (!is_nan(update_data.u_sigma)) {
+            u_sigma_ = update_data.u_sigma * scalar;
         }
 
         return {false, false};
+    }
+
+    VoltageSensorUpdate<sym> inverse(VoltageSensorUpdate<sym> update_data) const {
+        assert(update_data.id == this->id());
+
+        double const scalar = u_rated_ * u_scale<sym>;
+
+        set_if_not_nan(update_data.u_measured, u_measured_ * scalar);
+        set_if_not_nan(update_data.u_angle_measured, u_angle_measured_);
+        set_if_not_nan(update_data.u_sigma, u_sigma_ * scalar);
+
+        return update_data;
     }
 
   private:

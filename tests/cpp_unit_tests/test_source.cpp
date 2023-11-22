@@ -7,6 +7,15 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test source") {
     double const sk = 10e6;
@@ -37,7 +46,14 @@ TEST_CASE("Test source") {
     ComplexTensor<false> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
-    SourceInput const source_input{{{1}, 2, 1}, u_input, nan, sk, rx_ratio, z01_ratio};
+    SourceInput const source_input{.id = 1,
+                                   .node = 2,
+                                   .status = 1,
+                                   .u_ref = u_input,
+                                   .u_ref_angle = nan,
+                                   .sk = sk,
+                                   .rx_ratio = rx_ratio,
+                                   .z01_ratio = z01_ratio};
     Source source{source_input, un};
 
     CHECK(source.math_model_type() == ComponentType::source);
@@ -174,15 +190,57 @@ TEST_CASE("Test source") {
     }
 
     SUBCASE("test update") {
-        auto changed = source.update(SourceUpdate{{{1}, 1}, 1.05, nan});
+        auto changed = source.update(SourceUpdate{.id = 1, .status = 1, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(!changed.topo);
         CHECK(changed.param);
-        changed = source.update(SourceUpdate{{{1}, 0}, 1.05, nan});
+        changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(changed.topo);
         CHECK(changed.param);
-        changed = source.update(SourceUpdate{{{1}, 0}, nan, nan});
+        changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = nan, .u_ref_angle = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
+    }
+
+    SUBCASE("Update inverse") {
+        SourceUpdate source_update{.id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan};
+        auto expected = source_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { source_update.status = static_cast<IntS>(source.status()); }
+            SUBCASE("different") { source_update.status = IntS{0}; }
+            expected.status = static_cast<IntS>(source.status());
+        }
+
+        SUBCASE("u_ref") {
+            SUBCASE("same") { source_update.u_ref = u_input; }
+            SUBCASE("different") { source_update.u_ref = 0.0; }
+            expected.u_ref = u_input;
+        }
+
+        SUBCASE("u_ref_angle") {
+            source_update.u_ref_angle = 0.0;
+            expected.u_ref_angle = nan;
+        }
+
+        SUBCASE("multiple") {
+            source_update.status = IntS{0};
+            source_update.u_ref = 0.0;
+            source_update.u_ref_angle = 0.1;
+            expected.status = static_cast<IntS>(source.status());
+            expected.u_ref = u_input;
+            expected.u_ref_angle = nan;
+        }
+
+        auto const inv = source.inverse(source_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        check_nan_preserving_equality(inv.u_ref, expected.u_ref);
+        check_nan_preserving_equality(inv.u_ref_angle, expected.u_ref_angle);
     }
 }
 
