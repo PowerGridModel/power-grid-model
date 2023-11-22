@@ -723,9 +723,10 @@ def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValid
         p_inf = p_inf.any(axis=-1)
         q_inf = q_inf.any(axis=-1)
     mis_match = p_nan != q_nan
-    mis_match |= p_inf.any() or q_inf.any()
+    mis_match |= np.logical_or(p_inf, q_inf)
     if mis_match.any():
-        ids = [data[component]["id"].flatten().tolist()]
+        # ids = data[component]["id"].flatten().tolist()
+        ids = data[component]["id"][mis_match].flatten().tolist()
         errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
     return errors
 
