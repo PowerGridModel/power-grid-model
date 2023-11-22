@@ -11,25 +11,7 @@
 #include <sstream>
 
 namespace {
-using namespace power_grid_model;
-
-auto to_string(std::vector<std::pair<ID, ID>> const& d) {
-    std::stringstream sstr;
-    sstr << "{";
-    for (const auto& it : d) {
-        sstr << it.first << ": " << it.second << ", ";
-    }
-    sstr << "}";
-    return sstr.str();
-}
-
-auto to_string(std::vector<int> const& input) {
-    std::stringstream sstr;
-    for (auto const& i : input) {
-        sstr << i << ", ";
-    }
-    return sstr.str();
-}
+using power_grid_model::ID;
 } // namespace
 
 TEST_CASE("Test sparse ordening") {
@@ -39,7 +21,7 @@ TEST_CASE("Test sparse ordening") {
 
         auto const start = std::chrono::high_resolution_clock::now();
         std::vector<std::pair<std::vector<ID>, std::vector<std::pair<ID, ID>>>> const alpha_fills =
-            minimum_degree_ordering(graph);
+            power_grid_model::minimum_degree_ordering(graph);
         auto const stop = std::chrono::high_resolution_clock::now();
 
         auto const duration = duration_cast<std::chrono::microseconds>(stop - start);

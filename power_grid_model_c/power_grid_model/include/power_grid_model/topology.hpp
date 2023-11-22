@@ -701,7 +701,7 @@ class Topology {
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }
-}; // namespace power_grid_model
+};
 
 } // namespace power_grid_model
 
