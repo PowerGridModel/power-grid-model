@@ -139,8 +139,8 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 $$
    \begin{eqnarray}
-      Z_{series}    & = & r + jx, \\
-      Y_{shunt} & = & 2 \pi fc/(tan \sigma +j). 
+      Z_\mathrm{series}    & = & r + \mathrm{j}x \\
+      Y_\mathrm{shunt} & = & 2 \pi fc/(tan \sigma +\mathrm{j})
    \end{eqnarray}
 $$
 
@@ -158,7 +158,7 @@ There is no additional attribute for `link`.
 
 $$
    \begin{eqnarray}
-      Y_{series}    & = & 1 & \times 10^6&.
+      Y_\mathrm{series}    & = & 1 & \times 10^6&.
     \end{eqnarray}
 $$
 
@@ -207,22 +207,25 @@ increased.
 `transformer` is described by a π model, where $Z_{series}$ and $Y_{shunt}$ can be computed by following equations:
 
 $$
-
-   \begin{eqnarray} 
-        && |Z_{series}| = uk / z_{base}.\\ 
-        && Re(Z_{series}) = (pk/sn) / z_{base} ,\\
-        && Im(Z_{series}) = sqrt{|Z_{series}|^2-Re(Z_{series})^2} p.u. ,\\
-        && |Y_{shunt}| = i0 / y_{base} \\
-        && Re(Y_{shunt}) = (sn/p0) / y_{base} \\
-        && Im(Y_{shunt}) = \begin{cases} \mbox{0,} & \mbox{if } Re(Y_{shunt}) > |Y_{shunt}|) \\ \mbox{-sqrt(|Y_{shunt}|^2-Re(Y_{shunt})^2) p.u.,} & \mbox{otherwise.} \end{cases} \]
-        && z_{base} = sn/(u2^2)\\
-        && y_{base} = (u2^2)/sn\\
+    \begin{eqnarray} 
+        & |Z_\mathrm{series}| = uk / z_\mathrm{base}\\ 
+        &\mathrm{Re}(Z_\mathrm{series}) = (pk/sn) / z_\mathrm{base}\\
+        &\mathrm{Im}(Z_\mathrm{series}) = \sqrt{|Z_\mathrm{series}|^2-\mathrm{Re}(Z_\mathrm{series})^2} p.u. \\
+        &|Y_\mathrm{shunt}| = i0 / y_\mathrm{base} \\
+        &\mathrm{Re}(Y_\mathrm{shunt}) = (sn/p0) / y_\mathrm{base} \\
+        &\mathrm{Im}(Y_\mathrm{shunt}) = 
+        \begin{cases}
+            0 & \text{ if $Re(Y_\mathrm{shunt})$ > $|Y_\mathrm{shunt}|$} \\
+            -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} p.u. & \text{otherwise} 
+        \end{cases}
+        \\
+        &z_\mathrm{base} = sn/(u2^2)\\
+        &y_\mathrm{base} = (u2^2)/sn\\
    \end{eqnarray}
-
 
 $$
 
-where $z_{base} = 1/ y_{base}= `sn`/(`u2`^2)$.
+where $z_\mathrm{base} = 1/ y_\mathrm{base}= sn/(u2^2)$.
 
 
 ## Branch3
@@ -331,10 +334,6 @@ It can happen that `tap_min > tap_max`. In this case the winding voltage is decr
 increased.
 ```
 
-#### Electrical Model
-
-For positive sequence,
-
 
 ## Appliance
 
@@ -389,17 +388,16 @@ with an internal impedance. The impedance is specified by convention as short ci
 | `z01_ratio`   | `double`  | -                | zero sequence to positive sequence impedance ratio |     &#10060; default 1.0     | &#10060; |    `> 0`     |
 
 #### Electric Model
-`source` is modeled by an internal constant impedance r+jx with positive sequence and zero sequence.
+`source` is modeled by an internal constant impedance $r+\mathrm{j}x$ with positive sequence and zero sequence.
 Its value can be computed using following equations:
 
 - for positive sequence,
 
 $$
    \begin{eqnarray} 
-        z\_ source = s_{base} / sk \\
-        x1 = z\_source * \sqrt{1+ rx\_ ratio^2}\\
-        r1= rx\_ ratio * x1
-
+        & z_\mathrm{source} = s_\mathrm{base} / sk \\
+        & x_1 = z_\mathrm{source} \times \sqrt{1+ rx\_ ratio^2}\\
+        & r_1=  x_1 \times rx\_ ratio
    \end{eqnarray}
 $$
 
@@ -409,9 +407,9 @@ where $s_{base}$ is a constant value $1 \times 10^6$.
 
 $$
    \begin{eqnarray} 
-        z0\_ source = z \_source * z01_ratio\\
-        x0 = z0\_ source * \sqrt{1+ rx\_ ratio^2}\\
-        r0= rx_ratio * x0
+        &z_\mathrm{source,0} = z_\mathrm{source} \times z01\_ ratio\\
+        &x_0 = z_\mathrm{source,0} \times \sqrt{1+ rx\_ ratio^2}\\
+        &r_0= x_0 \times rx\_ ratio
    \end{eqnarray}
 $$
 
@@ -452,32 +450,34 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 `generic_load_gen` are modelled by using the so-called ZIP load model in power-grid-model, 
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
-The injection current $I_{inj}$ of each ZIP model type can be computed as follows:
-- for constant impedance (Z) load: 
+The injection of each ZIP model type can be computed as follows:
+
+- for a constant impedance (Z) load/generator,
 
 $$
    \begin{eqnarray} 
-        S = S_{specified} * (u^2)
+        S = S_\mathrm{specified} \times u^2
    \end{eqnarray}
 $$
 
-- for Constant current (I) load: 
+- for a constant current (I) load/generator,
 
 $$
    \begin{eqnarray} 
-        S = S_{specified} * u
+        S = S_\mathrm{specified} \times u
    \end{eqnarray}
 $$
 
-- for constant power (P) load: 
+- for a constant power (P) load/generator:,
 
 $$
    \begin{eqnarray} 
-        S = S_{specfied}
+        S = S_\mathrm{specified}
    \end{eqnarray}
 $$
 
-where $S_{specified}$ = `p_specified` + j`q_specified`, S = `p` + j`q` which are the result attributes and u is calculated node voltage, more specifically a complex representation of `u` and `u_angle` attribute of node.
+where $S_\mathrm{specified} = p\_ specified + \mathrm{j} q\_ specified$, $ S = p + \mathrm{j}q $ and $u$ is the calculated node voltage.
+
 
 
 ### Shunt
@@ -504,7 +504,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 ```
 
 #### Electric Model
-`shunt` is modelled by a fixed admittance which equals to `g` + j`b`
+`shunt` is modelled by a fixed admittance which equals to $g + \mathrm{j}b$.
 
 
 ## Sensor
@@ -571,8 +571,6 @@ $$
         && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ node
    \end{eqnarray}
 $$
-
-where u_node and u_angle_node are the steady state output variables`u` and `u_angle` of corresponding `node` provided at `measured_object`
 
 
 ### Generic Power Sensor
@@ -646,7 +644,6 @@ $$
         q\_ residual = q\_ measured - q\_ node
    \end{eqnarray}
 $$
-where “p_node” and "q_node" are the steady state output variables `p` and `q` of corresponding to the element at `measured_object`. The type of flow of this power is given by `measured_terminal_type`
 
 ## Fault
 
@@ -689,14 +686,14 @@ A `fault` has no steady state output.
 | `i_f_angle` | `RealValueOutput` | rad        | current angle |
 
 #### Electric Model
-Four types of short circuit fault are included in power-grid-model, here `z` =`r_f` + j`r_f`.
+Four types of short circuit fault are included in power-grid-model.
 
-| `fault_type`                       | `fault_phase`    | description                                                       |
-| ---------------------------------- | ---------------- |-------------------------------------------------------------------|
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance `z`.                    |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase grounded with impedance `z`, and other phases are open. |
-| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance `z`.                      |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance `z` then grounded.        |
+| `fault_type`                       | `fault_phase`    | description                                                          |
+| ---------------------------------- | ---------------- |----------------------------------------------------------------------|
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance $z\_ f$.                   |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance $z\_ f$, and other phases are open. |
+| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance $z\_ f$.                         |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance $z\_ f$ then grounded.           |
 
 In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
 
