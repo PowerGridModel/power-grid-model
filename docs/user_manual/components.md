@@ -154,15 +154,13 @@ two busbars inside a substation. It has a very high admittance (small impedance)
 There is no additional attribute for `link`.
 
 #### Electric Model: 
-`link` is modeled by a constant reactance $Y_{series}$, where
+`link` is modeled by a constant reactance $Y_\mathrm{series}$, where
 
 $$
    \begin{eqnarray}
       Y_\mathrm{series}    & = & 1 & \times 10^6&.
     \end{eqnarray}
 $$
-
-
 
 ### Transformer
 
@@ -204,29 +202,31 @@ increased.
 ```
 
 #### Electric Model
-`transformer` is described by a π model, where $Z_{series}$ and $Y_{shunt}$ can be computed by following equations:
+`transformer` is described by a π model, where $Z_\mathrm{series}$ can be computed as
 
 $$
     \begin{eqnarray} 
         & |Z_\mathrm{series}| = uk / z_\mathrm{base}\\ 
         &\mathrm{Re}(Z_\mathrm{series}) = (pk/sn) / z_\mathrm{base}\\
         &\mathrm{Im}(Z_\mathrm{series}) = \sqrt{|Z_\mathrm{series}|^2-\mathrm{Re}(Z_\mathrm{series})^2} p.u. \\
+    \end{eqnarray}
+$$
+
+and $Y_\mathrm{shunt}$ can be computed as
+
+$$
+    \begin{eqnarray} 
         &|Y_\mathrm{shunt}| = i0 / y_\mathrm{base} \\
         &\mathrm{Re}(Y_\mathrm{shunt}) = (sn/p0) / y_\mathrm{base} \\
         &\mathrm{Im}(Y_\mathrm{shunt}) = 
         \begin{cases}
-            0 & \text{ if $Re(Y_\mathrm{shunt})$ > $|Y_\mathrm{shunt}|$} \\
+            0 & \text{ if $\mathrm{Re}(Y_\mathrm{shunt})$ > $|Y_\mathrm{shunt}|$} \\
             -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} p.u. & \text{otherwise} 
         \end{cases}
-        \\
-        &z_\mathrm{base} = sn/(u2^2)\\
-        &y_\mathrm{base} = (u2^2)/sn\\
    \end{eqnarray}
-
 $$
 
 where $z_\mathrm{base} = 1/ y_\mathrm{base}= sn/(u2^2)$.
-
 
 ## Branch3
 
@@ -401,7 +401,7 @@ $$
    \end{eqnarray}
 $$
 
-where $s_{base}$ is a constant value $1 \times 10^6$.
+where $s_\mathrm{base}$ is a constant value $1 \times 10^6$.
 
 - for zero sequence, 
 
@@ -412,8 +412,6 @@ $$
         &r_0= x_0 \times rx\_ ratio
    \end{eqnarray}
 $$
-
-
 
 ### Generic Load and Generator
 
@@ -476,9 +474,7 @@ $$
    \end{eqnarray}
 $$
 
-where $S_\mathrm{specified} = p\_ specified + \mathrm{j} q\_ specified$, $ S = p + \mathrm{j}q $ and $u$ is the calculated node voltage.
-
-
+where $u$ is the calculated node voltage.
 
 ### Shunt
 
@@ -505,7 +501,6 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 #### Electric Model
 `shunt` is modelled by a fixed admittance which equals to $g + \mathrm{j}b$.
-
 
 ## Sensor
 
@@ -571,7 +566,6 @@ $$
         && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ node
    \end{eqnarray}
 $$
-
 
 ### Generic Power Sensor
 
@@ -688,12 +682,12 @@ A `fault` has no steady state output.
 #### Electric Model
 Four types of short circuit fault are included in power-grid-model.
 
-| `fault_type`                       | `fault_phase`    | description                                                          |
-| ---------------------------------- | ---------------- |----------------------------------------------------------------------|
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance $z\_ f$.                   |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance $z\_ f$, and other phases are open. |
-| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance $z\_ f$.                         |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance $z\_ f$ then grounded.           |
+| `fault_type`                       | `fault_phase`    | description                                                              |
+| ---------------------------------- | ---------------- |--------------------------------------------------------------------------|
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance z_f.                          |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance z_f, and other phases are open. |
+| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance z_f$.                         |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance z_f then grounded.           |
 
 In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
 
