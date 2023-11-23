@@ -100,7 +100,7 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
     PowerSensorUpdate<sym> inverse(PowerSensorUpdate<sym> update_data) const {
         assert(update_data.id == this->id());
 
-        auto const scalar = base_power<sym>;
+        auto const scalar = convert_direction() * base_power<sym>;
 
         set_if_not_nan(update_data.p_measured, real(s_measured_) * scalar);
         set_if_not_nan(update_data.q_measured, imag(s_measured_) * scalar);
