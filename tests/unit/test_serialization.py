@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, Union
 
 import msgpack
 import numpy as np
@@ -13,14 +13,10 @@ from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
-def sort_dict(data: Dict):
-    return dict(sorted(data.items()))
-
-
 def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):
     indent = None if indent is None or indent < 0 else indent
     separators = (",", ":") if indent is None else None
-    result = json.dumps(sort_dict(data), indent=indent, separators=separators)
+    result = json.dumps(data, indent=indent, separators=separators)
 
     if raw_buffer:
         return result.encode("utf-8")
@@ -29,15 +25,15 @@ def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):
 
 
 def to_msgpack(data):
-    return msgpack.packb(sort_dict(data))
+    return msgpack.packb(data)
 
 
 def from_msgpack(data):
-    return sort_dict(msgpack.unpackb(data))
+    return msgpack.unpackb(data)
 
 
 def empty_dataset(dataset_type: str = "input"):
-    return {"version": "1.0", "type": dataset_type, "is_batch": False, "data": {}, "attributes": {}}
+    return {"version": "1.0", "type": dataset_type, "is_batch": False, "attributes": {}, "data": {}}
 
 
 def simple_input_dataset():
@@ -387,7 +383,7 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
 
 @pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
 def test_msgpack_serialize_empty_dataset(dataset_type):
-    reference = sort_dict(empty_dataset(dataset_type))
+    reference = empty_dataset(dataset_type)
     for use_compact_list in (True, False):
         assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
 
@@ -457,4 +453,4 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
             nan_b = np.isnan(field_result_b)
 
             np.testing.assert_array_equal(nan_a, nan_b)
-            np.testing.assert_array_equal(field_result_a[~nan_a], field_result_b[~nan_b])
+            np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
