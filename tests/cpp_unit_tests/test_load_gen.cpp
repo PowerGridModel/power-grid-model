@@ -376,9 +376,9 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
         }
 
         SUBCASE("Status") {
-            SUBCASE("same") { update.status = static_cast<IntS>(status); }
+            SUBCASE("same") { update.status = status; }
             SUBCASE("different") { update.status = IntS{0}; }
-            expected.status = static_cast<IntS>(status);
+            expected.status = status;
         }
 
         SUBCASE("p_specified") {
@@ -397,7 +397,7 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
             update.status = IntS{0};
             update.p_specified = RealValueType{0.0};
             update.q_specified = RealValueType{0.1};
-            expected.status = static_cast<IntS>(status);
+            expected.status = status;
             expected.p_specified = p_specified;
             expected.q_specified = q_specified;
         }
