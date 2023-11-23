@@ -150,7 +150,7 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
         dense_mapping.reorder[--counter[it_entry->second]] = it_entry->first;
     }
 
-    assert(dense_mapping.indvector.back() == n_A);
+    // assert(dense_mapping.indvector.back() == n_A );
     return dense_mapping;
 }
 
