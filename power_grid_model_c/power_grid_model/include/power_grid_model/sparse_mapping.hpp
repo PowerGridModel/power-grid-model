@@ -112,13 +112,6 @@ struct DenseMapping {
 inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
     auto const n_A = static_cast<Idx>(idx_B_in_A.size());
 
-    // int max = 0;
-    // for (auto const& value : idx_B_in_A) {
-    //     if (max < value){
-    //         max = value;
-    //     }
-    // }
-
     using DenseEntry = std::pair<Idx, Idx>;
     // entries vector with size n_A
     std::vector<DenseEntry> entries(n_A);
@@ -131,9 +124,12 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
 
     DenseMapping dense_mapping;
 
-    dense_mapping.indvector.resize(n_B + 1);
+    dense_mapping.indvector.resize(n_A);
     // size of reorder will be 6
     dense_mapping.reorder.resize(n_A);
+
+    IdxVector xndvector;
+    xndvector.resize(n_B);
 
     IdxVector counter(n_B, 0);
 
@@ -141,31 +137,19 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
         ++counter[entry.second];
     }
 
-    // since the counter is already counter = {0, 2, 2, 1, 0, 1, 0}, the goal is to linearly extract {1,1,2,2,3,5}
+    std::inclusive_scan(counter.cbegin(), counter.cend(), xndvector.begin());
 
-    // IdxVector counter_sum(n_B+1, 0);
-    // accumulate value to indptr
-    // [a, b, c, d], the inclusive scan would produce [a, a+b, a+b+c, a+b+c+d]
-    // counter = {0, 2, 2, 1, 0, 1, 0}, indptr becomes {0, 0, 2, 4, 5, 5, 6, 6}
-    std::inclusive_scan(counter.cbegin(), counter.cend(), dense_mapping.indvector.begin() + 1);
+    std::copy(xndvector.cbegin(), xndvector.cend(), counter.begin());
 
-    // std::copy(counter_sum.cbegin() + 1, counter_sum.cend(), counter.begin());
-
-    // for (auto it_entry = entries.crbegin(); it_entry != entries.crend(); ++it_entry) {
-    //     dense_mapping.indvector[--counter[it_entry->second]] = it_entry->first;
-    // }
-
-    // copy back
-    // copy everything except the indptr[0] to counter.
-    // counter becomes {0, 2, 4, 5, 5, 6, 6}
-    std::copy(dense_mapping.indvector.cbegin() + 1, dense_mapping.indvector.cend(), counter.begin());
+    for (int i = n_A - 1; i >= 0; i--) {
+        dense_mapping.indvector[xndvector[idx_B_in_A[i]] - 1] = idx_B_in_A[i];
+        xndvector[idx_B_in_A[i]]--;
+    }
 
     for (auto it_entry = entries.crbegin(); it_entry != entries.crend(); ++it_entry) {
         dense_mapping.reorder[--counter[it_entry->second]] = it_entry->first;
     }
-    // the first is the index before reordering of load_gen
-    // it entry second is the index of the bus
-    // reorder at the end contains for each new index of the load gen the old index of the load gen in a linear way
+
     assert(dense_mapping.indvector[0] == 0);
     assert(dense_mapping.indvector.back() == n_A);
     return dense_mapping;
