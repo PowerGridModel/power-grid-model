@@ -82,8 +82,6 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
         RealValue<sym> qs = imag(s_specified_);
         update_real_value<sym>(new_p_specified, ps, scalar);
         update_real_value<sym>(new_q_specified, qs, scalar);
-        update_real_value<sym>(new_p_specified, p_specified_, 1.0);
-        update_real_value<sym>(new_q_specified, q_specified_, 1.0);
 
         s_specified_ = ps + 1.0i * qs;
     }
@@ -103,18 +101,14 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
         assert(update_data.id == this->id());
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
-        // set_if_not_nan(update_data.p_specified, real(s_specified_) * scalar);
-        // set_if_not_nan(update_data.q_specified, imag(s_specified_) * scalar);
-        set_if_not_nan(update_data.p_specified, p_specified_);
-        set_if_not_nan(update_data.q_specified, q_specified_);
+        set_if_not_nan(update_data.p_specified, real(s_specified_) * scalar);
+        set_if_not_nan(update_data.q_specified, imag(s_specified_) * scalar);
 
         return update_data;
     }
 
   private:
     ComplexValue<sym> s_specified_{}; // specified power injection
-    RealValue<sym> p_specified_{};
-    RealValue<sym> q_specified_{};
 
     // direction of load_gen
     static constexpr double direction_ = is_gen ? 1.0 : -1.0;

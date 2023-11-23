@@ -79,9 +79,7 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
           u_rated_{u_rated},
           u_sigma_{voltage_sensor_input.u_sigma / (u_rated_ * u_scale<sym>)},
           u_measured_{voltage_sensor_input.u_measured / (u_rated_ * u_scale<sym>)},
-          u_angle_measured_{voltage_sensor_input.u_angle_measured},
-          u_measured_orig_{voltage_sensor_input.u_measured},
-          u_sigma_orig_{voltage_sensor_input.u_sigma} {};
+          u_angle_measured_{voltage_sensor_input.u_angle_measured} {};
 
     UpdateChange update(VoltageSensorUpdate<sym> const& update_data) {
         assert(update_data.id == this->id());
@@ -91,11 +89,8 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
         update_real_value<sym>(update_data.u_measured, u_measured_, scalar);
         update_real_value<sym>(update_data.u_angle_measured, u_angle_measured_, 1.0);
 
-        update_real_value<sym>(update_data.u_measured, u_measured_orig_, 1.0);
-
         if (!is_nan(update_data.u_sigma)) {
             u_sigma_ = update_data.u_sigma * scalar;
-            u_sigma_orig_ = update_data.u_sigma;
         }
 
         return {false, false};
@@ -106,12 +101,9 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
 
         double const scalar = u_rated_ * u_scale<sym>;
 
-        // set_if_not_nan(update_data.u_measured, u_measured_ * scalar);
+        set_if_not_nan(update_data.u_measured, u_measured_ * scalar);
         set_if_not_nan(update_data.u_angle_measured, u_angle_measured_);
-        // set_if_not_nan(update_data.u_sigma, u_sigma_ * scalar);
-    
-        set_if_not_nan(update_data.u_measured, u_measured_orig_);
-        set_if_not_nan(update_data.u_sigma, u_sigma_orig_);
+        set_if_not_nan(update_data.u_sigma, u_sigma_ * scalar);
 
         return update_data;
     }
@@ -121,9 +113,6 @@ template <bool sym> class VoltageSensor : public GenericVoltageSensor {
     double u_sigma_;
     RealValue<sym> u_measured_;
     RealValue<sym> u_angle_measured_;
-
-    RealValue<sym> u_measured_orig_{};
-    double u_sigma_orig_{};
 
     bool has_angle() const {
         if constexpr (sym) {

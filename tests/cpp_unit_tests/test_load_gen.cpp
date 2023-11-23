@@ -338,9 +338,9 @@ TEST_CASE("Test load generator") {
     }
 }
 
-TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
-    using InputType = typename LoadGenType::InputType;
-    using UpdateType = typename LoadGenType::UpdateType;
+TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
+    using InputType = typename LoadGeneratorType::InputType;
+    using UpdateType = typename LoadGeneratorType::UpdateType;
     using RealValueType = decltype(InputType::p_specified);
 
     auto const r_nan = RealValueType{nan};
@@ -355,7 +355,7 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         update.p_specified = RealValueType{1.0};
         update.q_specified = r_nan;
 
-        LoadGenType load_gen{input, 1.0};
+        LoadGeneratorType load_gen{input, 1.0};
         load_gen.update(update);
 
         auto const result = load_gen.template calc_param<true>(true);
@@ -364,10 +364,9 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
     }
 
     SUBCASE("Update inverse") {
+        auto const status = IntS{1};
         auto const p_specified = RealValueType{1.0};
         auto const q_specified = RealValueType{2.0};
-        LoadGenType const load_gen{
-            {.id = 1, .node = 2, .status = 1, .type = {}, .p_specified = p_specified, .q_specified = q_specified}, 1.0};
 
         UpdateType update{.id = 1, .status = na_IntS, .p_specified = r_nan, .q_specified = r_nan};
         auto expected = update;
@@ -377,9 +376,9 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         }
 
         SUBCASE("Status") {
-            SUBCASE("same") { update.status = static_cast<IntS>(load_gen.status()); }
+            SUBCASE("same") { update.status = static_cast<IntS>(status); }
             SUBCASE("different") { update.status = IntS{0}; }
-            expected.status = static_cast<IntS>(load_gen.status());
+            expected.status = static_cast<IntS>(status);
         }
 
         SUBCASE("p_specified") {
@@ -398,17 +397,26 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
             update.status = IntS{0};
             update.p_specified = RealValueType{0.0};
             update.q_specified = RealValueType{0.1};
-            expected.status = static_cast<IntS>(load_gen.status());
+            expected.status = static_cast<IntS>(status);
             expected.p_specified = p_specified;
             expected.q_specified = q_specified;
         }
 
-        auto const inv = load_gen.inverse(update);
+        for (auto const load_gen_type : {LoadGenType::const_pq, LoadGenType::const_y, LoadGenType::const_i}) {
+            LoadGeneratorType const load_gen{{.id = 1,
+                                              .node = 2,
+                                              .status = status,
+                                              .type = load_gen_type,
+                                              .p_specified = p_specified,
+                                              .q_specified = q_specified},
+                                             1.0};
+            auto const inv = load_gen.inverse(update);
 
-        CHECK(inv.id == expected.id);
-        CHECK(inv.status == expected.status);
-        check_nan_preserving_equality(inv.p_specified, expected.p_specified);
-        check_nan_preserving_equality(inv.q_specified, expected.q_specified);
+            CHECK(inv.id == expected.id);
+            CHECK(inv.status == expected.status);
+            check_nan_preserving_equality(inv.p_specified, expected.p_specified);
+            check_nan_preserving_equality(inv.q_specified, expected.q_specified);
+        }
     }
 }
 } // namespace power_grid_model
