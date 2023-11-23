@@ -141,7 +141,7 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
 
     std::copy(xndvector.cbegin(), xndvector.cend(), counter.begin());
 
-    for (int i = n_A - 1; i >= 0; i--) {
+    for (auto i = n_A - 1; i >= 0; i--) {
         dense_mapping.indvector[xndvector[idx_B_in_A[i]] - 1] = idx_B_in_A[i];
         xndvector[idx_B_in_A[i]]--;
     }

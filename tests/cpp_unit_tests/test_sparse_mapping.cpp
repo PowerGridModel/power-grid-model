@@ -22,8 +22,7 @@ TEST_CASE("Test dense mapping") {
     DenseMapping mapping{{1, 1, 2, 2, 3, 5}, {3, 4, 2, 5, 0, 1}};
     DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 7);
 
-    // indvectors are not done yet
-    // CHECK(mapping.indvector == mapping_2.indvector);
+    CHECK(mapping.indvector == mapping_2.indvector);
     CHECK(mapping.reorder == mapping_2.reorder);
 }
 
