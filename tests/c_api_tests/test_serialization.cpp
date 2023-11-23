@@ -19,16 +19,16 @@ namespace {
 using namespace std::string_literals;
 
 constexpr char const* json_data =
-    R"({"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]},"is_batch":false,"type":"input","version":"1.0"})";
+    R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]}})";
 } // namespace
 
 TEST_CASE("Serialization") {
     // get handle
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
-    std::vector<NodeInput> node{{{5}, nan}};
-    std::vector<SourceInput> source{{{{6}, na_IntID, na_IntS}, nan, nan, nan, nan, nan},
-                                    {{{7}, na_IntID, na_IntS}, nan, nan, nan, nan, nan}};
+    std::vector<NodeInput> node{{5, nan}};
+    std::vector<SourceInput> source{{6, na_IntID, na_IntS, nan, nan, nan, nan, nan},
+                                    {7, na_IntID, na_IntS, nan, nan, nan, nan, nan}};
     Idx const n_components = 2;
     Idx const batch_size = 1;
     Idx const is_batch = 0;
@@ -75,7 +75,7 @@ TEST_CASE("Serialization") {
             Idx msgpack_size{};
             PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
             CHECK(PGM_error_code(hl) == PGM_no_error);
-            auto const json_document = nlohmann::json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
+            auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
             auto const json_result = json_document.dump(-1);
             CHECK(json_result == json_data);
         }

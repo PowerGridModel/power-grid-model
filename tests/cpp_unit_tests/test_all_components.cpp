@@ -20,8 +20,6 @@
 
 #include <doctest/doctest.h>
 
-#include <iostream>
-
 namespace power_grid_model {
 
 // Test whether it is possible to copy a class to its base class

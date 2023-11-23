@@ -9,6 +9,21 @@
 namespace power_grid_model {
 namespace {
 auto const r_nan = RealValue<false>{nan};
+
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+
+void check_nan_preserving_equality(RealValue<false> const& actual, RealValue<false> const& expected) {
+    for (auto i : {0, 1, 2}) {
+        CAPTURE(i);
+        check_nan_preserving_equality(actual(i), expected(i));
+    }
+}
 } // namespace
 
 // TO TEST
@@ -550,6 +565,154 @@ TEST_CASE("Test power sensor") {
         CHECK(result.q_residual[0] != r_nan[0]);
         CHECK(result.q_residual[1] != r_nan[1]);
         CHECK(result.q_residual[2] != r_nan[2]);
+    }
+
+    SUBCASE("Update inverse - sym") {
+        constexpr auto power_sigma = 1.0;
+        constexpr auto p_measured = 2.0;
+        constexpr auto q_measured = 3.0;
+        constexpr auto p_sigma = 4.0;
+        constexpr auto q_sigma = 5.0;
+        PowerSensor<true> const power_sensor{
+            {1, 1, MeasuredTerminalType::branch3_1, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
+
+        PowerSensorUpdate<true> ps_update{1, nan, nan, nan, nan, nan};
+        auto expected = ps_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("power_sigma") {
+            SUBCASE("same") { ps_update.power_sigma = power_sigma; }
+            SUBCASE("different") { ps_update.power_sigma = 0.0; }
+            expected.power_sigma = power_sigma;
+        }
+
+        SUBCASE("p_measured") {
+            SUBCASE("same") { ps_update.p_measured = p_measured; }
+            SUBCASE("different") { ps_update.p_measured = 0.0; }
+            expected.p_measured = p_measured;
+        }
+
+        SUBCASE("q_measured") {
+            SUBCASE("same") { ps_update.q_measured = q_measured; }
+            SUBCASE("different") { ps_update.q_measured = 0.0; }
+            expected.q_measured = q_measured;
+        }
+
+        SUBCASE("p_sigma") {
+            SUBCASE("same") { ps_update.p_sigma = p_sigma; }
+            SUBCASE("different") { ps_update.p_sigma = 0.0; }
+            expected.p_sigma = p_sigma;
+        }
+
+        SUBCASE("q_sigma") {
+            SUBCASE("same") { ps_update.q_sigma = q_sigma; }
+            SUBCASE("different") { ps_update.q_sigma = 0.0; }
+            expected.q_sigma = q_sigma;
+        }
+
+        SUBCASE("multiple") {
+            ps_update.power_sigma = 0.0;
+            ps_update.p_measured = 0.0;
+            ps_update.q_measured = 0.0;
+            ps_update.p_sigma = 0.0;
+            ps_update.q_sigma = 0.0;
+            expected.power_sigma = power_sigma;
+            expected.p_measured = p_measured;
+            expected.p_sigma = p_sigma;
+            expected.q_sigma = q_sigma;
+        }
+
+        auto const inv = power_sensor.inverse(ps_update);
+
+        CHECK(inv.id == expected.id);
+        check_nan_preserving_equality(inv.power_sigma, expected.power_sigma);
+        check_nan_preserving_equality(inv.p_measured, expected.p_measured);
+        check_nan_preserving_equality(inv.q_measured, expected.q_measured);
+        check_nan_preserving_equality(inv.p_sigma, expected.p_sigma);
+        check_nan_preserving_equality(inv.q_sigma, expected.q_sigma);
+    }
+
+    SUBCASE("Update inverse - asym") {
+        constexpr auto power_sigma = 1.0;
+        RealValue<false> const p_measured{2.0, 3.0, 4.0};
+        RealValue<false> const q_measured{5.0, 6.0, 7.0};
+        RealValue<false> const p_sigma{7.0, 8.0, 9.0};
+        RealValue<false> const q_sigma{10.0, 11.0, 12.0};
+        PowerSensor<false> const power_sensor{
+            {1, 1, MeasuredTerminalType::branch3_1, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
+
+        PowerSensorUpdate<false> ps_update{1, nan, r_nan, r_nan, r_nan, r_nan};
+        auto expected = ps_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("power_sigma") {
+            SUBCASE("same") { ps_update.power_sigma = power_sigma; }
+            SUBCASE("different") { ps_update.power_sigma = 0.0; }
+            expected.power_sigma = power_sigma;
+        }
+
+        SUBCASE("p_measured") {
+            SUBCASE("same") { ps_update.p_measured = p_measured; }
+            SUBCASE("1 different") {
+                ps_update.p_measured = {0.0, nan, nan};
+                expected.p_measured = {p_measured(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                ps_update.p_measured = {0.0, 0.1, 0.2};
+                expected.p_measured = p_measured;
+            }
+        }
+
+        SUBCASE("p_sigma") {
+            SUBCASE("same") { ps_update.p_sigma = p_sigma; }
+            SUBCASE("1 different") {
+                ps_update.p_sigma = {0.0, nan, nan};
+                expected.p_sigma = {p_sigma(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                ps_update.p_sigma = {0.0, 0.4, 0.6};
+                expected.p_sigma = p_sigma;
+            }
+        }
+
+        SUBCASE("q_sigma") {
+            SUBCASE("same") { ps_update.q_sigma = q_sigma; }
+            SUBCASE("1 different") {
+                ps_update.q_sigma = {0.0, nan, nan};
+                expected.q_sigma = {q_sigma(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                ps_update.q_sigma = {0.0, 0.4, 0.6};
+                expected.q_sigma = q_sigma;
+            }
+        }
+
+        SUBCASE("multiple") {
+            ps_update.power_sigma = 0.0;
+            ps_update.p_measured = {0.0, 0.1, 0.2};
+            ps_update.p_measured = {0.0, 0.2, 0.4};
+            ps_update.p_sigma = {0.0, 0.3, 0.6};
+            ps_update.q_sigma = {0.0, 0.4, 0.8};
+            expected.power_sigma = power_sigma;
+            expected.p_measured = p_measured;
+            expected.p_sigma = p_sigma;
+            expected.q_sigma = q_sigma;
+        }
+
+        auto const inv = power_sensor.inverse(ps_update);
+
+        CHECK(inv.id == expected.id);
+        check_nan_preserving_equality(inv.power_sigma, expected.power_sigma);
+        check_nan_preserving_equality(inv.p_measured, expected.p_measured);
+        check_nan_preserving_equality(inv.q_measured, expected.q_measured);
+        check_nan_preserving_equality(inv.p_sigma, expected.p_sigma);
+        check_nan_preserving_equality(inv.q_sigma, expected.q_sigma);
     }
 }
 } // namespace power_grid_model
