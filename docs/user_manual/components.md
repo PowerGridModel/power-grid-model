@@ -158,7 +158,7 @@ There is no additional attribute for `link`.
 
 $$
    \begin{eqnarray}
-      Y_\mathrm{series}    & = & 1 & \times 10^6&.
+      Y_\mathrm{series}    & = & 1 & \times 10^6 * ( 1+ \mathrm{j} ) p.u. &.
     \end{eqnarray}
 $$
 
@@ -208,7 +208,7 @@ $$
     \begin{eqnarray} 
         & |Z_\mathrm{series}| = uk / z_\mathrm{base}\\ 
         &\mathrm{Re}(Z_\mathrm{series}) = (pk/sn) / z_\mathrm{base}\\
-        &\mathrm{Im}(Z_\mathrm{series}) = \sqrt{|Z_\mathrm{series}|^2-\mathrm{Re}(Z_\mathrm{series})^2} p.u. \\
+        &\mathrm{Im}(Z_\mathrm{series}) = \sqrt{|Z_\mathrm{series}|^2-\mathrm{Re}(Z_\mathrm{series})^2} \\
     \end{eqnarray}
 $$
 
@@ -221,7 +221,7 @@ $$
         &\mathrm{Im}(Y_\mathrm{shunt}) = 
         \begin{cases}
             0 & \text{ if $\mathrm{Re}(Y_\mathrm{shunt})$ > $|Y_\mathrm{shunt}|$} \\
-            -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} p.u. & \text{otherwise} 
+            -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} & \text{otherwise} 
         \end{cases}
    \end{eqnarray}
 $$
@@ -454,7 +454,7 @@ The injection of each ZIP model type can be computed as follows:
 
 $$
    \begin{eqnarray} 
-        S = S_\mathrm{specified} \times u^2
+        S = S_\mathrm{specified} \times \bar{u}^2
    \end{eqnarray}
 $$
 
@@ -462,7 +462,7 @@ $$
 
 $$
    \begin{eqnarray} 
-        S = S_\mathrm{specified} \times u
+        S = S_\mathrm{specified} \times \bar{u}
    \end{eqnarray}
 $$
 
@@ -474,7 +474,7 @@ $$
    \end{eqnarray}
 $$
 
-where $u$ is the calculated node voltage.
+where $\bar{u}$ is the calculated node voltage.
 
 ### Shunt
 
@@ -562,8 +562,8 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 
 $$
    \begin{eqnarray} 
-        && u\_ residual = u\_ measured - u\_ node \\
-        && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ node
+        && u\_ residual = u\_ measured - u\_ state \\
+        && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ state
    \end{eqnarray}
 $$
 
@@ -634,8 +634,8 @@ See the documentation on [state estimation calculation methods](calculations.md#
 
 $$
    \begin{eqnarray} 
-        p\_ residual = p\_ measured - p\_ node \\
-        q\_ residual = q\_ measured - q\_ node
+        p\_ residual = p\_ measured - p\_ state \\
+        q\_ residual = q\_ measured - q\_ state
    \end{eqnarray}
 $$
 
