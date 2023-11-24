@@ -218,11 +218,7 @@ $$
     \begin{eqnarray} 
         &|Y_\mathrm{shunt}| = i0 / y_\mathrm{base} \\
         &\mathrm{Re}(Y_\mathrm{shunt}) = (sn/p0) / y_\mathrm{base} \\
-        &\mathrm{Im}(Y_\mathrm{shunt}) = 
-        \begin{cases}
-            0 & \text{ if $\mathrm{Re}(Y_\mathrm{shunt})$ > $|Y_\mathrm{shunt}|$} \\
-            -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} & \text{otherwise} 
-        \end{cases}
+        &\mathrm{Im}(Y_\mathrm{shunt}) = -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} \\
    \end{eqnarray}
 $$
 
