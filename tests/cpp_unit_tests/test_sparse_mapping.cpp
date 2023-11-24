@@ -24,6 +24,8 @@ TEST_CASE("Test dense mapping") {
 
     CHECK(mapping.indvector == mapping_2.indvector);
     CHECK(mapping.reorder == mapping_2.reorder);
+    CHECK(mapping_2.indvector.begin() == std::min_element(mapping_2.indvector.begin(), mapping_2.indvector.end()));
+    CHECK(mapping_2.indvector.end() - 1 == std::max_element(mapping_2.indvector.begin(), mapping_2.indvector.end()));
 }
 
 } // namespace power_grid_model

@@ -139,18 +139,13 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
 
     std::inclusive_scan(counter.cbegin(), counter.cend(), xndvector.begin());
 
-    std::copy(xndvector.cbegin(), xndvector.cend(), counter.begin());
-
-    for (auto i = n_A - 1; i >= 0; i--) {
-        dense_mapping.indvector[xndvector[idx_B_in_A[i]] - 1] = idx_B_in_A[i];
-        xndvector[idx_B_in_A[i]]--;
-    }
+    // {0,3},{1,5},{2,2},{3,1},{4,1},{5,2}
 
     for (auto it_entry = entries.crbegin(); it_entry != entries.crend(); ++it_entry) {
-        dense_mapping.reorder[--counter[it_entry->second]] = it_entry->first;
+        dense_mapping.indvector[xndvector[idx_B_in_A[it_entry->first]] - 1] = idx_B_in_A[it_entry->first];
+        dense_mapping.reorder[--xndvector[it_entry->second]] = it_entry->first;
     }
 
-    // assert(dense_mapping.indvector.back() == n_A );
     return dense_mapping;
 }
 
