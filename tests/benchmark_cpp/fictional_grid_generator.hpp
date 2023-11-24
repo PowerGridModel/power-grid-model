@@ -161,18 +161,29 @@ class FictionalGridGenerator {
     void generate_mv_grid() {
         // source node
         ID const id_source_node = id_gen_++;
-        NodeInput const source_node{{id_source_node}, 150.0e3};
+        NodeInput const source_node{.id = id_source_node, .u_rated = 150.0e3};
         input_.node.push_back(source_node);
-        SourceInput const source{{{id_gen_++}, id_source_node, 1}, 1.05, nan, 2000e6, nan, nan};
+        SourceInput const source{.id = id_gen_++,
+                                 .node = id_source_node,
+                                 .status = 1,
+                                 .u_ref = 1.05,
+                                 .u_ref_angle = nan,
+                                 .sk = 2000e6,
+                                 .rx_ratio = nan,
+                                 .z01_ratio = nan};
         input_.source.push_back(source);
 
         // transformer and mv busbar
         ID const id_mv_busbar = id_gen_++;
-        NodeInput const mv_busbar{{id_mv_busbar}, 10.5e3};
+        NodeInput const mv_busbar{.id = id_mv_busbar, .u_rated = 10.5e3};
         input_.node.push_back(mv_busbar);
         for (Idx i = 0; i != option_.n_parallel_hv_mv_transformer; ++i) {
             // transformer, 150/10.5kV, 60MVA, uk=20.3%
-            TransformerInput const transformer{{{id_gen_++}, id_source_node, id_mv_busbar, 1, 1},
+            TransformerInput const transformer{id_gen_++,
+                                               id_source_node,
+                                               id_mv_busbar,
+                                               1,
+                                               1,
                                                150.0e3,
                                                10.5e3,
                                                60.0e6,
@@ -199,15 +210,16 @@ class FictionalGridGenerator {
                                                nan};
             input_.transformer.push_back(transformer);
             // shunt, Z0 = 0 + j7 ohm
-            ShuntInput const shunt{{{id_gen_++}, id_mv_busbar, 1}, 0.0, 0.0, 0.0, -1.0 / 7.0};
+            ShuntInput const shunt{
+                .id = id_gen_++, .node = id_mv_busbar, .status = 1, .g1 = 0.0, .b1 = 0.0, .g0 = 0.0, .b0 = -1.0 / 7.0};
             input_.shunt.push_back(shunt);
         }
 
         // template input
-        NodeInput const mv_node{{0}, 10.5e3};
-        SymLoadGenInput const mv_sym_load{{{{0}, 0, 1}, LoadGenType::const_i}, 0.8e6, 0.6e6};
+        NodeInput const mv_node{0, 10.5e3};
+        SymLoadGenInput const mv_sym_load{0, 0, 1, LoadGenType::const_i, 0.8e6, 0.6e6};
         // cable 3 * 630Al XLPE 10kV, per km
-        LineInput const mv_line{{{0}, 0, 0, 1, 1}, 0.063, 0.103, 0.4e-6, 0.0004, 0.275, 0.101, 0.66e-6, 0.0, 1e3};
+        LineInput const mv_line{0, 0, 0, 1, 1, 0.063, 0.103, 0.4e-6, 0.0004, 0.275, 0.101, 0.66e-6, 0.0, 1e3};
 
         // random generator
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
@@ -279,10 +291,14 @@ class FictionalGridGenerator {
 
     void generate_lv_grid(ID mv_node, double mv_base_load) {
         ID const id_lv_busbar = id_gen_++;
-        NodeInput const lv_busbar{{id_lv_busbar}, 400.0};
+        NodeInput const lv_busbar{id_lv_busbar, 400.0};
         input_.node.push_back(lv_busbar);
         // transformer, 1500 kVA or mv base load, uk=6%, pk=8.8kW
-        TransformerInput const transformer{{{id_gen_++}, mv_node, id_lv_busbar, 1, 1},
+        TransformerInput const transformer{id_gen_++,
+                                           mv_node,
+                                           id_lv_busbar,
+                                           1,
+                                           1,
                                            10.5e3,
                                            420.0,
                                            std::max(1500e3, mv_base_load * 1.2),
@@ -310,15 +326,14 @@ class FictionalGridGenerator {
         input_.transformer.push_back(transformer);
 
         // template
-        NodeInput const lv_node{{0}, 400.0};
+        NodeInput const lv_node{.id = 0, .u_rated = 400.0};
         AsymLoadGenInput const lv_asym_load{
-            {{{0}, 0, 1}, LoadGenType::const_i}, RealValue<false>{0.0}, RealValue<false>{0.0}};
+            0, 0, 1, LoadGenType::const_i, RealValue<false>{0.0}, RealValue<false>{0.0}};
         // 4*150 Al, per km
-        LineInput const lv_main_line{{{0}, 0, 0, 1, 1}, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387,
-                                     0.36e-6,           0.0,   300.0};
+        LineInput const lv_main_line{0, 0, 0, 1, 1, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387, 0.36e-6, 0.0, 300.0};
         // 4*16 Cu, per km
-        LineInput const lv_connection_line{{{0}, 0, 0, 1, 1}, 1.15, 0.096, 0.43e-6, 0.0004, 4.6, 0.408,
-                                           0.258e-6,          0.0,  80.0};
+        LineInput const lv_connection_line{0,       0,      0,   1,     1,        1.15, 0.096,
+                                           0.43e-6, 0.0004, 4.6, 0.408, 0.258e-6, 0.0,  80.0};
 
         // generator
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};

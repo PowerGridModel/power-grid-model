@@ -7,11 +7,32 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+
+void check_nan_preserving_equality(RealValue<false> const& actual, RealValue<false> const& expected) {
+    for (auto i : {0, 1, 2}) {
+        CAPTURE(i);
+        check_nan_preserving_equality(actual(i), expected(i));
+    }
+}
+} // namespace
 
 TEST_CASE("Test load generator") {
-    LoadGenInput<true> sym_load_gen_input{{{{1}, 2, 1}, LoadGenType::const_pq}, 3e6, 3e6};
-    LoadGenInput<false> asym_load_gen_input{
-        {{{1}, 2, 1}, LoadGenType::const_pq}, RealValue<false>{1e6}, RealValue<false>{1e6}};
+    LoadGenInput<true> sym_load_gen_input{
+        .id = 1, .node = 2, .status = 1, .type = LoadGenType::const_pq, .p_specified = 3e6, .q_specified = 3e6};
+    LoadGenInput<false> asym_load_gen_input{.id = 1,
+                                            .node = 2,
+                                            .status = 1,
+                                            .type = LoadGenType::const_pq,
+                                            .p_specified = RealValue<false>{1e6},
+                                            .q_specified = RealValue<false>{1e6}};
     SymGenerator sym_gen_pq{sym_load_gen_input, 10e3};
     AsymLoad asym_load_pq{asym_load_gen_input, 10e3};
     sym_load_gen_input.type = LoadGenType::const_i;
@@ -256,7 +277,8 @@ TEST_CASE("Test load generator") {
     }
 
     SUBCASE("Test update load") {
-        auto changed = sym_gen_pq.update(SymLoadGenUpdate{{{1}, na_IntS}, 1e6, nan});
+        auto changed =
+            sym_gen_pq.update(SymLoadGenUpdate{.id = 1, .status = na_IntS, .p_specified = 1e6, .q_specified = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
         ApplianceOutput<true> const sym_result = sym_gen_pq.get_output<true>(u);
@@ -316,9 +338,9 @@ TEST_CASE("Test load generator") {
     }
 }
 
-TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
-    using InputType = typename LoadGenType::InputType;
-    using UpdateType = typename LoadGenType::UpdateType;
+TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
+    using InputType = typename LoadGeneratorType::InputType;
+    using UpdateType = typename LoadGeneratorType::UpdateType;
     using RealValueType = decltype(InputType::p_specified);
 
     auto const r_nan = RealValueType{nan};
@@ -333,12 +355,68 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGenType, SymLoad, AsymLoad, SymGen
         update.p_specified = RealValueType{1.0};
         update.q_specified = r_nan;
 
-        LoadGenType load_gen{input, 1.0};
+        LoadGeneratorType load_gen{input, 1.0};
         load_gen.update(update);
 
         auto const result = load_gen.template calc_param<true>(true);
         CHECK_FALSE(std::isnan(result.real()));
         CHECK_FALSE(std::isnan(result.imag()));
+    }
+
+    SUBCASE("Update inverse") {
+        auto const status = IntS{1};
+        auto const p_specified = RealValueType{1.0};
+        auto const q_specified = RealValueType{2.0};
+
+        UpdateType update{.id = 1, .status = na_IntS, .p_specified = r_nan, .q_specified = r_nan};
+        auto expected = update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { update.status = status; }
+            SUBCASE("different") { update.status = IntS{0}; }
+            expected.status = status;
+        }
+
+        SUBCASE("p_specified") {
+            SUBCASE("same") { update.p_specified = p_specified; }
+            SUBCASE("different") { update.p_specified = RealValueType{0.0}; }
+            expected.p_specified = p_specified;
+        }
+
+        SUBCASE("q_specified") {
+            SUBCASE("same") { update.q_specified = q_specified; }
+            SUBCASE("different") { update.q_specified = RealValueType{0.0}; }
+            expected.q_specified = q_specified;
+        }
+
+        SUBCASE("multiple") {
+            update.status = IntS{0};
+            update.p_specified = RealValueType{0.0};
+            update.q_specified = RealValueType{0.1};
+            expected.status = status;
+            expected.p_specified = p_specified;
+            expected.q_specified = q_specified;
+        }
+
+        for (auto const load_gen_type : {LoadGenType::const_pq, LoadGenType::const_y, LoadGenType::const_i}) {
+            LoadGeneratorType const load_gen{{.id = 1,
+                                              .node = 2,
+                                              .status = status,
+                                              .type = load_gen_type,
+                                              .p_specified = p_specified,
+                                              .q_specified = q_specified},
+                                             1.0};
+            auto const inv = load_gen.inverse(update);
+
+            CHECK(inv.id == expected.id);
+            CHECK(inv.status == expected.status);
+            check_nan_preserving_equality(inv.p_specified, expected.p_specified);
+            check_nan_preserving_equality(inv.q_specified, expected.q_specified);
+        }
     }
 }
 } // namespace power_grid_model

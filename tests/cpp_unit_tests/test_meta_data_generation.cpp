@@ -8,8 +8,6 @@
 
 #include <doctest/doctest.h>
 
-#include <iostream>
-
 namespace power_grid_model {
 
 TEST_CASE("Test column row conversion") {

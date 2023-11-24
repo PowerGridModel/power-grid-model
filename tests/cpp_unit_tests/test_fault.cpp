@@ -7,9 +7,25 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test fault") {
-    Fault fault{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, 3.0, 4.0}};
+    Fault fault{{.id = 1,
+                 .status = 1,
+                 .fault_type = FaultType::two_phase_to_ground,
+                 .fault_phase = FaultPhase::ab,
+                 .fault_object = 4,
+                 .r_f = 3.0,
+                 .x_f = 4.0}};
+
     CHECK(fault.math_model_type() == ComponentType::fault);
     CHECK(fault.status());
     CHECK(fault.get_fault_type() == FaultType::two_phase_to_ground);
@@ -34,7 +50,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with nan impedance input") {
-        Fault const fault_nan_imp{{{1}, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, nan, nan}};
+        Fault const fault_nan_imp{{1, 1, FaultType::two_phase_to_ground, FaultPhase::ab, 4, nan, nan}};
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
@@ -43,7 +59,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with other fault type") {
-        Fault const fault_nan_imp{{{1}, 1, FaultType::three_phase, FaultPhase::abc, 4, nan, nan}};
+        Fault const fault_nan_imp{{1, 1, FaultType::three_phase, FaultPhase::abc, 4, nan, nan}};
         FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
@@ -52,7 +68,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test calc param with nan fault type") {
-        Fault const fault_nan_imp{{{1}, 1, FaultType::nan, FaultPhase::nan, 4, nan, nan}};
+        Fault const fault_nan_imp{{1, 1, FaultType::nan, FaultPhase::nan, 4, nan, nan}};
         CHECK_THROWS_AS((fault_nan_imp.calc_param(u_rated)), InvalidShortCircuitType);
     }
 
@@ -109,7 +125,7 @@ TEST_CASE("Test fault") {
         using enum FaultType;
 
         auto create_fault = [](FaultType fault_type) {
-            return Fault{{{1}, 1, fault_type, FaultPhase::nan, 4, 3.0, 4.0}};
+            return Fault{{1, 1, fault_type, FaultPhase::nan, 4, 3.0, 4.0}};
         };
 
         CHECK((create_fault(three_phase).get_fault_type()) == three_phase);
@@ -123,7 +139,7 @@ TEST_CASE("Test fault") {
         using enum FaultPhase;
 
         auto create_fault = [](FaultType fault_type, FaultPhase fault_phase) {
-            return Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}};
+            return Fault{{1, 1, fault_type, fault_phase, 4, 3.0, 4.0}};
         };
 
         SUBCASE("Fault phase fully specified") {
@@ -158,7 +174,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test update") {
-        FaultUpdate const fault_update{{1}, 0, FaultType::two_phase, FaultPhase::ac, 10, nan, nan};
+        FaultUpdate const fault_update{1, 0, FaultType::two_phase, FaultPhase::ac, 10, nan, nan};
         UpdateChange const updated = fault.update(fault_update);
 
         CHECK(!updated.param);
@@ -170,7 +186,7 @@ TEST_CASE("Test fault") {
         CHECK(fault.get_fault_object() == 10);
 
         // update without updating
-        FaultUpdate const fault_update_nan{{1}, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
+        FaultUpdate const fault_update_nan{1, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
         fault.update(fault_update_nan);
         CHECK_FALSE(fault.status());
         CHECK(fault.get_fault_type() == FaultType::two_phase);
@@ -178,7 +194,7 @@ TEST_CASE("Test fault") {
         CHECK(fault.get_fault_object() == 10);
 
         // default value does override
-        FaultUpdate const fault_update_default_value{{1}, na_IntS, FaultType::nan, FaultPhase::default_value, na_IntID,
+        FaultUpdate const fault_update_default_value{1,   na_IntS, FaultType::nan, FaultPhase::default_value, na_IntID,
                                                      nan, nan};
         fault.update(fault_update_default_value);
         CHECK_FALSE(fault.status());
@@ -200,18 +216,18 @@ TEST_CASE("Test fault") {
         auto check_allowed = [&fault](FaultType fault_type, FaultPhase fault_phase) {
             CAPTURE(fault_type);
             CAPTURE(fault_phase);
-            CHECK_NOTHROW((Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}}));
+            CHECK_NOTHROW((Fault{{1, 1, fault_type, fault_phase, 4, 3.0, 4.0}}));
 
-            FaultUpdate const fault_update{{1}, 0, fault_type, fault_phase, 10, nan, nan};
+            FaultUpdate const fault_update{1, 0, fault_type, fault_phase, 10, nan, nan};
             CHECK_NOTHROW(fault.update(fault_update));
         };
 
         auto check_not_allowed = [&fault](FaultType fault_type, FaultPhase fault_phase) {
             CAPTURE(fault_type);
             CAPTURE(fault_phase);
-            CHECK_THROWS_AS((Fault{{{1}, 1, fault_type, fault_phase, 4, 3.0, 4.0}}), InvalidShortCircuitPhases);
+            CHECK_THROWS_AS((Fault{{1, 1, fault_type, fault_phase, 4, 3.0, 4.0}}), InvalidShortCircuitPhases);
 
-            FaultUpdate const fault_update{{1}, 0, fault_type, fault_phase, 10, nan, nan};
+            FaultUpdate const fault_update{1, 0, fault_type, fault_phase, 10, nan, nan};
             CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitPhases);
         };
 
@@ -272,16 +288,16 @@ TEST_CASE("Test fault") {
         }
 
         SUBCASE("Invalid fault type") {
-            CHECK_THROWS_AS((Fault{{{1}, 1, static_cast<FaultType>(-127), FaultPhase::nan, 4, 3.0, 4.0}}),
+            CHECK_THROWS_AS((Fault{{1, 1, static_cast<FaultType>(-127), FaultPhase::nan, 4, 3.0, 4.0}}),
                             InvalidShortCircuitType);
 
-            FaultUpdate const fault_update{{1}, 0, static_cast<FaultType>(-127), FaultPhase::nan, 10, nan, nan};
+            FaultUpdate const fault_update{1, 0, static_cast<FaultType>(-127), FaultPhase::nan, 10, nan, nan};
             CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitType);
         }
     }
 
     SUBCASE("Update fault r, x") {
-        FaultUpdate const fault_update_rx{{1}, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, 10.0, 20.0};
+        FaultUpdate const fault_update_rx{1, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, 10.0, 20.0};
         fault.update(fault_update_rx);
         FaultCalcParam const param = fault.calc_param(u_rated);
         double const base_y = base_i / (u_rated / sqrt(3));
@@ -289,6 +305,68 @@ TEST_CASE("Test fault") {
         CHECK(cabs(param.y_fault - y_f) < numerical_tolerance);
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
         CHECK(param.fault_phase == FaultPhase::ab);
+    }
+
+    SUBCASE("Update inverse") {
+        FaultUpdate fault_update{1, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, nan, nan};
+        auto expected = fault_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { fault_update.status = static_cast<IntS>(fault.status()); }
+            SUBCASE("different") { fault_update.status = IntS{0}; }
+            expected.status = static_cast<IntS>(fault.status());
+        }
+
+        SUBCASE("Fault type") {
+            SUBCASE("Same") { fault_update.fault_type = fault.get_fault_type(); }
+            SUBCASE("different") { fault_update.fault_type = FaultType::three_phase; }
+            expected.fault_type = fault.get_fault_type();
+        }
+
+        SUBCASE("Fault phase") {
+            SUBCASE("Same") { fault_update.fault_phase = fault.get_fault_phase(); }
+            SUBCASE("different") { fault_update.fault_phase = FaultPhase::abc; }
+            expected.fault_phase = fault.get_fault_phase();
+        }
+
+        SUBCASE("Fault object") {
+            SUBCASE("Same") { fault_update.fault_object = fault.get_fault_object(); }
+            SUBCASE("different") { fault_update.fault_object = 100; }
+            expected.fault_object = fault.get_fault_object();
+        }
+
+        SUBCASE("r_f, x_f") {
+            fault_update.r_f = 6.0;
+            fault_update.x_f = 7.0;
+            expected.r_f = 3.0;
+            expected.x_f = 4.0;
+        }
+
+        SUBCASE("multiple") {
+            fault_update.status = IntS{0};
+            fault_update.fault_type = FaultType::three_phase;
+            fault_update.fault_phase = FaultPhase::abc;
+            fault_update.fault_object = 100;
+            expected.status = static_cast<IntS>(fault.status());
+            expected.fault_type = fault.get_fault_type();
+            expected.fault_phase = fault.get_fault_phase();
+            expected.fault_object = fault.get_fault_object();
+        }
+
+        auto const inv = fault.inverse(fault_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        CHECK(inv.fault_type == expected.fault_type);
+        CHECK(inv.fault_phase == expected.fault_phase);
+        CHECK(inv.fault_object == expected.fault_object);
+
+        check_nan_preserving_equality(inv.r_f, expected.r_f);
+        check_nan_preserving_equality(inv.x_f, expected.x_f);
     }
 }
 
