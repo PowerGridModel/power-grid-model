@@ -1,0 +1,8 @@
+{
+  "calculation_method": "iterative_linear",
+  "rtol": 1e-8,
+  "atol": {
+    "default": 1e-8,
+    ".+_residual": 5e-4
+  }
+}

@@ -27,7 +27,7 @@ using DatasetMap = std::map<std::string, MetaComponent, std::less<>>;
 using AllDatasetMap = std::map<std::string, DatasetMap, std::less<>>;
 
 // template function to add meta data
-template <class CT> void add_meta_data(AllDatasetMap& meta) {
+template <class CT> inline void add_meta_data(AllDatasetMap& meta) {
     meta["input"].try_emplace(CT::name, MetaComponentImpl<typename CT::InputType>{}, CT::name);
     meta["update"].try_emplace(CT::name, MetaComponentImpl<typename CT::UpdateType>{}, CT::name);
     meta["sym_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::template OutputType<true>>{}, CT::name);

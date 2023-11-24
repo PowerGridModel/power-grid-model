@@ -1,0 +1,112 @@
+{
+    "version": "1.0",
+    "type": "update",
+    "is_batch": true,
+    "attributes": {
+        "sym_power_sensor": [
+            "id",
+            "power_sigma",
+            "p_measured",
+            "q_measured"
+        ],
+        "sym_voltage_sensor": [
+            "id",
+            "u_sigma",
+            "u_measured"
+        ]
+    },
+    "data": [
+        {
+            "sym_power_sensor": [
+                [
+                    21,
+                    200000,
+                    -2000000,
+                    300000
+                ],
+                [
+                    22,
+                    200000,
+                    2000000,
+                    -570000
+                ],
+                [
+                    23,
+                    200000,
+                    -2000000,
+                    280000
+                ],
+                [
+                    24,
+                    300000,
+                    3000000,
+                    -400000
+                ],
+                [
+                    25,
+                    200000,
+                    -2000000,
+                    400000
+                ]
+            ],
+            "sym_voltage_sensor": [
+                [
+                    19,
+                    2000,
+                    20000
+                ],
+                [
+                    20,
+                    2000,
+                    20000
+                ]
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                [
+                    21,
+                    null,
+                    null,
+                    null
+                ],
+                [
+                    22,
+                    null,
+                    null,
+                    null
+                ],
+                [
+                    23,
+                    null,
+                    null,
+                    null
+                ],
+                [
+                    24,
+                    null,
+                    null,
+                    null
+                ],
+                [
+                    25,
+                    null,
+                    null,
+                    null
+                ]
+            ],
+            "sym_voltage_sensor": [
+                [
+                    19,
+                    2000,
+                    null
+                ],
+                [
+                    20,
+                    2000,
+                    null
+                ]
+            ]
+        }
+    ]
+}

@@ -69,7 +69,7 @@ template <bool is_const> class DataPointer {
         if (indptr_ != nullptr) {
             return indptr_[pos + 1] - indptr_[pos];
         }
-        return (Idx)elements_per_scenario_;
+        return elements_per_scenario_;
     }
 
     ptr_t<void> raw_ptr() const { return ptr_; }

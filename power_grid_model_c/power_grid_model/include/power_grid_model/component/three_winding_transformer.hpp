@@ -117,11 +117,20 @@ class ThreeWindingTransformer : public Branch3 {
         return true;
     }
 
-    UpdateChange update(ThreeWindingTransformerUpdate const& update) {
-        assert(update.id == id());
-        bool const topo_changed = set_status(update.status_1, update.status_2, update.status_3);
-        bool const param_changed = set_tap(update.tap_pos) || topo_changed;
+    UpdateChange update(ThreeWindingTransformerUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool const topo_changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
+        bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
+    }
+
+    ThreeWindingTransformerUpdate inverse(ThreeWindingTransformerUpdate update_data) const {
+        assert(update_data.id == id());
+
+        update_data = Branch3::inverse(update_data);
+        set_if_not_nan(update_data.tap_pos, tap_pos_);
+
+        return update_data;
     }
 
   private:
@@ -281,87 +290,93 @@ class ThreeWindingTransformer : public Branch3 {
         auto const [uk_T1, uk_T2, uk_T3] = calculate_uk();
         auto const [pk_T1, pk_T2, pk_T3] = calculate_pk();
 
-        TransformerInput const transformer_input_T1{
-            {{2}, 0, 1, static_cast<IntS>(status_1()), 1}, // {{id}, from_node, to_node, from_status, to_status}
-            u1,                                            // u1
-            u1,                                            // u2
-            sn_1_,                                         // sn
-            uk_T1,                                         // uk
-            pk_T1,                                         // pk
-            i0_,                                           // i0
-            p0_,                                           // p0
-            WindingType::wye_n,                            // winding_from
-            WindingType::wye_n,                            // winding_to
-            0,                                             // clock
-            BranchSide::from,                              // tap_side
-            0,                                             // tap_pos
-            0,                                             // tap_min
-            0,                                             // tap_max
-            0,                                             // tap_nom
-            0.0,                                           // tap_size
-            nan,                                           // uk_min
-            nan,                                           // uk_max
-            nan,                                           // pk_min
-            nan,                                           // pk_max
-            z_grounding_1_.real(),                         // r_grounding_from
-            z_grounding_1_.imag(),                         // x_grounding_from
-            0,                                             // r_grounding_to
-            0                                              // x_grounding_to
-        };
-        TransformerInput const transformer_input_T2{
-            {{2}, 0, 1, static_cast<IntS>(status_2()), 1}, // {{id}, from_node, to_node, from_status, to_status}
-            u2,                                            // u1
-            u1,                                            // u2
-            sn_2_,                                         // sn
-            uk_T2,                                         // uk
-            pk_T2,                                         // pk
-            0.0,                                           // i0
-            0.0,                                           // p0
-            winding_2_,                                    // winding_from
-            winding_1_,                                    // winding_to
-            static_cast<IntS>(12 - clock_12_),             // clock, reversed
-            BranchSide::from,                              // tap_side
-            0,                                             // tap_pos
-            0,                                             // tap_min
-            0,                                             // tap_max
-            0,                                             // tap_nom
-            0.0,                                           // tap_size
-            nan,                                           // uk_min
-            nan,                                           // uk_max
-            nan,                                           // pk_min
-            nan,                                           // pk_max
-            z_grounding_2_.real(),                         // r_grounding_from
-            z_grounding_2_.imag(),                         // x_grounding_from
-            0,                                             // r_grounding_to
-            0                                              // x_grounding_to
-        };
-        TransformerInput const transformer_input_T3{
-            {{2}, 0, 1, static_cast<IntS>(status_3()), 1}, // {{id}, from_node, to_node, from_status, to_status}
-            u3,                                            // u1
-            u1,                                            // u2
-            sn_3_,                                         // sn
-            uk_T3,                                         // uk
-            pk_T3,                                         // pk
-            0.0,                                           // i0
-            0.0,                                           // p0
-            winding_3_,                                    // winding_from
-            winding_1_,                                    // winding_to
-            static_cast<IntS>(12 - clock_13_),             // clock, reversed
-            BranchSide::from,                              // tap_side
-            0,                                             // tap_pos
-            0,                                             // tap_min
-            0,                                             // tap_max
-            0,                                             // tap_nom
-            0.0,                                           // tap_size
-            nan,                                           // uk_min
-            nan,                                           // uk_max
-            nan,                                           // pk_min
-            nan,                                           // pk_max
-            z_grounding_3_.real(),                         // r_grounding_from
-            z_grounding_3_.imag(),                         // x_grounding_from
-            0,                                             // r_grounding_to
-            0                                              // x_grounding_to
-        };
+        TransformerInput const transformer_input_T1{.id = 2,
+                                                    .from_node = 0,
+                                                    .to_node = 1,
+                                                    .from_status = static_cast<IntS>(status_1()),
+                                                    .to_status = 1,
+                                                    .u1 = u1,
+                                                    .u2 = u1,
+                                                    .sn = sn_1_,
+                                                    .uk = uk_T1,
+                                                    .pk = pk_T1,
+                                                    .i0 = i0_,
+                                                    .p0 = p0_,
+                                                    .winding_from = WindingType::wye_n,
+                                                    .winding_to = WindingType::wye_n,
+                                                    .clock = 0,
+                                                    .tap_side = BranchSide::from,
+                                                    .tap_pos = 0,
+                                                    .tap_min = 0,
+                                                    .tap_max = 0,
+                                                    .tap_nom = 0,
+                                                    .tap_size = 0.0,
+                                                    .uk_min = nan,
+                                                    .uk_max = nan,
+                                                    .pk_min = nan,
+                                                    .pk_max = nan,
+                                                    .r_grounding_from = z_grounding_1_.real(),
+                                                    .x_grounding_from = z_grounding_1_.imag(),
+                                                    .r_grounding_to = 0,
+                                                    .x_grounding_to = 0};
+        TransformerInput const transformer_input_T2{.id = 2,
+                                                    .from_node = 0,
+                                                    .to_node = 1,
+                                                    .from_status = static_cast<IntS>(status_2()),
+                                                    .to_status = 1,
+                                                    .u1 = u2,
+                                                    .u2 = u1,
+                                                    .sn = sn_2_,
+                                                    .uk = uk_T2,
+                                                    .pk = pk_T2,
+                                                    .i0 = 0.0,
+                                                    .p0 = 0.0,
+                                                    .winding_from = winding_2_,
+                                                    .winding_to = winding_1_,
+                                                    .clock = static_cast<IntS>(12 - clock_12_), // reversed
+                                                    .tap_side = BranchSide::from,
+                                                    .tap_pos = 0,
+                                                    .tap_min = 0,
+                                                    .tap_max = 0,
+                                                    .tap_nom = 0,
+                                                    .tap_size = 0.0,
+                                                    .uk_min = nan,
+                                                    .uk_max = nan,
+                                                    .pk_min = nan,
+                                                    .pk_max = nan,
+                                                    .r_grounding_from = z_grounding_2_.real(),
+                                                    .x_grounding_from = z_grounding_2_.imag(),
+                                                    .r_grounding_to = 0,
+                                                    .x_grounding_to = 0};
+        TransformerInput const transformer_input_T3{.id = 2,
+                                                    .from_node = 0,
+                                                    .to_node = 1,
+                                                    .from_status = static_cast<IntS>(status_3()),
+                                                    .to_status = 1,
+                                                    .u1 = u3,
+                                                    .u2 = u1,
+                                                    .sn = sn_3_,
+                                                    .uk = uk_T3,
+                                                    .pk = pk_T3,
+                                                    .i0 = 0.0,
+                                                    .p0 = 0.0,
+                                                    .winding_from = winding_3_,
+                                                    .winding_to = winding_1_,
+                                                    .clock = static_cast<IntS>(12 - clock_13_), // reversed
+                                                    .tap_side = BranchSide::from,
+                                                    .tap_pos = 0,
+                                                    .tap_min = 0,
+                                                    .tap_max = 0,
+                                                    .tap_nom = 0,
+                                                    .tap_size = 0.0,
+                                                    .uk_min = nan,
+                                                    .uk_max = nan,
+                                                    .pk_min = nan,
+                                                    .pk_max = nan,
+                                                    .r_grounding_from = z_grounding_3_.real(),
+                                                    .x_grounding_from = z_grounding_3_.imag(),
+                                                    .r_grounding_to = 0,
+                                                    .x_grounding_to = 0};
 
         Transformer const T1{transformer_input_T1, u1_rated_, u1_rated_};
         Transformer const T2{transformer_input_T2, u2_rated_, u1_rated_};

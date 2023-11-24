@@ -111,6 +111,19 @@ class Fault final : public Base {
         return {false, false}; // topology and parameters do not change
     }
 
+    FaultUpdate inverse(FaultUpdate update_data) const {
+        assert(update_data.id == id());
+
+        set_if_not_nan(update_data.status, static_cast<IntS>(status_));
+        set_if_not_nan(update_data.fault_type, fault_type_);
+        set_if_not_nan(update_data.fault_phase, fault_phase_);
+        set_if_not_nan(update_data.fault_object, fault_object_);
+        set_if_not_nan(update_data.r_f, r_f_);
+        set_if_not_nan(update_data.x_f, x_f_);
+
+        return update_data;
+    }
+
     constexpr bool energized(bool is_connected_to_source) const override { return is_connected_to_source; }
 
     constexpr bool status() const { return status_; }
@@ -174,7 +187,7 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    template <std::derived_from<BaseOutput> T> T get_null_output_impl() const {
+    template <std::convertible_to<BaseOutput> T> T get_null_output_impl() const {
         T output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;

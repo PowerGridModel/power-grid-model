@@ -13,8 +13,9 @@
 namespace power_grid_model::common_solver_functions {
 
 template <bool sym>
-void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
-                 ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
+inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
+                        ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element,
+                        ComplexValue<sym>& u_bus) {
     for (Idx const source_number : sources) {
         ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
         diagonal_element += y_source; // add y_source to the diagonal of Ybus
@@ -22,7 +23,7 @@ void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const&
     }
 }
 
-template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
+template <bool sym> inline void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
     ComplexTensorVector<sym> const& ydata = y_bus.admittance();
     std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {
         if (k == -1) {
@@ -33,8 +34,8 @@ template <bool sym> void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<
 }
 
 template <bool sym>
-void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
-                             PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
+                                    PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
     for (Idx const source : sources) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
@@ -46,8 +47,8 @@ void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> 
 template <bool sym, class LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
-void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
-                               MathOutput<sym>& output, LoadGenFunc&& load_gen_func) {
+inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+                                      MathOutput<sym>& output, LoadGenFunc&& load_gen_func) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
@@ -74,10 +75,10 @@ void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerF
 template <bool sym, typename LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
-void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                      grouped_idx_vector_type auto const& sources_per_bus,
-                      grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
-                      LoadGenFunc&& load_gen_func) {
+inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                             grouped_idx_vector_type auto const& sources_per_bus,
+                             grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
+                             LoadGenFunc&& load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
     // call y bus

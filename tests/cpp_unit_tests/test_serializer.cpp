@@ -6,7 +6,6 @@
 
 #include <doctest/doctest.h>
 
-#include <iostream>
 #include <limits>
 
 namespace power_grid_model::meta_data {
