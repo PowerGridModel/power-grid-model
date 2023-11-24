@@ -53,6 +53,7 @@ from power_grid_model.validation.rules import (
     all_valid_fault_phases,
     all_valid_ids,
     none_missing,
+    valid_p_q_sigma,
 )
 from power_grid_model.validation.utils import update_input_data
 
@@ -708,6 +709,8 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         ref_components="node",
         measured_terminal_type=MeasuredTerminalType.node,
     )
+    if component in ("sym_power_sensor", "asym_power_sensor"):
+        errors += valid_p_q_sigma(data, component)
 
     return errors
 

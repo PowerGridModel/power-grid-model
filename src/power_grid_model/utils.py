@@ -9,11 +9,14 @@ This file contains all the helper functions for testing purpose
 import json
 import warnings
 from pathlib import Path
-from typing import Optional
-from typing import cast as cast_type
+from typing import Optional, cast as cast_type
 
 import numpy as np
 
+from power_grid_model._utils import (
+    get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
+    get_batch_size as _get_batch_size,
+)
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
@@ -52,6 +55,35 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
         return component_scenarios["data"][indptr[scenario] : indptr[scenario + 1]]
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
+
+
+def get_dataset_batch_size(dataset: BatchDataset) -> int:
+    """
+    Get the number of scenarios in the batch dataset.
+
+    Args:
+        dataset: the batch dataset
+
+    Raises:
+        ValueError: if the batch dataset is inconsistent.
+
+    Returns:
+        The size of the batch dataset. Making use of existing _utils function.
+    """
+    return _get_and_verify_batch_sizes(dataset)
+
+
+def get_component_batch_size(data_array: BatchArray) -> int:
+    """
+    Determine the number of batches and verify the data structure
+
+    Args:
+        data_array: a batch array for power-grid-model
+
+    Returns:
+        The number of batches in data_array
+    """
+    return _get_batch_size(data_array)
 
 
 def json_deserialize_from_file(file_path: Path) -> Dataset:
