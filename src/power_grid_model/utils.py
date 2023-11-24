@@ -9,13 +9,14 @@ This file contains all the helper functions for testing purpose
 import json
 import warnings
 from pathlib import Path
-from typing import Optional
-from typing import cast as cast_type
+from typing import Optional, cast as cast_type
 
 import numpy as np
 
-from power_grid_model._utils import get_and_verify_batch_sizes as _get_and_verify_batch_sizes
-from power_grid_model._utils import get_batch_size as _get_batch_size
+from power_grid_model._utils import (
+    get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
+    get_batch_size as _get_batch_size,
+)
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
