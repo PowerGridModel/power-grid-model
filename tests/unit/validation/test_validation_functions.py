@@ -435,96 +435,91 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
 
 
 @pytest.mark.parametrize(
-    ("sensor_type", "parameter", "values", "error_types"),
+    ("sensor_type", "values", "error_types"),
     [
-        ("sym_power_sensor", ["p_sigma", "q_sigma"], [np.nan, np.nan], [InvalidIdError, NotUniqueError]),
         (
             "sym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [0.1, np.nan],
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError],
+        ),
+        (
+            "sym_power_sensor",
+            [[0.1, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "sym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [np.nan, 0.1],
+            [[np.nan, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
-        ("sym_power_sensor", ["p_sigma", "q_sigma"], [0.1, 0.1], [InvalidIdError, NotUniqueError]),
         (
-            "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            "sym_power_sensor",
+            [[0.1, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[0.1, np.nan, 0.1], [np.nan, 0.1, np.nan]],
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, np.nan, 0.1], [np.nan, 0.1, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[0.1, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[np.nan, np.nan], [0.1, np.nan, np.nan], [np.nan, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
+            [[np.nan, np.nan], [0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1]],
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, 0.1, 0.1]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[0.1, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [[np.nan, np.nan], [0.1, np.nan, np.nan], [0.1, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, MultiFieldValidationError],
         ),
         (
             "asym_power_sensor",
-            ["p_sigma", "q_sigma"],
-            [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            [[np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             [InvalidIdError, NotUniqueError],
         ),
     ],
 )
-def test_validate_values__bad_p_q_sigma(sensor_type, parameter, values, error_types):
-    assert len(parameter) == len(values)
-
-    def arbitrary_fill(array, sensor_type, parameter, values):
+def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
+    def arbitrary_fill(array, sensor_type, values):
         if sensor_type == "sym_power_sensor":
-            array[parameter[0]] = values[0]
-            array[parameter[1]] = values[1]
+            array["p_sigma"] = values[0][0]
+            array["q_sigma"] = values[0][1]
         else:
-            array[parameter[0]][0][0] = values[0][0]
-            array[parameter[0]][0][1] = values[0][1]
-            array[parameter[0]][0][2] = values[0][2]
-            array[parameter[1]][0][0] = values[1][0]
-            array[parameter[1]][0][1] = values[1][1]
-            array[parameter[1]][0][2] = values[1][2]
+            array["p_sigma"][0] = values[1][0]
+            array["p_sigma"][1] = values[1][1]
+            array["p_sigma"][2] = values[1][2]
+            array["q_sigma"][0] = values[2][0]
+            array["q_sigma"][1] = values[2][1]
+            array["q_sigma"][2] = values[2][2]
         array["id"] = [123, 234, 345]
 
     sensor_array = initialize_array("input", sensor_type, 3)
-    arbitrary_fill(sensor_array, sensor_type, parameter, values)
+    arbitrary_fill(sensor_array, sensor_type, values)
     all_errors = validate_values({sensor_type: sensor_array})
 
     for error in all_errors:
@@ -580,7 +575,7 @@ def test_validate_values__bad_p_q_sigma_both_components(values, error_types):
     all_errors = validate_values(data)
     for error in all_errors:
         assert any(isinstance(error, error_type) for error_type in error_types)
-        assert data[error.component]["id"][0] == error.ids[0]
+        assert (data[error.component]["id"] == error.ids).all()
 
 
 def test_validate_values__bad_p_q_sigma_single_component_twice():
