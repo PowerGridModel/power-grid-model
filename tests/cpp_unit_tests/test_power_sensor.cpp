@@ -641,8 +641,6 @@ TEST_CASE("Test power sensor") {
         RealValue<false> const q_measured{5.0, 6.0, 7.0};
         RealValue<false> const p_sigma{7.0, 8.0, 9.0};
         RealValue<false> const q_sigma{10.0, 11.0, 12.0};
-        PowerSensor<false> const power_sensor{
-            {1, 1, MeasuredTerminalType::branch3_1, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
 
         PowerSensorUpdate<false> ps_update{1, nan, r_nan, r_nan, r_nan, r_nan};
         auto expected = ps_update;
@@ -705,14 +703,19 @@ TEST_CASE("Test power sensor") {
             expected.q_sigma = q_sigma;
         }
 
-        auto const inv = power_sensor.inverse(ps_update);
+        for (auto const measured_terminal_type :
+             {MeasuredTerminalType::branch_from, MeasuredTerminalType::generator, MeasuredTerminalType::load}) {
+            PowerSensor<false> const power_sensor{
+                {1, 1, measured_terminal_type, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
+            auto const inv = power_sensor.inverse(ps_update);
 
-        CHECK(inv.id == expected.id);
-        check_nan_preserving_equality(inv.power_sigma, expected.power_sigma);
-        check_nan_preserving_equality(inv.p_measured, expected.p_measured);
-        check_nan_preserving_equality(inv.q_measured, expected.q_measured);
-        check_nan_preserving_equality(inv.p_sigma, expected.p_sigma);
-        check_nan_preserving_equality(inv.q_sigma, expected.q_sigma);
+            CHECK(inv.id == expected.id);
+            check_nan_preserving_equality(inv.power_sigma, expected.power_sigma);
+            check_nan_preserving_equality(inv.p_measured, expected.p_measured);
+            check_nan_preserving_equality(inv.q_measured, expected.q_measured);
+            check_nan_preserving_equality(inv.p_sigma, expected.p_sigma);
+            check_nan_preserving_equality(inv.q_sigma, expected.q_sigma);
+        }
     }
 }
 } // namespace power_grid_model
