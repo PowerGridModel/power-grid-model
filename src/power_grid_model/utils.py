@@ -14,7 +14,8 @@ from typing import cast as cast_type
 
 import numpy as np
 
-from power_grid_model._utils import get_and_verify_batch_sizes, get_batch_size  # pylint: disable=unused-import
+from power_grid_model._utils import get_and_verify_batch_sizes as _get_and_verify_batch_sizes
+from power_grid_model._utils import get_batch_size as _get_batch_size
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
@@ -55,7 +56,7 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 
 
-def get_data_set_batch_size(dataset: BatchDataset) -> int:
+def get_dataset_batch_size(dataset: BatchDataset) -> int:
     """
     Get the number of scenarios in the batch dataset.
 
@@ -68,10 +69,10 @@ def get_data_set_batch_size(dataset: BatchDataset) -> int:
     Returns:
         The size of the batch dataset. Making use of existing _utils function.
     """
-    return get_and_verify_batch_sizes(dataset)
+    return _get_and_verify_batch_sizes(dataset)
 
 
-def get_data_array_batch_size(data_array: BatchArray) -> int:
+def get_component_batch_size(data_array: BatchArray) -> int:
     """
     Determine the number of batches and verify the data structure
 
@@ -81,7 +82,7 @@ def get_data_array_batch_size(data_array: BatchArray) -> int:
     Returns:
         The number of batches in data_array
     """
-    return get_batch_size(data_array)
+    return _get_batch_size(data_array)
 
 
 def json_deserialize_from_file(file_path: Path) -> Dataset:
