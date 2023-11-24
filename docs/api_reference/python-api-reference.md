@@ -52,4 +52,6 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.utils.msgpack_serialize_to_file
 .. autofunction:: power_grid_model.utils.import_json_data
 .. autofunction:: power_grid_model.utils.export_json_data
+.. autofunction:: power_grid_model._utils.get_and_verify_batch_sizes
+.. autofunction:: power_grid_model._utils.get_batch_size
 ```
