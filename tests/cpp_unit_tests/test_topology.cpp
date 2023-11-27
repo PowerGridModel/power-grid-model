@@ -324,41 +324,89 @@ TEST_CASE("Test topology") {
 }
 
 TEST_CASE("Test cycle reorder") {
-    // component topology
-    ComponentTopology comp_topo{};
-    comp_topo.n_node = 7;
-    comp_topo.branch_node_idx = {
-        {0, 1}, // 0
-        {1, 2}, // 1
-        {2, 3}, // 2
-        {3, 4}, // 3
-        {4, 5}, // 4
-        {0, 5}, // 5
-        {1, 4}, // 6
-        {6, 0}, // 7
-        {6, 2}, // 8
-        {5, 1}, // 9
-        {3, 1}, // 10
-        {6, 1}, // 11
-        {2, 1}, // 12
-    };
-    comp_topo.source_node_idx = {0};
-    // component connection
-    ComponentConnections comp_conn{};
-    comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
-    comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
-    comp_conn.source_connected = {1};
-    // result
-    TopologicalComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {{0, 3}, {0, 5}, {0, 4}, {0, 2}, {0, 6}, {0, 1}, {0, 0}};
-    std::vector<BranchIdx> const fill_in_ref{{3, 4}, {3, 6}, {4, 6}};
+    SUBCASE("9 nodes") {
+        // {
+        //     0: [3, 5],
+        //     1: [4, 5, 8],
+        //     2: [4, 5, 6],
+        //     3: [6, 7],
+        //     4: [6, 8],
+        //     6: [7, 8, 9],
+        //     7: [8, 9],
+        //     8: [9]
+        // }
 
-    Topology topo{comp_topo, comp_conn};
-    auto pair = topo.build_topology();
-    auto const& topo_comp_coup = *pair.second;
-    auto const& math_topo = *pair.first[0];
-    CHECK(topo_comp_coup.node == comp_coup_ref.node);
-    CHECK(math_topo.fill_in == fill_in_ref);
+        // component topology
+        ComponentTopology comp_topo{};
+        comp_topo.n_node = 10;
+        comp_topo.branch_node_idx = {
+            {0, 3}, {0, 5}, {1, 4}, {1, 5}, {1, 8}, {2, 4}, {2, 5}, {2, 6}, {3, 6},
+            {3, 7}, {4, 6}, {4, 8}, {6, 7}, {6, 8}, {6, 9}, {7, 8}, {7, 9}, {8, 9},
+        };
+        comp_topo.source_node_idx = {0};
+        // component connection
+        ComponentConnections comp_conn{};
+        comp_conn.branch_connected = std::vector<BranchConnected>(18, {1, 1});
+        comp_conn.branch_phase_shift = std::vector<double>(18, 0.0);
+        comp_conn.source_connected = {1};
+        // result
+        TopologicalComponentToMathCoupling comp_coup_ref{};
+        comp_coup_ref.node = {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 3}, {4, 5}, {5, 8}, {6, 5}, {5, 7}};
+
+        Topology topo{comp_topo, comp_conn};
+        auto pair = topo.build_topology();
+        auto const& topo_comp_coup = *pair.second;
+        auto const& math_topo = *pair.first[0];
+        CHECK(topo_comp_coup.node == comp_coup_ref.node);
+        CHECK(math_topo.fill_in == fill_in_ref);
+    }
+
+    SUBCASE("7 nodes") {
+        // {
+        //     0: [1, 5, 6],
+        //     1: [2, 4, 5, 3, 6],
+        //     2: [3, 6]
+        //     3: [4],
+        //     4: [5],
+        // }
+
+        // component topology
+        ComponentTopology comp_topo{};
+        comp_topo.n_node = 7;
+        comp_topo.branch_node_idx = {
+            {0, 1}, // 0
+            {1, 2}, // 1
+            {2, 3}, // 2
+            {3, 4}, // 3
+            {4, 5}, // 4
+            {0, 5}, // 5
+            {1, 4}, // 6
+            {6, 0}, // 7
+            {6, 2}, // 8
+            {5, 1}, // 9
+            {3, 1}, // 10
+            {6, 1}, // 11
+            {2, 1}, // 12
+        };
+        comp_topo.source_node_idx = {0};
+        // component connection
+        ComponentConnections comp_conn{};
+        comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
+        comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
+        comp_conn.source_connected = {1};
+        // result
+        TopologicalComponentToMathCoupling comp_coup_ref{};
+        comp_coup_ref.node = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {0, 4}, {0, 5}, {0, 6}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {1, 6}, {6, 4}};
+
+        Topology topo{comp_topo, comp_conn};
+        auto pair = topo.build_topology();
+        auto const& topo_comp_coup = *pair.second;
+        auto const& math_topo = *pair.first[0];
+        CHECK(topo_comp_coup.node == comp_coup_ref.node);
+        CHECK(math_topo.fill_in == fill_in_ref);
+    }
 }
 
 } // namespace power_grid_model

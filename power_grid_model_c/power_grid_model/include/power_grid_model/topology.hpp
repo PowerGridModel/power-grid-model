@@ -19,6 +19,8 @@
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/graph/minimum_degree_ordering.hpp>
 
+#include <iostream>
+
 // build topology of the grid
 // divide grid into several math models
 // start search from a source
@@ -279,55 +281,100 @@ class Topology {
     // return list of fill-ins when factorize the matrix
     std::vector<BranchIdx> reorder_node(std::vector<Idx>& dfs_node,
                                         std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
-        std::vector<BranchIdx> fill_in;
-        // make a copy and clear current vector
-        std::vector<Idx> const dfs_node_copy(dfs_node);
-        dfs_node.clear();
+        // std::vector<BranchIdx> fill_in;
+        // // make a copy and clear current vector
+        // std::vector<Idx> const dfs_node_copy(dfs_node);
+        // dfs_node.clear();
 
-        // loop all back edges assign all nodes before the back edges as inside cycle
-        for (auto const& back_edge : back_edges) {
-            GraphIdx node_in_cycle = back_edge.first;
-            // loop back from source in the predecessor tree
-            // stop if it is already marked as in cycle
-            while (node_status_[node_in_cycle] != -2) {
-                // assign cycle status and go to predecessor
-                node_status_[node_in_cycle] = -2;
-                node_in_cycle = predecessors_[node_in_cycle];
-            }
-        }
+        // // loop all back edges assign all nodes before the back edges as inside cycle
+        // for (auto const& back_edge : back_edges) {
+        //     GraphIdx node_in_cycle = back_edge.first;
 
-        // copy all the far-end non-cyclic node, in reverse order
-        std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
-                     [this](Idx x) { return node_status_[x] == -1; });
-        // copy all cyclic node
-        std::vector<Idx> cyclic_node;
-        std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
-                     [this](Idx x) { return node_status_[x] == -2; });
-        GraphIdx const n_cycle_node = cyclic_node.size();
-        // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
-        if (n_cycle_node < 4) {
-            std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
-            return fill_in;
-        }
+        //     // loop back from source in the predecessor tree
+        //     // stop if it is already marked as in cycle
+        //     while (node_status_[node_in_cycle] != -2) {
+        //         // assign cycle status and go to predecessor
+        //         node_status_[node_in_cycle] = -2;
+        //         node_in_cycle = predecessors_[node_in_cycle];
+        //     }
+        // }
 
+        // // copy all the far-end non-cyclic node, in reverse order
+        // std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
+        //              [this](Idx x) { return node_status_[x] == -1; });
+        // // copy all cyclic node
+        // std::vector<Idx> cyclic_node;
+        // std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
+        //              [this](Idx x) { return node_status_[x] == -2; });
+        // GraphIdx const n_cycle_node = cyclic_node.size();
+        // // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
+        // if (n_cycle_node < 4) {
+        //     std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
+        //     return fill_in;
+        // }
+        // for (GraphIdx i = 0; i != n_cycle_node; ++i) {
+        //     node_status_[cyclic_node[i]] = static_cast<Idx>(i);
+        // }
+
+        // // build graph lambda
+        // auto const build_graph = [&](ReorderGraph& g) {
+        //     // add edges
+        //     for (GraphIdx i = 0; i != n_cycle_node; ++i) {
+        //         // loop all edges of vertex i
+        //         auto const global_i = static_cast<GraphIdx>(cyclic_node[i]);
+        //         BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
+        //             // skip if j is not part of cyclic sub graph
+        //             if (node_status_[global_j] == -1) {
+        //                 continue;
+        //             }
+        //             auto const j = static_cast<GraphIdx>(node_status_[global_j]);
+        //             if (!boost::edge(i, j, g).second) {
+        //                 boost::add_edge(i, j, g);
+        //             }
+        //         }
+        //     }
+        // };
         // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
         std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
         for (Idx node_idx : dfs_node) {
-            unique_nearest_neighbours[node_idx] = {};
+            auto predecessor = static_cast<Idx>(predecessors_[node_idx]);
+            std::cout << node_idx << ": predecessor = " << predecessor << "\n";
+            if (predecessor != node_idx) {
+                unique_nearest_neighbours[node_idx] = {predecessor};
+            }
         }
+        std::cout << std::endl;
         for (auto const& edge : back_edges) {
             auto const from{static_cast<Idx>(edge.first)};
             auto const to{static_cast<Idx>(edge.second)};
+            std::cout << "back edge: " << from << ", " << to;
             if (!detail::in_graph(std::pair{from, to}, unique_nearest_neighbours)) {
+                std::cout << " (new)";
                 unique_nearest_neighbours[from].push_back(to);
             }
+            std::cout << "\n";
         }
+        std::cout << std::endl;
 
-        auto alpha_fills = minimum_degree_ordering(unique_nearest_neighbours);
+        for (auto const& [node, neighbours] : unique_nearest_neighbours) {
+            std::cout << "node: " << node << ", adjacent = [";
+            for (auto neighbour : neighbours) {
+                std::cout << neighbour << ", ";
+            }
+            std::cout << "]\n";
+        }
+        std::cout << std::endl;
+
+        auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
 
         // TODO(mgovers): set node_status_
         // TODO(mgovers): fill dfs_node = dfs_node[alpha_fills.first]
         // TODO(mgovers): construct fill_in = alpha_fills.second
+        std::vector<BranchIdx> fill_in;
+        for (auto [from, to] : fills) {
+            fill_in.push_back({reordered[from], reordered[to]});
+        }
+        dfs_node = std::move(reordered);
 
         return fill_in;
     }
