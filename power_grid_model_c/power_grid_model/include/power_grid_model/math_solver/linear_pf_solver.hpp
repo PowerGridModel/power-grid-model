@@ -43,9 +43,6 @@ if there are sources
 namespace power_grid_model {
 
 template <bool sym> class LinearPFSolver {
-  private:
-    // block size 1 for symmetric, 3 for asym
-    static constexpr Idx bsr_block_size_ = sym ? 1 : 3;
 
   public:
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
