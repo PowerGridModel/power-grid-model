@@ -111,36 +111,60 @@ struct DenseMapping {
 
 inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
     auto const n_A = static_cast<Idx>(idx_B_in_A.size());
+    auto const r = std::max_element(idx_B_in_A.begin(), idx_B_in_A.end());
+    // for counting sort nr_of_operations = 1 + 3*n_A + 2*n_B + 2*n_A + 2*n_B - 1 + 1 + n_A + 1 + 14 * n_A
+    // nr_of_operations = 20*n_A + 4*n_B + 2
+    // auto const c = 20*n_A + 4*n_B + 2
+    // if (n_A * log(n_A) < c * r){
 
+    // } else {
     using DenseEntry = std::pair<Idx, Idx>;
-    // entries vector with size n_A
+
+    // 1
     std::vector<DenseEntry> entries(n_A);
-    // idx_B_in_A{3, 5, 2, 1, 1, 2}, then count = {0, 1, 2, 3, 4, 5} since count is affected by the length of
-    // idx_B_in_A j_B is an element from idx_B_in_A, and i_A is the current value from IdxCount{0} returns
-    // entries[{0,3},{1,5},{2,2},{3,1},{4,1},{5,2}]
+
+    // n_A * 1, since the transform operation will be performed n_A times and it only does one operation - returning the
+    // dense entry
     std::transform(idx_B_in_A.cbegin(), idx_B_in_A.cend(), IdxCount{0}, entries.begin(), [](Idx j_B, Idx i_A) {
         return DenseEntry{i_A, j_B};
     });
 
     DenseMapping dense_mapping;
 
+    // n_A
     dense_mapping.indvector.resize(n_A);
-    // size of reorder will be 6
+    // n_A
     dense_mapping.reorder.resize(n_A);
 
     IdxVector xndvector;
+    // n_B
     xndvector.resize(n_B);
-
+    // n_B
     IdxVector counter(n_B, 0);
 
+    // entries have the same size as idx_B_in_A, thus n_A * 2. One for access, one for incrementing
     for (auto const& entry : entries) {
         ++counter[entry.second];
     }
 
+    // Loop over counter is n_B, but the addition does not happen on the first element so n_B - 1?
+    // Placing the values in xndvector is n_B, thus 2n_B - 1?
     std::inclusive_scan(counter.cbegin(), counter.cend(), xndvector.begin());
 
     // {0,3},{1,5},{2,2},{3,1},{4,1},{5,2}
 
+    // auto it_entry = entries.crbegin() should be 1
+    // it_entry != entries.crend() should be n_A + 1, since it does all the operations including
+    // the final one to check whether the condition does not hold anymore
+    // ++it_entry will be n_A
+    // Inside the loop:
+    // dense_mapping.indvector[xndvector[idx_B_in_A[it_entry->first]] - 1] will be 5 * n_A
+    // idx_B_in_A[it_entry->first] should then be 2 * n_A
+    // the first line becomes 5 * n_A + n_A(for assigning) + 2 * n_A = 8 * n_A
+    // dense_mapping.reorder[--xndvector[it_entry->second]] will be 4 * n_A
+    // it_entry->first will be n_A
+    // total second line will be 6 * n_A
+    // total both lines = 8 * n_A + 6 * n_A = 14 * n_A
     for (auto it_entry = entries.crbegin(); it_entry != entries.crend(); ++it_entry) {
         dense_mapping.indvector[xndvector[idx_B_in_A[it_entry->first]] - 1] = idx_B_in_A[it_entry->first];
         dense_mapping.reorder[--xndvector[it_entry->second]] = it_entry->first;

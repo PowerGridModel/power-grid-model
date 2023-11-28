@@ -28,4 +28,5 @@ TEST_CASE("Test dense mapping") {
     CHECK(mapping_2.indvector.end() - 1 == std::max_element(mapping_2.indvector.begin(), mapping_2.indvector.end()));
 }
 
+// matrix 1 to million, log the time it takes.
 } // namespace power_grid_model
