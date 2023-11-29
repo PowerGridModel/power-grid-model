@@ -135,12 +135,12 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 #### Electric Model
 
-`line` is described by a π model, where 
+`line` is described by a $\pi$ model, where 
 
 $$
    \begin{eqnarray}
       & Z_{\text{series}}  =  r + \mathrm{j}x \\
-      & Y_{\text{shunt}}  =  2 \pi fc/(\tan \sigma +\mathrm{j})
+      & Y_{\text{shunt}}  =  \frac{2 \pi fc}{\tan \sigma +\mathrm{j}}
    \end{eqnarray}
 $$
 
@@ -202,12 +202,12 @@ increased.
 ```
 
 #### Electric Model
-`transformer` is described by a π model, where $Z_{\text{series}}$ can be computed as
+`transformer` is described by a $\pi$ model, where $Z_{\text{series}}$ can be computed as
 
 $$
     \begin{eqnarray} 
-        & |Z_{\text{series}}| = u_k / z_{\text{base}}\\ 
-        &\mathrm{Re}(Z_{\text{series}}) = (p_k / s_n) / z_{\text{base}}\\
+        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\ 
+        &\mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}}\\
         &\mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
     \end{eqnarray}
 $$
@@ -216,8 +216,8 @@ and $Y_{\text{shunt}}$ can be computed as
 
 $$
     \begin{eqnarray} 
-        &|Y_{\text{shunt}}| = i_0 / y_{\text{base}} \\
-        &\mathrm{Re}(Y_{\text{shunt}}) = (s_n / p_0) / y_{\text{base}} \\
+        &|Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
+        &\mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
         &\mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
    \end{eqnarray}
 $$
@@ -391,21 +391,21 @@ Its value can be computed using following equations:
 
 $$
    \begin{eqnarray} 
-        & z_{\text{source}} = s_{\text{base}} / s_k \\
-        & x_1 = z_{\text{source}} \times \sqrt{1+ {r_{\text{x, ratio}}}^2}\\
-        & r_1 =  x_1 \times r_{\text{x, ratio}}
+        & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
+        & x_1 = z_{\text{source}} \sqrt{1+ (\frac{r}{x})^2}\\
+        & r_1 =  x_1 \cdot (\frac{r}{x})^2
    \end{eqnarray}
 $$
 
-where $s_{\text{base}}$ is a constant value $10^6$.
+where $s_{\text{base}}$ is a constant value $10^6$, and $\frac{r}{x}$ indicates `rx_ratio` as input.
 
 - for zero sequence, 
 
 $$
    \begin{eqnarray} 
-        &z_{\text{source, 0}} = z_{\text{source}} \times z_{\text{01, ratio}}\\
-        &x_0 = z_{\text{source, 0}} \times \sqrt{1+ {r_{\text{x, ratio}}}^2}\\
-        &r_0= x_0 \times r_{\text{x, ratio}}
+        &z_{\text{source, 0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
+        &x_0 = z_{\text{source, 0}} \sqrt{1+ (\frac{r}{x})^2}\\
+        &r_0= x_0 \cdot (\frac{r}{x})^2
    \end{eqnarray}
 $$
 
@@ -441,7 +441,7 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 
 ##### Electric model
 
-`generic_load_gen` are modelled by using the so-called ZIP load model in power-grid-model, 
+`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model, 
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
 The injection of each ZIP model type can be computed as follows:
@@ -450,7 +450,7 @@ The injection of each ZIP model type can be computed as follows:
 
 $$
    \begin{eqnarray} 
-        S = S_{\text{specified}} \times \bar{u}^2
+        S = S_{\text{specified}} \cdot \bar{u}^2
    \end{eqnarray}
 $$
 
@@ -458,7 +458,7 @@ $$
 
 $$
    \begin{eqnarray} 
-        S = S_{\text{specified}} \times \bar{u}
+        S = S_{\text{specified}} \cdot \bar{u}
    \end{eqnarray}
 $$
 
