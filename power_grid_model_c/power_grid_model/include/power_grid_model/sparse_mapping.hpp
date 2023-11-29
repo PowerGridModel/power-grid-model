@@ -7,7 +7,7 @@
 #define POWER_GRID_MODEL_SPARSE_MAPPING_HPP
 
 #include "power_grid_model.hpp"
-
+#include <ranges>
 /*
 Sparse mapping technique
 Given a input idx array: idx_B_in_A[...] to couple an array of A and an array of B,
@@ -116,9 +116,22 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
     // nr_of_operations = 20*n_A + 4*n_B + 2
     // auto const c = 20*n_A + 4*n_B + 2
     // if (n_A * log(n_A) < c * r){
-
     // } else {
+
     using DenseEntry = std::pair<Idx, Idx>;
+    // std::vector<DenseEntry> mapping_to_from;
+
+    // auto index_range = std::ranges::views::iota(0, static_cast<Idx>(idx_B_in_A.size()));
+    // std::ranges::transform(idx_B_in_A, index_range,
+    //                     std::back_inserter(mapping_to_from),
+    //                     [](Idx value, Idx orig_idx){ return std::pair{value, orig_idx}; });
+    // std::ranges::sort(mapping_to_from);  // runs in O(n log n)
+
+    // DenseMapping result;
+    // std::ranges::transform(mapping_to_from, std::back_inserter(result.indvector),
+    //                     [](DenseEntry const& to_from) { return to_from.first; } );
+    // std::ranges::transform(mapping_to_from, std::back_inserter(result.reorder),
+    //                     [](DenseEntry const& to_from) { return to_from.second; });
 
     // 1
     std::vector<DenseEntry> entries(n_A);
