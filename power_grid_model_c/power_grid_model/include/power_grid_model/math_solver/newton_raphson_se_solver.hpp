@@ -24,8 +24,8 @@ namespace math_model_impl {
 // solver
 template <bool sym> class NewtonRaphsonSESolver {
   public:
-    NewtonRaphsonSESolver(YBus<sym> const& /* y_bus */, std::shared_ptr<MathModelTopology const> const /* topo_ptr */) {
-    }
+    NewtonRaphsonSESolver(YBus<sym> const& /* y_bus */,
+                          std::shared_ptr<MathModelTopology const> const& /* topo_ptr */) {}
 
     MathOutput<sym> run_state_estimation(YBus<sym> const& /* y_bus */, StateEstimationInput<sym> const& /* input */,
                                          double /* err_tol */, Idx /* max_iter */,
