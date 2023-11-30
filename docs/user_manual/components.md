@@ -139,8 +139,8 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 $$
    \begin{eqnarray}
-      & Z_{\text{series}}  =  r + \mathrm{j}x \\
-      & Y_{\text{shunt}}  =  \frac{2 \pi fc}{\tan \sigma +\mathrm{j}}
+      & Z_{\text{series}} = r + \mathrm{j}x \\
+      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \sigma +\mathrm{j}}
    \end{eqnarray}
 $$
 
@@ -207,8 +207,8 @@ increased.
 $$
     \begin{eqnarray} 
         & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\ 
-        &\mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}}\\
-        &\mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
+        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}} \\
+        & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
     \end{eqnarray}
 $$
 
@@ -216,13 +216,13 @@ and $Y_{\text{shunt}}$ can be computed as
 
 $$
     \begin{eqnarray} 
-        &|Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
-        &\mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
-        &\mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
+        & |Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
+        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
+        & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
    \end{eqnarray}
 $$
 
-where $z_{\text{base}} = 1/ y_{\text{base}}= s_n / ({u_2}^2)$.
+where $z_{\text{base}} = 1 / y_{\text{base}} = s_n / ({u_2}^2)$.
 
 ## Branch3
 
@@ -392,8 +392,8 @@ Its value can be computed using following equations:
 $$
    \begin{eqnarray} 
         & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
-        & x_1 = z_{\text{source}} \sqrt{1+ (\frac{r}{x})^2}\\
-        & r_1 =  x_1 \cdot (\frac{r}{x})^2
+        & x_1 = z_{\text{source}} \sqrt{1+ \left(\frac{r}{x}\right)^2} \\
+        & r_1 = x_1 \cdot \left(\frac{r}{x}\right)^2
    \end{eqnarray}
 $$
 
@@ -403,9 +403,9 @@ where $s_{\text{base}}$ is a constant value $10^6$, and $\frac{r}{x}$ indicates 
 
 $$
    \begin{eqnarray} 
-        &z_{\text{source, 0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
-        &x_0 = z_{\text{source, 0}} \sqrt{1+ (\frac{r}{x})^2}\\
-        &r_0= x_0 \cdot (\frac{r}{x})^2
+        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
+        & x_0 = z_{\text{source,0}} \sqrt{1 + \left(\frac{r}{x}\right)^2}\\
+        & r_0 = x_0 \cdot \left(\frac{r}{x}\right)^2
    \end{eqnarray}
 $$
 
