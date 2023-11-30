@@ -363,9 +363,10 @@ Multiple appliance measurements (power measurements) on one bus are aggregated a
 
 $$
    \begin{eqnarray}
-            \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k 
+            \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k
             \quad\text{and}\quad
             \sigma_P^2 = \sum_{k=1}^{N_{appliance}} \sigma_{P,k}^2
+            \quad\text{and}\quad
             \sigma_Q^2 = \sum_{k=1}^{N_{appliance}} \sigma_{Q,k}^2
    \end{eqnarray}
 $$

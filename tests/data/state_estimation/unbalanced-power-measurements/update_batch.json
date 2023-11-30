@@ -1,0 +1,124 @@
+{
+    "version": "1.0",
+    "type": "update",
+    "is_batch": true,
+    "attributes": {},
+    "data": [
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "p_sigma": 1e4,
+                    "q_sigma": 1e4
+                },
+                {
+                    "id": 22,
+                    "p_sigma": 2e4,
+                    "q_sigma": 2e4
+                },
+                {
+                    "id": 23,
+                    "p_sigma": 2e5,
+                    "q_sigma": 2e5
+                },
+                {
+                    "id": 24,
+                    "p_sigma": 3e5,
+                    "q_sigma": 3e5
+                },
+                {
+                    "id": 25,
+                    "p_sigma": 2e5,
+                    "q_sigma": 2e5
+                }
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "p_sigma": 1.4e4,
+                    "q_sigma": 2e3
+                },
+                {
+                    "id": 22,
+                    "p_sigma": 2.8e4,
+                    "q_sigma": 4e3
+                },
+                {
+                    "id": 23,
+                    "p_sigma": 2.8e5,
+                    "q_sigma": 4e4
+                },
+                {
+                    "id": 24,
+                    "p_sigma": 4.2e5,
+                    "q_sigma": 6e4
+                },
+                {
+                    "id": 25,
+                    "p_sigma": 2.8e5,
+                    "q_sigma": 4e4
+                }
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "p_sigma": 14142.135588375611,
+                    "q_sigma": 1
+                },
+                {
+                    "id": 22,
+                    "p_sigma": 28284.271176751223,
+                    "q_sigma": 2
+                },
+                {
+                    "id": 23,
+                    "p_sigma": 282842.71176751223,
+                    "q_sigma": 20
+                },
+                {
+                    "id": 24,
+                    "p_sigma": 424264.06765126834,
+                    "q_sigma": 30
+                },
+                {
+                    "id": 25,
+                    "p_sigma": 282842.71176751223,
+                    "q_sigma": 20
+                }
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "p_sigma": 1,
+                    "q_sigma": 14142.135588375611
+                },
+                {
+                    "id": 22,
+                    "p_sigma": 2,
+                    "q_sigma": 28284.271176751223
+                },
+                {
+                    "id": 23,
+                    "p_sigma": 20,
+                    "q_sigma": 282842.71176751223
+                },
+                {
+                    "id": 24,
+                    "p_sigma": 30,
+                    "q_sigma": 424264.06765126834
+                },
+                {
+                    "id": 25,
+                    "p_sigma": 20,
+                    "q_sigma": 282842.71176751223
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,144 @@
+{
+    "version": "1.0",
+    "type": "sym_output",
+    "is_batch": true,
+    "attributes": {},
+    "data": [
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "energized": 1,
+                    "p_residual": -336838.537725876,
+                    "q_residual": 65028.46870697718
+                },
+                {
+                    "id": 22,
+                    "energized": 1,
+                    "p_residual": -1347354.150903504,
+                    "q_residual": 260113.8748279088
+                },
+                {
+                    "id": 23,
+                    "energized": 1,
+                    "p_residual": -1993921.872495188,
+                    "q_residual": 20122.30508131003
+                },
+                {
+                    "id": 24,
+                    "energized": 1,
+                    "p_residual": 2990971.781561474,
+                    "q_residual": -462589.7517884078
+                },
+                {
+                    "id": 25,
+                    "energized": 1,
+                    "p_residual": -2012857.220436906,
+                    "q_residual": 207325.1031722118
+                }
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "energized": 1,
+                    "p_residual": -336838.537725876,
+                    "q_residual": 65028.46870697718
+                },
+                {
+                    "id": 22,
+                    "energized": 1,
+                    "p_residual": -1347354.150903504,
+                    "q_residual": 260113.8748279088
+                },
+                {
+                    "id": 23,
+                    "energized": 1,
+                    "p_residual": -1993921.872495188,
+                    "q_residual": 20122.30508131003
+                },
+                {
+                    "id": 24,
+                    "energized": 1,
+                    "p_residual": 2990971.781561474,
+                    "q_residual": -462589.7517884078
+                },
+                {
+                    "id": 25,
+                    "energized": 1,
+                    "p_residual": -2012857.220436906,
+                    "q_residual": 207325.1031722118
+                }
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "energized": 1,
+                    "p_residual": -336838.537725876,
+                    "q_residual": 65028.46870697718
+                },
+                {
+                    "id": 22,
+                    "energized": 1,
+                    "p_residual": -1347354.150903504,
+                    "q_residual": 260113.8748279088
+                },
+                {
+                    "id": 23,
+                    "energized": 1,
+                    "p_residual": -1993921.872495188,
+                    "q_residual": 20122.30508131003
+                },
+                {
+                    "id": 24,
+                    "energized": 1,
+                    "p_residual": 2990971.781561474,
+                    "q_residual": -462589.7517884078
+                },
+                {
+                    "id": 25,
+                    "energized": 1,
+                    "p_residual": -2012857.220436906,
+                    "q_residual": 207325.1031722118
+                }
+            ]
+        },
+        {
+            "sym_power_sensor": [
+                {
+                    "id": 21,
+                    "energized": 1,
+                    "p_residual": -336838.537725876,
+                    "q_residual": 65028.46870697718
+                },
+                {
+                    "id": 22,
+                    "energized": 1,
+                    "p_residual": -1347354.150903504,
+                    "q_residual": 260113.8748279088
+                },
+                {
+                    "id": 23,
+                    "energized": 1,
+                    "p_residual": -1993921.872495188,
+                    "q_residual": 20122.30508131003
+                },
+                {
+                    "id": 24,
+                    "energized": 1,
+                    "p_residual": 2990971.781561474,
+                    "q_residual": -462589.7517884078
+                },
+                {
+                    "id": 25,
+                    "energized": 1,
+                    "p_residual": -2012857.220436906,
+                    "q_residual": 207325.1031722118
+                }
+            ]
+        }
+    ]
+}
