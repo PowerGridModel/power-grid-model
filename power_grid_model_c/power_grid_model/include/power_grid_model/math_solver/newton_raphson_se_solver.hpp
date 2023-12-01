@@ -203,8 +203,7 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                                     diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance));
                             block.g() += dot(shunt_addtion_transpose_weight, shunt_addition);
 
-                            auto del_shunt_power = measured_value.shunt_power(obj);
-                            -calculate_shunt_power(yii, ui);
+                            auto del_shunt_power = measured_value.shunt_power(obj) -calculate_shunt_power(yii, ui);
                             block.eta() += dot(shunt_addtion_transpose_weight, del_shunt_power);
                         }
                     }
