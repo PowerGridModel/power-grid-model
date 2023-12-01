@@ -281,37 +281,37 @@ class Topology {
     // return list of fill-ins when factorize the matrix
     std::vector<BranchIdx> reorder_node(std::vector<Idx>& dfs_node,
                                         std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
-        // std::vector<BranchIdx> fill_in;
-        // // make a copy and clear current vector
-        // std::vector<Idx> const dfs_node_copy(dfs_node);
-        // dfs_node.clear();
+        std::vector<BranchIdx> fill_in;
+        // make a copy and clear current vector
+        std::vector<Idx> const dfs_node_copy(dfs_node);
+        dfs_node.clear();
 
-        // // loop all back edges assign all nodes before the back edges as inside cycle
-        // for (auto const& back_edge : back_edges) {
-        //     GraphIdx node_in_cycle = back_edge.first;
+        // loop all back edges assign all nodes before the back edges as inside cycle
+        for (auto const& back_edge : back_edges) {
+            GraphIdx node_in_cycle = back_edge.first;
 
-        //     // loop back from source in the predecessor tree
-        //     // stop if it is already marked as in cycle
-        //     while (node_status_[node_in_cycle] != -2) {
-        //         // assign cycle status and go to predecessor
-        //         node_status_[node_in_cycle] = -2;
-        //         node_in_cycle = predecessors_[node_in_cycle];
-        //     }
-        // }
+            // loop back from source in the predecessor tree
+            // stop if it is already marked as in cycle
+            while (node_status_[node_in_cycle] != -2) {
+                // assign cycle status and go to predecessor
+                node_status_[node_in_cycle] = -2;
+                node_in_cycle = predecessors_[node_in_cycle];
+            }
+        }
 
-        // // copy all the far-end non-cyclic node, in reverse order
-        // std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
-        //              [this](Idx x) { return node_status_[x] == -1; });
-        // // copy all cyclic node
-        // std::vector<Idx> cyclic_node;
-        // std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
-        //              [this](Idx x) { return node_status_[x] == -2; });
-        // GraphIdx const n_cycle_node = cyclic_node.size();
-        // // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
-        // if (n_cycle_node < 4) {
-        //     std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
-        //     return fill_in;
-        // }
+        // copy all the far-end non-cyclic node, in reverse order
+        std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
+                     [this](Idx x) { return node_status_[x] == -1; });
+        // copy all cyclic node
+        std::vector<Idx> cyclic_node;
+        std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
+                     [this](Idx x) { return node_status_[x] == -2; });
+        GraphIdx const n_cycle_node = cyclic_node.size();
+        // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
+        if (n_cycle_node < 4) {
+            std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
+            return fill_in;
+        }
         // for (GraphIdx i = 0; i != n_cycle_node; ++i) {
         //     node_status_[cyclic_node[i]] = static_cast<Idx>(i);
         // }
@@ -336,7 +336,7 @@ class Topology {
         // };
         // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
         std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
-        for (Idx node_idx : dfs_node) {
+        for (Idx node_idx : cyclic_node) {
             auto predecessor = static_cast<Idx>(predecessors_[node_idx]);
             std::cout << node_idx << ": predecessor = " << predecessor << "\n";
             if (predecessor != node_idx) {
@@ -367,14 +367,33 @@ class Topology {
 
         auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
 
-        // TODO(mgovers): set node_status_
-        // TODO(mgovers): fill dfs_node = dfs_node[alpha_fills.first]
-        // TODO(mgovers): construct fill_in = alpha_fills.second
-        std::vector<BranchIdx> fill_in;
+        std::ranges::transform(reordered, std::back_inserter(dfs_node),
+                               [&cyclic_node](Idx idx) { return cyclic_node[idx]; });
+
+        // TODO(mgovers): make this more efficient
+        auto const permuted_node_idx = [&dfs_node](Idx node_idx) {
+            return static_cast<Idx>(std::distance(dfs_node.begin(), std::ranges::find(dfs_node, node_idx)));
+        };
+
         for (auto [from, to] : fills) {
-            fill_in.push_back({reordered[from], reordered[to]});
+            auto from_reordered = permuted_node_idx(reordered[from]);
+            auto to_reordered = permuted_node_idx(reordered[to]);
+            fill_in.push_back({from_reordered, to_reordered});
         }
-        dfs_node = std::move(reordered);
+
+        std::cout << "reordered: [";
+        for (auto n : reordered) {
+            std::cout << n << ", ";
+        }
+        std::cout << "]\nfill_in (before reordening) : [";
+        for (auto [from, to] : fills) {
+            std::cout << "(" << from << ", " << to << "), ";
+        }
+        std::cout << "]\nfill_in (reordered) : [";
+        for (auto [from, to] : fill_in) {
+            std::cout << "(" << from << ", " << to << "), ";
+        }
+        std::cout << "\n" << std::endl;
 
         return fill_in;
     }
@@ -395,6 +414,7 @@ class Topology {
             Idx2D const i_math = comp_coup_.node[i];
             Idx2D const j_math = comp_coup_.node[j];
             Idx const math_group = [&]() {
+                // TODO(mgovers): rewrite
                 Idx group = -1;
                 if (i_status != 0 && i_math.group != -1) {
                     group = i_math.group;

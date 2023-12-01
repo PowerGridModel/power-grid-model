@@ -352,7 +352,7 @@ TEST_CASE("Test cycle reorder") {
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
         comp_coup_ref.node = {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}};
-        std::vector<BranchIdx> const fill_in_ref{{5, 3}, {4, 5}, {5, 8}, {6, 5}, {5, 7}};
+        std::vector<BranchIdx> const fill_in_ref{{3, 5}, {4, 5}, {5, 8}, {5, 6}, {5, 7}};
 
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
@@ -398,7 +398,7 @@ TEST_CASE("Test cycle reorder") {
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
         comp_coup_ref.node = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {0, 4}, {0, 5}, {0, 6}};
-        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {1, 6}, {6, 4}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {3, 6}, {4, 6}};
 
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();

@@ -11,6 +11,8 @@
 #include "../sparse_mapping.hpp"
 #include "../three_phase_tensor.hpp"
 
+#include <iostream> // TODO(mgovers) remove
+
 namespace power_grid_model {
 
 // hide implementation in inside namespace
@@ -152,6 +154,13 @@ struct YBusStructure {
                 y_bus_element.push_back(m.element);
             }
         }
+        for (size_t idx = 0; idx < vec_map_element.size(); ++idx) {
+            auto const& m = vec_map_element[idx];
+            std::cout << "idx = " << idx << ", pos = [" << m.pos.first << ", " << m.pos.second
+                      << "], element = {element_type = " << static_cast<Idx>(m.element.element_type)
+                      << ", idx = " << m.element.idx << "}\n";
+        }
+        std::cout << std::endl;
 
         // iterate the whole element include fill-in
         for (auto it_element = vec_map_element.cbegin(); it_element != vec_map_element.cend();

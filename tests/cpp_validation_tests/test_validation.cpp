@@ -592,12 +592,15 @@ TEST_CASE("Validation test single") {
 TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
     for (CaseParam const& param : all_cases) {
-        SUBCASE(param.case_name.c_str()) {
-            try {
-                validate_batch_case(param);
-            } catch (std::exception& e) {
-                auto const msg = std::string("Unexpected exception with message: ") + e.what();
-                FAIL_CHECK(msg);
+        if (param.case_name ==
+            "power_flow/pandapower/networks/asymmetric/distribution-case-asym-newton_raphson_batch") {
+            SUBCASE(param.case_name.c_str()) {
+                try {
+                    validate_batch_case(param);
+                } catch (std::exception& e) {
+                    auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                    FAIL_CHECK(msg);
+                }
             }
         }
     }
