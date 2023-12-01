@@ -97,6 +97,10 @@ inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& 
     output.bus_injection = y_bus.calculate_injection(output.u);
 }
 
+auto diagonal_inverse(RealValue<sym> const& value) {
+    return ComplexDiagonalTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};
+}
+
 } // namespace power_grid_model::common_solver_functions
 
 #endif

@@ -160,10 +160,13 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, ComplexValueVector<sym> const& current_u) {
         MathModelParam<sym> const& param = y_bus.math_model_param();
         IdxVector const& row_indptr = y_bus.row_indptr_lu();
         IdxVector const& col_indices = y_bus.col_indices_lu();
+        // get generated (measured/estimated) voltage phasor
+        // with current result voltage angle
+        ComplexValueVector<sym> u = measured_value.voltage(current_u);
 
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
@@ -203,7 +206,7 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                                     diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance));
                             block.g() += dot(shunt_addtion_transpose_weight, shunt_addition);
 
-                            auto del_shunt_power = measured_value.shunt_power(obj) -calculate_shunt_power(yii, ui);
+                            auto del_shunt_power = measured_value.shunt_power(obj) - calculate_shunt_power(yii, ui);
                             block.eta() += dot(shunt_addtion_transpose_weight, del_shunt_power);
                         }
                     }
@@ -219,40 +222,40 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                                 // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
                                 auto const& y_branch_start = param.branch_param[obj].value[measured_side * 2 + b0];
                                 auto const& y_branch_end = param.branch_param[obj].value[measured_side * 2 + b1];
-                                auto const& branch_addition = calculate_branch_block(yij, ui, uj);
+                                auto const& branch_addition_i = calculate_branch_block(yij, ui, uj);
+                                if (b0 == b1) {
+                                    auto const& del_branch_power =
+                                        measured_value.branch_power(obj) - calcualte_branch_power(yij, ui, uj);
+                                    block.eta() += dot(F_T_variance, del_branch_power);
+                                }
+                                auto const& branch_addition_j = calculate_branch_block(yij, ui, uj);
+
+                                auto const& F_T_variance = dot(hermitian_transpose(branch_addition),
+                                                               diagonal_inverse(power.p_variance + power.q_variance));
                                 auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
-                                block.g() +=
-                                    dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(power.p_variance + power.q_variance),
-                                        param.branch_param[obj].value[measured_side * 2 + b1]);
-                                block.q() += 0;   // TODO Fill RHS incrementally some combination of block.g()
-                                block.eta() += 0; // TODO Fill RHS incrementally some combination of block.g()
+                                block.g() += dot(F_T_variance, branch_addition);
                             }
                         }
-                    }
-                    Idx const k = bus_entry[row];
-                    // diagonal correction
-                    // del_pq has negative injection
-                    // H += (-Q)
-                    add_diag(data_jac_[k].h(), del_x_pq_[row].q());
-                    // N -= (-P)
-                    add_diag(data_jac_[k].n(), -del_x_pq_[row].p());
-                    // M -= (-P)
-                    add_diag(data_jac_[k].m(), -del_x_pq_[row].p());
-                    // L -= (-Q)
-                    add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
+                      }
+                    
                 }
+                
+
+                
                 // fill block with injection measurement
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
                     // Q_ij = Y_bus_ij
-                    block.q() = y_bus.admittance()[data_idx];
+                    block.q() = calculate_q_bus();
                     // R_ii = -variance, only diagonal
+                    block.tau() -= calculate_bus_injection_contribution()
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
                         auto const& injection = measured_value.bus_injection(row);
                         block.r() = ComplexTensor<sym>{
                             static_cast<ComplexValue<sym>>(-(injection.p_variance + injection.q_variance))};
+                        block.tau() += injection.value;
+                        block.q() -= 0; //TODO extra component
                     }
                 }
                 // injection measurement not exist
@@ -265,6 +268,8 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                     }
                 }
             }
+
+            // sum all row and add remaining part to block.qi
         }
 
         // loop all transpose entry for QH
@@ -281,67 +286,72 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
         sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
-    void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
-                     ComplexValueVector<sym> const& current_u) {
-        MathModelParam<sym> const& param = y_bus.math_model_param();
-        std::vector<BranchIdx> const branch_bus_idx = y_bus.math_topology().branch_bus_idx;
-        // get generated (measured/estimated) voltage phasor
-        // with current result voltage angle
-        ComplexValueVector<sym> u = measured_value.voltage(current_u);
+    auto g_sin_min_b_cos();
+    auto g_cos_min_b_sin();
+    auto g_cos_plus_b_sin();
+    auto g_sin_plus_b_cos();
 
-        // loop all bus to fill rhs
-        for (Idx bus = 0; bus != n_bus_; ++bus) {
-            Idx const data_idx = y_bus.bus_entry()[bus];
-            // reset rhs block to fill values
-            NRSERhs<sym>& rhs_block = x_rhs_[bus];
-            rhs_block = NRSERhs<sym>{};
-            // fill block with voltage measurement
-            if (measured_value.has_voltage(bus)) {
-                // eta += u / variance
-                rhs_block.eta() += u[bus] / measured_value.voltage_var(bus);
-            }
-            // fill block with branch, shunt measurement, need to convert to current
-            for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
-                 element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
-                Idx const obj = y_bus.y_bus_element()[element_idx].idx;
-                YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
-                // shunt
-                if (type == YBusElementType::shunt) {
-                    if (measured_value.has_shunt(obj)) {
-                        PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
-                        // eta -= Ys^H * (variance^-1) * i_shunt
-                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
-                                               diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
-                    }
-                }
-                // branch
-                else {
-                    // branch is either ff or tt
-                    IntS const b = static_cast<IntS>(type) / 2;
-                    assert(b == static_cast<IntS>(type) % 2);
-                    // measured at from-side: 0, to-side: 1
-                    for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
-                        // has measurement
-                        if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                            PowerSensorCalcParam<sym> const& m =
-                                std::invoke(branch_power_[measured_side], measured_value, obj);
-                            // the current needs to be calculated with the voltage of the measured bus side
-                            // NOTE: not the current bus!
-                            Idx const measured_bus = branch_bus_idx[obj][measured_side];
-                            // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
-                            rhs_block.eta() +=
-                                dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                    diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
-                        }
-                    }
-                }
-            }
-            // fill block with injection measurement, need to convert to current
-            if (measured_value.has_bus_injection(bus)) {
-                rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
-            }
-        }
-    }
+    // void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
+    //                  ComplexValueVector<sym> const& current_u) {
+    //     MathModelParam<sym> const& param = y_bus.math_model_param();
+    //     std::vector<BranchIdx> const branch_bus_idx = y_bus.math_topology().branch_bus_idx;
+    //     // get generated (measured/estimated) voltage phasor
+    //     // with current result voltage angle
+    //     ComplexValueVector<sym> u = measured_value.voltage(current_u);
+
+    //     // loop all bus to fill rhs
+    //     for (Idx bus = 0; bus != n_bus_; ++bus) {
+    //         Idx const data_idx = y_bus.bus_entry()[bus];
+    //         // reset rhs block to fill values
+    //         NRSERhs<sym>& rhs_block = x_rhs_[bus];
+    //         rhs_block = NRSERhs<sym>{};
+    //         // fill block with voltage measurement
+    //         if (measured_value.has_voltage(bus)) {
+    //             // eta += u / variance
+    //             rhs_block.eta() += u[bus] / measured_value.voltage_var(bus);
+    //         }
+    //         // fill block with branch, shunt measurement, need to convert to current
+    //         for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
+    //              element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
+    //             Idx const obj = y_bus.y_bus_element()[element_idx].idx;
+    //             YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
+    //             // shunt
+    //             if (type == YBusElementType::shunt) {
+    //                 if (measured_value.has_shunt(obj)) {
+    //                     PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
+    //                     // eta -= Ys^H * (variance^-1) * i_shunt
+    //                     rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
+    //                                            diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
+    //                 }
+    //             }
+    //             // branch
+    //             else {
+    //                 // branch is either ff or tt
+    //                 IntS const b = static_cast<IntS>(type) / 2;
+    //                 assert(b == static_cast<IntS>(type) % 2);
+    //                 // measured at from-side: 0, to-side: 1
+    //                 for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
+    //                     // has measurement
+    //                     if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
+    //                         PowerSensorCalcParam<sym> const& m =
+    //                             std::invoke(branch_power_[measured_side], measured_value, obj);
+    //                         // the current needs to be calculated with the voltage of the measured bus side
+    //                         // NOTE: not the current bus!
+    //                         Idx const measured_bus = branch_bus_idx[obj][measured_side];
+    //                         // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
+    //                         rhs_block.eta() +=
+    //                             dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
+    //                                 diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         // fill block with injection measurement, need to convert to current
+    //         if (measured_value.has_bus_injection(bus)) {
+    //             rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
+    //         }
+    //     }
+    // }
 
     double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle_measurement) {
         double max_dev = 0.0;
