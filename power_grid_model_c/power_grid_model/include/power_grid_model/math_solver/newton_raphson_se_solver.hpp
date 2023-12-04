@@ -12,7 +12,6 @@ iterative linear state estimation solver
 
 #include "block_matrix.hpp"
 #include "measured_values.hpp"
-#include "se_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -52,7 +51,7 @@ template <bool sym> using NRSERhs = NRSEUnknown<sym>;
    [Q, R ]
 ]
 */
-template <bool sym> class SEGainBlock : public Block<DoubleComplex, sym, true, 4> {
+template <bool sym> class NRSEGainBlock : public Block<DoubleComplex, sym, true, 4> {
   public:
     template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 4>::template GetterType<r, c>;
 
@@ -81,14 +80,16 @@ template <bool sym> class SEGainBlock : public Block<DoubleComplex, sym, true, 4
     GetterType<3, 3> r_Q_v() { return this->template get_val<3, 3>(); }
 };
 // solver
-template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRaphsonSESolver<sym>> {
+template <bool sym> class NewtonRaphsonSESolver {
 
   public:
     NewtonRaphsonSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
-        data_gain_(y_bus.nnz_lu()),
-        x_rhs_(y_bus.size()),
-        sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-        perm_(y_bus.size()) {}
+        : n_bus_{y_bus.size()},
+          math_topo_{std::move(topo_ptr)},
+          data_gain_(y_bus.nnz_lu()),
+          x_rhs_(y_bus.size()),
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          perm_(y_bus.size()) {}
 
     MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
                                          Idx max_iter, CalculationInfo& calculation_info) {
@@ -143,11 +144,6 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
     }
 
   private:
-    // array selection function pointer
-    static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
-    static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
-                                              &MeasuredValues<sym>::branch_to_power};
-
     Idx n_bus_;
     // shared topo data
     std::shared_ptr<MathModelTopology const> math_topo_;
@@ -160,18 +156,26 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, ComplexValueVector<sym> const& current_u) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
+                                ComplexValueVector<sym> const& current_u) {
         MathModelParam<sym> const& param = y_bus.math_model_param();
         IdxVector const& row_indptr = y_bus.row_indptr_lu();
         IdxVector const& col_indices = y_bus.col_indices_lu();
         // get generated (measured/estimated) voltage phasor
         // with current result voltage angle
-        ComplexValueVector<sym> u = measured_value.voltage(current_u);
+        // check if this is  the right way or not
+        ComplexValueVector<sym> measured_u = measured_value.voltage(current_u);
 
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
+            ComplexValue<sym> const ui = current_u[row];
+            RealValue<sym> const abs_ui = cabs(ui);
+            NRSERhs<sym>& rhs_block = x_rhs_[row];
+            rhs_block = NRSERhs<sym>{};
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
+                ComplexValue<sym> const uj = current_u[col];
+                RealValue<sym> const abs_uj = cabs(uj);
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
                 block = NRSEGainBlock<sym>{};
@@ -186,9 +190,14 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                     // G += 1.0 / variance
                     // for 3x3 tensor, fill diagonal
 
-                    // TODO split complex for NR
-                    block.g() += ComplexTensor<sym>{1.0 / measured_value.voltage_var(row)};
-                    block.eta() += (u[bus] - x_[bus]) / measured_value.voltage_var(bus);
+                    auto const& weight = ComplexTensor<sym>{1.0 / measured_value.voltage_var(row)};
+                    auto const& del_u = measured_u[row] - current_u[row];
+                    // block.g_P_theta() += weight;
+                    block.g_P_v() += weight;
+                    // block.g_Q_theta() += weight;
+                    block.g_Q_v() += weight;
+                    // block.eta_theta() += dot(weight, cabs(del_u));
+                    rhs_block.eta_v() += dot(weight, (del_u / cabs(del_u)));
                 }
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -198,64 +207,71 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += Ys^H * (variance^-1) * Ys
                             auto const& yii = param.shunt_param[obj];
-                            auto const& shunt_addtion = calculate_shunt_block(yii, ui);
-                            auto const& shunt_addtion_transpose_weight =
-                                dot(hermitian_transpose(shunt_addition),
-                                    diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance));
-                            block.g() += dot(shunt_addtion_transpose_weight, shunt_addition);
-
-                            auto del_shunt_power = measured_value.shunt_power(obj) - calculate_shunt_power(yii, ui);
-                            block.eta() += dot(shunt_addtion_transpose_weight, del_shunt_power);
+                            auto const& shunt_power = measured_value.shunt_power(obj);
+                            shunt_measurement_contribution(yii, ui, shunt_power, block, rhs_block);
                         }
                     }
-                    // branch
-                    else {
-                        // branch from- and to-side index at 0, and 1 position
-                        IntS const b0 = static_cast<IntS>(type) / 2;
-                        IntS const b1 = static_cast<IntS>(type) % 2;
-                        // measured at from-side: 0, to-side: 1
-                        for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
-                            // has measurement
-                            if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                                // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
-                                auto const& y_branch_start = param.branch_param[obj].value[measured_side * 2 + b0];
-                                auto const& y_branch_end = param.branch_param[obj].value[measured_side * 2 + b1];
-                                auto const& branch_addition_i = calculate_branch_block(yij, ui, uj);
-                                if (b0 == b1) {
-                                    auto const& del_branch_power =
-                                        measured_value.branch_power(obj) - calcualte_branch_power(yij, ui, uj);
-                                    block.eta() += dot(F_T_variance, del_branch_power);
-                                }
-                                auto const& branch_addition_j = calculate_branch_block(yij, ui, uj);
-
-                                auto const& F_T_variance = dot(hermitian_transpose(branch_addition),
-                                                               diagonal_inverse(power.p_variance + power.q_variance));
-                                auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
-                                block.g() += dot(F_T_variance, branch_addition);
-                            }
+                    else if (type == YBusElementType::bff){
+                        if (measured_value.has_branch_from(obj)) {
+                            auto const& yii = param.branch_param[obj].value[type];
+                            auto const& branch_from_power = measured_value.branch_from_power(obj);
+                            shunt_measurement_contribution(yii, ui, branch_from_power, block, rhs_block);
+                        } 
+                    }
+                    else if (type == YBusElementType::btt)  {
+                        if (measured_value.has_branch_to(obj)) {
+                            auto const& yii = param.shunt_param[obj].value[type];
+                            auto const& branch_to_power = measured_value.branch_to_power(obj);
+                            shunt_measurement_contribution(yii, ui, branch_to_power, block, rhs_block);
                         }
-                      }
-                    
+                    }
+                    else if (type == YBusElementType::bft)  {
+                        if (measured_value.has_branch_from(obj)) {
+                            auto const& yii = param.branch_param[obj].value[YBusElementType::bff];
+                            auto const& yij = param.branch_param[obj].value[YBusElementType::bft];
+                            auto const& branch_from_power = measured_value.branch_from_power(obj);
+                            branch_measurement_contribution(branch_from_power, yii, yij, ui, uj, block, rhs_block);
+                        }
+                    }
+                    else {
+                        if (measured_value.has_branch_to(obj)) {
+                            auto const& yii = param.branch_param[obj].value[YBusElementType::btt];
+                            auto const& yij = param.branch_param[obj].value[YBusElementType::btf];
+                            auto const& branch_to_power = measured_value.branch_to_power(obj);
+                            branch_measurement_contribution(branch_to_power, yii, yij, uj, ui, block, rhs_block);
+                        }
+                    }
                 }
-                
 
-                
                 // fill block with injection measurement
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
-                    // Q_ij = Y_bus_ij
-                    block.q() = calculate_q_bus();
+                    auto const& yij = y_bus.admittance()[data_idx];
+
                     // R_ii = -variance, only diagonal
-                    block.tau() -= calculate_bus_injection_contribution()
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
                         auto const& injection = measured_value.bus_injection(row);
-                        block.r() = ComplexTensor<sym>{
-                            static_cast<ComplexValue<sym>>(-(injection.p_variance + injection.q_variance))};
-                        block.tau() += injection.value;
-                        block.q() -= 0; //TODO extra component
+                        // add negative of the non-summation value then sign will be reversed when row is summed
+                        block.q_P_theta() += abs_ui * abs_ui * yij.imag();
+                        block.q_P_v() += -abs_ui * yij.real();
+                        block.q_Q_theta() += abs_ui * abs_ui * yij.real();
+                        block.q_Q_v() += abs_ui * yij.imag();
+
+                        rhs_block.tau_P() += injection.value.real();
+                        rhs_block.tau_Q() += injection.value.imag();
+
+                        block.r_P_theta() = -injection.p_variance * injection.p_variance;
+                        block.r_Q_V() = -injection.q_variance * injection.q_variance;
+                    } else {
+                        block.q_P_theta() += g_sin_minus_b_cos(yij, ui, uj);
+                        block.q_P_v() += g_cos_plus_b_sin(yij, ui, uj) / abs_uj;
+                        block.q_Q_theta() += -g_cos_plus_b_sin(yij, ui, uj);
+                        block.q_Q_v() += -g_sin_minus_b_cos(yij, ui, uj) / abs_uj;
+
+                        rhs_block.tau_P() += -g_cos_plus_b_sin(yij, ui, uj);
+                        rhs_block.tau_Q() += -g_sin_minus_b_cos(yij, ui, uj);
                     }
                 }
                 // injection measurement not exist
@@ -264,94 +280,106 @@ template <bool sym> class NewtonRaphsonSESolver : public SESolver<sym, NewtonRap
                     // R_ii = -1.0, only diagonal
                     // assign -1.0 to diagonal of 3x3 tensor, for asym
                     if (row == col) {
-                        block.r() = ComplexTensor<sym>{-1.0};
+                        block.r_P_theta() = RealValue<sym>{-1.0};
+                        block.r_Q_V() = RealValue<sym>{-1.0};
                     }
                 }
             }
-
-            // sum all row and add remaining part to block.qi
+            // extra component and sum of run
+            // auto const& diag_block = data_gain[y_bus.lu_diag()[row]];
+            // diag_block.q_P_theta() = -sum_gain_row();
+            // diag_block.q_P_v() = -sum_gain_row();
+            // diag_block.q_Q_theta() = -sum_gain_row();
+            // diag_block.q_Q_v() = -sum_gain_row();
         }
 
         // loop all transpose entry for QH
-        // assign the hermitian transpose of the transpose entry of Q
+        // assign the transpose of the transpose entry of Q
         for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
             // skip for fill-in
             if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
                 continue;
             }
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
-            data_gain_[data_idx_lu].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
+            data_gain_[data_idx_lu].qh_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
+            data_gain_[data_idx_lu].qh_P_V() = data_gain_[data_idx_tranpose].q_Q_theta();
+            data_gain_[data_idx_lu].qh_Q_theta() = data_gain_[data_idx_tranpose].q_P_V();
+            data_gain_[data_idx_lu].qh_Q_V() = data_gain_[data_idx_tranpose].q_Q_V();
         }
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
-    auto g_sin_min_b_cos();
-    auto g_cos_min_b_sin();
-    auto g_cos_plus_b_sin();
-    auto g_sin_plus_b_cos();
+    void branch_measurement_contribution(const auto& branch_power, const auto& yii, const auto& yij,
+                                         const ComplexValue<sym>& ui, const ComplexValue<sym>& uj,
+                                         NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block) {
+        RealValue<sym> const abs_ui = cabs(ui);
+        RealValue<sym> const abs_uj = cabs(uj);
+        ComplexDiagonalTensor<sym> const w_p = diagonal_inverse(branch_power.p_variance);
+        ComplexDiagonalTensor<sym> const w_q = diagonal_inverse(branch_power.q_variance);
 
-    // void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
-    //                  ComplexValueVector<sym> const& current_u) {
-    //     MathModelParam<sym> const& param = y_bus.math_model_param();
-    //     std::vector<BranchIdx> const branch_bus_idx = y_bus.math_topology().branch_bus_idx;
-    //     // get generated (measured/estimated) voltage phasor
-    //     // with current result voltage angle
-    //     ComplexValueVector<sym> u = measured_value.voltage(current_u);
+        RealValue<sym> const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
+        RealValue<sym> const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
 
-    //     // loop all bus to fill rhs
-    //     for (Idx bus = 0; bus != n_bus_; ++bus) {
-    //         Idx const data_idx = y_bus.bus_entry()[bus];
-    //         // reset rhs block to fill values
-    //         NRSERhs<sym>& rhs_block = x_rhs_[bus];
-    //         rhs_block = NRSERhs<sym>{};
-    //         // fill block with voltage measurement
-    //         if (measured_value.has_voltage(bus)) {
-    //             // eta += u / variance
-    //             rhs_block.eta() += u[bus] / measured_value.voltage_var(bus);
-    //         }
-    //         // fill block with branch, shunt measurement, need to convert to current
-    //         for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
-    //              element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
-    //             Idx const obj = y_bus.y_bus_element()[element_idx].idx;
-    //             YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
-    //             // shunt
-    //             if (type == YBusElementType::shunt) {
-    //                 if (measured_value.has_shunt(obj)) {
-    //                     PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
-    //                     // eta -= Ys^H * (variance^-1) * i_shunt
-    //                     rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
-    //                                            diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
-    //                 }
-    //             }
-    //             // branch
-    //             else {
-    //                 // branch is either ff or tt
-    //                 IntS const b = static_cast<IntS>(type) / 2;
-    //                 assert(b == static_cast<IntS>(type) % 2);
-    //                 // measured at from-side: 0, to-side: 1
-    //                 for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
-    //                     // has measurement
-    //                     if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-    //                         PowerSensorCalcParam<sym> const& m =
-    //                             std::invoke(branch_power_[measured_side], measured_value, obj);
-    //                         // the current needs to be calculated with the voltage of the measured bus side
-    //                         // NOTE: not the current bus!
-    //                         Idx const measured_bus = branch_bus_idx[obj][measured_side];
-    //                         // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
-    //                         rhs_block.eta() +=
-    //                             dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-    //                                 diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         // fill block with injection measurement, need to convert to current
-    //         if (measured_value.has_bus_injection(bus)) {
-    //             rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
-    //         }
-    //     }
-    // }
+        RealValue<sym> const dP_dt_i = -gs_minus_bc;
+        RealValue<sym> const dP_dV_i = gc_plus_bs / abs_ui;
+        RealValue<sym> const dQ_dt_i = gc_plus_bs;
+        RealValue<sym> const dQ_dV_i = gs_minus_bc / abs_ui;
+
+        RealValue<sym> const dP_dt_j = gs_minus_bc;
+        RealValue<sym> const dP_dV_j = gc_plus_bs / abs_uj;
+        RealValue<sym> const dQ_dt_j = -gc_plus_bs;
+        RealValue<sym> const dQ_dV_j = gs_minus_bc / abs_uj;
+
+        block.g_P_theta() += w_p * dP_dt_i * dP_dt_j + w_q * dQ_dt_i * dQ_dt_j;
+        block.g_Q_v() += w_p * dP_dV_i * dP_dV_j + w_q * dQ_dV_i * dQ_dV_j;
+
+        block.g_P_v() += w_p * dP_dt_i * dP_dV_j + w_q * dQ_dt_i * dQ_dV_j;
+        block.g_Q_theta() += w_p * dP_dt_j * dP_dV_i + w_q * dQ_dt_j * dQ_dV_i;
+
+        auto const del_branch_power_p = branch_power.value - gc_plus_bs;
+        auto const del_branch_power_q = branch_power.value - gs_minus_bc;
+
+        rhs_block.eta_p() = w_p * dP_dt_i * del_branch_power_p + w_p * dQ_dt_i * del_branch_power_q;
+        rhs_block.eta_q() = w_p * dP_dV_i * del_branch_power_p + w_p * dQ_dV_i * del_branch_power_q;
+    }
+
+    void shunt_measurement_contribution(const auto& yii, const ComplexValue<sym>& ui, const auto& shunt_power,
+                                        NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block) {
+
+        auto const calculated_shunt_power = calculate_shunt_power(yii, ui);
+        RealValue<sym> const abs_ui = cabs(ui);
+        auto const dP_dVi = 2 * abs_ui * yii.real();
+        auto const dQ_dVi = -2 * abs_ui * yii.imag();
+        auto const w_p = diagonal_inverse(shunt_power.p_variance);
+        auto const w_q = diagonal_inverse(shunt_power.q_variance);
+        block.g_Q_v() += w_p * dP_dVi * dP_dVi + w_q * dQ_dVi * dQ_dVi;
+
+        auto const del_shunt_power = shunt_power.value - ui * ui * yii;
+
+        rhs_block.eta_q() += w_p * dP_dVi * del_shunt_power.real() + w_q * dQ_dVi * del_shunt_power.imag();
+    }
+
+    RealTensor<sym> cos_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
+        // diag(Vi) * cos(theta_ij) * diag(Vj)
+        // Ui_r @* Uj_r + Ui_i @* Uj_i
+        // = cij
+        return vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
+    }
+
+    RealTensor<sym> sin_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
+        // diag(Vi) * sin(theta_ij) * diag(Vj)
+        // = Ui_i @* Uj_r - Ui_r @* Uj_i
+        // = sij
+        return vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
+    }
+
+    auto g_sin_minus_b_cos(ComplexTensor<sym> yij, ComplexValue<sym> ui, ComplexValue<sym> uj) {
+        return real(yij) * sin_ij(ui, uj) - imag(yij) * cos_ij(ui, uj);
+    }
+    auto g_cos_plus_b_sin(ComplexTensor<sym> yij, ComplexValue<sym> ui, ComplexValue<sym> uj) {
+        return real(yij) * cos_ij(ui, uj) + imag(yij) * sin_ij(ui, uj);
+    }
 
     double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle_measurement) {
         double max_dev = 0.0;

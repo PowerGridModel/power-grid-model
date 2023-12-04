@@ -16,7 +16,10 @@ iterative linear state estimation solver
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../exception.hpp"
+#include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
+#include "../timer.hpp"
 
 namespace power_grid_model {
 
@@ -68,7 +71,8 @@ template <bool sym> class IterativeLinearSESolver {
 
   public:
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
-        : SESolver{y_bus, topo_ptr},
+        : n_bus_{y_bus.size()},
+          math_topo_{std::move(topo_ptr)},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
