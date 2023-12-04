@@ -334,7 +334,7 @@ increased.
 
 `three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration. 
 However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star. 
-The values between windings eg. `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
+The values between windings (for eg. `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
 The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
