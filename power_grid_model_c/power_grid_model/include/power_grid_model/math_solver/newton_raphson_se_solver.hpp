@@ -7,7 +7,7 @@
 #define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_SE_SOLVER_HPP
 
 /*
-iterative linear state estimation solver
+Newton Raphson state estimation solver
 */
 
 #include "block_matrix.hpp"
@@ -207,39 +207,30 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            auto const& yii = param.shunt_param[obj];
-                            auto const& shunt_power = measured_value.shunt_power(obj);
-                            shunt_measurement_contribution(yii, ui, shunt_power, block, rhs_block);
+                            shunt_measurement_contribution(measured_value.shunt_power(obj), param.shunt_param[obj], ui,
+                                                           block, rhs_block);
                         }
-                    }
-                    else if (type == YBusElementType::bff){
+                    } else if (type == YBusElementType::bff) {
                         if (measured_value.has_branch_from(obj)) {
-                            auto const& yii = param.branch_param[obj].value[type];
-                            auto const& branch_from_power = measured_value.branch_from_power(obj);
-                            shunt_measurement_contribution(yii, ui, branch_from_power, block, rhs_block);
-                        } 
-                    }
-                    else if (type == YBusElementType::btt)  {
-                        if (measured_value.has_branch_to(obj)) {
-                            auto const& yii = param.shunt_param[obj].value[type];
-                            auto const& branch_to_power = measured_value.branch_to_power(obj);
-                            shunt_measurement_contribution(yii, ui, branch_to_power, block, rhs_block);
+                            shunt_measurement_contribution(measured_value.branch_from_power(obj),
+                                                           param.branch_param[obj].yff(), ui, block, rhs_block);
                         }
-                    }
-                    else if (type == YBusElementType::bft)  {
+                    } else if (type == YBusElementType::btt) {
+                        if (measured_value.has_branch_to(obj)) {
+                            shunt_measurement_contribution(measured_value.branch_to_power(obj),
+                                                           param.branch_param[obj].ytt(), ui, block, rhs_block);
+                        }
+                    } else if (type == YBusElementType::bft) {
                         if (measured_value.has_branch_from(obj)) {
-                            auto const& yii = param.branch_param[obj].value[YBusElementType::bff];
-                            auto const& yij = param.branch_param[obj].value[YBusElementType::bft];
-                            auto const& branch_from_power = measured_value.branch_from_power(obj);
-                            branch_measurement_contribution(branch_from_power, yii, yij, ui, uj, block, rhs_block);
+                            branch_measurement_contribution(measured_value.branch_from_power(obj),
+                                                            param.branch_param[obj].yff(),
+                                                            param.branch_param[obj].yft(), ui, uj, block, rhs_block);
                         }
-                    }
-                    else {
+                    } else {
                         if (measured_value.has_branch_to(obj)) {
-                            auto const& yii = param.branch_param[obj].value[YBusElementType::btt];
-                            auto const& yij = param.branch_param[obj].value[YBusElementType::btf];
-                            auto const& branch_to_power = measured_value.branch_to_power(obj);
-                            branch_measurement_contribution(branch_to_power, yii, yij, uj, ui, block, rhs_block);
+                            branch_measurement_contribution(measured_value.branch_to_power(obj),
+                                                            param.branch_param[obj].ytt(),
+                                                            param.branch_param[obj].ytf(), uj, ui, block, rhs_block);
                         }
                     }
                 }
@@ -259,19 +250,19 @@ template <bool sym> class NewtonRaphsonSESolver {
                         block.q_Q_theta() += abs_ui * abs_ui * yij.real();
                         block.q_Q_v() += abs_ui * yij.imag();
 
-                        rhs_block.tau_P() += injection.value.real();
-                        rhs_block.tau_Q() += injection.value.imag();
+                        rhs_block.tau_theta() += injection.value.real();
+                        rhs_block.tau_v() += injection.value.imag();
 
                         block.r_P_theta() = -injection.p_variance * injection.p_variance;
-                        block.r_Q_V() = -injection.q_variance * injection.q_variance;
+                        block.r_Q_v() = -injection.q_variance * injection.q_variance;
                     } else {
                         block.q_P_theta() += g_sin_minus_b_cos(yij, ui, uj);
                         block.q_P_v() += g_cos_plus_b_sin(yij, ui, uj) / abs_uj;
                         block.q_Q_theta() += -g_cos_plus_b_sin(yij, ui, uj);
                         block.q_Q_v() += -g_sin_minus_b_cos(yij, ui, uj) / abs_uj;
 
-                        rhs_block.tau_P() += -g_cos_plus_b_sin(yij, ui, uj);
-                        rhs_block.tau_Q() += -g_sin_minus_b_cos(yij, ui, uj);
+                        rhs_block.tau_theta() += -g_cos_plus_b_sin(yij, ui, uj);
+                        rhs_block.tau_v() += -g_sin_minus_b_cos(yij, ui, uj);
                     }
                 }
                 // injection measurement not exist
@@ -281,7 +272,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // assign -1.0 to diagonal of 3x3 tensor, for asym
                     if (row == col) {
                         block.r_P_theta() = RealValue<sym>{-1.0};
-                        block.r_Q_V() = RealValue<sym>{-1.0};
+                        block.r_Q_v() = RealValue<sym>{-1.0};
                     }
                 }
             }
@@ -302,29 +293,30 @@ template <bool sym> class NewtonRaphsonSESolver {
             }
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
             data_gain_[data_idx_lu].qh_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
-            data_gain_[data_idx_lu].qh_P_V() = data_gain_[data_idx_tranpose].q_Q_theta();
-            data_gain_[data_idx_lu].qh_Q_theta() = data_gain_[data_idx_tranpose].q_P_V();
-            data_gain_[data_idx_lu].qh_Q_V() = data_gain_[data_idx_tranpose].q_Q_V();
+            data_gain_[data_idx_lu].qh_P_v() = data_gain_[data_idx_tranpose].q_Q_theta();
+            data_gain_[data_idx_lu].qh_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
+            data_gain_[data_idx_lu].qh_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
         }
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
-    void branch_measurement_contribution(const auto& branch_power, const auto& yii, const auto& yij,
-                                         const ComplexValue<sym>& ui, const ComplexValue<sym>& uj,
-                                         NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block) {
+    void branch_measurement_contribution(PowerSensorCalcParam<sym> const& branch_power, ComplexTensor<sym> const& yii,
+                                         ComplexTensor<sym> const& yij, const ComplexValue<sym>& ui,
+                                         const ComplexValue<sym>& uj, NRSEGainBlock<sym>& block,
+                                         NRSERhs<sym>& rhs_block) {
         RealValue<sym> const abs_ui = cabs(ui);
         RealValue<sym> const abs_uj = cabs(uj);
-        ComplexDiagonalTensor<sym> const w_p = diagonal_inverse(branch_power.p_variance);
-        ComplexDiagonalTensor<sym> const w_q = diagonal_inverse(branch_power.q_variance);
+        RealValue<sym> const w_p = 1.0 / branch_power.p_variance;
+        RealValue<sym> const w_q = 1.0 / branch_power.q_variance;
 
         RealValue<sym> const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
         RealValue<sym> const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
 
         RealValue<sym> const dP_dt_i = -gs_minus_bc;
-        RealValue<sym> const dP_dV_i = gc_plus_bs / abs_ui;
+        RealValue<sym> const dP_dV_i = gc_plus_bs / abs_ui - 2 * abs_ui * yii.real();
         RealValue<sym> const dQ_dt_i = gc_plus_bs;
-        RealValue<sym> const dQ_dV_i = gs_minus_bc / abs_ui;
+        RealValue<sym> const dQ_dV_i = gs_minus_bc / abs_ui + 2 * abs_ui * yii.imag();
 
         RealValue<sym> const dP_dt_j = gs_minus_bc;
         RealValue<sym> const dP_dV_j = gc_plus_bs / abs_uj;
@@ -340,24 +332,24 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const del_branch_power_p = branch_power.value - gc_plus_bs;
         auto const del_branch_power_q = branch_power.value - gs_minus_bc;
 
-        rhs_block.eta_p() = w_p * dP_dt_i * del_branch_power_p + w_p * dQ_dt_i * del_branch_power_q;
-        rhs_block.eta_q() = w_p * dP_dV_i * del_branch_power_p + w_p * dQ_dV_i * del_branch_power_q;
+        rhs_block.eta_theta() = w_p * dP_dt_i * del_branch_power_p + w_p * dQ_dt_i * del_branch_power_q;
+        rhs_block.eta_v() = w_p * dP_dV_i * del_branch_power_p + w_p * dQ_dV_i * del_branch_power_q;
     }
 
-    void shunt_measurement_contribution(const auto& yii, const ComplexValue<sym>& ui, const auto& shunt_power,
-                                        NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block) {
+    void shunt_measurement_contribution(PowerSensorCalcParam<sym> const& shunt_power, ComplexTensor<sym> const& yii,
+                                        const ComplexValue<sym>& ui, NRSEGainBlock<sym>& block,
+                                        NRSERhs<sym>& rhs_block) {
 
-        auto const calculated_shunt_power = calculate_shunt_power(yii, ui);
         RealValue<sym> const abs_ui = cabs(ui);
         auto const dP_dVi = 2 * abs_ui * yii.real();
         auto const dQ_dVi = -2 * abs_ui * yii.imag();
-        auto const w_p = diagonal_inverse(shunt_power.p_variance);
-        auto const w_q = diagonal_inverse(shunt_power.q_variance);
+        auto const w_p = 1.0 / shunt_power.p_variance;
+        auto const w_q = 1.0 / shunt_power.q_variance;
         block.g_Q_v() += w_p * dP_dVi * dP_dVi + w_q * dQ_dVi * dQ_dVi;
 
         auto const del_shunt_power = shunt_power.value - ui * ui * yii;
 
-        rhs_block.eta_q() += w_p * dP_dVi * del_shunt_power.real() + w_q * dQ_dVi * del_shunt_power.imag();
+        rhs_block.eta_v() += w_p * dP_dVi * del_shunt_power.real() + w_q * dQ_dVi * del_shunt_power.imag();
     }
 
     RealTensor<sym> cos_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
@@ -390,15 +382,15 @@ template <bool sym> class NewtonRaphsonSESolver {
                 return 1.0;
             }
             if constexpr (sym) {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
+                return cabs(x_rhs_[math_topo_->slack_bus_].v()) / x_rhs_[math_topo_->slack_bus_].v();
             } else {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
+                return cabs(x_rhs_[math_topo_->slack_bus_].v()(0)) / x_rhs_[math_topo_->slack_bus_].v()(0);
             }
         }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // phase offset to calculated voltage as normalized
-            ComplexValue<sym> const u_normalized = x_rhs_[bus].u() * angle_offset;
+            ComplexValue<sym> const u_normalized = x_rhs_[bus].v() * angle_offset;
             // get dev of last iteration, get max
             double const dev = max_val(cabs(u_normalized - u[bus]));
             max_dev = std::max(dev, max_dev);
@@ -418,12 +410,12 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 };
 
-template class IterativeLinearSESolver<true>;
-template class IterativeLinearSESolver<false>;
+template class NewtonRaphsonSESolver<true>;
+template class NewtonRaphsonSESolver<false>;
 
 } // namespace math_model_impl
 
-template <bool sym> using IterativeLinearSESolver = math_model_impl::IterativeLinearSESolver<sym>;
+template <bool sym> using NewtonRaphsonSESolver = math_model_impl::NewtonRaphsonSESolver<sym>;
 
 } // namespace power_grid_model
 
