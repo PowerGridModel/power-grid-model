@@ -32,7 +32,7 @@ TEST_CASE("Test y bus") {
  ^         |             |
  |         |             5
   --- 0 ---              |
-                             X
+                         X
     */
 
     MathModelTopology topo{};

@@ -72,6 +72,7 @@ struct YBusStructure {
     // element of ybus of all components
     std::vector<YBusElement> y_bus_element;
     std::vector<Idx> y_bus_entry_indptr;
+    std::vector<MatrixPos> y_bus_pos_in_entries;
     // sequence entry of bus data
     IdxVector bus_entry;
     // LU csr structure for the y bus with sparse fill-ins
@@ -206,6 +207,7 @@ struct YBusStructure {
                 // all entries in the same position are looped, append indptr
                 // need to be offset by fill-in
                 y_bus_entry_indptr.push_back((it_element - vec_map_element.cbegin()) - fill_in_counter);
+                y_bus_pos_in_entries.push_back(pos);
                 // iterate linear nnz
                 ++nnz_counter;
                 ++nnz_counter_lu;
@@ -350,6 +352,63 @@ template <bool sym> class YBus {
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
+    void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
+                                     bool decrement = false) {
+        double mode = decrement ? -1.0 : 1.0;
+        if (decrement)
+            // overwrite the old cached parameters in increment mode (update)
+            math_model_param_incrmt_ = math_model_param_incrmt;
+        // construct admittance data
+        ComplexTensorVector<sym> admittance(nnz());
+        assert(admittance_->size() == nnz());
+        std::copy(admittance_->begin(), admittance_->end(), admittance.begin());
+        auto const& branch_param = math_model_param_incrmt_->branch_param;
+        auto const& branch_param_to_change = math_model_param_incrmt_->branch_param_to_change;
+        auto const& shunt_param = math_model_param_incrmt_->shunt_param;
+        auto const& shunt_param_to_change = math_model_param_incrmt_->shunt_param_to_change;
+        auto const& y_bus_element = y_bus_struct_->y_bus_element;
+        auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
+        auto const& y_bus_pos_in_entries = y_bus_struct_->y_bus_pos_in_entries;
+
+        // construct affected entries
+        std::vector<Idx> affected_entries = {};
+        for (auto b_param_to_change : branch_param_to_change) {
+            // check whether pos is in pos_in_entries
+            MatrixPos pos = std::pair{math_topology_->branch_bus_idx[b_param_to_change][0],
+                                      math_topology_->branch_bus_idx[b_param_to_change][1]};
+            auto it = std::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
+            if (it != y_bus_pos_in_entries.end())
+                affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+        }
+        for (auto s_param_to_change : shunt_param_to_change) {
+            MatrixPos pos = std::pair{math_topology_->shunts_per_bus.get_group(s_param_to_change),
+                                      math_topology_->shunts_per_bus.get_group(s_param_to_change)};
+            auto it = std::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
+            if (it != y_bus_pos_in_entries.end())
+                affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+        }
+
+        for (auto entry : affected_entries) {
+            // start admittance accumulation with zero
+            ComplexTensor<sym> entry_admittance{0.0};
+            // loop over all entries of this position
+            for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
+                if (y_bus_element[element].element_type == YBusElementType::shunt) {
+                    // shunt
+                    entry_admittance += shunt_param[y_bus_element[element].idx];
+                } else {
+                    // branch
+                    entry_admittance += branch_param[y_bus_element[element].idx]
+                                            .value[static_cast<Idx>(y_bus_element[element].element_type)];
+                }
+            }
+            // assign
+            admittance[entry] += mode * entry_admittance;
+        }
+        // move to shared ownership
+        admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
+    }
+
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
         Idx const begin = row_indptr()[bus_number];
         Idx const end = row_indptr()[bus_number + 1];
@@ -428,6 +487,9 @@ template <bool sym> class YBus {
 
     // cache the math parameters
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
+
+    // cache the increment math parameters
+    std::shared_ptr<MathModelParamIncrement<sym> const> math_model_param_incrmt_;
 };
 
 template class YBus<true>;
