@@ -355,7 +355,7 @@ template <bool sym> class YBus {
     void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
                                      bool decrement = false) {
         double mode = decrement ? -1.0 : 1.0;
-        if (decrement)
+        if (!decrement)
             // overwrite the old cached parameters in increment mode (update)
             math_model_param_incrmt_ = math_model_param_incrmt;
         // construct admittance data
