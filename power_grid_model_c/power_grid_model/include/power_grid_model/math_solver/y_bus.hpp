@@ -358,9 +358,12 @@ template <bool sym> class YBus {
         if (!decrement)
             // overwrite the old cached parameters in increment mode (update)
             math_model_param_incrmt_ = math_model_param_incrmt;
+        else if (!decremented_)
+            return;
+
         // construct admittance data
         ComplexTensorVector<sym> admittance(nnz());
-        assert(admittance_->size() == nnz());
+        assert(Idx(admittance_->size()) == nnz());
         std::copy(admittance_->begin(), admittance_->end(), admittance.begin());
         auto const& branch_param = math_model_param_incrmt_->branch_param;
         auto const& branch_param_to_change = math_model_param_incrmt_->branch_param_to_change;
@@ -407,6 +410,7 @@ template <bool sym> class YBus {
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
+        decremented_ = decrement;
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
@@ -490,6 +494,7 @@ template <bool sym> class YBus {
 
     // cache the increment math parameters
     std::shared_ptr<MathModelParamIncrement<sym> const> math_model_param_incrmt_;
+    bool decremented_ = false;
 };
 
 template class YBus<true>;
