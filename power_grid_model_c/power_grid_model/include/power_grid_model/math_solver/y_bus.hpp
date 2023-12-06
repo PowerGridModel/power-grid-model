@@ -365,7 +365,7 @@ template <bool sym> class YBus {
         // construct admittance data
         ComplexTensorVector<sym> admittance(nnz());
         assert(Idx(admittance_->size()) == nnz());
-        std::copy(admittance_->begin(), admittance_->end(), admittance.begin());
+        std::ranges::copy(admittance_->begin(), admittance_->end(), admittance.begin());
         auto const& branch_param = math_model_param_incrmt_->branch_param;
         auto const& branch_param_to_change = math_model_param_incrmt_->branch_param_to_change;
         auto const& shunt_param = math_model_param_incrmt_->shunt_param;
@@ -380,16 +380,18 @@ template <bool sym> class YBus {
             // check whether pos is in pos_in_entries
             MatrixPos pos = std::pair{math_topology_->branch_bus_idx[b_param_to_change][0],
                                       math_topology_->branch_bus_idx[b_param_to_change][1]};
-            auto it = std::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
-            if (it != y_bus_pos_in_entries.end())
+            auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
+            if (it != y_bus_pos_in_entries.end()) {
                 affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+            }
         }
         for (auto s_param_to_change : shunt_param_to_change) {
             MatrixPos pos = std::pair{math_topology_->shunts_per_bus.get_group(s_param_to_change),
                                       math_topology_->shunts_per_bus.get_group(s_param_to_change)};
-            auto it = std::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
-            if (it != y_bus_pos_in_entries.end())
+            auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
+            if (it != y_bus_pos_in_entries.end()) {
                 affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+            }
         }
 
         for (auto entry : affected_entries) {
