@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_MAIN_CORE_UPDATE_HPP
 
 #include "state.hpp"
+#include <ranges>
 
 #include "../all_components.hpp"
 
@@ -80,6 +81,33 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 template <bool sym>
 inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
     y_bus.update_admittance(math_model_param);
+}
+
+template <bool sym>
+inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
+                         bool increment) {
+    auto branch_param_to_change_views =
+        std::views::iota(0, math_model_param->branch_param.size()) | std::views::filter([&math_model_param](Idx i) {
+            return math_model_param->branch_param[i].yff() != ComplexTensor<sym>{0.0} ||
+                   math_model_param->branch_param[i].yft() != ComplexTensor<sym>{0.0} ||
+                   math_model_param->branch_param[i].ytf() != ComplexTensor<sym>{0.0} ||
+                   math_model_param->branch_param[i].ytt() != ComplexTensor<sym>{0.0};
+        });
+    auto shunt_param_to_change_views =
+        std::views::iota(0, math_model_param->shunt_param.size()) | std::views::filter([&math_model_param](Idx i) {
+            return math_model_param->shunt_param[i] != ComplexTensor<sym>{0.0};
+        });
+
+    MathModelParamIncrement<sym> math_model_param_incrmt = {
+        math_model_param,
+        std::make_shared<std::vector<Idx>>(
+            std::vector<Idx>(branch_param_to_change_views.begin(), branch_param_to_change_views.end())),
+        std::make_shared<std::vector<Idx>>(
+            std::vector<Idx>(shunt_param_to_change_views.begin(), shunt_param_to_change_views.end()))};
+
+    auto math_model_param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
+
+    y_bus.update_admittance_increment(math_model_param_incrmt_ptr, !increment);
 }
 
 template <bool sym>
