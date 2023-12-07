@@ -5,6 +5,8 @@
 #include <power_grid_model/sparse_mapping.hpp>
 
 #include <doctest/doctest.h>
+#include <iostream>
+#include <random>
 
 namespace power_grid_model {
 
@@ -28,5 +30,136 @@ TEST_CASE("Test dense mapping") {
     CHECK(mapping_2.indvector.end() - 1 == std::max_element(mapping_2.indvector.begin(), mapping_2.indvector.end()));
 }
 
-// matrix 1 to million, log the time it takes.
+TEST_CASE("Benchmark dense mapping N=10") {
+    using std::chrono::milliseconds;
+
+    IdxVector idx_B_in_A(10);
+    std::mt19937 eng(16);
+    std::uniform_int_distribution<> distr(0, 10);
+
+    for (auto& val : idx_B_in_A) {
+        val = distr(eng);
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 11);
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_double.count() << "ms\n";
+}
+
+TEST_CASE("Benchmark dense mapping N=100") {
+    using std::chrono::milliseconds;
+
+    IdxVector idx_B_in_A(100);
+    std::mt19937 eng(16);
+    std::uniform_int_distribution<> distr(0, 100);
+
+    for (auto& val : idx_B_in_A) {
+        val = distr(eng);
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 101);
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_double.count() << "ms\n";
+}
+
+TEST_CASE("Benchmark dense mapping N=1000") {
+    using std::chrono::milliseconds;
+
+    IdxVector idx_B_in_A(1000);
+    std::mt19937 eng(16);
+    std::uniform_int_distribution<> distr(0, 1000);
+
+    for (auto& val : idx_B_in_A) {
+        val = distr(eng);
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 1001);
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_double.count() << "ms\n";
+}
+
+TEST_CASE("Benchmark dense mapping N=10 000") {
+    using std::chrono::milliseconds;
+
+    IdxVector idx_B_in_A(10000);
+    std::mt19937 eng(16);
+    std::uniform_int_distribution<> distr(0, 10000);
+
+    for (auto& val : idx_B_in_A) {
+        val = distr(eng);
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 10001);
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_double.count() << "ms\n";
+}
+
+TEST_CASE("Benchmark dense mapping N=100 000") {
+    using std::chrono::milliseconds;
+
+    IdxVector idx_B_in_A(100000);
+    std::mt19937 eng(16);
+    std::uniform_int_distribution<> distr(0, 100000);
+
+    for (auto& val : idx_B_in_A) {
+        val = distr(eng);
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 100001);
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_double.count() << "ms\n";
+}
+
+TEST_CASE("Benchmark dense mapping N=1000 000") {
+    using std::chrono::milliseconds;
+
+    IdxVector idx_B_in_A(1000000);
+    std::mt19937 eng(16);
+    std::uniform_int_distribution<> distr(0, 1000000);
+
+    for (auto& val : idx_B_in_A) {
+        val = distr(eng);
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 1000001);
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_double.count() << "ms\n";
+}
+
 } // namespace power_grid_model

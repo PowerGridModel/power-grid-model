@@ -141,7 +141,7 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
         std::ranges::transform(mapping_to_from, std::back_inserter(dense_mapping.reorder),
                                [](DenseEntry const& to_from) { return to_from.second; });
     } else {
-        // 1
+        // n_A
         std::vector<DenseEntry> entries(n_A);
 
         // n_A, since the transform operation will be performed n_A times and it only does one operation - returning the
@@ -150,13 +150,13 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
             return DenseEntry{i_A, j_B};
         });
 
-        // n_A or can we say that resize is constant 1?
+        // n_A
         dense_mapping.indvector.resize(n_A);
-        // n_A or can we say that resize is constant 1?
+        // n_A
         dense_mapping.reorder.resize(n_A);
 
         IdxVector xndvector;
-        // n_B or can we say that resize is constant 1?
+        // n_B
         xndvector.resize(n_B);
         // n_B
         IdxVector counter(n_B, 0);
