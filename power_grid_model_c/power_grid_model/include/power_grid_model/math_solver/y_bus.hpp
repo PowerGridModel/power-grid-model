@@ -354,7 +354,7 @@ template <bool sym> class YBus {
 
     void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
                                      bool decrement = false) {
-        double mode = decrement ? -1.0 : 1.0;
+        const double mode = decrement ? -1.0 : 1.0;
         if (!decrement) {
             // overwrite the old cached parameters in increment mode (update)
             math_model_param_incrmt_ = math_model_param_incrmt;
@@ -376,18 +376,19 @@ template <bool sym> class YBus {
 
         // construct affected entries
         std::vector<Idx> affected_entries = {};
+
         for (auto b_param_to_change : branch_param_to_change) {
             // check whether pos is in pos_in_entries
-            MatrixPos pos = std::pair{math_topology_->branch_bus_idx[b_param_to_change][0],
-                                      math_topology_->branch_bus_idx[b_param_to_change][1]};
+            const MatrixPos pos = std::pair{math_topology_->branch_bus_idx[b_param_to_change][0],
+                                            math_topology_->branch_bus_idx[b_param_to_change][1]};
             auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
             if (it != y_bus_pos_in_entries.end()) {
                 affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
             }
         }
         for (auto s_param_to_change : shunt_param_to_change) {
-            MatrixPos pos = std::pair{math_topology_->shunts_per_bus.get_group(s_param_to_change),
-                                      math_topology_->shunts_per_bus.get_group(s_param_to_change)};
+            const MatrixPos pos = std::pair{math_topology_->shunts_per_bus.get_group(s_param_to_change),
+                                            math_topology_->shunts_per_bus.get_group(s_param_to_change)};
             auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
             if (it != y_bus_pos_in_entries.end()) {
                 affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));

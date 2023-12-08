@@ -272,6 +272,44 @@ TEST_CASE("Test fill-in y bus") {
     CHECK(ybus.map_lu_y_bus == map_lu_y_bus);
 }
 
+TEST_CASE("Incremental update y-bus") {
+    /*
+     * struct
+     * [1] --0--> [0] --1--> [2]
+     * extra fill-in: (1, 2) by removing node 0
+     *
+     * [
+     *   0, 1, 2
+     *   3, 4, f
+     *   5, f, 6
+     * ]
+     */
+
+    MathModelTopology topo{};
+    topo.phase_shift.resize(3, 0.0);
+    topo.branch_bus_idx = {
+        {1, 0}, // branch 0 from node 1 to 0
+        {0, 2}, // branch 1 from node 0 to 2
+    };
+    topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
+    topo.fill_in = {{1, 2}};
+
+    IdxVector row_indptr = {0, 3, 5, 7};
+    IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
+    IdxVector bus_entry = {0, 4, 6};
+    IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
+    IdxVector y_bus_entry_indptr = {0, 2,              // 0, 1 belong to element [0,0] in Ybus
+                                    3, 4, 5, 6, 7, 8}; // everything else has only one entry
+
+    YBusStructure ybus{topo};
+
+    CHECK(row_indptr == ybus.row_indptr);
+    CHECK(col_indices == ybus.col_indices);
+    CHECK(bus_entry == ybus.bus_entry);
+    CHECK(lu_transpose_entry == ybus.lu_transpose_entry);
+    CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr);
+}
+
 /*
 TODO:
 - test counting_sort_element()

@@ -157,22 +157,11 @@ template <bool sym> struct MathModelParam {
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
     ComplexTensorVector<sym> source_param;
-    // Default constructor
-    MathModelParam() = default;
-    // Copy constructor
-    MathModelParam(const MathModelParam<sym>& other)
-        : branch_param(other.branch_param), shunt_param(other.shunt_param), source_param(other.source_param) {}
 };
 
 template <bool sym> struct MathModelParamIncrement : public MathModelParam<sym> {
     std::vector<Idx> branch_param_to_change;
     std::vector<Idx> shunt_param_to_change;
-    // Copy constructor
-    MathModelParamIncrement(const MathModelParam<sym>& other, const std::vector<Idx>& branch_to_change,
-                            const std::vector<Idx>& shunt_to_change)
-        : MathModelParam<sym>(other),
-          branch_param_to_change(branch_to_change),
-          shunt_param_to_change(shunt_to_change) {}
 };
 
 template <bool sym> struct PowerFlowInput {
