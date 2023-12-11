@@ -686,10 +686,10 @@ Four types of short circuit fault are included in power-grid-model.
 
 | `fault_type`                       | `fault_phase`    | description                                                             |
 | ---------------------------------- | ---------------- |-------------------------------------------------------------------------|
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance z_f.                         |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance z_f, and other phases are open. |
-| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance z_f.                         |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance z_f then grounded.           |
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with fault impedance.                        |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with fault impedance, and other phases are open.  |
+| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with fault impedance.                          |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with fault impedance then grounded.            |
 
 In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
 
