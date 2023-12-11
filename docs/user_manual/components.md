@@ -222,7 +222,8 @@ $$
    \end{eqnarray}
 $$
 
-where $z_{\text{base}} = 1 / y_{\text{base}} = s_n / ({u_2}^2)$.
+where $z_{\text{base}} = 1 / y_{\text{base}} = s_{\text{base}} / ({u_{\text{2, rated}}}^2)$.
+$s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
 
 ## Branch3
 
@@ -403,7 +404,7 @@ $$
    \end{eqnarray}
 $$
 
-where $s_{\text{base}}$ is a constant value $10^6\,\text{VA}$, and $\frac{r}{x}$ indicates `rx_ratio` as input.
+where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac{r}{x}$ indicates `rx_ratio` as input.
 
 - for zero sequence, 
 
