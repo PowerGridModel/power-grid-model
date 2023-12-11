@@ -140,7 +140,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 $$
    \begin{eqnarray}
       & Z_{\text{series}} = r + \mathrm{j}x \\
-      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \delta +\mathrm{j}}
+      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \sigma +\mathrm{j}}
    \end{eqnarray}
 $$
 
@@ -330,6 +330,12 @@ It can happen that `tap_min > tap_max`. In this case the winding voltage is decr
 increased.
 ```
 
+#### Electric Model
+
+`three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration. 
+However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star. 
+The values between windings (for eg. `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
+The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
 
@@ -680,10 +686,10 @@ Four types of short circuit fault are included in power-grid-model.
 
 | `fault_type`                       | `fault_phase`    | description                                                             |
 | ---------------------------------- | ---------------- |-------------------------------------------------------------------------|
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance z_f.                         |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance z_f, and other phases are open. |
-| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance z_f.                         |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance z_f then grounded.           |
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with fault impedance.                        |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with fault impedance, and other phases are open.  |
+| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with fault impedance.                          |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with fault impedance then grounded.            |
 
 In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
 
