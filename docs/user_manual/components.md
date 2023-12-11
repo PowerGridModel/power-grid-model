@@ -133,6 +133,17 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 (i.e. `fault_type` is not `FaultType.three_phase`).
 ```
 
+#### Electric Model
+
+`line` is described by a π model, where 
+
+$$
+   \begin{eqnarray}
+      Z_\mathrm{series}    & = & r + \mathrm{j}x \\
+      Y_\mathrm{shunt} & = & 2 \pi fc/(tan \sigma +\mathrm{j})
+   \end{eqnarray}
+$$
+
 ### Link
 
 * type name: `link`
@@ -141,6 +152,15 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 two busbars inside a substation. It has a very high admittance (small impedance) which is set to a fixed per-unit value
 (equivalent to 10e6 siemens for 10kV network). Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
+
+#### Electric Model: 
+`link` is modeled by a constant reactance $Y_\mathrm{series}$, where
+
+$$
+   \begin{eqnarray}
+      Y_\mathrm{series}    & = & 1 & \times 10^6 * ( 1+ \mathrm{j} ) p.u. &.
+    \end{eqnarray}
+$$
 
 ### Transformer
 
@@ -180,6 +200,29 @@ levels.
 It can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
 increased.
 ```
+
+#### Electric Model
+`transformer` is described by a π model, where $Z_\mathrm{series}$ can be computed as
+
+$$
+    \begin{eqnarray} 
+        & |Z_\mathrm{series}| = uk / z_\mathrm{base}\\ 
+        &\mathrm{Re}(Z_\mathrm{series}) = (pk/sn) / z_\mathrm{base}\\
+        &\mathrm{Im}(Z_\mathrm{series}) = \sqrt{|Z_\mathrm{series}|^2-\mathrm{Re}(Z_\mathrm{series})^2} \\
+    \end{eqnarray}
+$$
+
+and $Y_\mathrm{shunt}$ can be computed as
+
+$$
+    \begin{eqnarray} 
+        &|Y_\mathrm{shunt}| = i0 / y_\mathrm{base} \\
+        &\mathrm{Re}(Y_\mathrm{shunt}) = (sn/p0) / y_\mathrm{base} \\
+        &\mathrm{Im}(Y_\mathrm{shunt}) = -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} \\
+   \end{eqnarray}
+$$
+
+where $z_\mathrm{base} = 1/ y_\mathrm{base}= sn/(u2^2)$.
 
 ## Branch3
 
@@ -287,6 +330,7 @@ It can happen that `tap_min > tap_max`. In this case the winding voltage is decr
 increased.
 ```
 
+
 ## Appliance
 
 * type name: `appliance`
@@ -339,6 +383,32 @@ with an internal impedance. The impedance is specified by convention as short ci
 | `rx_ratio`    | `double`  | -                | R to X ratio                                       |     &#10060; default 0.1     | &#10060; |    `>= 0`    |
 | `z01_ratio`   | `double`  | -                | zero sequence to positive sequence impedance ratio |     &#10060; default 1.0     | &#10060; |    `> 0`     |
 
+#### Electric Model
+`source` is modeled by an internal constant impedance $r+\mathrm{j}x$ with positive sequence and zero sequence.
+Its value can be computed using following equations:
+
+- for positive sequence,
+
+$$
+   \begin{eqnarray} 
+        & z_\mathrm{source} = s_\mathrm{base} / sk \\
+        & x_1 = z_\mathrm{source} \times \sqrt{1+ rx\_ ratio^2}\\
+        & r_1=  x_1 \times rx\_ ratio
+   \end{eqnarray}
+$$
+
+where $s_\mathrm{base}$ is a constant value $1 \times 10^6$.
+
+- for zero sequence, 
+
+$$
+   \begin{eqnarray} 
+        &z_\mathrm{source,0} = z_\mathrm{source} \times z01\_ ratio\\
+        &x_0 = z_\mathrm{source,0} \times \sqrt{1+ rx\_ ratio^2}\\
+        &r_0= x_0 \times rx\_ ratio
+   \end{eqnarray}
+$$
+
 ### Generic Load and Generator
 
 * type name: `generic_load_gen`
@@ -369,6 +439,39 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 | `p_specified` | `RealValueInput` | watt (W)                   | specified active power   | &#10024; only for power flow | &#10004; |
 | `q_specified` | `RealValueInput` | volt-ampere-reactive (var) | specified reactive power | &#10024; only for power flow | &#10004; |
 
+##### Electric model
+
+`generic_load_gen` are modelled by using the so-called ZIP load model in power-grid-model, 
+where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
+
+The injection of each ZIP model type can be computed as follows:
+
+- for a constant impedance (Z) load/generator,
+
+$$
+   \begin{eqnarray} 
+        S = S_\mathrm{specified} \times \bar{u}^2
+   \end{eqnarray}
+$$
+
+- for a constant current (I) load/generator,
+
+$$
+   \begin{eqnarray} 
+        S = S_\mathrm{specified} \times \bar{u}
+   \end{eqnarray}
+$$
+
+- for a constant power (P) load/generator:,
+
+$$
+   \begin{eqnarray} 
+        S = S_\mathrm{specified}
+   \end{eqnarray}
+$$
+
+where $\bar{u}$ is the calculated node voltage.
+
 ### Shunt
 
 * type name: `shunt`
@@ -391,6 +494,9 @@ In case of short circuit calculations, the zero-sequence parameters are required
 if any of the faults in any of the scenarios within a batch are not three-phase faults
 (i.e. `fault_type` is not `FaultType.three_phase`).
 ```
+
+#### Electric Model
+`shunt` is modelled by a fixed admittance which equals to $g + \mathrm{j}b$.
 
 ## Sensor
 
@@ -421,6 +527,7 @@ a `node`.
 | --------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------- | :--------------------------------: | :------: | :----------: |
 | `u_sigma` | `double`  | volt (V) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |    `> 0`     |
 
+
 #### Voltage Sensor Concrete Types
 
 There are two concrete types of voltage sensor. They share similar attributes:
@@ -446,6 +553,16 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 | `u_residual`       | `RealValueOutput` | volt (V) | residual value between measured voltage magnitude and calculated voltage magnitude                                       |
 | `u_angle_residual` | `RealValueOutput` | rad      | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) |
 
+#### Electric Model
+`generic_voltage_sensor` is modeled by following equations:
+
+$$
+   \begin{eqnarray} 
+        && u\_ residual = u\_ measured - u\_ state \\
+        && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ state
+   \end{eqnarray}
+$$
+
 ### Generic Power Sensor
 
 * type name: `generic_power_sensor`
@@ -470,7 +587,7 @@ Because of this distribution, at least one appliance is required to be connected
 | name                     | data type                                                                     | unit             | description                                                                                                                                                                                 |              required               |  update  |                     valid values                     |
 | ------------------------ | ----------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------: | :------: | :--------------------------------------------------: |
 | `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                | indicate if it measures an `appliance` or a `branch`                                                                                                                                        |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
-| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See {hoverxreftooltip}`user_manual/components:Power Sensor Complete Types`. | &#10024; only for state estimation. | &#10004; |                        `> 0`                         |
+| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See {hoverxreftooltip}`user_manual/components:Power Sensor Concrete Types`. | &#10024; only for state estimation. | &#10004; |                        `> 0`                         |
 
 #### Power Sensor Concrete Types
 
@@ -508,6 +625,16 @@ See the documentation on [state estimation calculation methods](calculations.md#
 | `p_residual` | `RealValueOutput` | watt (W)                   | residual value between measured active power and calculated active power     |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power |
 
+#### Electric Model
+`Generic Power Sensor` is modeled by following equations:
+
+$$
+   \begin{eqnarray} 
+        p\_ residual = p\_ measured - p\_ state \\
+        q\_ residual = q\_ measured - q\_ state
+   \end{eqnarray}
+$$
+
 ## Fault
 
 * type name: `fault`
@@ -537,17 +664,6 @@ If any of the faults in any of the scenarios within a batch are not `three_phase
 the calculation is treated as asymmetric.
 ```
 
-##### Default values for `fault_phase`
-
-In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
-
-| `fault_type`                       | `fault_phase`    |
-| ---------------------------------- | ---------------- |
-| `FaultType.three_phase`            | `FaultPhase.abc` |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   |
-| `FaultType.two_phase`              | `FaultPhase.bc`  |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  |
-
 #### Steady state output
 
 A `fault` has no steady state output.
@@ -558,3 +674,17 @@ A `fault` has no steady state output.
 | ----------- | ----------------- | ---------- | ------------- |
 | `i_f`       | `RealValueOutput` | ampere (A) | current       |
 | `i_f_angle` | `RealValueOutput` | rad        | current angle |
+
+#### Electric Model
+Four types of short circuit fault are included in power-grid-model.
+
+| `fault_type`                       | `fault_phase`    | description                                                             |
+| ---------------------------------- | ---------------- |-------------------------------------------------------------------------|
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance z_f.                         |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance z_f, and other phases are open. |
+| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance z_f.                         |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance z_f then grounded.           |
+
+In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
+
+

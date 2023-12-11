@@ -144,11 +144,14 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
     T value{};
     attr.get_value(raw_data_ptr, reinterpret_cast<RawDataPtr>(&value), obj);
 
+    std::stringstream sstr;
+    sstr << std::setprecision(16);
     if constexpr (std::same_as<T, RealValue<false>>) {
-        return "(" + std::to_string(value(0)) + ", " + std::to_string(value(1)) + ", " + std::to_string(value(2)) + ")";
+        sstr << "(" << value(0) << ", " << value(1) << ", " << value(2) << ")";
     } else {
-        return std::to_string(value);
+        sstr << value;
     }
+    return sstr.str();
 }
 
 std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
@@ -258,12 +261,12 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                     if (match) {
                         CHECK(match);
                     } else {
-                        std::string const case_str =
-                            "scenario: #" + std::to_string(scenario) + ", Component: " + type_name + " #" +
-                            std::to_string(obj) + ", attribute: " + attr.name +
-                            ": actual = " + get_as_string(result_ptr, attr, obj) +
-                            " vs. expected = " + get_as_string(reference_result_ptr, attr, obj);
-                        CHECK_MESSAGE(match, case_str);
+                        std::stringstream case_sstr;
+                        case_sstr << "scenario: #" << scenario << ", Component: " << type_name << " #" << obj
+                                  << ", attribute: " << attr.name
+                                  << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
+                                  << get_as_string(reference_result_ptr, attr, obj);
+                        CHECK_MESSAGE(match, case_sstr.str());
                     }
                 }
             }

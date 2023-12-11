@@ -19,8 +19,13 @@ from power_grid_model.core.buffer_handling import (
     get_buffer_view,
 )
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
-from power_grid_model.core.power_grid_core import ConstDatasetPtr, DatasetInfoPtr, MutableDatasetPtr, WritableDatasetPtr
-from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_core import (
+    ConstDatasetPtr,
+    DatasetInfoPtr,
+    MutableDatasetPtr,
+    WritableDatasetPtr,
+    power_grid_core as pgc,
+)
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
