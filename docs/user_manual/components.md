@@ -223,7 +223,7 @@ $$
 $$
 
 where $z_{\text{base}} = 1 / y_{\text{base}} = s_{\text{base}} / ({u_{\text{2, rated}}}^2)$.
-$s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
+Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
 
 ## Branch3
 
