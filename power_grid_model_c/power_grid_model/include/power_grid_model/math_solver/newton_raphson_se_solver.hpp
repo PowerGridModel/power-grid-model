@@ -23,12 +23,12 @@ namespace power_grid_model {
 namespace math_model_impl {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
-template <bool sym> struct NRSEUnknown : public Block<DoubleComplex, sym, false, 4> {
-    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, false, 4>::template GetterType<r, c>;
+template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
+    template <int r, int c> using GetterType = typename Block<double, sym, false, 4>::template GetterType<r, c>;
 
     // eigen expression
-    using Block<DoubleComplex, sym, false, 4>::Block;
-    using Block<DoubleComplex, sym, false, 4>::operator=;
+    using Block<double, sym, false, 4>::Block;
+    using Block<double, sym, false, 4>::operator=;
 
     GetterType<0, 0> theta() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> v() { return this->template get_val<1, 0>(); }
@@ -51,13 +51,13 @@ template <bool sym> using NRSERhs = NRSEUnknown<sym>;
    [Q, R ]
 ]
 */
-template <bool sym> class NRSEGainBlock : public Block<DoubleComplex, sym, true, 4> {
+template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
-    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 4>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
 
     // eigen expression
-    using Block<DoubleComplex, sym, true, 4>::Block;
-    using Block<DoubleComplex, sym, true, 4>::operator=;
+    using Block<double, sym, true, 4>::Block;
+    using Block<double, sym, true, 4>::operator=;
 
     GetterType<0, 0> g_P_theta() { return this->template get_val<0, 0>(); }
     GetterType<0, 1> g_P_v() { return this->template get_val<0, 1>(); }
@@ -156,7 +156,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     // unknown and rhs
     std::vector<NRSERhs<sym>> del_x_rhs_;
     // voltage of current iteration
-    std::vector<NRSEUnknown<sym>> x_;
+    std::vector<NRSERhs<sym>> x_;
     // solver
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
@@ -174,13 +174,13 @@ template <bool sym> class NewtonRaphsonSESolver {
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
             auto const& ui = current_u[row];
-            auto const abs_ui = x_[row].v();
+            RealValue<sym> const& abs_ui = cabs(ui);
             NRSERhs<sym>& rhs_block = del_x_rhs_[row];
             rhs_block = NRSERhs<sym>{};
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
                 auto const& uj = current_u[col];
-                auto const abs_uj = x_[col].v();
+                RealValue<sym> const& abs_uj = cabs(uj);
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
                 block = NRSEGainBlock<sym>{};
@@ -212,30 +212,32 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            shunt_measurement_contribution(measured_value.shunt_power(obj), param.shunt_param[obj], ui, row,
-                                                           block, rhs_block);
+                            shunt_measurement_contribution(measured_value.shunt_power(obj), param.shunt_param[obj], row,
+                                                           current_u, block, rhs_block);
                         }
                     } else if (type == YBusElementType::bff) {
                         if (measured_value.has_branch_from(obj)) {
                             shunt_measurement_contribution(measured_value.branch_from_power(obj),
-                                                           param.branch_param[obj].yff(), ui, row, block, rhs_block);
+                                                           param.branch_param[obj].yff(), row, current_u, block,
+                                                           rhs_block);
                         }
                     } else if (type == YBusElementType::btt) {
                         if (measured_value.has_branch_to(obj)) {
                             shunt_measurement_contribution(measured_value.branch_to_power(obj),
-                                                           param.branch_param[obj].ytt(), ui, row, block, rhs_block);
+                                                           param.branch_param[obj].ytt(), row, current_u, block,
+                                                           rhs_block);
                         }
                     } else if (type == YBusElementType::bft) {
                         if (measured_value.has_branch_from(obj)) {
-                            branch_measurement_contribution(measured_value.branch_from_power(obj),
-                                                            param.branch_param[obj].yff(),
-                                                            param.branch_param[obj].yft(), ui, uj, block, rhs_block);
+                            branch_measurement_contribution(
+                                measured_value.branch_from_power(obj), param.branch_param[obj].yff(),
+                                param.branch_param[obj].yft(), row, col, current_u, block, rhs_block);
                         }
                     } else {
                         if (measured_value.has_branch_to(obj)) {
-                            branch_measurement_contribution(measured_value.branch_to_power(obj),
-                                                            param.branch_param[obj].ytt(),
-                                                            param.branch_param[obj].ytf(), uj, ui, block, rhs_block);
+                            branch_measurement_contribution(
+                                measured_value.branch_to_power(obj), param.branch_param[obj].ytt(),
+                                param.branch_param[obj].ytf(), row, col, current_u, block, rhs_block);
                         }
                     }
                 }
@@ -252,16 +254,16 @@ template <bool sym> class NewtonRaphsonSESolver {
                         // add negative of the non-summation value then sign will be reversed when row is summed
                         auto const w_p = diagonal_inverse(injection.p_variance);
                         auto const w_q = diagonal_inverse(injection.q_variance);
-                        // block.q_P_theta() += abs_ui * abs_ui * yij.imag();
-                        // block.q_P_v() += -abs_ui * yij.real();
-                        // block.q_Q_theta() += abs_ui * abs_ui * yij.real();
-                        // block.q_Q_v() += abs_ui * yij.imag();
+                        // block.q_P_theta() += dot(imag(yij), abs_ui, abs_ui);
+                        // block.q_P_v() += dot(real(yij), -abs_ui);
+                        // block.q_Q_theta() += dot(real(yij), abs_ui, abs_ui);;
+                        // block.q_Q_v() += dot(imag(yij), abs_ui);
 
                         // rhs_block.tau_theta() += injection.value.real();
                         // rhs_block.tau_v() += injection.value.imag();
 
-                        // block.r_P_theta() = -w_p * w_p;
-                        // block.r_Q_v() = -w_q * w_q;
+                        // block.r_P_theta() = dot(RealDiagonalTensor<sym>{-1.0}, w_p, w_p);
+                        // block.r_Q_v() = dot(RealDiagonalTensor<sym>{-1.0}, w_q, w_q);
                     } else {
                         // block.q_P_theta() += g_sin_minus_b_cos(yij, ui, uj);
                         // block.q_P_v() += g_cos_plus_b_sin(yij, ui, uj) * diagonal_inverse(abs_uj);
@@ -309,46 +311,56 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     void branch_measurement_contribution(PowerSensorCalcParam<sym> const& branch_power, ComplexTensor<sym> const& yii,
-                                         ComplexTensor<sym> const& yij, const ComplexValue<sym>& ui,
-                                         const ComplexValue<sym>& uj, NRSEGainBlock<sym>& block,
+                                         ComplexTensor<sym> const& yij, Idx const& row, Idx const& col,
+                                         ComplexValueVector<sym> const& current_u, NRSEGainBlock<sym>& block,
                                          NRSERhs<sym>& rhs_block) {
-        // auto const abs_ui = cabs(ui);
-        // auto const abs_uj = cabs(uj);
-        // auto const w_p = diagonal_inverse(branch_power.p_variance);
-        // auto const w_q = diagonal_inverse(branch_power.q_variance);
+        auto const& ui = current_u[row];
+        auto const& uj = current_u[col];
+        RealValue<sym> const& abs_ui = x_[row].v();
+        RealValue<sym> const& abs_uj = x_[col].v();
+        RealValue<sym> const& abs_ui_inv = 1.0 / abs_ui;
+        RealValue<sym> const& abs_uj_inv = 1.0 / abs_uj;
+        auto const unit_ui = exp(1.0i * x_[row].theta());
+        auto const unit_uj = exp(1.0i * x_[col].theta());
 
-    //     auto const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
-    //     auto const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
+        auto const w_p = diagonal_inverse(branch_power.p_variance);
+        auto const w_q = diagonal_inverse(branch_power.q_variance);
 
-    //     auto const dP_dt_i = -gs_minus_bc;
-    //     auto const dP_dV_i = gc_plus_bs / abs_ui - 2 * abs_ui * yii.real();
-    //     auto const dQ_dt_i = gc_plus_bs;
-    //     auto const dQ_dV_i = gs_minus_bc / abs_ui + 2 * abs_ui * yii.imag();
+        RealTensor<sym> const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
+        RealTensor<sym> const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
 
-    //    auto const dP_dt_j = gs_minus_bc;
-    //    auto const dP_dV_j = gc_plus_bs / abs_uj;
-    //    auto const dQ_dt_j = -gc_plus_bs;
-    //    auto const dQ_dV_j = gs_minus_bc / abs_uj;
+        RealTensor<sym> const dP_dt_i = -gs_minus_bc;
+        RealTensor<sym> const dP_dV_i =
+            g_cos_plus_b_sin(yij, unit_ui, uj) - dot(real(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
+        RealTensor<sym> const dQ_dt_i = gc_plus_bs;
+        RealTensor<sym> const dQ_dV_i =
+            g_sin_minus_b_cos(yij, unit_ui, uj) + dot(imag(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
 
-        // block.g_P_theta() += w_p * dP_dt_i * dP_dt_j + w_q * dQ_dt_i * dQ_dt_j;
-        // block.g_Q_v() += w_p * dP_dV_i * dP_dV_j + w_q * dQ_dV_i * dQ_dV_j;
-        // block.g_P_v() += w_p * dP_dt_i * dP_dV_j + w_q * dQ_dt_i * dQ_dV_j;
-        // block.g_Q_theta() += w_p * dP_dt_j * dP_dV_i + w_q * dQ_dt_j * dQ_dV_i;
+        RealTensor<sym> const dP_dt_j = gs_minus_bc;
+        RealTensor<sym> const dP_dV_j = g_cos_plus_b_sin(yij, ui, unit_uj);
+        RealTensor<sym> const dQ_dt_j = -gc_plus_bs;
+        RealTensor<sym> const dQ_dV_j = g_cos_plus_b_sin(yij, ui, unit_uj);
 
-        // auto const del_branch_power_p = real(branch_power.value) - gc_plus_bs;
-        // auto const del_branch_power_q = imag(branch_power.value) - gs_minus_bc;
+        block.g_P_theta() += dot(w_p, dP_dt_i, dP_dt_j) + dot(w_q, dQ_dt_i, dQ_dt_j);
+        block.g_Q_v() += dot(w_p, dP_dV_i, dP_dV_j) + dot(w_q, dQ_dV_i, dQ_dV_j);
+        block.g_P_v() += dot(w_p, dP_dt_i, dP_dV_j) + dot(w_q, dQ_dt_i, dQ_dV_j);
+        block.g_Q_theta() += dot(w_p, dP_dt_j, dP_dV_i) + dot(w_q, dQ_dt_j, dQ_dV_i);
 
-        // rhs_block.eta_theta() = w_p * dP_dt_i * del_branch_power_p + w_p * dQ_dt_i * del_branch_power_q;
+        RealValue<sym> const del_branch_power_p = real(branch_power.value) - sum_row(gc_plus_bs);
+        RealValue<sym> const del_branch_power_q = imag(branch_power.value) - sum_row(gs_minus_bc);
+
+        // rhs_block.eta_theta() = dot(w_p, dP_dt_i, del_branch_power_p) + dot(w_p, dQ_dt_i, del_branch_power_q);
         // rhs_block.eta_v() = w_p * dP_dV_i * del_branch_power_p + w_p * dQ_dV_i * del_branch_power_q;
     }
 
     void shunt_measurement_contribution(PowerSensorCalcParam<sym> const& shunt_power, ComplexTensor<sym> const& yii,
-                                        const ComplexValue<sym>& ui, Idx const& bus, NRSEGainBlock<sym>& block,
-                                        NRSERhs<sym>& rhs_block) {
+                                        Idx const& row, ComplexValueVector<sym> const& current_u,
+                                        NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block) {
 
-        auto const abs_ui = x_[bus].v();
-        auto const dP_dVi = dot(real(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
-        auto const dQ_dVi = dot(imag(yii), abs_ui, RealDiagonalTensor<sym>{-2.0});
+        auto const& ui = current_u[row];
+        auto const& abs_ui = x_[row].v();
+        RealTensor<sym> const dP_dVi = dot(real(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
+        RealTensor<sym> const dQ_dVi = dot(imag(yii), abs_ui, RealDiagonalTensor<sym>{-2.0});
         auto const w_p = diagonal_inverse(shunt_power.p_variance);
         auto const w_q = diagonal_inverse(shunt_power.q_variance);
         block.g_Q_v() += dot(w_p, dP_dVi, dP_dVi) + dot(w_q, dQ_dVi, dQ_dVi);
@@ -359,16 +371,10 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     RealTensor<sym> ui_uj_cos_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
-        // diag(Vi) * cos(theta_ij) * diag(Vj)
-        // Ui_r @* Uj_r + Ui_i @* Uj_i
-        // = cij
         return vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
     }
 
     RealTensor<sym> ui_uj_sin_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
-        // diag(Vi) * sin(theta_ij) * diag(Vj)
-        // = Ui_i @* Uj_r - Ui_r @* Uj_i
-        // = sij
         return vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
     }
 
