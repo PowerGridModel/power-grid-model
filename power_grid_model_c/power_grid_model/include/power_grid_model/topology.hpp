@@ -381,8 +381,12 @@ class Topology {
             fill_in.push_back({from_reordered, to_reordered});
         }
 
-        std::cout << "reordered: [";
+        std::cout << "reordered (before permutation): [";
         for (auto n : reordered) {
+            std::cout << n << ", ";
+        }
+        std::cout << "]\nreordered (after permutation): [";
+        for (auto n : dfs_node) {
             std::cout << n << ", ";
         }
         std::cout << "]\nfill_in (before reordening) : [";
@@ -393,7 +397,7 @@ class Topology {
         for (auto [from, to] : fill_in) {
             std::cout << "(" << from << ", " << to << "), ";
         }
-        std::cout << "\n" << std::endl;
+        std::cout << "]\n" << std::endl;
 
         return fill_in;
     }
