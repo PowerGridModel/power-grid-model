@@ -47,23 +47,28 @@ IdxVector generateVector(int n_A, int n_B) {
     return vec;
 }
 
-float measurePerformance(IdxVector idx_B_in_A, Idx const n_B) {
-    float t1 = clock();
+double measurePerformance(IdxVector const idx_B_in_A, Idx const n_B) {
+    auto t1 = std::chrono::high_resolution_clock::now();
 
     DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, n_B);
 
-    float t2 = clock() - t1;
+    auto t2 = std::chrono::high_resolution_clock::now();
 
-    float time_req = t2 - t1;
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
-    return time_req;
+    double durationInMilliseconds = ms_double.count();
+
+    return durationInMilliseconds;
 }
 
-void writeToCSV(const std::vector<float>& data) {
-    std::ofstream file("C:\resultt.xlsx");
+void writeToCSV(const std::vector<std::vector<double>>& data) {
+    std::ofstream file("C:\\headers\\resultt-log.csv");
 
-    for (const auto& value : data) {
-        file << value << ",";
+    for (const auto& row : data) {
+        for (const auto& value : row) {
+            file << value << ",";
+        }
+        file << "\n";
     }
     file.close();
 }
@@ -72,15 +77,18 @@ TEST_CASE("Benchmark") {
     std::vector<int> A_values = {10, 100, 1000, 10000, 100000, 1000000};
     std::vector<int> B_values = {1, 10, 100, 1000, 10000, 100000, 1000000};
 
+    std::vector<std::vector<double>> allData;
+
     for (const auto& n_A : A_values) {
-        std::vector<float> vec(7);
+        std::vector<double> vec;
         for (const auto& n_B : B_values) {
             IdxVector idx_B_in_A = generateVector(n_A, n_B);
-            float time_taken = measurePerformance(idx_B_in_A, n_B);
+            double time_taken = measurePerformance(idx_B_in_A, n_B);
             vec.push_back(time_taken);
         }
-        writeToCSV(vec);
+        allData.push_back(vec);
     }
+    writeToCSV(allData);
 }
 
 TEST_CASE("Benchmark dense mapping N") {
