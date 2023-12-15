@@ -4,10 +4,7 @@
 
 #include <power_grid_model/sparse_mapping.hpp>
 
-#include <ctime>
 #include <doctest/doctest.h>
-#include <fstream>
-#include <iostream>
 #include <random>
 
 namespace power_grid_model {
@@ -33,14 +30,35 @@ TEST_CASE("Test dense mapping - n log n sort") {
           *std::max_element(mapping_2.indvector.begin(), mapping_2.indvector.end()));
 }
 
+// TEST_CASE("Test dense mapping - comparison sort") {
+
+//     IdxVector idx_B_in_A(1000000);
+//     std::mt19937 eng(16);
+//     std::uniform_int_distribution<> distr(0, 1000000);
+
+//     for (auto& val : idx_B_in_A) {
+//         val = distr(eng);
+//     }
+
+//     IdxVector sorted_idx_B_in_A = idx_B_in_A;
+//     std::ranges::sort(sorted_idx_B_in_A);
+
+//     DenseMapping mapping_2 = build_dense_mapping(idx_B_in_A, 1000001);
+
+//     CHECK(mapping_2.indvector == sorted_idx_B_in_A);
+//     CHECK(*(mapping_2.indvector.begin()) == *std::min_element(mapping_2.indvector.begin(),
+//     mapping_2.indvector.end())); CHECK(*(mapping_2.indvector.end() - 1) ==
+//           *std::max_element(mapping_2.indvector.begin(), mapping_2.indvector.end()));
+// }
+
 TEST_CASE("Test dense mapping - comparison sort") {
 
     IdxVector idx_B_in_A(1000000);
-    std::mt19937 eng(16);
-    std::uniform_int_distribution<> distr(0, 1000000);
 
-    for (auto& val : idx_B_in_A) {
-        val = distr(eng);
+    int j = 0;
+    for (Idx i = 999999; i >= 0; i--) {
+        idx_B_in_A[j] = i;
+        j++;
     }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
