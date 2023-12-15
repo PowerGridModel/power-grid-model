@@ -3,14 +3,19 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
+from typing import Dict
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
 import pytest
 
+from power_grid_model import LoadGenType, initialize_array
+from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
+    get_component_batch_size,
+    get_dataset_batch_size,
     get_dataset_scenario,
     json_deserialize_from_file,
     json_serialize_to_file,
@@ -39,6 +44,79 @@ def test_get_dataset_scenario():
 
     with pytest.raises(IndexError):
         get_dataset_scenario(data, 2)
+
+
+def test_get_data_set_batch_size():
+    line = initialize_array("update", "line", (3, 2))
+    line["id"] = [[5, 6], [6, 7], [7, 5]]
+    line["from_status"] = [[1, 1], [1, 1], [1, 1]]
+
+    asym_load = initialize_array("update", "asym_load", (3, 2))
+    asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
+
+    batch_data = {"line": line, "asym_load": asym_load}
+
+    assert get_dataset_batch_size(batch_data) == 3
+
+
+def test_get_dataset_batch_size_sparse():
+    data = {
+        "node": {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data["input"]["node"]),
+            "indptr": np.array([0, 2, 3, 3]),
+        },
+        "sym_load": {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+            "indptr": np.array([0, 0, 1, 2]),
+        },
+        "asym_load": {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data["input"]["asym_load"]),
+            "indptr": np.array([0, 2, 3, 4]),
+        },
+    }
+
+    assert get_dataset_batch_size(data) == 3
+
+
+def test_get_dataset_batch_size_mixed():
+    line = initialize_array("update", "line", (3, 2))
+    line["id"] = [[5, 6], [6, 7], [7, 5]]
+    line["from_status"] = [[1, 1], [1, 1], [1, 1]]
+
+    asym_load = initialize_array("update", "asym_load", (2, 2))
+    asym_load["id"] = [[9, 10], [9, 10]]
+
+    data_dense = {"line": line, "asym_load": asym_load}
+    data_sparse = {
+        "node": {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data["input"]["node"]),
+            "indptr": np.array([0, 2, 3, 3, 5]),
+        },
+        "sym_load": {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+            "indptr": np.array([0, 0, 1, 2]),
+        },
+        "asym_load": {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data["input"]["asym_load"]),
+            "indptr": np.array([0, 2, 3]),
+        },
+    }
+    with pytest.raises(ValueError):
+        get_dataset_batch_size(data_dense)
+    with pytest.raises(ValueError):
+        get_dataset_batch_size(data_sparse)
+
+
+def test_get_component_batch_size():
+    asym_load = initialize_array("update", "asym_load", (3, 2))
+    asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
+
+    sym_load = {
+        "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+        "indptr": np.array([0, 0, 1, 2]),
+    }
+    assert get_component_batch_size(asym_load) == 3
+    assert get_component_batch_size(sym_load) == 3
 
 
 @patch("builtins.open", new_callable=mock_open)

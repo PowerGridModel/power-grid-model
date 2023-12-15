@@ -16,8 +16,13 @@ import numpy as np
 
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
-from power_grid_model.core.power_grid_core import CharPtr, DeserializerPtr, SerializerPtr, WritableDatasetPtr
-from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_core import (
+    CharPtr,
+    DeserializerPtr,
+    SerializerPtr,
+    WritableDatasetPtr,
+    power_grid_core as pgc,
+)
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.errors import PowerGridSerializationError
 

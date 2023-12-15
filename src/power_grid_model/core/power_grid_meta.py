@@ -12,8 +12,7 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
-from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr
-from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
 
 
 # constant enum for ctype
