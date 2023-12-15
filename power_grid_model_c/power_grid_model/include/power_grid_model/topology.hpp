@@ -19,8 +19,6 @@
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/graph/minimum_degree_ordering.hpp>
 
-#include <iostream>
-
 // build topology of the grid
 // divide grid into several math models
 // start search from a source
@@ -312,58 +310,21 @@ class Topology {
             std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
             return fill_in;
         }
-        // for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-        //     node_status_[cyclic_node[i]] = static_cast<Idx>(i);
-        // }
 
-        // // build graph lambda
-        // auto const build_graph = [&](ReorderGraph& g) {
-        //     // add edges
-        //     for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-        //         // loop all edges of vertex i
-        //         auto const global_i = static_cast<GraphIdx>(cyclic_node[i]);
-        //         BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
-        //             // skip if j is not part of cyclic sub graph
-        //             if (node_status_[global_j] == -1) {
-        //                 continue;
-        //             }
-        //             auto const j = static_cast<GraphIdx>(node_status_[global_j]);
-        //             if (!boost::edge(i, j, g).second) {
-        //                 boost::add_edge(i, j, g);
-        //             }
-        //         }
-        //     }
-        // };
-        // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
         std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
         for (Idx node_idx : cyclic_node) {
             auto predecessor = static_cast<Idx>(predecessors_[node_idx]);
-            std::cout << node_idx << ": predecessor = " << predecessor << "\n";
             if (predecessor != node_idx) {
                 unique_nearest_neighbours[node_idx] = {predecessor};
             }
         }
-        std::cout << std::endl;
         for (auto const& edge : back_edges) {
             auto const from{static_cast<Idx>(edge.first)};
             auto const to{static_cast<Idx>(edge.second)};
-            std::cout << "back edge: " << from << ", " << to;
             if (!detail::in_graph(std::pair{from, to}, unique_nearest_neighbours)) {
-                std::cout << " (new)";
                 unique_nearest_neighbours[from].push_back(to);
             }
-            std::cout << "\n";
         }
-        std::cout << std::endl;
-
-        for (auto const& [node, neighbours] : unique_nearest_neighbours) {
-            std::cout << "node: " << node << ", adjacent = [";
-            for (auto neighbour : neighbours) {
-                std::cout << neighbour << ", ";
-            }
-            std::cout << "]\n";
-        }
-        std::cout << std::endl;
 
         auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
         std::ranges::copy(reordered, std::back_inserter(dfs_node));
@@ -378,24 +339,6 @@ class Topology {
             auto to_reordered = permuted_node_idx(reordered[to]);
             fill_in.push_back({from_reordered, to_reordered});
         }
-
-        std::cout << "reordered (before permutation): [";
-        for (auto n : reordered) {
-            std::cout << n << ", ";
-        }
-        std::cout << "]\nreordered (after permutation): [";
-        for (auto n : dfs_node) {
-            std::cout << n << ", ";
-        }
-        std::cout << "]\nfill_in (before reordening) : [";
-        for (auto [from, to] : fills) {
-            std::cout << "(" << from << ", " << to << "), ";
-        }
-        std::cout << "]\nfill_in (reordered) : [";
-        for (auto [from, to] : fill_in) {
-            std::cout << "(" << from << ", " << to << "), ";
-        }
-        std::cout << "]\n" << std::endl;
 
         return fill_in;
     }
