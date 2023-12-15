@@ -31,4 +31,4 @@ build:
       - wget -P docs/contribution https://github.com/PowerGridModel/.github/raw/main/CONTRIBUTING.md
       - wget -P docs/contribution https://github.com/PowerGridModel/.github/raw/main/CODE_OF_CONDUCT.md
       # fix links
-      - find docs/release_and_support -name *.md -exec sed -i -r "s|./CONTRIBUTING.md|../contribution/CONTRIBUTING.md|g" {} \;
+      - find docs/release_and_support -name "*.md" -exec sed -i -r "s|./CONTRIBUTING.md|../contribution/CONTRIBUTING.md|g" {} \;
