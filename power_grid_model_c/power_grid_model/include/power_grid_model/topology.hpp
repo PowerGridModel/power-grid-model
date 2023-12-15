@@ -366,9 +366,7 @@ class Topology {
         std::cout << std::endl;
 
         auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
-
-        std::ranges::transform(reordered, std::back_inserter(dfs_node),
-                               [&cyclic_node](Idx idx) { return cyclic_node[idx]; });
+        std::ranges::copy(reordered, std::back_inserter(dfs_node));
 
         // TODO(mgovers): make this more efficient
         auto const permuted_node_idx = [&dfs_node](Idx node_idx) {

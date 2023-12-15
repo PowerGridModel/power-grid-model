@@ -6,8 +6,6 @@
 
 #include <doctest/doctest.h>
 
-#include <ostream>
-
 /*
  *  [0]   = Node / Bus
  * --0--> = Branch (from --id--> to)
@@ -178,10 +176,10 @@ TEST_CASE("Test topology") {
     // result
     TopologicalComponentToMathCoupling comp_coup_ref{};
     comp_coup_ref.node = {        // 0 1 2 3
-                          {0, 4}, // Topological node 0 has become node 4 in mathematical model (group) 0
+                          {0, 1}, // Topological node 0 has become node 4 in mathematical model (group) 0
                           {0, 2},
                           {0, 0},
-                          {0, 1},
+                          {0, 3},
                           // 4 5 6
                           {1, 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
                           {1, 3},
@@ -194,7 +192,7 @@ TEST_CASE("Test topology") {
                           {-1, -1},
                           {-1, -1},
                           // b0, b1, b2
-                          {0, 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
+                          {0, 4}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
                           {-1, -1},
                           {1, 1}};
     comp_coup_ref.source = {
@@ -218,9 +216,9 @@ TEST_CASE("Test topology") {
         {-1, {-1, -1, -1}}, // b1
         {1, {2, 3, 4}},     // b2
     };
-    comp_coup_ref.load_gen = {{0, 1}, {-1, -1}, {1, 0}, {0, 0}};
+    comp_coup_ref.load_gen = {{0, 0}, {-1, -1}, {1, 0}, {0, 1}};
     comp_coup_ref.shunt = {{0, 0}, {1, 0}, {-1, -1}};
-    comp_coup_ref.voltage_sensor = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {1, 0}, {-1, -1}};
+    comp_coup_ref.voltage_sensor = {{0, 0}, {0, 2}, {0, 1}, {0, 3}, {1, 0}, {-1, -1}};
     comp_coup_ref.power_sensor = {
         {0, 0},   // 0 branch_from
         {1, 0},   // 1 source
@@ -244,43 +242,41 @@ TEST_CASE("Test topology") {
 
     // Sub graph / math model 0
     MathModelTopology math0;
-    math0.slack_bus_ = 4;
-    math0.sources_per_bus = {from_sparse, {0, 0, 0, 0, 0, 1}};
-    math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
-    math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
-    math0.load_gens_per_bus = {from_sparse, {0, 0, 0, 1, 1, 2}};
-    math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
-    math0.shunts_per_bus = {from_sparse, {0, 0, 1, 1, 1, 1}};
-    math0.voltage_sensors_per_bus = {from_sparse, {0, 2, 3, 4, 4, 4}};
-    math0.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 0, 0}};
-    math0.power_sensors_per_source = {from_sparse, {0, 0}};
-    math0.power_sensors_per_shunt = {from_sparse, {0, 0}};
-    math0.power_sensors_per_load_gen = {from_sparse, {0, 1, 1}};
-    math0.power_sensors_per_branch_from = {from_sparse, {0, 0, 2, 2, 2, 3, 4, 5}};
+    math0.slack_bus_ = 1;
+    math0.sources_per_bus = {from_dense, {1}, 5};
+    math0.branch_bus_idx = {{1, 2}, {1, 3}, {3, -1}, {-1, 0}, {2, 4}, {3, 4}, {0, 4}};
+    math0.phase_shift = {0.0, 0.0, 0.0, -1.0, 0.0};
+    math0.load_gens_per_bus = {from_dense, {1, 2}, 5};
+    math0.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_y};
+    math0.shunts_per_bus = {from_dense, {3}, 5};
+    math0.voltage_sensors_per_bus = {from_dense, {0, 0, 2, 3}, 5};
+    math0.power_sensors_per_bus = {from_dense, {}, 5};
+    math0.power_sensors_per_source = {from_dense, {}, 1};
+    math0.power_sensors_per_shunt = {from_dense, {}, 1};
+    math0.power_sensors_per_load_gen = {from_dense, {1}, 2};
+    math0.power_sensors_per_branch_from = {from_dense, {1, 1, 4, 5, 6}, 7};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
-    math0.power_sensors_per_branch_to = {from_sparse, {0, 1, 3, 3, 3, 3, 3, 3}};
-    math0.fill_in = {{3, 4}};
+    math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 7};
+    math0.fill_in = {{4, 2}};
 
     // Sub graph / math model 1
     MathModelTopology math1;
     math1.slack_bus_ = 3;
-    math1.sources_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
-    math1.branch_bus_idx = {
-        {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
-    };
+    math1.sources_per_bus = {from_dense, {3}, 4};
+    math1.branch_bus_idx = {{3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1}};
     math1.phase_shift = {0, 0, 0, 0};
-    math1.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.load_gens_per_bus = {from_dense, {3}, 4};
     math1.load_gen_type = {LoadGenType::const_i};
-    math1.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
-    math1.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
-    math1.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
-    math1.power_sensors_per_source = {from_sparse, {0, 2}};
-    math1.power_sensors_per_shunt = {from_sparse, {0, 2}};
-    math1.power_sensors_per_load_gen = {from_sparse, {0, 2}};
-    math1.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0}};
-    math1.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0}};
+    math1.shunts_per_bus = {from_dense, {0}, 4};
+    math1.voltage_sensors_per_bus = {from_dense, {3}, 4};
+    math1.power_sensors_per_bus = {from_dense, {3}, 4};
+    math1.power_sensors_per_source = {from_dense, {0, 0}, 1};
+    math1.power_sensors_per_shunt = {from_dense, {0, 0}, 1};
+    math1.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
+    math1.power_sensors_per_branch_from = {from_dense, {}, 5};
+    math1.power_sensors_per_branch_to = {from_dense, {}, 5};
 
     std::vector<MathModelTopology> math_topology_ref = {math0, math1};
 
@@ -352,7 +348,7 @@ TEST_CASE("Test cycle reorder") {
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
         comp_coup_ref.node = {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}};
-        std::vector<BranchIdx> const fill_in_ref{{3, 5}, {4, 5}, {5, 8}, {5, 6}, {5, 7}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 3}, {4, 5}, {5, 8}, {6, 5}, {5, 7}};
 
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
@@ -398,7 +394,7 @@ TEST_CASE("Test cycle reorder") {
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
         comp_coup_ref.node = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {0, 4}, {0, 5}, {0, 6}};
-        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {3, 6}, {4, 6}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {3, 6}, {6, 4}};
 
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
