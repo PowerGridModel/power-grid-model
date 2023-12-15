@@ -35,8 +35,8 @@ TEST_CASE("Test dense mapping") {
 IdxVector generateVector(int n_A, int n_B) {
     IdxVector vec(n_A);
     // so we are always guaranteed to have n_B = max-min
-    vec[0] = Idx(0);
-    vec[n_A - 1] = Idx(n_B);
+    vec[0] = Idx(n_B);
+    vec[n_A - 1] = Idx(0);
 
     std::mt19937 eng(16);
     std::uniform_int_distribution<> distr(0, n_B);
@@ -62,7 +62,7 @@ double measurePerformance(IdxVector const idx_B_in_A, Idx const n_B) {
 }
 
 void writeToCSV(const std::vector<std::vector<double>>& data) {
-    std::ofstream file("C:\\headers\\resultt-log.csv");
+    std::ofstream file("C:\\headers\\resultt-log -reversed.csv");
 
     for (const auto& row : data) {
         for (const auto& value : row) {
