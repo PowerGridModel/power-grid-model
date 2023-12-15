@@ -135,12 +135,12 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 #### Electric Model
 
-`line` is described by a π model, where 
+`line` is described by a $\pi$ model, where 
 
 $$
    \begin{eqnarray}
-      Z_\mathrm{series}    & = & r + \mathrm{j}x \\
-      Y_\mathrm{shunt} & = & 2 \pi fc/(tan \sigma +\mathrm{j})
+      & Z_{\text{series}} = r + \mathrm{j}x \\
+      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \sigma +\mathrm{j}}
    \end{eqnarray}
 $$
 
@@ -154,11 +154,11 @@ two busbars inside a substation. It has a very high admittance (small impedance)
 There is no additional attribute for `link`.
 
 #### Electric Model: 
-`link` is modeled by a constant reactance $Y_\mathrm{series}$, where
+`link` is modeled by a constant reactance $Y_{\text{series}}$, where
 
 $$
    \begin{eqnarray}
-      Y_\mathrm{series}    & = & 1 & \times 10^6 * ( 1+ \mathrm{j} ) p.u. &.
+      Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
     \end{eqnarray}
 $$
 
@@ -202,27 +202,28 @@ increased.
 ```
 
 #### Electric Model
-`transformer` is described by a π model, where $Z_\mathrm{series}$ can be computed as
+`transformer` is described by a $\pi$ model, where $Z_{\text{series}}$ can be computed as
 
 $$
     \begin{eqnarray} 
-        & |Z_\mathrm{series}| = uk / z_\mathrm{base}\\ 
-        &\mathrm{Re}(Z_\mathrm{series}) = (pk/sn) / z_\mathrm{base}\\
-        &\mathrm{Im}(Z_\mathrm{series}) = \sqrt{|Z_\mathrm{series}|^2-\mathrm{Re}(Z_\mathrm{series})^2} \\
+        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\ 
+        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}} \\
+        & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
     \end{eqnarray}
 $$
 
-and $Y_\mathrm{shunt}$ can be computed as
+and $Y_{\text{shunt}}$ can be computed as
 
 $$
     \begin{eqnarray} 
-        &|Y_\mathrm{shunt}| = i0 / y_\mathrm{base} \\
-        &\mathrm{Re}(Y_\mathrm{shunt}) = (sn/p0) / y_\mathrm{base} \\
-        &\mathrm{Im}(Y_\mathrm{shunt}) = -\sqrt{|Y_\mathrm{shunt}|^2-\mathrm{Re}(Y_\mathrm{shunt})^2} \\
+        & |Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
+        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
+        & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
    \end{eqnarray}
 $$
 
-where $z_\mathrm{base} = 1/ y_\mathrm{base}= sn/(u2^2)$.
+where $z_{\text{base}} = 1 / y_{\text{base}} = s_{\text{base}} / ({u_{\text{2, rated}}}^2)$.
+Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
 
 ## Branch3
 
@@ -330,6 +331,12 @@ It can happen that `tap_min > tap_max`. In this case the winding voltage is decr
 increased.
 ```
 
+#### Electric Model
+
+`three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration. 
+However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star. 
+The values between windings (for eg. `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
+The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
 
@@ -391,21 +398,21 @@ Its value can be computed using following equations:
 
 $$
    \begin{eqnarray} 
-        & z_\mathrm{source} = s_\mathrm{base} / sk \\
-        & x_1 = z_\mathrm{source} \times \sqrt{1+ rx\_ ratio^2}\\
-        & r_1=  x_1 \times rx\_ ratio
+        & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
+        & x_1 = z_{\text{source}} \sqrt{1+ \left(\frac{r}{x}\right)^2} \\
+        & r_1 = x_1 \cdot \left(\frac{r}{x}\right)^2
    \end{eqnarray}
 $$
 
-where $s_\mathrm{base}$ is a constant value $1 \times 10^6$.
+where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac{r}{x}$ indicates `rx_ratio` as input.
 
 - for zero sequence, 
 
 $$
    \begin{eqnarray} 
-        &z_\mathrm{source,0} = z_\mathrm{source} \times z01\_ ratio\\
-        &x_0 = z_\mathrm{source,0} \times \sqrt{1+ rx\_ ratio^2}\\
-        &r_0= x_0 \times rx\_ ratio
+        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
+        & x_0 = z_{\text{source,0}} \sqrt{1 + \left(\frac{r}{x}\right)^2}\\
+        & r_0 = x_0 \cdot \left(\frac{r}{x}\right)^2
    \end{eqnarray}
 $$
 
@@ -441,7 +448,7 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 
 ##### Electric model
 
-`generic_load_gen` are modelled by using the so-called ZIP load model in power-grid-model, 
+`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model, 
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
 The injection of each ZIP model type can be computed as follows:
@@ -450,7 +457,7 @@ The injection of each ZIP model type can be computed as follows:
 
 $$
    \begin{eqnarray} 
-        S = S_\mathrm{specified} \times \bar{u}^2
+        S = S_{\text{specified}} \cdot \bar{u}^2
    \end{eqnarray}
 $$
 
@@ -458,7 +465,7 @@ $$
 
 $$
    \begin{eqnarray} 
-        S = S_\mathrm{specified} \times \bar{u}
+        S = S_{\text{specified}} \cdot \bar{u}
    \end{eqnarray}
 $$
 
@@ -466,7 +473,7 @@ $$
 
 $$
    \begin{eqnarray} 
-        S = S_\mathrm{specified}
+        S = S_{\text{specified}}
    \end{eqnarray}
 $$
 
@@ -558,8 +565,8 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 
 $$
    \begin{eqnarray} 
-        && u\_ residual = u\_ measured - u\_ state \\
-        && u\_ angle\_ residual = u\_ angle\_ measured - u\_ angle\_ state
+        & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
+        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}}
    \end{eqnarray}
 $$
 
@@ -630,8 +637,8 @@ See the documentation on [state estimation calculation methods](calculations.md#
 
 $$
    \begin{eqnarray} 
-        p\_ residual = p\_ measured - p\_ state \\
-        q\_ residual = q\_ measured - q\_ state
+        & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
+        & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
    \end{eqnarray}
 $$
 
@@ -680,10 +687,10 @@ Four types of short circuit fault are included in power-grid-model.
 
 | `fault_type`                       | `fault_phase`    | description                                                             |
 | ---------------------------------- | ---------------- |-------------------------------------------------------------------------|
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with impedance z_f.                         |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with impedance z_f, and other phases are open. |
-| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with impedance z_f.                         |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with impedance z_f then grounded.           |
+| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with fault impedance.                        |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with fault impedance, and other phases are open.  |
+| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with fault impedance.                          |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with fault impedance then grounded.            |
 
 In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
 
