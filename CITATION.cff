@@ -94,15 +94,15 @@ references:
     authors:
       - family-names: "Xiang"
         given-names: "Yu"
-        email: Tony.Xiang@Alliander.com
+        email: "Tony.Xiang@Alliander.com"
         affiliation: "Alliander"
       - family-names: "Salemink"
         given-names: "Peter"
-        email: Peter.Salemink@Alliander.com
+        email: "Peter.Salemink@Alliander.com"
         affiliation: "Alliander"
       - family-names: "Bharambe"
         given-names: "Nitish"
-        email: Nitish.Bharambe@Alliander.com
+        email: "Nitish.Bharambe@Alliander.com"
         affiliation: "Alliander"
       - family-names: "Govers"
         given-names: "Martinus"
@@ -111,7 +111,7 @@ references:
       - family-names: "Bogaard"
         name-particle: "van den"
         given-names: "Jonas"
-        email: Jonas.van.den.Bogaard@Alliander.com
+        email: "Jonas.van.den.Bogaard@Alliander.com"
         affiliation: "Alliander"
       - family-names: "Stoeller"
         given-names: "Bram"
