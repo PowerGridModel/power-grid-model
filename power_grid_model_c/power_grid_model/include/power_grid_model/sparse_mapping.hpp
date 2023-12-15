@@ -96,7 +96,7 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
 
         std::vector<DenseEntry> mapping_to_from;
 
-        auto index_range = std::ranges::views::iota(0, static_cast<Idx>(idx_B_in_A.size()));
+        auto index_range = std::ranges::views::iota(static_cast<Idx>(0), static_cast<Idx>(idx_B_in_A.size()));
 
         std::ranges::transform(idx_B_in_A, index_range, std::back_inserter(mapping_to_from),
                                [](Idx value, Idx orig_idx) {
