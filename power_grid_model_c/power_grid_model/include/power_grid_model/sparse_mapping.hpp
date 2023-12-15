@@ -92,13 +92,12 @@ inline DenseMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n
     using DenseEntry = std::pair<Idx, Idx>;
     DenseMapping dense_mapping;
 
-    if (static_cast<double>(n_A) * log(n_A) <= n_A + static_cast<double>(n_B)) {
+    if (static_cast<double>(n_A) * log(static_cast<double>(n_A)) <=
+        static_cast<double>(n_A) + static_cast<double>(n_B)) {
 
         std::vector<DenseEntry> mapping_to_from;
 
-        auto index_range = std::ranges::views::iota(Idx{0}, static_cast<Idx>(idx_B_in_A.size()));
-
-        std::transform(idx_B_in_A.begin(), idx_B_in_A.end(), index_range.begin(), std::back_inserter(mapping_to_from),
+        std::transform(idx_B_in_A.begin(), idx_B_in_A.end(), IdxCount{0}, std::back_inserter(mapping_to_from),
                        [](Idx value, Idx orig_idx) {
                            return std::pair{value, orig_idx};
                        });
