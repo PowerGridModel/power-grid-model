@@ -159,7 +159,13 @@ template <bool sym> struct MathModelParam {
     ComplexTensorVector<sym> source_param;
 };
 
-template <bool sym> struct MathModelParamIncrement : public MathModelParam<sym> {
+template <typename T>
+concept UpdateIsProgressive = requires(T t) { t.branch_param_to_change.size() > 0; };
+
+template <bool sym> struct MathModelParamIncrement {
+    std::vector<BranchCalcParam<sym>> branch_param;
+    ComplexTensorVector<sym> shunt_param;
+    ComplexTensorVector<sym> source_param;
     std::vector<Idx> branch_param_to_change;
     std::vector<Idx> shunt_param_to_change;
 };

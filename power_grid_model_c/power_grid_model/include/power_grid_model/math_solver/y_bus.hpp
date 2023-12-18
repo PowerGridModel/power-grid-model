@@ -11,6 +11,8 @@
 #include "../sparse_mapping.hpp"
 #include "../three_phase_tensor.hpp"
 
+#include <ranges>
+
 namespace power_grid_model {
 
 // hide implementation in inside namespace
@@ -352,13 +354,15 @@ template <bool sym> class YBus {
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
-    void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
-                                     bool decrement = false) {
-        const double mode = decrement ? -1.0 : 1.0;
-        if (!decrement) {
+    template <UpdateIsProgressive T>
+    void update_admittance_increment(std::shared_ptr<T const> const& math_model_param_incrmt,
+                                     bool is_decrement = false) {
+        const double mode = is_decrement ? -1.0 : 1.0;
+        if (!is_decrement) {
             // overwrite the old cached parameters in increment mode (update)
             math_model_param_incrmt_ = math_model_param_incrmt;
         } else if (!decremented_) {
+            math_model_param_incrmt_ = {}; // reset recorded increment that is already decremented
             return;
         }
 
@@ -366,10 +370,10 @@ template <bool sym> class YBus {
         ComplexTensorVector<sym> admittance(nnz());
         assert(Idx(admittance_->size()) == nnz());
         std::ranges::copy(admittance_->begin(), admittance_->end(), admittance.begin());
-        auto const& branch_param = math_model_param_incrmt_->branch_param;
-        auto const& branch_param_to_change = math_model_param_incrmt_->branch_param_to_change;
-        auto const& shunt_param = math_model_param_incrmt_->shunt_param;
-        auto const& shunt_param_to_change = math_model_param_incrmt_->shunt_param_to_change;
+        auto const& b_param = math_model_param_incrmt_->branch_param;
+        auto const& b_param_2c = math_model_param_incrmt_->branch_param_to_change;
+        auto const& s_param = math_model_param_incrmt_->shunt_param;
+        auto const& s_param_2c = math_model_param_incrmt_->shunt_param_to_change;
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
         auto const& y_bus_pos_in_entries = y_bus_struct_->y_bus_pos_in_entries;
@@ -377,24 +381,29 @@ template <bool sym> class YBus {
         // construct affected entries
         std::vector<Idx> affected_entries = {};
 
-        for (auto b_param_to_change : branch_param_to_change) {
-            // check whether pos is in pos_in_entries
-            const MatrixPos pos = std::pair{math_topology_->branch_bus_idx[b_param_to_change][0],
-                                            math_topology_->branch_bus_idx[b_param_to_change][1]};
+        auto check_and_add = [&affected_entries, &y_bus_pos_in_entries](MatrixPos pos) {
             auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
             if (it != y_bus_pos_in_entries.end()) {
                 affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
             }
-        }
-        for (auto s_param_to_change : shunt_param_to_change) {
-            const MatrixPos pos = std::pair{math_topology_->shunts_per_bus.get_group(s_param_to_change),
-                                            math_topology_->shunts_per_bus.get_group(s_param_to_change)};
-            auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
-            if (it != y_bus_pos_in_entries.end()) {
-                affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+        };
+
+        auto params_to_change = {b_param_2c | std::views::transform([](int n) { return std::make_pair(n, 1); }),
+                                 s_param_2c | std::views::transform([](int n) { return std::make_pair(n, 2); })};
+
+        for (auto [param_to_change, ptype] : params_to_change) {
+            Idx id_x = 0, id_y = 0;
+            if (ptype == 1) {
+                id_x = math_topology_->branch_bus_idx[param_to_change][0];
+                id_y = math_topology_->branch_bus_idx[param_to_change][1];
+            } else {
+                id_x = math_topology_->shunts_per_bus.get_group(param_to_change);
+                id_y = math_topology_->shunts_per_bus.get_group(param_to_change);
             }
+            check_and_add(std::pair(id_x, id_y));
         }
 
+        // process and update affected entries
         for (auto entry : affected_entries) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
@@ -402,10 +411,10 @@ template <bool sym> class YBus {
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
                 if (y_bus_element[element].element_type == YBusElementType::shunt) {
                     // shunt
-                    entry_admittance += shunt_param[y_bus_element[element].idx];
+                    entry_admittance += s_param[y_bus_element[element].idx];
                 } else {
                     // branch
-                    entry_admittance += branch_param[y_bus_element[element].idx]
+                    entry_admittance += b_param[y_bus_element[element].idx]
                                             .value[static_cast<Idx>(y_bus_element[element].element_type)];
                 }
             }
@@ -414,7 +423,7 @@ template <bool sym> class YBus {
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
-        decremented_ = decrement;
+        decremented_ = is_decrement;
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {

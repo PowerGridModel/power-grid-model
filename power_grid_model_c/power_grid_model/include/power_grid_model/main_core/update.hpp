@@ -7,9 +7,10 @@
 #define POWER_GRID_MODEL_MAIN_CORE_UPDATE_HPP
 
 #include "state.hpp"
-#include <ranges>
 
 #include "../all_components.hpp"
+
+#include <ranges>
 
 namespace power_grid_model::main_core {
 
@@ -101,11 +102,11 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
     MathModelParamIncrement<sym> math_model_param_incrmt;
     math_model_param_incrmt.branch_param = math_model_param->branch_param;
     math_model_param_incrmt.shunt_param = math_model_param->shunt_param;
-    math_model_param_incrmt.source_param = math_model_param->source_param;
-    math_model_param_incrmt.branch_param_to_change = std::make_shared<std::vector<Idx>>(
-        std::vector<Idx>(branch_param_to_change_views.begin(), branch_param_to_change_views.end()));
-    math_model_param_incrmt.shunt_param_to_change = std::make_shared<std::vector<Idx>>(
-        std::vector<Idx>(shunt_param_to_change_views.begin(), shunt_param_to_change_views.end()));
+    math_model_param_incrmt.source_param = math_model_param->source_param; // not sure if we actually need this
+    math_model_param_incrmt.branch_param_to_change =
+        std::vector<Idx>(branch_param_to_change_views.begin(), branch_param_to_change_views.end());
+    math_model_param_incrmt.shunt_param_to_change =
+        std::vector<Idx>(shunt_param_to_change_views.begin(), shunt_param_to_change_views.end());
 
     auto math_model_param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
 
