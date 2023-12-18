@@ -213,7 +213,7 @@ jobs:
       - name: Keep wheel files
         uses: actions/upload-artifact@v4
         with:
-          name: wheelhouse
+          name: wheelhouse-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   build-and-test-conda:
@@ -268,7 +268,6 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: wheelhouse
           path: wheelhouse
 
       - uses: actions/download-artifact@v4
@@ -277,8 +276,7 @@ jobs:
           path: .
 
       - name: List assets
-        run: |
-          ls ./wheelhouse/ -al
+        run: ls ./wheelhouse/ -al
 
       - name: Get tag
         id: tag
