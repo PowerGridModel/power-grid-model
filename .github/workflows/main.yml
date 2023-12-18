@@ -276,7 +276,7 @@ jobs:
 
       - name: Get tag
         id: tag
-        run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
+        run: echo "tag=v$(cat version/PYPI_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
