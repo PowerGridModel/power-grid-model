@@ -267,13 +267,9 @@ jobs:
           architecture: x64
 
       - uses: actions/download-artifact@v4
-        with:
-          path: wheelhouse
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: version
-          path: .
+      - name: Combine wheelhouses
+        run: for DIR in $(ls -d wheelhouse-*); do mv ${DIR}/* wheelhouse; done
 
       - name: List assets
         run: ls ./wheelhouse/ -al
