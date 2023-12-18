@@ -392,7 +392,8 @@ template <bool sym> class YBus {
                                  s_param_2c | std::views::transform([](int n) { return std::make_pair(n, 2); })};
 
         for (auto [param_to_change, ptype] : params_to_change) {
-            Idx id_x = 0, id_y = 0;
+            Idx id_x{0};
+            Idx id_y{0};
             if (ptype == 1) {
                 id_x = math_topology_->branch_bus_idx[param_to_change][0];
                 id_y = math_topology_->branch_bus_idx[param_to_change][1];
