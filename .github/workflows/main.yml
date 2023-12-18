@@ -269,7 +269,7 @@ jobs:
       - uses: actions/download-artifact@v4
 
       - name: Combine wheelhouses
-        run: for DIR in $(ls -d wheelhouse-*); do mv ${DIR}/* wheelhouse; done
+        run: mv wheelhouse-*/* wheelhouse
 
       - name: List assets
         run: ls ./wheelhouse/ -al
