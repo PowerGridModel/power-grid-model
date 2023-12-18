@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -45,13 +45,13 @@ jobs:
         run:  python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: version
           path: PYPI_VERSION
 
       - name: Keep SDist
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheelhouse
           path: ./wheelhouse/*.tar.gz
@@ -187,7 +187,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: version
           path: .
@@ -211,9 +211,9 @@ jobs:
           CIBW_BUILD: ${{ matrix.cibw_build }}
 
       - name: Keep wheel files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheelhouse
+          name: wheelhouse-${{ matrix.platform }}
           path: ./wheelhouse/*.whl
 
   build-and-test-conda:
@@ -231,7 +231,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: conda-pgm-env
           environment-file: .github/conda_pgm_env.yml
@@ -261,24 +261,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           architecture: x64
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheelhouse
-          path: wheelhouse
+      - uses: actions/download-artifact@v4
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: version
-          path: .
+      - name: Combine wheelhouses
+        run: mv wheelhouse-*/* wheelhouse
 
       - name: List assets
-        run: |
-          ls ./wheelhouse/ -al
+        run: ls ./wheelhouse/ -al
 
       - name: Get tag
         id: tag

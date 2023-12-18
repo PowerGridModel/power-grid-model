@@ -95,7 +95,7 @@ If you are using Power Grid Model in your research work, please consider citing 
 
 ```bibtex
 @software{Xiang_PowerGridModel_power-grid-model,
-  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Wang, Zhen and Guo, Jerry and Jagutis, Laurynas and Wang, Chenguang and van Raalte, Marc and {Contributors to the LF Energy project Power Grid Model}},
   doi = {10.5281/zenodo.8054429},
   license = {MPL-2.0},
   title = {{PowerGridModel/power-grid-model}},
