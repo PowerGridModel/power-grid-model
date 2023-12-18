@@ -268,8 +268,10 @@ jobs:
 
       - uses: actions/download-artifact@v4
 
-      - name: Set version
-        run: mv version/* .
+      - uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: .
 
       - name: Combine wheelhouses
         run: mv wheelhouse-*/* wheelhouse
