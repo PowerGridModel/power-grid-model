@@ -187,7 +187,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: version
           path: .
@@ -266,12 +266,12 @@ jobs:
           python-version: '3.10'
           architecture: x64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wheelhouse
           path: wheelhouse
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: version
           path: .
