@@ -343,67 +343,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
     }
-    /*
-        // void branch_measurement_contribution(PowerSensorCalcParam<sym> const& branch_power, ComplexTensor<sym> const&
-        // yii,
-        //                                      ComplexTensor<sym> const& yij, Idx const& row, Idx const& col,
-        //                                      ComplexValueVector<sym> const& current_u, NRSEGainBlock<sym>& block,
-        //                                      NRSERhs<sym>& rhs_block) {
-        //     auto const& ui = current_u[row];
-        //     auto const& uj = current_u[col];
-        //     RealValue<sym> const& abs_ui = x_[row].v();
-        //     RealValue<sym> const& abs_uj = x_[col].v();
-        //     auto const unit_ui = exp(1.0i * x_[row].theta());
-        //     auto const unit_uj = exp(1.0i * x_[col].theta());
 
-        //     auto const w_p = diagonal_inverse(branch_power.p_variance);
-        //     auto const w_q = diagonal_inverse(branch_power.q_variance);
-
-        //     RealTensor<sym> const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
-        //     RealTensor<sym> const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
-
-        //     RealTensor<sym> const dP_dt_i = -gs_minus_bc;
-        //     RealTensor<sym> const dP_dV_i =
-        //         g_cos_plus_b_sin(yij, unit_ui, uj) - dot(real(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
-        //     RealTensor<sym> const dQ_dt_i = gc_plus_bs;
-        //     RealTensor<sym> const dQ_dV_i =
-        //         g_sin_minus_b_cos(yij, unit_ui, uj) + dot(imag(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
-
-        //     RealTensor<sym> const dP_dt_j = gs_minus_bc;
-        //     RealTensor<sym> const dP_dV_j = g_cos_plus_b_sin(yij, ui, unit_uj);
-        //     RealTensor<sym> const dQ_dt_j = -gc_plus_bs;
-        //     RealTensor<sym> const dQ_dV_j = g_cos_plus_b_sin(yij, ui, unit_uj);
-
-        //     RealValue<sym> const del_branch_power_p = real(branch_power.value) - sum_row(gc_plus_bs);
-        //     RealValue<sym> const del_branch_power_q = imag(branch_power.value) - sum_row(gs_minus_bc);
-
-        //     block.g_P_theta() += dot(w_p, dP_dt_i, dP_dt_j) + dot(w_q, dQ_dt_i, dQ_dt_j);
-        //     block.g_Q_v() += dot(w_p, dP_dV_i, dP_dV_j) + dot(w_q, dQ_dV_i, dQ_dV_j);
-        //     block.g_P_v() += dot(w_p, dP_dt_i, dP_dV_j) + dot(w_q, dQ_dt_i, dQ_dV_j);
-        //     block.g_Q_theta() += dot(w_p, dP_dt_j, dP_dV_i) + dot(w_q, dQ_dt_j, dQ_dV_i);
-
-        //     rhs_block.eta_theta() = dot(w_p, dP_dt_i, del_branch_power_p) + dot(w_q, dQ_dt_i, del_branch_power_q);
-        //     rhs_block.eta_v() = dot(w_p, dP_dV_i, del_branch_power_p) + dot(w_q, dQ_dV_i, del_branch_power_q);
-        // }
-
-        // void shunt_measurement_contribution(PowerSensorCalcParam<sym> const& shunt_power, ComplexTensor<sym> const&
-       yii,
-        //                                     Idx const& row, ComplexValueVector<sym> const& current_u,
-        //                                     NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block) {
-
-        //     auto const& ui = current_u[row];
-        //     auto const& abs_ui = x_[row].v();
-        //     RealTensor<sym> const dP_dVi = dot(real(yii), abs_ui, RealDiagonalTensor<sym>{2.0});
-        //     RealTensor<sym> const dQ_dVi = dot(imag(yii), abs_ui, RealDiagonalTensor<sym>{-2.0});
-        //     auto const w_p = diagonal_inverse(shunt_power.p_variance);
-        //     auto const w_q = diagonal_inverse(shunt_power.q_variance);
-        //     block.g_Q_v() += dot(w_p, dP_dVi, dP_dVi) + dot(w_q, dQ_dVi, dQ_dVi);
-
-        //     ComplexValue<sym> const del_shunt_power = shunt_power.value - dot(yii, ui) * ui;
-
-        //     rhs_block.eta_v() += dot(w_p, dP_dVi, real(del_shunt_power)) + dot(w_q, dQ_dVi, imag(del_shunt_power));
-        // }
-    */
     NRSEJacobian shunt_jacobian(ComplexValue<sym> const& ui, ComplexTensor<sym> const& yii) {
         NRSEJacobian jacobian_sub_block{};
         jacobian_sub_block.dP_dv = dot(real(yii), cabs(ui), RealDiagonalTensor<sym>{2.0});
