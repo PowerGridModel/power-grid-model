@@ -4,6 +4,7 @@
 
 #include <power_grid_model/math_solver/y_bus.hpp>
 #include <power_grid_model/three_phase_tensor.hpp>
+//#include <power_grid_model/main_core/update.hpp>
 
 #include <doctest/doctest.h>
 
@@ -274,40 +275,114 @@ TEST_CASE("Test fill-in y bus") {
 
 TEST_CASE("Incremental update y-bus") {
     /*
-     * struct
-     * [1] --0--> [0] --1--> [2]
-     * extra fill-in: (1, 2) by removing node 0
-     *
-     * [
-     *   0, 1, 2
-     *   3, 4, f
-     *   5, f, 6
-     * ]
-     */
+    test Y bus struct
+    [
+            x, x, 0, 0
+            x, x, x, 0
+            0, x, x, x
+            0, 0, x, x
+    ]
+
+     [0]   = Node
+--0--> = Branch (from --id--> to)
+ -X-   = Open switch / not connected
+
+    Topology:
+
+  --- 4 ---               ----- 3 -----
+ |         |             |             |
+ |         v             v             |
+[0]       [1] --- 1 --> [2] --- 2 --> [3]
+ ^         |             |
+ |         |             5
+  --- 0 ---              |
+                         X
+    */
 
     MathModelTopology topo{};
-    topo.phase_shift.resize(3, 0.0);
+    MathModelParam<true> param_sym;
+    topo.phase_shift.resize(4, 0.0);
     topo.branch_bus_idx = {
         {1, 0}, // branch 0 from node 1 to 0
-        {0, 2}, // branch 1 from node 0 to 2
+        {1, 2}, // branch 1 from node 1 to 2
+        {2, 3}, // branch 2 from node 2 to 3
+        {3, 2}, // branch 3 from node 3 to 2
+        {0, 1}, // branch 4 from node 0 to 1
+        {2, -1} // branch 5 from node 2 to "not connected"
     };
-    topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
-    topo.fill_in = {{1, 2}};
+    param_sym.branch_param = {// ff, ft, tf, tt
+                              {1.0i, 2.0i, 3.0i, 4.0i}, {5.0, 6.0, 7.0, 8.0},     {9.0i, 10.0i, 11.0i, 12.0i},
+                              {13.0, 14.0, 15.0, 16.0}, {17.0, 18.0, 19.0, 20.0}, {1000i, 0.0, 0.0, 0.0}};
+    topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
+    param_sym.shunt_param = {100.0i, 200.0i};
 
-    IdxVector row_indptr = {0, 3, 5, 7};
-    IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
-    IdxVector bus_entry = {0, 4, 6};
-    IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
-    IdxVector y_bus_entry_indptr = {0, 2,              // 0, 1 belong to element [0,0] in Ybus
-                                    3, 4, 5, 6, 7, 8}; // everything else has only one entry
+    // get shared ptr
+    auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
 
-    YBusStructure ybus{topo};
+    ComplexTensorVector<true> admittance_sym = {
+        17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
+        18.0 + 3.0i,    // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
+        19.0 + 2.0i,    // 1, 0 -> {0, 1}tf + {1, 0}ft = 19.0 + 2.0i
+        25.0 + 1.0i,    // 1, 1 -> {0, 1}tt + {1, 0}ff + {1,2}ff = 20.0 + 1.0i + 5.0
+        6.0,            // 1, 2 -> {1,2}ft = 6.0
+        7.0,            // 2, 1 -> {1,2}tf = 7.0
+        24.0 + 1009.0i, // 2, 2 -> {1,2}tt + {2,3}ff + {3, 2}tt + {2,-1}ff = 8.0 + 9.0i + 16.0 + 1000.0i = 24.0 + 1009i
+        15.0 + 10.0i,   // 2, 3 -> {2,3}ft + {3,2}tf = 10.0i + 15.0
+        14.0 + 11.0i,   // 3, 2 -> {2,3}tf + {3,2}ft = 11.0i + 14.0
+        13.0 + 212.0i   // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1) = 12.0i + 13.0 + 200.0i
+    };
 
-    CHECK(row_indptr == ybus.row_indptr);
-    CHECK(col_indices == ybus.col_indices);
-    CHECK(bus_entry == ybus.bus_entry);
-    CHECK(lu_transpose_entry == ybus.lu_transpose_entry);
-    CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr);
+    ComplexTensorVector<true> admittance_sym_state_1 = {34.0 + 208.0i, 36.0 + 6.0i,  38.0 + 4.0i,    50.0 + 2.0i,
+                                                        12.0,          14.0,         48.0 + 2018.0i, 30.0 + 20.0i,
+                                                        14.0 + 22.0i,  26.0 + 424.0i};
+    topo.branch_bus_idx = {
+        {1, 0}, // branch 0 from node 1 to 0
+        {1, 2}, // branch 1 from node 1 to 2
+        {2, 3}, // branch 2 from node 2 to 3
+        {3, 2}, // branch 3 from node 3 to 2
+        {0, 1}, // branch 4 from node 0 to 1
+        {2, -1} // branch 5 from node 2 to "not connected"
+    };
+    MathModelParam<true> param_sym_update;
+    param_sym_update.branch_param = {//   ff,    ft,   tf,   tt
+                                       {1.0i,   0.0,  0.0,  0.0 },  // {1,  0}
+                                       { 0.0,   1.0,  0.0,  0.0 },  // {1,  2}
+                                       { 0.0,   0.0,  0.0,  2.0i},  // {2,  3}
+                                       { 0.0,   0.0,  2.0,  0.0 },  // {3,  2} 
+                                       { 0.0,   0.0,  0.0,  0.0 },  // {0,  1}  
+                                       { 1.0i,  0.0,  0.0,  0.0 }}; // {2, -1}
+    param_sym_update.shunt_param = {1.0i, 0.0i};
+
+    ComplexTensorVector<true> admittance_sym_2 = {
+        //17.0 + 104.0i,                                                                        [v]
+        17.0 + 105.0i,  // 0, 0 -> += {1, 0}tt + {0, 1}ff + shunt(0) = 0.0 + 0.0 + 1.0i         
+        //18.0 + 3.0i,                                                                          [v]
+        18.0 + 3.0i,    // 0, 1 -> += {0, 1}ft + {1, 0}tf = 0.0 + 0.0
+        //19.0 + 2.0i,                                                                          [v]
+        19.0 + 2.0i,    // 1, 0 -> += {0, 1}tf + {1, 0}ft = 0.0 + 0.0
+        //25.0 + 1.0i,                                                                          [v]
+        25.0 + 2.0i,    // 1, 1 -> += {0, 1}tt + {1, 0}ff + {1,2}ff = 0.0 + 1.0i + 0.0
+        //6.0,                                                                                  [v]
+        7.0,            // 1, 2 -> += {1,2}ft = 1.0
+        //7.0,                                                                                  [v]
+        7.0,            // 2, 1 -> += {1,2}tf = 0.0
+        //24.0 + 1009.0i,                                                                       [v] 
+        24.0 + 1010.0i, // 2, 2 -> += {1,2}tt + {2,3}ff + {3, 2}tt + {2,-1}ff = 0.0 + 0.0 + 0.0 + 1.0i
+        //15.0 + 10.0i,                                                                         [v]
+        17.0 + 10.0i,   // 2, 3 -> += {2,3}ft + {3,2}tf = 0.0 + 2.0
+        //14.0 + 11.0i,                                                                         [v]
+        14.0 + 11.0i,   // 3, 2 -> += {2,3}tf + {3,2}ft = 0.0 + 0.0
+        //13.0 + 212.0i                                                                         [v]
+        13.0 + 214.0i   // 3, 3 -> += {2,3}tt + {3,2}ff + shunt(1) = 2.0i + 0.0 + 0.0
+    };
+
+    SUBCASE("Test whole scale update") {
+        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        CHECK(ybus.admittance().size() == admittance_sym.size());
+        for (size_t i = 0; i < admittance_sym.size(); i++) {
+            CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
+        }
+    }
 }
 
 /*

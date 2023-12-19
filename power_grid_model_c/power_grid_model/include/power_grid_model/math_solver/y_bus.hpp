@@ -402,7 +402,6 @@ template <bool sym> class YBus {
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
 
         // construct affected entries
-        //std::vector<Idx> affected_entries = {};
         auto const affected_entries = increments_to_entries();
 
         // process and update affected entries
