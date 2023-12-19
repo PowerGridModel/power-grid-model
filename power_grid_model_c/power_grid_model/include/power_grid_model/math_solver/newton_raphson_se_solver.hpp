@@ -174,9 +174,6 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
                                 ComplexValueVector<sym> const& current_u) {
-        MathModelParam<sym> const& param = y_bus.math_model_param();
-        IdxVector const& row_indptr = y_bus.row_indptr_lu();
-        IdxVector const& col_indices = y_bus.col_indices_lu();
 
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
