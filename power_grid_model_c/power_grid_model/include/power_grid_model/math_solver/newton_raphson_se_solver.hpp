@@ -145,7 +145,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");
-        calculate_result(y_bus, measured_values, output);
+        // calculate_result(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -197,7 +197,6 @@ template <bool sym> class NewtonRaphsonSESolver {
         }
         return max_dev;
     }
-
 };
 
 template class NewtonRaphsonSESolver<true>;
