@@ -9,8 +9,8 @@
 #include "calculation_parameters.hpp"
 #include "enum.hpp"
 #include "exception.hpp"
+#include "index_mapping.hpp"
 #include "power_grid_model.hpp"
-#include "sparse_mapping.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
