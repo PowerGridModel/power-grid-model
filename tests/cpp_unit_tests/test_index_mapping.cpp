@@ -31,8 +31,10 @@ TEST_CASE("Test dense mapping - counting sort") {
 TEST_CASE("Test dense mapping - comparison sort") {
     constexpr Idx count{1'000'000};
 
-    IdxVector idx_B_in_A;
-    std::ranges::copy((std::views::iota(Idx{0}, count) | std::views::reverse), std::back_inserter(idx_B_in_A));
+    IdxVector idx_B_in_A(count);
+    for (Idx i = 0; i < count; ++i) {
+        idx_B_in_A[i] = count - 1 - i;
+    }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
     std::ranges::sort(sorted_idx_B_in_A);

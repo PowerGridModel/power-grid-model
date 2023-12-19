@@ -41,7 +41,7 @@ namespace detail {
 inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     auto next_group = std::begin(element_groups);
-    for (auto const group : std::views::iota(Idx{0}, num_groups)) {
+    for (auto group : boost::counting_range(Idx{0}, num_groups)) {
         next_group = std::upper_bound(next_group, std::end(element_groups), group);
         result[group + 1] = std::distance(std::begin(element_groups), next_group);
     }
@@ -50,7 +50,7 @@ inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
 
 inline auto sparse_decode(IdxVector const& indptr) {
     auto result = IdxVector(indptr.back());
-    for (auto const group : std::views::iota(Idx{0}, static_cast<Idx>(indptr.size() - 1))) {
+    for (Idx group : boost::counting_range(Idx{0}, static_cast<Idx>(indptr.size()) - 1)) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;
