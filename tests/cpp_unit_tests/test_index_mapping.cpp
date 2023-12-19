@@ -5,7 +5,6 @@
 #include <power_grid_model/index_mapping.hpp>
 
 #include <doctest/doctest.h>
-#include <random>
 
 namespace power_grid_model {
 

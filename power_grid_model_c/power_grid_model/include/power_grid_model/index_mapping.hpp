@@ -125,16 +125,17 @@ inline auto build_dense_mapping_counting_sort(IdxVector const& idx_B_in_A, Idx c
 } // namespace detail
 
 inline DenseIndexMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
-    auto const n_A = static_cast<Idx>(idx_B_in_A.size());
+    constexpr auto relative_complexity_prefactor = 1.0;
 
-    if (static_cast<double>(n_A) * log(static_cast<double>(n_A)) <=
-        static_cast<double>(n_A) + static_cast<double>(n_B)) {
+    auto const n_A_ = static_cast<double>(idx_B_in_A.size());
+    auto const n_B_ = static_cast<double>(n_B);
 
-        return detail::build_dense_mapping_comparison_sort(idx_B_in_A, n_B);
-    } else {
+    if (n_A_ + n_B_ < relative_complexity_prefactor * n_A_ * log(n_A_)) {
         return detail::build_dense_mapping_counting_sort(idx_B_in_A, n_B);
     }
+    return detail::build_dense_mapping_comparison_sort(idx_B_in_A, n_B);
 }
 
 } // namespace power_grid_model
+
 #endif
