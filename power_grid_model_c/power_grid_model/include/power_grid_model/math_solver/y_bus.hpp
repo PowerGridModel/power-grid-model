@@ -354,8 +354,10 @@ template <bool sym> class YBus {
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
-    void increments_to_entries(std::shared_ptr<IdxVector> affected_entries) {
+    //void increments_to_entries(std::shared_ptr<IdxVector> affected_entries) {
+    IdxVector increments_to_entries() {
         // construct affected entries
+        IdxVector affected_entries = {};
         auto const& y_bus_pos_in_entries = y_bus_struct_->y_bus_pos_in_entries;
         auto process_params = [&affected_entries, &y_bus_pos_in_entries, this](auto params_to_change, bool is_branch) {
             for (auto param_to_change : params_to_change) {
@@ -371,13 +373,14 @@ template <bool sym> class YBus {
                 auto it =
                     std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), MatrixPos{id_x, id_y});
                 if (it != y_bus_pos_in_entries.end()) {
-                    affected_entries->push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+                    affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
                 }
             }
         };
 
         process_params(math_model_param_incrmt_->branch_param_to_change, true);
         process_params(math_model_param_incrmt_->shunt_param_to_change, false);
+        return affected_entries;
     }
 
     void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
@@ -399,11 +402,11 @@ template <bool sym> class YBus {
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
 
         // construct affected entries
-        std::vector<Idx> affected_entries = {};
-        increments_to_entries(std::make_shared<IdxVector>(affected_entries));
+        //std::vector<Idx> affected_entries = {};
+        auto const affected_entries = increments_to_entries();
 
         // process and update affected entries
-        for (auto entry : affected_entries) {
+        for (auto const entry : affected_entries) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
