@@ -45,12 +45,10 @@ template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
 template <bool sym> using NRSERhs = NRSEUnknown<sym>;
 
 // class of 4*4 (12*12) se gain block
-/*
-[
-   [G, QH]
-   [Q, R ]
-]
-*/
+// [
+//    [G, QH]
+//    [Q, R ]
+// ]
 template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
