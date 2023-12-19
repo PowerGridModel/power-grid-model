@@ -394,7 +394,7 @@ template <bool sym> class YBus {
         // construct admittance data
         ComplexTensorVector<sym> admittance(nnz());
         assert(Idx(admittance_->size()) == nnz());
-        std::ranges::copy(admittance_->begin(), admittance_->end(), admittance.begin());
+        std::ranges::copy(*admittance_, admittance.begin());
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
 
