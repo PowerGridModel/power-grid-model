@@ -91,7 +91,7 @@ struct DenseIndexMapping {
 
 namespace detail {
 
-inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx const n_B) {
+inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx const /* n_B */) {
     using DenseEntry = std::pair<Idx, Idx>;
 
     std::vector<DenseEntry> mapping_to_from;
