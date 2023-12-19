@@ -198,18 +198,6 @@ template <bool sym> class NewtonRaphsonSESolver {
         return max_dev;
     }
 
-    void calculate_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, MathOutput<sym>& output) {
-        // call y bus
-        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
-        output.bus_injection = y_bus.calculate_injection(output.u);
-        std::tie(output.load_gen, output.source) =
-            measured_value.calculate_load_gen_source(output.u, output.bus_injection);
-    }
-
-    auto diagonal_inverse(RealValue<sym> const& value) {
-        return RealDiagonalTensor<sym>{static_cast<RealValue<sym>>(RealValue<sym>{1.0} / value)};
-    }
 };
 
 template class NewtonRaphsonSESolver<true>;
