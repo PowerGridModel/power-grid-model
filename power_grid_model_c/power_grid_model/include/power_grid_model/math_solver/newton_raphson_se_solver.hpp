@@ -20,9 +20,7 @@ Newton Raphson state estimation solver
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
-
-namespace nrse_solver_impl {
+namespace math_model_impl::nrse_solver_impl {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
@@ -202,9 +200,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 template class NewtonRaphsonSESolver<true>;
 template class NewtonRaphsonSESolver<false>;
 
-} // namespace nrse_solver_impl
-
-} // namespace math_model_impl
+} // namespace math_model_impl::nrse_solver_impl
 
 template <bool sym> using NewtonRaphsonSESolver = math_model_impl::nrse_solver_impl::NewtonRaphsonSESolver<sym>;
 

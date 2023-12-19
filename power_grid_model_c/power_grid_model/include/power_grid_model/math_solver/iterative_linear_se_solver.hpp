@@ -24,9 +24,7 @@ iterative linear state estimation solver
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
-
-namespace ilse_solver_impl {
+namespace math_model_impl::ilse_solver_impl {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <bool sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false, 2> {
@@ -357,9 +355,7 @@ template <bool sym> class IterativeLinearSESolver {
 template class IterativeLinearSESolver<true>;
 template class IterativeLinearSESolver<false>;
 
-} // namespace ilse_solver_impl
-
-} // namespace math_model_impl
+} // namespace math_model_impl::ilse_solver_impl
 
 template <bool sym> using IterativeLinearSESolver = math_model_impl::ilse_solver_impl::IterativeLinearSESolver<sym>;
 
