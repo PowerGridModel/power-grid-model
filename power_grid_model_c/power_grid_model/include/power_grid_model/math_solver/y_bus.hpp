@@ -354,8 +354,33 @@ template <bool sym> class YBus {
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
-    template <UpdateIsProgressive T>
-    void update_admittance_increment(std::shared_ptr<T const> const& math_model_param_incrmt,
+    void increments_to_entries(std::shared_ptr<IdxVector> affected_entries) {
+        // construct affected entries
+        auto const& y_bus_pos_in_entries = y_bus_struct_->y_bus_pos_in_entries;
+        auto process_params = [&affected_entries, &y_bus_pos_in_entries, this](auto params_to_change, bool is_branch) {
+            for (auto param_to_change : params_to_change) {
+                Idx id_x{0};
+                Idx id_y{0};
+                if (is_branch) {
+                    id_x = math_topology_->branch_bus_idx[param_to_change][0];
+                    id_y = math_topology_->branch_bus_idx[param_to_change][1];
+                } else {
+                    id_x = math_topology_->shunts_per_bus.get_group(param_to_change);
+                    id_y = math_topology_->shunts_per_bus.get_group(param_to_change);
+                }
+                auto it =
+                    std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), MatrixPos{id_x, id_y});
+                if (it != y_bus_pos_in_entries.end()) {
+                    affected_entries->push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+                }
+            }
+        };
+
+        process_params(math_model_param_incrmt_->branch_param_to_change, true);
+        process_params(math_model_param_incrmt_->shunt_param_to_change, false);
+    }
+
+    void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
                                      bool is_decrement = false) {
         const double mode = is_decrement ? -1.0 : 1.0;
         if (!is_decrement) {
@@ -370,39 +395,12 @@ template <bool sym> class YBus {
         ComplexTensorVector<sym> admittance(nnz());
         assert(Idx(admittance_->size()) == nnz());
         std::ranges::copy(admittance_->begin(), admittance_->end(), admittance.begin());
-        auto const& b_param = math_model_param_incrmt_->branch_param;
-        auto const& b_param_2c = math_model_param_incrmt_->branch_param_to_change;
-        auto const& s_param = math_model_param_incrmt_->shunt_param;
-        auto const& s_param_2c = math_model_param_incrmt_->shunt_param_to_change;
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
-        auto const& y_bus_pos_in_entries = y_bus_struct_->y_bus_pos_in_entries;
 
         // construct affected entries
         std::vector<Idx> affected_entries = {};
-
-        auto check_and_add = [&affected_entries, &y_bus_pos_in_entries](MatrixPos pos) {
-            auto it = std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), pos);
-            if (it != y_bus_pos_in_entries.end()) {
-                affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
-            }
-        };
-
-        auto params_to_change = {b_param_2c | std::views::transform([](int n) { return std::make_pair(n, 1); }),
-                                 s_param_2c | std::views::transform([](int n) { return std::make_pair(n, 2); })};
-
-        for (auto [param_to_change, ptype] : params_to_change) {
-            Idx id_x{0};
-            Idx id_y{0};
-            if (ptype == 1) {
-                id_x = math_topology_->branch_bus_idx[param_to_change][0];
-                id_y = math_topology_->branch_bus_idx[param_to_change][1];
-            } else {
-                id_x = math_topology_->shunts_per_bus.get_group(param_to_change);
-                id_y = math_topology_->shunts_per_bus.get_group(param_to_change);
-            }
-            check_and_add(std::pair(id_x, id_y));
-        }
+        increments_to_entries(std::make_shared<IdxVector>(affected_entries));
 
         // process and update affected entries
         for (auto entry : affected_entries) {
@@ -412,10 +410,10 @@ template <bool sym> class YBus {
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
                 if (y_bus_element[element].element_type == YBusElementType::shunt) {
                     // shunt
-                    entry_admittance += s_param[y_bus_element[element].idx];
+                    entry_admittance += math_model_param_incrmt_->shunt_param[y_bus_element[element].idx];
                 } else {
                     // branch
-                    entry_admittance += b_param[y_bus_element[element].idx]
+                    entry_admittance += math_model_param_incrmt_->branch_param[y_bus_element[element].idx]
                                             .value[static_cast<Idx>(y_bus_element[element].element_type)];
                 }
             }
