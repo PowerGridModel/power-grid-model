@@ -206,7 +206,7 @@ template class NewtonRaphsonSESolver<false>;
 
 } // namespace math_model_impl
 
-template <bool sym> using NewtonRaphsonSESolver = math_model_impl::NewtonRaphsonSESolver<sym>;
+template <bool sym> using NewtonRaphsonSESolver = math_model_impl::nrse_solver_impl::NewtonRaphsonSESolver<sym>;
 
 } // namespace power_grid_model
 

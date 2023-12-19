@@ -361,7 +361,7 @@ template class IterativeLinearSESolver<false>;
 
 } // namespace math_model_impl
 
-template <bool sym> using IterativeLinearSESolver = math_model_impl::IterativeLinearSESolver<sym>;
+template <bool sym> using IterativeLinearSESolver = math_model_impl::ilse_solver_impl::IterativeLinearSESolver<sym>;
 
 } // namespace power_grid_model
 
