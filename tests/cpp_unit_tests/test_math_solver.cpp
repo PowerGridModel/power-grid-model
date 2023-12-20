@@ -38,7 +38,7 @@ void check_close(auto const& x, auto const& y) { check_close<true>(x, y); }
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {
-        math_model_impl::PFJacBlock<true> b{};
+        math_solver::PFJacBlock<true> b{};
         b.h() += 1.0;
         b.n() += 2.0;
         b.m() += 3.0;
@@ -50,7 +50,7 @@ TEST_CASE("Test block") {
     }
 
     SUBCASE("Asymmetric") {
-        math_model_impl::PFJacBlock<false> b{};
+        math_solver::PFJacBlock<false> b{};
         RealTensor<false> const h{1.0};
         RealTensor<false> const n{2.0};
         RealTensor<false> const m{3.0};

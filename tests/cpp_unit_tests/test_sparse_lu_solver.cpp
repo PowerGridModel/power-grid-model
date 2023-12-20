@@ -9,12 +9,12 @@
 
 namespace power_grid_model {
 
-using lu_trait_double = math_model_impl::sparse_lu_entry_trait<double, double, double>;
+using lu_trait_double = math_solver::sparse_lu_entry_trait<double, double, double>;
 static_assert(!lu_trait_double::is_block);
 static_assert(lu_trait_double::block_size == 1);
 static_assert(std::is_same_v<lu_trait_double::Scalar, double>);
 
-using lu_trait_tensor = math_model_impl::sparse_lu_entry_trait<Eigen::Array33cd, Eigen::Array3cd, Eigen::Array3cd>;
+using lu_trait_tensor = math_solver::sparse_lu_entry_trait<Eigen::Array33cd, Eigen::Array3cd, Eigen::Array3cd>;
 static_assert(std::is_base_of_v<Eigen::ArrayBase<Eigen::Array33cd>, Eigen::Array33cd>);
 static_assert(lu_trait_tensor::is_block);
 static_assert(lu_trait_tensor::block_size == 3);
