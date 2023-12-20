@@ -162,10 +162,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
 
         if constexpr (CacheType::value) {
+            constexpr auto comp_index = AllComponents::template index_of<CompType>();
+
             main_core::update_inverse<CompType>(
-                state_, begin, end,
-                std::back_inserter(std::get<AllComponents::template index_of<CompType>()>(cached_inverse_update_)),
-                sequence_idx);
+                state_, begin, end, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+
+            std::get<comp_index>(cached_updated_sequence_indices_) = sequence_idx;
         }
 
         UpdateChange const changed = main_core::update_component<CompType>(state_, begin, end, sequence_idx);
@@ -211,10 +213,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component() {
-        auto& cached_inverse_update = std::get<AllComponents::template index_of<CompType>()>(cached_inverse_update_);
+        constexpr auto component_index = AllComponents::template index_of<CompType>();
+
+        auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
+        auto& cached_updated_sequence_indices = std::get<component_index>(cached_updated_sequence_indices_);
+
         if (!cached_inverse_update.empty()) {
             update_component<CompType, permanent_update_t>(cached_inverse_update);
             cached_inverse_update.clear();
+            cached_updated_sequence_indices.clear();
         }
     }
 
@@ -725,6 +732,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_asym_parameter_up_to_date_{false};
 
     OwnedUpdateDataset cached_inverse_update_{};
+    std::array<std::vector<Idx2D>, n_types> cached_updated_sequence_indices_{};
     UpdateChange cached_state_changes_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
