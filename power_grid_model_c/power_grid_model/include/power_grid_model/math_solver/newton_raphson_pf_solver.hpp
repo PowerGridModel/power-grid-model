@@ -160,7 +160,7 @@ J.L -= -dQ_cal_m/dV
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace math_solver {
 
 // class for phasor in polar coordinate and/or complex power
 template <bool sym> struct PolarPhasor : public Block<double, sym, false, 2> {
@@ -435,9 +435,9 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
 template class NewtonRaphsonPFSolver<true>;
 template class NewtonRaphsonPFSolver<false>;
 
-} // namespace math_model_impl
+} // namespace math_solver
 
-template <bool sym> using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
+template <bool sym> using NewtonRaphsonPFSolver = math_solver::NewtonRaphsonPFSolver<sym>;
 
 } // namespace power_grid_model
 

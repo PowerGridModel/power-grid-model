@@ -13,7 +13,7 @@ Collect all measured Values
 #include "../calculation_parameters.hpp"
 #include "../three_phase_tensor.hpp"
 
-namespace power_grid_model::math_model_impl {
+namespace power_grid_model::math_solver {
 
 // processed measurement struct
 // combined all measurement of the same quantity
@@ -580,6 +580,6 @@ template <bool sym> class MeasuredValues {
 
 template class MeasuredValues<true>;
 template class MeasuredValues<false>;
-} // namespace power_grid_model::math_model_impl
+} // namespace power_grid_model::math_solver
 
 #endif

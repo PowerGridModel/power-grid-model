@@ -16,7 +16,7 @@
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace math_solver {
 
 template <class Tensor, class RHSVector, class XVector, class = void> struct sparse_lu_entry_trait;
 
@@ -29,9 +29,9 @@ template <class ArrayLike>
 concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>; // should be an eigen array
 
 template <class LHSArrayLike, class RHSArrayLike>
-concept matrix_multiplicable = eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
-                               (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) ==
-                                static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
+concept matrix_multiplicable =
+    eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
+    (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
 
 template <class Tensor, class RHSVector, class XVector>
 concept tensor_lu =
@@ -335,10 +335,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::shared_ptr<IdxVector const> diag_lu_;
 };
 
-} // namespace math_model_impl
+} // namespace math_solver
 
 template <class Tensor, class RHSVector, class XVector>
-using SparseLUSolver = math_model_impl::SparseLUSolver<Tensor, RHSVector, XVector>;
+using SparseLUSolver = math_solver::SparseLUSolver<Tensor, RHSVector, XVector>;
 
 } // namespace power_grid_model
 

@@ -42,6 +42,8 @@ if there are sources
 
 namespace power_grid_model {
 
+namespace math_solver {
+
 template <bool sym> class LinearPFSolver {
 
   public:
@@ -63,7 +65,7 @@ template <bool sym> class LinearPFSolver {
 
         // prepare matrix
         Timer sub_timer(calculation_info, 2221, "Prepare matrix");
-        common_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
+        detail::copy_y_bus<sym>(y_bus, mat_data_);
         prepare_matrix_and_rhs(y_bus, input, output);
 
         // solve
@@ -91,7 +93,7 @@ template <bool sym> class LinearPFSolver {
     typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        using common_solver_functions::add_sources;
+        using detail::add_sources;
 
         IdxVector const& bus_entry = y_bus.lu_diag();
         for (auto const& [bus_number, load_gens, sources] :
@@ -113,13 +115,16 @@ template <bool sym> class LinearPFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        common_solver_functions::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                                  [](Idx /*i*/) { return LoadGenType::const_y; });
+        detail::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                 [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
 
 template class LinearPFSolver<true>;
 template class LinearPFSolver<false>;
+} // namespace math_solver
+
+template <bool sym> using LinearPFSolver = math_solver::LinearPFSolver<sym>;
 
 } // namespace power_grid_model
 

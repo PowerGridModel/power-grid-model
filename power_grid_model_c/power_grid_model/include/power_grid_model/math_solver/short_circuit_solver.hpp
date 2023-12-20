@@ -17,7 +17,7 @@
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace math_solver {
 
 // solver
 template <bool sym> class ShortCircuitSolver {
@@ -49,7 +49,7 @@ template <bool sym> class ShortCircuitSolver {
 
         IdxVector infinite_admittance_fault_counter(n_bus_);
 
-        common_solver_functions::copy_y_bus<sym>(y_bus, mat_data_);
+        detail::copy_y_bus<sym>(y_bus, mat_data_);
 
         prepare_matrix_and_rhs(y_bus, input, output, infinite_admittance_fault_counter, fault_type, phase_1, phase_2);
 
@@ -85,8 +85,7 @@ template <bool sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            common_solver_functions::add_sources<sym>(sources, bus_number, y_bus, input.source, diagonal_element,
-                                                      u_bus);
+            detail::add_sources<sym>(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
 
             add_faults(faults, bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
                        fault_type, phase_1, phase_2);
@@ -442,9 +441,9 @@ template <bool sym> class ShortCircuitSolver {
 template class ShortCircuitSolver<true>;
 template class ShortCircuitSolver<false>;
 
-} // namespace math_model_impl
+} // namespace math_solver
 
-template <bool sym> using ShortCircuitSolver = math_model_impl::ShortCircuitSolver<sym>;
+template <bool sym> using ShortCircuitSolver = math_solver::ShortCircuitSolver<sym>;
 
 } // namespace power_grid_model
 
