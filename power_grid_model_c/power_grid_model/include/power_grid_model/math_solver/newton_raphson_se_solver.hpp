@@ -20,7 +20,7 @@ Newton Raphson state estimation solver
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace math_model_impl::nrse {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
@@ -45,12 +45,10 @@ template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
 template <bool sym> using NRSERhs = NRSEUnknown<sym>;
 
 // class of 4*4 (12*12) se gain block
-/*
-[
-   [G, QH]
-   [Q, R ]
-]
-*/
+// [
+//    [G, QH]
+//    [Q, R ]
+// ]
 template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
@@ -145,7 +143,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");
-        calculate_result(y_bus, measured_values, output);
+        // calculate_result(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -465,9 +463,9 @@ template <bool sym> class NewtonRaphsonSESolver {
 template class NewtonRaphsonSESolver<true>;
 template class NewtonRaphsonSESolver<false>;
 
-} // namespace math_model_impl
+} // namespace math_model_impl::nrse
 
-template <bool sym> using NewtonRaphsonSESolver = math_model_impl::NewtonRaphsonSESolver<sym>;
+template <bool sym> using NewtonRaphsonSESolver = math_model_impl::nrse::NewtonRaphsonSESolver<sym>;
 
 } // namespace power_grid_model
 

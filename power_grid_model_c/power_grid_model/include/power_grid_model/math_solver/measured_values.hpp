@@ -13,10 +13,7 @@ Collect all measured Values
 #include "../calculation_parameters.hpp"
 #include "../three_phase_tensor.hpp"
 
-namespace power_grid_model {
-
-// hide implementation in inside namespace
-namespace math_model_impl {
+namespace power_grid_model::math_model_impl {
 
 // processed measurement struct
 // combined all measurement of the same quantity
