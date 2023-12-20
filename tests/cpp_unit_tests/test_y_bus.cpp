@@ -348,6 +348,7 @@ TEST_CASE("Incremental update y-bus") {
         {0, 1}, // branch 4 from node 0 to 1
         {2, -1} // branch 5 from node 2 to "not connected"
     };
+
     MathModelParam<true> param_sym_update;
     param_sym_update.branch_param = {                        //   ff,    ft,   tf,   tt
                                      {1.0i, 0.0, 0.0, 0.0},  // {1,  0}

@@ -11,7 +11,9 @@
 #include "../sparse_mapping.hpp"
 #include "../three_phase_tensor.hpp"
 
+#include <algorithm>
 #include <ranges>
+#include <set>
 
 namespace power_grid_model {
 
@@ -336,51 +338,61 @@ template <bool sym> class YBus {
         for (Idx entry = 0; entry != nnz(); ++entry) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
+            IdxVector entry_param_branch;
+            IdxVector entry_param_shunt;
             // loop over all entries of this position
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
+                auto param_idx = y_bus_element[element].idx;
                 if (y_bus_element[element].element_type == YBusElementType::shunt) {
                     // shunt
-                    entry_admittance += shunt_param[y_bus_element[element].idx];
+                    entry_admittance += shunt_param[param_idx];
+                    entry_param_shunt.push_back(param_idx);
                 } else {
                     // branch
-                    entry_admittance += branch_param[y_bus_element[element].idx]
-                                            .value[static_cast<Idx>(y_bus_element[element].element_type)];
+                    entry_admittance +=
+                        branch_param[param_idx].value[static_cast<Idx>(y_bus_element[element].element_type)];
+                    entry_param_branch.push_back(param_idx);
                 }
             }
             // assign
             admittance[entry] = entry_admittance;
+            map_admittance_param_branch.push_back(entry_param_branch);
+            map_admittance_param_shunt.push_back(entry_param_shunt);
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
-    // void increments_to_entries(std::shared_ptr<IdxVector> affected_entries) {
     IdxVector increments_to_entries() {
         // construct affected entries
-        IdxVector affected_entries = {};
-        auto const& y_bus_pos_in_entries = y_bus_struct_->y_bus_pos_in_entries;
-        auto process_params = [&affected_entries, &y_bus_pos_in_entries, this](auto params_to_change, bool is_branch) {
-            for (auto param_to_change : params_to_change) {
-                Idx id_x{0};
-                Idx id_y{0};
-                if (is_branch) {
-                    id_x = math_topology_->branch_bus_idx[param_to_change][0];
-                    id_y = math_topology_->branch_bus_idx[param_to_change][1];
-                } else {
-                    id_x = math_topology_->shunts_per_bus.get_group(param_to_change);
-                    id_y = math_topology_->shunts_per_bus.get_group(param_to_change);
+        std::set<Idx> affected_entries;
+        auto querry_params_in_map = [&affected_entries, this](auto params_to_change, bool is_branch) {
+            if (is_branch) {
+                for (size_t i = 0; i < map_admittance_param_branch.size(); ++i) {
+                    if (std::any_of(map_admittance_param_branch[i].begin(), map_admittance_param_branch[i].end(),
+                                    [&](Idx val) {
+                                        return std::find(params_to_change.begin(), params_to_change.end(), val) !=
+                                               params_to_change.end();
+                                    })) {
+                        affected_entries.insert(i);
+                    }
                 }
-                auto it =
-                    std::ranges::find(y_bus_pos_in_entries.begin(), y_bus_pos_in_entries.end(), MatrixPos{id_x, id_y});
-                if (it != y_bus_pos_in_entries.end()) {
-                    affected_entries.push_back(std::distance(y_bus_pos_in_entries.begin(), it));
+            } else {
+                for (size_t i = 0; i < map_admittance_param_shunt.size(); ++i) {
+                    if (std::any_of(map_admittance_param_shunt[i].begin(), map_admittance_param_shunt[i].end(),
+                                    [&](Idx val) {
+                                        return std::find(params_to_change.begin(), params_to_change.end(), val) !=
+                                               params_to_change.end();
+                                    })) {
+                        affected_entries.insert(i);
+                    }
                 }
             }
         };
 
-        process_params(math_model_param_incrmt_->branch_param_to_change, true);
-        process_params(math_model_param_incrmt_->shunt_param_to_change, false);
-        return affected_entries;
+        querry_params_in_map(math_model_param_incrmt_->branch_param_to_change, true);
+        querry_params_in_map(math_model_param_incrmt_->shunt_param_to_change, false);
+        return IdxVector{affected_entries.begin(), affected_entries.end()};
     }
 
     void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
@@ -389,8 +401,7 @@ template <bool sym> class YBus {
         if (!is_decrement) {
             // overwrite the old cached parameters in increment mode (update)
             math_model_param_incrmt_ = math_model_param_incrmt;
-        } else if (!decremented_) {
-            math_model_param_incrmt_ = {}; // reset recorded increment that is already decremented
+        } else if (decremented_) {
             return;
         }
 
@@ -505,6 +516,10 @@ template <bool sym> class YBus {
 
     // cache the math parameters
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
+
+    // map index between admittance entries and parameter entries
+    std::vector<IdxVector> map_admittance_param_branch{};
+    std::vector<IdxVector> map_admittance_param_shunt{};
 
     // cache the increment math parameters
     std::shared_ptr<MathModelParamIncrement<sym> const> math_model_param_incrmt_;
