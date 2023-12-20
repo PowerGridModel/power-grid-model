@@ -172,8 +172,8 @@ template <bool sym> class NewtonRaphsonSESolver {
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(YBus<sym> const& /*y_bus*/, MeasuredValues<sym> const& /*measured_value*/,
-                                ComplexValueVector<sym> const& /*current_u*/) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
+                                ComplexValueVector<sym> const& current_u) {
 
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
