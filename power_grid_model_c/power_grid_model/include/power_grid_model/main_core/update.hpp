@@ -13,6 +13,13 @@
 namespace power_grid_model::main_core {
 
 namespace detail {
+template <std::derived_from<Base> Component, class ComponentContainer, typename UpdateType>
+    requires model_component_state<MainModelState, ComponentContainer, Component> &&
+             std::same_as<std::remove_cvref_t<typename Component::UpdateType>, std::remove_cvref_t<UpdateType>>
+inline Idx2D get_idx_by_id(MainModelState<ComponentContainer> const& state, UpdateType const& update) {
+    return state.components.template get_idx_by_id<Component>(update.id);
+}
+
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           typename Func>
     requires model_component_state<MainModelState, ComponentContainer, Component> &&
@@ -28,13 +35,33 @@ inline void iterate_component_sequence(Func&& func, MainModelState<ComponentCont
         // get component
         // either using ID via hash map
         // either directly using sequence id
-        Idx2D const sequence_single =
-            has_sequence_id ? sequence_idx[seq] : state.components.template get_idx_by_id<Component>(it->id);
+        Idx2D const sequence_single = has_sequence_id ? sequence_idx[seq] : get_idx_by_id<Component>(state, *it);
 
         func(*it, sequence_single);
     }
 }
 } // namespace detail
+
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<Idx2D> OutputIterator>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
+                                   ForwardIterator end, OutputIterator destination) {
+    using UpdateType = typename Component::UpdateType;
+
+    std::transform(begin, end, destination,
+                   [&state](UpdateType const& update) { return detail::get_idx_by_id<Component>(state, update); });
+}
+
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
+                                                 ForwardIterator end) {
+    std::vector<Idx2D> result;
+    result.reserve(std::distance(begin, end));
+    get_component_sequence<Component>(state, begin, end, std::back_inserter(result));
+    return result;
+}
 
 // template to update components
 // using forward interators

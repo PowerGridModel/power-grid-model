@@ -164,10 +164,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if constexpr (CacheType::value) {
             constexpr auto comp_index = AllComponents::template index_of<CompType>();
 
-            main_core::update_inverse<CompType>(
-                state_, begin, end, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+            auto& cached_sequence = std::get<comp_index>(cached_updated_sequence_indices_);
+            if (sequence_idx.empty()) {
+                main_core::get_component_sequence<CompType>(state_, begin, end, std::back_inserter(cached_sequence));
+            } else {
+                assert(cached_sequence.empty());
+                cached_sequence = sequence_idx;
+            }
 
-            std::get<comp_index>(cached_updated_sequence_indices_) = sequence_idx;
+            main_core::update_inverse<CompType>(
+                state_, begin, end, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), cached_sequence);
         }
 
         UpdateChange const changed = main_core::update_component<CompType>(state_, begin, end, sequence_idx);
@@ -377,12 +383,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
                 // begin and end of the first batch
                 auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType>(0);
-                // vector
-                std::vector<Idx2D> seq_idx(std::distance(it_begin, it_end));
-                std::transform(it_begin, it_end, seq_idx.begin(), [&model](UpdateType const& update) {
-                    return model.state_.components.template get_idx_by_id<ComponentType>(update.id);
-                });
-                return seq_idx;
+                return main_core::get_component_sequence<ComponentType>(model.state_, it_begin, it_end);
             }...};
 
         // fill in the map per component type
