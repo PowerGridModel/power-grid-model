@@ -354,7 +354,7 @@ template <bool sym> class YBus {
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
-    //void increments_to_entries(std::shared_ptr<IdxVector> affected_entries) {
+    // void increments_to_entries(std::shared_ptr<IdxVector> affected_entries) {
     IdxVector increments_to_entries() {
         // construct affected entries
         IdxVector affected_entries = {};

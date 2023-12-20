@@ -85,8 +85,8 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
 }
 
 template <bool sym>
-inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
-                         bool increment) {
+inline void update_y_bus_increment(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
+                                   bool increment) {
     auto branch_param_to_change_views =
         std::views::iota(0, math_model_param->branch_param.size()) | std::views::filter([&math_model_param](Idx i) {
             return math_model_param->branch_param[i].yff() != ComplexTensor<sym>{0.0} ||
