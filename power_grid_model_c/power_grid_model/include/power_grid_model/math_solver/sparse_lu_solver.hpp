@@ -29,9 +29,9 @@ template <class ArrayLike>
 concept eigen_array = std::same_as<decltype(check_array_base(ArrayLike{})), int>; // should be an eigen array
 
 template <class LHSArrayLike, class RHSArrayLike>
-concept matrix_multiplicable =
-    eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
-    (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) == static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
+concept matrix_multiplicable = eigen_array<LHSArrayLike> && eigen_array<RHSArrayLike> &&
+                               (static_cast<Idx>(LHSArrayLike::ColsAtCompileTime) ==
+                                static_cast<Idx>(RHSArrayLike::RowsAtCompileTime));
 
 template <class Tensor, class RHSVector, class XVector>
 concept tensor_lu =
