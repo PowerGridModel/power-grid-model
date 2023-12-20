@@ -175,7 +175,7 @@ template class MathSolver<true>;
 template class MathSolver<false>;
 } // namespace math_solver
 
-template <bool sym> using MathSolver = math_solver::MathSolver<sym>;
+using math_solver::MathSolver;
 
 } // namespace power_grid_model
 

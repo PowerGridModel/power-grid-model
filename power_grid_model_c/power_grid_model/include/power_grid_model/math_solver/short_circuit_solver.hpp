@@ -17,7 +17,7 @@
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_solver {
+namespace math_solver::short_circuit {
 
 // solver
 template <bool sym> class ShortCircuitSolver {
@@ -441,9 +441,9 @@ template <bool sym> class ShortCircuitSolver {
 template class ShortCircuitSolver<true>;
 template class ShortCircuitSolver<false>;
 
-} // namespace math_solver
+} // namespace math_solver::short_circuit
 
-template <bool sym> using ShortCircuitSolver = math_solver::ShortCircuitSolver<sym>;
+using math_solver::short_circuit::ShortCircuitSolver;
 
 } // namespace power_grid_model
 

@@ -42,7 +42,7 @@ if there are sources
 
 namespace power_grid_model {
 
-namespace math_solver {
+namespace math_solver::linear_pf {
 
 template <bool sym> class LinearPFSolver {
 
@@ -122,9 +122,9 @@ template <bool sym> class LinearPFSolver {
 
 template class LinearPFSolver<true>;
 template class LinearPFSolver<false>;
-} // namespace math_solver
+} // namespace math_solver::linear_pf
 
-template <bool sym> using LinearPFSolver = math_solver::LinearPFSolver<sym>;
+using math_solver::linear_pf::LinearPFSolver;
 
 } // namespace power_grid_model
 

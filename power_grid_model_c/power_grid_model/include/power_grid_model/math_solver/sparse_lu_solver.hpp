@@ -337,8 +337,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
 
 } // namespace math_solver
 
-template <class Tensor, class RHSVector, class XVector>
-using SparseLUSolver = math_solver::SparseLUSolver<Tensor, RHSVector, XVector>;
+using math_solver::SparseLUSolver;
 
 } // namespace power_grid_model
 

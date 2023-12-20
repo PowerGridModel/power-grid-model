@@ -69,7 +69,7 @@ Nomenclature:
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_solver {
+namespace math_solver::iterative_current_pf {
 
 // solver
 template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
@@ -193,9 +193,9 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 template class IterativeCurrentPFSolver<true>;
 template class IterativeCurrentPFSolver<false>;
 
-} // namespace math_solver
+} // namespace math_solver::iterative_current_pf
 
-template <bool sym> using IterativeCurrentPFSolver = math_solver::IterativeCurrentPFSolver<sym>;
+using math_solver::iterative_current_pf::IterativeCurrentPFSolver;
 
 } // namespace power_grid_model
 
