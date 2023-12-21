@@ -10,6 +10,13 @@
 
 #include "../all_components.hpp"
 
+#define USE_BOOST_IOTA
+
+#ifdef USE_BOOST_IOTA
+#include <boost/range/adaptors.hpp>
+#include <boost/range/irange.hpp>
+#endif
+
 #include <ranges>
 
 namespace power_grid_model::main_core {
@@ -88,16 +95,24 @@ template <bool sym>
 inline void update_y_bus_increment(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                                    bool increment) {
     auto branch_param_to_change_views =
-        std::views::iota(0, math_model_param->branch_param.size()) | std::views::filter([&math_model_param](Idx i) {
+#ifdef USE_BOOST_IOTA
+        boost::irange(0, math_model_param->branch_param.size()) | boost::adaptors::filtered
+#else
+        std::views::iota(0, math_model_param->branch_param.size()) | std::views::filter
+#endif
+        ([&math_model_param](Idx i) {
             return math_model_param->branch_param[i].yff() != ComplexTensor<sym>{0.0} ||
                    math_model_param->branch_param[i].yft() != ComplexTensor<sym>{0.0} ||
                    math_model_param->branch_param[i].ytf() != ComplexTensor<sym>{0.0} ||
                    math_model_param->branch_param[i].ytt() != ComplexTensor<sym>{0.0};
         });
     auto shunt_param_to_change_views =
-        std::views::iota(0, math_model_param->shunt_param.size()) | std::views::filter([&math_model_param](Idx i) {
-            return math_model_param->shunt_param[i] != ComplexTensor<sym>{0.0};
-        });
+#ifdef USE_BOOST_IOTA
+        boost::irange(0, math_model_param->branch_param.size()) | boost::adaptors::filtered
+#else
+        std::views::iota(0, math_model_param->shunt_param.size()) | std::views::filter
+#endif
+        ([&math_model_param](Idx i) { return math_model_param->shunt_param[i] != ComplexTensor<sym>{0.0}; });
 
     MathModelParamIncrement<sym> math_model_param_incrmt;
     math_model_param_incrmt.branch_param = math_model_param->branch_param;

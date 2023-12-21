@@ -7,6 +7,12 @@
 
 #include <doctest/doctest.h>
 
+#define USE_BOOST_IOTA
+
+#ifdef USE_BOOST_IOTA
+#include <boost/range/adaptors.hpp>
+#include <boost/range/irange.hpp>
+#endif
 #include <ranges>
 
 namespace power_grid_model {
@@ -276,28 +282,28 @@ TEST_CASE("Test fill-in y bus") {
 
 TEST_CASE("Incremental update y-bus") {
     /*
-    test Y bus struct
-    [
-            x, x, 0, 0
-            x, x, x, 0
-            0, x, x, x
-            0, 0, x, x
-    ]
-
-     [0]   = Node
---0--> = Branch (from --id--> to)
- -X-   = Open switch / not connected
-
-    Topology:
-
-  --- 4 ---               ----- 3 -----
- |         |             |             |
- |         v             v             |
-[0]       [1] --- 1 --> [2] --- 2 --> [3]
- ^         |             |
- |         |             5
-  --- 0 ---              |
-                         X
+    // test Y bus struct
+    // [
+    //         x, x, 0, 0
+    //         x, x, x, 0
+    //         0, x, x, x
+    //         0, 0, x, x
+    // ]
+    //
+    //  [0]   = Node
+    // --0--> = Branch (from --id--> to)
+    //  -X-   = Open switch / not connected
+    //
+    //     Topology:
+    //
+    //   --- 4 ---               ----- 3 -----
+    //  |         |             |             |
+    //  |         v             v             |
+    // [0]       [1] --- 1 --> [2] --- 2 --> [3]
+    //  ^         |             |
+    //  |         |             5
+    //   --- 0 ---              |
+    //                          X
     */
 
     MathModelTopology topo{};
@@ -382,38 +388,44 @@ TEST_CASE("Incremental update y-bus") {
         13.0 + 214.0i // 3, 3 -> += {2,3}tt + {3,2}ff + shunt(1) = 2.0i + 0.0 + 0.0
     };
 
+    auto VERIFY_ADMITTANCE = [](ComplexTensorVector<true> const& admittance,
+                                ComplexTensorVector<true> const& admittance_ref) {
+        CHECK(admittance.size() == admittance_ref.size());
+        for (size_t i = 0; i < admittance.size(); i++) {
+            CHECK(cabs(admittance[i] - admittance_ref[i]) < numerical_tolerance);
+        }
+    };
     SUBCASE("Test whole scale update") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
-        CHECK(ybus.admittance().size() == admittance_sym.size());
-        for (size_t i = 0; i < admittance_sym.size(); i++) {
-            CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
-        }
-        ybus.update_admittance(std::make_shared<MathModelParam<true> const>(param_sym));
+        VERIFY_ADMITTANCE(ybus.admittance(), admittance_sym);
 
-        CHECK(ybus.admittance().size() == admittance_sym.size());
-        for (size_t i = 0; i < admittance_sym.size(); i++) {
-            CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
-        }
+        ybus.update_admittance(std::make_shared<MathModelParam<true> const>(param_sym));
+        VERIFY_ADMITTANCE(ybus.admittance(), admittance_sym);
     }
 
     SUBCASE("Test progressive update") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
-        CHECK(ybus.admittance().size() == admittance_sym.size());
-        for (size_t i = 0; i < admittance_sym.size(); i++) {
-            CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
-        }
+        VERIFY_ADMITTANCE(ybus.admittance(), admittance_sym);
+
         auto branch_param_to_change_views =
-            std::views::iota(0, static_cast<int>(param_sym_update.branch_param.size())) |
-            std::views::filter([&param_sym_update](Idx i) {
+#ifdef USE_BOOST_IOTA
+            boost::irange(0, static_cast<int>(param_sym_update.branch_param.size())) | boost::adaptors::filtered
+#else
+            std::views::iota(0, static_cast<int>(param_sym_update.branch_param.size())) | std::views::filter
+#endif
+            ([&param_sym_update](Idx i) {
                 return param_sym_update.branch_param[i].yff() != ComplexTensor<true>{0.0} ||
                        param_sym_update.branch_param[i].yft() != ComplexTensor<true>{0.0} ||
                        param_sym_update.branch_param[i].ytf() != ComplexTensor<true>{0.0} ||
                        param_sym_update.branch_param[i].ytt() != ComplexTensor<true>{0.0};
             });
-        auto shunt_param_to_change_views = std::views::iota(0, static_cast<int>(param_sym_update.shunt_param.size())) |
-                                           std::views::filter([&param_sym_update](Idx i) {
-                                               return param_sym_update.shunt_param[i] != ComplexTensor<true>{0.0};
-                                           });
+        auto shunt_param_to_change_views =
+#ifdef USE_BOOST_IOTA
+            boost::irange(0, static_cast<int>(param_sym_update.shunt_param.size())) | boost::adaptors::filtered
+#else
+            std::views::iota(0, static_cast<int>(param_sym_update.shunt_param.size())) | std::views::filter
+#endif
+            ([&param_sym_update](Idx i) { return param_sym_update.shunt_param[i] != ComplexTensor<true>{0.0}; });
 
         MathModelParamIncrement<true> math_model_param_incrmt;
         math_model_param_incrmt.branch_param = param_sym_update.branch_param;
@@ -428,25 +440,13 @@ TEST_CASE("Incremental update y-bus") {
             std::make_shared<MathModelParamIncrement<true> const>(math_model_param_incrmt);
 
         ybus.update_admittance_increment(math_model_param_incrmt_ptr, false);
-        // check increment
-        CHECK(ybus.admittance().size() == admittance_sym_2.size());
-        for (size_t i = 0; i < admittance_sym_2.size(); i++) {
-            CHECK(cabs(ybus.admittance()[i] - admittance_sym_2[i]) < numerical_tolerance);
-        }
+        VERIFY_ADMITTANCE(ybus.admittance(), admittance_sym_2);
 
         ybus.update_admittance_increment(math_model_param_incrmt_ptr, true);
-        // check decrement
-        CHECK(ybus.admittance().size() == admittance_sym.size());
-        for (size_t i = 0; i < admittance_sym.size(); i++) {
-            CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
-        }
+        VERIFY_ADMITTANCE(ybus.admittance(), admittance_sym);
 
         ybus.update_admittance_increment(math_model_param_incrmt_ptr, true);
-        // check second decrement, which should not change anything
-        CHECK(ybus.admittance().size() == admittance_sym.size());
-        for (size_t i = 0; i < admittance_sym.size(); i++) {
-            CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
-        }
+        VERIFY_ADMITTANCE(ybus.admittance(), admittance_sym);
     }
 }
 
