@@ -374,7 +374,7 @@ template <bool sym> class YBus {
                                         return std::find(params_to_change.begin(), params_to_change.end(), val) !=
                                                params_to_change.end();
                                     })) {
-                        affected_entries.insert(i);
+                        affected_entries.insert(int(i));
                     }
                 }
             } else {
@@ -384,7 +384,7 @@ template <bool sym> class YBus {
                                         return std::find(params_to_change.begin(), params_to_change.end(), val) !=
                                                params_to_change.end();
                                     })) {
-                        affected_entries.insert(i);
+                        affected_entries.insert(int(i));
                     }
                 }
             }
