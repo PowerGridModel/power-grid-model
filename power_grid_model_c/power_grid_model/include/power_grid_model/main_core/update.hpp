@@ -32,12 +32,8 @@ inline void iterate_component_sequence(Func&& func, MainModelState<ComponentCont
 
     // loop to to update component
     for (auto it = begin; it != end; ++it, ++seq) {
-        // get component
-        // either using ID via hash map
-        // either directly using sequence id
-        Idx2D const sequence_single = has_sequence_id ? sequence_idx[seq] : get_idx_by_id<Component>(state, *it);
-
-        func(*it, sequence_single);
+        // get component directly using sequence id
+        func(*it, sequence_idx[seq]);
     }
 }
 } // namespace detail
