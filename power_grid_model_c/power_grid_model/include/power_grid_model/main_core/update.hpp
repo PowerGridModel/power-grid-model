@@ -24,10 +24,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, std::forw
           typename Func>
     requires model_component_state<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
-inline void iterate_component_sequence(Func&& func, MainModelState<ComponentContainer> const& state,
-                                       ForwardIterator begin, ForwardIterator end,
+inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
                                        std::vector<Idx2D> const& sequence_idx) {
-    bool const has_sequence_id = !sequence_idx.empty();
     Idx seq = 0;
 
     // loop to to update component
@@ -76,7 +74,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
             auto& comp = state.components.template get_item<Component>(sequence_single);
             changed = changed || comp.update(update_data);
         },
-        state, begin, end, sequence_idx);
+        begin, end, sequence_idx);
 
     return changed;
 }
@@ -97,7 +95,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
             auto const& comp = state.components.template get_item<Component>(sequence_single);
             *destination++ = comp.inverse(update_data);
         },
-        state, begin, end, sequence_idx);
+        begin, end, sequence_idx);
 }
 
 template <bool sym>
