@@ -32,13 +32,13 @@ template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
 
     GetterType<0, 0> theta() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> v() { return this->template get_val<1, 0>(); }
-    GetterType<2, 0> phi_theta() { return this->template get_val<2, 0>(); }
-    GetterType<3, 0> phi_v() { return this->template get_val<3, 0>(); }
+    GetterType<2, 0> phi_p() { return this->template get_val<2, 0>(); }
+    GetterType<3, 0> phi_q() { return this->template get_val<3, 0>(); }
 
     GetterType<0, 0> eta_theta() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> eta_v() { return this->template get_val<1, 0>(); }
-    GetterType<2, 0> tau_theta() { return this->template get_val<2, 0>(); }
-    GetterType<3, 0> tau_v() { return this->template get_val<3, 0>(); }
+    GetterType<2, 0> tau_p() { return this->template get_val<2, 0>(); }
+    GetterType<3, 0> tau_q() { return this->template get_val<3, 0>(); }
 };
 
 // block class for the right hand side in state estimation equation
@@ -46,7 +46,7 @@ template <bool sym> using NRSERhs = NRSEUnknown<sym>;
 
 // class of 4*4 (12*12) se gain block
 // [
-//    [G, QH]
+//    [G, QT]
 //    [Q, R ]
 // ]
 template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
@@ -187,8 +187,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             auto const unit_ui = exp(1.0i * x_[row].theta());
             NRSERhs<sym>& rhs_block = del_x_rhs_[row];
             rhs_block = NRSERhs<sym>{};
-            NRSEGainBlock<sym>& diag_block = data_gain_[y_bus.lu_diag()[row]];
-            diag_block = NRSEGainBlock<sym>{};
+
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
                 auto const& uj = current_u[col];
@@ -196,6 +195,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 auto const unit_uj = exp(1.0i * x_[col].theta());
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
+                // Initialize the block (Diagonal block gets initialized outside this loop)
                 if (row != col) {
                     block = NRSEGainBlock<sym>{};
                 }
@@ -278,6 +278,10 @@ template <bool sym> class NewtonRaphsonSESolver {
                     }
                 }
 
+                // Initialize diagonal block
+                NRSEGainBlock<sym>& diag_block = data_gain_[y_bus.lu_diag()[row]];
+                diag_block = NRSEGainBlock<sym>{};
+
                 // fill block with injection measurement
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
@@ -293,8 +297,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                         NRSEJacobian injection_diagonal = injection_diagonal_jacobian(yij, abs_ui);
                         add_single_jacobian(block, injection_diagonal, 1.0);
 
-                        rhs_block.tau_theta() += injection.value.real();
-                        rhs_block.tau_v() += injection.value.imag();
+                        rhs_block.tau_p() += injection.value.real();
+                        rhs_block.tau_q() += injection.value.imag();
 
                         // block.r_P_theta() += w_p * w_p;
                         // block.r_Q_v() += w_q * w_q;
@@ -308,8 +312,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                         add_single_jacobian(diag_block, injection_non_diagonal, -1.0);
 
                         // subtract f(x) incrementally
-                        rhs_block.tau_theta() += -sum_row(gc_plus_bs);
-                        rhs_block.tau_v() += -sum_row(gs_minus_bc);
+                        rhs_block.tau_p() += -sum_row(gc_plus_bs);
+                        rhs_block.tau_q() += -sum_row(gs_minus_bc);
                     }
                 }
                 // injection measurement not exist
