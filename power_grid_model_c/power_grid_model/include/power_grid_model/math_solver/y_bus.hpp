@@ -17,7 +17,7 @@
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_solver {
+namespace math_model_impl {
 
 using OffDiagIdxMap = std::array<Idx, 2>; // map of ft and tf for branch
 
@@ -340,7 +340,7 @@ template <bool sym> class YBus {
             IdxVector entry_param_shunt;
             IdxVector entry_param_branch;
             // std::vector<std::pair<Idx, Idx>> entry_param_shunt_pair;
-            //  loop over all entries of this position
+            //   loop over all entries of this position
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
                 auto param_idx = y_bus_element[element].idx;
                 if (y_bus_element[element].element_type == YBusElementType::shunt) {
@@ -368,32 +368,20 @@ template <bool sym> class YBus {
     IdxVector increments_to_entries() {
         // construct affected entries
         std::set<Idx> affected_entries;
-        auto querry_params_in_map = [&affected_entries, this](auto params_to_change, bool is_branch) {
-            if (is_branch) {
-                for (size_t i = 0; i < map_admittance_param_branch.size(); ++i) {
-                    if (std::any_of(map_admittance_param_branch[i].begin(), map_admittance_param_branch[i].end(),
-                                    [&](Idx val) {
-                                        return std::find(params_to_change.begin(), params_to_change.end(), val) !=
-                                               params_to_change.end();
-                                    })) {
-                        affected_entries.insert(static_cast<int>(i));
-                    }
-                }
-            } else {
-                for (size_t i = 0; i < map_admittance_param_shunt.size(); ++i) {
-                    if (std::any_of(map_admittance_param_shunt[i].begin(), map_admittance_param_shunt[i].end(),
-                                    [&](Idx val) {
-                                        return std::find(params_to_change.begin(), params_to_change.end(), val) !=
-                                               params_to_change.end();
-                                    })) {
-                        affected_entries.insert(static_cast<int>(i));
-                    }
+
+        // querry params in map, not yet distinguishing between entry_param_shunt_pair and entry_param_shunt
+        auto querry_params_in_map = [&affected_entries](auto const& params_to_change, auto const& mapping) {
+            for (size_t i = 0; i < mapping.size(); ++i) {
+                if (std::ranges::any_of(mapping[i], [&](Idx val) {
+                        return std::ranges::find(params_to_change, val) != params_to_change.end();
+                    })) {
+                    affected_entries.insert(static_cast<int>(i));
                 }
             }
         };
 
-        querry_params_in_map(math_model_param_incrmt_->branch_param_to_change, true);
-        querry_params_in_map(math_model_param_incrmt_->shunt_param_to_change, false);
+        querry_params_in_map(math_model_param_incrmt_->branch_param_to_change, map_admittance_param_branch);
+        querry_params_in_map(math_model_param_incrmt_->shunt_param_to_change, map_admittance_param_shunt);
         return IdxVector{affected_entries.begin(), affected_entries.end()};
     }
 
@@ -522,7 +510,8 @@ template <bool sym> class YBus {
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch{};
     std::vector<IdxVector> map_admittance_param_shunt{};
-    // std::vector<std::vector<std::pair<Idx, Idx>>> map_admittance_param_shunt_pairs{};
+    // std::vector<std::vector<std::pair<Idx, Idx>>> map_admittance_param_shunt_pairs{}; //WIP
+
     //  cache the increment math parameters
     std::shared_ptr<MathModelParamIncrement<sym> const> math_model_param_incrmt_;
     bool decremented_ = false;
@@ -531,9 +520,11 @@ template <bool sym> class YBus {
 template class YBus<true>;
 template class YBus<false>;
 
-} // namespace math_solver
+} // namespace math_model_impl
 
-using math_solver::YBus;
+template <bool sym> using YBus = math_model_impl::YBus<sym>;
+
+using YBusStructure = math_model_impl::YBusStructure;
 
 } // namespace power_grid_model
 
