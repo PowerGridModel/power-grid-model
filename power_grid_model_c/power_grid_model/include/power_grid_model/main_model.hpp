@@ -266,19 +266,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     the the sequence indexer given an input array of ID's for a given component type
     */
     void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
+        using GetIndexerFunc = void (*)(MainModelState const& state, ID const* id_begin, Idx size, Idx* indexer_begin);
 
         // static function array
         static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
-            [](MainModelImpl const& model, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
-                std::transform(id_begin_, id_begin_ + size_, indexer_begin_, [&model](ID id) {
-                    return model.state_.components.template get_idx_by_id<ComponentType>(id).pos;
+            [](MainModelState const& state, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
+                std::transform(id_begin_, id_begin_ + size_, indexer_begin_, [&state](ID id) {
+                    return state.components.template get_idx_by_id<ComponentType>(id).pos;
                 });
             }...};
         // search component type name
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             if (entry.name == component_type) {
-                return get_indexer_func[entry.index](*this, id_begin, size, indexer_begin);
+                return get_indexer_func[entry.index](state_, id_begin, size, indexer_begin);
             }
         }
     }
@@ -286,15 +286,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // get sequence idx map of a certain batch scenario
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
         using GetSeqIdxFunc =
-            std::vector<Idx2D> (*)(MainModelImpl const& x, ConstDataPointer const& component_update, Idx pos);
+            std::vector<Idx2D> (*)(MainModelState const& state, ConstDataPointer const& component_update, Idx pos);
 
         // function pointer array to get cached idx
         static constexpr std::array<GetSeqIdxFunc, n_types> get_seq_idx{
-            [](MainModelImpl const& model, ConstDataPointer const& component_update, Idx pos) -> std::vector<Idx2D> {
+            [](MainModelState const& state, ConstDataPointer const& component_update, Idx pos) -> std::vector<Idx2D> {
                 using UpdateType = typename ComponentType::UpdateType;
 
                 auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType>(pos);
-                return main_core::get_component_sequence<ComponentType>(model.state_, it_begin, it_end);
+                return main_core::get_component_sequence<ComponentType>(state, it_begin, it_end);
             }...};
 
         // fill in the map per component type
@@ -303,8 +303,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // skip if component does not exist
             if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
                 // add
-                // TODO(mgovers): move the update finding into the get_seq_idx body
-                sequence_idx_map[entry.index] = get_seq_idx[entry.index](*this, found->second, scenario_idx);
+                sequence_idx_map[entry.index] = get_seq_idx[entry.index](state_, found->second, scenario_idx);
             }
         }
         return sequence_idx_map;
