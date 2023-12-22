@@ -8,7 +8,6 @@
 
 #include "../calculation_parameters.hpp"
 #include "../power_grid_model.hpp"
-#include "../sparse_mapping.hpp"
 #include "../three_phase_tensor.hpp"
 
 namespace power_grid_model {
