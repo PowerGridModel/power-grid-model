@@ -24,6 +24,8 @@
 
 namespace power_grid_model {
 
+namespace math_solver {
+
 template <bool sym> class MathSolver {
   public:
     explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -171,6 +173,9 @@ template <bool sym> class MathSolver {
 
 template class MathSolver<true>;
 template class MathSolver<false>;
+} // namespace math_solver
+
+using math_solver::MathSolver;
 
 } // namespace power_grid_model
 
