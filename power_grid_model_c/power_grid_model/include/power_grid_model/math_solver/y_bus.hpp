@@ -436,8 +436,6 @@ template class YBus<false>;
 
 using math_solver::YBus;
 
-using math_solver::YBusStructure;
-
 } // namespace power_grid_model
 
 #endif
