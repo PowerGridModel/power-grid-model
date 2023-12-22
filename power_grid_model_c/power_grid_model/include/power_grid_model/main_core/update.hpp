@@ -20,10 +20,8 @@ inline Idx2D get_idx_by_id(MainModelState<ComponentContainer> const& state, Upda
     return state.components.template get_idx_by_id<Component>(update.id);
 }
 
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
-          typename Func>
-    requires model_component_state<MainModelState, ComponentContainer, Component> &&
-             std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
+template <std::derived_from<Base> Component, std::forward_iterator ForwardIterator, typename Func>
+    requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
                                        std::vector<Idx2D> const& sequence_idx) {
     Idx seq = 0;
