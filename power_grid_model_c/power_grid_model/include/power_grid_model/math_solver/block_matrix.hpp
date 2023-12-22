@@ -12,7 +12,7 @@
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 
-namespace power_grid_model::math_model_impl {
+namespace power_grid_model::math_solver {
 
 template <scalar_value T, bool sym, bool is_tensor, int n_sub_block> struct block_trait {
     static constexpr int n_row = sym ? n_sub_block : n_sub_block * 3;
@@ -64,6 +64,6 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     }
 };
 
-} // namespace power_grid_model::math_model_impl
+} // namespace power_grid_model::math_solver
 
 #endif

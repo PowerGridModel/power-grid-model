@@ -9,6 +9,10 @@
 
 namespace power_grid_model {
 
+namespace {
+using math_solver::YBusStructure;
+}
+
 TEST_CASE("Test y bus") {
     /*
     test Y bus struct
