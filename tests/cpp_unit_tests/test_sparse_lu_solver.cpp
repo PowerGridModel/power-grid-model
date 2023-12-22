@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
 using lu_trait_double = math_solver::sparse_lu_entry_trait<double, double, double>;
 static_assert(!lu_trait_double::is_block);
@@ -128,4 +128,4 @@ TEST_CASE("Test Sparse LU solver") {
     }
 }
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver

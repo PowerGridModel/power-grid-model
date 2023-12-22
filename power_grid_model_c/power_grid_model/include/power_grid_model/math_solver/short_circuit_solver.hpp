@@ -14,10 +14,10 @@
 #include "../enum.hpp"
 #include "../exception.hpp"
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_solver::short_circuit {
+namespace short_circuit {
 
 // solver
 template <bool sym> class ShortCircuitSolver {
@@ -441,10 +441,10 @@ template <bool sym> class ShortCircuitSolver {
 template class ShortCircuitSolver<true>;
 template class ShortCircuitSolver<false>;
 
-} // namespace math_solver::short_circuit
+} // namespace short_circuit
 
-using math_solver::short_circuit::ShortCircuitSolver;
+using short_circuit::ShortCircuitSolver;
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif

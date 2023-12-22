@@ -66,10 +66,10 @@ Nomenclature:
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_solver::iterative_current_pf {
+namespace iterative_current_pf {
 
 // solver
 template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
@@ -193,10 +193,10 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 template class IterativeCurrentPFSolver<true>;
 template class IterativeCurrentPFSolver<false>;
 
-} // namespace math_solver::iterative_current_pf
+} // namespace iterative_current_pf
 
-using math_solver::iterative_current_pf::IterativeCurrentPFSolver;
+using iterative_current_pf::IterativeCurrentPFSolver;
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif

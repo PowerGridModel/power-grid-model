@@ -13,10 +13,7 @@
 
 #include <memory>
 
-namespace power_grid_model {
-
-// hide implementation in inside namespace
-namespace math_solver {
+namespace power_grid_model::math_solver {
 
 template <class Tensor, class RHSVector, class XVector, class = void> struct sparse_lu_entry_trait;
 
@@ -335,10 +332,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::shared_ptr<IdxVector const> diag_lu_;
 };
 
-} // namespace math_solver
-
-using math_solver::SparseLUSolver;
-
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif

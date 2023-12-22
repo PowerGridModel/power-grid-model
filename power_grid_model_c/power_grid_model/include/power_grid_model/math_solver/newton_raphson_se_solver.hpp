@@ -17,10 +17,10 @@ Newton Raphson state estimation solver
 #include "../calculation_parameters.hpp"
 #include "../three_phase_tensor.hpp"
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_solver::newton_raphson_se {
+namespace newton_raphson_se {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
@@ -200,10 +200,10 @@ template <bool sym> class NewtonRaphsonSESolver {
 template class NewtonRaphsonSESolver<true>;
 template class NewtonRaphsonSESolver<false>;
 
-} // namespace math_solver::newton_raphson_se
+} // namespace newton_raphson_se
 
-using math_solver::newton_raphson_se::NewtonRaphsonSESolver;
+using newton_raphson_se::NewtonRaphsonSESolver;
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif

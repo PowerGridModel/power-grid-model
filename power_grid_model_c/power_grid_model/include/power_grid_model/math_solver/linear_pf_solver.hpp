@@ -40,9 +40,9 @@ if there are sources
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
-namespace math_solver::linear_pf {
+namespace linear_pf {
 
 template <bool sym> class LinearPFSolver {
 
@@ -122,10 +122,10 @@ template <bool sym> class LinearPFSolver {
 
 template class LinearPFSolver<true>;
 template class LinearPFSolver<false>;
-} // namespace math_solver::linear_pf
+} // namespace linear_pf
 
-using math_solver::linear_pf::LinearPFSolver;
+using linear_pf::LinearPFSolver;
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif
