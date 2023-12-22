@@ -6,7 +6,7 @@
 
 #include <doctest/doctest.h>
 
-namespace power_grid_model::math_model_impl {
+namespace power_grid_model::math_solver {
 namespace {
 template <bool sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
     if constexpr (sym) {
@@ -129,4 +129,4 @@ TEST_CASE("Measured Values") {
     }
 }
 
-} // namespace power_grid_model::math_model_impl
+} // namespace power_grid_model::math_solver

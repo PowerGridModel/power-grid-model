@@ -10,7 +10,7 @@
 
 #include "../calculation_parameters.hpp"
 
-namespace power_grid_model::common_solver_functions {
+namespace power_grid_model::math_solver::detail {
 
 template <bool sym>
 inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
@@ -91,12 +91,12 @@ inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& 
     output.bus_injection.resize(sources_per_bus.size());
 
     for (auto const& [bus_number, sources, load_gens] : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus)) {
-        common_solver_functions::calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
-        common_solver_functions::calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
+        calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
+        calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
     }
     output.bus_injection = y_bus.calculate_injection(output.u);
 }
 
-} // namespace power_grid_model::common_solver_functions
+} // namespace power_grid_model::math_solver::detail
 
 #endif

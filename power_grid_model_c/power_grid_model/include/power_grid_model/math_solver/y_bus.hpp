@@ -13,7 +13,7 @@
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace math_solver {
 
 using OffDiagIdxMap = std::array<Idx, 2>; // map of ft and tf for branch
 
@@ -432,11 +432,9 @@ template <bool sym> class YBus {
 template class YBus<true>;
 template class YBus<false>;
 
-} // namespace math_model_impl
+} // namespace math_solver
 
-template <bool sym> using YBus = math_model_impl::YBus<sym>;
-
-using YBusStructure = math_model_impl::YBusStructure;
+using math_solver::YBus;
 
 } // namespace power_grid_model
 
