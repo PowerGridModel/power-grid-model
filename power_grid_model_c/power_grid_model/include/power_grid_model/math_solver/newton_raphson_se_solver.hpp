@@ -62,10 +62,10 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
     GetterType<1, 0> g_Q_theta() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> g_Q_v() { return this->template get_val<1, 1>(); }
 
-    GetterType<0, 2> qh_P_theta() { return this->template get_val<0, 2>(); }
-    GetterType<0, 3> qh_P_v() { return this->template get_val<0, 3>(); }
-    GetterType<1, 2> qh_Q_theta() { return this->template get_val<1, 2>(); }
-    GetterType<1, 3> qh_Q_v() { return this->template get_val<1, 3>(); }
+    GetterType<0, 2> qt_P_theta() { return this->template get_val<0, 2>(); }
+    GetterType<0, 3> qt_P_v() { return this->template get_val<0, 3>(); }
+    GetterType<1, 2> qt_Q_theta() { return this->template get_val<1, 2>(); }
+    GetterType<1, 3> qt_Q_v() { return this->template get_val<1, 3>(); }
 
     GetterType<2, 0> q_P_theta() { return this->template get_val<2, 0>(); }
     GetterType<2, 1> q_P_v() { return this->template get_val<2, 1>(); }
@@ -337,10 +337,10 @@ template <bool sym> class NewtonRaphsonSESolver {
                 continue;
             }
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
-            data_gain_[data_idx_lu].qh_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
-            data_gain_[data_idx_lu].qh_P_v() = data_gain_[data_idx_tranpose].q_Q_theta();
-            data_gain_[data_idx_lu].qh_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
-            data_gain_[data_idx_lu].qh_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
+            data_gain_[data_idx_lu].qt_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
+            data_gain_[data_idx_lu].qt_P_v() = data_gain_[data_idx_tranpose].q_Q_theta();
+            data_gain_[data_idx_lu].qt_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
+            data_gain_[data_idx_lu].qt_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
         }
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
@@ -413,7 +413,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     ComplexValue<sym> calculated_shunt_power(ComplexTensor<sym> const& yii, ComplexValue<sym> const& ui) {
-        return dot(yii, ui * ui);
+        return ui * conj(-dot(yii, ui));
     }
 
     RealTensor<sym> ui_uj_cos_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
@@ -427,6 +427,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     auto g_sin_minus_b_cos(ComplexTensor<sym> yij, ComplexValue<sym> ui, ComplexValue<sym> uj) {
         return real(yij) * ui_uj_sin_ij(ui, uj) - imag(yij) * ui_uj_cos_ij(ui, uj);
     }
+
     auto g_cos_plus_b_sin(ComplexTensor<sym> yij, ComplexValue<sym> ui, ComplexValue<sym> uj) {
         return real(yij) * ui_uj_cos_ij(ui, uj) + imag(yij) * ui_uj_sin_ij(ui, uj);
     }
