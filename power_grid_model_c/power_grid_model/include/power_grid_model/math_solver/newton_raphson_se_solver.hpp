@@ -210,7 +210,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // TODO Add angle weight
                     auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
                     auto const abs_measured_u = cabs(measured_u[row]);
-                    auto const del_theta = measured_u[row] / abs_measured_u - x_[row].theta();
+                    // auto const del_theta = measured_u[row] / abs_measured_u - x_[row].theta();
                     auto const del_v = abs_measured_u - x_[row].v();
                     // block.g_P_theta() += weight_angle;
                     block.g_P_v() += w_v;
