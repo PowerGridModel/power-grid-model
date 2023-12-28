@@ -234,7 +234,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                             auto const calculated_p = sum_row(gc_plus_bs_ii);
                             auto const calculated_q = sum_row(gs_minus_bc_ii);
 
-                            auto const measured_power = measured_value.shunt_power(obj);
+                            auto const& measured_power = measured_value.shunt_power(obj);
                             auto const block_i = power_flow_jacobian_i(gs_minus_bc_ii, gc_plus_bs_ii, abs_ui_inv,
                                                                        calculated_p, calculated_q);
                             multiply_add_jacobian_blocks(block, rhs_block, block_i, block_i, measured_power,
@@ -253,7 +253,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                             auto const calculated_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
                             auto const calculated_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
 
-                            auto const measured_power = measured_value.branch_from_power(obj);
+                            auto const& measured_power = measured_value.branch_from_power(obj);
                             if (type == YBusElementType::bff) {
                                 auto const block_i = power_flow_jacobian_i(gs_minus_bc_ii, gc_plus_bs_ii, abs_ui_inv,
                                                                            calculated_p, calculated_q);
@@ -280,7 +280,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                             auto const calculated_p = sum_row(gc_plus_bs_jj + gc_plus_bs_ji);
                             auto const calculated_q = sum_row(gs_minus_bc_jj + gs_minus_bc_ji);
 
-                            auto const measured_power = measured_value.branch_to_power(obj);
+                            auto const& measured_power = measured_value.branch_to_power(obj);
 
                             if (type == YBusElementType::btt) {
                                 auto const block_j = power_flow_jacobian_j(gs_minus_bc_jj, gc_plus_bs_jj, abs_uj_inv);
