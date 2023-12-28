@@ -207,15 +207,17 @@ template <bool sym> class NewtonRaphsonSESolver {
                 if ((row == col) && measured_value.has_voltage(row)) {
                     // G += 1.0 / variance
                     // for 3x3 tensor, fill diagonal
-                    // TODO Figure out angle measurement
+                    // TODO Add angle weight
                     auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
-                    auto const del_u = measured_u[row] - current_u[row];
+                    auto const abs_measured_u = cabs(measured_u[row]);
+                    auto const del_theta = measured_u[row] / abs_measured_u - x_[row].theta();
+                    auto const del_v = abs_measured_u - x_[row].v();
                     // block.g_P_theta() += weight_angle;
                     block.g_P_v() += w_v;
                     // block.g_Q_theta() += weight_angle;
                     block.g_Q_v() += w_v;
-                    // block.eta_theta() += dot(weight_angle, cabs(del_u));
-                    rhs_block.eta_v() += dot(w_v, cabs(del_u));
+                    // block.eta_theta() += dot(weight_angle, del_theta);
+                    rhs_block.eta_v() += dot(w_v, del_v);
                 }
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -312,10 +314,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
                         auto const& injection = measured_value.bus_injection(row);
-                        // add negative of the non-summation value then sign will be reversed when row is summed
-                        auto const w_p = diagonal_inverse(injection.p_variance);
-                        auto const w_q = diagonal_inverse(injection.q_variance);
-
                         auto const injection_jacobian = power_flow_jacobian_i(
                             gs_minus_bc, gc_plus_bs, abs_ui_inv, partial_calculated_p, partial_calculated_q);
                         add_injection_jacobian(block, injection_jacobian);
@@ -323,8 +321,11 @@ template <bool sym> class NewtonRaphsonSESolver {
                         rhs_block.tau_p() += injection.value.real();
                         rhs_block.tau_q() += injection.value.imag();
 
-                        // block.r_P_theta() += RealTensor<sym>{w_p * w_p};
-                        // block.r_Q_v() += w_q * w_q;
+                        // TODO Confirm if correct
+                        block.r_P_theta() += RealTensor<sym>{
+                            RealValue<sym>{RealValue<sym>{1.0} / injection.p_variance / injection.p_variance}};
+                        block.r_Q_v() += RealTensor<sym>{
+                            RealValue<sym>{RealValue<sym>{1.0} / injection.q_variance / injection.q_variance}};
                     } else {
                         auto const injection_jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_uj_inv);
                         add_injection_jacobian(block, injection_jacobian);
@@ -371,23 +372,23 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     NRSEJacobian power_flow_jacobian_i(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
-                                       RealDiagonalTensor<sym> abs_ui_inv, RealValue<sym> calculated_p,
+                                       RealDiagonalTensor<sym> abs_u_self_inv, RealValue<sym> calculated_p,
                                        RealValue<sym> calculated_q) {
-        auto jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_ui_inv);
+        auto jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_u_self_inv);
         jacobian.dP_dt -= RealTensor<sym>{calculated_q};
-        jacobian.dP_dv += dot(calculated_p, abs_ui_inv);
+        jacobian.dP_dv += dot(calculated_p, abs_u_self_inv);
         jacobian.dQ_dt += RealTensor<sym>{calculated_p};
-        jacobian.dQ_dv += dot(calculated_q, abs_ui_inv);
+        jacobian.dQ_dv += dot(calculated_q, abs_u_self_inv);
         return jacobian;
     }
 
     NRSEJacobian power_flow_jacobian_j(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
-                                       RealDiagonalTensor<sym> const& abs_uj_inv) {
+                                       RealDiagonalTensor<sym> const& abs_u_other_inv) {
         NRSEJacobian jacobian{};
         jacobian.dP_dt = gs_minus_bc;
         jacobian.dP_dv = -gc_plus_bs;
-        jacobian.dQ_dt = dot(gc_plus_bs, abs_uj_inv);
-        jacobian.dQ_dv = dot(gs_minus_bc, abs_uj_inv);
+        jacobian.dQ_dt = dot(gc_plus_bs, abs_u_other_inv);
+        jacobian.dQ_dv = dot(gs_minus_bc, abs_u_other_inv);
         return jacobian;
     }
 
