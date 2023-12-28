@@ -225,19 +225,18 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            auto const& yii = param.branch_param[obj].yff();
+                            auto const& yii = param.shunt_param[obj];
                             auto const gc_plus_bs_ii = g_cos_plus_b_sin(yii, ui, ui);
                             auto const gs_minus_bc_ii = g_sin_minus_b_cos(yii, ui, ui);
 
-                            auto const calculated_power_p = sum_row(gc_plus_bs_ii);
-                            auto const calculated_power_q = sum_row(gs_minus_bc_ii);
+                            auto const calculated_p = sum_row(gc_plus_bs_ii);
+                            auto const calculated_q = sum_row(gs_minus_bc_ii);
 
-                            NRSEJacobian block_i = power_flow_jacobian(gs_minus_bc_ii, gc_plus_bs_ii, abs_ui_inv);
-                            block_i = power_flow_jacobian_side_i_addition(block_i, calculated_power_p,
-                                                                          calculated_power_q, abs_ui_inv);
+                            auto const block_i = power_flow_jacobian_i(gs_minus_bc_ii, gc_plus_bs_ii, abs_ui_inv,
+                                                                       abs_ui_inv, calculated_p, calculated_q);
                             multiply_add_jacobian_blocks(block, rhs_block, block_i, block_i,
-                                                         measured_value.branch_from_power(obj), calculated_power_p,
-                                                         calculated_power_q);
+                                                         measured_value.branch_from_power(obj), calculated_p,
+                                                         calculated_q);
                         }
                     } else if (type == YBusElementType::bff) {
                         if (measured_value.has_branch_from(obj)) {
@@ -249,14 +248,14 @@ template <bool sym> class NewtonRaphsonSESolver {
                             auto const gc_plus_bs_ij = g_cos_plus_b_sin(yij, ui, uj);
                             auto const gs_minus_bc_ij = g_sin_minus_b_cos(yij, ui, uj);
 
-                            auto const calculated_power_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
-                            auto const calculated_power_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
-                            NRSEJacobian block_i = power_flow_jacobian(gs_minus_bc_ii, gc_plus_bs_ii, abs_ui_inv);
-                            block_i = power_flow_jacobian_side_i_addition(block_i, calculated_power_p,
-                                                                          calculated_power_q, abs_ui_inv);
+                            auto const calculated_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
+                            auto const calculated_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
+
+                            auto const block_i = power_flow_jacobian_i(gs_minus_bc_ii, gc_plus_bs_ii, abs_ui_inv,
+                                                                       abs_ui_inv, calculated_p, calculated_q);
                             multiply_add_jacobian_blocks(block, rhs_block, block_i, block_i,
-                                                         measured_value.branch_from_power(obj), calculated_power_p,
-                                                         calculated_power_q);
+                                                         measured_value.branch_from_power(obj), calculated_p,
+                                                         calculated_q);
                         }
                     } else if (type == YBusElementType::bft) {
                         if (measured_value.has_branch_from(obj)) {
@@ -268,55 +267,53 @@ template <bool sym> class NewtonRaphsonSESolver {
                             auto const gc_plus_bs_ij = g_cos_plus_b_sin(yij, ui, uj);
                             auto const gs_minus_bc_ij = g_sin_minus_b_cos(yij, ui, uj);
 
-                            auto const calculated_power_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
-                            auto const calculated_power_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
+                            auto const calculated_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
+                            auto const calculated_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
 
-                            NRSEJacobian block_i = power_flow_jacobian(gs_minus_bc_ij, gc_plus_bs_ij, abs_uj_inv);
-                            block_i = power_flow_jacobian_side_i_addition(block_i, calculated_power_p,
-                                                                          calculated_power_q, abs_ui_inv);
-                            NRSEJacobian block_j = power_flow_jacobian(gs_minus_bc_ij, gc_plus_bs_ij, abs_uj_inv);
+                            auto const block_i = power_flow_jacobian_i(gs_minus_bc_ij, gc_plus_bs_ij, abs_ui_inv,
+                                                                       abs_uj_inv, calculated_p, calculated_q);
+                            auto const block_j = power_flow_jacobian_j(gs_minus_bc_ij, gc_plus_bs_ij, abs_uj_inv);
                             multiply_add_jacobian_blocks(block, rhs_block, block_i, block_j,
-                                                         measured_value.branch_from_power(obj), calculated_power_p,
-                                                         calculated_power_q);
+                                                         measured_value.branch_from_power(obj), calculated_p,
+                                                         calculated_q);
                         }
                     } else if (type == YBusElementType::btt) {
                         if (measured_value.has_branch_to(obj)) {
                             auto const& yii = param.branch_param[obj].ytt();
-                            auto const gc_plus_bs_ii = g_cos_plus_b_sin(yii, ui, ui);
-                            auto const gs_minus_bc_ii = g_sin_minus_b_cos(yii, ui, ui);
+                            auto const gc_plus_bs_ii = g_cos_plus_b_sin(yii, uj, uj);
+                            auto const gs_minus_bc_ii = g_sin_minus_b_cos(yii, uj, uj);
 
                             auto const& yij = param.branch_param[obj].ytf();
                             auto const gc_plus_bs_ij = g_cos_plus_b_sin(yij, ui, uj);
                             auto const gs_minus_bc_ij = g_sin_minus_b_cos(yij, ui, uj);
 
-                            auto const calculated_power_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
-                            auto const calculated_power_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
+                            auto const calculated_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
+                            auto const calculated_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
 
-                            NRSEJacobian block_j = power_flow_jacobian(gs_minus_bc_ii, gc_plus_bs_ii, abs_uj_inv);
+                            auto const block_j = power_flow_jacobian_j(gs_minus_bc_ii, gc_plus_bs_ii, abs_uj_inv);
                             multiply_add_jacobian_blocks(block, rhs_block, block_j, block_j,
-                                                         measured_value.branch_to_power(obj), calculated_power_p,
-                                                         calculated_power_q);
+                                                         measured_value.branch_to_power(obj), calculated_p,
+                                                         calculated_q);
                         }
                     } else if (type == YBusElementType::btf) {
                         if (measured_value.has_branch_to(obj)) {
                             auto const& yii = param.branch_param[obj].ytt();
-                            auto const gc_plus_bs_ii = g_cos_plus_b_sin(yii, ui, ui);
-                            auto const gs_minus_bc_ii = g_sin_minus_b_cos(yii, ui, ui);
+                            auto const gc_plus_bs_ii = g_cos_plus_b_sin(yii, uj, uj);
+                            auto const gs_minus_bc_ii = g_sin_minus_b_cos(yii, uj, uj);
 
                             auto const& yij = param.branch_param[obj].ytf();
                             auto const gc_plus_bs_ij = g_cos_plus_b_sin(yij, ui, uj);
                             auto const gs_minus_bc_ij = g_sin_minus_b_cos(yij, ui, uj);
 
-                            auto const calculated_power_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
-                            auto const calculated_power_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
+                            auto const calculated_p = sum_row(gc_plus_bs_ii + gc_plus_bs_ij);
+                            auto const calculated_q = sum_row(gs_minus_bc_ii + gs_minus_bc_ij);
 
-                            NRSEJacobian block_i = power_flow_jacobian(gs_minus_bc_ij, gc_plus_bs_ij, abs_ui_inv);
-                            block_i = power_flow_jacobian_side_i_addition(block_i, calculated_power_p,
-                                                                          calculated_power_q, abs_ui_inv);
-                            NRSEJacobian block_j = power_flow_jacobian(gs_minus_bc_ij, gc_plus_bs_ij, abs_ui_inv);
+                            auto const block_i = power_flow_jacobian_i(gs_minus_bc_ij, gc_plus_bs_ij, abs_uj_inv,
+                                                                       abs_ui_inv, calculated_p, calculated_q);
+                            auto const block_j = power_flow_jacobian_j(gs_minus_bc_ij, gc_plus_bs_ij, abs_uj_inv);
                             multiply_add_jacobian_blocks(block, rhs_block, block_j, block_i,
-                                                         measured_value.branch_to_power(obj), calculated_power_p,
-                                                         calculated_power_q);
+                                                         measured_value.branch_to_power(obj), calculated_p,
+                                                         calculated_q);
                         }
                     }
                 }
@@ -329,6 +326,10 @@ template <bool sym> class NewtonRaphsonSESolver {
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
+                    auto const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
+                    auto const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
+                    auto const partial_calculated_p = sum_row(gc_plus_bs);
+                    auto const partial_calculated_q = sum_row(gs_minus_bc);
 
                     // R_ii = -variance, only diagonal
                     if (row == col) {
@@ -337,27 +338,26 @@ template <bool sym> class NewtonRaphsonSESolver {
                         // add negative of the non-summation value then sign will be reversed when row is summed
                         auto const w_p = diagonal_inverse(injection.p_variance);
                         auto const w_q = diagonal_inverse(injection.q_variance);
-                        // NRSEJacobian injection_diagonal = injection_diagonal_jacobian(yij, cabs(abs_ui));
-                        // add_single_jacobian(block, injection_diagonal, 1.0);
+
+                        auto const injection_jacobian =
+                            power_flow_jacobian_i(gs_minus_bc, gc_plus_bs, abs_ui_inv, abs_ui_inv, partial_calculated_p,
+                                                  partial_calculated_q);
+                        add_injection_jacobian(block, injection_jacobian);
 
                         rhs_block.tau_p() += injection.value.real();
                         rhs_block.tau_q() += injection.value.imag();
 
-                        // block.r_P_theta() += w_p * w_p;
+                        // block.r_P_theta() += RealTensor<sym>{w_p * w_p};
                         // block.r_Q_v() += w_q * w_q;
                     } else {
-                        auto const gc_plus_bs = g_cos_plus_b_sin(yij, ui, uj);
-                        auto const gs_minus_bc = g_sin_minus_b_cos(yij, ui, uj);
-                        // Same jacobian for branch from applies to non diagonal injection
-                        // NRSEJacobian injection_non_diagonal = power_flow_jacobian(gs_minus_bc, gc_plus_bs,
-                        // abs_uj_inv); add_single_jacobian(block, injection_non_diagonal, 1.0);
-                        // TODO alternate: store here and add stored outside this loop
-                        // add_single_jacobian(diag_block, injection_non_diagonal, -1.0);
+                        auto const injection_jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_uj_inv);
+                        add_injection_jacobian(block, injection_jacobian);
 
                         // subtract f(x) incrementally
-                        rhs_block.tau_p() += -sum_row(gc_plus_bs);
-                        rhs_block.tau_q() += -sum_row(gs_minus_bc);
+                        rhs_block.tau_p() -= partial_calculated_p;
+                        rhs_block.tau_q() -= partial_calculated_q;
                     }
+
                 }
                 // injection measurement not exist
                 else {
@@ -392,31 +392,32 @@ template <bool sym> class NewtonRaphsonSESolver {
     NRSEJacobian power_flow_jacobian_side_i_addition(NRSEJacobian block_i, RealValue<sym> calculated_power_p,
                                                      RealValue<sym> calculated_power_q,
                                                      RealDiagonalTensor<sym> abs_ui_inv) {
-        // block_i.dP_dt += RealTensor<sym>{RealDiagonalTensor<sym>{-calculated_power_q}};
-        // block_i.dP_dv += dot(RealDiagonalTensor<sym>{calculated_power_p}, abs_ui_inv);
-        // block_i.dQ_dt += RealTensor<sym>{RealDiagonalTensor<sym>{calculated_power_p}};
-        // block_i.dQ_dv += dot(RealDiagonalTensor<sym>{calculated_power_q}, abs_ui_inv);
+        block_i.dP_dt -= RealTensor<sym>{calculated_power_q};
+        block_i.dP_dv += dot(calculated_power_p, abs_ui_inv);
+        block_i.dQ_dt += RealTensor<sym>{calculated_power_p};
+        block_i.dQ_dv += dot(calculated_power_q, abs_ui_inv);
         return block_i;
     }
 
-    NRSEJacobian power_flow_jacobian(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
-                                     RealDiagonalTensor<sym> const& abs_uj_inv) {
-        NRSEJacobian jacobian_sub_block{};
-        jacobian_sub_block.dP_dt = gs_minus_bc;
-        jacobian_sub_block.dP_dv = -gc_plus_bs;
-        jacobian_sub_block.dQ_dt = dot(gc_plus_bs, abs_uj_inv);
-        jacobian_sub_block.dQ_dv = dot(gs_minus_bc, abs_uj_inv);
-        return jacobian_sub_block;
+    NRSEJacobian power_flow_jacobian_i(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
+                                       RealDiagonalTensor<sym> abs_ui_inv, RealDiagonalTensor<sym> abs_uj_inv,
+                                       RealValue<sym> calculated_p, RealValue<sym> calculated_q) {
+        auto jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_uj_inv);
+        jacobian.dP_dt -= RealTensor<sym>{calculated_q};
+        jacobian.dP_dv += dot(calculated_p, abs_ui_inv);
+        jacobian.dQ_dt += RealTensor<sym>{calculated_p};
+        jacobian.dQ_dv += dot(calculated_q, abs_ui_inv);
+        return jacobian;
     }
 
-    NRSEJacobian injection_diagonal_jacobian(ComplexTensor<sym> const& yii, RealValue<sym> const& abs_ui) {
-        NRSEJacobian jacobian_sub_block{};
-        // TODO multiply correctly
-        // jacobian_sub_block.dP_dt =  dot(imag(yii), abs_ui, abs_ui);
-        // jacobian_sub_block.dP_dv = dot(real(yii), -abs_ui);
-        // jacobian_sub_block.dQ_dt = -dot(real(yii), abs_ui, abs_ui);
-        // jacobian_sub_block.dQ_dv = dot(imag(yii), abs_ui);
-        return jacobian_sub_block;
+    NRSEJacobian power_flow_jacobian_j(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
+                                       RealDiagonalTensor<sym> const& abs_uj_inv) {
+        NRSEJacobian jacobian{};
+        jacobian.dP_dt = gs_minus_bc;
+        jacobian.dP_dv = -gc_plus_bs;
+        jacobian.dQ_dt = dot(gc_plus_bs, abs_uj_inv);
+        jacobian.dQ_dv = dot(gs_minus_bc, abs_uj_inv);
+        return jacobian;
     }
 
     void multiply_add_jacobian_blocks(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, NRSEJacobian block_1,
@@ -438,23 +439,11 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.eta_v() += dot(w_p, block_1.dP_dv, del_power_p) + dot(w_q, block_1.dQ_dv, del_power_q);
     }
 
-    void add_single_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian jacobian_block, double multiplier) {
-        block.q_P_theta() += multiplier * jacobian_block.dP_dt;
-        block.q_P_v() += multiplier * jacobian_block.dP_dv;
-        block.q_Q_theta() += multiplier * jacobian_block.dQ_dt;
-        block.q_Q_v() += multiplier * jacobian_block.dQ_dv;
-    }
-
-    ComplexValue<sym> calculated_branch_power(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs) {
-        // TODO multiply correctly
-        // ComplexValue<sym> power{};
-        // power.real(sum_row(gc_plus_bs));
-        // power.imag(sum_row(gs_minus_bc));
-        return ComplexValue<sym>{};
-    }
-
-    ComplexValue<sym> calculated_shunt_power(ComplexTensor<sym> const& yii, ComplexValue<sym> const& ui) {
-        return ui * conj(-dot(yii, ui));
+    void add_injection_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian jacobian_block) {
+        block.q_P_theta() += jacobian_block.dP_dt;
+        block.q_P_v() += jacobian_block.dP_dv;
+        block.q_Q_theta() += jacobian_block.dQ_dt;
+        block.q_Q_v() += jacobian_block.dQ_dv;
     }
 
     RealTensor<sym> ui_uj_cos_ij(ComplexValue<sym> ui, ComplexValue<sym> uj) {
