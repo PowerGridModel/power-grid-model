@@ -182,31 +182,22 @@ inline std::vector<Idx> remove_vertices_update_degrees(Idx& u, std::map<Idx, std
 
 inline std::pair<std::vector<Idx>, std::vector<std::pair<Idx, Idx>>>
 minimum_degree_ordering(std::map<Idx, std::vector<Idx>>& d) {
-    std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>> data = detail::comp_size_degrees_graph(d);
-    Idx& n = data[0].first;
-    std::vector<std::pair<Idx, Idx>>& dgd = data[0].second;
+    auto data = detail::comp_size_degrees_graph(d);
+    auto& [n, dgd] = data[0];
+
     std::vector<Idx> alpha;
     std::vector<std::pair<Idx, Idx>> fills;
 
-    for (int k = 0; k < n; k++) {
-        Idx u =
-            get<0>(*min_element(begin(dgd), end(dgd), [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
-        std::vector<Idx> vu{u};
-        alpha.insert(alpha.end(), vu.begin(), vu.end());
-        if ((d.size() == 1) and d.begin()->second.size() == 1) {
-            Idx a = d.begin()->first;
-            Idx b = d.begin()->second[0];
-            if (alpha.back() == a) {
-                std::vector<Idx> vb{b};
-                alpha.insert(alpha.end(), vb.begin(), vb.end());
-            } else {
-                std::vector<Idx> va{a};
-                alpha.insert(alpha.end(), va.begin(), va.end());
-            }
+    for (Idx k = 0; k < n; k++) {
+        Idx u = get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
+        alpha.push_back(u);
+        if ((d.size() == 1) && d.begin()->second.size() == 1) {
+            Idx const a = d.begin()->first;
+            Idx const b = d.begin()->second[0];
+            alpha.push_back(alpha.back() == a ? b : a);
             break;
         } else {
-            std::vector<Idx> va = detail::remove_vertices_update_degrees(u, d, dgd, fills);
-            alpha.insert(alpha.end(), va.begin(), va.end());
+            std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
             if (d.empty()) {
                 break;
             }
