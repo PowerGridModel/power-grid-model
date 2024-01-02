@@ -14,7 +14,7 @@ constexpr double ph = 2.0 / 3.0 * pi;
 
 TEST_CASE("Test main model - state estimation") {
     MainModel main_model{50.0};
-    SUBCASE("State Estimation") {
+    SUBCASE("Iterative Linear State Estimation") {
         SUBCASE("Single Node + Source") {
             main_model.add_component<Node>({{1, 10e3}});
             main_model.add_component<Source>({{2, 1, 1, 1.0, nan, nan, nan, nan}});
@@ -141,6 +141,46 @@ TEST_CASE("Test main model - state estimation") {
                     CHECK(power_sensor_output[2].p_residual == doctest::Approx(-200.0).scale(1e3)); // node
                     CHECK(power_sensor_output[2].q_residual == doctest::Approx(-20.0).scale(1e3));  // node
                 }
+            }
+        }
+    }
+    SUBCASE("Newton-Raphson State Estimation") {
+        SUBCASE("Single Node + Source") {
+            main_model.add_component<Node>({{1, 10e3}});
+            main_model.add_component<Source>({{2, 1, 1, 1.0, nan, nan, nan, nan}});
+            SUBCASE("Symmetric Voltage Sensor") {
+                main_model.add_component<SymVoltageSensor>({{3, 1, 1e2, 12.345e3, 0.1}});
+                main_model.set_construction_complete();
+                SUBCASE("Symmetric Calculation") {
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::newton_raphson);
+                    std::vector<NodeOutput<true>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u == doctest::Approx(12.345e3));
+                }
+                SUBCASE("Asymmetric Calculation") {
+                    std::vector<MathOutput<false>> const math_output =
+                        main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::newton_raphson);
+                    std::vector<NodeOutput<false>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                }
+            }
+            SUBCASE("Asymmetric Voltage Sensor") {
+
+                SUBCASE("Symmetric Calculation") {}
+                SUBCASE("Asymmetric Calculation") {}
+            }
+        }
+
+        SUBCASE("Node Injection") {
+
+            SUBCASE("Symmetric Power Sensor - Symmetric Calculation") {
+
+                SUBCASE("Without Injection Sensor") {}
+                SUBCASE("With Injection Sensor") {}
             }
         }
 

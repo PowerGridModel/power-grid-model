@@ -64,7 +64,7 @@ template <bool sym> class MathSolver {
 
         switch (calculation_method) {
         case default_method:
-            [[fallthrough]]; // use Newton-Raphson by default
+            [[fallthrough]]; // use iterative linear by default
         case iterative_linear:
             return run_state_estimation_iterative_linear(input, err_tol, max_iter, calculation_info, y_bus);
         case newton_raphson:
