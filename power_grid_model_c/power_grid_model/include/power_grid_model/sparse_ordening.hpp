@@ -78,7 +78,7 @@ inline std::map<Idx, IdxVector> make_clique(IdxVector& l) {
         Idx const idx = i + 1;
         IdxVector sl(l.size() - idx);
         std::copy(l.begin() + idx, l.end(), sl.begin());
-        d[l[i]] = sl;
+        d[l[i]] = std::move(sl);
     }
 
     return d;
