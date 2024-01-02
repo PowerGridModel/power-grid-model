@@ -10,8 +10,6 @@
 #include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 
-#include <iostream> // TODO(mgovers) remove
-
 namespace power_grid_model {
 
 // hide implementation in inside namespace
