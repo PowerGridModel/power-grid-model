@@ -169,9 +169,28 @@ TEST_CASE("Test main model - state estimation") {
                 }
             }
             SUBCASE("Asymmetric Voltage Sensor") {
-
-                SUBCASE("Symmetric Calculation") {}
-                SUBCASE("Asymmetric Calculation") {}
+                main_model.add_component<AsymVoltageSensor>(
+                    {{3, 1, 1e2, {12.345e3 / s3, 12.345e3 / s3, 12.345e3 / s3}, {0.1, 0.2 - ph, 0.3 + ph}}});
+                main_model.set_construction_complete();
+                SUBCASE("Symmetric Calculation") {
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::newton_raphson);
+                    std::vector<NodeOutput<true>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    double const u = (std::cos(0.1) + std::cos(0.2) + std::cos(0.3)) * 12.345e3;
+                    double const v = (std::sin(0.1) + std::sin(0.2) + std::sin(0.3)) * 12.345e3;
+                    double const expected_u = std::sqrt(u * u + v * v) / 3.0;
+                    CHECK(node_output[0].u == doctest::Approx(expected_u));
+                }
+                SUBCASE("Asymmetric Calculation") {
+                    std::vector<MathOutput<false>> const math_output =
+                        main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::newton_raphson);
+                    std::vector<NodeOutput<false>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                }
             }
         }
 
