@@ -82,9 +82,6 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
 template <bool sym> class NewtonRaphsonSESolver {
 
     struct NRSEJacobian {
-        struct i_side_block {};
-        struct j_side_block {};
-
         RealTensor<sym> dP_dt{};
         RealTensor<sym> dP_dv{};
         RealTensor<sym> dQ_dt{};
@@ -368,8 +365,8 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     NRSEJacobian power_flow_jacobian_i(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
-                                       RealDiagonalTensor<sym> const& abs_u_self_inv, RealValue<sym> const& calculated_p,
-                                       RealValue<sym> const& calculated_q) {
+                                       RealDiagonalTensor<sym> const& abs_u_self_inv,
+                                       RealValue<sym> const& calculated_p, RealValue<sym> const& calculated_q) {
         auto jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_u_self_inv);
         jacobian.dP_dt -= RealTensor<sym>{calculated_q};
         jacobian.dP_dv += dot(calculated_p, abs_u_self_inv);
@@ -390,7 +387,8 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     void multiply_add_jacobian_blocks(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, NRSEJacobian const& block_1,
                                       NRSEJacobian const& block_2, PowerSensorCalcParam<sym> const& power_sensor,
-                                      RealValue<sym> const& calculated_power_p, RealValue<sym> const& calculated_power_q) {
+                                      RealValue<sym> const& calculated_power_p,
+                                      RealValue<sym> const& calculated_power_q) {
         auto const w_p = diagonal_inverse(power_sensor.p_variance);
         auto const w_q = diagonal_inverse(power_sensor.q_variance);
         auto const del_power_p = calculated_power_p - real(power_sensor.value);
