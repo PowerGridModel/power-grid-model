@@ -17,27 +17,13 @@
 namespace power_grid_model {
 
 namespace detail {
-inline void remove_element_vector_pair(Idx& u, std::vector<std::pair<Idx, Idx>>& dgd) {
-    Idx i = 0;
-    while (i < dgd.size()) {
-        if (dgd[i].first == u) {
-            dgd.erase(dgd.begin() + i);
-            break;
-        } else {
-            i++;
-        }
-    }
+inline void remove_element_vector_pair(Idx u, std::vector<std::pair<Idx, Idx>>& dgd) {
+    std::erase_if(dgd, [u](auto const& v) { return v.first == u; });
 }
 
-inline void set_element_vector_pair(Idx& u, Idx v, std::vector<std::pair<Idx, Idx>>& dgd) {
-    Idx i = 0;
-    while (i < dgd.size()) {
-        if (dgd[i].first == u) {
-            dgd[i].second = v;
-            break;
-        } else {
-            i++;
-        }
+inline void set_element_vector_pair(Idx u, Idx v, std::vector<std::pair<Idx, Idx>>& dgd) {
+    if (auto it = std::ranges::find_if(dgd, [u](auto const& value) { return value.first == u; }); it != dgd.end()) {
+        it->second = v;
     }
 }
 
@@ -45,19 +31,17 @@ inline std::vector<Idx> adj(Idx& u, std::map<Idx, std::vector<Idx>>& d) {
     std::vector<Idx> l;
 
     for (const auto& it : d) {
-        if (it.first == u)
-            l.insert(l.end(), it.second.begin(), it.second.end());
+        if (it.first == u) {
+            l.insert(l.end(), it.second.cbegin(), it.second.cend());
+        }
 
-        if (find(it.second.begin(), it.second.end(), u) != it.second.end()) {
-            std::vector<Idx> v{it.first};
-            l.insert(l.end(), v.begin(), v.end());
+        if (std::ranges::find(it.second, u) != it.second.cend()) {
+            l.push_back(it.first);
         }
     }
 
     return l;
 }
-
-inline bool compair_ids(std::pair<Idx, Idx>& a, std::pair<Idx, Idx>& b) { return a.first < b.first; }
 
 inline std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>>
 comp_size_degrees_graph(std::map<Idx, std::vector<Idx>>& d) {
@@ -67,62 +51,58 @@ comp_size_degrees_graph(std::map<Idx, std::vector<Idx>>& d) {
 
     for (const auto& it : d) {
         Idx k = it.first;
-        if (find(v.begin(), v.end(), k) == v.end()) {
-            std::vector<Idx> vk{k};
-            v.insert(v.end(), vk.begin(), vk.end());
-            n += 1;
-            dd.push_back({k, adj(k, d).size()});
+        if (std::ranges::find(v, k) == v.end()) {
+            ++n;
+            v.push_back(k);
+            dd.emplace_back(k, adj(k, d).size());
         }
         for (const Idx& el : it.second) {
             Idx e = el;
             if (find(v.begin(), v.end(), e) == v.end()) {
-                std::vector<Idx> ve{e};
-                v.insert(v.end(), ve.begin(), ve.end());
-                n += 1;
-                dd.push_back({e, adj(e, d).size()});
+                ++n;
+                v.push_back(e);
+                dd.emplace_back(e, adj(e, d).size());
             }
         }
     }
 
-    sort(dd.begin(), dd.end());
+    std::ranges::sort(dd);
 
     return {{n, dd}};
 }
 
-inline std::vector<std::pair<std::vector<Idx>, std::vector<Idx>>>
-check_indistguishable(Idx& u, std::map<Idx, std::vector<Idx>>& d) {
-    std::vector<Idx> l, rl, lu, lv, vu{u}, vv;
-    l = adj(u, d);
-    lu = l;
-    lu.insert(lu.end(), vu.begin(), vu.end());
-
-    for (auto& v : l) {
-        lv = adj(v, d);
-        vv = {v};
-        lv.insert(lv.end(), vv.begin(), vv.end());
-        sort(lu.begin(), lu.end());
-        sort(lv.begin(), lv.end());
-        if (lu == lv) {
-            rl.insert(rl.end(), vv.begin(), vv.end());
-        }
-    }
-
-    return {{l, rl}};
-}
-
 inline std::map<Idx, std::vector<Idx>> make_clique(std::vector<Idx>& l) {
     std::map<Idx, std::vector<Idx>> d;
-    Idx b = l.size() - 1;
 
-    for (int i = 0; i < b; i++) {
-        Idx index = i + 1;
-        auto start = l.begin() + index;
-        std::vector<Idx> sl(l.size() - index);
-        copy(start, l.end(), sl.begin());
+    for (Idx i = 0; i < static_cast<Idx>(l.size()) - 1; i++) {
+        Idx const idx = i + 1;
+        std::vector<Idx> sl(l.size() - idx);
+        std::copy(l.begin() + idx, l.end(), sl.begin());
         d[l[i]] = sl;
     }
 
     return d;
+}
+
+inline std::vector<std::pair<std::vector<Idx>, std::vector<Idx>>>
+check_indistguishable(Idx& u, std::map<Idx, std::vector<Idx>>& d) {
+    std::vector<Idx> rl;
+
+    auto l = adj(u, d);
+    auto lu = l;
+    lu.push_back(u);
+
+    for (auto& v : l) {
+        auto lv = adj(v, d);
+        lv.push_back(v);
+        std::ranges::sort(lu);
+        std::ranges::sort(lv);
+        if (lu == lv) {
+            rl.push_back(v);
+        }
+    }
+
+    return {{l, rl}};
 }
 
 inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, std::vector<Idx>> const& d) {
@@ -145,31 +125,30 @@ inline std::vector<Idx> remove_vertices_update_degrees(Idx& u, std::map<Idx, std
     std::vector<std::pair<std::vector<Idx>, std::vector<Idx>>> nbsrl = check_indistguishable(u, d);
     std::vector<Idx>& nbs = nbsrl[0].first;
     std::vector<Idx>& rl = nbsrl[0].second;
-    std::vector<Idx> alpha = rl, vu{u};
+    std::vector<Idx> alpha = rl;
     std::map<Idx, std::vector<Idx>> dd;
 
-    rl.insert(rl.begin(), vu.begin(), vu.end());
+    rl.push_back(u);
 
-    for (auto& uu : rl) {
-        if (uu != u)
-            nbs.erase(remove(nbs.begin(), nbs.end(), uu), nbs.end());
+    for (auto uu : rl) {
+        if (uu != u) {
+            std::erase(nbs, uu);
+        }
 
         remove_element_vector_pair(uu, dgd);
         std::vector<Idx> el;
         for (auto& it : d) {
-            it.second.erase(remove(it.second.begin(), it.second.end(), uu), it.second.end());
+            std::erase(it.second, uu);
             if (it.second.empty()) {
-                Idx k = it.first;
-                std::vector<Idx> vk{k};
-                el.insert(el.end(), vk.begin(), vk.end());
+                el.push_back(it.first);
             }
         }
 
-        std::vector<Idx> vuu{uu};
-        el.insert(el.end(), vuu.begin(), vuu.end());
+        el.push_back(uu);
 
-        for (auto& it : el)
+        for (auto& it : el) {
             d.erase(it);
+        }
     }
 
     dd = make_clique(nbs);
@@ -180,17 +159,14 @@ inline std::vector<Idx> remove_vertices_update_degrees(Idx& u, std::map<Idx, std
             std::pair<Idx, Idx> t{k, e};
             if (!in_graph(t, d)) {
                 if (d.find(k) != d.end()) {
-                    std::vector<Idx> ve{e};
-                    d[k].insert(d[k].end(), ve.begin(), ve.end());
-                    fills.push_back({k, e});
+                    d[k].push_back(e);
+                    fills.emplace_back(k, e);
                 } else if (d.find(e) != d.end()) {
-                    std::vector<Idx> vk{k};
-                    d[e].insert(d[e].end(), vk.begin(), vk.end());
-                    fills.push_back({e, k});
+                    d[e].push_back(k);
+                    fills.emplace_back(e, k);
                 } else {
-                    std::vector<Idx> ve{e};
-                    d[k].insert(d[k].end(), ve.begin(), ve.end());
-                    fills.push_back({k, e});
+                    d[k].push_back(e);
+                    fills.emplace_back(k, e);
                 }
             }
         }
