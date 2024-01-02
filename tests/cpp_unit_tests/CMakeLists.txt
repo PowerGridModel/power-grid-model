@@ -28,7 +28,7 @@ set(PROJECT_SOURCES
     "test_sparse_ordening.cpp"
     "test_grouped_index_vector.cpp"
     "test_container.cpp"
-    "test_sparse_mapping.cpp"
+    "test_index_mapping.cpp"
     "test_meta_data_generation.cpp"
     "test_voltage_sensor.cpp"
     "test_power_sensor.cpp"

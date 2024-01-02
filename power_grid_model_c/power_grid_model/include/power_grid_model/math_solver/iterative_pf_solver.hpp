@@ -20,7 +20,7 @@
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
-namespace power_grid_model::math_model_impl {
+namespace power_grid_model::math_solver {
 
 // solver
 template <bool sym, typename DerivedSolver> class IterativePFSolver {
@@ -102,8 +102,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        common_solver_functions::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                                  [this](Idx i) { return (*load_gen_type_)[i]; });
+        detail::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                 [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
   private:
@@ -120,6 +120,6 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
 };
 
-} // namespace power_grid_model::math_model_impl
+} // namespace power_grid_model::math_solver
 
 #endif

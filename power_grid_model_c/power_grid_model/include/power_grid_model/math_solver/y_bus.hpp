@@ -8,7 +8,6 @@
 
 #include "../calculation_parameters.hpp"
 #include "../power_grid_model.hpp"
-#include "../sparse_mapping.hpp"
 #include "../three_phase_tensor.hpp"
 
 #include <iostream> // TODO(mgovers) remove
@@ -16,7 +15,7 @@
 namespace power_grid_model {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace math_solver {
 
 using OffDiagIdxMap = std::array<Idx, 2>; // map of ft and tf for branch
 
@@ -154,13 +153,6 @@ struct YBusStructure {
                 y_bus_element.push_back(m.element);
             }
         }
-        for (size_t idx = 0; idx < vec_map_element.size(); ++idx) {
-            auto const& m = vec_map_element[idx];
-            std::cout << "idx = " << idx << ", pos = [" << m.pos.first << ", " << m.pos.second
-                      << "], element = {element_type = " << static_cast<Idx>(m.element.element_type)
-                      << ", idx = " << m.element.idx << "}\n";
-        }
-        std::cout << std::endl;
 
         // iterate the whole element include fill-in
         for (auto it_element = vec_map_element.cbegin(); it_element != vec_map_element.cend();
@@ -442,11 +434,9 @@ template <bool sym> class YBus {
 template class YBus<true>;
 template class YBus<false>;
 
-} // namespace math_model_impl
+} // namespace math_solver
 
-template <bool sym> using YBus = math_model_impl::YBus<sym>;
-
-using YBusStructure = math_model_impl::YBusStructure;
+using math_solver::YBus;
 
 } // namespace power_grid_model
 

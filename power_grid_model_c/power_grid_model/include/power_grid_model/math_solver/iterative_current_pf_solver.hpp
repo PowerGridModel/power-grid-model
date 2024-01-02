@@ -66,10 +66,10 @@ Nomenclature:
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace iterative_current_pf {
 
 // solver
 template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
@@ -91,7 +91,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         // re-build matrix and prefactorize Build y bus data with source admittance
         if (y_data_ptr_ != &y_bus.admittance()) {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
-            common_solver_functions::copy_y_bus<sym>(y_bus, mat_data);
+            detail::copy_y_bus<sym>(y_bus, mat_data);
 
             for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
                 Idx const data_sequence = bus_entry[bus_number];
@@ -193,10 +193,10 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
 template class IterativeCurrentPFSolver<true>;
 template class IterativeCurrentPFSolver<false>;
 
-} // namespace math_model_impl
+} // namespace iterative_current_pf
 
-template <bool sym> using IterativeCurrentPFSolver = math_model_impl::IterativeCurrentPFSolver<sym>;
+using iterative_current_pf::IterativeCurrentPFSolver;
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif
