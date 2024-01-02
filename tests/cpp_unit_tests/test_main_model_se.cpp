@@ -209,7 +209,7 @@ TEST_CASE("Test main model - state estimation") {
                 SUBCASE("Without Injection Sensor") {
                     main_model.set_construction_complete();
                     std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::newton_raphson);
 
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
@@ -242,7 +242,7 @@ TEST_CASE("Test main model - state estimation") {
                     main_model.set_construction_complete();
 
                     std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::newton_raphson);
 
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
