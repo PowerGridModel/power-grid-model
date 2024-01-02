@@ -160,9 +160,10 @@ template <bool sym> struct MathModelParam {
 };
 
 template <bool sym> struct MathModelParamIncrement {
-    std::vector<BranchCalcParam<sym>> branch_param;
-    ComplexTensorVector<sym> shunt_param;
-    ComplexTensorVector<sym> source_param;
+    //MathModelParam<sym> param;
+    //std::vector<BranchCalcParam<sym>> branch_param;
+    //ComplexTensorVector<sym> shunt_param;
+    //ComplexTensorVector<sym> source_param;
     std::vector<Idx> branch_param_to_change;
     std::vector<Idx> shunt_param_to_change;
 };

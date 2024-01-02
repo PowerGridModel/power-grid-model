@@ -339,7 +339,7 @@ template <bool sym> class YBus {
             ComplexTensor<sym> entry_admittance{0.0};
             IdxVector entry_param_shunt;
             IdxVector entry_param_branch;
-            // std::vector<std::pair<Idx, Idx>> entry_param_shunt_pair;
+            // std::vector<std::pair<Idx, Idx>> entry_param_shunt_pair; //WIP
             //   loop over all entries of this position
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
                 auto param_idx = y_bus_element[element].idx;
@@ -352,20 +352,20 @@ template <bool sym> class YBus {
                     entry_admittance +=
                         branch_param[param_idx].value[static_cast<Idx>(y_bus_element[element].element_type)];
                     entry_param_branch.push_back(param_idx);
-                    // entry_param_shunt_pair.push_back(std::make_pair(param_idx, element));
+                    // entry_param_shunt_pair.push_back(std::make_pair(param_idx, element)); //WIP
                 }
             }
             // assign
             admittance[entry] = entry_admittance;
             map_admittance_param_branch.push_back(entry_param_branch);
             map_admittance_param_shunt.push_back(entry_param_shunt);
-            // map_admittance_param_shunt_pairs.push_back(entry_param_shunt_pair);
+            // map_admittance_param_shunt_pairs.push_back(entry_param_shunt_pair); //WIP
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
     }
 
-    IdxVector increments_to_entries() {
+    IdxVector increments_to_entries(auto const& math_model_param_incrmt) {
         // construct affected entries
         std::set<Idx> affected_entries;
 
@@ -380,20 +380,57 @@ template <bool sym> class YBus {
             }
         };
 
-        querry_params_in_map(math_model_param_incrmt_->branch_param_to_change, map_admittance_param_branch);
-        querry_params_in_map(math_model_param_incrmt_->shunt_param_to_change, map_admittance_param_shunt);
+        querry_params_in_map(math_model_param_incrmt->branch_param_to_change, map_admittance_param_branch);
+        querry_params_in_map(math_model_param_incrmt->shunt_param_to_change, map_admittance_param_shunt);
         return IdxVector{affected_entries.begin(), affected_entries.end()};
     }
 
-    void update_admittance_increment(std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
-                                     bool is_decrement = false) {
-        const double mode = is_decrement ? -1.0 : 1.0;
+    void update_admittance_increment(
+        std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
+        std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
+        bool is_delta = false, bool is_decrement = false) {
+        const double mode = (is_decrement && is_delta) ? -1.0 : 1.0;
         if (!is_decrement) {
             // overwrite the old cached parameters in increment mode (update)
-            math_model_param_incrmt_ = math_model_param_incrmt;
-        } else if (decremented_) {
+            math_model_param_ = math_model_param;
+        } else if (decremented_ || !is_delta) {
             return;
         }
+
+  //      if (!is_delta) {
+		//	// overwrite the old cached delta parameters
+  //          math_model_param_incrmt_ = math_model_param_incrmt;
+  //          for (size_t idx = 0; idx < math_model_param->branch_param.size(); ++idx) {
+  //              if (std::ranges::find(math_model_param_incrmt->branch_param_to_change, Idx(idx)) != 
+  //                      math_model_param_incrmt->branch_param_to_change.end()
+  //                  ) {
+  //                  math_model_param_delta_->branch_param[idx].value[0] =
+  //                      math_model_param->branch_param[idx].value[0] - math_model_param_->branch_param[idx].value[0];
+  //                  math_model_param_delta_->branch_param[idx].value[1] =
+  //                      math_model_param->branch_param[idx].value[1] - math_model_param_->branch_param[idx].value[1];
+  //                  math_model_param_delta_->branch_param[idx].value[2] =
+  //                      math_model_param->branch_param[idx].value[2] - math_model_param_->branch_param[idx].value[2];
+  //                  math_model_param_delta_->branch_param[idx].value[3] =
+  //                      math_model_param->branch_param[idx].value[3] - math_model_param_->branch_param[idx].value[3];
+  //              } else {
+  //                  math_model_param_delta_->branch_param[idx] =
+  //                      BranchCalcParam<sym>{ComplexTensor<sym>{0.0}, ComplexTensor<sym>{0.0}, ComplexTensor<sym>{0.0},
+  //                                           ComplexTensor<sym>{0.0}};    
+  //              }
+  //          }
+  //          for (auto const& idx : math_model_param_incrmt->branch_param_to_change) {
+		//		math_model_param_delta_.branch_param[idx] = 
+  //                  math_model_param_incrmt->branch_param[idx] - math_model_param_->branch_param[idx];
+		//	}
+  //          math_model_param_delta_->shunt_param = ComplexTensorVector<sym>{math_model_param->shunt_param.size(), ComplexTensor<sym>{0.0}
+  //          };
+  //          for (auto const& idx : math_model_param_incrmt->shunt_param_to_change) {
+  //              math_model_param_delta_.shunt_param[idx] = 
+		//			math_model_param_incrmt->shunt_param[idx] - math_model_param_->shunt_param[idx];
+		//	}
+  //          math_model_param_delta_->source_param = ComplexTensorVector<sym>{math_model_param->source_param.size(), ComplexTensor<sym>{0.0}
+  //          };
+		//}
 
         // construct admittance data
         ComplexTensorVector<sym> admittance(nnz());
@@ -401,9 +438,12 @@ template <bool sym> class YBus {
         std::ranges::copy(*admittance_, admittance.begin());
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
-
+        auto& math_param_shunt = is_delta ? 
+            math_model_param_delta_->shunt_param : math_model_param_->shunt_param;
+        auto& math_param_branch = is_delta ?
+	        math_model_param_delta_->branch_param : math_model_param_->branch_param;
         // construct affected entries
-        auto const affected_entries = increments_to_entries();
+        auto const affected_entries = increments_to_entries(math_model_param_incrmt);
 
         // process and update affected entries
         for (auto const entry : affected_entries) {
@@ -413,15 +453,19 @@ template <bool sym> class YBus {
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
                 if (y_bus_element[element].element_type == YBusElementType::shunt) {
                     // shunt
-                    entry_admittance += math_model_param_incrmt_->shunt_param[y_bus_element[element].idx];
+                    entry_admittance += math_param_shunt[y_bus_element[element].idx];
                 } else {
                     // branch
-                    entry_admittance += math_model_param_incrmt_->branch_param[y_bus_element[element].idx]
+                    entry_admittance += math_param_branch[y_bus_element[element].idx]
                                             .value[static_cast<Idx>(y_bus_element[element].element_type)];
                 }
             }
             // assign
-            admittance[entry] += mode * entry_admittance;
+            if (is_delta) {
+                admittance[entry] += mode * entry_admittance;
+            } else {
+                admittance[entry] = entry_admittance;
+            }
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
@@ -505,7 +549,7 @@ template <bool sym> class YBus {
     std::shared_ptr<MathModelTopology const> math_topology_;
 
     // cache the math parameters
-    std::shared_ptr<MathModelParam<sym> const> math_model_param_;
+    std::shared_ptr<MathModelParam<sym> const> math_model_param_, math_model_param_delta_;
 
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch{};

@@ -82,9 +82,68 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
         state, begin, end, sequence_idx);
 }
 
+#define INCREMENT_UPDATE_Y_BUS
+
+template <bool sym>
+inline bool cmplx_neq(ComplexTensor<sym> const& lhs, ComplexTensor<sym> const& rhs) {
+    if constexpr (sym) {
+        return static_cast<bool>(lhs.real() != rhs.real() || lhs.imag() != rhs.imag());
+    } else {
+    	return static_cast<bool>(
+            (lhs(0, 0).real() != rhs(0, 0).real() || lhs(0, 0).imag() != rhs(0, 0).imag()) ||
+			(lhs(1, 1).real() != rhs(1, 1).real() || lhs(1, 1).imag() != rhs(1, 1).imag()) ||
+            (lhs(2, 2).real() != rhs(2, 2).real() || lhs(2, 2).imag() != rhs(2, 2).imag())
+        );
+    }
+};
+
 template <bool sym>
 inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
+#ifdef INCREMENT_UPDATE_Y_BUS
+    // verify that the number of branches, shunts and source is the same
+    MathModelParam<sym> const& y_bus_param = y_bus.math_model_param();
+    assert(y_bus_param.branch_param.size() == math_model_param->branch_param.size());
+    assert(y_bus_param.shunt_param.size() == math_model_param->shunt_param.size());
+    assert(y_bus_param.source_param.size() == math_model_param->source_param.size());
+    // loop through all branches and shunts of math_model_param, check changes
+  //  auto branch_param_to_change_views =
+  //      boost::irange(0, y_bus_param.branch_param.size()) | boost::adaptors::filtered([&math_model_param](Idx i) {
+  //          return math_model_param->branch_param[i].yff() != y_bus_param.branch_param[i].yff() ||
+  //                 math_model_param->branch_param[i].yft() != y_bus_param.branch_param[i].yft() ||
+  //                 math_model_param->branch_param[i].ytf() != y_bus_param.branch_param[i].ytf() ||
+  //                 math_model_param->branch_param[i].ytt() != y_bus_param.branch_param[i].ytt();
+		//});
+    //const size_t shunt_size = math_model_param->shunt_param.size();
+    //auto shunt_param_to_change_views = 
+    //    boost::irange(shunt_size) | boost::adaptors::filtered([&math_model_param, &y_bus_param](Idx i) {
+    //        return cmplx_neq<sym>(math_model_param->shunt_param[i], y_bus_param.shunt_param[i]);
+    //    });
+    std::vector<Idx> branch_param_to_change_views;
+    for (size_t idx = 0; idx < math_model_param->branch_param.size(); ++idx) {
+    	if (cmplx_neq<sym>(math_model_param->branch_param[idx].yff(), y_bus_param.branch_param[idx].yff()) ||
+			cmplx_neq<sym>(math_model_param->branch_param[idx].yft(), y_bus_param.branch_param[idx].yft()) ||
+			cmplx_neq<sym>(math_model_param->branch_param[idx].ytf(), y_bus_param.branch_param[idx].ytf()) ||
+			cmplx_neq<sym>(math_model_param->branch_param[idx].ytt(), y_bus_param.branch_param[idx].ytt())) {
+			branch_param_to_change_views.push_back(idx);
+		}
+	}
+	std::vector<Idx> shunt_param_to_change_views;
+	for (size_t idx = 0; idx < math_model_param->shunt_param.size(); ++idx) {
+        if (cmplx_neq<sym>(math_model_param->shunt_param[idx], y_bus_param.shunt_param[idx])) {
+			shunt_param_to_change_views.push_back(idx);
+		}
+	}
+
+    MathModelParamIncrement<sym> math_model_param_incrmt;
+    math_model_param_incrmt.branch_param_to_change = branch_param_to_change_views;
+    math_model_param_incrmt.shunt_param_to_change = shunt_param_to_change_views;
+
+    auto math_model_param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
+
+	y_bus.update_admittance_increment(math_model_param, math_model_param_incrmt_ptr, false, false);
+#else
     y_bus.update_admittance(math_model_param);
+#endif
 }
 
 template <bool sym>
@@ -103,15 +162,12 @@ inline void update_y_bus_increment(YBus<sym>& y_bus, std::shared_ptr<MathModelPa
         });
 
     MathModelParamIncrement<sym> math_model_param_incrmt;
-    math_model_param_incrmt.branch_param = math_model_param->branch_param;
-    math_model_param_incrmt.shunt_param = math_model_param->shunt_param;
-    math_model_param_incrmt.source_param = math_model_param->source_param; // not sure if we actually need this
     math_model_param_incrmt.branch_param_to_change = branch_param_to_change_views;
     math_model_param_incrmt.shunt_param_to_change = shunt_param_to_change_views;
 
     auto math_model_param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
 
-    y_bus.update_admittance_increment(math_model_param_incrmt_ptr, !increment);
+    y_bus.update_admittance_increment(math_model_param, math_model_param_incrmt_ptr, true, !increment);
 }
 
 template <bool sym>
