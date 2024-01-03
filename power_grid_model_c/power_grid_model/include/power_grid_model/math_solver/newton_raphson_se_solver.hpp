@@ -200,19 +200,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 }
                 // fill block with voltage measurement, only diagonal
                 if ((row == col) && measured_value.has_voltage(row)) {
-                    // G += 1.0 / variance
-                    // for 3x3 tensor, fill diagonal
-                    // TODO Change angle weight per angle variance and store angle as non complex
-                    // TODO if angle measurement not present, set w_angle to 0.
-                    auto const w_angle = RealTensor<sym>{1.0};
-                    auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
-                    auto const abs_measured_v = cabs(measured_estimated_u[row]);
-                    auto const del_theta = arg(measured_estimated_u[row]) - x_[row].theta();
-                    auto const del_v = abs_measured_v - x_[row].v();
-                    block.g_P_theta() += w_angle;
-                    block.g_Q_v() += w_v;
-                    rhs_block.eta_theta() += dot(w_angle, del_theta);
-                    rhs_block.eta_v() += dot(w_v, del_v);
+                    add_voltage_measurments(block, rhs_block, measured_value, measured_estimated_u, row);
                 }
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -343,6 +331,13 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // loop all transpose entry for QH
         // assign the transpose of the transpose entry of Q
+        make_symmetric_from_lower_triangle(y_bus);
+
+        // prefactorize
+        sparse_solver_.prefactorize(data_gain_, perm_);
+    }
+
+    void make_symmetric_from_lower_triangle(YBus<sym> const& y_bus) {
         for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
             // skip for fill-in
             if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
@@ -354,8 +349,24 @@ template <bool sym> class NewtonRaphsonSESolver {
             data_gain_[data_idx_lu].qt_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
             data_gain_[data_idx_lu].qt_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
         }
-        // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
+    }
+
+    void add_voltage_measurments(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
+                                 MeasuredValues<sym> const& measured_value,
+                                 ComplexValueVector<sym> const& measured_estimated_u, Idx const& row) {
+        // G += 1.0 / variance
+        // for 3x3 tensor, fill diagonal
+        // TODO Change angle weight per angle variance and store angle as non complex
+        // TODO if angle measurement not present, set w_angle to 0.
+        auto const w_angle = RealTensor<sym>{1.0};
+        auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
+        auto const abs_measured_v = cabs(measured_estimated_u[row]);
+        auto const del_theta = arg(measured_estimated_u[row]) - x_[row].theta();
+        auto const del_v = abs_measured_v - x_[row].v();
+        block.g_P_theta() += w_angle;
+        block.g_Q_v() += w_v;
+        rhs_block.eta_theta() += dot(w_angle, del_theta);
+        rhs_block.eta_v() += dot(w_v, del_v);
     }
 
     NRSEJacobian power_flow_jacobian_i(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
