@@ -175,18 +175,18 @@ template <bool sym> class NewtonRaphsonSESolver {
         // get generated (measured/estimated) voltage phasor
         // with current result voltage angle
         // check if this is  the right way or not
-        ComplexValueVector<sym> measured_u = measured_value.voltage(current_u);
+        ComplexValueVector<sym> measured_estimated_u = measured_value.voltage(current_u);
 
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
-            auto const& ui = current_u[row];
+            auto const& ui = measured_estimated_u[row];
             auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
             NRSERhs<sym>& rhs_block = del_x_rhs_[row];
             rhs_block = NRSERhs<sym>{};
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
-                auto const& uj = current_u[col];
+                auto const& uj = measured_estimated_u[col];
                 RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
@@ -206,9 +206,9 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // TODO if angle measurement not present, set w_angle to 0.
                     auto const w_angle = RealTensor<sym>{1.0};
                     auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
-                    auto const abs_measured_u = cabs(measured_u[row]);
-                    auto const del_theta = arg(measured_u[row]) - x_[row].theta();
-                    auto const del_v = abs_measured_u - x_[row].v();
+                    auto const abs_measured_v = cabs(measured_estimated_u[row]);
+                    auto const del_theta = arg(measured_estimated_u[row]) - x_[row].theta();
+                    auto const del_v = abs_measured_v - x_[row].v();
                     block.g_P_theta() += w_angle;
                     block.g_Q_v() += w_v;
                     rhs_block.eta_theta() += dot(w_angle, del_theta);
