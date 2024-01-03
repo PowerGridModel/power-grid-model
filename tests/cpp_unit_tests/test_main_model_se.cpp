@@ -79,6 +79,7 @@ TEST_CASE("Test main model - state estimation") {
                     double const v = (std::sin(0.1) + std::sin(0.2) + std::sin(0.3)) * 12.345e3;
                     double const expected_u = std::sqrt(u * u + v * v) / 3.0;
                     CHECK(node_output[0].u == doctest::Approx(expected_u));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.2));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     std::vector<MathOutput<false>> const math_output =
@@ -88,6 +89,34 @@ TEST_CASE("Test main model - state estimation") {
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.1));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(0.2 - ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(0.3 + ph));
+                }
+            }
+            SUBCASE("Asymmetric Voltage Sensor - no angle") {
+                main_model.add_component<AsymVoltageSensor>(
+                    {{3, 1, 1e2, {12.345e3 / s3, 12.345e3 / s3, 12.345e3 / s3}, {nan, nan, nan}}});
+                main_model.set_construction_complete();
+                SUBCASE("Symmetric Calculation") {
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                    std::vector<NodeOutput<true>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u == doctest::Approx(12.345e3));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.0));
+                }
+                SUBCASE("Asymmetric Calculation") {
+                    std::vector<MathOutput<false>> const math_output =
+                        main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
+                    std::vector<NodeOutput<false>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.0));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(-ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(ph));
                 }
             }
         }
