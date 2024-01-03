@@ -384,7 +384,7 @@ TEST_CASE("Incremental update y-bus") {
         // 13.0 + 212.0i                                                                         [v]
         13.0 + 214.0i // 3, 3 -> += {2,3}tt + {3,2}ff + shunt(1) = 2.0i + 0.0 + 0.0
     };
-    
+
     auto verify_admittance = [](ComplexTensorVector<true> const& admittance,
                                 ComplexTensorVector<true> const& admittance_ref) {
         CHECK(admittance.size() == admittance_ref.size());
@@ -399,7 +399,7 @@ TEST_CASE("Incremental update y-bus") {
         ybus.update_admittance(std::make_shared<MathModelParam<true> const>(param_sym));
         verify_admittance(ybus.admittance(), admittance_sym);
     }
-    /*
+
     SUBCASE("Test progressive update") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         verify_admittance(ybus.admittance(), admittance_sym);
@@ -418,9 +418,6 @@ TEST_CASE("Incremental update y-bus") {
                                            });
 
         MathModelParamIncrement<true> math_model_param_incrmt;
-        math_model_param_incrmt.branch_param = param_sym_update.branch_param;
-        math_model_param_incrmt.shunt_param = param_sym_update.shunt_param;
-        math_model_param_incrmt.source_param = param_sym_update.source_param; // not sure if we actually need this
         math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
                                                           branch_param_to_change_views.end()};
         math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
@@ -428,17 +425,17 @@ TEST_CASE("Incremental update y-bus") {
 
         auto math_model_param_incrmt_ptr =
             std::make_shared<MathModelParamIncrement<true> const>(math_model_param_incrmt);
+        auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
 
-        ybus.update_admittance_increment(math_model_param_incrmt_ptr, false);
-        verify_admittance(ybus.admittance(), admittance_sym_2);
+        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, false, false);
+        // verify_admittance(ybus.admittance(), admittance_sym_2);
 
-        ybus.update_admittance_increment(math_model_param_incrmt_ptr, true);
-        verify_admittance(ybus.admittance(), admittance_sym);
+        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, false, true);
+        // verify_admittance(ybus.admittance(), admittance_sym);
 
-        ybus.update_admittance_increment(math_model_param_incrmt_ptr, true);
-        verify_admittance(ybus.admittance(), admittance_sym);
+        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, false, true);
+        // verify_admittance(ybus.admittance(), admittance_sym);
     }
-    */
 }
 
 /*

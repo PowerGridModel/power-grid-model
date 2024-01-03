@@ -160,12 +160,8 @@ template <bool sym> struct MathModelParam {
 };
 
 template <bool sym> struct MathModelParamIncrement {
-    //MathModelParam<sym> param;
-    //std::vector<BranchCalcParam<sym>> branch_param;
-    //ComplexTensorVector<sym> shunt_param;
-    //ComplexTensorVector<sym> source_param;
-    std::vector<Idx> branch_param_to_change;
-    std::vector<Idx> shunt_param_to_change;
+    std::vector<Idx> branch_param_to_change; // indices of changed branch_param
+    std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
 };
 
 template <bool sym> struct PowerFlowInput {

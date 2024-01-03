@@ -1141,7 +1141,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         else if (!is_parameter_up_to_date<sym>()) {
             // insert logic here to update parameters incrementally
             // compare the old and new parameters, and update the solvers
-            // 
+            //
             // get param, will be consumed
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
             main_core::update_y_bus(math_state_, math_params, n_math_solvers_);
