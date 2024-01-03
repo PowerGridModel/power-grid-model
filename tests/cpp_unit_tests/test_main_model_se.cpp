@@ -27,6 +27,7 @@ TEST_CASE("Test main model - state estimation") {
                     std::vector<NodeOutput<true>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.1));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     std::vector<MathOutput<false>> const math_output =
@@ -36,6 +37,9 @@ TEST_CASE("Test main model - state estimation") {
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.1));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(0.1 - ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(0.1 + ph));
                 }
             }
             SUBCASE("Asymmetric Voltage Sensor") {
