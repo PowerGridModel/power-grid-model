@@ -449,7 +449,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            // accumulate unknown
+            // accumulate the unknown variable
             auto const old_abs_u = x_[bus].v();
             x_[bus].theta() += del_x_rhs_[bus].theta() - angle_offset;
             x_[bus].v() += x_[bus].v() * del_x_rhs_[bus].v();
