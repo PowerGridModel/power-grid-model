@@ -82,9 +82,6 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
 template <bool sym> class NewtonRaphsonSESolver {
 
     struct NRSEJacobian {
-        struct i_side_block {};
-        struct j_side_block {};
-
         RealTensor<sym> dP_dt{};
         RealTensor<sym> dP_dv{};
         RealTensor<sym> dQ_dt{};
@@ -138,7 +135,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, del_x_rhs_, del_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
-            max_dev = iterate_unknown(output.u);
+            max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
         };
 
         // calculate math result
@@ -178,25 +175,23 @@ template <bool sym> class NewtonRaphsonSESolver {
         // get generated (measured/estimated) voltage phasor
         // with current result voltage angle
         // check if this is  the right way or not
-        ComplexValueVector<sym> measured_u = measured_value.voltage(current_u);
+        ComplexValueVector<sym> measured_estimated_u = measured_value.voltage(current_u);
 
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
-            auto const& ui = current_u[row];
+            auto const& ui = measured_estimated_u[row];
             auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
             NRSERhs<sym>& rhs_block = del_x_rhs_[row];
-            rhs_block = NRSERhs<sym>{};
+            rhs_block.clear();
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
-                auto const& uj = current_u[col];
+                auto const& uj = measured_estimated_u[col];
                 RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
-                // Initialize the block (Diagonal block gets initialized outside this loop)
-                if (row != col) {
-                    block = NRSEGainBlock<sym>{};
-                }
+                // Initialize the block
+                block.clear();
                 // get data idx of y bus,
                 // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
@@ -205,19 +200,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 }
                 // fill block with voltage measurement, only diagonal
                 if ((row == col) && measured_value.has_voltage(row)) {
-                    // G += 1.0 / variance
-                    // for 3x3 tensor, fill diagonal
-                    // TODO Add angle weight
-                    auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
-                    auto const abs_measured_u = cabs(measured_u[row]);
-                    // auto const del_theta = measured_u[row] / abs_measured_u - x_[row].theta();
-                    auto const del_v = abs_measured_u - x_[row].v();
-                    // block.g_P_theta() += weight_angle;
-                    block.g_P_v() += w_v;
-                    // block.g_Q_theta() += weight_angle;
-                    block.g_Q_v() += w_v;
-                    // block.eta_theta() += dot(weight_angle, del_theta);
-                    rhs_block.eta_v() += dot(w_v, del_v);
+                    add_voltage_measurments(block, rhs_block, measured_value, measured_estimated_u, row);
                 }
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -293,10 +276,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                     }
                 }
 
-                // Initialize diagonal block
-                NRSEGainBlock<sym>& diag_block = data_gain_[y_bus.lu_diag()[row]];
-                diag_block = NRSEGainBlock<sym>{};
-
                 // fill block with injection measurement
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
@@ -352,6 +331,13 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // loop all transpose entry for QH
         // assign the transpose of the transpose entry of Q
+        make_symmetric_from_lower_triangle(y_bus);
+
+        // prefactorize
+        sparse_solver_.prefactorize(data_gain_, perm_);
+    }
+
+    void make_symmetric_from_lower_triangle(YBus<sym> const& y_bus) {
         for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
             // skip for fill-in
             if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
@@ -363,13 +349,29 @@ template <bool sym> class NewtonRaphsonSESolver {
             data_gain_[data_idx_lu].qt_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
             data_gain_[data_idx_lu].qt_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
         }
-        // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
+    }
+
+    void add_voltage_measurments(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
+                                 MeasuredValues<sym> const& measured_value,
+                                 ComplexValueVector<sym> const& measured_estimated_u, Idx const& row) {
+        // G += 1.0 / variance
+        // for 3x3 tensor, fill diagonal
+        // TODO Change angle weight per angle variance and store angle as non complex
+        // TODO if angle measurement not present, set w_angle to 0.
+        auto const w_angle = RealTensor<sym>{1.0};
+        auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
+        auto const abs_measured_v = cabs(measured_estimated_u[row]);
+        auto const del_theta = arg(measured_estimated_u[row]) - x_[row].theta();
+        auto const del_v = abs_measured_v - x_[row].v();
+        block.g_P_theta() += w_angle;
+        block.g_Q_v() += w_v;
+        rhs_block.eta_theta() += dot(w_angle, del_theta);
+        rhs_block.eta_v() += dot(w_v, del_v);
     }
 
     NRSEJacobian power_flow_jacobian_i(RealTensor<sym> const& gs_minus_bc, RealTensor<sym> const& gc_plus_bs,
-                                       RealDiagonalTensor<sym> const& abs_u_self_inv, RealValue<sym> const& calculated_p,
-                                       RealValue<sym> const& calculated_q) {
+                                       RealDiagonalTensor<sym> const& abs_u_self_inv,
+                                       RealValue<sym> const& calculated_p, RealValue<sym> const& calculated_q) {
         auto jacobian = power_flow_jacobian_j(gs_minus_bc, gc_plus_bs, abs_u_self_inv);
         jacobian.dP_dt -= RealTensor<sym>{calculated_q};
         jacobian.dP_dv += dot(calculated_p, abs_u_self_inv);
@@ -390,7 +392,8 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     void multiply_add_jacobian_blocks(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, NRSEJacobian const& block_1,
                                       NRSEJacobian const& block_2, PowerSensorCalcParam<sym> const& power_sensor,
-                                      RealValue<sym> const& calculated_power_p, RealValue<sym> const& calculated_power_q) {
+                                      RealValue<sym> const& calculated_power_p,
+                                      RealValue<sym> const& calculated_power_q) {
         auto const w_p = diagonal_inverse(power_sensor.p_variance);
         auto const w_q = diagonal_inverse(power_sensor.q_variance);
         auto const del_power_p = calculated_power_p - real(power_sensor.value);
@@ -430,23 +433,34 @@ template <bool sym> class NewtonRaphsonSESolver {
         return real(yij) * ui_uj_cos_ij(ui, uj) + imag(yij) * ui_uj_sin_ij(ui, uj);
     }
 
-    double iterate_unknown(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle_measurement) {
         double max_dev = 0.0;
+        // phase shift anti offset of slack bus, phase a
+        // if no angle measurement is present
+        double const angle_offset = [&]() -> double {
+            if (has_angle_measurement) {
+                return 1.0;
+            }
+            if constexpr (sym) {
+                return x_[math_topo_->slack_bus_].theta() + del_x_rhs_[math_topo_->slack_bus_].theta();
+            } else {
+                return x_[math_topo_->slack_bus_].theta()(0) + del_x_rhs_[math_topo_->slack_bus_].theta()(0);
+            }
+        }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            // accumulate unknown
-            x_[bus].theta() += del_x_rhs_[bus].theta();
+            // accumulate the unknown variable
+            auto const old_abs_u = x_[bus].v();
+            x_[bus].theta() += del_x_rhs_[bus].theta() - angle_offset;
             x_[bus].v() += x_[bus].v() * del_x_rhs_[bus].v();
             x_[bus].phi_p() += del_x_rhs_[bus].phi_p();
             x_[bus].phi_q() += del_x_rhs_[bus].phi_q();
 
             // phase offset to calculated voltage as normalized
-            ComplexValue<sym> const u_tmp = x_[bus].v() * exp(1.0i * x_[bus].theta());
+            u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
             // get dev of last iteration, get max
-            double const dev = max_val(cabs(u_tmp - u[bus]));
+            double const dev = max_val(x_[bus].v() - old_abs_u);
             max_dev = std::max(dev, max_dev);
-            // assign
-            u[bus] = u_tmp;
         }
         return max_dev;
     }

@@ -167,7 +167,7 @@ template <bool sym> class IterativeLinearSESolver {
                 Idx const col = col_indices[data_idx_lu];
                 // get a reference and reset block to zero
                 ILSEGainBlock<sym>& block = data_gain_[data_idx_lu];
-                block = ILSEGainBlock<sym>{};
+                block.clear();
                 // get data idx of y bus,
                 // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
@@ -266,7 +266,7 @@ template <bool sym> class IterativeLinearSESolver {
             Idx const data_idx = y_bus.bus_entry()[bus];
             // reset rhs block to fill values
             ILSERhs<sym>& rhs_block = x_rhs_[bus];
-            rhs_block = ILSERhs<sym>{};
+            rhs_block.clear();
             // fill block with voltage measurement
             if (measured_value.has_voltage(bus)) {
                 // eta += u / variance
