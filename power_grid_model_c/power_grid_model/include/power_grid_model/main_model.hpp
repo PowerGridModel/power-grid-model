@@ -77,7 +77,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                         std::make_index_sequence<sizeof...(ComponentType)>>;
     static constexpr size_t n_types = AllComponents::n_types;
 
-    using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
+    // function pointer definition
+    using InputFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position);
+    using UpdateFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position,
+                                std::vector<Idx2D> const& sequence_idx);
+    template <math_output_type MathOutputType>
+    using OutputFunc = void (*)(MainModelImpl& x, std::vector<MathOutputType> const& math_output,
+                                MutableDataPointer const& data_ptr, Idx position);
+    using CheckUpdateFunc = bool (*)(ConstDataPointer const& component_update);
+    using GetSeqIdxFunc = std::vector<Idx2D> (*)(MainModelImpl const& x, ConstDataPointer const& component_update);
+    using GetIndexerFunc = void (*)(MainModelImpl const& x, ID const* id_begin, Idx size, Idx* indexer_begin);
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
@@ -91,8 +100,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
-        using InputFunc = void (*)(MainModelImpl & x, ConstDataPointer const& data_ptr, Idx position);
-
         static constexpr std::array<InputFunc, n_types> add{
             [](MainModelImpl& model, ConstDataPointer const& data_ptr, Idx position) {
                 auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::InputType>(position);
@@ -151,15 +158,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
-    void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
+    void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
         assert(construction_complete_);
-        assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
 
         if constexpr (CacheType::value) {
-            constexpr auto comp_index = AllComponents::template index_of<CompType>();
-
             main_core::update_inverse<CompType>(
-                state_, begin, end, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+                state_, begin, end,
+                std::back_inserter(std::get<AllComponents::template index_of<CompType>()>(cached_inverse_update_)),
+                sequence_idx);
         }
 
         UpdateChange const changed = main_core::update_component<CompType>(state_, begin, end, sequence_idx);
@@ -173,19 +179,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // helper function to update vectors of components
     template <class CompType, class CacheType>
-    void update_component(std::vector<typename CompType::UpdateType> const& components,
-                          std::vector<Idx2D> const& sequence_idx) {
+    void update_component(std::vector<typename CompType::UpdateType> const& components) {
         if (!components.empty()) {
-            update_component<CompType, CacheType>(components.cbegin(), components.cend(), sequence_idx);
+            update_component<CompType, CacheType>(components.cbegin(), components.cend());
         }
     }
 
     // update all components
     template <class CacheType>
-    void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
-        using UpdateFunc = void (*)(MainModelImpl & x, ConstDataPointer const& data_ptr, Idx position,
-                                    std::vector<Idx2D> const& sequence_idx);
-
+    void update_component(ConstDataset const& update_data, Idx pos = 0,
+                          std::map<std::string, std::vector<Idx2D>, std::less<>> const& sequence_idx_map = {}) {
         static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
                                                                    ConstDataPointer const& data_ptr, Idx position,
                                                                    std::vector<Idx2D> const& sequence_idx) {
@@ -193,33 +196,31 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             model.update_component<ComponentType, CacheType>(begin, end, sequence_idx);
         }...};
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
+            auto const found = update_data.find(entry.name);
             // skip if component does not exist
-            if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
-                update[entry.index](*this, found->second, pos, sequence_idx_map[entry.index]);
+            if (found == update_data.cend()) {
+                continue;
+            }
+            if (auto const found_seq = sequence_idx_map.find(entry.name); found_seq != sequence_idx_map.cend()) {
+                // update using pre-cached sequence number
+                update[entry.index](*this, found->second, pos, found_seq->second);
+            } else {
+                update[entry.index](*this, found->second, pos, {});
             }
         }
     }
 
-    // update all components
-    template <class CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
-        update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
-    }
-
-    template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
-        constexpr auto component_index = AllComponents::template index_of<CompType>();
-
-        auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
-        auto const& component_sequence = std::get<component_index>(sequence_idx);
-
+    template <typename CompType> void restore_component() {
+        auto& cached_inverse_update = std::get<AllComponents::template index_of<CompType>()>(cached_inverse_update_);
         if (!cached_inverse_update.empty()) {
-            update_component<CompType, permanent_update_t>(cached_inverse_update, component_sequence);
+            update_component<CompType, permanent_update_t>(cached_inverse_update);
             cached_inverse_update.clear();
         }
     }
 
     // restore the initial values of all components
-    void restore_components(SequenceIdx const& sequence_idx) {
-        (restore_component<ComponentType>(sequence_idx), ...);
+    void restore_components() {
+        (restore_component<ComponentType>(), ...);
 
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
@@ -266,54 +267,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     the the sequence indexer given an input array of ID's for a given component type
     */
     void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        using GetIndexerFunc = void (*)(MainModelState const& state, ID const* id_begin, Idx size, Idx* indexer_begin);
-
         // static function array
         static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
-            [](MainModelState const& state, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
-                std::transform(id_begin_, id_begin_ + size_, indexer_begin_, [&state](ID id) {
-                    return state.components.template get_idx_by_id<ComponentType>(id).pos;
+            [](MainModelImpl const& model, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
+                std::transform(id_begin_, id_begin_ + size_, indexer_begin_, [&model](ID id) {
+                    return model.state_.components.template get_idx_by_id<ComponentType>(id).pos;
                 });
             }...};
         // search component type name
         for (ComponentEntry const& entry : AllComponents::component_index_map) {
             if (entry.name == component_type) {
-                return get_indexer_func[entry.index](state_, id_begin, size, indexer_begin);
+                return get_indexer_func[entry.index](*this, id_begin, size, indexer_begin);
             }
         }
-    }
-
-    // get sequence idx map of a certain batch scenario
-    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
-        using GetSeqIdxFunc =
-            std::vector<Idx2D> (*)(MainModelState const& state, ConstDataPointer const& component_update, Idx pos);
-
-        // function pointer array to get cached idx
-        static constexpr std::array<GetSeqIdxFunc, n_types> get_seq_idx{
-            [](MainModelState const& state, ConstDataPointer const& component_update, Idx pos) -> std::vector<Idx2D> {
-                using UpdateType = typename ComponentType::UpdateType;
-
-                auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType>(pos);
-                return main_core::get_component_sequence<ComponentType>(state, it_begin, it_end);
-            }...};
-
-        // fill in the map per component type
-        SequenceIdx sequence_idx_map;
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            // skip if component does not exist
-            if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
-                // add
-                sequence_idx_map[entry.index] = get_seq_idx[entry.index](state_, found->second, scenario_idx);
-            }
-        }
-        return sequence_idx_map;
-    }
-
-    // get sequence idx map of an entire batch for fast caching of component sequences
-    // (only applicable for independent update dataset)
-    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
-        assert(is_update_independent(update_data));
-        return get_sequence_idx_map(update_data, 0);
     }
 
   private:
@@ -391,6 +357,41 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
+    // get sequence idx map for fast caching of component sequences
+    // only applicable for independent update dataset
+    std::map<std::string, std::vector<Idx2D>, std::less<>> get_sequence_idx_map(ConstDataset const& update_data) const {
+        // function pointer array to get cached idx
+        static constexpr std::array<GetSeqIdxFunc, n_types> get_seq_idx{
+            [](MainModelImpl const& model, ConstDataPointer const& component_update) -> std::vector<Idx2D> {
+                using UpdateType = typename ComponentType::UpdateType;
+                // no batch
+                if (component_update.batch_size() < 1) {
+                    return {};
+                }
+                // begin and end of the first batch
+                auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType>(0);
+                // vector
+                std::vector<Idx2D> seq_idx(std::distance(it_begin, it_end));
+                std::transform(it_begin, it_end, seq_idx.begin(), [&model](UpdateType const& update) {
+                    return model.state_.components.template get_idx_by_id<ComponentType>(update.id);
+                });
+                return seq_idx;
+            }...};
+
+        // fill in the map per component type
+        std::map<std::string, std::vector<Idx2D>, std::less<>> sequence_idx_map;
+        for (ComponentEntry const& entry : AllComponents::component_index_map) {
+            auto const found = update_data.find(entry.name);
+            // skip if component does not exist
+            if (found == update_data.cend()) {
+                continue;
+            }
+            // add
+            sequence_idx_map[entry.name] = get_seq_idx[entry.index](*this, found->second);
+        }
+        return sequence_idx_map;
+    }
+
     /*
     run the calculation function in batch on the provided update data.
 
@@ -440,17 +441,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         MainModelImpl const& base_model = *this;
 
         // cache component update order if possible
-        bool const is_independent = MainModelImpl::is_update_independent(update_data);
-
-        SequenceIdx const sequence_idx = is_independent ? get_sequence_idx_map(update_data) : SequenceIdx{};
+        std::map<std::string, std::vector<Idx2D>, std::less<>> const sequence_idx_map =
+            MainModelImpl::is_update_independent(update_data)
+                ? get_sequence_idx_map(update_data)
+                : std::map<std::string, std::vector<Idx2D>, std::less<>>{};
 
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
         std::vector<CalculationInfo> infos(n_batch);
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, &sequence_idx,
-                          n_batch, is_independent](Idx start, Idx stride) {
+        auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
+                          &sequence_idx_map, n_batch](Idx start, Idx stride) {
             Timer const t_total(infos[start], 0000, "Total in thread");
 
             auto model = [&base_model, &infos, start] {
@@ -458,26 +460,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return MainModelImpl{base_model};
             }();
 
-            auto scenario_sequence = sequence_idx;
-
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
                 Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
                 // try to update model and run calculation
                 try {
                     {
                         Timer const t_update_model(infos[batch_number], 1200, "Update model");
-                        if (!is_independent) {
-                            scenario_sequence = model.get_sequence_idx_map(update_data, batch_number);
-                        }
-                        model.template update_component<cached_update_t>(update_data, batch_number, scenario_sequence);
+                        model.template update_component<cached_update_t>(update_data, batch_number, sequence_idx_map);
                     }
                     calculation_fn(model, result_data, batch_number);
                     {
                         Timer const t_update_model(infos[batch_number], 1201, "Restore model");
-                        model.restore_components(scenario_sequence);
-                        if (!is_independent) {
-                            std::ranges::for_each(scenario_sequence, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
-                        }
+                        model.restore_components();
                     }
                 } catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
@@ -540,17 +534,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static bool is_update_independent(ConstDataset const& update_data) {
         // check all components
-        return std::ranges::all_of(AllComponents::component_index_map, [&update_data](ComponentEntry const& entry) {
-            static constexpr std::array check_component_update_independent{
-                &is_component_update_independent<ComponentType>...};
-            auto const found = update_data.find(entry.name);
-            // return true if this component update does not exist
-            if (found == update_data.cend()) {
-                return true;
-            }
-            // check for this component update
-            return check_component_update_independent[entry.index](found->second);
-        });
+        return std::all_of(AllComponents::component_index_map.cbegin(), AllComponents::component_index_map.cend(),
+                           [&update_data](ComponentEntry const& entry) {
+                               static constexpr std::array check_component_update_independent{
+                                   &is_component_update_independent<ComponentType>...};
+                               auto const found = update_data.find(entry.name);
+                               // return true if this component update does not exist
+                               if (found == update_data.cend()) {
+                                   return true;
+                               }
+                               // check for this component update
+                               return check_component_update_independent[entry.index](found->second);
+                           });
     }
 
     template <class Component> static bool is_component_update_independent(ConstDataPointer const& component_update) {
@@ -689,10 +684,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <math_output_type MathOutputType>
     void output_result(std::vector<MathOutputType> const& math_output, Dataset const& result_data, Idx pos = 0) {
-        using OutputFunc = void (*)(MainModelImpl & x, std::vector<MathOutputType> const& math_output,
-                                    MutableDataPointer const& data_ptr, Idx position);
-
-        static constexpr std::array<OutputFunc, n_types> get_result{
+        static constexpr std::array<OutputFunc<MathOutputType>, n_types> get_result{
             [](MainModelImpl& model, std::vector<MathOutputType> const& math_output_,
                MutableDataPointer const& data_ptr, Idx position) {
                 auto const begin =
