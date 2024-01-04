@@ -763,21 +763,15 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cac
     auto main_model = default_model(state);
 
     std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
-    ConstDataset update_data{
-        {"source", ConstDataPointer{source_update2.data(), static_cast<Idx>(source_update2.size())}}};
-    CHECK_THROWS_AS((main_model.update_component<typename settings::update_type>(update_data)), IDNotFound);
+    CHECK_THROWS_AS((main_model.update_component<Source, typename settings::update_type>(source_update2)), IDNotFound);
 }
 
 TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_update, cached_update) {
     State state;
     auto main_model = default_model(state);
 
-    ConstDataset update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load",
-         ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
-    main_model.update_component<typename settings::update_type>(update_data);
-
+    main_model.update_component<SymLoad, typename settings::update_type>(state.sym_load_update);
+    main_model.update_component<AsymLoad, typename settings::update_type>(state.asym_load_update);
     SUBCASE("Symmetrical") {
         auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
         main_model.output_result<Node>(math_output, state.sym_node.begin());
@@ -815,13 +809,9 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
     auto main_model = default_model(state);
 
     state.sym_load_update[0].p_specified = 2.5e6;
-
-    ConstDataset update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
-        {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
-    main_model.update_component<typename settings::update_type>(update_data);
-
+    main_model.update_component<SymLoad, typename settings::update_type>(state.sym_load_update);
+    main_model.update_component<AsymLoad, typename settings::update_type>(state.asym_load_update);
+    main_model.update_component<Shunt, typename settings::update_type>(state.shunt_update);
     SUBCASE("Symmetrical") {
         auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
         main_model.output_result<Node>(math_output, state.sym_node.begin());
@@ -859,16 +849,12 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     auto main_model = default_model(state);
 
     state.sym_load_update[0].p_specified = 2.5e6;
-
-    ConstDataset update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
-        {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}},
-        {"source", ConstDataPointer{state.source_update.data(), static_cast<Idx>(state.source_update.size())}},
-        {"link", ConstDataPointer{state.link_update.data(), static_cast<Idx>(state.link_update.size())}},
-        {"fault", ConstDataPointer{state.fault_update.data(), static_cast<Idx>(state.fault_update.size())}}};
-
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_component<AsymLoad, typename settings::update_type>(state.asym_load_update);
+    main_model.update_component<SymLoad, typename settings::update_type>(state.sym_load_update);
+    main_model.update_component<Shunt, typename settings::update_type>(state.shunt_update);
+    main_model.update_component<Source, typename settings::update_type>(state.source_update);
+    main_model.update_component<Link, typename settings::update_type>(state.link_update);
+    main_model.update_component<Fault, typename settings::update_type>(state.fault_update);
 
     SUBCASE("Symmetrical") {
         auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
@@ -908,13 +894,9 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
 
     auto const math_output_orig = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
 
-    ConstDataset update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load",
-         ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
-
-    main_model.update_component<typename settings::update_type>(update_data);
-    main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+    main_model.update_component<SymLoad, typename settings::update_type>(state.sym_load_update);
+    main_model.update_component<AsymLoad, typename settings::update_type>(state.asym_load_update);
+    main_model.restore_components();
 
     SUBCASE("Symmetrical") {
         auto const math_output_result = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
