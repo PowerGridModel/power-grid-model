@@ -18,28 +18,47 @@
 namespace power_grid_model::main_core {
 
 namespace detail {
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
-          typename Func>
+template <std::derived_from<Base> Component, class ComponentContainer, typename UpdateType>
     requires model_component_state<MainModelState, ComponentContainer, Component> &&
-             std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
-inline void iterate_component_sequence(Func&& func, MainModelState<ComponentContainer> const& state,
-                                       ForwardIterator begin, ForwardIterator end,
+             std::same_as<std::remove_cvref_t<typename Component::UpdateType>, std::remove_cvref_t<UpdateType>>
+inline Idx2D get_idx_by_id(MainModelState<ComponentContainer> const& state, UpdateType const& update) {
+    return state.components.template get_idx_by_id<Component>(update.id);
+}
+
+template <std::derived_from<Base> Component, std::forward_iterator ForwardIterator, typename Func>
+    requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
+inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
                                        std::vector<Idx2D> const& sequence_idx) {
-    bool const has_sequence_id = !sequence_idx.empty();
     Idx seq = 0;
 
     // loop to to update component
     for (auto it = begin; it != end; ++it, ++seq) {
-        // get component
-        // either using ID via hash map
-        // either directly using sequence id
-        Idx2D const sequence_single =
-            has_sequence_id ? sequence_idx[seq] : state.components.template get_idx_by_id<Component>(it->id);
-
-        func(*it, sequence_single);
+        // get component directly using sequence id
+        func(*it, sequence_idx[seq]);
     }
 }
 } // namespace detail
+
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<Idx2D> OutputIterator>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
+                                   ForwardIterator end, OutputIterator destination) {
+    using UpdateType = typename Component::UpdateType;
+
+    std::transform(begin, end, destination,
+                   [&state](UpdateType const& update) { return detail::get_idx_by_id<Component>(state, update); });
+}
+
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
+                                                 ForwardIterator end) {
+    std::vector<Idx2D> result;
+    result.reserve(std::distance(begin, end));
+    get_component_sequence<Component>(state, begin, end, std::back_inserter(result));
+    return result;
+}
 
 // template to update components
 // using forward interators
@@ -58,7 +77,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
             auto& comp = state.components.template get_item<Component>(sequence_single);
             changed = changed || comp.update(update_data);
         },
-        state, begin, end, sequence_idx);
+        begin, end, sequence_idx);
 
     return changed;
 }
@@ -79,7 +98,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
             auto const& comp = state.components.template get_item<Component>(sequence_single);
             *destination++ = comp.inverse(update_data);
         },
-        state, begin, end, sequence_idx);
+        begin, end, sequence_idx);
 }
 
 #define INCREMENT_UPDATE_Y_BUS
