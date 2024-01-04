@@ -442,15 +442,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // cache component update order if possible
         bool const is_independent = MainModelImpl::is_update_independent(update_data);
 
-        SequenceIdx const sequence_idx = is_independent ? get_sequence_idx_map(update_data) : SequenceIdx{};
-
         // error messages
         std::vector<std::string> exceptions(n_batch, "");
         std::vector<CalculationInfo> infos(n_batch);
 
         // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, &sequence_idx,
-                          n_batch, is_independent](Idx start, Idx stride) {
+        auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, n_batch,
+                          is_independent](Idx start, Idx stride) {
             Timer const t_total(infos[start], 0000, "Total in thread");
 
             auto model = [&base_model, &infos, start] {
@@ -458,7 +456,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return MainModelImpl{base_model};
             }();
 
-            auto scenario_sequence = sequence_idx;
+            SequenceIdx scenario_sequence = is_independent ? model.get_sequence_idx_map(update_data) : SequenceIdx{};
 
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
                 Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
