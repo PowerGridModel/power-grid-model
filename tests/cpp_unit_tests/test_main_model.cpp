@@ -763,7 +763,7 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cac
     auto main_model = default_model(state);
 
     std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"source", ConstDataPointer{source_update2.data(), static_cast<Idx>(source_update2.size())}}};
     CHECK_THROWS_AS((main_model.update_component<typename settings::update_type>(update_data)), IDNotFound);
 }
@@ -772,7 +772,7 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
     State state;
     auto main_model = default_model(state);
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load",
          ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
@@ -816,7 +816,7 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
 
     state.sym_load_update[0].p_specified = 2.5e6;
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
         {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
@@ -860,7 +860,7 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
 
     state.sym_load_update[0].p_specified = 2.5e6;
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
         {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}},
@@ -908,7 +908,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
 
     auto const math_output_orig = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load",
          ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
