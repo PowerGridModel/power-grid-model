@@ -385,6 +385,7 @@ template <bool sym> class YBus {
         return IdxVector{affected_entries.begin(), affected_entries.end()};
     }
 
+    /*
     void diff_to_delta(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached delta parameters
         // loop through all branch params and assign delta
@@ -411,10 +412,11 @@ template <bool sym> class YBus {
                 math_model_param->shunt_param[idx] - math_model_param_->shunt_param[idx];
         }
     }
-
+    */
     void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                                      std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
-                                     bool is_delta = false, bool is_decrement = false) {
+                                     bool is_decrement = false) {
+        /*
         // delta and increment logic
         if (!math_model_param_delta_) {
             math_model_param_delta_ = std::make_shared<MathModelParam<sym>>(MathModelParam<sym>{});
@@ -469,6 +471,53 @@ template <bool sym> class YBus {
             } else {
                 admittance[entry] = entry_admittance;
             }
+        }
+        // move to shared ownership
+        admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
+        decremented_ = is_decrement;
+        */
+        // increment and decrement logic
+        if (is_decrement) {
+            if (decremented_) {
+                return; // in decrement mode, do nothing if already decremented
+            }
+        } else {
+            // swap the old cached parameters in increment mode (update)
+            math_model_param_prev_ = math_model_param_;
+            math_model_param_ = math_model_param;
+            math_model_param_incrmt_ = math_model_param_incrmt;
+        }
+        // construct admittance data
+        ComplexTensorVector<sym> admittance(nnz());
+        assert(Idx(admittance_->size()) == nnz());
+        std::ranges::copy(*admittance_, admittance.begin());
+        auto const& y_bus_element = y_bus_struct_->y_bus_element;
+        auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
+        auto const& math_param_shunt =
+            is_decrement ? math_model_param_prev_->shunt_param : math_model_param_->shunt_param;
+        auto const& math_param_branch =
+            is_decrement ? math_model_param_prev_->branch_param : math_model_param_->branch_param;
+
+        // construct affected entries
+        auto const affected_entries = increments_to_entries(math_model_param_incrmt_);
+
+        // process and update affected entries
+        for (auto const entry : affected_entries) {
+            // start admittance accumulation with zero
+            ComplexTensor<sym> entry_admittance{0.0};
+            // loop over all entries of this position
+            for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
+                if (y_bus_element[element].element_type == YBusElementType::shunt) {
+                    // shunt
+                    entry_admittance += math_param_shunt[y_bus_element[element].idx];
+                } else {
+                    // branch
+                    entry_admittance += math_param_branch[y_bus_element[element].idx]
+                                            .value[static_cast<Idx>(y_bus_element[element].element_type)];
+                }
+            }
+            // assign
+            admittance[entry] = entry_admittance;
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
@@ -553,7 +602,7 @@ template <bool sym> class YBus {
 
     // cache the math parameters
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
-    std::shared_ptr<MathModelParam<sym>> math_model_param_delta_;
+    std::shared_ptr<MathModelParam<sym> const> math_model_param_prev_;
 
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch{};

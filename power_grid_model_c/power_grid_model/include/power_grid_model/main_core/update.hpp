@@ -116,6 +116,11 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
     //     boost::irange(shunt_size) | boost::adaptors::filtered([&math_model_param, &y_bus_param](Idx i) {
     //         return cmplx_neq<sym>(math_model_param->shunt_param[i], y_bus_param.shunt_param[i]);
     //     });
+
+    // Placeholder for extracting to_change_indices for both branches and shunts from sequence_idx_map
+    // -
+    // -
+
     std::vector<Idx> branch_param_to_change_views;
     for (size_t idx = 0; idx < math_model_param->branch_param.size(); ++idx) {
         if (cmplx_neq<sym>(math_model_param->branch_param[idx].yff(), y_bus_param.branch_param[idx].yff()) ||
@@ -138,8 +143,8 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
 
     auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
 
-    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr, false,
-                                      false); /* param, changed_param, is_delta, is_decrement */
+    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr,
+                                      false); /* param, changed_param, is_decrement */
 #else
     y_bus.update_admittance(math_model_param);
 #endif // INCREMENT_UPDATE_Y_BUS
@@ -167,8 +172,8 @@ inline void update_y_bus_increment(YBus<sym>& y_bus, std::shared_ptr<MathModelPa
 
     auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
 
-    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr, true,
-                                      !increment); /* param, changed_param, is_delta, is_decrement */
+    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr,
+                                      !increment); /* param, changed_param, is_decrement */
 }
 
 template <bool sym>
