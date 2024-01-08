@@ -385,97 +385,9 @@ template <bool sym> class YBus {
         return IdxVector{affected_entries.begin(), affected_entries.end()};
     }
 
-    /*
-    void diff_to_delta(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
-        // overwrite the old cached delta parameters
-        // loop through all branch params and assign delta
-        for (size_t idx = 0; idx < math_model_param->branch_param.size(); ++idx) {
-            math_model_param_delta_->branch_param[idx] = BranchCalcParam<sym>{
-                ComplexTensor<sym>{0.0}, ComplexTensor<sym>{0.0}, ComplexTensor<sym>{0.0}, ComplexTensor<sym>{0.0}};
-        }
-        for (auto const& idx : math_model_param_incrmt_->branch_param_to_change) {
-            math_model_param_delta_->branch_param[idx].value[0] =
-                math_model_param->branch_param[idx].value[0] - math_model_param_->branch_param[idx].value[0];
-            math_model_param_delta_->branch_param[idx].value[1] =
-                math_model_param->branch_param[idx].value[1] - math_model_param_->branch_param[idx].value[1];
-            math_model_param_delta_->branch_param[idx].value[2] =
-                math_model_param->branch_param[idx].value[2] - math_model_param_->branch_param[idx].value[2];
-            math_model_param_delta_->branch_param[idx].value[3] =
-                math_model_param->branch_param[idx].value[3] - math_model_param_->branch_param[idx].value[3];
-        }
-        // loop through all shunt params and assign delta
-        for (size_t idx = 0; idx < math_model_param->branch_param.size(); ++idx) {
-            math_model_param_delta_->shunt_param[idx] = ComplexTensor<sym>{0.0};
-        }
-        for (auto const& idx : math_model_param_incrmt_->shunt_param_to_change) {
-            math_model_param_delta_->shunt_param[idx] =
-                math_model_param->shunt_param[idx] - math_model_param_->shunt_param[idx];
-        }
-    }
-    */
     void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                                      std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
                                      bool is_decrement = false) {
-        /*
-        // delta and increment logic
-        if (!math_model_param_delta_) {
-            math_model_param_delta_ = std::make_shared<MathModelParam<sym>>(MathModelParam<sym>{});
-        }
-        if (!is_decrement) {
-            // overwrite the old cached parameters in increment mode (update)
-            if (!is_delta) { // update in increment mode (not delta)
-                math_model_param_ = math_model_param;
-                diff_to_delta(math_model_param);
-            } else { // update in delta mode
-                math_model_param_delta_ = std::const_pointer_cast<MathModelParam<sym>>(math_model_param);
-            }
-            math_model_param_incrmt_ = math_model_param_incrmt;
-        } else if (decremented_) {
-            return; // in decrement mode, do nothing if already decremented
-        }
-        const double mode = is_decrement ? -1.0 : 1.0;
-        const bool should_pt_2_delta = is_decrement ? true : is_delta;
-
-        // construct admittance data
-        ComplexTensorVector<sym> admittance(nnz());
-        assert(Idx(admittance_->size()) == nnz());
-        std::ranges::copy(*admittance_, admittance.begin());
-        auto const& y_bus_element = y_bus_struct_->y_bus_element;
-        auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
-        auto const& math_param_shunt =
-            should_pt_2_delta ? math_model_param_delta_->shunt_param : math_model_param_->shunt_param;
-        auto const& math_param_branch =
-            should_pt_2_delta ? math_model_param_delta_->branch_param : math_model_param_->branch_param;
-
-        // construct affected entries
-        auto const affected_entries = increments_to_entries(math_model_param_incrmt_);
-
-        // process and update affected entries
-        for (auto const entry : affected_entries) {
-            // start admittance accumulation with zero
-            ComplexTensor<sym> entry_admittance{0.0};
-            // loop over all entries of this position
-            for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
-                if (y_bus_element[element].element_type == YBusElementType::shunt) {
-                    // shunt
-                    entry_admittance += math_param_shunt[y_bus_element[element].idx];
-                } else {
-                    // branch
-                    entry_admittance += math_param_branch[y_bus_element[element].idx]
-                                            .value[static_cast<Idx>(y_bus_element[element].element_type)];
-                }
-            }
-            // assign
-            if (is_delta) {
-                admittance[entry] += mode * entry_admittance;
-            } else {
-                admittance[entry] = entry_admittance;
-            }
-        }
-        // move to shared ownership
-        admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
-        decremented_ = is_decrement;
-        */
         // increment and decrement logic
         if (is_decrement) {
             if (decremented_) {
