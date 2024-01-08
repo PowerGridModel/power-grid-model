@@ -113,7 +113,6 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
                    cmplx_neq<sym>(math_model_param->branch_param[i].ytf(), y_bus_param.branch_param[i].ytf()) ||
                    cmplx_neq<sym>(math_model_param->branch_param[i].ytt(), y_bus_param.branch_param[i].ytt());
         });
-    const size_t shunt_size = math_model_param->shunt_param.size();
     auto shunt_param_to_change_views =
         boost::irange(y_bus_param.shunt_param.size()) |
         boost::adaptors::filtered([&math_model_param, &y_bus_param](Idx i) {
