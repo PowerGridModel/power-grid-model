@@ -103,7 +103,8 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
     assert(y_bus_param.branch_param.size() == math_model_param->branch_param.size());
     assert(y_bus_param.shunt_param.size() == math_model_param->shunt_param.size());
     assert(y_bus_param.source_param.size() == math_model_param->source_param.size());
-    // loop through all branches and shunts of math_model_param, check changes
+
+    // when sequence_idx_map not available: loop through all branches and shunts of math_model_param, check changes
     auto branch_param_to_change_views =
         boost::irange(y_bus_param.branch_param.size()) |
         boost::adaptors::filtered([&math_model_param, &y_bus_param](Idx i) {
@@ -124,10 +125,10 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
     // -
 
     MathModelParamIncrement<sym> math_model_param_incrmt;
-    math_model_param_incrmt.branch_param_to_change =
-        std::vector<Idx>(branch_param_to_change_views.begin(), branch_param_to_change_views.end());
-    math_model_param_incrmt.shunt_param_to_change =
-        std::vector<Idx>(shunt_param_to_change_views.begin(), shunt_param_to_change_views.end());
+    math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
+                                                      branch_param_to_change_views.end()};
+    math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
+                                                     shunt_param_to_change_views.end()};
 
     auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
 
@@ -155,10 +156,10 @@ inline void update_y_bus_increment(YBus<sym>& y_bus, std::shared_ptr<MathModelPa
         });
 
     MathModelParamIncrement<sym> math_model_param_incrmt;
-    math_model_param_incrmt.branch_param_to_change =
-        std::vector<Idx>(branch_param_to_change_views.begin(), branch_param_to_change_views.end());
-    math_model_param_incrmt.shunt_param_to_change =
-        std::vector<Idx>(shunt_param_to_change_views.begin(), shunt_param_to_change_views.end());
+    math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
+                                                      branch_param_to_change_views.end()};
+    math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
+                                                     shunt_param_to_change_views.end()};
 
     auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
 

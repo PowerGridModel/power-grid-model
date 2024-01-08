@@ -353,6 +353,7 @@ TEST_CASE("Incremental update y-bus") {
     };
 
     MathModelParam<true> param_sym_update;
+    /* Ditched delta based update param
     param_sym_update.branch_param = {                        //   ff,    ft,   tf,   tt
                                      {1.0i, 0.0, 0.0, 0.0},  // {1,  0}
                                      {0.0, 1.0, 0.0, 0.0},   // {1,  2}
@@ -361,6 +362,16 @@ TEST_CASE("Incremental update y-bus") {
                                      {0.0, 0.0, 0.0, 0.0},   // {0,  1}
                                      {1.0i, 0.0, 0.0, 0.0}}; // {2, -1}
     param_sym_update.shunt_param = {1.0i, 0.0i};
+    */
+    // Swap based params
+    param_sym_update.branch_param = {                             //   ff,    ft,   tf,   tt
+                                     {2.0i, 2.0i, 3.0i, 4.0i},    // {1,  0}
+                                     {5.0, 7.0, 7.0, 8.0},        // {1,  2}
+                                     {9.0i, 10.0i, 11.0i, 14.0i}, // {2,  3}
+                                     {13.0, 14.0, 17.0, 16.0},    // {3,  2}
+                                     {17.0, 18.0, 19.0, 20.0},    // {0,  1}
+                                     {1001.0i, 0.0, 0.0, 0.0}};   // {2, -1}
+    param_sym_update.shunt_param = {101.0i, 200.0i};
 
     const ComplexTensorVector<true> admittance_sym_2 = {
         // 17.0 + 104.0i,                                                                        [v]
@@ -399,7 +410,7 @@ TEST_CASE("Incremental update y-bus") {
         ybus.update_admittance(std::make_shared<MathModelParam<true> const>(param_sym));
         verify_admittance(ybus.admittance(), admittance_sym);
     }
-    /*
+
     SUBCASE("Test progressive update") {
         YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
         verify_admittance(ybus.admittance(), admittance_sym);
@@ -427,16 +438,16 @@ TEST_CASE("Incremental update y-bus") {
             std::make_shared<MathModelParamIncrement<true> const>(math_model_param_incrmt);
         auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
 
+        /* ybus::update_admittance_increment (model_parameter, increment_indices, is_decrement)*/
         ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, false);
-        // verify_admittance(ybus.admittance(), admittance_sym_2);
+        verify_admittance(ybus.admittance(), admittance_sym_2);
 
         ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, true);
-        // verify_admittance(ybus.admittance(), admittance_sym);
+        verify_admittance(ybus.admittance(), admittance_sym);
 
         ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, true);
-        // verify_admittance(ybus.admittance(), admittance_sym);
+        verify_admittance(ybus.admittance(), admittance_sym);
     }
-    */
 }
 
 /*
