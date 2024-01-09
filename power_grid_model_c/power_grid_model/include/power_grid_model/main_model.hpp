@@ -475,8 +475,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     }
                 } catch (std::exception const& ex) {
                     exceptions[batch_number] = ex.what();
+                    model = [&base_model, &infos, start] {
+                        Timer const t_copy_model(infos[start], 1100, "Copy model");
+                        return MainModelImpl{base_model};
+                    }();
                 } catch (...) {
                     exceptions[batch_number] = "unknown exception";
+                    model = [&base_model, &infos, start] {
+                        Timer const t_copy_model(infos[start], 1100, "Copy model");
+                        return MainModelImpl{base_model};
+                    }();
                 }
 
                 infos[batch_number].merge(model.calculation_info_);
