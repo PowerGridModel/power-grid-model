@@ -182,7 +182,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             auto const& ui = measured_estimated_u[row];
             auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
             // TODO Find a better way. vector outer product doesnt work with complex
-            // ComplexTensor<sym> const ui_ui_conj = vector_outer_product(ui, conj(ui));
+            auto const ui_ui_conj = vector_outer_product(ui, conj(ui));
 
             NRSERhs<sym>& rhs_block = del_x_rhs_[row];
             rhs_block.clear();
@@ -192,8 +192,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 auto const& uj = measured_estimated_u[col];
 
                 // TODO Find a better way. vector outer product doesnt work with complex
-                ComplexTensor<sym> ui_uj_conj{};
-                // ComplexTensor<sym> const ui_ui_conj = vector_outer_product(ui, conj(uj));
+                auto const ui_uj_conj = vector_outer_product(ui, conj(uj));
 
                 RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
                 // get a reference and reset block to zero
@@ -221,7 +220,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                         auto const& measured_power = measured_value.shunt_power(obj);
                         auto const jac_complex = jac_complex_intermediate_form(yii, ui_uj_conj);
                         auto const jac_complex_unit_other = dot(jac_complex, abs_ui_inv);
-                        auto const calculated_power = dot(jac_complex, ComplexValue<sym>{1.0});
+                        auto const calculated_power = sum_row(jac_complex);
                         auto const block_i =
                             power_flow_jacobian_i(jac_complex, jac_complex_unit_other, calculated_power);
                         multiply_add_jacobian_blocks(block, rhs_block, block_i, block_i, measured_power,
@@ -235,7 +234,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                         auto const jac_complex_ff = jac_complex_intermediate_form(yii, ui_ui_conj);
                         auto const jac_complex_ft = jac_complex_intermediate_form(yij, ui_uj_conj);
 
-                        auto const calculated_power = dot((jac_complex_ff + jac_complex_ft), ComplexValue<sym>{1.0});
+                        auto const calculated_power = sum_row(jac_complex_ff + jac_complex_ft);
                         auto const& measured_power = measured_value.branch_from_power(obj);
 
                         if (type == YBusElementType::bff) {
@@ -261,7 +260,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                         auto const jac_complex_tt = jac_complex_intermediate_form(yii, ui_ui_conj);
                         auto const jac_complex_tf = jac_complex_intermediate_form(yij, ui_uj_conj);
 
-                        auto const calculated_power = dot((jac_complex_tt + jac_complex_tf), ComplexValue<sym>{1.0});
+                        auto const calculated_power = sum_row(jac_complex_tt + jac_complex_tf);
                         auto const& measured_power = measured_value.branch_to_power(obj);
 
                         if (type == YBusElementType::btt) {
@@ -287,7 +286,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                     auto const& yij = y_bus.admittance()[data_idx];
                     auto const jac_complex_ft = jac_complex_intermediate_form(yij, ui_ui_conj);
                     auto const jac_complex_unit_other_ft = dot(jac_complex_ft, abs_ui_inv);
-                    auto const calculated_power = dot(jac_complex_ft, ComplexValue<sym>{1.0});
+                    auto const calculated_power = sum_row(jac_complex_ft);
 
                     // R_ii = -variance, only diagonal
                     if (row == col) {
@@ -377,11 +376,11 @@ template <bool sym> class NewtonRaphsonSESolver {
     NRSEJacobian power_flow_jacobian_i(ComplexTensor<sym> const& jac_complex, ComplexTensor<sym> jac_complex_unit_self,
                                        ComplexValue<sym> calculated_power) {
         auto jacobian = power_flow_jacobian_j(jac_complex, jac_complex_unit_self);
-        ComplexValue<sym> const calculated_power_unit_self = dot(jac_complex_unit_self, ComplexValue<sym>{1.0});
-        // jacobian.dP_dt -= RealTensor<sym>{imag(calculated_power)};
-        // jacobian.dP_dv += RealTensor<sym>{real(calculated_power_unit_self)};
-        // jacobian.dQ_dt += RealTensor<sym>{real(calculated_power)};
-        // jacobian.dQ_dv += RealTensor<sym>{imag(calculated_power_unit_self)};
+        auto const calculated_power_unit_self = sum_row(jac_complex_unit_self);
+        jacobian.dP_dt -= RealTensor<sym>{imag_val<sym>(calculated_power)};
+        jacobian.dP_dv += RealTensor<sym>{real_val<sym>(calculated_power_unit_self)};
+        jacobian.dQ_dt += RealTensor<sym>{real_val<sym>(calculated_power)};
+        jacobian.dQ_dv += RealTensor<sym>{imag_val<sym>(calculated_power_unit_self)};
         return jacobian;
     }
 
