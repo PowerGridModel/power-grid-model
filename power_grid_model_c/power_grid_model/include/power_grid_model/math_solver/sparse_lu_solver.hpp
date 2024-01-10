@@ -203,7 +203,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
                     return block_perm_array[pivot_row_col];
                 } else {
-                    if (lu_matrix[pivot_idx] == 0.0) {
+                    if (!is_normal(lu_matrix[pivot_idx])) {
                         throw SparseMatrixError{};
                     }
                     return {};
