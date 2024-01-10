@@ -1232,6 +1232,4 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     }
 }
 
-TEST_CASE("Test main model - sparse errors") {}
-
 } // namespace power_grid_model
