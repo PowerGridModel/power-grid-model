@@ -1089,7 +1089,7 @@ TEST_CASE("Test main model - runtime dispatch") {
     }
 }
 
-TEST_CASE("Test main model - incomplete input but complete dataset") {
+TEST_CASE("Test main model - incomplete input") {
     using CalculationMethod::iterative_current;
     using CalculationMethod::linear;
     using CalculationMethod::linear_current;
@@ -1129,13 +1129,26 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     update_data["asym_load"] =
         DataPointer<true>{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
 
+    std::vector<SourceUpdate> incomplete_source_update{{6, na_IntS, nan, nan}, {10, na_IntS, nan, nan}};
+    std::vector<SymLoadGenUpdate> incomplete_sym_load_update{{7, na_IntS, nan, nan}};
+    std::vector<AsymLoadGenUpdate> incomplete_asym_load_update{
+        {8, na_IntS, RealValue<false>{nan}, RealValue<false>{nan}}};
+
+    ConstDataset incomplete_update_data;
+    incomplete_update_data["source"] =
+        DataPointer<true>{incomplete_source_update.data(), static_cast<Idx>(incomplete_source_update.size())};
+    incomplete_update_data["sym_load"] =
+        DataPointer<true>{incomplete_sym_load_update.data(), static_cast<Idx>(incomplete_sym_load_update.size())};
+    incomplete_update_data["asym_load"] =
+        DataPointer<true>{incomplete_asym_load_update.data(), static_cast<Idx>(incomplete_asym_load_update.size())};
+
     MainModel test_model{50.0, input_data};
     MainModel const ref_model{main_model};
 
     Dataset test_result_data;
     Dataset ref_result_data;
 
-    SUBCASE("Symmetrical") {
+    SUBCASE("Symmetrical - Complete") {
         std::vector<NodeOutput<true>> test_sym_node(state.sym_node.size());
         std::vector<NodeOutput<true>> ref_sym_node(state.sym_node.size());
         test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
@@ -1166,7 +1179,7 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
         CHECK(test_sym_node[2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
     }
 
-    SUBCASE("Asymmetrical") {
+    SUBCASE("Asymmetrical - Complete") {
         std::vector<NodeOutput<false>> test_asym_node(state.asym_node.size());
         std::vector<NodeOutput<false>> ref_asym_node(state.asym_node.size());
         test_result_data["node"] = DataPointer<false>{test_asym_node.data(), static_cast<Idx>(test_asym_node.size())};
@@ -1204,32 +1217,58 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     }
 
     SUBCASE("Symmetrical - Incomplete") {
-        update_data = {};
-
         std::vector<NodeOutput<true>> test_sym_node(state.sym_node.size());
         std::vector<NodeOutput<true>> ref_sym_node(state.sym_node.size());
         test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
         ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
 
-        CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear), SparseMatrixError);
-        CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data), SparseMatrixError);
-        CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data, update_data),
-                        SparseMatrixError);
+        SUBCASE("Direct call") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear), SparseMatrixError);
+        }
+        SUBCASE("Target dataset") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Empty update dataset") {
+            update_data = {};
+
+            CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data, update_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Update dataset") {
+            CHECK_THROWS_AS(
+                test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data, incomplete_update_data),
+                BatchCalculationError);
+        }
     }
 
     SUBCASE("Asymmetrical - Incomplete") {
-        update_data = {};
-
         std::vector<NodeOutput<false>> test_sym_node(state.sym_node.size());
         std::vector<NodeOutput<false>> ref_sym_node(state.sym_node.size());
         test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
         ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
 
-        CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear), SparseMatrixError);
-        CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data), SparseMatrixError);
-        CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, update_data),
-                        SparseMatrixError);
+        SUBCASE("Direct call") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear), SparseMatrixError);
+        }
+        SUBCASE("Target dataset") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Empty update dataset") {
+            update_data = {};
+
+            CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, update_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Update dataset") {
+            CHECK_THROWS_AS(
+                test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, incomplete_update_data),
+                BatchCalculationError);
+        }
     }
+
+    SUBCASE("Sparse followed by dense") {}
 }
 
 } // namespace power_grid_model
