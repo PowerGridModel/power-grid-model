@@ -1303,6 +1303,38 @@ TEST_CASE("Test main model - incomplete input") {
             CHECK(test_sym_node[state.sym_node.size() + 1].u_pu == doctest::Approx(ref_sym_node[1].u_pu));
             CHECK(test_sym_node[state.sym_node.size() + 2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
         }
+
+        SUBCASE("Asymmetrical") {
+            std::vector<NodeOutput<false>> test_asym_node(batch_size * state.sym_node.size(),
+                                                          {na_IntID, na_IntS, RealValue<false>{nan},
+                                                           RealValue<false>{nan}, RealValue<false>{nan},
+                                                           RealValue<false>{nan}, RealValue<false>{nan}});
+            std::vector<NodeOutput<false>> ref_asym_node(
+                state.sym_node.size(), {na_IntID, na_IntS, RealValue<false>{nan}, RealValue<false>{nan},
+                                        RealValue<false>{nan}, RealValue<false>{nan}, RealValue<false>{nan}});
+            test_result_data["node"] =
+                DataPointer<false>{test_asym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
+            ref_result_data["node"] = DataPointer<false>{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+
+            CHECK_THROWS_AS(
+                test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, mixed_update_data),
+                BatchCalculationError);
+            main_model.calculate_power_flow<false>(1e-8, 1, linear, ref_result_data, update_data, -1);
+
+            CHECK(is_nan(test_asym_node[0].u_pu));
+            CHECK(is_nan(test_asym_node[1].u_pu));
+            CHECK(is_nan(test_asym_node[2].u_pu));
+
+            CHECK(test_asym_node[state.asym_node.size() + 0].u_pu(0) == doctest::Approx(ref_asym_node[0].u_pu(0)));
+            CHECK(test_asym_node[state.asym_node.size() + 0].u_pu(1) == doctest::Approx(ref_asym_node[0].u_pu(1)));
+            CHECK(test_asym_node[state.asym_node.size() + 0].u_pu(2) == doctest::Approx(ref_asym_node[0].u_pu(2)));
+            CHECK(test_asym_node[state.asym_node.size() + 1].u_pu(0) == doctest::Approx(ref_asym_node[1].u_pu(0)));
+            CHECK(test_asym_node[state.asym_node.size() + 1].u_pu(1) == doctest::Approx(ref_asym_node[1].u_pu(1)));
+            CHECK(test_asym_node[state.asym_node.size() + 1].u_pu(2) == doctest::Approx(ref_asym_node[1].u_pu(2)));
+            CHECK(test_asym_node[state.asym_node.size() + 2].u_pu(0) == doctest::Approx(ref_asym_node[2].u_pu(0)));
+            CHECK(test_asym_node[state.asym_node.size() + 2].u_pu(1) == doctest::Approx(ref_asym_node[2].u_pu(1)));
+            CHECK(test_asym_node[state.asym_node.size() + 2].u_pu(2) == doctest::Approx(ref_asym_node[2].u_pu(2)));
+        }
     }
 }
 
