@@ -1211,15 +1211,16 @@ TEST_CASE("Test main model - incomplete input") {
             main_model.calculate_power_flow<false>(1e-8, 20, newton_raphson, ref_result_data, update_data, -1);
         }
 
-        CHECK(test_asym_node[0].u_pu(0) == doctest::Approx(ref_asym_node[0].u_pu(0)));
-        CHECK(test_asym_node[0].u_pu(1) == doctest::Approx(ref_asym_node[0].u_pu(1)));
-        CHECK(test_asym_node[0].u_pu(2) == doctest::Approx(ref_asym_node[0].u_pu(2)));
-        CHECK(test_asym_node[1].u_pu(0) == doctest::Approx(ref_asym_node[1].u_pu(0)));
-        CHECK(test_asym_node[1].u_pu(1) == doctest::Approx(ref_asym_node[1].u_pu(1)));
-        CHECK(test_asym_node[1].u_pu(2) == doctest::Approx(ref_asym_node[1].u_pu(2)));
-        CHECK(test_asym_node[2].u_pu(0) == doctest::Approx(ref_asym_node[2].u_pu(0)));
-        CHECK(test_asym_node[2].u_pu(1) == doctest::Approx(ref_asym_node[2].u_pu(1)));
-        CHECK(test_asym_node[2].u_pu(2) == doctest::Approx(ref_asym_node[2].u_pu(2)));
+        for (auto component_idx : {0, 1, 2}) {
+            CAPTURE(component_idx);
+
+            for (auto phase_idx : {0, 1, 2}) {
+                CAPTURE(phase_idx);
+
+                CHECK(test_asym_node[component_idx].u_pu(phase_idx) ==
+                      doctest::Approx(ref_asym_node[component_idx].u_pu(phase_idx)));
+            }
+        }
     }
 
     SUBCASE("Symmetrical - Incomplete") {
@@ -1338,19 +1339,18 @@ TEST_CASE("Incomplete followed by complete") {
                         BatchCalculationError);
         main_model.calculate_power_flow<false>(1e-8, 1, linear, ref_result_data, second_scenario_update_data, -1);
 
-        CHECK(is_nan(test_asym_node[0].u_pu));
-        CHECK(is_nan(test_asym_node[1].u_pu));
-        CHECK(is_nan(test_asym_node[2].u_pu));
+        for (auto component_idx : {0, 1, 2}) {
+            CAPTURE(component_idx);
 
-        CHECK(test_asym_node[state.asym_node.size() + 0].u_pu(0) == doctest::Approx(ref_asym_node[0].u_pu(0)));
-        CHECK(test_asym_node[state.asym_node.size() + 0].u_pu(1) == doctest::Approx(ref_asym_node[0].u_pu(1)));
-        CHECK(test_asym_node[state.asym_node.size() + 0].u_pu(2) == doctest::Approx(ref_asym_node[0].u_pu(2)));
-        CHECK(test_asym_node[state.asym_node.size() + 1].u_pu(0) == doctest::Approx(ref_asym_node[1].u_pu(0)));
-        CHECK(test_asym_node[state.asym_node.size() + 1].u_pu(1) == doctest::Approx(ref_asym_node[1].u_pu(1)));
-        CHECK(test_asym_node[state.asym_node.size() + 1].u_pu(2) == doctest::Approx(ref_asym_node[1].u_pu(2)));
-        CHECK(test_asym_node[state.asym_node.size() + 2].u_pu(0) == doctest::Approx(ref_asym_node[2].u_pu(0)));
-        CHECK(test_asym_node[state.asym_node.size() + 2].u_pu(1) == doctest::Approx(ref_asym_node[2].u_pu(1)));
-        CHECK(test_asym_node[state.asym_node.size() + 2].u_pu(2) == doctest::Approx(ref_asym_node[2].u_pu(2)));
+            CHECK(is_nan(test_asym_node[component_idx].u_pu));
+
+            for (auto phase_idx : {0, 1, 2}) {
+                CAPTURE(phase_idx);
+
+                CHECK(test_asym_node[state.asym_node.size() + component_idx].u_pu(phase_idx) ==
+                      doctest::Approx(ref_asym_node[component_idx].u_pu(phase_idx)));
+            }
+        }
     }
 }
 
