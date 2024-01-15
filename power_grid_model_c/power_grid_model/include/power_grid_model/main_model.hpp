@@ -480,7 +480,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 scenario_update_restore(model, update_data, is_independent, scenario_sequence, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
-                [&model, &calculation_fn, &result_data, is_independent](Idx scenario_idx) {
+                [&model, &calculation_fn, &result_data](Idx scenario_idx) {
                     calculation_fn(model, result_data, scenario_idx);
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
