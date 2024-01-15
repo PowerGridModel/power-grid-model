@@ -463,8 +463,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
                 is_independent](Idx start, Idx stride, Idx n_batch) {
-            assert(exceptions.size() >= n_batch);
-            assert(infos.size() >= n_batch);
+            assert(n_batch <= narrow_cast<Idx>(exceptions.size()));
+            assert(n_batch <= narrow_cast<Idx>(infos.size()));
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
