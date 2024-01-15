@@ -1272,7 +1272,7 @@ TEST_CASE("Test main model - incomplete input") {
     }
 }
 
-TEST_CASE("Incomplete followed by complete") {
+TEST_CASE("Test main model - Incomplete followed by complete") {
     using CalculationMethod::linear;
 
     State state;

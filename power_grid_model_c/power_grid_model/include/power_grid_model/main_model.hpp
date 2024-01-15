@@ -391,6 +391,37 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
+    template <typename... Args>
+    static auto call_with(auto&& run, auto&& setup, auto&& winddown, auto&& handle_exception, auto&& recover_from_bad)
+        requires std::invocable<std::remove_cvref_t<decltype(run)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(setup)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(winddown)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(handle_exception)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(recover_from_bad)>, Args const&...> &&
+                 std::same_as<std::invoke_result_t<decltype(run), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(setup), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(winddown), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(handle_exception), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(recover_from_bad), Args const&...>, void>
+    {
+        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
+                handle_exception_ = std::move(handle_exception),
+                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
+            try {
+                setup_(args...);
+                run_(args...);
+                winddown_(args...);
+            } catch (...) {
+                handle_exception_(args...);
+                try {
+                    winddown_(args...);
+                } catch (...) {
+                    recover_from_bad_(args...);
+                }
+            }
+        };
+    }
+
     /*
     run the calculation function in batch on the provided update data.
 
@@ -451,47 +482,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                           is_independent](Idx start, Idx stride) {
             Timer const t_total(infos[start], 0000, "Total in thread");
 
-            auto model = [&base_model, &infos, start] {
-                Timer const t_copy_model(infos[start], 1100, "Copy model");
+            auto copy_model = [&base_model, &infos](Idx scenario_idx) {
+                Timer const t_copy_model(infos[scenario_idx], 1100, "Copy model");
                 return MainModelImpl{base_model};
-            }();
+            };
+            auto model = copy_model(start);
 
             SequenceIdx scenario_sequence = is_independent ? model.get_sequence_idx_map(update_data) : SequenceIdx{};
 
+            auto&& [setup, winddown] =
+                scenario_update_restore(model, update_data, is_independent, scenario_sequence, infos);
+
+            auto calculate_scenario = MainModelImpl::call_with<Idx>(
+                [&model, &calculation_fn, &result_data, is_independent, &infos](Idx scenario_idx) {
+                    calculation_fn(model, result_data, scenario_idx);
+                },
+                setup, winddown, scenario_exception_handler(model, exceptions, infos),
+                [&model, &copy_model](Idx scenario_idx) { model = copy_model(scenario_idx); });
+
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
                 Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
-                // try to update model and run calculation
-                try {
-                    {
-                        Timer const t_update_model(infos[batch_number], 1200, "Update model");
-                        if (!is_independent) {
-                            scenario_sequence = model.get_sequence_idx_map(update_data, batch_number);
-                        }
-                        model.template update_component<cached_update_t>(update_data, batch_number, scenario_sequence);
-                    }
-                    calculation_fn(model, result_data, batch_number);
-                    {
-                        Timer const t_update_model(infos[batch_number], 1201, "Restore model");
-                        model.restore_components(scenario_sequence);
-                        if (!is_independent) {
-                            std::ranges::for_each(scenario_sequence, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
-                        }
-                    }
-                } catch (std::exception const& ex) {
-                    exceptions[batch_number] = ex.what();
-                    model = [&base_model, &infos, start] {
-                        Timer const t_copy_model(infos[start], 1100, "Copy model");
-                        return MainModelImpl{base_model};
-                    }();
-                } catch (...) {
-                    exceptions[batch_number] = "unknown exception";
-                    model = [&base_model, &infos, start] {
-                        Timer const t_copy_model(infos[start], 1100, "Copy model");
-                        return MainModelImpl{base_model};
-                    }();
-                }
 
-                infos[batch_number].merge(model.calculation_info_);
+                calculate_scenario(batch_number);
             }
         };
 
@@ -522,6 +534,42 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_info_ = main_core::merge_calculation_info(infos);
 
         return BatchParameter{};
+    }
+
+    static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
+                                        bool const is_independent, SequenceIdx& scenario_sequence,
+                                        std::vector<CalculationInfo>& infos) {
+        return std::make_pair(
+            [&model, &update_data, &scenario_sequence, is_independent, &infos](Idx scenario_idx) {
+                Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
+                if (!is_independent) {
+                    scenario_sequence = model.get_sequence_idx_map(update_data, scenario_idx);
+                }
+                model.template update_component<cached_update_t>(update_data, scenario_idx, scenario_sequence);
+            },
+            [&model, &scenario_sequence, is_independent, &infos](Idx scenario_idx) {
+                Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
+                model.restore_components(scenario_sequence);
+                if (!is_independent) {
+                    std::ranges::for_each(scenario_sequence, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
+                }
+            });
+    }
+
+    // Lippincott pattern
+    static auto scenario_exception_handler(MainModelImpl& model, std::vector<std::string>& messages,
+                                           std::vector<CalculationInfo>& infos) {
+        return [&model, &messages, &infos](Idx scenario_idx) {
+            std::exception_ptr ex_ptr = std::current_exception();
+            try {
+                std::rethrow_exception(ex_ptr);
+            } catch (std::exception const& ex) {
+                messages[scenario_idx] = ex.what();
+            } catch (...) {
+                messages[scenario_idx] = "unknown exception";
+            }
+            infos[scenario_idx].merge(model.calculation_info_);
+        };
     }
 
     static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
