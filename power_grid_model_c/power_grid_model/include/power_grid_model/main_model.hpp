@@ -476,14 +476,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             SequenceIdx scenario_sequence = is_independent ? model.get_sequence_idx_map(update_data) : SequenceIdx{};
 
-            auto&& [setup, winddown] =
+            auto [setup, winddown] =
                 scenario_update_restore(model, update_data, is_independent, scenario_sequence, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
                 [&model, &calculation_fn, &result_data, is_independent](Idx scenario_idx) {
                     calculation_fn(model, result_data, scenario_idx);
                 },
-                setup, winddown, scenario_exception_handler(model, exceptions, infos),
+                std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
                 [&model, &copy_model](Idx scenario_idx) { model = copy_model(scenario_idx); });
 
             for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
@@ -523,7 +523,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename... Args>
-    static auto call_with(auto&& run, auto&& setup, auto&& winddown, auto&& handle_exception, auto&& recover_from_bad)
+    static auto call_with(auto run, auto setup, auto winddown, auto handle_exception, auto recover_from_bad)
         requires std::invocable<std::remove_cvref_t<decltype(run)>, Args const&...> &&
                  std::invocable<std::remove_cvref_t<decltype(setup)>, Args const&...> &&
                  std::invocable<std::remove_cvref_t<decltype(winddown)>, Args const&...> &&
@@ -535,9 +535,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                  std::same_as<std::invoke_result_t<decltype(handle_exception), Args const&...>, void> &&
                  std::same_as<std::invoke_result_t<decltype(recover_from_bad), Args const&...>, void>
     {
-        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
-                handle_exception_ = std::move(handle_exception),
-                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
+        return [setup_ = std::forward<decltype(setup)>(setup), run_ = std::forward<decltype(run)>(run),
+                winddown_ = std::forward<decltype(winddown)>(winddown),
+                handle_exception_ = std::forward<decltype(handle_exception)>(handle_exception),
+                recover_from_bad_ = std::forward<decltype(recover_from_bad)>(recover_from_bad)](Args const&... args) {
             try {
                 setup_(args...);
                 run_(args...);
@@ -577,7 +578,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     static auto scenario_exception_handler(MainModelImpl& model, std::vector<std::string>& messages,
                                            std::vector<CalculationInfo>& infos) {
         return [&model, &messages, &infos](Idx scenario_idx) {
-            std::exception_ptr ex_ptr = std::current_exception();
+            std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
             } catch (std::exception const& ex) {
