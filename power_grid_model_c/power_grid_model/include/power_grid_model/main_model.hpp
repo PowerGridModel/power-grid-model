@@ -467,19 +467,36 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // missing entries are provided in the update data
         }
 
+        // error messages
+        std::vector<std::string> exceptions(n_batch, "");
+        std::vector<CalculationInfo> infos(n_batch);
+
+        // lambda for sub batch calculation
+        auto sub_batch = sub_batch_calculation_(calculation_fn, result_data, update_data, exceptions, infos);
+
+        batch_dispatch(sub_batch, n_batch, threading);
+
+        handle_batch_exceptions(exceptions);
+        calculation_info_ = main_core::merge_calculation_info(infos);
+
+        return BatchParameter{};
+    }
+
+    template <typename Calculate>
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
+    auto sub_batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data,
+                                std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
         // cache component update order if possible
         bool const is_independent = MainModelImpl::is_update_independent(update_data);
 
-        // error messages
-        std::vector<std::string> exceptions(n_batch, "");
-        std::vector<CalculationInfo> infos(n_batch);
+        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
+                is_independent](Idx start, Idx stride, Idx n_batch) {
+            assert(exceptions.size() >= n_batch);
+            assert(infos.size() >= n_batch);
 
-        // lambda for sub batch calculation
-        auto sub_batch = [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, n_batch,
-                          is_independent](Idx start, Idx stride) {
             Timer const t_total(infos[start], 0000, "Total in thread");
 
             auto copy_model = [&base_model, &infos](Idx scenario_idx) {
@@ -506,16 +523,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 calculate_scenario(batch_number);
             }
         };
+    }
 
+    // run sequential if
+    //    specified threading < 0
+    //    use hardware threads, but it is either unknown (0) or only has one thread (1)
+    //    specified threading = 1
+    static void batch_dispatch(auto&& sub_batch, Idx n_batch, Idx threading)
+        requires std::invocable<std::remove_cvref_t<decltype(sub_batch)>, Idx /* start */, Idx /* stride */,
+                                Idx /* n_batch */>
+    {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
-        // run sequential if
-        //    specified threading < 0
-        //    use hardware threads, but it is either unknown (0) or only has one thread (1)
-        //    specified threading = 1
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
             // run all in sequential
-            sub_batch(0, 1);
+            sub_batch(0, 1, n_batch);
         } else {
             // create parallel threads
             Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_batch);
@@ -523,17 +545,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
                 // compute each sub batch with stride
-                threads.emplace_back(sub_batch, thread_number, n_thread);
+                threads.emplace_back(sub_batch, thread_number, n_thread, n_batch);
             }
             for (auto& thread : threads) {
                 thread.join();
             }
         }
-
-        handle_batch_exceptions(exceptions);
-        calculation_info_ = main_core::merge_calculation_info(infos);
-
-        return BatchParameter{};
     }
 
     static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
