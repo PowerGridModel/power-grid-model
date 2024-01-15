@@ -480,8 +480,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 scenario_update_restore(model, update_data, is_independent, scenario_sequence, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
-                [&model, &calculation_fn, &result_data](Idx scenario_idx) {
+                [&model, &calculation_fn, &result_data, &infos](Idx scenario_idx) {
                     calculation_fn(model, result_data, scenario_idx);
+                    infos[scenario_idx].merge(model.calculation_info_);
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
                 [&model, &copy_model](Idx scenario_idx) { model = copy_model(scenario_idx); });
@@ -535,10 +536,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                  std::same_as<std::invoke_result_t<decltype(handle_exception), Args const&...>, void> &&
                  std::same_as<std::invoke_result_t<decltype(recover_from_bad), Args const&...>, void>
     {
-        return [setup_ = std::forward<decltype(setup)>(setup), run_ = std::forward<decltype(run)>(run),
-                winddown_ = std::forward<decltype(winddown)>(winddown),
-                handle_exception_ = std::forward<decltype(handle_exception)>(handle_exception),
-                recover_from_bad_ = std::forward<decltype(recover_from_bad)>(recover_from_bad)](Args const&... args) {
+        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
+                handle_exception_ = std::move(handle_exception),
+                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
             try {
                 setup_(args...);
                 run_(args...);
