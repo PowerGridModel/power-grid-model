@@ -391,37 +391,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
-    template <typename... Args>
-    static auto call_with(auto&& run, auto&& setup, auto&& winddown, auto&& handle_exception, auto&& recover_from_bad)
-        requires std::invocable<std::remove_cvref_t<decltype(run)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(setup)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(winddown)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(handle_exception)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(recover_from_bad)>, Args const&...> &&
-                 std::same_as<std::invoke_result_t<decltype(run), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(setup), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(winddown), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(handle_exception), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(recover_from_bad), Args const&...>, void>
-    {
-        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
-                handle_exception_ = std::move(handle_exception),
-                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
-            try {
-                setup_(args...);
-                run_(args...);
-                winddown_(args...);
-            } catch (...) {
-                handle_exception_(args...);
-                try {
-                    winddown_(args...);
-                } catch (...) {
-                    recover_from_bad_(args...);
-                }
-            }
-        };
-    }
-
     /*
     run the calculation function in batch on the provided update data.
 
@@ -551,6 +520,37 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 thread.join();
             }
         }
+    }
+
+    template <typename... Args>
+    static auto call_with(auto&& run, auto&& setup, auto&& winddown, auto&& handle_exception, auto&& recover_from_bad)
+        requires std::invocable<std::remove_cvref_t<decltype(run)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(setup)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(winddown)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(handle_exception)>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<decltype(recover_from_bad)>, Args const&...> &&
+                 std::same_as<std::invoke_result_t<decltype(run), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(setup), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(winddown), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(handle_exception), Args const&...>, void> &&
+                 std::same_as<std::invoke_result_t<decltype(recover_from_bad), Args const&...>, void>
+    {
+        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
+                handle_exception_ = std::move(handle_exception),
+                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
+            try {
+                setup_(args...);
+                run_(args...);
+                winddown_(args...);
+            } catch (...) {
+                handle_exception_(args...);
+                try {
+                    winddown_(args...);
+                } catch (...) {
+                    recover_from_bad_(args...);
+                }
+            }
+        };
     }
 
     static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
