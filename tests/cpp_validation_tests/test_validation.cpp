@@ -262,7 +262,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     } else {
                         std::stringstream case_sstr;
-                        case_sstr << "scenario: #" << scenario << ", Component: " << type_name << " #" << obj
+                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << type_name << " #" << obj
                                   << ", attribute: " << attr.name
                                   << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
                                   << get_as_string(reference_result_ptr, attr, obj);
@@ -552,6 +552,8 @@ void validate_batch_case(CaseParam const& param) {
 
         // run in loops
         for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
+            CAPTURE(scenario);
+
             MainModel model_copy{model};
 
             // update and run
@@ -567,6 +569,8 @@ void validate_batch_case(CaseParam const& param) {
         // run in one-go, with different threading possibility
         auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, n_scenario);
         for (Idx const threading : {-1, 0, 1, 2}) {
+            CAPTURE(threading);
+
             func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
                  validation_case.update_batch.const_dataset, threading);
 

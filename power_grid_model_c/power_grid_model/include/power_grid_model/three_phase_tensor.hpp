@@ -52,6 +52,11 @@ template <scalar_value T> class Vector : public Eigen3Vector<T> {
     explicit Vector(std::piecewise_construct_t /* tag */, T const& x) { (*this) << x, x, x; }
     // constructor of three values
     Vector(T const& x1, T const& x2, T const& x3) { (*this) << x1, x2, x3; }
+    // for complex, it is possible to construct from real part and imaginary part
+    template <std::floating_point U>
+        requires std::same_as<T, std::complex<U>>
+    Vector(Vector<U> real_part, Vector<U> imag_part)
+        : Vector{{real_part(0), imag_part(0)}, {real_part(1), imag_part(1)}, {real_part(2), imag_part(2)}} {}
 };
 
 template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
@@ -295,7 +300,16 @@ inline bool is_nan(Enum x) {
 
 // is normal
 inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
-inline auto is_normal(RealValue<false> const& value) {
+template <std::floating_point T> inline auto is_normal(std::complex<T> const& value) {
+    if (value.real() == T{0}) {
+        return is_normal(value.imag());
+    }
+    if (value.imag() == T{0}) {
+        return is_normal(value.real());
+    }
+    return is_normal(value.real()) && is_normal(value.imag());
+}
+template <class Derived> inline auto is_normal(Eigen::ArrayBase<Derived> const& value) {
     return is_normal(value(0)) && is_normal(value(1)) && is_normal(value(2));
 }
 

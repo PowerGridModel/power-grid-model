@@ -347,20 +347,45 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
 
     SUBCASE("Partial initialization and full update") {
         InputType input{};
-
-        input.p_specified = r_nan;
-        input.q_specified = RealValueType{1.0};
-
         UpdateType update{};
-        update.p_specified = RealValueType{1.0};
-        update.q_specified = r_nan;
+
+        input.status = 1;
+
+        SUBCASE("p_specified not provided") {
+            input.p_specified = r_nan;
+            input.q_specified = RealValueType{1.0};
+
+            update.p_specified = RealValueType{1.0};
+            update.q_specified = r_nan;
+        }
+
+        SUBCASE("q_specified not provided") {
+            input.p_specified = RealValueType{1.0};
+            input.q_specified = r_nan;
+
+            update.p_specified = r_nan;
+            update.q_specified = RealValueType{1.0};
+        }
+
+        SUBCASE("both not provided") {
+            input.p_specified = r_nan;
+            input.q_specified = r_nan;
+
+            update.p_specified = RealValueType{1.0};
+            update.q_specified = RealValueType{1.0};
+        }
 
         LoadGeneratorType load_gen{input, 1.0};
+
+        auto const result_incomplete = load_gen.template calc_param<true>(true);
+        CHECK(std::isnan(result_incomplete.real()));
+        CHECK(std::isnan(result_incomplete.imag()));
+
         load_gen.update(update);
 
-        auto const result = load_gen.template calc_param<true>(true);
-        CHECK_FALSE(std::isnan(result.real()));
-        CHECK_FALSE(std::isnan(result.imag()));
+        auto const result_complete = load_gen.template calc_param<true>(true);
+        CHECK_FALSE(std::isnan(result_complete.real()));
+        CHECK_FALSE(std::isnan(result_complete.imag()));
     }
 
     SUBCASE("Update inverse") {
