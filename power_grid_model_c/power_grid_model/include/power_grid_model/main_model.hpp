@@ -411,21 +411,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // execute one power flow in the current instance, no batch calculation is needed
         // NOTE: if the map is not empty but the datasets inside are empty
         //     that will be considered as a zero batch_size
-        bool const all_empty = update_data.empty();
-        if (all_empty) {
+        if (update_data.empty()) {
             calculation_fn(*this, result_data, 0);
             return BatchParameter{};
         }
 
-        // get number of batches (can't be empty, because then all_empty would have been true)
-        Idx const n_batch = update_data.cbegin()->second.batch_size();
+        // get batch size (can't be empty; see previous check)
+        Idx const n_scenarios = update_data.cbegin()->second.batch_size();
         // assert if all component types have the same number of batches
         assert(std::all_of(update_data.cbegin(), update_data.cend(),
-                           [n_batch](auto const& x) { return x.second.batch_size() == n_batch; }));
+                           [n_scenarios](auto const& x) { return x.second.batch_size() == n_scenarios; }));
 
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent and but not topology cachable
-        if (n_batch == 0) {
+        if (n_scenarios == 0) {
             return BatchParameter{};
         }
 
@@ -437,13 +436,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // error messages
-        std::vector<std::string> exceptions(n_batch, "");
-        std::vector<CalculationInfo> infos(n_batch);
+        std::vector<std::string> exceptions(n_scenarios, "");
+        std::vector<CalculationInfo> infos(n_scenarios);
 
         // lambda for sub batch calculation
         auto sub_batch = sub_batch_calculation_(calculation_fn, result_data, update_data, exceptions, infos);
 
-        batch_dispatch(sub_batch, n_batch, threading);
+        batch_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
         calculation_info_ = main_core::merge_calculation_info(infos);
@@ -462,9 +461,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool const is_independent = MainModelImpl::is_update_independent(update_data);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
-                is_independent](Idx start, Idx stride, Idx n_batch) {
-            assert(n_batch <= narrow_cast<Idx>(exceptions.size()));
-            assert(n_batch <= narrow_cast<Idx>(infos.size()));
+                is_independent](Idx start, Idx stride, Idx n_scenarios) {
+            assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
+            assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
@@ -487,10 +486,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
                 [&model, &copy_model](Idx scenario_idx) { model = copy_model(scenario_idx); });
 
-            for (Idx batch_number = start; batch_number < n_batch; batch_number += stride) {
-                Timer const t_total_single(infos[batch_number], 0100, "Total single calculation in thread");
+            for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
+                Timer const t_total_single(infos[scenario_idx], 0100, "Total single calculation in thread");
 
-                calculate_scenario(batch_number);
+                calculate_scenario(scenario_idx);
             }
         };
     }
@@ -500,21 +499,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     //    use hardware threads, but it is either unknown (0) or only has one thread (1)
     //    specified threading = 1
     template <typename RunSubBatchFn>
-        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_batch*/>
-    static void batch_dispatch(RunSubBatchFn sub_batch, Idx n_batch, Idx threading) {
+        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
+    static void batch_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
             // run all in sequential
-            sub_batch(0, 1, n_batch);
+            sub_batch(0, 1, n_scenarios);
         } else {
             // create parallel threads
-            Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_batch);
+            Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_scenarios);
             std::vector<std::thread> threads;
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
                 // compute each sub batch with stride
-                threads.emplace_back(sub_batch, thread_number, n_thread, n_batch);
+                threads.emplace_back(sub_batch, thread_number, n_thread, n_scenarios);
             }
             for (auto& thread : threads) {
                 thread.join();
