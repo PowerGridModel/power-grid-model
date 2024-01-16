@@ -1,8 +1,11 @@
 {
-  "calculation_method": "iterative_linear",
+  "calculation_method": ["iterative_linear", "newton_raphson"],
   "rtol": 1e-6,
   "atol": {
     "q.*": 1e-1,
     "default": 1e-6
+  },
+  "experimental_features": {
+    "newton_raphson": "enabled"
   }
 }
