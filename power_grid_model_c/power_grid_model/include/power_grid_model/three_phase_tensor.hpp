@@ -127,8 +127,8 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
-                      static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
+concept rk2_tensor =
+    (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
@@ -154,8 +154,27 @@ template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<De
     return sqrt(abs2(m));
 }
 
+// imag and real value retrieval
+// TODO Change to single value and arraybase
+template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> c) {
+    if constexpr (sym) {
+        return imag(c);
+    } else {
+        return c.imag();
+    }
+}
+
+template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> c) {
+    if constexpr (sym) {
+        return real(c);
+    } else {
+        return c.real();
+    }
+}
+
 // calculate kron product of two vector
 inline double vector_outer_product(double x, double y) { return x * y; }
+inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
 template <column_vector DerivedA, column_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
@@ -198,8 +217,9 @@ template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<Derived
 
 // function to sum rows of tensor
 template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
-// overload for double
+// overload for double and double complex
 inline double sum_row(double d) { return d; }
+inline DoubleComplex sum_row(DoubleComplex d) { return d; }
 
 // function to sum vector
 template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }
