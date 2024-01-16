@@ -1095,11 +1095,10 @@ auto incomplete_input_model(State const& state) -> MainModel {
 
     std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
                                                            {10, 3, 1, nan, nan, 1e12, nan, nan}};
-    std::vector<SymLoadGenInput> incomplete_sym_load_input{{7, 3, 1, LoadGenType::const_y, nan, 0.0}};
-    std::vector<AsymLoadGenInput> incomplete_asym_load_input{
+    std::vector<SymLoadGenInput> const incomplete_sym_load_input{{7, 3, 1, LoadGenType::const_y, nan, 0.0}};
+    std::vector<AsymLoadGenInput> const incomplete_asym_load_input{
         {8, 3, 1, LoadGenType::const_y, RealValue<false>{nan}, RealValue<false>{0.0}}};
 
-    ConstDataset input_data;
     main_model.add_component<Node>(state.node_input);
     main_model.add_component<Line>(state.line_input);
     main_model.add_component<Link>(state.link_input);
@@ -1119,7 +1118,7 @@ TEST_CASE("Test main model - incomplete input") {
     using CalculationMethod::linear_current;
     using CalculationMethod::newton_raphson;
 
-    State state;
+    State const state;
     auto main_model = default_model(state);
     auto test_model = incomplete_input_model(state);
 
@@ -1272,10 +1271,10 @@ TEST_CASE("Test main model - incomplete input") {
     }
 }
 
-TEST_CASE("Incomplete followed by complete") {
+TEST_CASE("Test main model - Incomplete followed by complete") {
     using CalculationMethod::linear;
 
-    State state;
+    State const state;
     auto main_model = default_model(state);
     auto test_model = incomplete_input_model(state);
 
