@@ -13,10 +13,7 @@
 
 #include <memory>
 
-namespace power_grid_model {
-
-// hide implementation in inside namespace
-namespace math_model_impl {
+namespace power_grid_model::math_solver {
 
 template <class Tensor, class RHSVector, class XVector, class = void> struct sparse_lu_entry_trait;
 
@@ -206,7 +203,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
                     return block_perm_array[pivot_row_col];
                 } else {
-                    if (lu_matrix[pivot_idx] == 0.0) {
+                    if (!is_normal(lu_matrix[pivot_idx])) {
                         throw SparseMatrixError{};
                     }
                     return {};
@@ -335,11 +332,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::shared_ptr<IdxVector const> diag_lu_;
 };
 
-} // namespace math_model_impl
-
-template <class Tensor, class RHSVector, class XVector>
-using SparseLUSolver = math_model_impl::SparseLUSolver<Tensor, RHSVector, XVector>;
-
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif

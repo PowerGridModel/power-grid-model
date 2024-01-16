@@ -157,10 +157,10 @@ J.L -= -dQ_cal_m/dV
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 
-namespace power_grid_model {
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace newton_raphson_pf {
 
 // class for phasor in polar coordinate and/or complex power
 template <bool sym> struct PolarPhasor : public Block<double, sym, false, 2> {
@@ -435,10 +435,10 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
 template class NewtonRaphsonPFSolver<true>;
 template class NewtonRaphsonPFSolver<false>;
 
-} // namespace math_model_impl
+} // namespace newton_raphson_pf
 
-template <bool sym> using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
+using newton_raphson_pf::NewtonRaphsonPFSolver;
 
-} // namespace power_grid_model
+} // namespace power_grid_model::math_solver
 
 #endif
