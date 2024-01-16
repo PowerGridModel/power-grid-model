@@ -499,10 +499,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     //    specified threading < 0
     //    use hardware threads, but it is either unknown (0) or only has one thread (1)
     //    specified threading = 1
-    static void batch_dispatch(auto&& sub_batch, Idx n_batch, Idx threading)
-        requires std::invocable<std::remove_cvref_t<decltype(sub_batch)>, Idx /* start */, Idx /* stride */,
+    template <typename RunSubBatchFn>
+        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /* start */, Idx /* stride */,
                                 Idx /* n_batch */>
-    {
+    static void batch_dispatch(RunSubBatchFn sub_batch, Idx n_batch, Idx threading) {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
@@ -523,19 +523,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <typename... Args>
-    static auto call_with(auto run, auto setup, auto winddown, auto handle_exception, auto recover_from_bad)
-        requires std::invocable<std::remove_cvref_t<decltype(run)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(setup)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(winddown)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(handle_exception)>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<decltype(recover_from_bad)>, Args const&...> &&
-                 std::same_as<std::invoke_result_t<decltype(run), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(setup), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(winddown), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(handle_exception), Args const&...>, void> &&
-                 std::same_as<std::invoke_result_t<decltype(recover_from_bad), Args const&...>, void>
-    {
+    template <typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
+              typename RecoverFromBadFn, typename... Args>
+        requires std::invocable<std::remove_cvref_t<RunFn>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<SetupFn>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<WinddownFn>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<HandleExceptionFn>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<RecoverFromBadFn>, Args const&...>
+    static auto call_with(RunFn run, SetupFn setup, WinddownFn winddown, HandleExceptionFn handle_exception,
+                          RecoverFromBadFn recover_from_bad) {
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
                 handle_exception_ = std::move(handle_exception),
                 recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
