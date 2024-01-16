@@ -22,7 +22,7 @@ from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model.enum import CalculationMethod, CalculationType, ShortCircuitVoltageScaling
+from power_grid_model.enum import CalculationMethod, CalculationType, ShortCircuitVoltageScaling, _ExperimentalFeatures
 
 
 class PowerGridModel:
@@ -194,6 +194,7 @@ class PowerGridModel:
 
         as_enum_value("calculation_method", CalculationMethod)
         as_enum_value("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
+        as_enum_value("experimental_features", _ExperimentalFeatures)
 
         opt = Options()
         for key, value in kwargs.items():
@@ -262,6 +263,101 @@ class PowerGridModel:
 
         return output_data
 
+    def _calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
+        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        threading: int = -1,
+        output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
+        experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
+    ):
+        calculation_type = CalculationType.power_flow
+        options = self._options(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            error_tolerance=error_tolerance,
+            max_iterations=max_iterations,
+            calculation_method=calculation_method,
+            threading=threading,
+            experimental_features=experimental_features,
+        )
+        return self._calculate_impl(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            update_data=update_data,
+            output_component_types=output_component_types,
+            options=options,
+            continue_on_batch_error=continue_on_batch_error,
+        )
+
+    def _calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iterative_linear,
+        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        threading: int = -1,
+        output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
+        experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
+    ) -> Dict[str, np.ndarray]:
+        calculation_type = CalculationType.state_estimation
+        options = self._options(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            error_tolerance=error_tolerance,
+            max_iterations=max_iterations,
+            calculation_method=calculation_method,
+            threading=threading,
+            experimental_features=experimental_features,
+        )
+        return self._calculate_impl(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            update_data=update_data,
+            output_component_types=output_component_types,
+            options=options,
+            continue_on_batch_error=continue_on_batch_error,
+        )
+
+    def _calculate_short_circuit(
+        self,
+        *,
+        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iec60909,
+        update_data: Optional[Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        threading: int = -1,
+        output_component_types: Optional[Union[Set[str], List[str]]] = None,
+        continue_on_batch_error: bool = False,
+        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
+        experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
+    ) -> Dict[str, np.ndarray]:
+        calculation_type = CalculationType.short_circuit
+        symmetric = False
+
+        options = self._options(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            calculation_method=calculation_method,
+            threading=threading,
+            short_circuit_voltage_scaling=short_circuit_voltage_scaling,
+            experimental_features=experimental_features,
+        )
+        return self._calculate_impl(
+            calculation_type=calculation_type,
+            symmetric=symmetric,
+            update_data=update_data,
+            output_component_types=output_component_types,
+            options=options,
+            continue_on_batch_error=continue_on_batch_error,
+        )
+
     def calculate_power_flow(
         self,
         *,
@@ -273,6 +369,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        **kwargs,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -334,22 +431,16 @@ class PowerGridModel:
         Raises:
             Exception: In case an error in the core occurs, an exception will be thrown.
         """
-        calculation_type = CalculationType.power_flow
-        options = self._options(
-            calculation_type=calculation_type,
+        return self._calculate_power_flow(
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            threading=threading,
-        )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
             update_data=update_data,
+            threading=threading,
             output_component_types=output_component_types,
-            options=options,
             continue_on_batch_error=continue_on_batch_error,
+            **kwargs,
         )
 
     def calculate_state_estimation(
@@ -363,6 +454,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        **kwargs,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
@@ -421,22 +513,16 @@ class PowerGridModel:
         Raises:
             Exception: In case an error in the core occurs, an exception will be thrown.
         """
-        calculation_type = CalculationType.state_estimation
-        options = self._options(
-            calculation_type=calculation_type,
+        return self._calculate_state_estimation(
             symmetric=symmetric,
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            threading=threading,
-        )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
             update_data=update_data,
+            threading=threading,
             output_component_types=output_component_types,
-            options=options,
             continue_on_batch_error=continue_on_batch_error,
+            **kwargs,
         )
 
     def calculate_short_circuit(
@@ -448,6 +534,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
+        **kwargs,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
@@ -501,23 +588,14 @@ class PowerGridModel:
         Raises:
             Exception: In case an error in the core occurs, an exception will be thrown.
         """
-        calculation_type = CalculationType.short_circuit
-        symmetric = False
-
-        options = self._options(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
+        return self._calculate_short_circuit(
             calculation_method=calculation_method,
-            threading=threading,
-            short_circuit_voltage_scaling=short_circuit_voltage_scaling,
-        )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
             update_data=update_data,
+            threading=threading,
             output_component_types=output_component_types,
-            options=options,
             continue_on_batch_error=continue_on_batch_error,
+            short_circuit_voltage_scaling=short_circuit_voltage_scaling,
+            **kwargs,
         )
 
     def __del__(self):

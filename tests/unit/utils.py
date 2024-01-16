@@ -12,14 +12,9 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pytest
 
+from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
-from power_grid_model.utils import (
-    export_json_data,
-    import_json_data,
-    json_deserialize,
-    json_deserialize_from_file,
-    json_serialize_to_file,
-)
+from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"

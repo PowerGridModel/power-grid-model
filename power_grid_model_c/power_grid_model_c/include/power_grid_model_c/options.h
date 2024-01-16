@@ -55,7 +55,7 @@ PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_
  *
  * @param handle
  * @param opt The pointer to the option instance.
- * @param method Ssee #PGM_CalculationMethod .
+ * @param method See #PGM_CalculationMethod .
  */
 PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method);
 
@@ -109,6 +109,20 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  */
 PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Options* opt,
                                                    PGM_Idx short_circuit_voltage_scaling);
+
+/**
+ * @brief Enable/disable experimental features.
+ *
+ * [Danger mode]
+ *
+ * The behavior of experimental features may not be final and no stability guarantees are made to the users.
+ * Features marked as 'experimental' as well as the behavior of experimental functionality itself may change over time.
+ *
+ * @param handle
+ * @param opt pointer to option instance
+ * @param experimental_features See #PGM_ExperimentalFeatures
+ */
+PGM_API void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features);
 
 #ifdef __cplusplus
 }

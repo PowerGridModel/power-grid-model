@@ -171,3 +171,10 @@ class ShortCircuitVoltageScaling(IntEnum):
 
     minimum = 0
     maximum = 1
+
+
+class _ExperimentalFeatures(IntEnum):
+    """Experimental features"""
+
+    disabled = 0
+    enabled = 1

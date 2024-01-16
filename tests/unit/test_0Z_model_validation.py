@@ -26,6 +26,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
             "threading",
             "output_component_types",
             "continue_on_batch_error",
+            "experimental_features",
         ],
     ),
     "state_estimation": (
@@ -39,6 +40,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
             "threading",
             "output_component_types",
             "continue_on_batch_error",
+            "experimental_features",
         ],
     ),
     "short_circuit": (
@@ -50,6 +52,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
             "output_component_types",
             "continue_on_batch_error",
             "short_circuit_voltage_scaling",
+            "experimental_features",
         ],
     ),
 }
@@ -79,8 +82,15 @@ def test_single_validation(
 
     # Normal calculation
     calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
-    kwargs = {"symmetric": sym, "calculation_method": calculation_method}
-    result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
+    base_kwargs = {"symmetric": sym, "calculation_method": calculation_method}
+    for key, value in params.items():
+        if key not in base_kwargs:
+            if not isinstance(value, dict):
+                base_kwargs[key] = value
+            elif calculation_method in value:
+                base_kwargs[key] = value[calculation_method]
+
+    result = calculation_function(model, **supported_kwargs(kwargs=base_kwargs, supported=calculation_args))
 
     # Compare the results
     reference_result = case_data["output"]
@@ -99,10 +109,10 @@ def test_single_validation(
         save_json_data(f"{case_id}.json", result)
 
     # test calculate with only node and source result
-    kwargs = {"symmetric": sym, "calculation_method": calculation_method, "output_component_types": ["node", "source"]}
+    kwargs = dict(base_kwargs, **{"output_component_types": ["node", "source"]})
     result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
     assert set(result.keys()) == {"node", "source"}
-    kwargs = {"symmetric": sym, "calculation_method": calculation_method, "output_component_types": {"node", "source"}}
+    kwargs = dict(base_kwargs, **{"output_component_types": {"node", "source"}})
     result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
     assert set(result.keys()) == {"node", "source"}
 
