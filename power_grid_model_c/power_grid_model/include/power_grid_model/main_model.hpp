@@ -500,8 +500,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     //    use hardware threads, but it is either unknown (0) or only has one thread (1)
     //    specified threading = 1
     template <typename RunSubBatchFn>
-        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /* start */, Idx /* stride */,
-                                Idx /* n_batch */>
+        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_batch*/>
     static void batch_dispatch(RunSubBatchFn sub_batch, Idx n_batch, Idx threading) {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
