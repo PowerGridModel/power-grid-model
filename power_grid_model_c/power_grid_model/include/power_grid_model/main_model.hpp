@@ -522,8 +522,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
-              typename RecoverFromBadFn, typename... Args>
+    template <typename... Args, typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
+              typename RecoverFromBadFn>
         requires std::invocable<std::remove_cvref_t<RunFn>, Args const&...> &&
                  std::invocable<std::remove_cvref_t<SetupFn>, Args const&...> &&
                  std::invocable<std::remove_cvref_t<WinddownFn>, Args const&...> &&
