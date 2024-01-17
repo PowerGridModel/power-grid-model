@@ -28,6 +28,8 @@ extern "C" {
  *   - err_tol: 1e-8
  *   - max_iter: 20
  *   - threading: -1
+ *   - short_circuit_voltage_scaling: PGM_short_circuit_voltage_scaling_maximum
+ *   - experimental_features: PGM_experimental_features_disabled
  *
  * @param handle
  * @return The pointer to the option instance. Should be freed by PGM_destroy_options().
