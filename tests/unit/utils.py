@@ -5,6 +5,7 @@
 import json
 import os
 import re
+import sys
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -14,6 +15,7 @@ import pytest
 
 from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
+from power_grid_model.errors import PowerGridBatchError, PowerGridError, PowerGridSerializationError
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
 BASE_PATH = Path(__file__).parent.parent
@@ -103,7 +105,11 @@ def add_case(
         ]
         kwargs = {}
         if "fail" in calculation_method_params:
-            kwargs["marks"] = pytest.mark.xfail(reason=calculation_method_params["fail"], raises=AssertionError)
+            xfail = calculation_method_params["fail"]
+            a = sys.modules[__name__]
+            kwargs["marks"] = pytest.mark.xfail(
+                reason=xfail["reason"], raises=getattr(sys.modules[__name__], xfail.get("raises"), AssertionError)
+            )
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
