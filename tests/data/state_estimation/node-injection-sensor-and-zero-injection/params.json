@@ -2,7 +2,13 @@
   "calculation_method": ["iterative_linear", "newton_raphson"],
   "rtol": 1e-8,
   "atol": 1e-8,
-  "experimental_features": {
-    "newton_raphson": "enabled"
+  "extra_params": {
+    "newton_raphson": {
+      "experimental_features": "enabled",
+      "fail": {
+        "reason": "Experimental feature under development",
+        "raises": "PowerGridError"
+      }
+    }
   }
 }

@@ -5,7 +5,13 @@
     "default": 1e-8,
     ".+_residual": 5e-4
   },
-  "experimental_features": {
-    "newton_raphson": "enabled"
+  "extra_params": {
+    "newton_raphson": {
+      "experimental_features": "enabled",
+      "fail": {
+        "reason": "Experimental feature under development",
+        "raises": "PowerGridError"
+      }
+    }
   }
 }
