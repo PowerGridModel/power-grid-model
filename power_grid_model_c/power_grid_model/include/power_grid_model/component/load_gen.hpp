@@ -83,7 +83,7 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
         update_real_value<sym>(new_p_specified, ps, scalar);
         update_real_value<sym>(new_q_specified, qs, scalar);
 
-        s_specified_ = ps + 1.0i * qs;
+        s_specified_ = ComplexValue<sym>{ps, qs};
     }
 
     // update for load_gen
@@ -108,14 +108,28 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     }
 
   private:
-    ComplexValue<sym> s_specified_{}; // specified power injection
+    ComplexValue<sym> s_specified_{std::complex<double>{nan, nan}}; // specified power injection
 
     // direction of load_gen
     static constexpr double direction_ = is_gen ? 1.0 : -1.0;
 
     // override calc_param
-    ComplexValue<true> sym_calc_param() const override { return mean_val(s_specified_); }
-    ComplexValue<false> asym_calc_param() const override { return piecewise_complex_value(s_specified_); }
+    ComplexValue<true> sym_calc_param() const override {
+        if constexpr (sym) {
+            if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
+                return {nan, nan};
+            }
+        }
+        return mean_val(s_specified_);
+    }
+    ComplexValue<false> asym_calc_param() const override {
+        if constexpr (sym) {
+            if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
+                return ComplexValue<false>{std::complex{nan, nan}};
+            }
+        }
+        return piecewise_complex_value(s_specified_);
+    }
     template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         appliance_math_output.s = scale_power<sym_calc>(u);

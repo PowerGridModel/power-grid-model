@@ -52,6 +52,11 @@ template <scalar_value T> class Vector : public Eigen3Vector<T> {
     explicit Vector(std::piecewise_construct_t /* tag */, T const& x) { (*this) << x, x, x; }
     // constructor of three values
     Vector(T const& x1, T const& x2, T const& x3) { (*this) << x1, x2, x3; }
+    // for complex, it is possible to construct from real part and imaginary part
+    template <std::floating_point U>
+        requires std::same_as<T, std::complex<U>>
+    Vector(Vector<U> real_part, Vector<U> imag_part)
+        : Vector{{real_part(0), imag_part(0)}, {real_part(1), imag_part(1)}, {real_part(2), imag_part(2)}} {}
 };
 
 template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
@@ -122,8 +127,8 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
-                      static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
+concept rk2_tensor =
+    (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
@@ -149,8 +154,27 @@ template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<De
     return sqrt(abs2(m));
 }
 
+// imag and real value retrieval
+// TODO Change to single value and arraybase
+template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> c) {
+    if constexpr (sym) {
+        return imag(c);
+    } else {
+        return c.imag();
+    }
+}
+
+template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> c) {
+    if constexpr (sym) {
+        return real(c);
+    } else {
+        return c.real();
+    }
+}
+
 // calculate kron product of two vector
 inline double vector_outer_product(double x, double y) { return x * y; }
+inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
 template <column_vector DerivedA, column_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
@@ -193,8 +217,9 @@ template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<Derived
 
 // function to sum rows of tensor
 template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
-// overload for double
+// overload for double and double complex
 inline double sum_row(double d) { return d; }
+inline DoubleComplex sum_row(DoubleComplex d) { return d; }
 
 // function to sum vector
 template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }
@@ -275,7 +300,16 @@ inline bool is_nan(Enum x) {
 
 // is normal
 inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
-inline auto is_normal(RealValue<false> const& value) {
+template <std::floating_point T> inline auto is_normal(std::complex<T> const& value) {
+    if (value.real() == T{0}) {
+        return is_normal(value.imag());
+    }
+    if (value.imag() == T{0}) {
+        return is_normal(value.real());
+    }
+    return is_normal(value.real()) && is_normal(value.imag());
+}
+template <class Derived> inline auto is_normal(Eigen::ArrayBase<Derived> const& value) {
     return is_normal(value(0)) && is_normal(value(1)) && is_normal(value(2));
 }
 
