@@ -5,6 +5,7 @@
 import json
 import os
 import re
+import sys
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -12,14 +13,10 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pytest
 
+from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
-from power_grid_model.utils import (
-    export_json_data,
-    import_json_data,
-    json_deserialize,
-    json_deserialize_from_file,
-    json_serialize_to_file,
-)
+from power_grid_model.errors import PowerGridBatchError, PowerGridError, PowerGridSerializationError
+from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
@@ -27,6 +24,30 @@ OUPUT_PATH = BASE_PATH / "output"
 EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
+
+KNOWN_EXCEPTIONS = {
+    ex.__name__: ex
+    for ex in (PowerGridBatchError, PowerGridError, PowerGridSerializationError, AssertionError, OSError)
+}
+
+
+class PowerGridModelWithExt(PowerGridModel):
+    """Wrapper class around the power grid model to expose extended features."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def calculate_power_flow_with_ext(self, *args, **kwargs):
+        """calculate_power_flow with extended features."""
+        return self._calculate_power_flow(*args, **kwargs)
+
+    def calculate_state_estimation_with_ext(self, *args, **kwargs):
+        """calculate_state_estimation with extended features."""
+        return self._calculate_state_estimation(*args, **kwargs)
+
+    def calculate_short_circuit_with_ext(self, *args, **kwargs):
+        """calculate_short_circuit with extended features."""
+        return self._calculate_short_circuit(*args, **kwargs)
 
 
 def get_output_type(calculation_type: str, sym: bool) -> str:
@@ -75,19 +96,24 @@ def add_case(
         case_id += "-" + calculation_method
         if is_batch:
             case_id += "-batch"
+
+        calculation_method_params = dict(params, **params.get("extra_params", {}).get(calculation_method, {}))
         pytest_param = [
             case_id,
             case_dir,
             sym,
             calculation_type,
             calculation_method,
-            params["rtol"],
-            params["atol"],
-            params,
+            calculation_method_params["rtol"],
+            calculation_method_params["atol"],
+            calculation_method_params,
         ]
         kwargs = {}
-        if "fail" in params:
-            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
+        if "fail" in calculation_method_params:
+            xfail = calculation_method_params["fail"]
+            kwargs["marks"] = pytest.mark.xfail(
+                reason=xfail["reason"], raises=KNOWN_EXCEPTIONS[xfail.get("raises", "AssertionError")]
+            )
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
