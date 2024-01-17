@@ -58,14 +58,15 @@ template <bool sym> class MeasuredValues {
     }
 
     // checker of measured data, return true if measurement is available
-    bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
-    bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
-    bool has_branch_from(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
-    bool has_branch_to(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
-    bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
-    bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
-    bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
-    bool has_angle() const { return n_angle_ > 0; }
+    constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
+    constexpr bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
+    constexpr bool has_branch_from(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
+    constexpr bool has_branch_to(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
+    constexpr bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
+    constexpr bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
+    constexpr bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
+    constexpr bool has_angle() const { return n_angle_ > 0; }
+    constexpr bool has_angle_measurement(Idx bus) const { return is_nan(imag(voltage_at_bus(bus))); }
 
     // getter of measurement and variance
     // if the obj is not measured, it is undefined behaviour to call this function
@@ -85,18 +86,19 @@ template <bool sym> class MeasuredValues {
                 u[bus] = current_u[bus];
             }
             // no angle measurement
-            else if (is_nan(imag(voltage_main_value_[idx_voltage_[bus]].value))) {
-                u[bus] = real(voltage_main_value_[idx_voltage_[bus]].value) * current_u[bus] /
-                         cabs(current_u[bus]); // U / |U| to get angle shift
+            else if (has_angle_measurement(bus)) {
+                u[bus] =
+                    real(voltage_at_bus(bus)) * current_u[bus] / cabs(current_u[bus]); // U / |U| to get angle shift
             }
             // full measurement
             else {
-                u[bus] = voltage_main_value_[idx_voltage_[bus]].value;
+                u[bus] = voltage_at_bus(bus);
             }
         }
         return u;
     }
 
+    constexpr auto const& voltage_at_bus(Idx bus) const { return voltage_main_value_[idx_voltage_[bus]].value; }
     // power measurement
     constexpr auto const& bus_injection(Idx bus) const {
         return power_main_value_[bus_injection_[bus].idx_bus_injection];
@@ -111,7 +113,6 @@ template <bool sym> class MeasuredValues {
 
     // getter mean angle shift
     RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
-    constexpr bool has_angle_measurement() const { return n_angle_ > 0; }
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
