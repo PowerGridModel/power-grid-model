@@ -143,12 +143,12 @@ template <bool sym> class NewtonRaphsonSESolver {
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, del_x_rhs_, del_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
-            max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
+            max_dev = iterate_unknown(output.u, measured_values.has_angle());
         };
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");
-        // calculate_result(y_bus, measured_values, output);
+        calculate_result(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -190,7 +190,6 @@ template <bool sym> class NewtonRaphsonSESolver {
         for (Idx row = 0; row != n_bus_; ++row) {
             auto const& ui = measured_estimated_u[row];
             auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
-            // TODO Find a better way. vector outer product doesnt work with complex
             auto const ui_ui_conj = vector_outer_product(ui, conj(ui));
 
             NRSERhs<sym>& rhs_block = del_x_rhs_[row];
@@ -203,8 +202,6 @@ template <bool sym> class NewtonRaphsonSESolver {
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
                 auto const& uj = measured_estimated_u[col];
-
-                // TODO Find a better way. vector outer product doesnt work with complex
                 auto const ui_uj_conj = vector_outer_product(ui, conj(uj));
 
                 RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
@@ -378,7 +375,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         // for 3x3 tensor, fill diagonal
         // TODO Change angle weight per angle variance and store angle as non complex
         // TODO if angle measurement not present, set w_angle to 0.
-        auto const w_angle = RealTensor<sym>{1.0};
+        auto const w_angle = RealTensor<sym>{measured_value.has_angle_measurement(row) ? 1.0 : 0.0};
         auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
         auto const abs_measured_v = cabs(measured_estimated_u[row]);
         auto const del_theta = arg(measured_estimated_u[row]) - x_[row].theta();
@@ -446,12 +443,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         return conj(yij) * ui_conj_uj;
     }
 
-    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle_measurement) {
+    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle) {
         double max_dev = 0.0;
         // phase shift anti offset of slack bus, phase a
         // if no angle measurement is present
         double const angle_offset = [&]() -> double {
-            if (has_angle_measurement) {
+            if (has_angle) {
                 return 1.0;
             }
             if constexpr (sym) {

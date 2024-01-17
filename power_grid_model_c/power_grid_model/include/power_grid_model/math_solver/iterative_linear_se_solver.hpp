@@ -117,7 +117,7 @@ template <bool sym> class IterativeLinearSESolver {
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
-            max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
+            max_dev = iterate_unknown(output.u, measured_values.has_angle());
         };
 
         // calculate math result
@@ -315,12 +315,12 @@ template <bool sym> class IterativeLinearSESolver {
         }
     }
 
-    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle_measurement) {
+    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle) {
         double max_dev = 0.0;
         // phase shift anti offset of slack bus, phase a
         // if no angle measurement is present
         DoubleComplex const angle_offset = [&]() -> DoubleComplex {
-            if (has_angle_measurement) {
+            if (has_angle) {
                 return 1.0;
             }
             if constexpr (sym) {
