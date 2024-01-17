@@ -24,6 +24,25 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 )
 
 
+class PowerGridModelWithExt(PowerGridModel):
+    """Wrapper class around the power grid model to expose extended features."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def calculate_power_flow_with_ext(self, *args, **kwargs):
+        """calculate_power_flow with extended features."""
+        return super()._calculate_power_flow(*args, **kwargs)
+
+    def calculate_state_estimation_with_ext(self, *args, **kwargs):
+        """calculate_state_estimation with extended features."""
+        return super()._calculate_state_estimation(*args, **kwargs)
+
+    def calculate_short_circuit_with_ext(self, *args, **kwargs):
+        """calculate_short_circuit with extended features."""
+        return super()._calculate_short_circuit(*args, **kwargs)
+
+
 def get_output_type(calculation_type: str, sym: bool) -> str:
     if calculation_type == "short_circuit":
         if sym:
@@ -70,15 +89,17 @@ def add_case(
         case_id += "-" + calculation_method
         if is_batch:
             case_id += "-batch"
+
+        calculation_method_params = dict(params, **params.get("extra_params", {}).get(calculation_method, {}))
         pytest_param = [
             case_id,
             case_dir,
             sym,
             calculation_type,
             calculation_method,
-            params["rtol"],
-            params["atol"],
-            params,
+            calculation_method_params["rtol"],
+            calculation_method_params["atol"],
+            calculation_method_params,
         ]
         kwargs = {}
         if "fail" in params:

@@ -9,14 +9,13 @@ from typing import Callable, Dict, List, Tuple
 import numpy as np
 import pytest
 
-from power_grid_model import PowerGridModel
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
 
-from .utils import EXPORT_OUTPUT, compare_result, import_case_data, pytest_cases, save_json_data
+from .utils import EXPORT_OUTPUT, PowerGridModelWithExt, compare_result, import_case_data, pytest_cases, save_json_data
 
 calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
     "power_flow": (
-        PowerGridModel.calculate_power_flow,
+        PowerGridModelWithExt.calculate_power_flow_with_ext,
         [
             "symmetric",
             "error_tolerance",
@@ -30,7 +29,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
         ],
     ),
     "state_estimation": (
-        PowerGridModel.calculate_state_estimation,
+        PowerGridModelWithExt.calculate_state_estimation_with_ext,
         [
             "symmetric",
             "error_tolerance",
@@ -44,7 +43,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
         ],
     ),
     "short_circuit": (
-        PowerGridModel.calculate_short_circuit,
+        PowerGridModelWithExt.calculate_short_circuit_with_ext,
         [
             "calculation_method",
             "update_data",
@@ -78,7 +77,7 @@ def test_single_validation(
 ):
     # Initialization
     case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
-    model = PowerGridModel(case_data["input"], system_frequency=50.0)
+    model = PowerGridModelWithExt(case_data["input"], system_frequency=50.0)
 
     # Normal calculation
     calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
@@ -133,7 +132,7 @@ def test_batch_validation(
 ):
     # Initialization
     case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
-    model = PowerGridModel(case_data["input"], system_frequency=50.0)
+    model = PowerGridModelWithExt(case_data["input"], system_frequency=50.0)
     update_batch = case_data["update_batch"]
     update_list = convert_batch_dataset_to_batch_list(update_batch)
     reference_output_batch = case_data["output_batch"]

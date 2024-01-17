@@ -403,6 +403,14 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     if (j.contains("fail")) {
         j.at("fail").get_to(param.fail);
     }
+    if (j.contains("extra_params")) {
+        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
+            if (json const& method_extra_params = extra_params.at(calculation_method);
+                method_extra_params.contains("fail")) {
+                method_extra_params.at("fail").get_to(param.fail);
+            }
+        }
+    }
     if (calculation_type == "short_circuit") {
         j.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
