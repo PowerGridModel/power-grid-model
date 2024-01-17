@@ -198,12 +198,26 @@ enum PGM_SerializationFormat {
 };
 
 /**
- * @brief Enumeration of short circuit voltage scaling
+ * @brief Enumeration of short circuit voltage scaling.
  *
  */
 enum PGM_ShortCircuitVoltageScaling {
     PGM_short_circuit_voltage_scaling_minimum = 0, /**< voltage scaling for minimum short circuit currents */
     PGM_short_circuit_voltage_scaling_maximum = 1, /**< voltage scaling for maximum short circuit currents */
+};
+
+/**
+ * @brief Enumeration of experimental features.
+ *
+ * [Danger mode]
+ *
+ * The behavior of experimental features may not be final and no stability guarantees are made to the users.
+ * Which features (if any) are enabled in experimental mode may change over time.
+ *
+ */
+enum PGM_ExperimentalFeatures {
+    PGM_experimental_features_disabled = 0, /**< disable experimental features */
+    PGM_experimental_features_enabled = 1,  /**< enable experimental features */
 };
 
 #ifdef __cplusplus

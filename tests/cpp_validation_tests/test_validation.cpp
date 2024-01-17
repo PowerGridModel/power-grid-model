@@ -400,11 +400,18 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     } else {
         j_atol.get_to(param.atol);
     }
-    if (j.contains("fail")) {
-        j.at("fail").get_to(param.fail);
+
+    json calculation_method_params;
+    calculation_method_params.update(j, true);
+    if (j.contains("extra_params")) {
+        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
+            calculation_method_params.update(extra_params.at(calculation_method), true);
+        }
     }
+
+    param.fail = calculation_method_params.contains("fail");
     if (calculation_type == "short_circuit") {
-        j.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
+        calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
