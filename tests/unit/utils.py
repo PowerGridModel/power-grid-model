@@ -32,15 +32,15 @@ class PowerGridModelWithExt(PowerGridModel):
 
     def calculate_power_flow_with_ext(self, *args, **kwargs):
         """calculate_power_flow with extended features."""
-        return super()._calculate_power_flow(*args, **kwargs)
+        return self._calculate_power_flow(*args, **kwargs)
 
     def calculate_state_estimation_with_ext(self, *args, **kwargs):
         """calculate_state_estimation with extended features."""
-        return super()._calculate_state_estimation(*args, **kwargs)
+        return self._calculate_state_estimation(*args, **kwargs)
 
     def calculate_short_circuit_with_ext(self, *args, **kwargs):
         """calculate_short_circuit with extended features."""
-        return super()._calculate_short_circuit(*args, **kwargs)
+        return self._calculate_short_circuit(*args, **kwargs)
 
 
 def get_output_type(calculation_type: str, sym: bool) -> str:
@@ -102,8 +102,8 @@ def add_case(
             calculation_method_params,
         ]
         kwargs = {}
-        if "fail" in params:
-            kwargs["marks"] = pytest.mark.xfail(reason=params["fail"], raises=AssertionError)
+        if "fail" in calculation_method_params:
+            kwargs["marks"] = pytest.mark.xfail(reason=calculation_method_params["fail"], raises=AssertionError)
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 

@@ -369,7 +369,6 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
-        **kwargs,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -440,7 +439,6 @@ class PowerGridModel:
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
-            **kwargs,
         )
 
     def calculate_state_estimation(
@@ -454,7 +452,6 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
-        **kwargs,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
@@ -522,7 +519,6 @@ class PowerGridModel:
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
-            **kwargs,
         )
 
     def calculate_short_circuit(
@@ -534,7 +530,6 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
-        **kwargs,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
@@ -595,7 +590,6 @@ class PowerGridModel:
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
             short_circuit_voltage_scaling=short_circuit_voltage_scaling,
-            **kwargs,
         )
 
     def __del__(self):
