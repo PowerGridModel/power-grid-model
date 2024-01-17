@@ -401,10 +401,11 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
         j_atol.get_to(param.atol);
     }
 
-    json calculation_method_params{j};
+    json calculation_method_params;
+    calculation_method_params.update(j, true);
     if (j.contains("extra_params")) {
         if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
-            calculation_method_params.update(extra_params.at(calculation_method));
+            calculation_method_params.update(extra_params.at(calculation_method), true);
         }
     }
 
