@@ -30,6 +30,6 @@ void PGM_set_short_circuit_voltage_scaling(PGM_Handle* /* handle */, PGM_Options
                                            PGM_Idx short_circuit_voltage_scaling) {
     opt->short_circuit_voltage_scaling = short_circuit_voltage_scaling;
 }
-void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features) {
+void PGM_set_experimental_features(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx experimental_features) {
     opt->experimental_features = experimental_features;
 }
