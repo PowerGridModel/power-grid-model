@@ -25,6 +25,11 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
 
+KNOWN_EXCEPTIONS = {
+    ex.__name__: ex
+    for ex in (PowerGridBatchError, PowerGridError, PowerGridSerializationError, AssertionError, OSError)
+}
+
 
 class PowerGridModelWithExt(PowerGridModel):
     """Wrapper class around the power grid model to expose extended features."""
@@ -106,9 +111,8 @@ def add_case(
         kwargs = {}
         if "fail" in calculation_method_params:
             xfail = calculation_method_params["fail"]
-            a = sys.modules[__name__]
             kwargs["marks"] = pytest.mark.xfail(
-                reason=xfail["reason"], raises=getattr(sys.modules[__name__], xfail.get("raises"), AssertionError)
+                reason=xfail["reason"], raises=KNOWN_EXCEPTIONS[xfail.get("raises", "AssertionError")]
             )
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
