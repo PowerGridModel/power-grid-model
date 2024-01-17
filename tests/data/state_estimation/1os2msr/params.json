@@ -10,7 +10,7 @@
       "experimental_features": "enabled",
       "fail": {
         "reason": "Experimental feature under development",
-        "raises": "PowerGridError"
+        "raises": "OSError"
       }
     }
   }
