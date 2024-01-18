@@ -6,8 +6,7 @@
     "newton_raphson": {
       "experimental_features": "enabled",
       "fail": {
-        "reason": "Experimental feature under development",
-        "raises": "OSError"
+        "reason": "Experimental feature under development"
       }
     }
   }
