@@ -26,6 +26,7 @@ struct PGM_Options {
     Idx max_iter{20};
     Idx threading{-1};
     Idx short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
+    Idx experimental_features{PGM_experimental_features_disabled};
 };
 
 #endif

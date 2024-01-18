@@ -66,7 +66,7 @@ template <bool sym> class MeasuredValues {
     constexpr bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
     constexpr bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
     constexpr bool has_angle() const { return n_angle_ > 0; }
-    constexpr bool has_angle_measurement(Idx bus) const { return is_nan(imag(voltage_at_bus(bus))); }
+    constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage_at_bus(bus))); }
 
     // getter of measurement and variance
     // if the obj is not measured, it is undefined behaviour to call this function
@@ -86,7 +86,7 @@ template <bool sym> class MeasuredValues {
                 u[bus] = current_u[bus];
             }
             // no angle measurement
-            else if (has_angle_measurement(bus)) {
+            else if (!has_angle_measurement(bus)) {
                 u[bus] =
                     real(voltage_at_bus(bus)) * current_u[bus] / cabs(current_u[bus]); // U / |U| to get angle shift
             }

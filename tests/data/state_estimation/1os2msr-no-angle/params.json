@@ -1,5 +1,13 @@
 {
-  "calculation_method": "iterative_linear",
+  "calculation_method":  ["iterative_linear", "newton_raphson"],
   "rtol": 1e-8,
-  "atol": 1e-8
+  "atol": 1e-8,
+  "extra_params": {
+    "newton_raphson": {
+      "experimental_features": "enabled",
+      "fail": {
+        "reason": "Experimental feature under development"
+      }
+    }
+  }
 }
