@@ -86,7 +86,7 @@ template <bool sym> class MeasuredValues {
                 u[bus] = current_u[bus];
             }
             // no angle measurement
-            else if (has_angle_measurement(bus)) {
+            else if (!has_angle_measurement(bus)) {
                 u[bus] =
                     real(voltage_at_bus(bus)) * current_u[bus] / cabs(current_u[bus]); // U / |U| to get angle shift
             }
