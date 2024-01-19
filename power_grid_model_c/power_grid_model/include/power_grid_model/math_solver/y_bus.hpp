@@ -324,6 +324,11 @@ template <bool sym> class YBus {
 
     constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
 
+    void set_branch_param_idx(IdxVector const& branch_param_idx) { branch_param_idx_ = branch_param_idx; }
+    void set_shunt_param_idx(IdxVector const& shunt_param_idx) { shunt_param_idx_ = shunt_param_idx; }
+    IdxVector const& get_branch_param_idx() const { return branch_param_idx_; }
+    IdxVector const& get_shunt_param_idx() const { return shunt_param_idx_; }
+
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached parameters
         math_model_param_ = math_model_param;
@@ -515,6 +520,10 @@ template <bool sym> class YBus {
     // cache the math parameters
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
     std::shared_ptr<MathModelParam<sym> const> math_model_param_prev_;
+
+    // cache the branch and shunt parameters in sequence_idx_map
+    IdxVector branch_param_idx_{};
+    IdxVector shunt_param_idx_{};
 
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch{};

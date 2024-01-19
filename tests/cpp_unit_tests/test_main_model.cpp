@@ -34,6 +34,7 @@ struct State {
     std::vector<AsymLoadGenInput> asym_load_input{
         {8, 3, 1, LoadGenType::const_y, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
     std::vector<ShuntInput> shunt_input{{9, 3, 1, 0.015, 0.0, 0.015, 0.0}};
+    // std::vector<BranchInput> branch_input{{1, 2, 3, 1, 0}}; // {{id}, from_node, to_node, from_status, to_status}
 
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<SymPowerSensorInput> sym_power_sensor_input{
