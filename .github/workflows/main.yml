@@ -174,9 +174,12 @@ jobs:
           - platform: linux-aarch64
             os: ubuntu-latest
             cibw_build: "*_aarch64"
-          - platform: macos
+          - platform: macos-x64
             os: macos-13
-            cibw_build: "*"
+            cibw_build: "*_x86_64"
+          - platform: macos-arm64
+            os: macos-13
+            cibw_build: "*_arm64"
           - platform: windows
             os: windows-latest
             cibw_build: "*"
