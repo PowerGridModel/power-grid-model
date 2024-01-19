@@ -178,7 +178,7 @@ jobs:
             os: macos-13
             cibw_build: "*_x86_64"
           - platform: macos-arm64
-            os: macos-13-large
+            os: macos-13
             cibw_build: "*_arm64"
           - platform: windows
             os: windows-latest
