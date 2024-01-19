@@ -166,7 +166,7 @@ jobs:
   build-and-test-python:
     strategy:
       matrix:
-        platform: [ linux-x64, linux-aarch64, macos, windows ]
+        platform: [ linux-x64, linux-aarch64, macos-x64, macos-arm64, windows ]
         include:
           - platform: linux-x64
             os: ubuntu-latest
@@ -178,7 +178,7 @@ jobs:
             os: macos-13
             cibw_build: "*_x86_64"
           - platform: macos-arm64
-            os: macos-13
+            os: macos-13-large
             cibw_build: "*_arm64"
           - platform: windows
             os: windows-latest
