@@ -18,176 +18,152 @@
 
 namespace power_grid_model::meta_data {
 
-// template specialization functors to get attributes
+// template specialization to get list of attributes in the value field
 
 template<>
 struct get_attributes_list<BaseUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 1> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<BaseUpdate, &BaseUpdate::id>{}, "id"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<BaseUpdate, &BaseUpdate::id, offsetof(BaseUpdate, id), []{ return "id"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<BranchUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 3> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<BranchUpdate, &BranchUpdate::id>{}, "id"},
-            {MetaAttributeImpl<BranchUpdate, &BranchUpdate::from_status>{}, "from_status"},
-            {MetaAttributeImpl<BranchUpdate, &BranchUpdate::to_status>{}, "to_status"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<BranchUpdate, &BranchUpdate::id, offsetof(BranchUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<BranchUpdate, &BranchUpdate::from_status, offsetof(BranchUpdate, from_status), []{ return "from_status"; }>::value,
+            meta_data_gen::get_meta_attribute<BranchUpdate, &BranchUpdate::to_status, offsetof(BranchUpdate, to_status), []{ return "to_status"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<Branch3Update> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 4> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<Branch3Update, &Branch3Update::id>{}, "id"},
-            {MetaAttributeImpl<Branch3Update, &Branch3Update::status_1>{}, "status_1"},
-            {MetaAttributeImpl<Branch3Update, &Branch3Update::status_2>{}, "status_2"},
-            {MetaAttributeImpl<Branch3Update, &Branch3Update::status_3>{}, "status_3"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<Branch3Update, &Branch3Update::id, offsetof(Branch3Update, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<Branch3Update, &Branch3Update::status_1, offsetof(Branch3Update, status_1), []{ return "status_1"; }>::value,
+            meta_data_gen::get_meta_attribute<Branch3Update, &Branch3Update::status_2, offsetof(Branch3Update, status_2), []{ return "status_2"; }>::value,
+            meta_data_gen::get_meta_attribute<Branch3Update, &Branch3Update::status_3, offsetof(Branch3Update, status_3), []{ return "status_3"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<ApplianceUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 2> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::id>{}, "id"},
-            {MetaAttributeImpl<ApplianceUpdate, &ApplianceUpdate::status>{}, "status"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<ApplianceUpdate, &ApplianceUpdate::id, offsetof(ApplianceUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<ApplianceUpdate, &ApplianceUpdate::status, offsetof(ApplianceUpdate, status), []{ return "status"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<TransformerUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 4> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::id>{}, "id"},
-            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::from_status>{}, "from_status"},
-            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::to_status>{}, "to_status"},
-            {MetaAttributeImpl<TransformerUpdate, &TransformerUpdate::tap_pos>{}, "tap_pos"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<TransformerUpdate, &TransformerUpdate::id, offsetof(TransformerUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerUpdate, &TransformerUpdate::from_status, offsetof(TransformerUpdate, from_status), []{ return "from_status"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerUpdate, &TransformerUpdate::to_status, offsetof(TransformerUpdate, to_status), []{ return "to_status"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerUpdate, &TransformerUpdate::tap_pos, offsetof(TransformerUpdate, tap_pos), []{ return "tap_pos"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<ThreeWindingTransformerUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 5> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id>{}, "id"},
-            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1>{}, "status_1"},
-            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2>{}, "status_2"},
-            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3>{}, "status_3"},
-            {MetaAttributeImpl<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos>{}, "tap_pos"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::id, offsetof(ThreeWindingTransformerUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_1, offsetof(ThreeWindingTransformerUpdate, status_1), []{ return "status_1"; }>::value,
+            meta_data_gen::get_meta_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_2, offsetof(ThreeWindingTransformerUpdate, status_2), []{ return "status_2"; }>::value,
+            meta_data_gen::get_meta_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::status_3, offsetof(ThreeWindingTransformerUpdate, status_3), []{ return "status_3"; }>::value,
+            meta_data_gen::get_meta_attribute<ThreeWindingTransformerUpdate, &ThreeWindingTransformerUpdate::tap_pos, offsetof(ThreeWindingTransformerUpdate, tap_pos), []{ return "tap_pos"; }>::value,
+    };
 };
 
 template <bool sym>
 struct get_attributes_list<LoadGenUpdate<sym>> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 4> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id>{}, "id"},
-            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status>{}, "status"},
-            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified>{}, "p_specified"},
-            {MetaAttributeImpl<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified>{}, "q_specified"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::id, offsetof(LoadGenUpdate<sym>, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::status, offsetof(LoadGenUpdate<sym>, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::p_specified, offsetof(LoadGenUpdate<sym>, p_specified), []{ return "p_specified"; }>::value,
+            meta_data_gen::get_meta_attribute<LoadGenUpdate<sym>, &LoadGenUpdate<sym>::q_specified, offsetof(LoadGenUpdate<sym>, q_specified), []{ return "q_specified"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<SourceUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 4> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::id>{}, "id"},
-            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::status>{}, "status"},
-            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref>{}, "u_ref"},
-            {MetaAttributeImpl<SourceUpdate, &SourceUpdate::u_ref_angle>{}, "u_ref_angle"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<SourceUpdate, &SourceUpdate::id, offsetof(SourceUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<SourceUpdate, &SourceUpdate::status, offsetof(SourceUpdate, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<SourceUpdate, &SourceUpdate::u_ref, offsetof(SourceUpdate, u_ref), []{ return "u_ref"; }>::value,
+            meta_data_gen::get_meta_attribute<SourceUpdate, &SourceUpdate::u_ref_angle, offsetof(SourceUpdate, u_ref_angle), []{ return "u_ref_angle"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<ShuntUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::id>{}, "id"},
-            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::status>{}, "status"},
-            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::g1>{}, "g1"},
-            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::b1>{}, "b1"},
-            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::g0>{}, "g0"},
-            {MetaAttributeImpl<ShuntUpdate, &ShuntUpdate::b0>{}, "b0"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<ShuntUpdate, &ShuntUpdate::id, offsetof(ShuntUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<ShuntUpdate, &ShuntUpdate::status, offsetof(ShuntUpdate, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<ShuntUpdate, &ShuntUpdate::g1, offsetof(ShuntUpdate, g1), []{ return "g1"; }>::value,
+            meta_data_gen::get_meta_attribute<ShuntUpdate, &ShuntUpdate::b1, offsetof(ShuntUpdate, b1), []{ return "b1"; }>::value,
+            meta_data_gen::get_meta_attribute<ShuntUpdate, &ShuntUpdate::g0, offsetof(ShuntUpdate, g0), []{ return "g0"; }>::value,
+            meta_data_gen::get_meta_attribute<ShuntUpdate, &ShuntUpdate::b0, offsetof(ShuntUpdate, b0), []{ return "b0"; }>::value,
+    };
 };
 
 template <bool sym>
 struct get_attributes_list<VoltageSensorUpdate<sym>> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 4> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id>{}, "id"},
-            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma>{}, "u_sigma"},
-            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured>{}, "u_measured"},
-            {MetaAttributeImpl<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured>{}, "u_angle_measured"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::id, offsetof(VoltageSensorUpdate<sym>, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_sigma, offsetof(VoltageSensorUpdate<sym>, u_sigma), []{ return "u_sigma"; }>::value,
+            meta_data_gen::get_meta_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_measured, offsetof(VoltageSensorUpdate<sym>, u_measured), []{ return "u_measured"; }>::value,
+            meta_data_gen::get_meta_attribute<VoltageSensorUpdate<sym>, &VoltageSensorUpdate<sym>::u_angle_measured, offsetof(VoltageSensorUpdate<sym>, u_angle_measured), []{ return "u_angle_measured"; }>::value,
+    };
 };
 
 template <bool sym>
 struct get_attributes_list<PowerSensorUpdate<sym>> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id>{}, "id"},
-            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma>{}, "power_sigma"},
-            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured>{}, "p_measured"},
-            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured>{}, "q_measured"},
-            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_sigma>{}, "p_sigma"},
-            {MetaAttributeImpl<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_sigma>{}, "q_sigma"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::id, offsetof(PowerSensorUpdate<sym>, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::power_sigma, offsetof(PowerSensorUpdate<sym>, power_sigma), []{ return "power_sigma"; }>::value,
+            meta_data_gen::get_meta_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_measured, offsetof(PowerSensorUpdate<sym>, p_measured), []{ return "p_measured"; }>::value,
+            meta_data_gen::get_meta_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_measured, offsetof(PowerSensorUpdate<sym>, q_measured), []{ return "q_measured"; }>::value,
+            meta_data_gen::get_meta_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::p_sigma, offsetof(PowerSensorUpdate<sym>, p_sigma), []{ return "p_sigma"; }>::value,
+            meta_data_gen::get_meta_attribute<PowerSensorUpdate<sym>, &PowerSensorUpdate<sym>::q_sigma, offsetof(PowerSensorUpdate<sym>, q_sigma), []{ return "q_sigma"; }>::value,
+    };
 };
 
 template<>
 struct get_attributes_list<FaultUpdate> {
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, 7> value{
+            // all attributes including base class
             
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::id>{}, "id"},
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::status>{}, "status"},
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_type>{}, "fault_type"},
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_phase>{}, "fault_phase"},
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::fault_object>{}, "fault_object"},
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::r_f>{}, "r_f"},
-            {MetaAttributeImpl<FaultUpdate, &FaultUpdate::x_f>{}, "x_f"},
-        };
-    }
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::id, offsetof(FaultUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::status, offsetof(FaultUpdate, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::fault_type, offsetof(FaultUpdate, fault_type), []{ return "fault_type"; }>::value,
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::fault_phase, offsetof(FaultUpdate, fault_phase), []{ return "fault_phase"; }>::value,
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::fault_object, offsetof(FaultUpdate, fault_object), []{ return "fault_object"; }>::value,
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::r_f, offsetof(FaultUpdate, r_f), []{ return "r_f"; }>::value,
+            meta_data_gen::get_meta_attribute<FaultUpdate, &FaultUpdate::x_f, offsetof(FaultUpdate, x_f), []{ return "x_f"; }>::value,
+    };
 };
 
 
