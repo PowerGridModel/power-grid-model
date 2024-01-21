@@ -227,21 +227,21 @@ struct MetaDataset {
     }
 };
 // getter for meta dataset
-template <char const* name, template <class> class struct_getter, class comp_list> struct get_meta_dataset;
-template <char const* name, template <class> class struct_getter, class... ComponentType>
-struct get_meta_dataset<name, struct_getter, ComponentList<ComponentType...>> {
+template <char const* dataset_name, template <class> class struct_getter, class comp_list> struct get_meta_dataset;
+template <char const* dataset_name, template <class> class struct_getter, class... ComponentType>
+struct get_meta_dataset<dataset_name, struct_getter, ComponentList<ComponentType...>> {
     static constexpr size_t n_components = sizeof...(ComponentType);
     static constexpr std::array<MetaComponent, n_components> components{
-        get_meta_component<ComponentType, ComponentType::name>::value...};
+        get_meta_component<typename struct_getter<ComponentType>::type, ComponentType::name>::value...};
     static constexpr MetaDataset value{
-        .name = name,
+        .name = dataset_name,
         .components = components,
     };
 };
 
 // meta data
 struct MetaData {
-    std::vector<MetaDataset> datasets;
+    std::span<MetaDataset const> datasets;
 
     Idx n_datasets() const { return static_cast<Idx>(datasets.size()); }
 
@@ -253,6 +253,17 @@ struct MetaData {
         }
         throw std::out_of_range{"Cannot find dataset with name: " + std::string{dataset_name} + "!\n"};
     }
+};
+// get meta data
+template <char const* dataset_name, template <class> class struct_getter> struct dataset_mark;
+template <class comp_list, class... T> struct get_meta_data;
+template <class comp_list, char const*... dataset_name, template <class> class... struct_getter>
+struct get_meta_data<comp_list, dataset_mark<dataset_name, struct_getter>...> {
+    static constexpr std::array<MetaDataset, sizeof...(dataset_name)> datasets{
+        get_meta_dataset<dataset_name, struct_getter, comp_list>::value...};
+    static constexpr MetaData value{
+        .datasets = datasets,
+    };
 };
 
 // little endian

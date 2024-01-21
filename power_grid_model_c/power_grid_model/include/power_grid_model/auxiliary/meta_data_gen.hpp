@@ -23,6 +23,11 @@
 // generate of meta data
 namespace power_grid_model::meta_data {
 
+template <class T> struct struct_getter_input {
+    using type = typename T::InputType;
+};
+using dataset_mark_input = dataset_mark<"input", struct_getter_input>;
+
 using DatasetMap = std::map<std::string, MetaComponent, std::less<>>;
 using AllDatasetMap = std::map<std::string, DatasetMap, std::less<>>;
 
