@@ -23,57 +23,121 @@
 // generate of meta data
 namespace power_grid_model::meta_data {
 
+namespace meta_data_gen {
+
+// getter for meta attribute
+template <class StructType, auto member_ptr, size_t offset, auto attribute_name_getter> struct get_meta_attribute {
+    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+
+    static constexpr MetaAttribute value{
+        .name = attribute_name_getter(),
+        .ctype = ctype_v<ValueType>,
+        .offset = offset,
+        .size = sizeof(ValueType),
+        .component_size = sizeof(StructType),
+        .check_nan = [](RawDataConstPtr buffer_ptr, Idx pos) -> bool {
+            return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
+        },
+        .check_all_nan = [](RawDataConstPtr buffer_ptr, Idx size) -> bool {
+            return std::all_of(IdxCount{0}, IdxCount{size}, [buffer_ptr](Idx i) { return check_nan(buffer_ptr, i); });
+        },
+        .set_value =
+            [](RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) {
+                (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr =
+                    *reinterpret_cast<ValueType const*>(value_ptr);
+            },
+        .get_value =
+            [](RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) {
+                *reinterpret_cast<ValueType*>(value_ptr) =
+                    (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
+            },
+        .compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, Idx pos) -> bool {
+            ValueType const& x = (reinterpret_cast<StructType const*>(ptr_x) + pos)->*member_ptr;
+            ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
+            if constexpr (std::same_as<ValueType, double>) {
+                return std::abs(y - x) < (std::abs(x) * rtol + atol);
+            } else if constexpr (std::same_as<ValueType, RealValue<false>>) {
+                return (abs(y - x) < (abs(x) * rtol + atol)).all();
+            } else {
+                return x == y;
+            }
+        },
+    };
+};
+
+// getter for meta component
+template <class StructType, auto component_name_getter> struct get_meta_component {
+    static constexpr MetaComponent value{
+        .name = component_name_getter(),
+        .size = sizeof(StructType),
+        .alignment = alignof(StructType),
+        .attributes = get_attributes_list<StructType>::value,
+        .set_nan =
+            [](RawDataPtr buffer_ptr, Idx pos, Idx size) {
+                static StructType const nan_value = get_component_nan<StructType>{}();
+                auto ptr = reinterpret_cast<StructType*>(buffer_ptr);
+                std::fill(ptr + pos, ptr + pos + size, nan_value);
+            },
+        .create_buffer = [](Idx size) -> RawDataPtr { return new StructType[size]; },
+        .destroy_buffer = [](RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); },
+    };
+};
+
+// getter for meta dataset
+template <auto dataset_name_getter, template <class> class struct_getter, class comp_list> struct get_meta_dataset;
+template <auto dataset_name_getter, template <class> class struct_getter, class... ComponentType>
+struct get_meta_dataset<dataset_name_getter, struct_getter, ComponentList<ComponentType...>> {
+    static constexpr size_t n_components = sizeof...(ComponentType);
+    static constexpr std::array<MetaComponent, n_components> components{
+        get_meta_component<typename struct_getter<ComponentType>::type, [] { return ComponentType::name; }>::value...};
+    static constexpr MetaDataset value{
+        .name = dataset_name_getter(),
+        .components = components,
+    };
+};
+
+// get meta data
+template <auto dataset_name_getter, template <class> class struct_getter> struct dataset_mark;
+template <class comp_list, class... T> struct get_meta_data;
+template <class comp_list, auto... dataset_name_getter, template <class> class... struct_getter>
+struct get_meta_data<comp_list, dataset_mark<dataset_name_getter, struct_getter>...> {
+    static constexpr std::array<MetaDataset, sizeof...(dataset_name_getter)> datasets{
+        get_meta_dataset<dataset_name_getter, struct_getter, comp_list>::value...};
+    static constexpr MetaData value{
+        .datasets = datasets,
+    };
+};
+
+// list of all dataset names
 template <class T> struct struct_getter_input {
     using type = typename T::InputType;
 };
-using dataset_mark_input = dataset_mark<"input", struct_getter_input>;
-
-using DatasetMap = std::map<std::string, MetaComponent, std::less<>>;
-using AllDatasetMap = std::map<std::string, DatasetMap, std::less<>>;
-
-// template function to add meta data
-template <class CT> inline void add_meta_data(AllDatasetMap& meta) {
-    meta["input"].try_emplace(CT::name, MetaComponentImpl<typename CT::InputType>{}, CT::name);
-    meta["update"].try_emplace(CT::name, MetaComponentImpl<typename CT::UpdateType>{}, CT::name);
-    meta["sym_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::template OutputType<true>>{}, CT::name);
-    meta["asym_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::template OutputType<false>>{}, CT::name);
-    meta["sc_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::ShortCircuitOutputType>{}, CT::name);
-}
-
-template <class T> struct MetaDataGeneratorImpl;
-
-template <class... ComponentType> struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
-    using FuncPtr = std::add_pointer_t<void(AllDatasetMap& meta)>;
-    static constexpr std::array<FuncPtr, sizeof...(ComponentType)> func_arr{&add_meta_data<ComponentType>...};
-
-    static MetaData create_meta() {
-        // get all dataset map
-        AllDatasetMap all_map{};
-        for (auto const func : func_arr) {
-            func(all_map);
-        }
-
-        // create meta data set
-        MetaData meta{};
-        for (auto const* const dataset_name : {"input", "update", "sym_output", "asym_output", "sc_output"}) {
-            DatasetMap const& single_map = all_map.at(dataset_name);
-            MetaDataset meta_dataset{};
-            meta_dataset.name = dataset_name;
-            for (auto const& [component_name, meta_component] : single_map) {
-                meta_dataset.components.push_back(meta_component);
-            }
-            meta.datasets.push_back(meta_dataset);
-        }
-        return meta;
-    }
+template <class T> struct struct_getter_update {
+    using type = typename T::UpdateType;
+};
+template <class T> struct struct_getter_sym_output {
+    using type = typename T::template OutputType<true>;
+};
+template <class T> struct struct_getter_asym_output {
+    using type = typename T::template OutputType<false>;
+};
+template <class T> struct struct_getter_sc_output {
+    using type = typename T::ShortCircuitOutputType;
 };
 
-using MetaDataGenerator = MetaDataGeneratorImpl<AllComponents>;
+// generate meta data
+constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
+                                             dataset_mark<[] { return "input"; }, struct_getter_input>,
+                                             dataset_mark<[] { return "update"; }, struct_getter_update>,
+                                             dataset_mark<[] { return "sym_output"; }, struct_getter_sym_output>,
+                                             dataset_mark<[] { return "asym_output"; }, struct_getter_asym_output>,
+                                             dataset_mark<[] { return "sc_output"; }, struct_getter_sc_output>
+                                             // end list of all marks
+                                             >::value;
 
-inline MetaData const& meta_data() {
-    static MetaData const meta_data = MetaDataGenerator::create_meta();
-    return meta_data;
-}
+} // namespace meta_data_gen
+
+constexpr MetaData meta_data = meta_data_gen::meta_data;
 
 } // namespace power_grid_model::meta_data
 
