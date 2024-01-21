@@ -22,13 +22,15 @@ template <class T> struct trait_pointer_to_member;
 template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
-template <class StructType, auto member_ptr> inline size_t get_offset() {
-    StructType const obj{};
-    return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
-}
 
-// empty template functor classes to generate attributes list
+// primary template to get the attribute list of a component
+// the specializations will contain static constexpr "value" field 
+//    which is a std::array
+// the specializations are automatically generated
 template <class T> struct get_attributes_list;
+// primary template functor classes to generate nan value for a component
+// the specializations will contain operator() to return a component instance with NaNs
+// the specializations are automatically generated
 template <class T> struct get_component_nan;
 
 // ctype string
@@ -114,9 +116,10 @@ template <class StructType, auto member_ptr> struct MetaAttributeImpl {
 };
 
 struct MetaAttribute {
+    /*
     template <class StructType, auto member_ptr,
               class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string attr_name)
+    MetaAttribute(MetaAttributeImpl<StructType, member_ptr> attribute_data, std::string attr_name)
         : name{std::move(attr_name)},
           ctype{ctype_v<ValueType>},
           offset{get_offset<StructType, member_ptr>()},
@@ -127,6 +130,8 @@ struct MetaAttribute {
           set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
           get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
           compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
+
+    */
 
     // meta data
     std::string name;
