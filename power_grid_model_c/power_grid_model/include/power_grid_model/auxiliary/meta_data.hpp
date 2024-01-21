@@ -194,7 +194,7 @@ struct MetaComponent {
 };
 // getter for meta component
 template <class StructType, char const* comp_name> struct get_meta_component {
-    static constexpr MetaComponent{
+    static constexpr MetaComponent value{
         .name = comp_name,
         .size = sizeof(StructType),
         .alignment = alignof(StructType),
@@ -210,9 +210,10 @@ template <class StructType, char const* comp_name> struct get_meta_component {
     };
 };
 
+// meta dataset
 struct MetaDataset {
-    std::string name;
-    std::vector<MetaComponent> components;
+    std::string_view name;
+    std::span<MetaComponent const> components;
 
     Idx n_components() const { return static_cast<Idx>(components.size()); }
 
@@ -224,6 +225,18 @@ struct MetaDataset {
         }
         throw std::out_of_range{"Cannot find component with name: " + std::string{component_name} + "!\n"};
     }
+};
+// getter for meta dataset
+template <char const* name, template <class> class struct_getter, class comp_list> struct get_meta_dataset;
+template <char const* name, template <class> class struct_getter, class... ComponentType>
+struct get_meta_dataset<name, struct_getter, ComponentList<ComponentType...>> {
+    static constexpr size_t n_components = sizeof...(ComponentType);
+    static constexpr std::array<MetaComponent, n_components> components{
+        get_meta_component<ComponentType, ComponentType::name>::value...};
+    static constexpr MetaDataset value{
+        .name = name,
+        .components = components,
+    };
 };
 
 // meta data
