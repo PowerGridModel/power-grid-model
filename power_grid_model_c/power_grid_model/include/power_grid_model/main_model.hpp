@@ -198,6 +198,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 update[entry.index](*this, found->second, pos, sequence_idx_map[entry.index]);
             }
         }
+        cached_sequence_idx_map_.assign(sequence_idx_map.begin(), sequence_idx_map.end());
     }
 
     // update all components
@@ -223,6 +224,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
+        cached_sequence_idx_map_ = {};
     }
 
     // set complete construction
@@ -800,6 +802,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
+    std::vector<std::vector<Idx2D>> cached_sequence_idx_map_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
@@ -1181,6 +1184,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             y_bus_vec.reserve(n_math_solvers_);
             auto math_params = get_math_param<sym>();
 
+            IdxVector branch_param_in_seq_map{};
+            IdxVector shunt_param_in_seq_map{};
+            // check for branch and shunt parameters idx in component_idx_map
+            // this relates to the incremental update of Y_bus,
+            // which only needs to update the branch and shunt parameters
+            for (ComponentEntry const& entry : AllComponents::component_index_map) {
+                if (entry.name == "line" || entry.name == "link") { // two instances of branch
+                    branch_param_in_seq_map.push_back(entry.index);
+                } else if (entry.name == "shunt") {
+                    shunt_param_in_seq_map.push_back(entry.index);
+                }
+            }
+
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 // construct from existing Y_bus structure if possible
                 if (other_y_bus_exist) {
@@ -1191,6 +1207,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     y_bus_vec.emplace_back(state_.math_topology[i],
                                            std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
                 }
+                y_bus_vec.back().set_branch_param_idx(branch_param_in_seq_map);
+                y_bus_vec.back().set_shunt_param_idx(shunt_param_in_seq_map);
             }
         }
     }
@@ -1213,12 +1231,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         // if parameters are not up to date, update them
         else if (!is_parameter_up_to_date<sym>()) {
-            // insert logic here to update parameters incrementally
-            // compare the old and new parameters, and update the solvers
-            //
             // get param, will be consumed
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
-            main_core::update_y_bus(math_state_, math_params, n_math_solvers_);
+            main_core::update_y_bus(math_state_, math_params, n_math_solvers_, cached_sequence_idx_map_);
         }
         // else do nothing, set everything up to date
         is_parameter_up_to_date<sym>() = true;
