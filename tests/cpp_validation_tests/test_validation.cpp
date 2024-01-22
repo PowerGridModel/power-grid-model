@@ -225,7 +225,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
-                if (attr.name == "u_angle") {
+                if (attr.name == std::string("u_angle")) {
                     continue;
                 }
                 // get absolute tolerance
@@ -239,7 +239,8 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 // for other _angle attribute, we need to find the magnitue and compare together
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
-                bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                std::string const attr_name = attr.name;
+                bool const is_angle = std::regex_match(attr_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
                 MetaAttribute const& possible_attr_magnitude =
                     is_angle ? component_meta.get_attribute(magnitude_name) : attr;
