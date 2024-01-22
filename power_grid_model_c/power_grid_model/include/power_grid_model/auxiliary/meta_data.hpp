@@ -91,7 +91,7 @@ using RawDataConstPtr = void const*; // raw read-only data ptr
 // meta attribute
 struct MetaAttribute {
     // meta data
-    std::string_view name{};
+    char const* name{};
     CType ctype{};
     size_t offset{};
     size_t size{};
@@ -115,7 +115,7 @@ struct MetaAttribute {
 // meta component
 struct MetaComponent {
     // meta data
-    std::string_view name;
+    char const* name;
     size_t size;
     size_t alignment;
     std::span<MetaAttribute const> attributes;
@@ -156,7 +156,7 @@ struct MetaComponent {
 
 // meta dataset
 struct MetaDataset {
-    std::string_view name;
+    char const* name;
     std::span<MetaComponent const> components;
 
     Idx n_components() const { return static_cast<Idx>(components.size()); }
