@@ -158,7 +158,7 @@ constexpr std::string_view batch_dataset_dict_indent =
 TEST_CASE("Serializer") {
 
     std::vector<SymLoadGenUpdate> sym_load_gen(4);
-    meta_data().get_dataset("update").get_component("sym_load").set_nan(sym_load_gen.data(), 0, 4);
+    meta_data.get_dataset("update").get_component("sym_load").set_nan(sym_load_gen.data(), 0, 4);
     sym_load_gen[0].id = 9;
     sym_load_gen[1].id = 10;
     sym_load_gen[2].id = 11;
@@ -169,7 +169,7 @@ TEST_CASE("Serializer") {
     sym_load_gen[3].p_specified = -std::numeric_limits<double>::infinity();
 
     std::vector<AsymLoadGenUpdate> asym_load_gen(5);
-    meta_data().get_dataset("update").get_component("asym_load").set_nan(asym_load_gen.data(), 0, 5);
+    meta_data.get_dataset("update").get_component("asym_load").set_nan(asym_load_gen.data(), 0, 5);
     asym_load_gen[0].id = 5;
     asym_load_gen[1].id = 6;
     asym_load_gen[2].id = 13;

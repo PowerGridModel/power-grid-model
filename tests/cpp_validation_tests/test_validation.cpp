@@ -123,7 +123,7 @@ auto load_dataset(std::filesystem::path const& path) {
 // create single result set
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
                                     Idx batch_size = 1) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+    MetaDataset const& meta = meta_data.get_dataset(data_type);
     WritableDatasetHandler handler{is_batch, batch_size, meta.name};
 
     for (auto const& [name, data_ptr] : input.const_dataset) {
@@ -209,7 +209,7 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+    MetaDataset const& meta = meta_data.get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
     // loop all scenario
     for (Idx scenario = 0; scenario != batch_size; ++scenario) {

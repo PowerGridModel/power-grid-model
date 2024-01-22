@@ -17,7 +17,7 @@ TEST_CASE("C API Meta Data") {
     // get handle
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
-    auto const& meta = meta_data();
+    auto const& meta = meta_data;
 
     SUBCASE("Datasets") {
         // check dataset

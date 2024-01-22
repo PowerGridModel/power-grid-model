@@ -31,15 +31,15 @@ auto const meta_catch = [](PGM_Handle* handle, auto func) -> decltype(auto) {
 
 // retrieve meta data
 // dataset
-PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return meta_data::meta_data().n_datasets(); }
+PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return meta_data::meta_data.n_datasets(); }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
-    if (idx >= meta_data::meta_data().n_datasets()) {
+    if (idx >= meta_data::meta_data.n_datasets()) {
         throw std::out_of_range{"Index out of range!\n"};
     }
-    return meta_catch(handle, [idx]() { return &meta_data::meta_data().datasets[idx]; });
+    return meta_catch(handle, [idx]() { return &meta_data::meta_data.datasets[idx]; });
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
-    return meta_catch(handle, [dataset]() { return &meta_data::meta_data().get_dataset(dataset); });
+    return meta_catch(handle, [dataset]() { return &meta_data::meta_data.get_dataset(dataset); });
 }
 char const* PGM_meta_dataset_name(PGM_Handle* /* handle */, PGM_MetaDataset const* dataset) { return dataset->name; }
 // component
@@ -55,9 +55,8 @@ PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_M
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
                                                         char const* component) {
-    return meta_catch(handle, [component, dataset]() {
-        return &meta_data::meta_data().get_dataset(dataset).get_component(component);
-    });
+    return meta_catch(
+        handle, [component, dataset]() { return &meta_data::meta_data.get_dataset(dataset).get_component(component); });
 }
 char const* PGM_meta_component_name(PGM_Handle* /* handle */, PGM_MetaComponent const* component) {
     return component->name;
@@ -80,7 +79,7 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_M
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset, char const* component,
                                                         char const* attribute) {
     return meta_catch(handle, [component, dataset, attribute]() {
-        return &meta_data::meta_data().get_dataset(dataset).get_component(component).get_attribute(attribute);
+        return &meta_data::meta_data.get_dataset(dataset).get_component(component).get_attribute(attribute);
     });
 }
 char const* PGM_meta_attribute_name(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute) {

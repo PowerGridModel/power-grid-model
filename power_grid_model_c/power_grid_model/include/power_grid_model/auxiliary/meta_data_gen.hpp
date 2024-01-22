@@ -55,7 +55,7 @@ constexpr MetaData meta_data = get_meta_data<AllComponents, // all components li
 
 } // namespace meta_data_gen
 
-inline MetaData const& meta_data() { return meta_data_gen::meta_data; }
+constexpr MetaData meta_data = meta_data_gen::meta_data;
 
 } // namespace power_grid_model::meta_data
 

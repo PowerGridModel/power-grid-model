@@ -12,7 +12,7 @@ namespace power_grid_model {
 
 TEST_CASE("Test column row conversion") {
     SUBCASE("Test meta input data generation") {
-        auto const& meta_map = meta_data::meta_data().get_dataset("input");
+        auto const& meta_map = meta_data::meta_data.get_dataset("input");
         auto const& node = meta_map.get_component("node");
         auto const& node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
@@ -29,7 +29,7 @@ TEST_CASE("Test column row conversion") {
     }
 
     SUBCASE("Test meta ouput data generation") {
-        auto const& meta_map = meta_data::meta_data().get_dataset("asym_output");
+        auto const& meta_map = meta_data::meta_data.get_dataset("asym_output");
         auto const& node = meta_map.get_component("node");
         auto const& node_attr = node.attributes;
         CHECK(node_attr[0].name == "id");
@@ -46,7 +46,7 @@ TEST_CASE("Test column row conversion") {
     }
 
     SUBCASE("Test meta update data generation") {
-        auto const& meta_map = meta_data::meta_data().get_dataset("update");
+        auto const& meta_map = meta_data::meta_data.get_dataset("update");
         auto const& load = meta_map.get_component("asym_load");
         auto const& load_attr = load.attributes;
         CHECK(load_attr[0].name == "id");
