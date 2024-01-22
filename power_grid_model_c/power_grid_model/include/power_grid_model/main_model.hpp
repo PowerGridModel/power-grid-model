@@ -1190,9 +1190,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // this relates to the incremental update of Y_bus,
             // which only needs to update the branch and shunt parameters
             for (ComponentEntry const& entry : AllComponents::component_index_map) {
-                if (entry.name == "line" || entry.name == "link") { // two instances of branch
+                std::string entryName = entry.name;
+                if (entryName == "line" || entryName == "link") { // two instances of branch
                     branch_param_in_seq_map.push_back(entry.index);
-                } else if (entry.name == "shunt") {
+                } else if (entryName == "shunt") {
                     shunt_param_in_seq_map.push_back(entry.index);
                 }
             }

@@ -120,6 +120,7 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
 #ifdef INCREMENT_UPDATE_Y_BUS
     // verify that the number of branches, shunts and source is the same
     MathModelParam<sym> const& y_bus_param = y_bus.math_model_param();
+    (void)y_bus_param; // suppress compiler unused variable warning
     assert(y_bus_param.branch_param.size() == math_model_param->branch_param.size());
     assert(y_bus_param.shunt_param.size() == math_model_param->shunt_param.size());
     assert(y_bus_param.source_param.size() == math_model_param->source_param.size());
