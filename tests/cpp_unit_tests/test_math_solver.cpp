@@ -140,7 +140,7 @@ TEST_CASE("Test math solver") {
     // build topo
     double const shift_val = deg_30;
     MathModelTopology topo;
-    topo.slack_bus_ = 0;
+    topo.slack_bus = 0;
     topo.phase_shift = {0.0, 0.0, -shift_val};
     topo.branch_bus_idx = {{0, 1}, {1, 2}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
@@ -683,7 +683,7 @@ TEST_CASE("Short circuit solver") {
 
     // Grid for short circuit
     MathModelTopology topo_sc;
-    topo_sc.slack_bus_ = 0;
+    topo_sc.slack_bus = 0;
     topo_sc.phase_shift = {0.0, 0.0};
     topo_sc.branch_bus_idx = {{0, 1}};
     topo_sc.sources_per_bus = {from_sparse, {0, 1, 1}};
@@ -869,7 +869,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test fault on source bus") {
         // Grid for short circuit
         MathModelTopology topo_comp;
-        topo_sc.slack_bus_ = 0;
+        topo_sc.slack_bus = 0;
         topo_comp.phase_shift = {0.0};
         topo_comp.branch_bus_idx = {};
         topo_comp.sources_per_bus = {from_sparse, {0, 1}};
@@ -1040,7 +1040,7 @@ TEST_CASE("Math solver, zero variance test") {
     bus_1 = bus_0 = 1.0
     */
     MathModelTopology topo;
-    topo.slack_bus_ = 1;
+    topo.slack_bus = 1;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
     topo.sources_per_bus = {from_sparse, {0, 0, 1}};
@@ -1082,7 +1082,7 @@ TEST_CASE("Math solver, measurements") {
 
     */
     MathModelTopology topo;
-    topo.slack_bus_ = 0;
+    topo.slack_bus = 0;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1}};

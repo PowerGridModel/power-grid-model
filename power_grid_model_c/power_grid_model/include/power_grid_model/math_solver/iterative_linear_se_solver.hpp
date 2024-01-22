@@ -324,9 +324,9 @@ template <bool sym> class IterativeLinearSESolver {
                 return 1.0;
             }
             if constexpr (sym) {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
+                return cabs(x_rhs_[math_topo_->slack_bus].u()) / x_rhs_[math_topo_->slack_bus].u();
             } else {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
+                return cabs(x_rhs_[math_topo_->slack_bus].u()(0)) / x_rhs_[math_topo_->slack_bus].u()(0);
             }
         }();
 

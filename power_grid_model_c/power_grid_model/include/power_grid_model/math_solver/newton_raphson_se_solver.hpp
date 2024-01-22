@@ -214,8 +214,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                     continue;
                 }
                 // fill block with voltage measurement, only diagonal
-                if ((row == col) && measured_value.has_voltage(row)) {
-                    add_voltage_measurments(block, rhs_block, measured_value, current_u, row);
+                if (row == col) {
+                    add_voltage_measurements(block, rhs_block, measured_value, row);
                 }
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -363,18 +363,35 @@ template <bool sym> class NewtonRaphsonSESolver {
         }
     }
 
-    void add_voltage_measurments(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
-                                 MeasuredValues<sym> const& measured_value,
-                                 ComplexValueVector<sym> const& measured_estimated_u, Idx const& row) {
+    void add_voltage_measurements(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
+                                  MeasuredValues<sym> const& measured_value, Idx const& bus) {
+        if (!measured_value.has_voltage(bus)) {
+            return;
+        }
+
         // G += 1.0 / variance
         // for 3x3 tensor, fill diagonal
         // TODO Change angle weight per angle variance and store angle as non complex
         // TODO if angle measurement not present, set w_angle to 0.
-        auto const w_angle = RealTensor<sym>{measured_value.has_angle_measurement(row) ? 1.0 : 0.0};
-        auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(row)};
-        auto const abs_measured_v = cabs(measured_estimated_u[row]);
-        auto const del_theta = arg(measured_estimated_u[row]) - x_[row].theta();
-        auto const del_v = abs_measured_v - x_[row].v();
+
+        auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(bus)};
+        auto const abs_measured_v = cabs(measured_value.voltage(bus));
+        auto const del_v = abs_measured_v - x_[bus].v();
+
+        auto w_angle = RealTensor<sym>{1.0};
+        auto del_theta = RealValue<sym>{-x_[bus].theta()};
+
+        auto const virtual_angle_measurement_bus = measured_value.has_angle_measurement(math_topo_->slack_bus)
+                                                       ? math_topo_->slack_bus
+                                                       : measured_value.first_voltage_measurement();
+
+        if (measured_value.has_angle() || bus != virtual_angle_measurement_bus) {
+            if (!measured_value.has_angle_measurement(bus)) {
+                w_angle = RealTensor<sym>{0.0};
+            }
+            del_theta += RealValue<sym>{arg(measured_value.voltage(bus))};
+        }
+
         block.g_P_theta() += w_angle;
         block.g_Q_v() += w_v;
         rhs_block.eta_theta() += dot(w_angle, del_theta);
@@ -447,9 +464,9 @@ template <bool sym> class NewtonRaphsonSESolver {
                 return 1.0;
             }
             if constexpr (sym) {
-                return x_[math_topo_->slack_bus_].theta() + del_x_rhs_[math_topo_->slack_bus_].theta();
+                return x_[math_topo_->slack_bus].theta() + del_x_rhs_[math_topo_->slack_bus].theta();
             } else {
-                return x_[math_topo_->slack_bus_].theta()(0) + del_x_rhs_[math_topo_->slack_bus_].theta()(0);
+                return x_[math_topo_->slack_bus].theta()(0) + del_x_rhs_[math_topo_->slack_bus].theta()(0);
             }
         }();
 
