@@ -15,7 +15,7 @@
 #include "../../power_grid_model.hpp"   // NOLINT
 #include "../../three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"             // NOLINT
-#include "../output.hpp"                // NOLINT
+#include "../output.hpp" // NOLINT
 
 
 namespace power_grid_model::meta_data {
