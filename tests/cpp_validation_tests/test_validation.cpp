@@ -209,6 +209,7 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
+    using namespace std::string_literals;
     MetaDataset const& meta = meta_data.get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
     // loop all scenario
@@ -225,7 +226,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
-                if (attr.name == std::string("u_angle")) {
+                if (attr.name == "u_angle"s) {
                     continue;
                 }
                 // get absolute tolerance
