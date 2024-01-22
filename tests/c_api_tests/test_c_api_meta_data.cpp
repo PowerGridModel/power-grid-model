@@ -17,19 +17,18 @@ TEST_CASE("C API Meta Data") {
     // get handle
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
-    auto const& meta = meta_data;
 
     SUBCASE("Datasets") {
         // check dataset
-        CHECK(PGM_meta_n_datasets(hl) == meta.n_datasets());
-        for (Idx idx_dataset = 0; idx_dataset != meta.n_datasets(); ++idx_dataset) {
+        CHECK(PGM_meta_n_datasets(hl) == meta_data.n_datasets());
+        for (Idx idx_dataset = 0; idx_dataset != meta_data.n_datasets(); ++idx_dataset) {
             PGM_MetaDataset const* const dataset = PGM_meta_get_dataset_by_idx(hl, idx_dataset);
             std::string const dataset_name = PGM_meta_dataset_name(hl, dataset);
             CHECK(PGM_meta_get_dataset_by_name(hl, dataset_name.c_str()) == dataset);
-            CHECK(dataset_name == meta.datasets[idx_dataset].name);
+            CHECK(dataset_name == meta_data.datasets[idx_dataset].name);
 
             // check component
-            MetaDataset const& cpp_dataset = meta.get_dataset(dataset_name);
+            MetaDataset const& cpp_dataset = meta_data.get_dataset(dataset_name);
             CHECK(PGM_meta_n_components(hl, dataset) == cpp_dataset.n_components());
             for (Idx idx_component = 0; idx_component != cpp_dataset.n_components(); ++idx_component) {
                 PGM_MetaComponent const* const component = PGM_meta_get_component_by_idx(hl, dataset, idx_component);
