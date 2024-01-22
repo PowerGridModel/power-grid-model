@@ -181,14 +181,10 @@ template <bool sym> class NewtonRaphsonSESolver {
         IdxVector const& row_indptr = y_bus.row_indptr_lu();
         IdxVector const& col_indices = y_bus.col_indices_lu();
         IdxVector const& lu_diag = y_bus.lu_diag();
-        // get generated (measured/estimated) voltage phasor
-        // with current result voltage angle
-        // check if this is  the right way or not
-        ComplexValueVector<sym> measured_estimated_u = measured_value.voltage(current_u);
 
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
-            auto const& ui = measured_estimated_u[row];
+            auto const& ui = current_u[row];
             auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
             auto const ui_ui_conj = vector_outer_product(ui, conj(ui));
 
@@ -201,7 +197,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 Idx const col = col_indices[data_idx_lu];
-                auto const& uj = measured_estimated_u[col];
+                auto const& uj = current_u[col];
                 auto const ui_uj_conj = vector_outer_product(ui, conj(uj));
 
                 RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
@@ -219,7 +215,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 }
                 // fill block with voltage measurement, only diagonal
                 if ((row == col) && measured_value.has_voltage(row)) {
-                    add_voltage_measurments(block, rhs_block, measured_value, measured_estimated_u, row);
+                    add_voltage_measurments(block, rhs_block, measured_value, current_u, row);
                 }
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -321,7 +317,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                         block.r_Q_v() += RealTensor<sym>{
                             RealValue<sym>{RealValue<sym>{1.0} / injection.q_variance / injection.q_variance}};
                     } else {
-
                         // subtract f(x) incrementally
                         rhs_block.tau_p() -= real(calculated_power);
                         rhs_block.tau_q() -= imag(calculated_power);
