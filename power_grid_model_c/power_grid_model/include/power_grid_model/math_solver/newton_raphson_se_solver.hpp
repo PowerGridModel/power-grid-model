@@ -461,7 +461,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         // if no angle measurement is present
         double const angle_offset = [&]() -> double {
             if (has_angle) {
-                return 1.0;
+                return 0.0;
             }
             if constexpr (sym) {
                 return x_[math_topo_->slack_bus].theta() + del_x_rhs_[math_topo_->slack_bus].theta();
