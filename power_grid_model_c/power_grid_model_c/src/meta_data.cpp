@@ -33,10 +33,12 @@ auto const meta_catch = [](PGM_Handle* handle, auto func) -> decltype(auto) {
 // dataset
 PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return meta_data::meta_data.n_datasets(); }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
-    if (idx >= meta_data::meta_data.n_datasets()) {
-        throw std::out_of_range{"Index out of range!\n"};
-    }
-    return meta_catch(handle, [idx]() { return &meta_data::meta_data.datasets[idx]; });
+    return meta_catch(handle, [idx]() {
+        if (idx >= meta_data::meta_data.n_datasets()) {
+            throw std::out_of_range{"Index out of range!\n"};
+        }
+        return &meta_data::meta_data.datasets[idx];
+    });
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
     return meta_catch(handle, [dataset]() { return &meta_data::meta_data.get_dataset(dataset); });
@@ -48,10 +50,12 @@ PGM_Idx PGM_meta_n_components(PGM_Handle* /* handle */, PGM_MetaDataset const* d
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
                                                        PGM_Idx idx) {
-    if (idx >= dataset->n_components()) {
-        throw std::out_of_range{"Index out of range!\n"};
-    }
-    return meta_catch(handle, [idx, dataset]() { return &dataset->components[idx]; });
+    return meta_catch(handle, [idx, dataset]() {
+        if (idx >= dataset->n_components()) {
+            throw std::out_of_range{"Index out of range!\n"};
+        }
+        return &dataset->components[idx];
+    });
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
                                                         char const* component) {
@@ -71,10 +75,12 @@ PGM_Idx PGM_meta_n_attributes(PGM_Handle* /* handle */, PGM_MetaComponent const*
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
                                                        PGM_Idx idx) {
-    if (idx >= component->n_attributes()) {
-        throw std::out_of_range{"Index out of range!\n"};
-    }
-    return meta_catch(handle, [idx, component]() { return &component->attributes[idx]; });
+    return meta_catch(handle, [idx, component]() {
+        if (idx >= component->n_attributes()) {
+            throw std::out_of_range{"Index out of range!\n"};
+        }
+        return &component->attributes[idx];
+    });
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset, char const* component,
                                                         char const* attribute) {
