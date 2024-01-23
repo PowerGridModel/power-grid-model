@@ -390,11 +390,7 @@ template <bool sym> class MeasuredValues {
             accumulated_inverse_variance += inv_variance;
             if constexpr (only_magnitude) {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                if (is_nan(imag(measurement.value))) {
-                    abs_value += real(measurement.value); // only keep real part
-                } else {
-                    abs_value += cabs(measurement.value); // get abs of the value
-                }
+                abs_value += cabs_or_real<sym>(measurement.value);
                 accumulated_value += abs_value * inv_variance;
             } else {
                 // accumulate value

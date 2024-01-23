@@ -127,8 +127,8 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-concept rk2_tensor =
-    (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
+concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
+                      static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
@@ -169,6 +169,14 @@ template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> c) {
         return real(c);
     } else {
         return c.real();
+    }
+}
+
+template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    } else {
+        return cabs(value); // get abs of the value
     }
 }
 
