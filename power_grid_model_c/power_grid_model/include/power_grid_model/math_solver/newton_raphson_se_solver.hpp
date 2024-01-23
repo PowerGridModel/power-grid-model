@@ -128,6 +128,8 @@ template <bool sym> class NewtonRaphsonSESolver {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             x_[bus].v() = 1.0;
             x_[bus].theta() = mean_angle_shift + math_topo_->phase_shift[bus];
+            x_[bus].phi_p() = 0.0;
+            x_[bus].phi_q() = 0.0;
             output.u[bus] = exp(1.0i * x_[bus].theta());
         }
 
