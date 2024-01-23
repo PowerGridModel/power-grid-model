@@ -8,6 +8,7 @@
 
 #include "input.hpp"
 #include "meta_data.hpp"
+#include "meta_gen/gen_getters.hpp"
 #include "meta_gen/input.hpp"
 #include "meta_gen/output.hpp"
 #include "meta_gen/update.hpp"
@@ -23,52 +24,38 @@
 // generate of meta data
 namespace power_grid_model::meta_data {
 
-using DatasetMap = std::map<std::string, MetaComponent, std::less<>>;
-using AllDatasetMap = std::map<std::string, DatasetMap, std::less<>>;
+namespace meta_data_gen {
 
-// template function to add meta data
-template <class CT> inline void add_meta_data(AllDatasetMap& meta) {
-    meta["input"].try_emplace(CT::name, MetaComponentImpl<typename CT::InputType>{}, CT::name);
-    meta["update"].try_emplace(CT::name, MetaComponentImpl<typename CT::UpdateType>{}, CT::name);
-    meta["sym_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::template OutputType<true>>{}, CT::name);
-    meta["asym_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::template OutputType<false>>{}, CT::name);
-    meta["sc_output"].try_emplace(CT::name, MetaComponentImpl<typename CT::ShortCircuitOutputType>{}, CT::name);
-}
-
-template <class T> struct MetaDataGeneratorImpl;
-
-template <class... ComponentType> struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
-    using FuncPtr = std::add_pointer_t<void(AllDatasetMap& meta)>;
-    static constexpr std::array<FuncPtr, sizeof...(ComponentType)> func_arr{&add_meta_data<ComponentType>...};
-
-    static MetaData create_meta() {
-        // get all dataset map
-        AllDatasetMap all_map{};
-        for (auto const func : func_arr) {
-            func(all_map);
-        }
-
-        // create meta data set
-        MetaData meta{};
-        for (auto const* const dataset_name : {"input", "update", "sym_output", "asym_output", "sc_output"}) {
-            DatasetMap const& single_map = all_map.at(dataset_name);
-            MetaDataset meta_dataset{};
-            meta_dataset.name = dataset_name;
-            for (auto const& [component_name, meta_component] : single_map) {
-                meta_dataset.components.push_back(meta_component);
-            }
-            meta.datasets.push_back(meta_dataset);
-        }
-        return meta;
-    }
+// list of all dataset names
+template <class T> struct input_getter_s {
+    using type = typename T::InputType;
+};
+template <class T> struct update_getter_s {
+    using type = typename T::UpdateType;
+};
+template <class T> struct sym_output_getter_s {
+    using type = typename T::template OutputType<true>;
+};
+template <class T> struct asym_output_getter_s {
+    using type = typename T::template OutputType<false>;
+};
+template <class T> struct sc_output_getter_s {
+    using type = typename T::ShortCircuitOutputType;
 };
 
-using MetaDataGenerator = MetaDataGeneratorImpl<AllComponents>;
+// generate meta data
+constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
+                                             dataset_mark<[] { return "input"; }, input_getter_s>,
+                                             dataset_mark<[] { return "update"; }, update_getter_s>,
+                                             dataset_mark<[] { return "sym_output"; }, sym_output_getter_s>,
+                                             dataset_mark<[] { return "asym_output"; }, asym_output_getter_s>,
+                                             dataset_mark<[] { return "sc_output"; }, sc_output_getter_s>
+                                             // end list of all marks
+                                             >::value;
 
-inline MetaData const& meta_data() {
-    static MetaData const meta_data = MetaDataGenerator::create_meta();
-    return meta_data;
-}
+} // namespace meta_data_gen
+
+constexpr MetaData meta_data = meta_data_gen::meta_data;
 
 } // namespace power_grid_model::meta_data
 

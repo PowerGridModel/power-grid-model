@@ -15,9 +15,7 @@ using namespace power_grid_model::meta_data;
 
 // dataset info
 
-char const* PGM_dataset_info_name(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) {
-    return info->dataset->name.c_str();
-}
+char const* PGM_dataset_info_name(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) { return info->dataset->name; }
 
 PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info) {
     return static_cast<PGM_Idx>(info->is_batch);
@@ -31,7 +29,7 @@ PGM_Idx PGM_dataset_info_n_components(PGM_Handle* /*unused*/, PGM_DatasetInfo co
 
 char const* PGM_dataset_info_component_name(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info,
                                             PGM_Idx component_idx) {
-    return info->component_info[component_idx].component->name.c_str();
+    return info->component_info[component_idx].component->name;
 }
 
 PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* /*unused*/, PGM_DatasetInfo const* info,
