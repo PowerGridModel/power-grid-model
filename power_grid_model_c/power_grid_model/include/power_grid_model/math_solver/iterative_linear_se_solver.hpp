@@ -259,7 +259,7 @@ template <bool sym> class IterativeLinearSESolver {
         std::vector<BranchIdx> const branch_bus_idx = y_bus.math_topology().branch_bus_idx;
         // get generated (measured/estimated) voltage phasor
         // with current result voltage angle
-        ComplexValueVector<sym> u = measured_value.voltage(current_u);
+        ComplexValueVector<sym> u = linearize_voltage(current_u, measured_value);
 
         // loop all bus to fill rhs
         for (Idx bus = 0; bus != n_bus_; ++bus) {
@@ -324,9 +324,9 @@ template <bool sym> class IterativeLinearSESolver {
                 return 1.0;
             }
             if constexpr (sym) {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
+                return cabs(x_rhs_[math_topo_->slack_bus].u()) / x_rhs_[math_topo_->slack_bus].u();
             } else {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
+                return cabs(x_rhs_[math_topo_->slack_bus].u()(0)) / x_rhs_[math_topo_->slack_bus].u()(0);
             }
         }();
 
@@ -349,6 +349,32 @@ template <bool sym> class IterativeLinearSESolver {
         output.bus_injection = y_bus.calculate_injection(output.u);
         std::tie(output.load_gen, output.source) =
             measured_value.calculate_load_gen_source(output.u, output.bus_injection);
+    }
+
+    // getter of voltage value for all buses
+    // for no measurement, the voltage phasor is used from the current iteration
+    // for magnitude only measurement, angle is added from the current iteration
+    // for magnitude and angle measurement, the measured phasor is returned
+    ComplexValueVector<sym> linearize_voltage(ComplexValueVector<sym> const& current_u,
+                                              MeasuredValues<sym> const& measured_values) const {
+        ComplexValueVector<sym> u(current_u.size());
+
+        for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
+            // no measurement
+            if (!measured_values.has_voltage(bus)) {
+                u[bus] = current_u[bus];
+            }
+            // no angle measurement
+            else if (!measured_values.has_angle_measurement(bus)) {
+                u[bus] = real(measured_values.voltage(bus)) * current_u[bus] /
+                         cabs(current_u[bus]); // U / |U| to get angle shift
+            }
+            // full measurement
+            else {
+                u[bus] = measured_values.voltage(bus);
+            }
+        }
+        return u;
     }
 };
 

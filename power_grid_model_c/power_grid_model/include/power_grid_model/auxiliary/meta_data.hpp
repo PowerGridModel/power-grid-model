@@ -12,6 +12,7 @@
 #include "../three_phase_tensor.hpp"
 
 #include <bit>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -22,13 +23,15 @@ template <class T> struct trait_pointer_to_member;
 template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
-template <class StructType, auto member_ptr> inline size_t get_offset() {
-    StructType const obj{};
-    return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
-}
 
-// empty template functor classes to generate attributes list
+// primary template to get the attribute list of a component
+// the specializations will contain static constexpr "value" field
+//    which is a std::array
+// the specializations are automatically generated
 template <class T> struct get_attributes_list;
+// primary template functor classes to generate nan value for a component
+// the specializations will contain operator() to return a component instance with NaNs
+// the specializations are automatically generated
 template <class T> struct get_component_nan;
 
 // ctype string
@@ -86,50 +89,9 @@ using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr
 
 // meta attribute
-template <class StructType, auto member_ptr> struct MetaAttributeImpl {
-    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    static bool check_nan(RawDataConstPtr buffer_ptr, Idx pos) {
-        return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
-    }
-    static bool check_all_nan(RawDataConstPtr buffer_ptr, Idx size) {
-        return std::all_of(IdxCount{0}, IdxCount{size}, [buffer_ptr](Idx i) { return check_nan(buffer_ptr, i); });
-    }
-    static void set_value(RawDataPtr buffer_ptr, RawDataConstPtr value_ptr, Idx pos) {
-        (reinterpret_cast<StructType*>(buffer_ptr) + pos)->*member_ptr = *reinterpret_cast<ValueType const*>(value_ptr);
-    }
-    static void get_value(RawDataConstPtr buffer_ptr, RawDataPtr value_ptr, Idx pos) {
-        *reinterpret_cast<ValueType*>(value_ptr) = (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
-    }
-    static bool compare_value(RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, Idx pos) {
-        ValueType const& x = (reinterpret_cast<StructType const*>(ptr_x) + pos)->*member_ptr;
-        ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
-        if constexpr (std::same_as<ValueType, double>) {
-            return std::abs(y - x) < (std::abs(x) * rtol + atol);
-        } else if constexpr (std::same_as<ValueType, RealValue<false>>) {
-            return (abs(y - x) < (abs(x) * rtol + atol)).all();
-        } else {
-            return x == y;
-        }
-    }
-};
-
 struct MetaAttribute {
-    template <class StructType, auto member_ptr,
-              class ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type>
-    MetaAttribute(MetaAttributeImpl<StructType, member_ptr> /* attribute_data */, std::string attr_name)
-        : name{std::move(attr_name)},
-          ctype{ctype_v<ValueType>},
-          offset{get_offset<StructType, member_ptr>()},
-          size{sizeof(ValueType)},
-          component_size{sizeof(StructType)},
-          check_nan{MetaAttributeImpl<StructType, member_ptr>::check_nan},
-          check_all_nan{MetaAttributeImpl<StructType, member_ptr>::check_all_nan},
-          set_value{MetaAttributeImpl<StructType, member_ptr>::set_value},
-          get_value{MetaAttributeImpl<StructType, member_ptr>::get_value},
-          compare_value{MetaAttributeImpl<StructType, member_ptr>::compare_value} {}
-
     // meta data
-    std::string name;
+    char const* name{};
     CType ctype{};
     size_t offset{};
     size_t size{};
@@ -151,32 +113,12 @@ struct MetaAttribute {
 };
 
 // meta component
-template <class StructType> struct MetaComponentImpl {
-    static RawDataPtr create_buffer(Idx size) { return new StructType[size]; }
-    static void destroy_buffer(RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); }
-    static void set_nan(RawDataPtr buffer_ptr, Idx pos, Idx size) {
-        static StructType const nan_value = get_component_nan<StructType>{}();
-        auto ptr = reinterpret_cast<StructType*>(buffer_ptr);
-        std::fill(ptr + pos, ptr + pos + size, nan_value);
-    }
-};
-
 struct MetaComponent {
-    template <class StructType>
-    MetaComponent(MetaComponentImpl<StructType> /* component_data */, std::string comp_name)
-        : name{std::move(comp_name)},
-          size{sizeof(StructType)},
-          alignment{alignof(StructType)},
-          attributes{get_attributes_list<StructType>{}()},
-          set_nan{MetaComponentImpl<StructType>::set_nan},
-          create_buffer{MetaComponentImpl<StructType>::create_buffer},
-          destroy_buffer{MetaComponentImpl<StructType>::destroy_buffer} {}
-
     // meta data
-    std::string name;
+    char const* name;
     size_t size;
     size_t alignment;
-    std::vector<MetaAttribute> attributes;
+    std::span<MetaAttribute const> attributes;
 
     // function pointers
     std::add_pointer_t<void(RawDataPtr, Idx, Idx)> set_nan;
@@ -212,9 +154,10 @@ struct MetaComponent {
     }
 };
 
+// meta dataset
 struct MetaDataset {
-    std::string name;
-    std::vector<MetaComponent> components;
+    char const* name;
+    std::span<MetaComponent const> components;
 
     Idx n_components() const { return static_cast<Idx>(components.size()); }
 
@@ -230,7 +173,7 @@ struct MetaDataset {
 
 // meta data
 struct MetaData {
-    std::vector<MetaDataset> datasets;
+    std::span<MetaDataset const> datasets;
 
     Idx n_datasets() const { return static_cast<Idx>(datasets.size()); }
 

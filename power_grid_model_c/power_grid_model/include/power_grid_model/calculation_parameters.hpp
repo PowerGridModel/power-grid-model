@@ -112,7 +112,7 @@ using BranchIdx = std::array<Idx, 2>;
 using Branch3Idx = std::array<Idx, 3>;
 
 struct MathModelTopology {
-    Idx slack_bus_{};
+    Idx slack_bus{};
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;

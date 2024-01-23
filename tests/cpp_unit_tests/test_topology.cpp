@@ -244,7 +244,7 @@ TEST_CASE("Test topology") {
 
     // Sub graph / math model 0
     MathModelTopology math0;
-    math0.slack_bus_ = 4;
+    math0.slack_bus = 4;
     math0.sources_per_bus = {from_sparse, {0, 0, 0, 0, 0, 1}};
     math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
     math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
@@ -265,7 +265,7 @@ TEST_CASE("Test topology") {
 
     // Sub graph / math model 1
     MathModelTopology math1;
-    math1.slack_bus_ = 3;
+    math1.slack_bus = 3;
     math1.sources_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
     math1.branch_bus_idx = {
         {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
@@ -303,7 +303,7 @@ TEST_CASE("Test topology") {
         for (size_t i = 0; i < math_topology.size(); i++) {
             auto const& math = *math_topology[i];
             auto const& math_ref = math_topology_ref[i];
-            CHECK(math.slack_bus_ == math_ref.slack_bus_);
+            CHECK(math.slack_bus == math_ref.slack_bus);
             CHECK(math.n_bus() == math_ref.n_bus());
             check_equal(math.sources_per_bus, math_ref.sources_per_bus);
             CHECK(math.branch_bus_idx == math_ref.branch_bus_idx);

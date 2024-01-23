@@ -127,8 +127,8 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
 template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-concept rk2_tensor =
-    (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
+concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
+                      static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
@@ -152,24 +152,6 @@ inline double cabs(DoubleComplex const& x) { return std::sqrt(std::norm(x)); }
 inline double abs2(DoubleComplex const& x) { return std::norm(x); }
 template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
     return sqrt(abs2(m));
-}
-
-// imag and real value retrieval
-// TODO Change to single value and arraybase
-template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> c) {
-    if constexpr (sym) {
-        return imag(c);
-    } else {
-        return c.imag();
-    }
-}
-
-template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> c) {
-    if constexpr (sym) {
-        return real(c);
-    } else {
-        return c.real();
-    }
 }
 
 // calculate kron product of two vector
@@ -359,6 +341,31 @@ inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& val
         set_if_not_nan(target(i), value(i));
     }
 };
+
+// imag and real value retrieval
+// TODO Change to single value and arraybase
+template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> const& c) {
+    if constexpr (sym) {
+        return imag(c);
+    } else {
+        return c.imag();
+    }
+}
+
+template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> const& c) {
+    if constexpr (sym) {
+        return real(c);
+    } else {
+        return c.real();
+    }
+}
+
+template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    }
+    return cabs(value); // get abs of the value
+}
 
 // symmetric component matrix
 inline ComplexTensor<false> get_sym_matrix() {

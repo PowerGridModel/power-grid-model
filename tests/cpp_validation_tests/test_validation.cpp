@@ -123,7 +123,7 @@ auto load_dataset(std::filesystem::path const& path) {
 // create single result set
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
                                     Idx batch_size = 1) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+    MetaDataset const& meta = meta_data.get_dataset(data_type);
     WritableDatasetHandler handler{is_batch, batch_size, meta.name};
 
     for (auto const& [name, data_ptr] : input.const_dataset) {
@@ -209,7 +209,8 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+    using namespace std::string_literals;
+    MetaDataset const& meta = meta_data.get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
     // loop all scenario
     for (Idx scenario = 0; scenario != batch_size; ++scenario) {
@@ -225,7 +226,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
-                if (attr.name == "u_angle") {
+                if (attr.name == "u_angle"s) {
                     continue;
                 }
                 // get absolute tolerance
@@ -239,7 +240,8 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 // for other _angle attribute, we need to find the magnitue and compare together
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
-                bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                std::string const attr_name = attr.name;
+                bool const is_angle = std::regex_match(attr_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
                 MetaAttribute const& possible_attr_magnitude =
                     is_angle ? component_meta.get_attribute(magnitude_name) : attr;

@@ -57,49 +57,24 @@ template <bool sym> class MeasuredValues {
         normalize_variance();
     }
 
-    // checker of measured data, return true if measurement is available
+    constexpr bool has_angle() const { return n_voltage_angle_measurements_ > 0; }
+    constexpr bool has_voltage_measurements() const { return n_voltage_measurements_ > 0; }
+
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
+    constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }
     constexpr bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
     constexpr bool has_branch_from(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
     constexpr bool has_branch_to(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
     constexpr bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
     constexpr bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
     constexpr bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
-    constexpr bool has_angle() const { return n_angle_ > 0; }
-    constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage_at_bus(bus))); }
 
     // getter of measurement and variance
     // if the obj is not measured, it is undefined behaviour to call this function
     // use checker first
 
-    // getter of voltage variance
-    double voltage_var(Idx bus) const { return voltage_main_value_[idx_voltage_[bus]].variance; }
-    // getter of voltage value for all buses
-    // for no measurement, the voltage phasor is used from the current iteration
-    // for magnitude only measurement, angle is added from the current iteration
-    // for magnitude and angle measurement, the measured phasor is returned
-    ComplexValueVector<sym> voltage(ComplexValueVector<sym> const& current_u) const {
-        ComplexValueVector<sym> u(current_u.size());
-        for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
-            // no measurement
-            if (idx_voltage_[bus] == unmeasured) {
-                u[bus] = current_u[bus];
-            }
-            // no angle measurement
-            else if (!has_angle_measurement(bus)) {
-                u[bus] =
-                    real(voltage_at_bus(bus)) * current_u[bus] / cabs(current_u[bus]); // U / |U| to get angle shift
-            }
-            // full measurement
-            else {
-                u[bus] = voltage_at_bus(bus);
-            }
-        }
-        return u;
-    }
-
-    constexpr auto const& voltage_at_bus(Idx bus) const { return voltage_main_value_[idx_voltage_[bus]].value; }
-    // power measurement
+    constexpr double voltage_var(Idx bus) const { return voltage_main_value_[idx_voltage_[bus]].variance; }
+    constexpr auto const& voltage(Idx bus) const { return voltage_main_value_[idx_voltage_[bus]].value; }
     constexpr auto const& bus_injection(Idx bus) const {
         return power_main_value_[bus_injection_[bus].idx_bus_injection];
     }
@@ -110,6 +85,11 @@ template <bool sym> class MeasuredValues {
     constexpr auto const& shunt_power(Idx shunt) const { return power_main_value_[idx_shunt_power_[shunt]]; }
     constexpr auto const& load_gen_power(Idx load_gen) const { return extra_value_[idx_load_gen_power_[load_gen]]; }
     constexpr auto const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
+
+    constexpr auto first_voltage_measurement() const {
+        assert(has_voltage_measurements());
+        return first_voltage_measurement_;
+    }
 
     // getter mean angle shift
     RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
@@ -178,11 +158,14 @@ template <bool sym> class MeasuredValues {
     // relevant for extra value
     IdxVector idx_load_gen_power_;
     IdxVector idx_source_power_;
-    // number of angle measurement
-    Idx n_angle_{};
+
+    Idx n_voltage_measurements_{};
+    Idx n_voltage_angle_measurements_{}; // number of angle measurement
+
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
+    Idx first_voltage_measurement_{};
 
     constexpr MathModelTopology const& math_topology() const { return *math_topology_; }
 
@@ -228,9 +211,14 @@ template <bool sym> class MeasuredValues {
         }
 
         // assign a meaningful mean angle shift, if at least one voltage has angle measurement
-        if (n_angle_ > 0) {
-            mean_angle_shift_ = angle_cum / n_angle_;
+        if (has_angle()) {
+            mean_angle_shift_ = angle_cum / n_voltage_angle_measurements_;
         }
+
+        auto const is_measured = [](auto const& value) { return value >= 0; };
+        n_voltage_measurements_ = std::ranges::count_if(idx_voltage_, is_measured);
+        first_voltage_measurement_ =
+            std::distance(idx_voltage_.begin(), std::ranges::find_if(idx_voltage_, is_measured));
     }
 
     RealValue<sym> process_bus_voltage_measurements(Idx bus, IdxRange const& sensors,
@@ -257,7 +245,7 @@ template <bool sym> class MeasuredValues {
             idx_voltage_[bus] = static_cast<Idx>(voltage_main_value_.size());
             voltage_main_value_.push_back(aggregated);
             if (angle_measured) {
-                ++n_angle_;
+                ++n_voltage_angle_measurements_;
                 // accumulate angle, offset by intrinsic phase shift
                 angle_cum = arg(aggregated.value * std::exp(-1.0i * math_topology().phase_shift[bus]));
             }
@@ -402,11 +390,7 @@ template <bool sym> class MeasuredValues {
             accumulated_inverse_variance += inv_variance;
             if constexpr (only_magnitude) {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                if (is_nan(imag(measurement.value))) {
-                    abs_value += real(measurement.value); // only keep real part
-                } else {
-                    abs_value += cabs(measurement.value); // get abs of the value
-                }
+                abs_value += cabs_or_real<sym>(measurement.value);
                 accumulated_value += abs_value * inv_variance;
             } else {
                 // accumulate value
@@ -521,10 +505,11 @@ template <bool sym> class MeasuredValues {
         }
 
         // scale
-        std::ranges::for_each(voltage_main_value_, [min_var](auto& x) { x.variance /= min_var; });
-        std::ranges::for_each(power_main_value_, [min_var](auto& x) {
-            x.p_variance /= min_var;
-            x.q_variance /= min_var;
+        auto inv_norm_var = 1.0 / min_var;
+        std::ranges::for_each(voltage_main_value_, [inv_norm_var](auto& x) { x.variance *= inv_norm_var; });
+        std::ranges::for_each(power_main_value_, [inv_norm_var](auto& x) {
+            x.p_variance *= inv_norm_var;
+            x.q_variance *= inv_norm_var;
         });
     }
 
