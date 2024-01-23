@@ -14,6 +14,8 @@
 
 namespace power_grid_model::meta_data {
 
+using namespace std::string_literals;
+
 // single data
 namespace {
 constexpr std::string_view json_single = R"(
@@ -263,7 +265,7 @@ TEST_CASE("Deserializer") {
         Deserializer deserializer{from_json, json_single};
 
         SUBCASE("Check meta data") {
-            CHECK(deserializer.get_dataset_info().dataset().name == "input");
+            CHECK(deserializer.get_dataset_info().dataset().name == "input"s);
             CHECK(!deserializer.get_dataset_info().is_batch());
             CHECK(deserializer.get_dataset_info().batch_size() == 1);
             CHECK(deserializer.get_dataset_info().n_components() == 4);
@@ -337,7 +339,7 @@ TEST_CASE("Deserializer") {
         Deserializer deserializer{from_json, json_batch};
 
         SUBCASE("Check meta data") {
-            CHECK(deserializer.get_dataset_info().dataset().name == "update");
+            CHECK(deserializer.get_dataset_info().dataset().name == "update"s);
             CHECK(deserializer.get_dataset_info().is_batch());
             CHECK(deserializer.get_dataset_info().batch_size() == 4);
             CHECK(deserializer.get_dataset_info().n_components() == 2);

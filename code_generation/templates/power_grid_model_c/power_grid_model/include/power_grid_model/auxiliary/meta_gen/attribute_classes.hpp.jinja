@@ -9,16 +9,18 @@
 #ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_{{ include_guard }}_HPP
 #define POWER_GRID_MODEL_AUXILIARY_META_GEN_{{ include_guard }}_HPP
 
-#include "../../enum.hpp" // NOLINT
-#include "../../power_grid_model.hpp" // NOLINT
+#include "gen_getters.hpp" // NOLINT
+
+#include "../../enum.hpp"               // NOLINT
+#include "../../power_grid_model.hpp"   // NOLINT
 #include "../../three_phase_tensor.hpp" // NOLINT
-#include "../meta_data.hpp" // NOLINT
+#include "../meta_data.hpp"             // NOLINT
 #include "../{{ name }}.hpp" // NOLINT
 
 
 namespace power_grid_model::meta_data {
 
-// template specialization functors to get attributes
+// template specialization to get list of attributes in the value field
 
 {% for attribute_class in classes -%}
 
@@ -29,14 +31,12 @@ struct get_attributes_list<{{ attribute_class.name }}<sym>> {
 template<>
 struct get_attributes_list<{{ attribute_class.name }}> {
 {%- endif %}
-    std::vector<MetaAttribute> operator() () const {
-        // all attributes including base class
-        return {
+    static constexpr std::array<MetaAttribute, {{ attribute_class.full_attributes|length }}> value{
+            // all attributes including base class
             {% for attribute in attribute_class.full_attributes %}
-            {MetaAttributeImpl<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}>{}, "{{ attribute.names }}"},
+            meta_data_gen::get_meta_attribute<{{ attribute_class.full_name }}, &{{ attribute_class.full_name }}::{{ attribute.names }}, offsetof({{ attribute_class.full_name }}, {{ attribute.names }}), []{ return "{{ attribute.names }}"; }>::value,
             {%- endfor %}
-        };
-    }
+    };
 };
 
 {% endfor %}

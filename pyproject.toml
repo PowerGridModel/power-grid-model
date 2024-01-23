@@ -31,7 +31,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.21.0",
 ]
@@ -76,10 +76,11 @@ version = {file = "PYPI_VERSION"}
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=95"]
+xfail_strict = true
 
 [tool.black]
 line-length = 120
-target-version = ['py38']
+target-version = ['py39']
 
 [tool.isort]
 profile = "black"
@@ -105,9 +106,8 @@ test-extras = ["dev"]
 test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
-#    musllinux when python < 3.9
 #    musllinux in aarch64
-skip = ["pp*", "cp38-musllinux*", "*-musllinux_aarch64"]
+skip = ["pp*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]

@@ -42,6 +42,7 @@ class Options:
     max_iterations = OptionSetter(pgc.set_max_iter)
     threading = OptionSetter(pgc.set_threading)
     short_circuit_voltage_scaling = OptionSetter(pgc.set_short_circuit_voltage_scaling)
+    experimental_features = OptionSetter(pgc.set_experimental_features)
 
     @property
     def opt(self) -> OptionsPtr:

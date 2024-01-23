@@ -123,7 +123,7 @@ auto load_dataset(std::filesystem::path const& path) {
 // create single result set
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
                                     Idx batch_size = 1) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+    MetaDataset const& meta = meta_data.get_dataset(data_type);
     WritableDatasetHandler handler{is_batch, batch_size, meta.name};
 
     for (auto const& [name, data_ptr] : input.const_dataset) {
@@ -209,7 +209,8 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
 // assert single result
 void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
                    std::map<std::string, double> atol, double rtol) {
-    MetaDataset const& meta = meta_data().get_dataset(data_type);
+    using namespace std::string_literals;
+    MetaDataset const& meta = meta_data.get_dataset(data_type);
     Idx const batch_size = result.cbegin()->second.batch_size();
     // loop all scenario
     for (Idx scenario = 0; scenario != batch_size; ++scenario) {
@@ -225,7 +226,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
-                if (attr.name == "u_angle") {
+                if (attr.name == "u_angle"s) {
                     continue;
                 }
                 // get absolute tolerance
@@ -239,7 +240,8 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 // for other _angle attribute, we need to find the magnitue and compare together
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
-                bool const is_angle = std::regex_match(attr.name, angle_match, angle_regex);
+                std::string const attr_name = attr.name;
+                bool const is_angle = std::regex_match(attr_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
                 MetaAttribute const& possible_attr_magnitude =
                     is_angle ? component_meta.get_attribute(magnitude_name) : attr;
@@ -262,7 +264,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     } else {
                         std::stringstream case_sstr;
-                        case_sstr << "scenario: #" << scenario << ", Component: " << type_name << " #" << obj
+                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << type_name << " #" << obj
                                   << ", attribute: " << attr.name
                                   << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
                                   << get_as_string(reference_result_ptr, attr, obj);
@@ -400,11 +402,18 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     } else {
         j_atol.get_to(param.atol);
     }
-    if (j.contains("fail")) {
-        j.at("fail").get_to(param.fail);
+
+    json calculation_method_params;
+    calculation_method_params.update(j, true);
+    if (j.contains("extra_params")) {
+        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
+            calculation_method_params.update(extra_params.at(calculation_method), true);
+        }
     }
+
+    param.fail = calculation_method_params.contains("fail");
     if (calculation_type == "short_circuit") {
-        j.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
+        calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
@@ -552,6 +561,8 @@ void validate_batch_case(CaseParam const& param) {
 
         // run in loops
         for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
+            CAPTURE(scenario);
+
             MainModel model_copy{model};
 
             // update and run
@@ -567,6 +578,8 @@ void validate_batch_case(CaseParam const& param) {
         // run in one-go, with different threading possibility
         auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, n_scenario);
         for (Idx const threading : {-1, 0, 1, 2}) {
+            CAPTURE(threading);
+
             func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
                  validation_case.update_batch.const_dataset, threading);
 

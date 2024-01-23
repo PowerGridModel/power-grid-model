@@ -763,7 +763,7 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cac
     auto main_model = default_model(state);
 
     std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"source", ConstDataPointer{source_update2.data(), static_cast<Idx>(source_update2.size())}}};
     CHECK_THROWS_AS((main_model.update_component<typename settings::update_type>(update_data)), IDNotFound);
 }
@@ -772,7 +772,7 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
     State state;
     auto main_model = default_model(state);
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load",
          ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
@@ -816,7 +816,7 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
 
     state.sym_load_update[0].p_specified = 2.5e6;
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
         {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
@@ -860,7 +860,7 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
 
     state.sym_load_update[0].p_specified = 2.5e6;
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
         {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}},
@@ -908,7 +908,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
 
     auto const math_output_orig = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
 
-    ConstDataset update_data{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load",
          ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
@@ -1089,36 +1089,43 @@ TEST_CASE("Test main model - runtime dispatch") {
     }
 }
 
-TEST_CASE("Test main model - incomplete input but complete dataset") {
+namespace {
+auto incomplete_input_model(State const& state) -> MainModel {
+    MainModel main_model{50.0};
+
+    std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
+                                                           {10, 3, 1, nan, nan, 1e12, nan, nan}};
+    std::vector<SymLoadGenInput> const incomplete_sym_load_input{{7, 3, 1, LoadGenType::const_y, nan, 0.0}};
+    std::vector<AsymLoadGenInput> const incomplete_asym_load_input{
+        {8, 3, 1, LoadGenType::const_y, RealValue<false>{nan}, RealValue<false>{0.0}}};
+
+    main_model.add_component<Node>(state.node_input);
+    main_model.add_component<Line>(state.line_input);
+    main_model.add_component<Link>(state.link_input);
+    main_model.add_component<Source>(incomplete_source_input);
+    main_model.add_component<SymLoad>(incomplete_sym_load_input);
+    main_model.add_component<AsymLoad>(incomplete_asym_load_input);
+    main_model.add_component<Shunt>(state.shunt_input);
+    main_model.set_construction_complete();
+
+    return main_model;
+}
+} // namespace
+
+TEST_CASE("Test main model - incomplete input") {
     using CalculationMethod::iterative_current;
     using CalculationMethod::linear;
     using CalculationMethod::linear_current;
     using CalculationMethod::newton_raphson;
 
-    State state;
+    State const state;
     auto main_model = default_model(state);
-
-    std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
-                                                           {10, 3, 1, nan, nan, 1e12, nan, nan}};
-    std::vector<SymLoadGenInput> incomplete_sym_load_input{{7, 3, 1, LoadGenType::const_y, nan, nan}};
-    std::vector<AsymLoadGenInput> incomplete_asym_load_input{
-        {8, 3, 1, LoadGenType::const_y, RealValue<false>{nan}, RealValue<false>{nan}}};
-
-    ConstDataset input_data;
-    input_data["node"] = DataPointer<true>{state.node_input.data(), static_cast<Idx>(state.node_input.size())};
-    input_data["line"] = DataPointer<true>{state.line_input.data(), static_cast<Idx>(state.line_input.size())};
-    input_data["link"] = DataPointer<true>{state.link_input.data(), static_cast<Idx>(state.link_input.size())};
-    input_data["source"] = DataPointer<true>{state.source_input.data(), static_cast<Idx>(state.source_input.size())};
-    input_data["sym_load"] =
-        DataPointer<true>{incomplete_sym_load_input.data(), static_cast<Idx>(incomplete_sym_load_input.size())};
-    input_data["asym_load"] =
-        DataPointer<true>{incomplete_asym_load_input.data(), static_cast<Idx>(incomplete_asym_load_input.size())};
-    input_data["shunt"] = DataPointer<true>{state.shunt_input.data(), static_cast<Idx>(state.shunt_input.size())};
+    auto test_model = incomplete_input_model(state);
 
     std::vector<SourceUpdate> complete_source_update{{6, 1, 1.05, nan}, {10, 1, 1.05, 0}};
-    std::vector<SymLoadGenUpdate> complete_sym_load_update{{7, 1, 0.5e6, 0.0}};
+    std::vector<SymLoadGenUpdate> complete_sym_load_update{{7, 1, 0.5e6, nan}};
     std::vector<AsymLoadGenUpdate> complete_asym_load_update{
-        {8, 1, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{0.0}}};
+        {8, 1, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{nan}}};
 
     ConstDataset update_data;
     update_data["source"] =
@@ -1128,13 +1135,25 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
     update_data["asym_load"] =
         DataPointer<true>{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
 
-    MainModel test_model{50.0, input_data};
+    std::vector<SourceUpdate> incomplete_source_update{{6, na_IntS, nan, nan}, {10, na_IntS, nan, nan}};
+    std::vector<SymLoadGenUpdate> incomplete_sym_load_update{{7, na_IntS, nan, nan}};
+    std::vector<AsymLoadGenUpdate> incomplete_asym_load_update{
+        {8, na_IntS, RealValue<false>{nan}, RealValue<false>{nan}}};
+
+    ConstDataset incomplete_update_data;
+    incomplete_update_data["source"] =
+        DataPointer<true>{incomplete_source_update.data(), static_cast<Idx>(incomplete_source_update.size())};
+    incomplete_update_data["sym_load"] =
+        DataPointer<true>{incomplete_sym_load_update.data(), static_cast<Idx>(incomplete_sym_load_update.size())};
+    incomplete_update_data["asym_load"] =
+        DataPointer<true>{incomplete_asym_load_update.data(), static_cast<Idx>(incomplete_asym_load_update.size())};
+
     MainModel const ref_model{main_model};
 
     Dataset test_result_data;
     Dataset ref_result_data;
 
-    SUBCASE("Symmetrical") {
+    SUBCASE("Symmetrical - Complete") {
         std::vector<NodeOutput<true>> test_sym_node(state.sym_node.size());
         std::vector<NodeOutput<true>> ref_sym_node(state.sym_node.size());
         test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
@@ -1165,7 +1184,7 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
         CHECK(test_sym_node[2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
     }
 
-    SUBCASE("Asymmetrical") {
+    SUBCASE("Asymmetrical - Complete") {
         std::vector<NodeOutput<false>> test_asym_node(state.asym_node.size());
         std::vector<NodeOutput<false>> ref_asym_node(state.asym_node.size());
         test_result_data["node"] = DataPointer<false>{test_asym_node.data(), static_cast<Idx>(test_asym_node.size())};
@@ -1191,15 +1210,146 @@ TEST_CASE("Test main model - incomplete input but complete dataset") {
             main_model.calculate_power_flow<false>(1e-8, 20, newton_raphson, ref_result_data, update_data, -1);
         }
 
-        CHECK(test_asym_node[0].u_pu(0) == doctest::Approx(ref_asym_node[0].u_pu(0)));
-        CHECK(test_asym_node[0].u_pu(1) == doctest::Approx(ref_asym_node[0].u_pu(1)));
-        CHECK(test_asym_node[0].u_pu(2) == doctest::Approx(ref_asym_node[0].u_pu(2)));
-        CHECK(test_asym_node[1].u_pu(0) == doctest::Approx(ref_asym_node[1].u_pu(0)));
-        CHECK(test_asym_node[1].u_pu(1) == doctest::Approx(ref_asym_node[1].u_pu(1)));
-        CHECK(test_asym_node[1].u_pu(2) == doctest::Approx(ref_asym_node[1].u_pu(2)));
-        CHECK(test_asym_node[2].u_pu(0) == doctest::Approx(ref_asym_node[2].u_pu(0)));
-        CHECK(test_asym_node[2].u_pu(1) == doctest::Approx(ref_asym_node[2].u_pu(1)));
-        CHECK(test_asym_node[2].u_pu(2) == doctest::Approx(ref_asym_node[2].u_pu(2)));
+        for (auto component_idx : {0, 1, 2}) {
+            CAPTURE(component_idx);
+
+            for (auto phase_idx : {0, 1, 2}) {
+                CAPTURE(phase_idx);
+
+                CHECK(test_asym_node[component_idx].u_pu(phase_idx) ==
+                      doctest::Approx(ref_asym_node[component_idx].u_pu(phase_idx)));
+            }
+        }
+    }
+
+    SUBCASE("Symmetrical - Incomplete") {
+        std::vector<NodeOutput<true>> test_sym_node(state.sym_node.size());
+        test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+
+        SUBCASE("Direct call") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear), SparseMatrixError);
+        }
+        SUBCASE("Target dataset") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Empty update dataset") {
+            update_data = {};
+
+            CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data, update_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Update dataset") {
+            CHECK_THROWS_AS(
+                test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data, incomplete_update_data),
+                BatchCalculationError);
+        }
+    }
+
+    SUBCASE("Asymmetrical - Incomplete") {
+        std::vector<NodeOutput<false>> test_sym_node(state.sym_node.size());
+        test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+
+        SUBCASE("Direct call") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear), SparseMatrixError);
+        }
+        SUBCASE("Target dataset") {
+            CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Empty update dataset") {
+            update_data = {};
+
+            CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, update_data),
+                            SparseMatrixError);
+        }
+        SUBCASE("Update dataset") {
+            CHECK_THROWS_AS(
+                test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, incomplete_update_data),
+                BatchCalculationError);
+        }
+    }
+}
+
+TEST_CASE("Test main model - Incomplete followed by complete") {
+    using CalculationMethod::linear;
+
+    State const state;
+    auto main_model = default_model(state);
+    auto test_model = incomplete_input_model(state);
+
+    constexpr Idx batch_size = 2;
+
+    std::vector<SourceUpdate> mixed_source_update{
+        {6, 1, nan, nan}, {10, 1, nan, nan}, {6, 1, 1.05, nan}, {10, 1, 1.05, 0}};
+    std::vector<SymLoadGenUpdate> mixed_sym_load_update{{7, 1, nan, 1.0}, {7, 1, 0.5e6, nan}};
+    std::vector<AsymLoadGenUpdate> mixed_asym_load_update{{8, 1, RealValue<false>{nan}, RealValue<false>{1.0}},
+                                                          {8, 1, RealValue<false>{0.5e6 / 3.0}, RealValue<false>{nan}}};
+
+    auto const source_indptr = IdxVector{0, 0, static_cast<Idx>(mixed_source_update.size())};
+
+    REQUIRE(source_indptr.size() == batch_size + 1);
+
+    ConstDataset mixed_update_data;
+    mixed_update_data["source"] = DataPointer<true>{mixed_source_update.data(), batch_size, 2};
+    mixed_update_data["sym_load"] = DataPointer<true>{mixed_sym_load_update.data(), batch_size, 1};
+    mixed_update_data["asym_load"] = DataPointer<true>{mixed_asym_load_update.data(), batch_size, 1};
+
+    ConstDataset second_scenario_update_data;
+    second_scenario_update_data["source"] = DataPointer<true>{mixed_source_update.data() + 2, 2};
+    second_scenario_update_data["sym_load"] = DataPointer<true>{mixed_sym_load_update.data() + 1, 1};
+    second_scenario_update_data["asym_load"] = DataPointer<true>{mixed_asym_load_update.data() + 1, 1};
+
+    Dataset test_result_data;
+    Dataset ref_result_data;
+
+    SUBCASE("Symmetrical") {
+        std::vector<NodeOutput<true>> test_sym_node(batch_size * state.sym_node.size(),
+                                                    {na_IntID, na_IntS, nan, nan, nan, nan, nan});
+        std::vector<NodeOutput<true>> ref_sym_node(state.sym_node.size(), {na_IntID, na_IntS, nan, nan, nan, nan, nan});
+        test_result_data["node"] =
+            DataPointer<false>{test_sym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
+        ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
+
+        CHECK_THROWS_AS(test_model.calculate_power_flow<true>(1e-8, 1, linear, test_result_data, mixed_update_data),
+                        BatchCalculationError);
+        main_model.calculate_power_flow<true>(1e-8, 1, linear, ref_result_data, second_scenario_update_data, -1);
+
+        CHECK(is_nan(test_sym_node[0].u_pu));
+        CHECK(is_nan(test_sym_node[1].u_pu));
+        CHECK(is_nan(test_sym_node[2].u_pu));
+        CHECK(test_sym_node[state.sym_node.size() + 0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
+        CHECK(test_sym_node[state.sym_node.size() + 1].u_pu == doctest::Approx(ref_sym_node[1].u_pu));
+        CHECK(test_sym_node[state.sym_node.size() + 2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
+    }
+
+    SUBCASE("Asymmetrical") {
+        std::vector<NodeOutput<false>> test_asym_node(
+            batch_size * state.sym_node.size(), {na_IntID, na_IntS, RealValue<false>{nan}, RealValue<false>{nan},
+                                                 RealValue<false>{nan}, RealValue<false>{nan}, RealValue<false>{nan}});
+        std::vector<NodeOutput<false>> ref_asym_node(
+            state.sym_node.size(), {na_IntID, na_IntS, RealValue<false>{nan}, RealValue<false>{nan},
+                                    RealValue<false>{nan}, RealValue<false>{nan}, RealValue<false>{nan}});
+        test_result_data["node"] =
+            DataPointer<false>{test_asym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
+        ref_result_data["node"] = DataPointer<false>{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+
+        CHECK_THROWS_AS(test_model.calculate_power_flow<false>(1e-8, 1, linear, test_result_data, mixed_update_data),
+                        BatchCalculationError);
+        main_model.calculate_power_flow<false>(1e-8, 1, linear, ref_result_data, second_scenario_update_data, -1);
+
+        for (auto component_idx : {0, 1, 2}) {
+            CAPTURE(component_idx);
+
+            CHECK(is_nan(test_asym_node[component_idx].u_pu));
+
+            for (auto phase_idx : {0, 1, 2}) {
+                CAPTURE(phase_idx);
+
+                CHECK(test_asym_node[state.asym_node.size() + component_idx].u_pu(phase_idx) ==
+                      doctest::Approx(ref_asym_node[component_idx].u_pu(phase_idx)));
+            }
+        }
     }
 }
 
