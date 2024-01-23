@@ -154,32 +154,6 @@ template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<De
     return sqrt(abs2(m));
 }
 
-// imag and real value retrieval
-// TODO Change to single value and arraybase
-template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> c) {
-    if constexpr (sym) {
-        return imag(c);
-    } else {
-        return c.imag();
-    }
-}
-
-template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> c) {
-    if constexpr (sym) {
-        return real(c);
-    } else {
-        return c.real();
-    }
-}
-
-template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> value) {
-    if (is_nan(imag(value))) {
-        return real(value); // only keep real part
-    } else {
-        return cabs(value); // get abs of the value
-    }
-}
-
 // calculate kron product of two vector
 inline double vector_outer_product(double x, double y) { return x * y; }
 inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
@@ -367,6 +341,31 @@ inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& val
         set_if_not_nan(target(i), value(i));
     }
 };
+
+// imag and real value retrieval
+// TODO Change to single value and arraybase
+template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> const& c) {
+    if constexpr (sym) {
+        return imag(c);
+    } else {
+        return c.imag();
+    }
+}
+
+template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> const& c) {
+    if constexpr (sym) {
+        return real(c);
+    } else {
+        return c.real();
+    }
+}
+
+template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    }
+    return cabs(value); // get abs of the value
+}
 
 // symmetric component matrix
 inline ComplexTensor<false> get_sym_matrix() {
