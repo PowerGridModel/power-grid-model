@@ -48,7 +48,7 @@ class DatasetHandler {
     DatasetHandler(bool is_batch, Idx batch_size, std::string_view dataset)
         : dataset_info_{.is_batch = is_batch,
                         .batch_size = batch_size,
-                        .dataset = &meta_data().get_dataset(dataset),
+                        .dataset = &meta_data.get_dataset(dataset),
                         .component_info = {}} {
         if (!dataset_info_.is_batch && (dataset_info_.batch_size != 1)) {
             throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
