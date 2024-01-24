@@ -187,11 +187,10 @@ class Transformer : public Branch {
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);
-        if (y_shunt.real() > y_shunt_abs) {
-            y_shunt.imag(0.0);
-        } else {
-            y_shunt.imag(-std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real()));
-        }
+
+        auto const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
+        y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);
+
         // y shunt
         y_shunt = y_shunt / base_y_to;
         // return
