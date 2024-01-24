@@ -11,6 +11,7 @@ iterative linear state estimation solver
 */
 
 #include "block_matrix.hpp"
+#include "common_solver_functions.hpp"
 #include "measured_values.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
@@ -122,7 +123,7 @@ template <bool sym> class IterativeLinearSESolver {
 
         // calculate math result
         sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");
-        calculate_result(y_bus, measured_values, output);
+        math_solver::detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -345,15 +346,6 @@ template <bool sym> class IterativeLinearSESolver {
             u[bus] = u_normalized;
         }
         return max_dev;
-    }
-
-    void calculate_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, MathOutput<sym>& output) {
-        // call y bus
-        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
-        output.bus_injection = y_bus.calculate_injection(output.u);
-        std::tie(output.load_gen, output.source) =
-            measured_value.calculate_load_gen_source(output.u, output.bus_injection);
     }
 
     // Construct linearized voltage value for all buses

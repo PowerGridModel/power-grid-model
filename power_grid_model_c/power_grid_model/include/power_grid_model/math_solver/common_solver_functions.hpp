@@ -6,6 +6,7 @@
 #ifndef POWER_GRID_MODEL_COMMON_SOLVER_FUNCTIONS_HPP
 #define POWER_GRID_MODEL_COMMON_SOLVER_FUNCTIONS_HPP
 
+#include "measured_values.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -102,6 +103,16 @@ template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& 
         return real(value); // only keep real part
     }
     return cabs(value); // get abs of the value
+}
+
+template <bool sym>
+inline void calculate_se_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
+                                MathOutput<sym>& output) {
+    // call y bus
+    output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
+    output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
+    output.bus_injection = y_bus.calculate_injection(output.u);
+    std::tie(output.load_gen, output.source) = measured_value.calculate_load_gen_source(output.u, output.bus_injection);
 }
 
 } // namespace power_grid_model::math_solver::detail
