@@ -356,26 +356,21 @@ template <bool sym> class IterativeLinearSESolver {
             measured_value.calculate_load_gen_source(output.u, output.bus_injection);
     }
 
-    // getter of voltage value for all buses
-    // for no measurement, the voltage phasor is used from the current iteration
-    // for magnitude only measurement, angle is added from the current iteration
-    // for magnitude and angle measurement, the measured phasor is returned
+    // Construct linearized voltage value for all buses
+    // for no measurement, the voltage phasor of the current iteration is used
+    // for magnitude only measurement, the angle of the current iteration is used
+    // for magnitude and angle measurement, the measured phasor is used
     ComplexValueVector<sym> linearize_voltage(ComplexValueVector<sym> const& current_u,
                                               MeasuredValues<sym> const& measured_values) const {
         ComplexValueVector<sym> u(current_u.size());
 
         for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
-            // no measurement
-            if (!measured_values.has_voltage(bus)) {
+            if (!measured_values.has_voltage(bus)) { // no measurement
                 u[bus] = current_u[bus];
-            }
-            // no angle measurement
-            else if (!measured_values.has_angle_measurement(bus)) {
+            } else if (!measured_values.has_angle_measurement(bus)) {
                 u[bus] = real(measured_values.voltage(bus)) * current_u[bus] /
                          cabs(current_u[bus]); // U / |U| to get angle shift
-            }
-            // full measurement
-            else {
+            } else { // full measurement
                 u[bus] = measured_values.voltage(bus);
             }
         }

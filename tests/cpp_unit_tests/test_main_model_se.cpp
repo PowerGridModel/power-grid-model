@@ -10,6 +10,7 @@ namespace power_grid_model {
 namespace {
 constexpr double s3 = sqrt3;
 constexpr double ph = 2.0 / 3.0 * pi;
+
 struct IterativeLinearCalculationMethod {
     static constexpr auto calculation_method = CalculationMethod::iterative_linear;
 };
@@ -21,7 +22,9 @@ struct NewtonRaphsonCalculationMethod {
 TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, IterativeLinearCalculationMethod,
                    NewtonRaphsonCalculationMethod) {
     constexpr auto calculation_method = CalculationMethod::calculation_method;
+
     MainModel main_model{50.0};
+
     SUBCASE("State Estimation") {
         SUBCASE("Single Node + Source") {
             main_model.add_component<Node>({{1, 10e3}});

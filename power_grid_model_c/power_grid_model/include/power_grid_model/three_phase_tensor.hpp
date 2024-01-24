@@ -199,9 +199,9 @@ template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<Derived
 
 // function to sum rows of tensor
 template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
-// overload for double and double complex
-inline double sum_row(double d) { return d; }
-inline DoubleComplex sum_row(DoubleComplex d) { return d; }
+template <typename T>
+    requires std::floating_point<T> || std::same_as<T, DoubleComplex>
+inline T sum_row(T d) { return d; }
 
 // function to sum vector
 template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }

@@ -160,11 +160,12 @@ template <bool sym> class MeasuredValues {
     IdxVector idx_source_power_;
 
     Idx n_voltage_measurements_{};
-    Idx n_voltage_angle_measurements_{}; // number of angle measurement
+    Idx n_voltage_angle_measurements_{};
 
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
     RealValue<sym> mean_angle_shift_;
+    // the lowest bus index with a voltage measurement
     Idx first_voltage_measurement_{};
 
     constexpr MathModelTopology const& math_topology() const { return *math_topology_; }
