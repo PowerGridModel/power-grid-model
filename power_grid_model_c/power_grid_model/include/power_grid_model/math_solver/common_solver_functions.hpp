@@ -10,6 +10,7 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../exception.hpp"
 
 namespace power_grid_model::math_solver::detail {
 
