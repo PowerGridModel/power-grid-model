@@ -178,7 +178,8 @@ class Transformer : public Branch {
         // in this case, the real part of z_series should be negative
         z_series.real(pk * u2 * u2 / sn_ / sn_);
         // X = uk_sign * sqrt(Z^2 - R^2)
-        z_series.imag(uk_sign * std::sqrt(z_series_abs * z_series_abs - z_series.real() * z_series.real()));
+        auto const z_series_imag_squared = z_series_abs * z_series_abs - z_series.real() * z_series.real();
+        z_series.imag(uk_sign * (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0));
         // y series
         y_series = (1.0 / z_series) / base_y_to;
         // shunt
