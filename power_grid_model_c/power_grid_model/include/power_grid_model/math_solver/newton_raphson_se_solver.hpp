@@ -225,7 +225,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                      element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
                     Idx const obj = y_bus.y_bus_element()[element_idx].idx;
                     YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
-                    // shunt
                     if (type == YBusElementType::shunt && measured_value.has_shunt(obj)) {
                         auto const& yii = param.shunt_param[obj];
                         auto const& measured_power = measured_value.shunt_power(obj);
