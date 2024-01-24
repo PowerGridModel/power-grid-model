@@ -323,11 +323,16 @@ template <bool sym> class IterativeLinearSESolver {
             if (has_angle) {
                 return 1.0;
             }
-            if constexpr (sym) {
-                return cabs(x_rhs_[math_topo_->slack_bus].u()) / x_rhs_[math_topo_->slack_bus].u();
-            } else {
-                return cabs(x_rhs_[math_topo_->slack_bus].u()(0)) / x_rhs_[math_topo_->slack_bus].u()(0);
+            auto const& voltage = x_rhs_[math_topo_->slack_bus].u();
+            auto const& voltage_a = [](auto const& val) -> auto const& {
+                if constexpr (sym) {
+                    return val;
+                } else {
+                    return val(0);
+                }
             }
+            (voltage);
+            return cabs(voltage_a) / voltage_a;
         }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {

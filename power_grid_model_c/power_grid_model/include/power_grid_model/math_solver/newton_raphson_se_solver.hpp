@@ -145,7 +145,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, del_x_rhs_, del_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
-            max_dev = iterate_unknown(output.u, measured_values.has_angle());
+            max_dev = iterate_unknown(output.u);
         };
 
         // calculate math result
@@ -247,18 +247,16 @@ template <bool sym> class NewtonRaphsonSESolver {
                         auto const calculated_power = sum_row(jac_complex_ff + jac_complex_ft);
                         auto const& measured_power = measured_value.branch_from_power(obj);
 
+                        auto const jac_complex_unit_other_ff = dot(jac_complex_ff, abs_ui_inv);
+                        auto block_i = calculate_jacobian(jac_complex_ff, jac_complex_unit_other_ff);
+                        block_i += jacobian_diagonal_component(jac_complex_unit_other_ff, calculated_power);
+
                         if (type == YBusElementType::bff) {
-                            auto const jac_complex_unit_other_ff = dot(jac_complex_ff, abs_ui_inv);
-                            auto block_i = calculate_jacobian(jac_complex_ff, jac_complex_unit_other_ff);
-                            block_i += jacobian_diagonal_component(jac_complex_unit_other_ff, calculated_power);
                             multiply_add_jacobian_blocks(block, rhs_block, block_i, block_i, measured_power,
                                                          calculated_power);
                         } else if (type == YBusElementType::bft) {
                             auto const jac_complex_unit_other_ft = dot(jac_complex_ft, abs_uj_inv);
-                            // TODO check if ij should be ii
                             auto const block_j = calculate_jacobian(jac_complex_ft, jac_complex_unit_other_ft);
-                            auto block_i = jacobian_diagonal_component(jac_complex_unit_other_ft, calculated_power);
-                            block_i += block_j;
                             multiply_add_jacobian_blocks(block, rhs_block, block_i, block_j, measured_power,
                                                          calculated_power);
                         }
@@ -268,22 +266,22 @@ template <bool sym> class NewtonRaphsonSESolver {
                         auto const& yij = param.branch_param[obj].ytf();
 
                         auto const jac_complex_tt = jac_complex_intermediate_form(yii, ui_ui_conj);
-                        auto const jac_complex_tf = jac_complex_intermediate_form(yij, ui_uj_conj);
+                        auto const jac_complex_tf = jac_complex_intermediate_form(yij, conj(ui_uj_conj));
 
                         auto const calculated_power = sum_row(jac_complex_tt + jac_complex_tf);
                         auto const& measured_power = measured_value.branch_to_power(obj);
 
+                        auto const jac_complex_unit_other_tt = dot(jac_complex_tt, abs_ui_inv);
+                        auto block_j = calculate_jacobian(jac_complex_tt, jac_complex_unit_other_tt);
+                        block_j += jacobian_diagonal_component(jac_complex_unit_other_tt, calculated_power);
+
                         if (type == YBusElementType::btt) {
-                            auto const jac_complex_unit_other_tt = dot(jac_complex_tt, abs_ui_inv);
-                            auto const block_j = calculate_jacobian(jac_complex_tt, jac_complex_unit_other_tt);
                             multiply_add_jacobian_blocks(block, rhs_block, block_j, block_j, measured_power,
                                                          calculated_power);
 
                         } else if (type == YBusElementType::btf) {
                             auto const jac_complex_unit_other_tf = dot(jac_complex_tf, abs_uj_inv);
-                            auto const block_j = calculate_jacobian(jac_complex_tf, jac_complex_unit_other_tf);
-                            auto block_i = jacobian_diagonal_component(jac_complex_unit_other_tf, calculated_power);
-                            block_i += block_j;
+                            auto const block_i = calculate_jacobian(jac_complex_tf, jac_complex_unit_other_tf);
                             multiply_add_jacobian_blocks(block, rhs_block, block_j, block_i, measured_power,
                                                          calculated_power);
                         }
@@ -371,9 +369,6 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // G += 1.0 / variance
         // for 3x3 tensor, fill diagonal
-        // TODO Change angle weight per angle variance and store angle as non complex
-        // TODO if angle measurement not present, set w_angle to 0.
-
         auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(bus)};
         auto const abs_measured_v = cabs_or_real<sym>(measured_value.voltage(bus));
         auto const del_v = abs_measured_v - x_[bus].v();
@@ -404,10 +399,10 @@ template <bool sym> class NewtonRaphsonSESolver {
                                              ComplexValue<sym> calculated_power) {
         NRSEJacobian jacobian{};
         auto const calculated_power_unit_self = sum_row(jac_complex_unit_self);
-        jacobian.dP_dt -= RealTensor<sym>{imag_val<sym>(calculated_power)};
-        jacobian.dP_dv += RealTensor<sym>{real_val<sym>(calculated_power_unit_self)};
-        jacobian.dQ_dt += RealTensor<sym>{real_val<sym>(calculated_power)};
-        jacobian.dQ_dv += RealTensor<sym>{imag_val<sym>(calculated_power_unit_self)};
+        jacobian.dP_dt -= RealTensor<sym>{RealValue<sym>{imag(calculated_power)}};
+        jacobian.dP_dv += RealTensor<sym>{RealValue<sym>{real(calculated_power_unit_self)}};
+        jacobian.dQ_dt += RealTensor<sym>{RealValue<sym>{real(calculated_power)}};
+        jacobian.dQ_dv += RealTensor<sym>{RealValue<sym>{imag(calculated_power_unit_self)}};
         return jacobian;
     }
 
@@ -457,7 +452,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         return conj(yij) * ui_conj_uj;
     }
 
-    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle) {
+    double iterate_unknown(ComplexValueVector<sym>& u) {
         double max_dev = 0.0;
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // accumulate the unknown variable

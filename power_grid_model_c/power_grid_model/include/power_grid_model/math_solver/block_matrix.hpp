@@ -63,7 +63,7 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
         }
     }
 
-    void clear() { *this = Block<T, sym, is_tensor, n_sub_block>{}; }
+    void clear() { *this = {}; }
 };
 
 } // namespace power_grid_model::math_solver

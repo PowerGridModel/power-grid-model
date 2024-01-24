@@ -342,24 +342,6 @@ inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& val
     }
 };
 
-// imag and real value retrieval
-// TODO Change to single value and arraybase
-template <bool sym> inline RealValue<sym> imag_val(ComplexValue<sym> const& c) {
-    if constexpr (sym) {
-        return imag(c);
-    } else {
-        return c.imag();
-    }
-}
-
-template <bool sym> inline RealValue<sym> real_val(ComplexValue<sym> const& c) {
-    if constexpr (sym) {
-        return real(c);
-    } else {
-        return c.real();
-    }
-}
-
 template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
     if (is_nan(imag(value))) {
         return real(value); // only keep real part
