@@ -101,8 +101,6 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
         begin, end, sequence_idx);
 }
 
-#define INCREMENT_UPDATE_Y_BUS
-
 // mark changed components if not **exactly** equal; diffs with rounding errors are considered not equal
 template <bool sym> inline bool cmplx_neq(ComplexTensor<sym> const& lhs, ComplexTensor<sym> const& rhs) {
     if constexpr (sym) {
@@ -117,7 +115,6 @@ template <bool sym> inline bool cmplx_neq(ComplexTensor<sym> const& lhs, Complex
 template <bool sym>
 inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                          std::shared_ptr<std::vector<std::vector<Idx2D>> const> const& seq_idx_map) {
-#ifdef INCREMENT_UPDATE_Y_BUS
     // verify that the number of branches, shunts and source is the same
     MathModelParam<sym> const& y_bus_param = y_bus.math_model_param();
     (void)y_bus_param; // suppress compiler unused variable warning
@@ -185,9 +182,6 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
 
     y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr,
                                       false); /* param, changed_param, is_decrement */
-#else
-    y_bus.update_admittance(math_model_param);
-#endif // INCREMENT_UPDATE_Y_BUS
 }
 
 // Delta based progressive update for y_bus

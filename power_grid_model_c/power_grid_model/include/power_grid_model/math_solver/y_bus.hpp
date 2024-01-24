@@ -344,7 +344,6 @@ template <bool sym> class YBus {
             ComplexTensor<sym> entry_admittance{0.0};
             IdxVector entry_param_shunt;
             IdxVector entry_param_branch;
-            // std::vector<std::pair<Idx, Idx>> entry_param_shunt_pair; //WIP
             //   loop over all entries of this position
             for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
                 auto param_idx = y_bus_element[element].idx;
@@ -357,14 +356,12 @@ template <bool sym> class YBus {
                     entry_admittance +=
                         branch_param[param_idx].value[static_cast<Idx>(y_bus_element[element].element_type)];
                     entry_param_branch.push_back(param_idx);
-                    // entry_param_shunt_pair.push_back(std::make_pair(param_idx, element)); //WIP
                 }
             }
             // assign
             admittance[entry] = entry_admittance;
             map_admittance_param_branch.push_back(entry_param_branch);
             map_admittance_param_shunt.push_back(entry_param_shunt);
-            // map_admittance_param_shunt_pairs.push_back(entry_param_shunt_pair); //WIP
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
@@ -372,7 +369,7 @@ template <bool sym> class YBus {
 
     IdxVector increments_to_entries(auto const& math_model_param_incrmt) {
         // construct affected entries
-        std::set<Idx> affected_entries;
+        IdxVector affected_entries;
 
         // querry params in map, not yet distinguishing between entry_param_shunt_pair and entry_param_shunt
         auto querry_params_in_map = [&affected_entries](auto const& params_to_change, auto const& mapping) {
@@ -380,14 +377,14 @@ template <bool sym> class YBus {
                 if (std::ranges::any_of(mapping[i], [&](Idx val) {
                         return std::ranges::find(params_to_change, val) != params_to_change.end();
                     })) {
-                    affected_entries.insert(static_cast<int>(i));
+                    affected_entries.push_back(static_cast<int>(i));
                 }
             }
         };
 
         querry_params_in_map(math_model_param_incrmt->branch_param_to_change, map_admittance_param_branch);
         querry_params_in_map(math_model_param_incrmt->shunt_param_to_change, map_admittance_param_shunt);
-        return IdxVector{affected_entries.begin(), affected_entries.end()};
+        return affected_entries;
     }
 
     void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
@@ -528,7 +525,6 @@ template <bool sym> class YBus {
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch{};
     std::vector<IdxVector> map_admittance_param_shunt{};
-    // std::vector<std::vector<std::pair<Idx, Idx>>> map_admittance_param_shunt_pairs{}; //WIP
 
     //  cache the increment math parameters
     std::shared_ptr<MathModelParamIncrement<sym> const> math_model_param_incrmt_;
