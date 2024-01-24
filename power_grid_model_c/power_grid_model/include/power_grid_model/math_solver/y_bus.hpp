@@ -324,8 +324,8 @@ template <bool sym> class YBus {
 
     constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
 
-    void set_branch_param_idx(IdxVector const& branch_param_idx) { branch_param_idx_ = branch_param_idx; }
-    void set_shunt_param_idx(IdxVector const& shunt_param_idx) { shunt_param_idx_ = shunt_param_idx; }
+    void set_branch_param_idx(IdxVector branch_param_idx) { branch_param_idx_ = std::move(branch_param_idx); }
+    void set_shunt_param_idx(IdxVector shunt_param_idx) { shunt_param_idx_ = std::move(shunt_param_idx); }
     IdxVector const& get_branch_param_idx() const { return branch_param_idx_; }
     IdxVector const& get_shunt_param_idx() const { return shunt_param_idx_; }
 
@@ -371,8 +371,8 @@ template <bool sym> class YBus {
         // construct affected entries
         IdxVector affected_entries;
 
-        // querry params in map, not yet distinguishing between entry_param_shunt_pair and entry_param_shunt
-        auto querry_params_in_map = [&affected_entries](auto const& params_to_change, auto const& mapping) {
+        // query params in map, not yet distinguishing between entry_param_shunt_pair and entry_param_shunt
+        auto query_params_in_map = [&affected_entries](auto const& params_to_change, auto const& mapping) {
             for (size_t i = 0; i < mapping.size(); ++i) {
                 if (std::ranges::any_of(mapping[i], [&](Idx val) {
                         return std::ranges::find(params_to_change, val) != params_to_change.end();
@@ -382,11 +382,19 @@ template <bool sym> class YBus {
             }
         };
 
-        querry_params_in_map(math_model_param_incrmt->branch_param_to_change, map_admittance_param_branch);
-        querry_params_in_map(math_model_param_incrmt->shunt_param_to_change, map_admittance_param_shunt);
+        query_params_in_map(math_model_param_incrmt->branch_param_to_change, map_admittance_param_branch);
+        query_params_in_map(math_model_param_incrmt->shunt_param_to_change, map_admittance_param_shunt);
         return affected_entries;
     }
 
+    /**
+     * @brief Updates the admittance of the y_bus according to what's changed in math_model.
+     *
+     * @param math_model_param Shared pointer to the constant math_model parameters.
+     * @param math_model_param_incrmt Shared pointer to the constant mathematical model parameters .
+     * @param is_decrement Optional boolean flag indicating whether the update is a decrement. i.e., fallback to the
+     * previous scenario. Default is false.
+     */
     void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                                      std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
                                      bool is_decrement = false) {

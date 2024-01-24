@@ -104,11 +104,9 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 // mark changed components if not **exactly** equal; diffs with rounding errors are considered not equal
 template <bool sym> inline bool cmplx_neq(ComplexTensor<sym> const& lhs, ComplexTensor<sym> const& rhs) {
     if constexpr (sym) {
-        return static_cast<bool>(lhs.real() != rhs.real() || lhs.imag() != rhs.imag());
+        return lhs != rhs;
     } else {
-        return static_cast<bool>((lhs(0, 0).real() != rhs(0, 0).real() || lhs(0, 0).imag() != rhs(0, 0).imag()) ||
-                                 (lhs(1, 1).real() != rhs(1, 1).real() || lhs(1, 1).imag() != rhs(1, 1).imag()) ||
-                                 (lhs(2, 2).real() != rhs(2, 2).real() || lhs(2, 2).imag() != rhs(2, 2).imag()));
+        return lhs(0, 0) != rhs(0, 0) || lhs(1, 1) != rhs(1, 1) || lhs(2, 2) != rhs(2, 2);
     }
 };
 
@@ -127,27 +125,25 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
     }
 
     // when sequence_idx_map available: loop through all branches and shunts of math_model_param, check changes
-    auto querry_param_in_seq_map = [&seq_idx_map](IdxVector const& param_idd_vec) {
+    auto query_param_in_seq_map = [&seq_idx_map](IdxVector const& param_idx_vec) {
         std::vector<Idx2D> result;
-        for (auto const& param_idd : param_idd_vec) {
+        for (auto const& param_idd : param_idx_vec) {
             auto const& seq_idx = (*seq_idx_map)[param_idd];
             result.insert(result.end(), seq_idx.begin(), seq_idx.end());
         }
         return result;
     };
 
-    auto branch_params = querry_param_in_seq_map(y_bus.get_branch_param_idx());
-    auto shunt_params = querry_param_in_seq_map(y_bus.get_shunt_param_idx());
+    auto branch_params = query_param_in_seq_map(y_bus.get_branch_param_idx());
+    auto shunt_params = query_param_in_seq_map(y_bus.get_shunt_param_idx());
 
     MathModelParamIncrement<sym> math_model_param_incrmt;
     math_model_param_incrmt.branch_param_to_change.reserve(branch_params.size());
-    std::transform(branch_params.begin(), branch_params.end(),
-                   std::back_inserter(math_model_param_incrmt.branch_param_to_change),
-                   [](const Idx2D& val) { return val.pos; });
     math_model_param_incrmt.shunt_param_to_change.reserve(shunt_params.size());
-    std::transform(shunt_params.begin(), shunt_params.end(),
-                   std::back_inserter(math_model_param_incrmt.shunt_param_to_change),
-                   [](const Idx2D& val) { return val.pos; });
+    std::ranges::transform(branch_params, std::back_inserter(math_model_param_incrmt.branch_param_to_change),
+                           [](const Idx2D& val) { return val.pos; });
+    std::ranges::transform(shunt_params, std::back_inserter(math_model_param_incrmt.shunt_param_to_change),
+                           [](const Idx2D& val) { return val.pos; });
 
     // check changes in case sequence_idx_map is available but indicates empty
     // this back-up check fixes the edge case where the sequence_idx_map is available but indicates empty
@@ -178,38 +174,10 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
                                                          shunt_param_to_change_views.end()};
     }
 
-    auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
+    auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(std::move(math_model_param_incrmt));
 
     y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr,
                                       false); /* param, changed_param, is_decrement */
-}
-
-// Delta based progressive update for y_bus
-template <bool sym>
-inline void update_y_bus_increment(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
-                                   bool increment) {
-    auto branch_param_to_change_views =
-        boost::irange(0, math_model_param->branch_param.size()) | boost::adaptors::filtered([&math_model_param](Idx i) {
-            return math_model_param->branch_param[i].yff() != ComplexTensor<sym>{0.0} ||
-                   math_model_param->branch_param[i].yft() != ComplexTensor<sym>{0.0} ||
-                   math_model_param->branch_param[i].ytf() != ComplexTensor<sym>{0.0} ||
-                   math_model_param->branch_param[i].ytt() != ComplexTensor<sym>{0.0};
-        });
-    auto shunt_param_to_change_views =
-        boost::irange(0, math_model_param->branch_param.size()) | boost::adaptors::filtered([&math_model_param](Idx i) {
-            return math_model_param->shunt_param[i] != ComplexTensor<sym>{0.0};
-        });
-
-    MathModelParamIncrement<sym> math_model_param_incrmt;
-    math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
-                                                      branch_param_to_change_views.end()};
-    math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
-                                                     shunt_param_to_change_views.end()};
-
-    auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(math_model_param_incrmt);
-
-    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr,
-                                      !increment); /* param, changed_param, is_decrement */
 }
 
 template <bool sym>
