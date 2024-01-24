@@ -10,12 +10,19 @@
 Collect all measured Values
 */
 
-#include "common_solver_functions.hpp"
-
 #include "../calculation_parameters.hpp"
 #include "../three_phase_tensor.hpp"
 
 namespace power_grid_model::math_solver {
+
+namespace detail {
+template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    }
+    return cabs(value); // get abs of the value
+}
+} // namespace detail
 
 // processed measurement struct
 // combined all measurement of the same quantity
