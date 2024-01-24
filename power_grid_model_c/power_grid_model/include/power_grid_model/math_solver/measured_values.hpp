@@ -218,7 +218,7 @@ template <bool sym> class MeasuredValues {
             mean_angle_shift_ = angle_cum / n_voltage_angle_measurements_;
         }
 
-        auto const is_measured = [](auto const& value) { return value >= 0; };
+        static constexpr auto const is_measured = [](auto const& value) { return value >= 0; };
         n_voltage_measurements_ = std::ranges::count_if(idx_voltage_, is_measured);
         first_voltage_measurement_ =
             std::distance(idx_voltage_.begin(), std::ranges::find_if(idx_voltage_, is_measured));
