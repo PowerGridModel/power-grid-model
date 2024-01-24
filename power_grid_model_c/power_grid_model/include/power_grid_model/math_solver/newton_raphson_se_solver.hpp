@@ -484,7 +484,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         return RealDiagonalTensor<sym>{static_cast<RealValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 
-    RealValue<sym> const phase_shifted_zero_angle() {
+    auto phase_shifted_zero_angle() {
         if constexpr (sym) {
             return 0.0;
         } else {

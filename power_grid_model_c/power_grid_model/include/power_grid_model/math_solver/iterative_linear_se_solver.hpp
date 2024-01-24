@@ -370,7 +370,7 @@ template <bool sym> class IterativeLinearSESolver {
             } else if (!measured_values.has_angle_measurement(bus)) {
                 u[bus] = real(measured_values.voltage(bus)) * current_u[bus] /
                          cabs(current_u[bus]); // U / |U| to get angle shift
-            } else { // full measurement
+            } else {                           // full measurement
                 u[bus] = measured_values.voltage(bus);
             }
         }
