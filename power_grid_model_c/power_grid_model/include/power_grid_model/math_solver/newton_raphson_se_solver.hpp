@@ -11,6 +11,7 @@ Newton Raphson state estimation solver
 */
 
 #include "block_matrix.hpp"
+#include "common_solver_functions.hpp"
 #include "measured_values.hpp"
 #include "y_bus.hpp"
 
@@ -370,7 +371,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         // G += 1.0 / variance
         // for 3x3 tensor, fill diagonal
         auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(bus)};
-        auto const abs_measured_v = cabs_or_real<sym>(measured_value.voltage(bus));
+        auto const abs_measured_v = detail::cabs_or_real<sym>(measured_value.voltage(bus));
         auto const del_v = abs_measured_v - x_[bus].v();
 
         auto w_angle = RealTensor<sym>{1.0};

@@ -344,13 +344,6 @@ inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& val
     }
 };
 
-template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
-    if (is_nan(imag(value))) {
-        return real(value); // only keep real part
-    }
-    return cabs(value); // get abs of the value
-}
-
 // symmetric component matrix
 inline ComplexTensor<false> get_sym_matrix() {
     ComplexTensor<false> m;

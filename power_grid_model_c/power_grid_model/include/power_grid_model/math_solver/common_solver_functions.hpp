@@ -97,6 +97,13 @@ inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& 
     output.bus_injection = y_bus.calculate_injection(output.u);
 }
 
+template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    }
+    return cabs(value); // get abs of the value
+}
+
 } // namespace power_grid_model::math_solver::detail
 
 #endif

@@ -10,6 +10,8 @@
 Collect all measured Values
 */
 
+#include "common_solver_functions.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../three_phase_tensor.hpp"
 
@@ -391,7 +393,7 @@ template <bool sym> class MeasuredValues {
             accumulated_inverse_variance += inv_variance;
             if constexpr (only_magnitude) {
                 ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                abs_value += cabs_or_real<sym>(measurement.value);
+                abs_value += detail::cabs_or_real<sym>(measurement.value);
                 accumulated_value += abs_value * inv_variance;
             } else {
                 // accumulate value
