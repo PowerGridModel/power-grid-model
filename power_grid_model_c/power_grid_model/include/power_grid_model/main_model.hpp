@@ -1184,19 +1184,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             y_bus_vec.reserve(n_math_solvers_);
             auto math_params = get_math_param<sym>();
 
-            IdxVector branch_param_in_seq_map;
-            IdxVector shunt_param_in_seq_map;
-            // check for branch and shunt parameters idx in component_idx_map
-            // this relates to the incremental update of Y_bus,
-            // which only needs to update the branch and shunt parameters
-            for (ComponentEntry const& entry : AllComponents::component_index_map) {
-                const std::string entryName = entry.name;
-                if (entryName == "line" || entryName == "link") { // two instances of branch
-                    branch_param_in_seq_map.push_back(entry.index);
-                } else if (entryName == "shunt") {
-                    shunt_param_in_seq_map.push_back(entry.index);
-                }
-            }
+            // Check the branch and shunt indices
+            constexpr auto branch_param_in_seq_map =
+                std::array{AllComponents::template index_of<Line>(), AllComponents::template index_of<Link>(),
+                           AllComponents::template index_of<Transformer>()};
+            constexpr auto shunt_param_in_seq_map = std::array{AllComponents::template index_of<Shunt>()};
 
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 // construct from existing Y_bus structure if possible
@@ -1208,8 +1200,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     y_bus_vec.emplace_back(state_.math_topology[i],
                                            std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
                 }
-                y_bus_vec.back().set_branch_param_idx(branch_param_in_seq_map);
-                y_bus_vec.back().set_shunt_param_idx(shunt_param_in_seq_map);
+
+                y_bus_vec.back().set_branch_param_idx(
+                    IdxVector(branch_param_in_seq_map.begin(), branch_param_in_seq_map.end()));
+                y_bus_vec.back().set_shunt_param_idx(
+                    IdxVector(shunt_param_in_seq_map.begin(), shunt_param_in_seq_map.end()));
             }
         }
     }

@@ -102,6 +102,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 }
 
 // mark changed components if not **exactly** equal; diffs with rounding errors are considered not equal
+// operator == overload is not possible due to Eigen
 template <bool sym> inline bool cmplx_neq(ComplexTensor<sym> const& lhs, ComplexTensor<sym> const& rhs) {
     if constexpr (sym) {
         return lhs != rhs;
