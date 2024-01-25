@@ -448,8 +448,8 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     ComplexTensor<sym> jac_complex_intermediate_form(ComplexTensor<sym> const& yij,
-                                                     ComplexTensor<sym> const& ui_conj_uj) {
-        return conj(yij) * ui_conj_uj;
+                                                     ComplexTensor<sym> const& ui_uj_conj) {
+        return conj(yij) * ui_uj_conj;
     }
 
     double iterate_unknown(ComplexValueVector<sym>& u, MeasuredValues<sym> measured_values) {
