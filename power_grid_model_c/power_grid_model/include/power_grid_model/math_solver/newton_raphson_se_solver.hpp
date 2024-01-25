@@ -146,7 +146,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, del_x_rhs_, del_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
-            max_dev = iterate_unknown(output.u);
+            max_dev = iterate_unknown(output.u, measured_values);
         };
 
         // calculate math result
@@ -468,14 +468,17 @@ template <bool sym> class NewtonRaphsonSESolver {
         return conj(yij) * ui_uj_conj;
     }
 
-    double iterate_unknown(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u, MeasuredValues<sym> measured_values) {
         double max_dev = 0.0;
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // accumulate the unknown variable
             x_[bus].theta() += del_x_rhs_[bus].theta();
-            x_[bus].v() += x_[bus].v() * del_x_rhs_[bus].v();
-            x_[bus].phi_p() += del_x_rhs_[bus].phi_p();
-            x_[bus].phi_q() += del_x_rhs_[bus].phi_q();
+            x_[bus].v() += del_x_rhs_[bus].v();
+            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance) &&
+                any_zero(measured_values.bus_injection(bus).q_variance)) {
+                x_[bus].phi_p() += del_x_rhs_[bus].phi_p();
+                x_[bus].phi_q() += del_x_rhs_[bus].phi_q();
+            }
 
             auto const old_u = u[bus];
             u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
