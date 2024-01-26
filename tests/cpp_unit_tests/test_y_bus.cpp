@@ -443,14 +443,8 @@ TEST_CASE("Incremental update y-bus") {
         auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
 
         /* ybus::update_admittance_increment (model_parameter, increment_indices, is_decrement)*/
-        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, false);
+        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr);
         verify_admittance(ybus.admittance(), admittance_sym_2);
-
-        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, true);
-        verify_admittance(ybus.admittance(), admittance_sym);
-
-        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr, true);
-        verify_admittance(ybus.admittance(), admittance_sym);
     }
 }
 

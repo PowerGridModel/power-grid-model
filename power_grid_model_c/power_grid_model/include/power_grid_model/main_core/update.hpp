@@ -177,8 +177,8 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
 
     auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(std::move(math_model_param_incrmt));
 
-    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr,
-                                      false); /* param, changed_param, is_decrement */
+    y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr);
+    /* param, changed_param */
 }
 
 template <bool sym>

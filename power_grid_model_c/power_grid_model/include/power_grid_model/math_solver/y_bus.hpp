@@ -392,33 +392,23 @@ template <bool sym> class YBus {
      *
      * @param math_model_param Shared pointer to the constant math_model parameters.
      * @param math_model_param_incrmt Shared pointer to the constant mathematical model parameters .
-     * @param is_decrement Optional boolean flag indicating whether the update is a decrement. i.e., fallback to the
-     * previous scenario. Default is false.
      */
-    void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
-                                     std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt,
-                                     bool is_decrement = false) {
-        // increment and decrement logic
-        if (is_decrement) {
-            if (decremented_) {
-                return; // in decrement mode, do nothing if already decremented
-            }
-        } else {
-            // swap the old cached parameters in increment mode (update)
-            math_model_param_prev_ = math_model_param_;
-            math_model_param_ = math_model_param;
-            math_model_param_incrmt_ = math_model_param_incrmt;
-        }
+    void
+    update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
+                                std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt) {
+
+        // swap the old cached parameters
+        math_model_param_ = math_model_param;
+        math_model_param_incrmt_ = math_model_param_incrmt;
+
         // construct admittance data
         ComplexTensorVector<sym> admittance(nnz());
         assert(Idx(admittance_->size()) == nnz());
         std::ranges::copy(*admittance_, admittance.begin());
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
-        auto const& math_param_shunt =
-            is_decrement ? math_model_param_prev_->shunt_param : math_model_param_->shunt_param;
-        auto const& math_param_branch =
-            is_decrement ? math_model_param_prev_->branch_param : math_model_param_->branch_param;
+        auto const& math_param_shunt = math_model_param_->shunt_param;
+        auto const& math_param_branch = math_model_param_->branch_param;
 
         // construct affected entries
         auto const affected_entries = increments_to_entries(math_model_param_incrmt_);
@@ -443,7 +433,6 @@ template <bool sym> class YBus {
         }
         // move to shared ownership
         admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
-        decremented_ = is_decrement;
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
@@ -524,7 +513,6 @@ template <bool sym> class YBus {
 
     // cache the math parameters
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
-    std::shared_ptr<MathModelParam<sym> const> math_model_param_prev_;
 
     // cache the branch and shunt parameters in sequence_idx_map
     IdxVector branch_param_idx_{};
