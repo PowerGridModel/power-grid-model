@@ -254,11 +254,11 @@ template <bool sym> class NewtonRaphsonSESolver {
                                 auto const& y_xi_mu = param.branch_param[obj].value[2 * measured_side + 1];
                                 if (type == YBusElementType::bft) {
                                     process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
-                                                               ui_ui_conj, ui_uj_conj, ui, abs_ui_inv, abs_uj_inv,
-                                                               power, true);
+                                                               ui_ui_conj, ui_uj_conj, abs_ui_inv, abs_uj_inv, power,
+                                                               true);
                                 } else {
                                     process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
-                                                               uj_uj_conj, conj(ui_uj_conj), uj, abs_uj_inv, abs_ui_inv,
+                                                               uj_uj_conj, conj(ui_uj_conj), abs_uj_inv, abs_ui_inv,
                                                                power, false);
                                 }
                             }
@@ -272,7 +272,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
-                    process_injection_row(block, diag_block, rhs_block, yij, ui_uj_conj, ui, abs_uj_inv);
+                    process_injection_row(block, diag_block, rhs_block, yij, ui_uj_conj, abs_ui_inv, abs_uj_inv);
 
                     // R_ii = -variance, only diagonal
                     if (row == col) {
@@ -314,12 +314,12 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                               auto const& yij, auto const& ui_uj_conj, auto const& ui,
+                               auto const& yij, auto const& ui_uj_conj, auto const& abs_ui_iv,
                                RealDiagonalTensor<sym> const& abs_uj_inv) {
         auto const hnml_complex_ft = hnml_complex_form(yij, ui_uj_conj);
         auto const hnml_complex_abs_uj_inv_ft = dot(hnml_complex_ft, abs_uj_inv);
         auto const f_x_complex_row = sum_row(hnml_complex_ft);
-        auto const f_x_complex_abs_uj_inv_row = f_x_complex_row / ui;
+        auto const f_x_complex_abs_uj_inv_row = dot(abs_ui_iv, f_x_complex_row);
 
         auto const injection_jac = calculate_jacobian(hnml_complex_ft, hnml_complex_abs_uj_inv_ft);
         add_injection_jacobian(block, injection_jac);
@@ -347,14 +347,13 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                     const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_chi_u_chi_conj,
-                                    const auto& u_chi_u_psi_conj, const auto& u_chi, const auto& abs_u_chi_inv,
-                                    const auto& abs_u_psi_inv, const auto& measured_power,
-                                    bool multiply_with_i_transpose) {
+                                    const auto& u_chi_u_psi_conj, const auto& abs_u_chi_inv, const auto& abs_u_psi_inv,
+                                    const auto& measured_power, bool multiply_with_i_transpose) {
         auto const hnml_u_chi_u_chi_y_xi_xi = hnml_complex_form(y_xi_xi, u_chi_u_chi_conj);
         auto const hnml_u_chi_u_psi_y_xi_mu = hnml_complex_form(y_xi_mu, u_chi_u_psi_conj);
 
         auto const f_x_complex = sum_row(hnml_u_chi_u_chi_y_xi_xi + hnml_u_chi_u_psi_y_xi_mu);
-        auto const f_x_complex_u_chi_inv = f_x_complex / u_chi;
+        auto const f_x_complex_u_chi_inv = dot(abs_u_chi_inv, f_x_complex);
 
         auto const hnml_u_chi_u_chi_y_xi_xi_u_chi_inv = dot(hnml_u_chi_u_chi_y_xi_xi, abs_u_chi_inv);
         auto const hnml_u_chi_u_psi_y_xi_mu_u_psi_inv = dot(hnml_u_chi_u_psi_y_xi_mu, abs_u_psi_inv);
@@ -431,7 +430,8 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.eta_v() += dot(w_v, delta_v);
     }
 
-    NRSEJacobian jacobian_diagonal_component(ComplexValue<sym> f_x_complex_v_inv, ComplexValue<sym> f_x_complex) {
+    static NRSEJacobian jacobian_diagonal_component(ComplexValue<sym> const& f_x_complex_v_inv,
+                                                    ComplexValue<sym> const& f_x_complex) {
         NRSEJacobian jacobian{};
         jacobian.dP_dt = -RealTensor<sym>{RealValue<sym>{imag(f_x_complex)}};
         jacobian.dP_dv = RealTensor<sym>{RealValue<sym>{real(f_x_complex_v_inv)}};
@@ -440,7 +440,8 @@ template <bool sym> class NewtonRaphsonSESolver {
         return jacobian;
     }
 
-    NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hnml_complex, ComplexTensor<sym> hnml_complex_v_inv) {
+    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hnml_complex,
+                                           ComplexTensor<sym> const& hnml_complex_v_inv) {
         NRSEJacobian jacobian{};
         jacobian.dP_dt = imag(hnml_complex);
         jacobian.dP_dv = real(hnml_complex_v_inv);
@@ -463,8 +464,8 @@ template <bool sym> class NewtonRaphsonSESolver {
         return product;
     }
 
-    void multiply_add_jacobian_blocks_lhs(NRSEGainBlock<sym>& lhs_block, NRSEJacobian const& block_f_T_k_w,
-                                          NRSEJacobian const& other_block) {
+    static void multiply_add_jacobian_blocks_lhs(NRSEGainBlock<sym>& lhs_block, NRSEJacobian const& block_f_T_k_w,
+                                                 NRSEJacobian const& other_block) {
         // matrix multiplication of F_k^T . w_k . F_k
         lhs_block.g_P_theta() +=
             dot(block_f_T_k_w.dP_dt, other_block.dP_dt) + dot(block_f_T_k_w.dP_dv, other_block.dQ_dt);
@@ -474,9 +475,9 @@ template <bool sym> class NewtonRaphsonSESolver {
         lhs_block.g_Q_v() += dot(block_f_T_k_w.dQ_dt, other_block.dP_dv) + dot(block_f_T_k_w.dQ_dv, other_block.dQ_dv);
     }
 
-    void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& block_f_T_k_w,
-                                          PowerSensorCalcParam<sym> const& power_sensor,
-                                          ComplexValue<sym> const& f_x_complex) {
+    static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& block_f_T_k_w,
+                                                 PowerSensorCalcParam<sym> const& power_sensor,
+                                                 ComplexValue<sym> const& f_x_complex) {
         auto const delta_power = power_sensor.value - f_x_complex;
 
         // matrix multiplication of F_k^T . w_k . (z - f(x))
@@ -485,14 +486,14 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.eta_v() += dot(block_f_T_k_w.dQ_dt, real(delta_power)) + dot(block_f_T_k_w.dQ_dv, imag(delta_power));
     }
 
-    void add_injection_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian const& jacobian_block) {
+    static void add_injection_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian const& jacobian_block) {
         block.q_P_theta() += jacobian_block.dP_dt;
         block.q_P_v() += jacobian_block.dP_dv;
         block.q_Q_theta() += jacobian_block.dQ_dt;
         block.q_Q_v() += jacobian_block.dQ_dv;
     }
 
-    ComplexTensor<sym> hnml_complex_form(ComplexTensor<sym> const& yij, ComplexTensor<sym> const& ui_uj_conj) {
+    static ComplexTensor<sym> hnml_complex_form(ComplexTensor<sym> const& yij, ComplexTensor<sym> const& ui_uj_conj) {
         return conj(yij) * ui_uj_conj;
     }
 
@@ -517,11 +518,11 @@ template <bool sym> class NewtonRaphsonSESolver {
         return max_dev;
     }
 
-    auto diagonal_inverse(RealValue<sym> const& value) {
+    static auto diagonal_inverse(RealValue<sym> const& value) {
         return RealDiagonalTensor<sym>{static_cast<RealValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 
-    auto phase_shifted_zero_angle() {
+    static auto phase_shifted_zero_angle() {
         if constexpr (sym) {
             return 0.0;
         } else {
