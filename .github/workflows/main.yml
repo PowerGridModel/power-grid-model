@@ -289,10 +289,8 @@ jobs:
 
   publish-wheels:
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
-    if: |
-      always() &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+    # always run publish job but fail at the first step if previous jobs have been failed
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -301,6 +299,12 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
     steps:
+      - name: Fail fast
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "Previous jobs have failures!"
+          exit 1
+
       - uses: actions/checkout@v4
 
       - name: Setup python
