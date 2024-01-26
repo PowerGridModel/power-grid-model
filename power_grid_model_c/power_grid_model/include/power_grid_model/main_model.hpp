@@ -198,7 +198,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 update[entry.index](*this, found->second, pos, sequence_idx_map[entry.index]);
             }
         }
-        cached_sequence_idx_map_.assign(sequence_idx_map.begin(), sequence_idx_map.end());
+
+        // sequence_idx_map accumulation logic
+        if (is_accumulated_component_updated_) { // assign sequence_idx_map
+            cached_sequence_idx_map_.assign(sequence_idx_map.begin(), sequence_idx_map.end());
+            is_accumulated_component_updated_ = false;
+        } else { // accumulate sequence_idx_map, take the union of each sequence_idx_map
+            for (int i = 0; i < n_types; ++i) {
+                for (const auto& elem : sequence_idx_map[i]) {
+                    if (std::find(cached_sequence_idx_map_[i].begin(), cached_sequence_idx_map_[i].end(), elem) ==
+                        cached_sequence_idx_map_[i].end()) {
+                        cached_sequence_idx_map_[i].push_back(elem);
+                    }
+                }
+            }
+        }
     }
 
     // update all components
@@ -257,6 +271,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_topology_up_to_date_ = false;
         is_sym_parameter_up_to_date_ = false;
         is_asym_parameter_up_to_date_ = false;
+        is_accumulated_component_updated_ = true;
         n_math_solvers_ = 0;
         main_core::clear(math_state_);
         state_.math_topology.clear();
@@ -799,6 +814,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_topology_up_to_date_{false};
     bool is_sym_parameter_up_to_date_{false};
     bool is_asym_parameter_up_to_date_{false};
+    bool is_accumulated_component_updated_{true};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
@@ -1233,6 +1249,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         // else do nothing, set everything up to date
         is_parameter_up_to_date<sym>() = true;
+        is_accumulated_component_updated_ = true;
     }
 };
 
