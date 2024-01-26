@@ -262,49 +262,9 @@ template <bool sym> class NewtonRaphsonSESolver {
                                 }
                             }
                         }
+                    } else {
+                        assert(type == YBusElementType::bff || type == YBusElementType::btt);
                     }
-                    // else if (type == YBusElementType::bft) {
-                    //     if (measured_value.has_branch_from(obj))    {
-                    //         auto const& y_xi_xi = param.branch_param[obj].yff();
-                    //         auto const& y_xi_mu = param.branch_param[obj].yft();
-                    //         auto const& measured_power = measured_value.branch_from_power(obj);
-
-                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
-                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
-                    //     }
-                    //     //verify
-                    //     else if (measured_value.has_branch_to(obj)) {
-                    //         auto const& y_xi_xi = param.branch_param[obj].ytt();
-                    //         auto const& y_xi_mu = param.branch_param[obj].ytf();
-                    //         auto const& measured_power = measured_value.branch_to_power(obj);
-
-                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
-                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
-
-                    //     }
-
-                    // } else if (type == YBusElementType::btf) {
-                    //     if (measured_value.has_branch_to(obj))  {
-                    //         auto const& y_xi_xi = param.branch_param[obj].ytt();
-                    //         auto const& y_xi_mu = param.branch_param[obj].ytf();
-                    //         auto const& measured_power = measured_value.branch_to_power(obj);
-
-                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
-                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
-                    //     }
-                    //     // verify
-                    //     else if (measured_value.has_branch_from(obj)){
-                    //         auto const& y_xi_xi = param.branch_param[obj].yff();
-                    //         auto const& y_xi_mu = param.branch_param[obj].yft();
-                    //         auto const& measured_power = measured_value.branch_from_power(obj);
-
-                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
-                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
-                    //     }
-                    // }
-                    // else{
-                    //     assert (type == YBusElementType::bff || type == YBusElementType::btt)
-                    // }
                 }
 
                 // fill block with injection measurement
