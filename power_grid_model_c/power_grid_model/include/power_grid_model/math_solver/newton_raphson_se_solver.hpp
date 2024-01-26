@@ -102,7 +102,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         : n_bus_{y_bus.size()},
           math_topo_{std::move(topo_ptr)},
           data_gain_(y_bus.nnz_lu()),
-          del_x_rhs_(y_bus.size()),
+          delta_x_rhs_(y_bus.size()),
           x_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(y_bus.size()) {}
@@ -137,7 +137,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
-            sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, del_x_rhs_, del_x_rhs_);
+            sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values);
         };
@@ -164,7 +164,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     // data for gain matrix
     std::vector<NRSEGainBlock<sym>> data_gain_;
     // unknown and rhs
-    std::vector<NRSERhs<sym>> del_x_rhs_;
+    std::vector<NRSERhs<sym>> delta_x_rhs_;
     // voltage of current iteration
     std::vector<NRSERhs<sym>> x_;
     // solver
@@ -200,7 +200,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
             auto const ui_ui_conj = vector_outer_product(ui, conj(ui));
 
-            NRSERhs<sym>& rhs_block = del_x_rhs_[row];
+            NRSERhs<sym>& rhs_block = delta_x_rhs_[row];
             rhs_block.clear();
 
             // get a reference and reset block to zero
@@ -407,10 +407,10 @@ template <bool sym> class NewtonRaphsonSESolver {
         // for 3x3 tensor, fill diagonal
         auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(bus)};
         auto const abs_measured_v = detail::cabs_or_real<sym>(measured_value.voltage(bus));
-        auto const del_v = abs_measured_v - x_[bus].v();
+        auto const delta_v = abs_measured_v - x_[bus].v();
 
         auto w_angle = RealTensor<sym>{1.0};
-        auto del_theta = RealValue<sym>{-x_[bus].theta()};
+        auto delta_theta = RealValue<sym>{-x_[bus].theta()};
 
         auto const virtual_angle_measurement_bus = measured_value.has_angle_measurement(math_topo_->slack_bus)
                                                        ? math_topo_->slack_bus
@@ -420,15 +420,15 @@ template <bool sym> class NewtonRaphsonSESolver {
             if (!measured_value.has_angle_measurement(bus)) {
                 w_angle = RealTensor<sym>{0.0};
             }
-            del_theta += RealValue<sym>{arg(measured_value.voltage(bus))};
+            delta_theta += RealValue<sym>{arg(measured_value.voltage(bus))};
         } else {
-            del_theta += phase_shifted_zero_angle();
+            delta_theta += phase_shifted_zero_angle();
         }
 
         block.g_P_theta() += w_angle;
         block.g_Q_v() += w_v;
-        rhs_block.eta_theta() += dot(w_angle, del_theta);
-        rhs_block.eta_v() += dot(w_v, del_v);
+        rhs_block.eta_theta() += dot(w_angle, delta_theta);
+        rhs_block.eta_v() += dot(w_v, delta_v);
     }
 
     NRSEJacobian jacobian_diagonal_component(ComplexValue<sym> f_x_complex_v_inv, ComplexValue<sym> f_x_complex) {
@@ -500,12 +500,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         double max_dev = 0.0;
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // accumulate the unknown variable
-            x_[bus].theta() += del_x_rhs_[bus].theta();
-            x_[bus].v() += del_x_rhs_[bus].v();
+            x_[bus].theta() += delta_x_rhs_[bus].theta();
+            x_[bus].v() += delta_x_rhs_[bus].v();
             if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance) &&
                 any_zero(measured_values.bus_injection(bus).q_variance)) {
-                x_[bus].phi_p() += del_x_rhs_[bus].phi_p();
-                x_[bus].phi_q() += del_x_rhs_[bus].phi_q();
+                x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
+                x_[bus].phi_q() += delta_x_rhs_[bus].phi_q();
             }
 
             auto const old_u = u[bus];
