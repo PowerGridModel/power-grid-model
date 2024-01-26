@@ -153,7 +153,7 @@ template <bool sym> class IterativeLinearSESolver {
     SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>>::BlockPermArray perm_;
 
-    auto diagonal_inverse(RealValue<sym> const& value) {
+    static auto diagonal_inverse(RealValue<sym> const& value) {
         return ComplexDiagonalTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 
@@ -325,14 +325,14 @@ template <bool sym> class IterativeLinearSESolver {
                 return 1.0;
             }
             auto const& voltage = x_rhs_[math_topo_->slack_bus].u();
-            auto const& voltage_a = [](auto const& val) -> auto const& {
+            auto const& voltage_a = [&voltage]() -> auto const& {
                 if constexpr (sym) {
-                    return val;
+                    return voltage;
                 } else {
-                    return val(0);
+                    return voltage(0);
                 }
             }
-            (voltage);
+            ();
             return cabs(voltage_a) / voltage_a;
         }();
 

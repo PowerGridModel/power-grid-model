@@ -515,7 +515,7 @@ template <bool sym> class MeasuredValues {
         }
 
         // scale
-        auto inv_norm_var = 1.0 / min_var;
+        auto const inv_norm_var = 1.0 / min_var;
         std::ranges::for_each(voltage_main_value_, [inv_norm_var](auto& x) { x.variance *= inv_norm_var; });
         std::ranges::for_each(power_main_value_, [inv_norm_var](auto& x) {
             x.p_variance *= inv_norm_var;

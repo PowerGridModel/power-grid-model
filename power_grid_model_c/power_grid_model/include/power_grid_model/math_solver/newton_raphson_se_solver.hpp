@@ -288,8 +288,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                     }
                 }
 
-                // fill block with injection measurement
-                // injection measurement exist
+                // fill block with injection measurement constraints
                 if (measured_value.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
                     auto const jac_complex_ft = jac_complex_intermediate_form(yij, ui_uj_conj);
@@ -319,10 +318,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                             RealTensor<sym>{RealValue<sym>{RealValue<sym>{1.0} / injection.p_variance}};
                         block.r_Q_v() -= RealTensor<sym>{RealValue<sym>{RealValue<sym>{1.0} / injection.q_variance}};
                     }
-
-                }
-                // injection measurement not exist
-                else {
+                } else {
+                    // virtually remove constraints from equation
                     // Q_ij = 0
                     // R_ii = -1.0, only diagonal
                     // assign -1.0 to diagonal of 3x3 tensor, for asym
@@ -371,10 +368,10 @@ template <bool sym> class NewtonRaphsonSESolver {
         // for 3x3 tensor, fill diagonal
         auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(bus)};
         auto const abs_measured_v = detail::cabs_or_real<sym>(measured_value.voltage(bus));
-        auto const del_v = abs_measured_v - x_[bus].v();
+        auto const delta_v = abs_measured_v - x_[bus].v();
 
         auto w_angle = RealTensor<sym>{1.0};
-        auto del_theta = RealValue<sym>{-x_[bus].theta()};
+        auto delta_theta = RealValue<sym>{-x_[bus].theta()};
 
         auto const virtual_angle_measurement_bus = measured_value.has_angle_measurement(math_topo_->slack_bus)
                                                        ? math_topo_->slack_bus
@@ -384,19 +381,19 @@ template <bool sym> class NewtonRaphsonSESolver {
             if (!measured_value.has_angle_measurement(bus)) {
                 w_angle = RealTensor<sym>{0.0};
             }
-            del_theta += RealValue<sym>{arg(measured_value.voltage(bus))};
+            delta_theta += RealValue<sym>{arg(measured_value.voltage(bus))};
         } else {
-            del_theta += phase_shifted_zero_angle();
+            delta_theta += phase_shifted_zero_angle();
         }
 
         block.g_P_theta() += w_angle;
         block.g_Q_v() += w_v;
-        rhs_block.eta_theta() += dot(w_angle, del_theta);
-        rhs_block.eta_v() += dot(w_v, del_v);
+        rhs_block.eta_theta() += dot(w_angle, delta_theta);
+        rhs_block.eta_v() += dot(w_v, delta_v);
     }
 
-    NRSEJacobian jacobian_diagonal_component(ComplexTensor<sym> jac_complex_unit_self,
-                                             ComplexValue<sym> calculated_power) {
+    static NRSEJacobian jacobian_diagonal_component(ComplexTensor<sym> jac_complex_unit_self,
+                                                    ComplexValue<sym> calculated_power) {
         NRSEJacobian jacobian{};
         auto const calculated_power_unit_self = sum_row(jac_complex_unit_self);
         jacobian.dP_dt = -RealTensor<sym>{RealValue<sym>{imag(calculated_power)}};
@@ -406,7 +403,8 @@ template <bool sym> class NewtonRaphsonSESolver {
         return jacobian;
     }
 
-    NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& jac_complex, ComplexTensor<sym> jac_complex_unit_other) {
+    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& jac_complex,
+                                           ComplexTensor<sym> jac_complex_unit_other) {
         NRSEJacobian jacobian{};
         jacobian.dP_dt = imag(jac_complex);
         jacobian.dP_dv = real(jac_complex_unit_other);
@@ -415,12 +413,13 @@ template <bool sym> class NewtonRaphsonSESolver {
         return jacobian;
     }
 
-    void multiply_add_jacobian_blocks(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, NRSEJacobian const& block_1,
-                                      NRSEJacobian const& block_2, PowerSensorCalcParam<sym> const& power_sensor,
-                                      ComplexValue<sym> const& calculated_power) {
+    static void multiply_add_jacobian_blocks(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
+                                             NRSEJacobian const& block_1, NRSEJacobian const& block_2,
+                                             PowerSensorCalcParam<sym> const& power_sensor,
+                                             ComplexValue<sym> const& calculated_power) {
         auto const w_p = diagonal_inverse(power_sensor.p_variance);
         auto const w_q = diagonal_inverse(power_sensor.q_variance);
-        auto const del_power = calculated_power - power_sensor.value;
+        auto const delta_power = calculated_power - power_sensor.value;
 
         // matrix multiplication of F_k^T . w_k
         NRSEJacobian temp_product{};
@@ -436,19 +435,20 @@ template <bool sym> class NewtonRaphsonSESolver {
         block.g_Q_v() += dot(temp_product.dP_dv, block_2.dP_dt) + dot(temp_product.dQ_dv, block_2.dQ_dt);
 
         // matrix multiplication of F_k^T . w_k . (z - f(x))
-        rhs_block.eta_theta() += dot(temp_product.dP_dt, real(del_power)) + dot(temp_product.dQ_dt, imag(del_power));
-        rhs_block.eta_v() += dot(temp_product.dP_dv, real(del_power)) + dot(temp_product.dQ_dv, imag(del_power));
+        rhs_block.eta_theta() +=
+            dot(temp_product.dP_dt, real(delta_power)) + dot(temp_product.dQ_dt, imag(delta_power));
+        rhs_block.eta_v() += dot(temp_product.dP_dv, real(delta_power)) + dot(temp_product.dQ_dv, imag(delta_power));
     }
 
-    void add_injection_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian const& jacobian_block) {
+    static void add_injection_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian const& jacobian_block) {
         block.q_P_theta() += jacobian_block.dP_dt;
         block.q_P_v() += jacobian_block.dP_dv;
         block.q_Q_theta() += jacobian_block.dQ_dt;
         block.q_Q_v() += jacobian_block.dQ_dv;
     }
 
-    ComplexTensor<sym> jac_complex_intermediate_form(ComplexTensor<sym> const& yij,
-                                                     ComplexTensor<sym> const& ui_uj_conj) {
+    static ComplexTensor<sym> jac_complex_intermediate_form(ComplexTensor<sym> const& yij,
+                                                            ComplexTensor<sym> const& ui_uj_conj) {
         return conj(yij) * ui_uj_conj;
     }
 
@@ -467,17 +467,17 @@ template <bool sym> class NewtonRaphsonSESolver {
             auto const old_u = u[bus];
             u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
             // get dev of last iteration, get max
-            double const dev = max_val(cabs((u[bus] - old_u)));
+            double const dev = max_val(cabs(u[bus] - old_u));
             max_dev = std::max(dev, max_dev);
         }
         return max_dev;
     }
 
-    auto diagonal_inverse(RealValue<sym> const& value) {
+    static auto diagonal_inverse(RealValue<sym> const& value) {
         return RealDiagonalTensor<sym>{static_cast<RealValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 
-    auto phase_shifted_zero_angle() {
+    static auto phase_shifted_zero_angle() {
         if constexpr (sym) {
             return 0.0;
         } else {
