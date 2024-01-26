@@ -248,7 +248,7 @@ jobs:
       - name: Test
         run: pytest
 
-  test-macos-arm64:
+  test-python-macos-arm64:
     runs-on: flyci-macos-large-latest-m1
     needs: [build-cpp-test-macos, build-and-test-python]
 
@@ -268,12 +268,14 @@ jobs:
           python --version
 
       - uses: actions/download-artifact@v4
-
-      - uses: actions/download-artifact@v4
         with:
           name: version
           path: .
-      
+
+      - uses: actions/download-artifact@v4
+          name: wheelhouse-macos
+          path: wheelhouse-macos/.
+   
       - name: Install
         run: |
           pip install power-grid-model[dev]==$(cat PYPI_VERSION) --find-links=wheelhouse-macos
@@ -284,7 +286,7 @@ jobs:
 
 
   publish-wheels:
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-macos-arm64]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
