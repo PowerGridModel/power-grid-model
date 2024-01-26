@@ -458,9 +458,10 @@ template <bool sym> class NewtonRaphsonSESolver {
             // accumulate the unknown variable
             x_[bus].theta() += del_x_rhs_[bus].theta();
             x_[bus].v() += del_x_rhs_[bus].v();
-            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance) &&
-                any_zero(measured_values.bus_injection(bus).q_variance)) {
+            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance)) {
                 x_[bus].phi_p() += del_x_rhs_[bus].phi_p();
+            }
+            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).q_variance)) {
                 x_[bus].phi_q() += del_x_rhs_[bus].phi_q();
             }
 
