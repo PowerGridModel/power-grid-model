@@ -235,12 +235,13 @@ template <bool sym> class NewtonRaphsonSESolver {
                      element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
                     Idx const obj = y_bus.y_bus_element()[element_idx].idx;
                     YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
-                    if (type == YBusElementType::shunt && measured_value.has_shunt(obj)) {
-                        auto const& yii = param.shunt_param[obj];
-                        auto const& measured_power = measured_value.shunt_power(obj);
-                        process_shunt_measurement(block, rhs_block, yii, ui_ui_conj, abs_ui_inv, measured_power);
-
-                    } else if (type == YBusElementType::bft && type == YBusElementType::btf) {
+                    if (type == YBusElementType::shunt) {
+                        if (measured_value.has_shunt(obj))  {
+                            auto const& yii = param.shunt_param[obj];
+                            auto const& measured_power = measured_value.shunt_power(obj);
+                            process_shunt_measurement(block, rhs_block, yii, ui_ui_conj, abs_ui_inv, measured_power);
+                        }
+                    } else if (type == YBusElementType::bft || type == YBusElementType::btf) {
                         // measured at from-side: 0, to-side: 1
                         for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                             // has measurement
