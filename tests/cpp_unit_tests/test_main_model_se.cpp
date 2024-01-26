@@ -213,7 +213,7 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
         }
         SUBCASE("Line power sensor") {
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
-            main_model.add_component<Line>({{3, 1, 2, 1, 1, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e3}});
+            main_model.add_component<Line>({{3, 1, 2, 1, 1, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e3}});
             main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
             main_model.add_component<AsymLoad>({{6, 2, 1, LoadGenType::const_pq, {nan, nan, nan}, {nan, nan, nan}}});
             main_model.add_component<SymVoltageSensor>({{11, 1, 1e2, 10.0e3, 0.0}});
@@ -239,15 +239,22 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     CHECK(load_output[0].p == doctest::Approx(1800.0).scale(1e3));
                     CHECK(load_output[0].q == doctest::Approx(180.0).scale(1e3));
 
-                    CHECK(node_output[0].p == doctest::Approx(900.0).scale(1e3));
-                    CHECK(node_output[0].q == doctest::Approx(90.0).scale(1e3));
-                    CHECK(node_output[1].p == doctest::Approx(-900.0).scale(1e3));
-                    CHECK(node_output[1].q == doctest::Approx(-90.0).scale(1e3));
+                    CHECK(node_output[0].p == doctest::Approx(1800.0).scale(1e3));
+                    CHECK(node_output[0].q == doctest::Approx(180.0).scale(1e3));
+                    CHECK(node_output[1].p == doctest::Approx(-1800.0).scale(1e3));
+                    CHECK(node_output[1].q == doctest::Approx(-180.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3)); // gen
-                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3)); // gen
-                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3)); // load
-                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3)); // load
+                    CHECK(line_output[0].p_from == doctest::Approx(1800.0).scale(1e3));
+                    CHECK(line_output[0].q_from == doctest::Approx(180.0).scale(1e3));
+                    CHECK(line_output[0].p_to == doctest::Approx(-1800.0).scale(1e3));
+                    CHECK(line_output[0].q_to == doctest::Approx(-180.0).scale(1e3));
+
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3)); // load
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3)); // load
+                    CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3)); // branch_from
+                    CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3)); // branch_from
+                    CHECK(power_sensor_output[2].p_residual == doctest::Approx(0.0).scale(1e3)); // branch_to
+                    CHECK(power_sensor_output[2].q_residual == doctest::Approx(0.0).scale(1e3)); // branch_to
                 }
             }
         }

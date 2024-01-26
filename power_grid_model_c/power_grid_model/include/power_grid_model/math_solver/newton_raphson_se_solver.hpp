@@ -171,6 +171,11 @@ template <bool sym> class NewtonRaphsonSESolver {
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
+    // array selection function pointer
+    static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
+    static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
+                                              &MeasuredValues<sym>::branch_to_power};
+
     void initialize_unknown(MathOutput<sym>& output, MeasuredValues<sym> const& measured_values) {
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
@@ -206,6 +211,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 Idx const col = col_indices[data_idx_lu];
                 auto const& uj = current_u[col];
                 auto const ui_uj_conj = vector_outer_product(ui, conj(uj));
+                auto const uj_uj_conj = vector_outer_product(uj, conj(uj));
 
                 RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
                 // get a reference and reset block to zero
@@ -232,24 +238,73 @@ template <bool sym> class NewtonRaphsonSESolver {
                     if (type == YBusElementType::shunt && measured_value.has_shunt(obj)) {
                         auto const& yii = param.shunt_param[obj];
                         auto const& measured_power = measured_value.shunt_power(obj);
-                        process_shunt_measurement(block, rhs_block, yii, ui_uj_conj, abs_ui_inv, measured_power);
+                        process_shunt_measurement(block, rhs_block, yii, ui_ui_conj, abs_ui_inv, measured_power);
 
-                    } else if (type == YBusElementType::bft && measured_value.has_branch_from(obj)) {
-                        auto const& y_xi_xi = param.branch_param[obj].yff();
-                        auto const& y_xi_mu = param.branch_param[obj].yft();
-                        auto const& measured_power = measured_value.branch_from_power(obj);
-
-                        process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
-                                                   ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
-
-                    } else if (type == YBusElementType::btf && measured_value.has_branch_to(obj)) {
-                        auto const& y_xi_xi = param.branch_param[obj].ytt();
-                        auto const& y_xi_mu = param.branch_param[obj].ytf();
-                        auto const& measured_power = measured_value.branch_to_power(obj);
-
-                        process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
-                                                   ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
+                    } else if (type == YBusElementType::bft && type == YBusElementType::btf) {
+                        // measured at from-side: 0, to-side: 1
+                        for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
+                            // has measurement
+                            if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
+                                // branch from- and to-side index at 0, and 1 position
+                                IntS const type_ft_or_tf = static_cast<IntS>(type) / 2;
+                                // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
+                                auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
+                                auto const& y_xi_xi = param.branch_param[obj].value[2 * measured_side];
+                                auto const& y_xi_mu = param.branch_param[obj].value[2 * measured_side + 1];
+                                if (type == YBusElementType::bft) {
+                                    process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
+                                                               ui_ui_conj, ui_uj_conj, ui, abs_ui_inv, abs_uj_inv,
+                                                               power, true);
+                                } else {
+                                    process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
+                                                               uj_uj_conj, conj(ui_uj_conj), uj, abs_uj_inv, abs_ui_inv,
+                                                               power, false);
+                                }
+                            }
+                        }
                     }
+                    // else if (type == YBusElementType::bft) {
+                    //     if (measured_value.has_branch_from(obj))    {
+                    //         auto const& y_xi_xi = param.branch_param[obj].yff();
+                    //         auto const& y_xi_mu = param.branch_param[obj].yft();
+                    //         auto const& measured_power = measured_value.branch_from_power(obj);
+
+                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
+                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
+                    //     }
+                    //     //verify
+                    //     else if (measured_value.has_branch_to(obj)) {
+                    //         auto const& y_xi_xi = param.branch_param[obj].ytt();
+                    //         auto const& y_xi_mu = param.branch_param[obj].ytf();
+                    //         auto const& measured_power = measured_value.branch_to_power(obj);
+
+                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
+                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
+
+                    //     }
+
+                    // } else if (type == YBusElementType::btf) {
+                    //     if (measured_value.has_branch_to(obj))  {
+                    //         auto const& y_xi_xi = param.branch_param[obj].ytt();
+                    //         auto const& y_xi_mu = param.branch_param[obj].ytf();
+                    //         auto const& measured_power = measured_value.branch_to_power(obj);
+
+                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
+                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
+                    //     }
+                    //     // verify
+                    //     else if (measured_value.has_branch_from(obj)){
+                    //         auto const& y_xi_xi = param.branch_param[obj].yff();
+                    //         auto const& y_xi_mu = param.branch_param[obj].yft();
+                    //         auto const& measured_power = measured_value.branch_from_power(obj);
+
+                    //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu, ui_ui_conj,
+                    //                                 ui_uj_conj, ui, abs_ui_inv, abs_uj_inv, measured_power);
+                    //     }
+                    // }
+                    // else{
+                    //     assert (type == YBusElementType::bff || type == YBusElementType::btt)
+                    // }
                 }
 
                 // fill block with injection measurement
@@ -333,7 +388,8 @@ template <bool sym> class NewtonRaphsonSESolver {
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                     const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_chi_u_chi_conj,
                                     const auto& u_chi_u_psi_conj, const auto& u_chi, const auto& abs_u_chi_inv,
-                                    const auto& abs_u_psi_inv, const auto& measured_power) {
+                                    const auto& abs_u_psi_inv, const auto& measured_power,
+                                    bool multiply_with_i_transpose) {
         auto const hnml_u_chi_u_chi_y_xi_xi = hnml_complex_form(y_xi_xi, u_chi_u_chi_conj);
         auto const hnml_u_chi_u_psi_y_xi_mu = hnml_complex_form(y_xi_mu, u_chi_u_psi_conj);
 
@@ -341,15 +397,29 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const calculated_power_u_chi_inv = calculated_power / u_chi;
 
         auto const hnml_u_chi_u_chi_y_xi_xi_u_chi_inv = dot(hnml_u_chi_u_chi_y_xi_xi, abs_u_chi_inv);
+        auto const hnml_u_chi_u_psi_y_xi_mu_u_psi_inv = dot(hnml_u_chi_u_psi_y_xi_mu, abs_u_psi_inv);
+
         auto block_1 = calculate_jacobian(hnml_u_chi_u_chi_y_xi_xi, hnml_u_chi_u_chi_y_xi_xi_u_chi_inv);
         block_1 += jacobian_diagonal_component(calculated_power_u_chi_inv, calculated_power);
+        auto const block_2 = calculate_jacobian(hnml_u_chi_u_psi_y_xi_mu, hnml_u_chi_u_psi_y_xi_mu_u_psi_inv);
+
+        if (multiply_with_i_transpose) {
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_1, block_2, measured_power,
+                                       calculated_power);
+        } else {
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_2, block_1, measured_power,
+                                       calculated_power);
+        }
+    }
+
+    void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
+                                    auto& block_1, const auto& block_2, const auto& measured_power,
+                                    const auto& calculated_power) {
         auto const& block_f_T_k_w = multiply_weight_variance(block_1, measured_power);
 
         multiply_add_jacobian_blocks_lhs(diag_block, block_f_T_k_w, block_1);
         multiply_add_jacobian_blocks_rhs(rhs_block, block_f_T_k_w, measured_power, calculated_power);
 
-        auto const hnml_u_chi_u_psi_y_xi_mu_u_psi_inv = dot(hnml_u_chi_u_psi_y_xi_mu, abs_u_psi_inv);
-        auto const block_2 = calculate_jacobian(hnml_u_chi_u_psi_y_xi_mu, hnml_u_chi_u_psi_y_xi_mu_u_psi_inv);
         multiply_add_jacobian_blocks_lhs(block, block_f_T_k_w, block_2);
     }
 
