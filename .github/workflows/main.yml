@@ -264,6 +264,15 @@ jobs:
           uname -a
           uname -m
           python -c 'import platform; print(platform.platform())'
+          python --version
+      
+      - name: Install and test
+        run: |
+          pip install power-grid-model[dev]
+      
+      - name: test
+        run: |
+          pytest
 
 
   # publish-wheels:
