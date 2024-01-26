@@ -112,7 +112,8 @@ template <bool sym> inline bool cmplx_neq(ComplexTensor<sym> const& lhs, Complex
 };
 
 template <bool sym>
-inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
+inline void update_y_bus([[maybe_unused]] YBus<sym>& y_bus,
+                         std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                          std::shared_ptr<std::vector<std::vector<Idx2D>> const> const& seq_idx_map) {
     // verify that the number of branches, shunts and source is the same
     MathModelParam<sym> const& y_bus_param = y_bus.math_model_param();
@@ -157,8 +158,6 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
                        cmplx_neq<sym>(math_model_param->branch_param[i].ytf(), y_bus_param.branch_param[i].ytf()) ||
                        cmplx_neq<sym>(math_model_param->branch_param[i].ytt(), y_bus_param.branch_param[i].ytt());
             });
-        math_model_param_incrmt.branch_param_to_change.reserve(
-            std::distance(branch_param_to_change_views.begin(), branch_param_to_change_views.end()));
         math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
                                                           branch_param_to_change_views.end()};
     }
@@ -169,8 +168,6 @@ inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> c
             boost::adaptors::filtered([&math_model_param, &y_bus_param](Idx i) {
                 return cmplx_neq<sym>(math_model_param->shunt_param[i], y_bus_param.shunt_param[i]);
             });
-        math_model_param_incrmt.shunt_param_to_change.reserve(
-            std::distance(shunt_param_to_change_views.begin(), shunt_param_to_change_views.end()));
         math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
                                                          shunt_param_to_change_views.end()};
     }

@@ -1202,9 +1202,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
 
                 y_bus_vec.back().set_branch_param_idx(
-                    IdxVector(branch_param_in_seq_map.begin(), branch_param_in_seq_map.end()));
+                    IdxVector{branch_param_in_seq_map.begin(), branch_param_in_seq_map.end()});
                 y_bus_vec.back().set_shunt_param_idx(
-                    IdxVector(shunt_param_in_seq_map.begin(), shunt_param_in_seq_map.end()));
+                    IdxVector{shunt_param_in_seq_map.begin(), shunt_param_in_seq_map.end()});
             }
         }
     }

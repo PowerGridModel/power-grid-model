@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <ranges>
-#include <set>
 
 namespace power_grid_model {
 
@@ -371,7 +370,6 @@ template <bool sym> class YBus {
         // construct affected entries
         IdxVector affected_entries;
 
-        // query params in map, not yet distinguishing between entry_param_shunt_pair and entry_param_shunt
         auto query_params_in_map = [&affected_entries](auto const& params_to_change, auto const& mapping) {
             for (size_t i = 0; i < mapping.size(); ++i) {
                 if (std::ranges::any_of(mapping[i], [&](Idx val) {
@@ -524,7 +522,6 @@ template <bool sym> class YBus {
 
     //  cache the increment math parameters
     std::shared_ptr<MathModelParamIncrement<sym> const> math_model_param_incrmt_;
-    bool decremented_ = false;
 };
 
 template class YBus<true>;
