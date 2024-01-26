@@ -250,7 +250,7 @@ jobs:
 
   test-macos-arm64:
     runs-on: flyci-macos-large-latest-m1
-    nees: [build-cpp-test-macos, build-and-test-python]
+    needs: [build-cpp-test-macos, build-and-test-python]
 
     steps:
       - uses: actions/checkout@v4
