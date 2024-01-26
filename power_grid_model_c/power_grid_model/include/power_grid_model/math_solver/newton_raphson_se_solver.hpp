@@ -340,7 +340,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         auto jac_block = calculate_jacobian(hnml_ui_ui_yii, hnml_ui_ui_yii_abs_ui_inv);
         jac_block += jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
-        auto const& block_f_T_k_w = multiply_weight_variance(jac_block, measured_power);
+        auto const& block_f_T_k_w = transpose_multiply_weight(jac_block, measured_power);
         multiply_add_jacobian_blocks_lhs(block, block_f_T_k_w, jac_block);
         multiply_add_jacobian_blocks_rhs(rhs_block, block_f_T_k_w, measured_power, f_x_complex);
     }
@@ -374,7 +374,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                     auto& left_block, const auto& right_block, const auto& measured_power,
                                     const auto& f_x_complex) {
-        auto const& block_f_T_k_w = multiply_weight_variance(left_block, measured_power);
+        auto const& block_f_T_k_w = transpose_multiply_weight(left_block, measured_power);
 
         multiply_add_jacobian_blocks_lhs(diag_block, block_f_T_k_w, left_block);
         multiply_add_jacobian_blocks_rhs(rhs_block, block_f_T_k_w, measured_power, f_x_complex);
@@ -430,6 +430,14 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.eta_v() += dot(w_v, delta_v);
     }
 
+    /**
+     * @brief The second part to add to the F_k(u1, u1, y11) block for shunt flow.
+     * The members are -D[Q], D[P] . D[V]^-1, D[P], D[Q] . D[V]^-1,
+     *
+     * @param f_x_complex_v_inv (P_i + j * Q_i) / abs(u1)
+     * @param f_x_complex P_i + j * Q_i
+     * @return  second part of F_k block
+     */
     static NRSEJacobian jacobian_diagonal_component(ComplexValue<sym> const& f_x_complex_v_inv,
                                                     ComplexValue<sym> const& f_x_complex) {
         NRSEJacobian jacobian{};
@@ -440,22 +448,19 @@ template <bool sym> class NewtonRaphsonSESolver {
         return jacobian;
     }
 
-    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hnml_complex,
-                                           ComplexTensor<sym> const& hnml_complex_v_inv) {
-        NRSEJacobian jacobian{};
-        jacobian.dP_dt = imag(hnml_complex);
-        jacobian.dP_dv = real(hnml_complex_v_inv);
-        jacobian.dQ_dt = -real(hnml_complex);
-        jacobian.dQ_dv = imag(hnml_complex_v_inv);
-        return jacobian;
-    }
-
-    NRSEJacobian multiply_weight_variance(NRSEJacobian const& jac_block,
-                                          PowerSensorCalcParam<sym> const& power_sensor) {
+    /**
+     * @brief Calculate F_k(u1, u2, y12)^T . W_k. Hence first transpose, then dot product.
+     * where W_k = [[p_variance, 0], [0, q_variance]]
+     *
+     * @param jac_block F_k(u1, u2, y12)
+     * @param power_sensor object with members p_variance and q_variance
+     * @return  F_k(u1, u2, y12)^T . W
+     */
+    NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block,
+                                           PowerSensorCalcParam<sym> const& power_sensor) {
         auto const w_p = diagonal_inverse(power_sensor.p_variance);
         auto const w_q = diagonal_inverse(power_sensor.q_variance);
 
-        // matrix multiplication of F_k^T . w_k
         NRSEJacobian product{};
         product.dP_dt = dot(w_p, jac_block.dP_dt);
         product.dP_dv = dot(w_q, jac_block.dQ_dt);
@@ -464,15 +469,20 @@ template <bool sym> class NewtonRaphsonSESolver {
         return product;
     }
 
-    static void multiply_add_jacobian_blocks_lhs(NRSEGainBlock<sym>& lhs_block, NRSEJacobian const& block_f_T_k_w,
-                                                 NRSEJacobian const& other_block) {
-        // matrix multiplication of F_k^T . w_k . F_k
-        lhs_block.g_P_theta() +=
-            dot(block_f_T_k_w.dP_dt, other_block.dP_dt) + dot(block_f_T_k_w.dP_dv, other_block.dQ_dt);
-        lhs_block.g_P_v() += dot(block_f_T_k_w.dP_dt, other_block.dP_dv) + dot(block_f_T_k_w.dP_dv, other_block.dQ_dv);
-        lhs_block.g_Q_theta() +=
-            dot(block_f_T_k_w.dQ_dt, other_block.dP_dt) + dot(block_f_T_k_w.dQ_dv, other_block.dQ_dt);
-        lhs_block.g_Q_v() += dot(block_f_T_k_w.dQ_dt, other_block.dP_dv) + dot(block_f_T_k_w.dQ_dv, other_block.dQ_dv);
+    /**
+     * @brief Matrix multiply F_{k,1}^T . w_k and F_{k,2}^T.
+     * Then add the product to G of gain block
+     *
+     * @param lhs_block Gain block, G of the LHS
+     * @param f_T_k_w F_{k,1}^T . w_k
+     * @param f_i_or_j F_{k,2}^T
+     */
+    static void multiply_add_jacobian_blocks_lhs(NRSEGainBlock<sym>& lhs_block, NRSEJacobian const& f_T_k_w,
+                                                 NRSEJacobian const& f_i_or_j) {
+        lhs_block.g_P_theta() += dot(f_T_k_w.dP_dt, f_i_or_j.dP_dt) + dot(f_T_k_w.dP_dv, f_i_or_j.dQ_dt);
+        lhs_block.g_P_v() += dot(f_T_k_w.dP_dt, f_i_or_j.dP_dv) + dot(f_T_k_w.dP_dv, f_i_or_j.dQ_dv);
+        lhs_block.g_Q_theta() += dot(f_T_k_w.dQ_dt, f_i_or_j.dP_dt) + dot(f_T_k_w.dQ_dv, f_i_or_j.dQ_dt);
+        lhs_block.g_Q_v() += dot(f_T_k_w.dQ_dt, f_i_or_j.dP_dv) + dot(f_T_k_w.dQ_dv, f_i_or_j.dQ_dv);
     }
 
     static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& block_f_T_k_w,
@@ -493,6 +503,31 @@ template <bool sym> class NewtonRaphsonSESolver {
         block.q_Q_v() += jacobian_block.dQ_dv;
     }
 
+    /**
+     * @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
+     * The 4 members are H, N, M, L in the order.
+     *
+     * @param hnml_complex hnml_complex
+     * @param hnml_complex_v_inv hnml_complex / abs(u2)
+     * @return  F_k(u1, u2, y12)
+     */
+    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hnml_complex,
+                                           ComplexTensor<sym> const& hnml_complex_v_inv) {
+        NRSEJacobian jacobian{};
+        jacobian.dP_dt = imag(hnml_complex);
+        jacobian.dP_dv = real(hnml_complex_v_inv);
+        jacobian.dQ_dt = -real(hnml_complex);
+        jacobian.dQ_dv = imag(hnml_complex_v_inv);
+        return jacobian;
+    }
+
+    /**
+     * @brief Helper function for all G cos and B sin calculations
+     *
+     * @param yij admittance y12
+     * @param ui_uj_conj vector outer product of u1 and conj(u2)
+     * @return  -M(u1, u2, y12) + j * H(u1, u2, y12)
+     */
     static ComplexTensor<sym> hnml_complex_form(ComplexTensor<sym> const& yij, ComplexTensor<sym> const& ui_uj_conj) {
         return conj(yij) * ui_uj_conj;
     }
@@ -503,9 +538,10 @@ template <bool sym> class NewtonRaphsonSESolver {
             // accumulate the unknown variable
             x_[bus].theta() += delta_x_rhs_[bus].theta();
             x_[bus].v() += delta_x_rhs_[bus].v();
-            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance) &&
-                any_zero(measured_values.bus_injection(bus).q_variance)) {
+            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance)) {
                 x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
+            }
+            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).q_variance)) {
                 x_[bus].phi_q() += delta_x_rhs_[bus].phi_q();
             }
 
