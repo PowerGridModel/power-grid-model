@@ -351,7 +351,6 @@ template <bool sym> class IterativeLinearSESolver {
     auto linearize_measurements(ComplexValueVector<sym> const& current_u, MeasuredValues<sym> const& measured_values) {
         return measured_values.combine_voltage_iteration_with_measurements(current_u);
     }
-
 };
 
 template class IterativeLinearSESolver<true>;

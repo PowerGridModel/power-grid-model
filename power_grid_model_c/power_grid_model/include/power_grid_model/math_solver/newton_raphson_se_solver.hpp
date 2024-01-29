@@ -176,7 +176,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             x_[bus].theta() = mean_angle_shift + math_topo_->phase_shift[bus];
-            if (measured_values.has_voltage(bus))   {
+            if (measured_values.has_voltage(bus)) {
                 if (measured_values.has_angle_measurement(bus)) {
                     x_[bus].theta() += arg(measured_values.voltage(bus));
                 }
@@ -186,7 +186,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         }
     }
 
-    void reset_unknown()    {
+    void reset_unknown() {
         static auto const default_unknown = [] {
             NRSERhs<sym> x;
             x.v() = 1.0;
@@ -396,11 +396,10 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         RealTensor<sym> w_angle{};
         RealValue<sym> delta_theta{};
-        if (measured_value.has_angle_measurement(bus))    {
+        if (measured_value.has_angle_measurement(bus)) {
             delta_theta = RealValue<sym>{arg(measured_value.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
             w_angle = RealTensor<sym>{1.0};
-        }
-        else if (bus == virtual_angle_measurement_bus && !measured_value.has_angle())   {
+        } else if (bus == virtual_angle_measurement_bus && !measured_value.has_angle()) {
             delta_theta = phase_shifted_zero_angle() - RealValue<sym>{x_[bus].theta()};
             w_angle = RealTensor<sym>{1.0};
         }
@@ -481,9 +480,9 @@ template <bool sym> class NewtonRaphsonSESolver {
             }
             auto const& theta = x_[math_topo_->slack_bus].theta();
             if constexpr (sym) {
-                    return theta;
-                } else {
-                    return theta(0);
+                return theta;
+            } else {
+                return theta(0);
             }
         }();
 

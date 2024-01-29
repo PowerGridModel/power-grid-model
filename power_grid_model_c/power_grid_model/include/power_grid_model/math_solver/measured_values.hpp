@@ -143,16 +143,16 @@ template <bool sym> class MeasuredValues {
     // for no measurement, the voltage phasor of the current iteration is used
     // for magnitude only measurement, the angle of the current iteration is used
     // for magnitude and angle measurement, the measured phasor is used
-    ComplexValueVector<sym> combine_voltage_iteration_with_measurements(ComplexValueVector<sym> const& current_u) const {
+    ComplexValueVector<sym>
+    combine_voltage_iteration_with_measurements(ComplexValueVector<sym> const& current_u) const {
         ComplexValueVector<sym> u(current_u.size());
 
         for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
             if (!has_voltage(bus)) { // no measurement
                 u[bus] = current_u[bus];
             } else if (!has_angle_measurement(bus)) {
-                u[bus] = real(voltage(bus)) * current_u[bus] /
-                         cabs(current_u[bus]); // U / |U| to get angle shift
-            } else {                           // full measurement
+                u[bus] = real(voltage(bus)) * current_u[bus] / cabs(current_u[bus]); // U / |U| to get angle shift
+            } else {                                                                 // full measurement
                 u[bus] = voltage(bus);
             }
         }
