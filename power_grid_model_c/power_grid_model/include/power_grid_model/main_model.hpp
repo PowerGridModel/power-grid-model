@@ -203,14 +203,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (is_accumulated_component_updated_) { // assign sequence_idx_map
             cached_sequence_idx_map_.assign(sequence_idx_map.begin(), sequence_idx_map.end());
             is_accumulated_component_updated_ = false;
-        } else { // accumulate sequence_idx_map, take the union of each sequence_idx_map
+        } else { // accumulate sequence_idx_map, not taking the union for (slight) performance gain
             for (size_t i = 0; i < n_types; ++i) {
-                for (const auto& elem : sequence_idx_map[i]) {
-                    if (std::find(cached_sequence_idx_map_[i].begin(), cached_sequence_idx_map_[i].end(), elem) ==
-                        cached_sequence_idx_map_[i].end()) {
-                        cached_sequence_idx_map_[i].push_back(elem);
-                    }
-                }
+                cached_sequence_idx_map_[i].insert(cached_sequence_idx_map_[i].end(), sequence_idx_map[i].begin(),
+                                                   sequence_idx_map[i].end());
             }
         }
     }
