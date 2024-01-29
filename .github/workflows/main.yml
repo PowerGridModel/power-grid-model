@@ -203,7 +203,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.16.4
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -248,8 +248,49 @@ jobs:
       - name: Test
         run: pytest
 
+  test-python-macos-arm64:
+    runs-on: flyci-macos-large-latest-m1
+    needs: [build-cpp-test-macos, build-and-test-python]
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Check python version
+        run: |
+          uname -a
+          uname -m
+          python -c 'import platform; print(platform.platform())'
+          python --version
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheelhouse-macos
+          path: wheelhouse-macos/.
+   
+      - name: Install
+        run: |
+          pip install power-grid-model[dev]==$(cat PYPI_VERSION) --find-links=wheelhouse-macos
+      
+      - name: test
+        run: |
+          pytest
+
+
   publish-wheels:
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
+    # always run publish job but fail at the first step if previous jobs have been failed
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -258,6 +299,12 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
     steps:
+      - name: Fail fast
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "Previous jobs have failures!"
+          exit 1
+
       - uses: actions/checkout@v4
 
       - name: Setup python

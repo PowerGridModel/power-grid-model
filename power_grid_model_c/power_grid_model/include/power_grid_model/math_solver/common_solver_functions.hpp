@@ -77,10 +77,10 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
 template <bool sym, typename LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
-inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                             grouped_idx_vector_type auto const& sources_per_bus,
-                             grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
-                             LoadGenFunc&& load_gen_func) {
+inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                grouped_idx_vector_type auto const& sources_per_bus,
+                                grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
+                                LoadGenFunc&& load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
     // call y bus

@@ -125,7 +125,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
-        initialize_unknown(output, measured_values);
+        initialize_unknown(output.u, measured_values);
 
         // loop to iterate
         Idx num_iter = 0;
@@ -176,15 +176,31 @@ template <bool sym> class NewtonRaphsonSESolver {
     static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
                                               &MeasuredValues<sym>::branch_to_power};
 
-    void initialize_unknown(MathOutput<sym>& output, MeasuredValues<sym> const& measured_values) {
+    void initialize_unknown(ComplexValueVector<sym>& initial_u, MeasuredValues<sym> const& measured_values) {
+        reset_unknown();
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            x_[bus].v() = 1.0;
             x_[bus].theta() = mean_angle_shift + math_topo_->phase_shift[bus];
-            x_[bus].phi_p() = 0.0;
-            x_[bus].phi_q() = 0.0;
-            output.u[bus] = exp(1.0i * x_[bus].theta());
+            if (measured_values.has_voltage(bus)) {
+                if (measured_values.has_angle_measurement(bus)) {
+                    x_[bus].theta() += arg(measured_values.voltage(bus));
+                }
+                x_[bus].v() = detail::cabs_or_real<sym>(measured_values.voltage(bus));
+            }
+            initial_u[bus] = exp(1.0i * x_[bus].theta());
         }
+    }
+
+    void reset_unknown() {
+        static auto const default_unknown = [] {
+            NRSERhs<sym> x;
+            x.v() = 1.0;
+            x.theta() = 0.0;
+            x.phi_p() = 0.0;
+            x.phi_q() = 0.0;
+            return x;
+        }();
+        std::ranges::fill(x_, default_unknown);
     }
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
@@ -268,8 +284,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                     }
                 }
 
-                // fill block with injection measurement
-                // injection measurement exist
+                // fill block with injection measurement constraints
                 if (measured_value.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
                     process_injection_row(block, diag_block, rhs_block, yij, ui_uj_conj, abs_ui_inv, abs_uj_inv);
@@ -285,10 +300,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                             RealTensor<sym>{RealValue<sym>{RealValue<sym>{1.0} / injection.p_variance}};
                         block.r_Q_v() -= RealTensor<sym>{RealValue<sym>{RealValue<sym>{1.0} / injection.q_variance}};
                     }
-
-                }
-                // injection measurement not exist
-                else {
+                } else {
+                    // virtually remove constraints from equation
                     // Q_ij = 0
                     // R_ii = -1.0, only diagonal
                     // assign -1.0 to diagonal of 3x3 tensor, for asym
@@ -408,20 +421,18 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const abs_measured_v = detail::cabs_or_real<sym>(measured_value.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
-        auto w_angle = RealTensor<sym>{1.0};
-        auto delta_theta = RealValue<sym>{-x_[bus].theta()};
-
         auto const virtual_angle_measurement_bus = measured_value.has_angle_measurement(math_topo_->slack_bus)
                                                        ? math_topo_->slack_bus
                                                        : measured_value.first_voltage_measurement();
 
-        if (measured_value.has_angle() || bus != virtual_angle_measurement_bus) {
-            if (!measured_value.has_angle_measurement(bus)) {
-                w_angle = RealTensor<sym>{0.0};
-            }
-            delta_theta += RealValue<sym>{arg(measured_value.voltage(bus))};
-        } else {
-            delta_theta += phase_shifted_zero_angle();
+        RealTensor<sym> w_angle{};
+        RealValue<sym> delta_theta{};
+        if (measured_value.has_angle_measurement(bus)) {
+            delta_theta = RealValue<sym>{arg(measured_value.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
+            w_angle = RealTensor<sym>{1.0};
+        } else if (bus == virtual_angle_measurement_bus && !measured_value.has_angle()) {
+            delta_theta = phase_shifted_zero_angle() - RealValue<sym>{x_[bus].theta()};
+            w_angle = RealTensor<sym>{1.0};
         }
 
         block.g_P_theta() += w_angle;
@@ -534,9 +545,23 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     double iterate_unknown(ComplexValueVector<sym>& u, MeasuredValues<sym> measured_values) {
         double max_dev = 0.0;
+        // phase shift anti offset of slack bus, phase a
+        // if no angle measurement is present
+        double const angle_offset = [&]() -> double {
+            if (measured_values.has_angle()) {
+                return 0.0;
+            }
+            auto const& theta = x_[math_topo_->slack_bus].theta();
+            if constexpr (sym) {
+                return theta;
+            } else {
+                return theta(0);
+            }
+        }();
+
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // accumulate the unknown variable
-            x_[bus].theta() += delta_x_rhs_[bus].theta();
+            x_[bus].theta() += delta_x_rhs_[bus].theta() + RealValue<sym>{angle_offset};
             x_[bus].v() += delta_x_rhs_[bus].v();
             if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance)) {
                 x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
@@ -548,7 +573,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             auto const old_u = u[bus];
             u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
             // get dev of last iteration, get max
-            double const dev = max_val(cabs((u[bus] - old_u)));
+            double const dev = max_val(cabs(u[bus] - old_u));
             max_dev = std::max(dev, max_dev);
         }
         return max_dev;
@@ -562,7 +587,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         if constexpr (sym) {
             return 0.0;
         } else {
-            return RealValue<false>{0.0, deg_240, deg_120};
+            return RealValue<false>{0.0, -deg_120, deg_120};
         }
     }
 };
