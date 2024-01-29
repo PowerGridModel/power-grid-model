@@ -296,9 +296,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                         rhs_block.tau_p() += injection.value.real();
                         rhs_block.tau_q() += injection.value.imag();
 
-                        block.r_P_theta() -=
-                            RealTensor<sym>{RealValue<sym>{RealValue<sym>{1.0} / injection.p_variance}};
-                        block.r_Q_v() -= RealTensor<sym>{RealValue<sym>{RealValue<sym>{1.0} / injection.q_variance}};
+                        block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
+                        block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.q_variance}};
                     }
                 } else {
                     // virtually remove constraints from equation
@@ -561,8 +560,8 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // accumulate the unknown variable
-            x_[bus].theta() += del_x_rhs_[bus].theta() - RealValue<sym>{angle_offset};
-            x_[bus].v() += del_x_rhs_[bus].v();
+            x_[bus].theta() += delta_x_rhs_[bus].theta() - RealValue<sym>{angle_offset};
+            x_[bus].v() += delta_x_rhs_[bus].v();
             if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance)) {
                 x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
             }
