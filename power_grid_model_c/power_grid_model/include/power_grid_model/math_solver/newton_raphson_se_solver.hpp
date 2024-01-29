@@ -183,11 +183,11 @@ template <bool sym> class NewtonRaphsonSESolver {
             x_[bus].theta() = mean_angle_shift + math_topo_->phase_shift[bus];
             if (measured_values.has_voltage(bus)) {
                 if (measured_values.has_angle_measurement(bus)) {
-                    x_[bus].theta() += arg(measured_values.voltage(bus));
+                    x_[bus].theta() = arg(measured_values.voltage(bus));
                 }
                 x_[bus].v() = detail::cabs_or_real<sym>(measured_values.voltage(bus));
             }
-            initial_u[bus] = exp(1.0i * x_[bus].theta());
+            initial_u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
         }
     }
 
@@ -561,8 +561,8 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             // accumulate the unknown variable
-            x_[bus].theta() += delta_x_rhs_[bus].theta() + RealValue<sym>{angle_offset};
-            x_[bus].v() += delta_x_rhs_[bus].v();
+            x_[bus].theta() += del_x_rhs_[bus].theta() - RealValue<sym>{angle_offset};
+            x_[bus].v() += del_x_rhs_[bus].v();
             if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance)) {
                 x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
             }
