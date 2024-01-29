@@ -260,7 +260,7 @@ template <bool sym> class IterativeLinearSESolver {
         std::vector<BranchIdx> const branch_bus_idx = y_bus.math_topology().branch_bus_idx;
         // get generated (measured/estimated) voltage phasor
         // with current result voltage angle
-        ComplexValueVector<sym> u = linearize_voltage(current_u, measured_value);
+        ComplexValueVector<sym> u = linearize_measurements(current_u, measured_value);
 
         // loop all bus to fill rhs
         for (Idx bus = 0; bus != n_bus_; ++bus) {
@@ -348,26 +348,10 @@ template <bool sym> class IterativeLinearSESolver {
         return max_dev;
     }
 
-    // Construct linearized voltage value for all buses
-    // for no measurement, the voltage phasor of the current iteration is used
-    // for magnitude only measurement, the angle of the current iteration is used
-    // for magnitude and angle measurement, the measured phasor is used
-    ComplexValueVector<sym> linearize_voltage(ComplexValueVector<sym> const& current_u,
-                                              MeasuredValues<sym> const& measured_values) const {
-        ComplexValueVector<sym> u(current_u.size());
-
-        for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
-            if (!measured_values.has_voltage(bus)) { // no measurement
-                u[bus] = current_u[bus];
-            } else if (!measured_values.has_angle_measurement(bus)) {
-                u[bus] = real(measured_values.voltage(bus)) * current_u[bus] /
-                         cabs(current_u[bus]); // U / |U| to get angle shift
-            } else {                           // full measurement
-                u[bus] = measured_values.voltage(bus);
-            }
-        }
-        return u;
+    auto linearize_measurements(ComplexValueVector<sym> const& current_u, MeasuredValues<sym> const& measured_values) {
+        return measured_values.combine_voltage_iteration_with_measurements(current_u);
     }
+
 };
 
 template class IterativeLinearSESolver<true>;
