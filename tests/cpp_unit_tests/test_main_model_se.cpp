@@ -215,42 +215,37 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
             main_model.add_component<Line>({{3, 1, 2, 1, 1, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e3}});
             main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
-            main_model.add_component<AsymLoad>({{6, 2, 1, LoadGenType::const_pq, {nan, nan, nan}, {nan, nan, nan}}});
+            main_model.add_component<Shunt>({{6, 2, 1, 1800 / 10e3 / 10e3, -180 / 10e3 / 10e3, 0.0, 0.0}});
             main_model.add_component<SymVoltageSensor>({{11, 1, 1e2, 10.0e3, 0.0}});
             SUBCASE("Symmetric Power Sensor - Symmetric Calculation") {
                 main_model.add_component<SymPowerSensor>(
                     {{17, 3, MeasuredTerminalType::branch_from, 1e2, 1800.0, 180.0, nan, nan},
                      {18, 3, MeasuredTerminalType::branch_to, 1e2, -1800.0, -180.0, nan, nan},
-                     {16, 6, MeasuredTerminalType::load, 1e2, 1800.0, 180.0, nan, nan}});
+                     {16, 6, MeasuredTerminalType::shunt, 1e2, 1800.0, 180.0, nan, nan}});
                 SUBCASE("Line flow") {
                     main_model.set_construction_complete();
                     std::vector<MathOutput<true>> const math_output =
                         main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
 
-                    std::vector<SymApplianceOutput> load_output(1);
+                    std::vector<SymApplianceOutput> shunt_output(1);
                     std::vector<SymNodeOutput> node_output(2);
                     std::vector<SymPowerSensorOutput> power_sensor_output(3);
                     std::vector<BranchOutput<true>> line_output(1);
-                    main_model.output_result<AsymLoad>(math_output, load_output.begin());
+                    main_model.output_result<Shunt>(math_output, shunt_output.begin());
                     main_model.output_result<Node>(math_output, node_output.begin());
                     main_model.output_result<Line>(math_output, line_output.begin());
                     main_model.output_result<SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(load_output[0].p == doctest::Approx(1800.0).scale(1e3));
-                    CHECK(load_output[0].q == doctest::Approx(180.0).scale(1e3));
-
-                    CHECK(node_output[0].p == doctest::Approx(1800.0).scale(1e3));
-                    CHECK(node_output[0].q == doctest::Approx(180.0).scale(1e3));
-                    CHECK(node_output[1].p == doctest::Approx(-1800.0).scale(1e3));
-                    CHECK(node_output[1].q == doctest::Approx(-180.0).scale(1e3));
+                    CHECK(shunt_output[0].p == doctest::Approx(1800.0).scale(1e3));
+                    CHECK(shunt_output[0].q == doctest::Approx(180.0).scale(1e3));
 
                     CHECK(line_output[0].p_from == doctest::Approx(1800.0).scale(1e3));
                     CHECK(line_output[0].q_from == doctest::Approx(180.0).scale(1e3));
                     CHECK(line_output[0].p_to == doctest::Approx(-1800.0).scale(1e3));
                     CHECK(line_output[0].q_to == doctest::Approx(-180.0).scale(1e3));
 
-                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3)); // load
-                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3)); // load
+                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).scale(1e3)); // shunt
+                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).scale(1e3)); // shunt
                     CHECK(power_sensor_output[1].p_residual == doctest::Approx(0.0).scale(1e3)); // branch_from
                     CHECK(power_sensor_output[1].q_residual == doctest::Approx(0.0).scale(1e3)); // branch_from
                     CHECK(power_sensor_output[2].p_residual == doctest::Approx(0.0).scale(1e3)); // branch_to
