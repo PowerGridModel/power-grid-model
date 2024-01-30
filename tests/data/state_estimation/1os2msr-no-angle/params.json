@@ -6,7 +6,8 @@
     "newton_raphson": {
       "experimental_features": "enabled",
       "fail": {
-        "reason": "Experimental feature under development"
+        "reason": "Experimental feature under development",
+        "raises": "PowerGridError"
       }
     }
   }
