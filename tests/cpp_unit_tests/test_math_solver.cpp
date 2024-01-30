@@ -527,7 +527,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -543,7 +542,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -559,7 +557,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -578,7 +575,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
