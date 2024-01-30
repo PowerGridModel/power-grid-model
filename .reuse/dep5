@@ -1,8 +1,8 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: power-grid-model
-Upstream-Contact: Dynamic Grid Calculation <dynamic.grid.calculation@alliander.com>
+Upstream-Contact: Power Grid Model project <powergridmodel@lfenergy.org>
 Source: https://github.com/PowerGridModel/power-grid-model
 
-Files: *
-Copyright: 2017-2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+Files: ./*
+Copyright: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 License: MPL-2.0
