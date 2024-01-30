@@ -1134,7 +1134,7 @@ TEST_CASE("Math solver, zero variance test") {
     }
     SUBCASE("Newton-Raphson") {
         // TODO(mgovers): to be added in #478
-        solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
     }
 
     // check both voltage
