@@ -82,39 +82,6 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
 // solver
 template <bool sym> class NewtonRaphsonSESolver {
 
-    // /**
-    //  * @brief Exprimental class to store voltage product.
-    //  * This product gets computed duplicate times throughotu the simulation and caching it can be efficient
-    //  *
-    //  */
-    // class NRSEVoltage {
-    //     ComplexValueVector<sym> const& voltages_{};
-    //     std::unordered_map<std::pair<Idx, Idx>, ComplexTensor<sym>> outer_products_{};
-
-    //     public:
-    //         NRSEVoltageState(ComplexValueVector<sym> const& voltages) :   voltages_{voltages}   {}
-
-    //         auto const& ux_uy_conj(Idx const& row, Idx const& col)   {
-    //             auto const pos = std::pair<Idx, Idx>(row, col);
-    //             auto const inv_pos = std::pair<Idx, Idx>(col, row);
-    //             if (outer_products_.contains(pos))   {
-    //                 return outer_products_[pos];
-    //             }
-    //             else if (outer_products_.contains(inv_pos))   {
-    //                 return conj(outer_products_[inv_pos]);
-    //             }
-    //             else    {
-    //                 outer_products_[pos] = vector_outer_product(voltages_[row], conj(voltages_[col]));
-    //                 return outer_products_[pos];
-    //             }
-    //         }
-
-    //         auto const& u(Idx const& row)    {                return voltages_[row];            }
-    //         auto const& theta(Idx const& row)    {                return x_[row].theta();            }
-    //         auto const& abs_u(Idx const& row)    {                return x_[row].v();            }
-    //         auto const abs_u_inv_diagonal(Idx const& row)    {                return diagonal_inverse(x_[row].v()); }
-    // }
-
     struct NRSEVoltageState {
         ComplexTensor<sym> ui_ui_conj{};
         ComplexTensor<sym> uj_uj_conj{};
@@ -269,10 +236,6 @@ template <bool sym> class NewtonRaphsonSESolver {
             u_state.abs_ui_inv = diagonal_inverse(x_[row].v());
             u_state.ui_ui_conj = vector_outer_product(u_state.ui, conj(u_state.ui));
 
-            auto const& ui = current_u[row];
-            auto const& abs_ui_inv = diagonal_inverse(x_[row].v());
-            auto const ui_ui_conj = vector_outer_product(ui, conj(ui));
-
             NRSERhs<sym>& rhs_block = delta_x_rhs_[row];
             rhs_block.clear();
 
@@ -284,16 +247,10 @@ template <bool sym> class NewtonRaphsonSESolver {
                 Idx const col = col_indices[data_idx_lu];
 
                 u_state.uj = current_u[col];
+                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
                 u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
                 u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
                 u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
-                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
-
-                auto const& uj = current_u[col];
-                auto const uj_uj_conj = vector_outer_product(uj, conj(uj));
-                auto const ui_uj_conj = vector_outer_product(ui, conj(uj));
-                auto const uj_ui_conj = vector_outer_product(uj, conj(ui));
-                RealDiagonalTensor<sym> const& abs_uj_inv = diagonal_inverse(x_[col].v());
 
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
@@ -323,19 +280,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                             process_shunt_measurement(block, rhs_block, yii, u_state, measured_power);
                         }
                     } else if (type == YBusElementType::bft || type == YBusElementType::btf) {
-                        // // measured at from-side: 0, to-side: 1
-                        // for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
-                        //     // has measurement
-                        //     if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                        //         // branch from- and to-side index at 0, and 1 position
-                        //         bool branch_voltage_order = (type == YBusElementType::bft ^ measured_side == 0);
-                        //         auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
-                        //         auto const& y_xi_xi = param.branch_param[obj].value[2 * measured_side];
-                        //         auto const& y_xi_mu = param.branch_param[obj].value[2 * measured_side + 1];
-                        //         process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
-                        //                                     u_state, power, branch_voltage_order);
-                        //         break;
-
                         auto const& y_branch = param.branch_param[obj];
                         if (measured_value.has_branch_from(obj)) {
                             bool ij_voltage_order = (type == YBusElementType::bft);
@@ -348,30 +292,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
                                                        u_state, ij_voltage_order, measured_value.branch_to_power(obj));
                         }
-
-                        // measured at from-side: 0, to-side: 1
-                        // for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
-                        //     // has measurement
-                        //     if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                        //         // branch from- and to-side index at 0, and 1 position
-                        //         IntS const type_ft_or_tf = static_cast<IntS>(type) / 2;
-                        //         // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
-                        //         auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
-                        //         auto const& y_xi_xi = param.branch_param[obj].value[2 * measured_side];
-                        //         auto const& y_xi_mu = param.branch_param[obj].value[2 * measured_side + 1];
-                        //         if (type == YBusElementType::bft) {
-                        //             process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
-                        //                                        ui_ui_conj, ui_uj_conj, abs_ui_inv, abs_uj_inv, power,
-                        //                                        true);
-                        //             break;
-                        //         } else {
-                        //             process_branch_measurement(block, diag_block, rhs_block, y_xi_xi, y_xi_mu,
-                        //                                        uj_uj_conj, uj_ui_conj, abs_uj_inv, abs_ui_inv,
-                        //                                        power, false);
-                        //             break;
-                        //         }
-                        //     }
-                        // }
                     } else {
                         assert(type == YBusElementType::bff || type == YBusElementType::btt);
                     }
