@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -242,7 +242,7 @@ template <bool sym> class MeasuredValues {
 
         // assign a meaningful mean angle shift, if at least one voltage has angle measurement
         if (has_angle()) {
-            mean_angle_shift_ = angle_cum / n_voltage_angle_measurements_;
+            mean_angle_shift_ = angle_cum / static_cast<RealValue<sym>>(n_voltage_angle_measurements_);
         }
 
         static constexpr auto const is_measured = [](auto const& value) { return value >= 0; };

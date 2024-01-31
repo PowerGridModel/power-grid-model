@@ -1,8 +1,9 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 
 SPDX-License-Identifier: MPL-2.0
 -->
+
 ## Component Test Case: Three Winding Transformer
 
 Test case for validation of the three winding transformer component for symmetrical power flow calculations in pandapower. The implementation of both the libraries are similar. Three 2-winding transformers are used in star connection for creating a 3 winding transformer.

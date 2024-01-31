@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -527,7 +527,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -543,7 +542,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -559,7 +557,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -578,7 +575,6 @@ TEST_CASE("Test math solver") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
         }
         SUBCASE("Newton-Raphson") {
-
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
         }
 
@@ -1134,7 +1130,7 @@ TEST_CASE("Math solver, zero variance test") {
     }
     SUBCASE("Newton-Raphson") {
         // TODO(mgovers): to be added in #478
-        solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
     }
 
     // check both voltage

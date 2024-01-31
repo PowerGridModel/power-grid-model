@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -156,7 +156,6 @@ constexpr std::string_view batch_dataset_dict_indent =
 } // namespace
 
 TEST_CASE("Serializer") {
-
     std::vector<SymLoadGenUpdate> sym_load_gen(4);
     meta_data.get_dataset("update").get_component("sym_load").set_nan(sym_load_gen.data(), 0, 4);
     sym_load_gen[0].id = 9;
