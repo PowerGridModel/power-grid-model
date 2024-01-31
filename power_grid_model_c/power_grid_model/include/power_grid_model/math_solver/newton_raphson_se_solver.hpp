@@ -274,13 +274,13 @@ template <bool sym> class NewtonRaphsonSESolver {
                     } else if (type == YBusElementType::bft || type == YBusElementType::btf) {
                         auto const& y_branch = param.branch_param[obj];
                         if (measured_value.has_branch_from(obj)) {
-                            bool ij_voltage_order = (type == YBusElementType::bft);
+                            auto cont ij_voltage_order = (type == YBusElementType::bft);
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
                                                        u_state, ij_voltage_order,
                                                        measured_value.branch_from_power(obj));
                         }
                         if (measured_value.has_branch_to(obj)) {
-                            bool ij_voltage_order = (type == YBusElementType::btf);
+                            auto const ij_voltage_order = (type == YBusElementType::btf);
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
                                                        u_state, ij_voltage_order, measured_value.branch_to_power(obj));
                         }
@@ -335,9 +335,9 @@ template <bool sym> class NewtonRaphsonSESolver {
      * This would be H, N, M, L at (row, col) block and partially the second part of the (row, row) block using the same
      * H and M.
      *
-     * @param block
-     * @param diag_block
-     * @param rhs_block
+     * @param block LHS(r, c)
+     * @param diag_block LHS(r, r)
+     * @param rhs_block RHS(r)
      * @param yij
      * @param u_state
      */
@@ -388,9 +388,9 @@ template <bool sym> class NewtonRaphsonSESolver {
      *          if to_measurement,
      *              xi = t, mu = f, chi = row, psi = col
      *
-     * @param block G_(r,c)
-     * @param diag_block G_(r,c)
-     * @param rhs_block eta_r
+     * @param block G_(r, c)
+     * @param diag_block G_(r, r)
+     * @param rhs_block RHS(r)
      * @param y_xi_xi
      * @param y_xi_mu
      * @param u_state voltage state vector
@@ -457,7 +457,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const abs_measured_v = detail::cabs_or_real<sym>(measured_value.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
-        auto const virtual_angle_measurement_bus = measured_value.has_angle_measurement(math_topo_->slack_bus)
+        auto const virtual_angle_measurement_bus = measured_value.has_voltage(math_topo_->slack_bus)
                                                        ? math_topo_->slack_bus
                                                        : measured_value.first_voltage_measurement();
 
@@ -467,7 +467,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             delta_theta = RealValue<sym>{arg(measured_value.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
             w_theta = RealTensor<sym>{1.0};
         } else if (bus == virtual_angle_measurement_bus && !measured_value.has_angle()) {
-            delta_theta = phase_shifted_zero_angle() - RealValue<sym>{x_[bus].theta()};
+            delta_theta = arg(ComplexValue<sym>{1.0}) - RealValue<sym>{x_[bus].theta()};
             w_theta = RealTensor<sym>{1.0};
         }
 
@@ -623,14 +623,6 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     static auto diagonal_inverse(RealValue<sym> const& value) {
         return RealDiagonalTensor<sym>{static_cast<RealValue<sym>>(RealValue<sym>{1.0} / value)};
-    }
-
-    static auto phase_shifted_zero_angle() {
-        if constexpr (sym) {
-            return 0.0;
-        } else {
-            return RealValue<false>{0.0, -deg_120, deg_120};
-        }
     }
 };
 
