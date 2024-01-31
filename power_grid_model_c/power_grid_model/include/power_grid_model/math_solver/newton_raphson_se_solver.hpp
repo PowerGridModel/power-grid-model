@@ -274,7 +274,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                     } else if (type == YBusElementType::bft || type == YBusElementType::btf) {
                         auto const& y_branch = param.branch_param[obj];
                         if (measured_value.has_branch_from(obj)) {
-                            auto cont ij_voltage_order = (type == YBusElementType::bft);
+                            auto const ij_voltage_order = (type == YBusElementType::bft);
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
                                                        u_state, ij_voltage_order,
                                                        measured_value.branch_from_power(obj));
@@ -398,7 +398,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param measured_power
      */
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, bool order,
+                                    const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, auto const order,
                                     const auto& measured_power) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
         auto const hm_u_chi_u_psi_y_xi_mu = hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order));
