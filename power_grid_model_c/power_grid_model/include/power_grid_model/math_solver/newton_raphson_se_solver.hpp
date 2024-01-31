@@ -333,7 +333,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     /**
      * @brief Processes common part of all elements to fill from an injection measurement.
      * This would be H, N, M, L at (row, col) block and partially the second part of the (row, row) block using the same
-     * H and M.
+     * H and M but multiplied by abs_ui_inv.
      *
      * @param block LHS(r, c)
      * @param diag_block LHS(r, r)
@@ -345,14 +345,13 @@ template <bool sym> class NewtonRaphsonSESolver {
                                auto const& yij, auto const& u_state) {
         auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
         auto const nl_ui_uj_yij_abs_uj_inv = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
-        auto const f_x_complex_row = sum_row(hm_ui_uj_yij);
-        auto const f_x_complex_abs_uj_inv_row = dot(u_state.abs_ui_inv, f_x_complex_row);
-
         auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij_abs_uj_inv);
         add_injection_jacobian(block, injection_jac);
 
         // add paritial sum to the diagonal block and subtract from rhs for current row
-        auto const injection_jac_diagonal = jacobian_diagonal_component(f_x_complex_abs_uj_inv_row, f_x_complex_row);
+        auto const f_x_complex_row = sum_row(hm_ui_uj_yij);
+        auto const f_x_complex_abs_ui_inv_row = dot(u_state.abs_ui_inv, f_x_complex_row);
+        auto const injection_jac_diagonal = jacobian_diagonal_component(f_x_complex_abs_ui_inv_row, f_x_complex_row);
         add_injection_jacobian(diag_block, injection_jac_diagonal);
         rhs_block.tau_p() -= real(f_x_complex_row);
         rhs_block.tau_q() -= imag(f_x_complex_row);
