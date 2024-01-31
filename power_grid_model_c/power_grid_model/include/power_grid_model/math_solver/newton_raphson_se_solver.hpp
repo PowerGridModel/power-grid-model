@@ -94,9 +94,6 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         auto& u_chi_u_chi_conj(bool ij_voltage_order) const { return ij_voltage_order ? ui_ui_conj : uj_uj_conj; }
         auto& u_chi_u_psi_conj(bool ij_voltage_order) const { return ij_voltage_order ? ui_uj_conj : uj_ui_conj; }
-        auto& u_psi_u_chi_conj(bool ij_voltage_order) const { return ij_voltage_order ? uj_ui_conj : ui_uj_conj; }
-        auto& u_psi_u_psi_conj(bool ij_voltage_order) const { return ij_voltage_order ? uj_uj_conj : ui_ui_conj; }
-
         auto& abs_u_chi_inv(bool ij_voltage_order) const { return ij_voltage_order ? abs_ui_inv : abs_uj_inv; }
         auto& abs_u_psi_inv(bool ij_voltage_order) const { return ij_voltage_order ? abs_uj_inv : abs_ui_inv; }
     };
@@ -189,11 +186,6 @@ template <bool sym> class NewtonRaphsonSESolver {
     // solver
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
-
-    // array selection function pointer
-    static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
-    static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
-                                              &MeasuredValues<sym>::branch_to_power};
 
     void initialize_unknown(ComplexValueVector<sym>& initial_u, MeasuredValues<sym> const& measured_values) {
         reset_unknown();
@@ -330,7 +322,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             }
         }
 
-        // loop all transpose entry for QH
+        // loop all transpose entry for QT
         // assign the transpose of the transpose entry of Q
         make_symmetric_from_lower_triangle(y_bus);
 
@@ -338,14 +330,25 @@ template <bool sym> class NewtonRaphsonSESolver {
         sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
+    /**
+     * @brief Processes common part of all elements to fill from an injection measurement.
+     * This would be H, N, M, L at (row, col) block and partially the second part of the (row, row) block using the same
+     * H and M.
+     *
+     * @param block
+     * @param diag_block
+     * @param rhs_block
+     * @param yij
+     * @param u_state
+     */
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                auto const& yij, auto const& u_state) {
-        auto const hnml_complex_ft = hnml_complex_form(yij, u_state.ui_uj_conj);
-        auto const hnml_complex_abs_uj_inv_ft = dot(hnml_complex_ft, u_state.abs_uj_inv);
-        auto const f_x_complex_row = sum_row(hnml_complex_ft);
+        auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
+        auto const nl_ui_uj_yij_abs_uj_inv = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
+        auto const f_x_complex_row = sum_row(hm_ui_uj_yij);
         auto const f_x_complex_abs_uj_inv_row = dot(u_state.abs_ui_inv, f_x_complex_row);
 
-        auto const injection_jac = calculate_jacobian(hnml_complex_ft, hnml_complex_abs_uj_inv_ft);
+        auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij_abs_uj_inv);
         add_injection_jacobian(block, injection_jac);
 
         // add paritial sum to the diagonal block and subtract from rhs for current row
@@ -357,39 +360,63 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& yii,
                                    auto const& u_state, auto const& measured_power) {
-        auto const hnml_ui_ui_yii = hnml_complex_form(yii, u_state.ui_ui_conj);
-        auto const hnml_ui_ui_yii_abs_ui_inv = dot(hnml_ui_ui_yii, u_state.abs_ui_inv);
-        auto const f_x_complex = sum_row(hnml_ui_ui_yii);
-        auto const f_x_complex_abs_ui_inv = sum_row(hnml_ui_ui_yii_abs_ui_inv);
+        auto const hm_ui_ui_yii = hm_complex_form(yii, u_state.ui_ui_conj);
+        auto const nl_ui_ui_yii_abs_ui_inv = dot(hm_ui_ui_yii, u_state.abs_ui_inv);
+        auto const f_x_complex = sum_row(hm_ui_ui_yii);
+        auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_yii_abs_ui_inv);
 
-        auto jac_block = calculate_jacobian(hnml_ui_ui_yii, hnml_ui_ui_yii_abs_ui_inv);
+        auto jac_block = calculate_jacobian(hm_ui_ui_yii, nl_ui_ui_yii_abs_ui_inv);
         jac_block += jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
-        auto const& block_f_T_k_w = transpose_multiply_weight(jac_block, measured_power);
-        multiply_add_jacobian_blocks_lhs(block, block_f_T_k_w, jac_block);
-        multiply_add_jacobian_blocks_rhs(rhs_block, block_f_T_k_w, measured_power, f_x_complex);
+        auto const& block_F_T_k_w = transpose_multiply_weight(jac_block, measured_power);
+        multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, jac_block);
+        multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
+    /**
+     * @brief Adds contribution of branch measurements to the G_(r, r), G_(r, c) and eta_r blocks,
+     *  given the iteration passes through (r, c) ie. row, col
+     *
+     * When iterating via (row, col), have 4 cases regarding branch measurements:
+     *      if y_type == yft
+     *          if from_measurement,
+     *              xi = f, mu = t, chi = row, psi = col
+     *          if to_measurement,
+     *              xi = t, mu = f, chi = col, psi = row
+     *      if y_type == ytf &
+     *          if from_measurement,
+     *              xi = f, mu = t, chi = col, psi = row
+     *          if to_measurement,
+     *              xi = t, mu = f, chi = row, psi = col
+     *
+     * @param block G_(r,c)
+     * @param diag_block G_(r,c)
+     * @param rhs_block eta_r
+     * @param y_xi_xi
+     * @param y_xi_mu
+     * @param u_state voltage state vector
+     * @param order bool to determine if (chi, psi) = (row, col) or (col, row)
+     * @param measured_power
+     */
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                     const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, bool order,
                                     const auto& measured_power) {
-        auto const hnml_u_chi_u_chi_y_xi_xi = hnml_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
-        auto const hnml_u_chi_u_psi_y_xi_mu = hnml_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order));
+        auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
+        auto const hm_u_chi_u_psi_y_xi_mu = hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order));
 
-        auto const f_x_complex = sum_row(hnml_u_chi_u_chi_y_xi_xi + hnml_u_chi_u_psi_y_xi_mu);
+        auto const f_x_complex = sum_row(hm_u_chi_u_chi_y_xi_xi + hm_u_chi_u_psi_y_xi_mu);
         auto const f_x_complex_u_chi_inv = dot(u_state.abs_u_chi_inv(order), f_x_complex);
 
-        auto const hnml_u_chi_u_chi_y_xi_xi_u_chi_inv = dot(hnml_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
-        auto const hnml_u_chi_u_psi_y_xi_mu_u_psi_inv = dot(hnml_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
+        auto const nl_u_chi_u_chi_y_xi_xi_u_chi_inv = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
+        auto const nl_u_chi_u_psi_y_xi_mu_u_psi_inv = dot(hm_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
 
-        auto block_ii_or_jj = calculate_jacobian(hnml_u_chi_u_chi_y_xi_xi, hnml_u_chi_u_chi_y_xi_xi_u_chi_inv);
-        block_ii_or_jj += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
-        auto const block_ij_or_ji = calculate_jacobian(hnml_u_chi_u_psi_y_xi_mu, hnml_u_chi_u_psi_y_xi_mu_u_psi_inv);
+        auto block_rr_or_cc = calculate_jacobian(hm_u_chi_u_chi_y_xi_xi, nl_u_chi_u_chi_y_xi_xi_u_chi_inv);
+        block_rr_or_cc += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
+        auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu_u_psi_inv);
+        auto const& block_F_T_k_w = transpose_multiply_weight(block_rr_or_cc, measured_power);
 
-        auto const& block_f_T_k_w = transpose_multiply_weight(block_ii_or_jj, measured_power);
-
-        multiply_add_jacobian_blocks_lhs(diag_block, block_f_T_k_w, block_ii_or_jj);
-        multiply_add_jacobian_blocks_rhs(rhs_block, block_f_T_k_w, measured_power, f_x_complex);
-        multiply_add_jacobian_blocks_lhs(block, block_f_T_k_w, block_ij_or_ji);
+        multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, block_rr_or_cc);
+        multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, block_rc_or_cr);
+        multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
     void make_symmetric_from_lower_triangle(YBus<sym> const& y_bus) {
@@ -406,6 +433,18 @@ template <bool sym> class NewtonRaphsonSESolver {
         }
     }
 
+    /**
+     * @brief G(row,row) += w_k
+     * eta(row) += w_k . (z_k - f_k(x))
+     *
+     * In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
+     * angle measurement of zero. w_theta = 1.0 by default for all measurements
+     *
+     * @param block LHS(row, col), ie. LHS(row, row)
+     * @param rhs_block RHS(row)
+     * @param measured_value
+     * @param bus
+     */
     void process_voltage_measurements(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
                                       MeasuredValues<sym> const& measured_value, Idx const& bus) {
         if (!measured_value.has_voltage(bus)) {
@@ -422,19 +461,19 @@ template <bool sym> class NewtonRaphsonSESolver {
                                                        ? math_topo_->slack_bus
                                                        : measured_value.first_voltage_measurement();
 
-        RealTensor<sym> w_angle{};
+        RealTensor<sym> w_theta{};
         RealValue<sym> delta_theta{};
         if (measured_value.has_angle_measurement(bus)) {
             delta_theta = RealValue<sym>{arg(measured_value.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
-            w_angle = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{1.0};
         } else if (bus == virtual_angle_measurement_bus && !measured_value.has_angle()) {
             delta_theta = phase_shifted_zero_angle() - RealValue<sym>{x_[bus].theta()};
-            w_angle = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{1.0};
         }
 
-        block.g_P_theta() += w_angle;
+        block.g_P_theta() += w_theta;
         block.g_Q_v() += w_v;
-        rhs_block.eta_theta() += dot(w_angle, delta_theta);
+        rhs_block.eta_theta() += dot(w_theta, delta_theta);
         rhs_block.eta_v() += dot(w_v, delta_v);
     }
 
@@ -479,9 +518,9 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     /**
      * @brief Matrix multiply F_{k,1}^T . w_k and F_{k,2}^T.
-     * Then add the product to G of gain block
+     * Then add the product to G of LHS(row, col)
      *
-     * @param lhs_block Gain block, G of the LHS
+     * @param lhs_block LHS(row, col)
      * @param f_T_k_w F_{k,1}^T . w_k
      * @param f_i_or_j F_{k,2}^T
      */
@@ -493,15 +532,21 @@ template <bool sym> class NewtonRaphsonSESolver {
         lhs_block.g_Q_v() += dot(f_T_k_w.dQ_dt, f_i_or_j.dP_dv) + dot(f_T_k_w.dQ_dv, f_i_or_j.dQ_dv);
     }
 
-    static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& block_f_T_k_w,
+    /**
+     * @brief Matrix multiply F_{k,1}^T . w_k and (z_k - f_k(x)).
+     * Then add the product to eta of RHS(row)
+     *
+     * @param rhs_block RHS(row)
+     * @param f_T_k_w F_{k,1}^T . w_k
+     * @param power_sensor measurement
+     * @param f_x_complex calculated power
+     */
+    static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& f_T_k_w,
                                                  PowerSensorCalcParam<sym> const& power_sensor,
                                                  ComplexValue<sym> const& f_x_complex) {
         auto const delta_power = power_sensor.value - f_x_complex;
-
-        // matrix multiplication of F_k^T . w_k . (z - f(x))
-        rhs_block.eta_theta() +=
-            dot(block_f_T_k_w.dP_dt, real(delta_power)) + dot(block_f_T_k_w.dP_dv, imag(delta_power));
-        rhs_block.eta_v() += dot(block_f_T_k_w.dQ_dt, real(delta_power)) + dot(block_f_T_k_w.dQ_dv, imag(delta_power));
+        rhs_block.eta_theta() += dot(f_T_k_w.dP_dt, real(delta_power)) + dot(f_T_k_w.dP_dv, imag(delta_power));
+        rhs_block.eta_v() += dot(f_T_k_w.dQ_dt, real(delta_power)) + dot(f_T_k_w.dQ_dv, imag(delta_power));
     }
 
     static void add_injection_jacobian(NRSEGainBlock<sym>& block, NRSEJacobian const& jacobian_block) {
@@ -515,17 +560,17 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
      * The 4 members are H, N, M, L in the order.
      *
-     * @param hnml_complex hnml_complex
-     * @param hnml_complex_v_inv hnml_complex / abs(u2)
+     * @param hm_complex hm_complex
+     * @param nl_complex_v_inv hm_complex / abs(u2)
      * @return  F_k(u1, u2, y12)
      */
-    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hnml_complex,
-                                           ComplexTensor<sym> const& hnml_complex_v_inv) {
+    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hm_complex,
+                                           ComplexTensor<sym> const& nl_complex_v_inv) {
         NRSEJacobian jacobian{};
-        jacobian.dP_dt = imag(hnml_complex);
-        jacobian.dP_dv = real(hnml_complex_v_inv);
-        jacobian.dQ_dt = -real(hnml_complex);
-        jacobian.dQ_dv = imag(hnml_complex_v_inv);
+        jacobian.dP_dt = imag(hm_complex);
+        jacobian.dP_dv = real(nl_complex_v_inv);
+        jacobian.dQ_dt = -real(hm_complex);
+        jacobian.dQ_dv = imag(nl_complex_v_inv);
         return jacobian;
     }
 
@@ -536,7 +581,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param ui_uj_conj vector outer product of u1 and conj(u2)
      * @return  -M(u1, u2, y12) + j * H(u1, u2, y12)
      */
-    static ComplexTensor<sym> hnml_complex_form(ComplexTensor<sym> const& yij, ComplexTensor<sym> const& ui_uj_conj) {
+    static ComplexTensor<sym> hm_complex_form(ComplexTensor<sym> const& yij, ComplexTensor<sym> const& ui_uj_conj) {
         return conj(yij) * ui_uj_conj;
     }
 
