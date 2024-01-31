@@ -88,6 +88,7 @@ examples/State Estimation Example.ipynb
 examples/Short Circuit Example.ipynb
 examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
+examples/Asymmetric Calculation Example.ipynb
 ```
 
 ```{toctree}
