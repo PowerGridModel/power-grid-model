@@ -947,8 +947,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         return;
                     }
                     // assign parameters, branch3 param consists of three branch parameters
-                    auto const branch3_param =
-                        state.components.template get_item<Branch3>(changed_component_idx).template calc_param<sym>();
+                    // auto const branch3_param =
+                    //   state.components.template get_item<Branch3>(changed_component_idx).template calc_param<sym>();
                     for (size_t branch2 = 0; branch2 < 3; ++branch2) {
                         increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
                     }
@@ -965,7 +965,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
 
-        for (Idx i = 0; i < n_types; ++i) {
+        for (size_t i = 0; i < n_types; ++i) {
             auto const& changed_type_components = parameter_changed_components_[i];
             auto const& add_type_to_increment = add_to_increments[i];
             for (auto const& changed_component : changed_type_components) {
