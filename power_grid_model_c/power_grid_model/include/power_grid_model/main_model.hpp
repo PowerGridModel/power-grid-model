@@ -1270,7 +1270,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
-            assert(n_math_solvers_ == state_.math_topology.size());
+            assert(n_math_solvers_ == static_cast<Idx>(state_.math_topology.size()));
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
