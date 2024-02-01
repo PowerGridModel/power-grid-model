@@ -292,15 +292,14 @@ template <bool sym> class NewtonRaphsonSESolver {
                 // fill block with injection measurement constraints
                 if (measured_value.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
-                    process_injection_row(block, diag_block, rhs_block, yij, u_state);
+                    auto const& injection = measured_value.bus_injection(row);
+                    process_injection_row(block, diag_block, rhs_block, yij, u_state, injection);
 
                     // R_ii = -variance, only diagonal
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
-                        auto const& injection = measured_value.bus_injection(row);
                         rhs_block.tau_p() += injection.value.real();
                         rhs_block.tau_q() += injection.value.imag();
-
                         block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
                         block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.q_variance}};
                     }
@@ -332,6 +331,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     /**
      * @brief Processes common part of all elements to fill from an injection measurement.
+     * Also includes zero injection constraint.
      * This would be H, N, M, L at (row, col) block and partially the second part of the (row, row) block using the same
      * H and M but multiplied by abs_ui_inv.
      *
@@ -342,7 +342,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param u_state
      */
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                               auto const& yij, auto const& u_state) {
+                               auto const& yij, auto const& u_state, auto const& injection) {
         auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
         auto const nl_ui_uj_yij_abs_uj_inv = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
         auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij_abs_uj_inv);
@@ -353,8 +353,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const f_x_complex_abs_ui_inv_row = dot(u_state.abs_ui_inv, f_x_complex_row);
         auto const injection_jac_diagonal = jacobian_diagonal_component(f_x_complex_abs_ui_inv_row, f_x_complex_row);
         add_injection_jacobian(diag_block, injection_jac_diagonal);
-        rhs_block.tau_p() -= real(f_x_complex_row);
-        rhs_block.tau_q() -= imag(f_x_complex_row);
+        if (!any_zero(injection.p_variance)) {
+            rhs_block.tau_p() -= real(f_x_complex_row);
+        }
+        if (!any_zero(injection.q_variance)) {
+            rhs_block.tau_q() -= imag(f_x_complex_row);
+        }
     }
 
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& yii,
@@ -387,6 +391,10 @@ template <bool sym> class NewtonRaphsonSESolver {
      *          if to_measurement,
      *              xi = t, mu = f, chi = row, psi = col
      *
+     * f_P_(x) = -M(U_chi, U_chi, Y_xi_xi) - M(U_chi, U_psi, Y_xi_mu)
+     * f_Q_(x) = H(U_chi, U_chi, Y_xi_xi) + H(U_chi, U_psi, Y_xi_mu)
+     *
+     *
      * @param block G_(r, c)
      * @param diag_block G_(r, r)
      * @param rhs_block RHS(r)
@@ -400,17 +408,17 @@ template <bool sym> class NewtonRaphsonSESolver {
                                     const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, auto const order,
                                     const auto& measured_power) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
+        auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
+
         auto const hm_u_chi_u_psi_y_xi_mu = hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order));
+        auto const nl_u_chi_u_psi_y_xi_mu = dot(hm_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
 
         auto const f_x_complex = sum_row(hm_u_chi_u_chi_y_xi_xi + hm_u_chi_u_psi_y_xi_mu);
         auto const f_x_complex_u_chi_inv = dot(u_state.abs_u_chi_inv(order), f_x_complex);
 
-        auto const nl_u_chi_u_chi_y_xi_xi_u_chi_inv = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
-        auto const nl_u_chi_u_psi_y_xi_mu_u_psi_inv = dot(hm_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
-
-        auto block_rr_or_cc = calculate_jacobian(hm_u_chi_u_chi_y_xi_xi, nl_u_chi_u_chi_y_xi_xi_u_chi_inv);
+        auto block_rr_or_cc = calculate_jacobian(hm_u_chi_u_chi_y_xi_xi, nl_u_chi_u_chi_y_xi_xi);
         block_rr_or_cc += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
-        auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu_u_psi_inv);
+        auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu);
         auto const& block_F_T_k_w = transpose_multiply_weight(block_rr_or_cc, measured_power);
 
         multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, block_rr_or_cc);
