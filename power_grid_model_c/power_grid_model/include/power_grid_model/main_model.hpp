@@ -925,10 +925,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         return math_param;
     }
-    template <bool sym>
-    std::vector<MathModelParamIncrement>
-    get_math_param_increment(std::vector<MathModelParam<sym>> const& math_param,
-                             std::array<std::vector<Idx2D>, n_types> const& changed_components) {
+    template <bool sym> std::vector<MathModelParamIncrement> get_math_param_increment() {
         using AddToIncrement = void (*)(std::vector<MathModelParamIncrement>&, MainModelState const&, Idx2D const&);
 
         static constexpr std::array<AddToIncrement, n_types> add_to_increments{
@@ -969,7 +966,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
 
         for (Idx i = 0; i < n_types; ++i) {
-            auto const& changed_type_components = changed_components[i];
+            auto const& changed_type_components = parameter_changed_components_[i];
             auto const& add_type_to_increment = add_to_increments[i];
             for (auto const& changed_component : changed_type_components) {
                 add_type_to_increment(math_param_increment, state_, changed_component);
@@ -1281,8 +1278,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                    [](auto math_topo) { return MathSolver<sym>{std::move(math_topo)}; });
         } else if (!is_parameter_up_to_date<sym>()) {
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
-            std::vector<MathModelParamIncrement> const math_param_increments =
-                get_math_param_increment<sym>(math_params, parameter_changed_components_);
+            std::vector<MathModelParamIncrement> const math_param_increments = get_math_param_increment<sym>();
             if (last_updated_calculation_symmetry_mode_ == sym) {
                 main_core::update_y_bus(math_state_, math_params, math_param_increments);
             } else {
