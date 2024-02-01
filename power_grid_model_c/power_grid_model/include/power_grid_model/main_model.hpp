@@ -152,17 +152,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
+        constexpr auto comp_index = AllComponents::template index_of<CompType>();
+
         assert(construction_complete_);
         assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
 
         if constexpr (CacheType::value) {
-            constexpr auto comp_index = AllComponents::template index_of<CompType>();
-
             main_core::update_inverse<CompType>(
                 state_, begin, end, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
         }
 
-        UpdateChange const changed = main_core::update_component<CompType>(state_, begin, end, sequence_idx);
+        UpdateChange const changed = main_core::update_component<CompType>(
+            state_, begin, end, std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
         update_state(changed);
@@ -198,17 +199,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 update[entry.index](*this, found->second, pos, sequence_idx_map[entry.index]);
             }
         }
-
-        // sequence_idx_map accumulation logic
-        if (is_accumulated_component_updated_) { // assign sequence_idx_map
-            cached_sequence_idx_map_.assign(sequence_idx_map.begin(), sequence_idx_map.end());
-            is_accumulated_component_updated_ = false;
-        } else { // accumulate sequence_idx_map, not taking the union for (slight) performance gain
-            for (size_t i = 0; i < n_types; ++i) {
-                cached_sequence_idx_map_[i].insert(cached_sequence_idx_map_[i].end(), sequence_idx_map[i].begin(),
-                                                   sequence_idx_map[i].end());
-            }
-        }
     }
 
     // update all components
@@ -234,7 +224,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
-        cached_sequence_idx_map_ = {};
     }
 
     // set complete construction
@@ -267,7 +256,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_topology_up_to_date_ = false;
         is_sym_parameter_up_to_date_ = false;
         is_asym_parameter_up_to_date_ = false;
-        is_accumulated_component_updated_ = true;
         n_math_solvers_ = 0;
         main_core::clear(math_state_);
         state_.math_topology.clear();
@@ -811,10 +799,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_sym_parameter_up_to_date_{false};
     bool is_asym_parameter_up_to_date_{false};
     bool is_accumulated_component_updated_{true};
+    bool last_updated_calculation_symmetry_mode_{false};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
-    std::vector<std::vector<Idx2D>> cached_sequence_idx_map_{};
+    std::array<std::vector<Idx2D>, n_types> parameter_changed_components_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
@@ -892,7 +881,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             math_param[i].source_param.resize(state_.math_topology[i]->n_source());
         }
         // loop all branch
-        for (Idx i = 0; i != (Idx)state_.comp_topo->branch_node_idx.size(); ++i) {
+        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->branch[i];
             if (math_idx.group == -1) {
                 continue;
@@ -902,7 +891,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 state_.components.template get_item_by_seq<Branch>(i).template calc_param<sym>();
         }
         // loop all branch3
-        for (Idx i = 0; i != (Idx)state_.comp_topo->branch3_node_idx.size(); ++i) {
+        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch3_node_idx.size()); ++i) {
             Idx2DBranch3 const math_idx = state_.topo_comp_coup->branch3[i];
             if (math_idx.group == -1) {
                 continue;
@@ -915,7 +904,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         }
         // loop all shunt
-        for (Idx i = 0; i != (Idx)state_.comp_topo->shunt_node_idx.size(); ++i) {
+        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->shunt_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->shunt[i];
             if (math_idx.group == -1) {
                 continue;
@@ -925,7 +914,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 state_.components.template get_item_by_seq<Shunt>(i).template calc_param<sym>();
         }
         // loop all source
-        for (Idx i = 0; i != (Idx)state_.comp_topo->source_node_idx.size(); ++i) {
+        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->source_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->source[i];
             if (math_idx.group == -1) {
                 continue;
@@ -935,6 +924,59 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 state_.components.template get_item_by_seq<Source>(i).template math_param<sym>();
         }
         return math_param;
+    }
+    template <bool sym>
+    std::vector<MathModelParamIncrement>
+    get_math_param_increment(std::vector<MathModelParam<sym>> const& math_param,
+                             std::array<std::vector<Idx2D>, n_types> const& changed_components) {
+        using AddToIncrement = void (*)(std::vector<MathModelParamIncrement>&, MainModelState const&, Idx2D const&);
+
+        static constexpr std::array<AddToIncrement, n_types> add_to_increments{
+            [](std::vector<MathModelParamIncrement>& increments, MainModelState const& state,
+               Idx2D const& changed_component_idx) {
+                if constexpr (std::derived_from<ComponentType, Branch>) {
+                    Idx2D const math_idx =
+                        state.topo_comp_coup->branch[state.components.template get_seq<Branch>(changed_component_idx)];
+                    if (math_idx.group == -1) {
+                        return;
+                    }
+                    // assign parameters
+                    increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
+                } else if constexpr (std::derived_from<ComponentType, Branch3>) {
+                    Idx2DBranch3 const math_idx =
+                        state.topo_comp_coup
+                            ->branch3[state.components.template get_seq<Branch3>(changed_component_idx)];
+                    if (math_idx.group == -1) {
+                        return;
+                    }
+                    // assign parameters, branch3 param consists of three branch parameters
+                    auto const branch3_param =
+                        state.components.template get_item<Branch3>(changed_component_idx).template calc_param<sym>();
+                    for (size_t branch2 = 0; branch2 < 3; ++branch2) {
+                        increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
+                    }
+                } else if constexpr (std::same_as<ComponentType, Shunt>) {
+                    Idx2D const math_idx =
+                        state.topo_comp_coup->shunt[state.components.template get_seq<Shunt>(changed_component_idx)];
+                    if (math_idx.group == -1) {
+                        return;
+                    }
+                    // assign parameters
+                    increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
+                }
+            }...};
+
+        std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
+
+        for (Idx i = 0; i < n_types; ++i) {
+            auto const& changed_type_components = changed_components[i];
+            auto const& add_type_to_increment = add_to_increments[i];
+            for (auto const& changed_component : changed_type_components) {
+                add_type_to_increment(math_param_increment, state_, changed_component);
+            }
+        }
+
+        return math_param_increment;
     }
 
     static constexpr auto include_all = [](Idx) { return true; };
@@ -1228,24 +1270,29 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             rebuild_topology();
         }
         prepare_y_bus<sym>();
-        // if solvers do not exist, build them
-        if (n_math_solvers_ != (Idx)solvers.size()) {
+
+        if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
+            assert(n_math_solvers_ == state_.math_topology.size());
+
+            solvers.clear();
             solvers.reserve(n_math_solvers_);
-            // loop to build
-            for (Idx i = 0; i != n_math_solvers_; ++i) {
-                solvers.emplace_back(state_.math_topology[i]);
-            }
-        }
-        // if parameters are not up to date, update them
-        else if (!is_parameter_up_to_date<sym>()) {
-            // get param, will be consumed
+            std::ranges::transform(state_.math_topology, std::back_inserter(solvers),
+                                   [](auto math_topo) { return MathSolver<sym>{std::move(math_topo)}; });
+        } else if (!is_parameter_up_to_date<sym>()) {
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
-            main_core::update_y_bus(math_state_, math_params, n_math_solvers_, cached_sequence_idx_map_);
+            std::vector<MathModelParamIncrement> const math_param_increments =
+                get_math_param_increment<sym>(math_params, parameter_changed_components_);
+            if (last_updated_calculation_symmetry_mode_ == sym) {
+                main_core::update_y_bus(math_state_, math_params, math_param_increments);
+            } else {
+                main_core::update_y_bus(math_state_, math_params);
+            }
         }
         // else do nothing, set everything up to date
         is_parameter_up_to_date<sym>() = true;
-        is_accumulated_component_updated_ = true;
+        std::ranges::for_each(parameter_changed_components_, [](auto& comps) { comps.clear(); });
+        last_updated_calculation_symmetry_mode_ = sym;
     }
 };
 

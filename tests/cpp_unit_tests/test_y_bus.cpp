@@ -432,18 +432,16 @@ TEST_CASE("Incremental update y-bus") {
                                                return param_sym_update.shunt_param[i] != ComplexTensor<true>{0.0};
                                            });
 
-        MathModelParamIncrement<true> math_model_param_incrmt;
+        MathModelParamIncrement math_model_param_incrmt;
         math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
                                                           branch_param_to_change_views.end()};
         math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
                                                          shunt_param_to_change_views.end()};
 
-        auto math_model_param_incrmt_ptr =
-            std::make_shared<MathModelParamIncrement<true> const>(math_model_param_incrmt);
         auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
 
         /* ybus::update_admittance_increment (model_parameter, increment_indices, is_decrement)*/
-        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt_ptr);
+        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
 }

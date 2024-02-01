@@ -64,22 +64,30 @@ inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContain
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
-                                     ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
+                                     ForwardIterator end, OutputIterator changed_it,
+                                     std::vector<Idx2D> const& sequence_idx = {}) {
     using UpdateType = typename Component::UpdateType;
 
-    UpdateChange changed;
+    UpdateChange state_changed;
 
     detail::iterate_component_sequence<Component>(
-        [&changed, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
+        [&state_changed, &changed_it, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
             auto& comp = state.components.template get_item<Component>(sequence_single);
-            changed = changed || comp.update(update_data);
+            auto const comp_changed = comp.update(update_data);
+
+            state_changed = state_changed || comp_changed;
+
+            if (comp_changed.param || comp_changed.topo) {
+                *changed_it++ = sequence_single;
+            }
         },
         begin, end, sequence_idx);
 
-    return changed;
+    return state_changed;
 }
 
 // template to get the inverse update for components
@@ -112,25 +120,21 @@ template <bool sym> inline bool cmplx_neq(ComplexTensor<sym> const& lhs, Complex
 };
 
 template <bool sym>
-inline void update_y_bus([[maybe_unused]] YBus<sym>& y_bus,
-                         std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
-                         std::shared_ptr<std::vector<std::vector<Idx2D>> const> const& seq_idx_map) {
+inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
     // verify that the number of branches, shunts and source is the same
-    MathModelParam<sym> const& y_bus_param = y_bus.math_model_param();
-    (void)y_bus_param; // suppress compiler unused variable warning
-    assert(y_bus_param.branch_param.size() == math_model_param->branch_param.size());
-    assert(y_bus_param.shunt_param.size() == math_model_param->shunt_param.size());
-    assert(y_bus_param.source_param.size() == math_model_param->source_param.size());
+    assert(y_bus.math_model_param().branch_param.size() == math_model_param->branch_param.size());
+    assert(y_bus.math_model_param().shunt_param.size() == math_model_param->shunt_param.size());
+    assert(y_bus.math_model_param().source_param.size() == math_model_param->source_param.size());
 
-    if (seq_idx_map == nullptr) {
+    if (std::ranges::all_of(changed_components, std::ranges::empty)) {
         return;
     }
 
     // when sequence_idx_map available: loop through all branches and shunts of math_model_param, check changes
-    auto query_param_in_seq_map = [&seq_idx_map](IdxVector const& param_idx_vec) {
+    auto query_param_in_seq_map = [&changed_components](IdxVector const& param_idx_vec) {
         std::vector<Idx2D> result;
         for (auto const& param_idd : param_idx_vec) {
-            auto const& seq_idx = (*seq_idx_map)[param_idd];
+            auto const& seq_idx = (*changed_components)[param_idd];
             result.insert(result.end(), seq_idx.begin(), seq_idx.end());
         }
         return result;
@@ -139,7 +143,7 @@ inline void update_y_bus([[maybe_unused]] YBus<sym>& y_bus,
     auto branch_params = query_param_in_seq_map(y_bus.get_branch_param_idx());
     auto shunt_params = query_param_in_seq_map(y_bus.get_shunt_param_idx());
 
-    MathModelParamIncrement<sym> math_model_param_incrmt;
+    MathModelParamIncrement math_model_param_incrmt;
     math_model_param_incrmt.branch_param_to_change.reserve(branch_params.size());
     math_model_param_incrmt.shunt_param_to_change.reserve(shunt_params.size());
     std::ranges::transform(branch_params, std::back_inserter(math_model_param_incrmt.branch_param_to_change),
@@ -172,26 +176,47 @@ inline void update_y_bus([[maybe_unused]] YBus<sym>& y_bus,
                                                          shunt_param_to_change_views.end()};
     }
 
-    auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement<sym> const>(std::move(math_model_param_incrmt));
+    auto param_incrmt_ptr = std::make_shared<MathModelParamIncrement const>(std::move(math_model_param_incrmt));
 
     y_bus.update_admittance_increment(math_model_param, param_incrmt_ptr);
 }
 
 template <bool sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
-                         Idx n_math_solvers, std::vector<std::vector<Idx2D>> const& seq_idx_map) {
-    for (Idx i = 0; i != n_math_solvers; ++i) {
-        auto seq_idx_map_copy = seq_idx_map;
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
+    auto& y_bus_vec = [&math_state]() -> auto& {
         if constexpr (sym) {
-            update_y_bus(math_state.y_bus_vec_sym[i],
-                         std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])),
-                         std::make_shared<std::vector<std::vector<Idx2D>> const>(std::move(seq_idx_map_copy)));
-
+            return math_state.y_bus_vec_sym;
         } else {
-            update_y_bus(math_state.y_bus_vec_asym[i],
-                         std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])),
-                         std::make_shared<std::vector<std::vector<Idx2D>> const>(std::move(seq_idx_map_copy)));
+            return math_state.y_bus_vec_asym;
         }
+    }
+    ();
+
+    assert(y_bus_vec.size() == math_model_params.size());
+
+    for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
+        y_bus_vec[i].update_admittance(std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])));
+    }
+}
+
+template <bool sym>
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
+                         std::vector<MathModelParamIncrement> const& math_model_param_increments) {
+    auto& y_bus_vec = [&math_state]() -> auto& {
+        if constexpr (sym) {
+            return math_state.y_bus_vec_sym;
+        } else {
+            return math_state.y_bus_vec_asym;
+        }
+    }
+    ();
+
+    assert(y_bus_vec.size() == math_model_params.size());
+
+    for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
+        y_bus_vec[i].update_admittance_increment(
+            std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])),
+            math_model_param_increments[i]);
     }
 }
 

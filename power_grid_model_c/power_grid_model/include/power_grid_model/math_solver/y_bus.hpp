@@ -378,8 +378,8 @@ template <bool sym> class YBus {
             }
         };
 
-        query_params_in_map(math_model_param_incrmt->branch_param_to_change, map_admittance_param_branch_);
-        query_params_in_map(math_model_param_incrmt->shunt_param_to_change, map_admittance_param_shunt_);
+        query_params_in_map(math_model_param_incrmt.branch_param_to_change, map_admittance_param_branch_);
+        query_params_in_map(math_model_param_incrmt.shunt_param_to_change, map_admittance_param_shunt_);
         return affected_entries;
     }
 
@@ -389,9 +389,8 @@ template <bool sym> class YBus {
      * @param math_model_param Shared pointer to the constant math_model parameters.
      * @param math_model_param_incrmt Shared pointer to the constant mathematical model parameters .
      */
-    void
-    update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
-                                std::shared_ptr<MathModelParamIncrement<sym> const> const& math_model_param_incrmt) {
+    void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
+                                     MathModelParamIncrement const& math_model_param_incrmt) {
 
         // swap the old cached parameters
         math_model_param_ = math_model_param;

@@ -159,7 +159,7 @@ template <bool sym> struct MathModelParam {
     ComplexTensorVector<sym> source_param;
 };
 
-template <bool sym> struct MathModelParamIncrement {
+struct MathModelParamIncrement {
     std::vector<Idx> branch_param_to_change; // indices of changed branch_param
     std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
 };
