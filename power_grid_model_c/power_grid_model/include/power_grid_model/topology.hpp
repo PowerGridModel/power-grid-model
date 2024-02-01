@@ -312,7 +312,7 @@ class Topology {
         }
 
         std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
-        for (Idx node_idx : cyclic_node) {
+        for (Idx const node_idx : cyclic_node) {
             auto predecessor = static_cast<Idx>(predecessors_[node_idx]);
             if (predecessor != node_idx) {
                 unique_nearest_neighbours[node_idx] = {predecessor};

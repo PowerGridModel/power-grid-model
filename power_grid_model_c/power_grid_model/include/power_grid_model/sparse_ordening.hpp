@@ -152,9 +152,9 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
     dd = make_clique(nbs);
 
     for (auto& it : dd) {
-        Idx k = it.first;
+        Idx const k = it.first;
         for (const Idx& e : it.second) {
-            std::pair<Idx, Idx> t{k, e};
+            std::pair<Idx, Idx> const t{k, e};
             if (!in_graph(t, d)) {
                 if (d.find(k) != d.end() || d.find(e) == d.end()) {
                     d[k].push_back(e);
@@ -168,7 +168,7 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
     }
 
     for (auto& e : nbs) {
-        set_element_vector_pair(e, adj(e, d).size(), dgd);
+        set_element_vector_pair(e, static_cast<Idx>(adj(e, d).size()), dgd);
     }
 
     return alpha;
@@ -190,11 +190,10 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
             Idx const b = d.begin()->second[0];
             alpha.push_back(alpha.back() == a ? b : a);
             break;
-        } else {
-            std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
-            if (d.empty()) {
-                break;
-            }
+        }
+        std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
+        if (d.empty()) {
+            break;
         }
     }
     return {alpha, fills};
