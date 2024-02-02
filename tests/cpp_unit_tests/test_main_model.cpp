@@ -960,6 +960,110 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     }
 }
 
+TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update, cached_update) {
+    State state;
+    auto main_model = default_model(state);
+
+    auto const math_output_orig = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+
+    ConstDataset const update_data{
+        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
+        {"asym_load",
+         ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
+
+    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+
+    SUBCASE("compute mode: sym 1") {
+        auto const math_output_result = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+        main_model.output_result<Node>(math_output_result, state.sym_node.begin());
+        main_model.output_result<Branch>(math_output_result, state.sym_branch.begin());
+        main_model.output_result<Appliance>(math_output_result, state.sym_appliance.begin());
+
+        CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
+        if constexpr (settings::update_type::value) {
+            CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+            CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        } else {
+            CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2));
+            CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
+        }
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
+    }
+    SUBCASE("compute mode: asym 1") {
+        auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
+        main_model.output_result<Node>(math_output, state.asym_node.begin());
+        main_model.output_result<Branch>(math_output, state.asym_branch.begin());
+        main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
+
+        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
+        if constexpr (settings::update_type::value) {
+            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+            CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        } else {
+            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2));
+            CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
+        }
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
+    }
+
+    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+
+    SUBCASE("compute mode: asym 2") {
+        auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
+        main_model.output_result<Node>(math_output, state.asym_node.begin());
+        main_model.output_result<Branch>(math_output, state.asym_branch.begin());
+        main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
+
+        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
+        if constexpr (settings::update_type::value) {
+            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
+            CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
+        } else {
+            CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2));
+            CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
+        }
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
+    }
+
+    SUBCASE("compute mode: sym 2") {
+        auto const math_output_result = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+        main_model.output_result<Node>(math_output_result, state.sym_node.begin());
+        main_model.output_result<Branch>(math_output_result, state.sym_branch.begin());
+        main_model.output_result<Appliance>(math_output_result, state.sym_appliance.begin());
+
+        CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
+        if constexpr (settings::update_type::value) {
+            CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
+            CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
+        } else {
+            CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2));
+            CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
+        }
+        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
+    }
+}
 TEST_CASE("Test main model - runtime dispatch") {
     State state;
     auto main_model = default_model(state);
