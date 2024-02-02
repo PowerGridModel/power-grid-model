@@ -419,10 +419,23 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto block_rr_or_cc = calculate_jacobian(hm_u_chi_u_chi_y_xi_xi, nl_u_chi_u_chi_y_xi_xi);
         block_rr_or_cc += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
         auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu);
-        auto const& block_F_T_k_w = transpose_multiply_weight(block_rr_or_cc, measured_power);
 
-        multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, block_rr_or_cc);
-        multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, block_rc_or_cr);
+        if (order) {
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr, measured_power,
+                                       f_x_complex);
+        } else {
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc, measured_power,
+                                       f_x_complex);
+        }
+    }
+
+    void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
+                                    auto& left_block, const auto& right_block, const auto& measured_power,
+                                    const auto& f_x_complex) {
+        auto const& block_F_T_k_w = transpose_multiply_weight(left_block, measured_power);
+
+        multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, left_block);
+        multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, right_block);
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
