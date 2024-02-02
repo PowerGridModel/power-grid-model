@@ -10,11 +10,6 @@
 
 #include "../all_components.hpp"
 
-#include <boost/range/adaptors.hpp>
-#include <boost/range/irange.hpp>
-
-#include <ranges>
-
 namespace power_grid_model::main_core {
 
 namespace detail {
