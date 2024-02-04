@@ -236,6 +236,14 @@ template <bool sym> class NewtonRaphsonSESolver {
             diag_block.clear();
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
+
+                // get data idx of y bus,
+                // skip for a fill-in
+                Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
+                if (data_idx == -1) {
+                    continue;
+                }
+
                 Idx const col = col_indices[data_idx_lu];
 
                 u_state.uj = current_u[col];
@@ -249,12 +257,6 @@ template <bool sym> class NewtonRaphsonSESolver {
                 // Diagonal block is being cleared outside this loop
                 if (row != col) {
                     block.clear();
-                }
-                // get data idx of y bus,
-                // skip for a fill-in
-                Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
-                if (data_idx == -1) {
-                    continue;
                 }
                 // fill block with voltage measurement, only diagonal
                 if (row == col) {
@@ -313,17 +315,12 @@ template <bool sym> class NewtonRaphsonSESolver {
                         block.r_Q_v() = RealTensor<sym>{-1.0};
                     }
                 }
-
-                // Lagrange Multiplier: eta_i += sum_j (q_ji^T . phi_j)
-                rhs_block.eta_theta() +=
-                    dot(block.q_P_theta(), x_[col].phi_p()) + dot(block.q_Q_theta(), x_[col].phi_q());
-                rhs_block.eta_v() += dot(block.q_P_v(), x_[col].phi_p()) + dot(block.q_Q_v(), x_[col].phi_q());
             }
         }
 
         // loop all transpose entry for QT
         // assign the transpose of the transpose entry of Q
-        make_symmetric_from_lower_triangle(y_bus);
+        fill_qt_process_lagrange_multiplier(y_bus);
 
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
@@ -344,8 +341,8 @@ template <bool sym> class NewtonRaphsonSESolver {
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                auto const& yij, auto const& u_state, auto const& injection) {
         auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
-        auto const nl_ui_uj_yij_abs_uj_inv = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
-        auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij_abs_uj_inv);
+        auto const nl_ui_uj_yij = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
+        auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij);
         add_injection_jacobian(block, injection_jac);
 
         // add paritial sum to the diagonal block and subtract from rhs for current row
@@ -364,11 +361,11 @@ template <bool sym> class NewtonRaphsonSESolver {
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& yii,
                                    auto const& u_state, auto const& measured_power) {
         auto const hm_ui_ui_yii = hm_complex_form(yii, u_state.ui_ui_conj);
-        auto const nl_ui_ui_yii_abs_ui_inv = dot(hm_ui_ui_yii, u_state.abs_ui_inv);
+        auto const nl_ui_ui_yii = dot(hm_ui_ui_yii, u_state.abs_ui_inv);
         auto const f_x_complex = sum_row(hm_ui_ui_yii);
-        auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_yii_abs_ui_inv);
+        auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_yii);
 
-        auto jac_block = calculate_jacobian(hm_ui_ui_yii, nl_ui_ui_yii_abs_ui_inv);
+        auto jac_block = calculate_jacobian(hm_ui_ui_yii, nl_ui_ui_yii);
         jac_block += jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
         auto const& block_F_T_k_w = transpose_multiply_weight(jac_block, measured_power);
         multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, jac_block);
@@ -439,17 +436,36 @@ template <bool sym> class NewtonRaphsonSESolver {
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
-    void make_symmetric_from_lower_triangle(YBus<sym> const& y_bus) {
-        for (Idx data_idx_lu = 0; data_idx_lu != y_bus.nnz_lu(); ++data_idx_lu) {
-            // skip for fill-in
-            if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
-                continue;
+    /**
+     * @brief Fill Q^T(j,i) of LHS(i, j) from the Q(j, i) of LHS(j, i).
+     * Also process Lagrange Multiplier eta_i(i) = sum( Q^T(j,i) * phi(j) ) for j = 1 to n_bus
+     *
+     * @param y_bus
+     */
+    void fill_qt_process_lagrange_multiplier(YBus<sym> const& y_bus) {
+        auto const& row_indptr = y_bus.row_indptr_lu();
+        // loop data index, all rows and columns
+        for (Idx row = 0; row != n_bus_; ++row) {
+            auto& rhs_block = delta_x_rhs_[row];
+            for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
+                // skip for fill-in
+                if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
+                    continue;
+                }
+
+                Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
+                Idx const col = y_bus.col_indices_lu()[data_idx_lu];
+                auto& block = data_gain_[data_idx_lu];
+
+                block.qt_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
+                block.qt_P_v() = data_gain_[data_idx_tranpose].q_Q_theta();
+                block.qt_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
+                block.qt_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
+
+                rhs_block.eta_theta() +=
+                    dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_P_v(), x_[col].phi_q());
+                rhs_block.eta_v() += dot(block.qt_Q_theta(), x_[col].phi_p()) + dot(block.qt_Q_v(), x_[col].phi_q());
             }
-            Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
-            data_gain_[data_idx_lu].qt_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
-            data_gain_[data_idx_lu].qt_P_v() = data_gain_[data_idx_tranpose].q_Q_theta();
-            data_gain_[data_idx_lu].qt_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
-            data_gain_[data_idx_lu].qt_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
         }
     }
 
@@ -508,7 +524,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     static NRSEJacobian jacobian_diagonal_component(ComplexValue<sym> const& f_x_complex_v_inv,
                                                     ComplexValue<sym> const& f_x_complex) {
         NRSEJacobian jacobian{};
-        jacobian.dP_dt = -RealTensor<sym>{RealValue<sym>{imag(f_x_complex)}};
+        jacobian.dP_dt = RealTensor<sym>{RealValue<sym>{-imag(f_x_complex)}};
         jacobian.dP_dv = RealTensor<sym>{RealValue<sym>{real(f_x_complex_v_inv)}};
         jacobian.dQ_dt = RealTensor<sym>{RealValue<sym>{real(f_x_complex)}};
         jacobian.dQ_dv = RealTensor<sym>{RealValue<sym>{imag(f_x_complex_v_inv)}};
@@ -581,16 +597,15 @@ template <bool sym> class NewtonRaphsonSESolver {
      * The 4 members are H, N, M, L in the order.
      *
      * @param hm_complex hm_complex
-     * @param nl_complex_v_inv hm_complex / abs(u2)
+     * @param nl_complex hm_complex / abs(u2)
      * @return  F_k(u1, u2, y12)
      */
-    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hm_complex,
-                                           ComplexTensor<sym> const& nl_complex_v_inv) {
+    static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hm_complex, ComplexTensor<sym> const& nl_complex) {
         NRSEJacobian jacobian{};
         jacobian.dP_dt = imag(hm_complex);
-        jacobian.dP_dv = real(nl_complex_v_inv);
+        jacobian.dP_dv = real(nl_complex);
         jacobian.dQ_dt = -real(hm_complex);
-        jacobian.dQ_dv = imag(nl_complex_v_inv);
+        jacobian.dQ_dv = imag(nl_complex);
         return jacobian;
     }
 
