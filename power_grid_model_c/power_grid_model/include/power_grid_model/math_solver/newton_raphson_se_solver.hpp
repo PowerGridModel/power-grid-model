@@ -276,9 +276,9 @@ template <bool sym> class NewtonRaphsonSESolver {
                     YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            auto const& yii = param.shunt_param[obj];
+                            auto const& ys = param.shunt_param[obj];
                             auto const& measured_power = measured_value.shunt_power(obj);
-                            process_shunt_measurement(block, rhs_block, yii, u_state, measured_power);
+                            process_shunt_measurement(block, rhs_block, ys, u_state, measured_power);
                         }
                     } else if (type == YBusElementType::bft || type == YBusElementType::btf) {
                         auto const& y_branch = param.branch_param[obj];
@@ -343,7 +343,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param diag_block LHS(r, r)
      * @param rhs_block RHS(r)
      * @param yij
-     * @param u_state
+     * @param u_state Voltage state of iteration
      */
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                auto const& yij, auto const& u_state) {
@@ -361,15 +361,25 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.tau_q() -= imag(f_x_complex_row);
     }
 
-    void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& yii,
+    /**
+     * @brief Adds contribution of G(i, i) form the shunt.
+     * Note: The sign of Y_s is inverted per injection direction.
+     *
+     * @param block LHS(i, i)
+     * @param rhs_block RHS(i)
+     * @param ys shunt admittance related to the shunt measurement
+     * @param u_state Voltage state of iteration Voltage state of iteration
+     * @param measured_power measured shunt power
+     */
+    void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& ys,
                                    auto const& u_state, auto const& measured_power) {
-        auto const hm_ui_ui_yii = hm_complex_form(yii, u_state.ui_ui_conj);
+        auto const hm_ui_ui_yii = hm_complex_form(-ys, u_state.ui_ui_conj);
         auto const nl_ui_ui_yii = dot(hm_ui_ui_yii, u_state.abs_ui_inv);
         auto const f_x_complex = sum_row(hm_ui_ui_yii);
         auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_yii);
 
         auto jac_block = calculate_jacobian(hm_ui_ui_yii, nl_ui_ui_yii);
-        jac_block -= jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
+        jac_block += jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
         auto const& block_F_T_k_w = transpose_multiply_weight(jac_block, measured_power);
         multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, jac_block);
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
@@ -400,7 +410,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param rhs_block RHS(r)
      * @param y_xi_xi
      * @param y_xi_mu
-     * @param u_state voltage state vector
+     * @param u_state Voltage state of iteration voltage state vector
      * @param order bool to determine if (chi, psi) = (row, col) or (col, row)
      * @param measured_power
      */

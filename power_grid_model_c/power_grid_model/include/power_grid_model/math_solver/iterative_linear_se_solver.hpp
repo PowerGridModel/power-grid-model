@@ -189,7 +189,7 @@ template <bool sym> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += Ys^H * (variance^-1) * Ys
+                            // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
                             block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
                                              diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance),
@@ -282,7 +282,7 @@ template <bool sym> class IterativeLinearSESolver {
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
-                        // eta -= Ys^H * (variance^-1) * i_shunt
+                        // eta += (-Ys)^H * (variance^-1) * i_shunt
                         rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
                                                diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
                     }
