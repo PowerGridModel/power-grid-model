@@ -503,9 +503,11 @@ template <bool sym> class YBus {
     uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
         static uint64_t num_added = 0;
 
-        auto const new_key = num_added++;
+        auto const new_key = num_added;
+        ++num_added;
+
         assert(!parameters_changed_callbacks_.contains(new_key));
-        parameters_changed_callbacks_.insert(std::make_pair(new_key, std::move(callback)));
+        parameters_changed_callbacks_.emplace_hint(parameters_changed_callbacks_.cend(), new_key, std::move(callback));
         return new_key;
     }
 
